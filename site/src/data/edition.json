@@ -1,0 +1,21 @@
+{
+  "framework": "PATRIMOINE.EXE",
+  "edition": "NTE001",
+  "numero": "001",
+  "city": "Nantes",
+  "country": "France",
+  "host": "ESD Nantes",
+  "type": "STUDIO",
+  "programme": "B3 Design",
+  "label": "Pilot edition · B3 Design · 9, 10 & 12 Nov. 2026",
+  "dates": ["2026-11-09", "2026-11-10", "2026-11-12"],
+  "year": 2026,
+  "compteurs": {
+    "villes_activees": 1,
+    "institutions_hotes": 1,
+    "oeuvres_publiques": 1
+  },
+  "projects": [],
+  "heritage_sources": [],
+  "datasets": []
+}
