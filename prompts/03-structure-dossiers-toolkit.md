@@ -12,6 +12,7 @@ PXE_NTE001_SITE/
 ├── astro.config.mjs
 ├── package.json
 ├── README.md                  (sera complété au prompt 12)
+├── journal.md                 (mis à jour à chaque push)
 ├── public/
 │   └── assets/                (images, QR codes, favicon — chemins relatifs)
 ├── src/

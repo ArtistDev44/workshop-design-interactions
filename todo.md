@@ -3,11 +3,25 @@
 Édition : PXE · NTE001 · ESD Nantes · B3 Design — 9, 10 & 12 novembre 2026
 Intervenant : Kamel Ghabte · Groupe de 2 à 3 étudiants
 Stack : p5.js / JS / Open Data · Durée : 21 h · Dépôt : workshop-design-interactions
-Références projet : contexte/PATRIMOINE.EXE - Nantes 001 — Cours étudiant B3 Design — ESD Nantes — 2026.md (livret officiel) · contexte/PATRIMOINE.EXE — International Computational Heritage Framework.md
+Références projet : contexte/PATRIMOINE.EXE - Nantes 001 — Cours étudiant B3 Design — ESD Nantes — 2026.md (livret officiel) · contexte/PATRIMOINE.EXE — International Computational Heritage Framework.md · contexte/instructions-personnelles.md (règles de travail) · journal.md (journal des pushes)
 
 Corpus Nantes 001 : Passage Pommeraye, Île Feydeau / mascarons, Château des ducs de Bretagne, Tour LU, grues et chantiers navals, patrimoine arboré, inventaires locaux, mémoire de la traite. Une autre source documentée peut être défendue.
 
 Chaîne à tenir du début à la fin : source → grammaire → système → œuvre. Une source réelle avant un style. Un système stable avant une technologie supplémentaire. Un mapping justifié avant une API. Une œuvre exposable avant une démonstration de code.
+
+## Vue d'ensemble — protocole 3 jours
+
+| J1 · Lundi 9 nov | J2 · Mardi 10 nov | J3 · Jeudi 12 nov |
+| --- | --- | --- |
+| Observer / Décoder | Coder / Connecter | Produire / Exposer |
+| ☐ Fiche-source patrimoniale | ☐ Architecture du code | ☐ Freeze fonctionnel (midi) |
+| ☐ Grammaire extraite | ☐ 3 paramètres opératoires | ☐ README |
+| ☐ Sketch minimal p5.js | ☐ Mapping data / API | ☐ Manifest JSON |
+| ☐ Problématique posée | ☐ Fallback local (offline) | ☐ Cartel |
+| ☐ Direction créative fixée | ☐ Test croisé silencieux | ☐ Captation |
+|  | ☐ Itération post-test | ☐ Soutenance individuelle |
+
+Suivi rapide du protocole. Le détail de chaque journée est dans les phases ci-dessous : cocher une ligne du tableau revient à valider les tâches correspondantes de la phase du jour.
 
 ## Phase 0 — Cadrage (avant / début J1)
 

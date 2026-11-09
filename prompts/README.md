@@ -14,12 +14,15 @@ Point de départ : le **projet Astro de base** (starter minimal généré par
 3. Copier-coller le contenu de chaque prompt `NN-*.md`, **un par un**, en attendant que
    l'étape précédente soit terminée et vérifiée avant de passer à la suivante.
 4. Ne jamais inclure de clé privée, de token ou de secret dans le code ou les prompts.
+5. À chaque push vers un dépôt du projet, ajouter une entrée dans `journal.md` (date, commit, fichiers touchés, résumé).
 
 ## Références de contexte (à relire si besoin)
 
 - `contexte/PATRIMOINE.EXE - Nantes 001 — Cours étudiant B3 Design — ESD Nantes — 2026.md` — livret officiel (livrables, structure de dossier, manifest, cartel, robustesse, accessibilité).
 - `contexte/PATRIMOINE.EXE — International Computational Heritage Framework.md` — framework (registre machine-readable, identifiants `PXE-NTE001-G{nn}-W{nn}`, URL `/patrimoine-exe/nantes/001/slug/`, statuts STUDENT / SELECTED / COLLECTION, vitrine publique).
-- `todo.md` — jalons de la semaine et QR code vers le site en ligne.
+- `contexte/instructions-personnelles.md` — règles de travail du projet (todo, journal, chaîne source → grammaire → système → œuvre).
+- `todo.md` — vue d'ensemble du protocole 3 jours, jalons de la semaine et QR code vers le site en ligne.
+- `journal.md` — journal des pushes du dépôt, une ligne par push.
 
 ## Chaîne à tenir du début à la fin
 

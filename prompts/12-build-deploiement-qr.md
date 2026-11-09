@@ -18,7 +18,9 @@ README complet au format du livret, et génération du QR code pointant vers le 
    rendu statique), Données (registre local, aucun appel réseau), Lancer le projet
    (`npm install`, `npm run dev`, `npm run build`), Fallback/limites, Contributions,
    AI usage (3 à 5 lignes si applicable), Sources/droits.
-5. Ne committer aucun secret ; vérifier `git status` avant chaque commit.
+5. Ne committer aucun secret ; vérifier `git status` avant chaque commit. À chaque
+   push (déploiement inclus), ajouter une entrée dans `journal.md` : date, SHA du
+   commit, fichiers modifiés, résumé.
 
 ## Vérifications
 - Le site déployé répond à l'URL de l'édition et affiche la galerie et au moins une
