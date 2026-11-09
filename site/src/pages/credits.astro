@@ -1,0 +1,115 @@
+---
+// Crédits de l'édition, convention de nommage et AI usage (prompt 10).
+// Informations reprises du framework, du livret et du dépôt ; inconnu = [À COMPLÉTER].
+import Layout from '../layouts/Layout.astro';
+import edition from '../data/edition.json';
+---
+
+<Layout title="Crédits" description="Crédits de l'édition PATRIMOINE.EXE / Nantes 001, convention de nommage et usage de l'IA.">
+	<h1>Crédits</h1>
+
+	<section aria-labelledby="t-edition">
+		<h2 id="t-edition">Édition</h2>
+		<dl>
+			<dt>Framework</dt>
+			<dd>PATRIMOINE.EXE — International Computational Heritage Framework</dd>
+			<dt>Édition</dt>
+			<dd>{edition.edition} · {edition.city}, {edition.country} · type {edition.type}</dd>
+			<dt>Institution hôte</dt>
+			<dd>{edition.host} — {edition.programme}, 9, 10 &amp; 12 novembre {edition.year}</dd>
+			<dt>Direction</dt>
+			<dd>Kamel Ghabte — direction complète de l’édition : artistique, pédagogique, curatoriale et technique</dd>
+			<dt>Site de l’édition</dt>
+			<dd>[À COMPLÉTER : noms des auteurs du site]</dd>
+		</dl>
+	</section>
+
+	<section aria-labelledby="t-nommage">
+		<h2 id="t-nommage">Convention de nommage</h2>
+		<dl>
+			<dt>Identifiant d’œuvre</dt>
+			<dd>
+				<code>PXE-NTE001-G&#123;nn&#125;-W&#123;nn&#125;</code> — framework PXE · édition locale NTE001 ·
+				groupe · œuvre (ex. <code>PXE-NTE001-G07-W01</code>)
+			</dd>
+			<dt>Dossier de rendu</dt>
+			<dd><code>PXE_NTE001_G&#123;nn&#125;_NOM-PROJET</code></dd>
+			<dt>Adresse d’une œuvre</dt>
+			<dd><code>/patrimoine-exe/nantes/001/&lt;identifiant-en-minuscules&gt;/</code></dd>
+		</dl>
+	</section>
+
+	<section aria-labelledby="t-sources">
+		<h2 id="t-sources">Sources et droits</h2>
+		<ul>
+			<li>
+				Données : <a href="https://data.nantesmetropole.fr/">Open Data Nantes Métropole</a> (Licence
+				Ouverte ou ODbL selon les jeux de données), météo <a href="https://open-meteo.com/">Open-Meteo</a>.
+			</li>
+			<li>
+				Design : couleurs et échelle inspirées des tokens extraits de metropole.nantes.fr (dossier
+				<code>design-system/</code> du dépôt). Ce site n’est pas un site officiel de Nantes Métropole.
+			</li>
+			<li>Textes de méthode et de corpus : framework PATRIMOINE.EXE et livret étudiant Nantes 001.</li>
+		</ul>
+	</section>
+
+	<section aria-labelledby="t-ia">
+		<h2 id="t-ia">AI usage</h2>
+		<p>
+			Règle du module : un assistant IA peut être utilisé comme tuteur de code, aide au débogage,
+			brainstorming ou reformulation. Il ne remplace ni la recherche patrimoniale ni la compréhension
+			du code ; toute information historique doit être vérifiée.
+		</p>
+		<p class="ia">
+			Le site de l’édition a été construit avec un assistant IA (Claude, Anthropic) à partir des prompts
+			numérotés du dossier <code>prompts/</code> du dépôt. Les textes de méthode et de corpus sont repris
+			du framework et du livret, sans contenu généré. [À COMPLÉTER par l’équipe : ce qui a été relu,
+			réécrit et testé.]
+		</p>
+	</section>
+</Layout>
+
+<style>
+	section {
+		margin-bottom: var(--e-5);
+		max-width: 860px;
+	}
+	h2 {
+		font-size: var(--t-m);
+	}
+	dl {
+		display: grid;
+		grid-template-columns: 1fr;
+		gap: var(--e-1) var(--e-4);
+		margin: 0;
+	}
+	dt {
+		font-family: var(--f-mono);
+		font-size: var(--t-petit);
+		color: var(--c-texte-doux);
+		margin-top: var(--e-2);
+	}
+	dd {
+		margin: 0;
+	}
+	ul {
+		padding-left: var(--e-4);
+	}
+	li {
+		margin-bottom: var(--e-2);
+	}
+	.ia {
+		padding: var(--e-3);
+		background: var(--c-fond-alt);
+		border-radius: var(--r-md);
+	}
+	@media (min-width: 720px) {
+		dl {
+			grid-template-columns: 200px 1fr;
+		}
+		dt {
+			margin-top: 0;
+		}
+	}
+</style>
