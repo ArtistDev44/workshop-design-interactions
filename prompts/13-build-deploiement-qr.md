@@ -23,7 +23,14 @@ Sur GitHub : dépôt → **Settings → Pages → Build and deployment → Sourc
    `main` touchant `site/**` :
    - utilise `actions/checkout`, `actions/setup-node` (version de `site/package.json`
      → `engines`), `npm ci` et `npm run build` avec `working-directory: site` ;
-   - publie `site/dist` avec `actions/upload-pages-artifact` puis
+   - **attention au chemin** : GitHub Pages sert l'artefact à la racine
+     `https://artistdev44.github.io/workshop-design-interactions/`, alors que la `base`
+     ajoute `patrimoine-exe/nantes/001/` sans créer ce dossier dans `dist/`. Le
+     workflow doit donc assembler un dossier `_site/` : copier `site/dist/*` dans
+     `_site/patrimoine-exe/nantes/001/`, copier `site/dist/404.html` dans `_site/404.html`
+     (GitHub Pages ne lit la 404 qu'à la racine), et créer `_site/index.html` qui
+     redirige vers `./patrimoine-exe/nantes/001/` (`<meta http-equiv="refresh">` + lien) ;
+   - publie `_site` avec `actions/upload-pages-artifact` puis
      `actions/deploy-pages` (permissions `pages: write`, `id-token: write`).
 3. QR codes (sans ajouter de dépendance au site) : générer les images une seule fois
    en ligne de commande avec `npx --yes qrcode -o <fichier> <url>` (outil téléchargé

@@ -1,0 +1,139 @@
+---
+// Cartel d'une œuvre au format du livret (prompt 08) :
+// en-tête d'édition, titre, auteurs, source patrimoniale, concept (80–120 mots), système.
+import { libelleStatut, type Oeuvre } from '../lib/oeuvres';
+
+interface Props {
+	oeuvre: Oeuvre;
+}
+
+const { data } = Astro.props.oeuvre;
+const modes = { generative: 'Génératif', data: 'Data', interactif: 'Interactif' } as const;
+---
+
+<article class="cartel" aria-labelledby="titre-oeuvre">
+	<header class="cartel__entete">
+		<p class="cartel__edition mono">PATRIMOINE.EXE / NANTES 001</p>
+		<h1 id="titre-oeuvre">{data.titre}</h1>
+		<p class="cartel__auteurs">
+			{data.auteurs.join(', ')} — ESD Nantes, B3 Design, 2026
+		</p>
+		<p class="cartel__id mono">
+			{data.id} · {libelleStatut(data.statut)}
+		</p>
+	</header>
+
+	<section aria-labelledby="t-source">
+		<h2 id="t-source">Source patrimoniale</h2>
+		<dl>
+			<dt>Titre</dt>
+			<dd>{data.source.titre}</dd>
+			<dt>Lieu</dt>
+			<dd>{data.source.lieu}</dd>
+			<dt>Type</dt>
+			<dd>{data.source.type}</dd>
+			<dt>Référence</dt>
+			<dd><a href={data.source.url}>{data.source.url}</a> (consulté le {data.source.date_acces})</dd>
+			<dt>Droits</dt>
+			<dd>{data.source.droits}</dd>
+		</dl>
+	</section>
+
+	<section aria-labelledby="t-concept">
+		<h2 id="t-concept">Concept</h2>
+		<p class="cartel__texte">{data.cartel}</p>
+	</section>
+
+	<section aria-labelledby="t-systeme">
+		<h2 id="t-systeme">Système</h2>
+		<dl>
+			<dt>Stack</dt>
+			<dd>{data.stack}</dd>
+			<dt>Mode</dt>
+			<dd>{modes[data.mode]}</dd>
+			<dt>Règle</dt>
+			<dd>{data.grammaire.regle}</dd>
+			<dt>Invariants</dt>
+			<dd>
+				<ul>{data.grammaire.invariants.map((i) => <li>{i}</li>)}</ul>
+			</dd>
+			<dt>Variables</dt>
+			<dd>
+				<ul>{data.grammaire.variables.map((v) => <li>{v}</li>)}</ul>
+			</dd>
+			<dt>Paramètres opérants</dt>
+			<dd>
+				<ul>
+					{
+						data.parametres.map((p) => (
+							<li>
+								<strong>{p.nom}</strong> — {p.effet}
+							</li>
+						))
+					}
+				</ul>
+			</dd>
+			<dt>Hors ligne</dt>
+			<dd>{data.fallback}</dd>
+		</dl>
+	</section>
+</article>
+
+<style>
+	.cartel {
+		max-width: 860px;
+	}
+	.cartel__entete {
+		border-bottom: 4px solid var(--c-primaire);
+		padding-bottom: var(--e-3);
+		margin-bottom: var(--e-5);
+	}
+	.cartel__edition,
+	.cartel__id {
+		font-size: var(--t-petit);
+		color: var(--c-texte-doux);
+		margin-bottom: var(--e-2);
+	}
+	.cartel__auteurs {
+		font-size: var(--t-s);
+		margin-bottom: var(--e-2);
+	}
+	section {
+		margin-bottom: var(--e-5);
+	}
+	h2 {
+		font-size: var(--t-m);
+	}
+	.cartel__texte {
+		font-size: var(--t-s);
+		line-height: 1.45;
+	}
+	dl {
+		display: grid;
+		grid-template-columns: 1fr;
+		gap: var(--e-1) var(--e-4);
+		margin: 0;
+	}
+	dt {
+		font-family: var(--f-mono);
+		font-size: var(--t-petit);
+		color: var(--c-texte-doux);
+		margin-top: var(--e-2);
+	}
+	dd {
+		margin: 0;
+		overflow-wrap: anywhere;
+	}
+	dd ul {
+		margin: 0;
+		padding-left: var(--e-4);
+	}
+	@media (min-width: 720px) {
+		dl {
+			grid-template-columns: 200px 1fr;
+		}
+		dt {
+			margin-top: 0;
+		}
+	}
+</style>
