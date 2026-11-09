@@ -1,12 +1,15 @@
 # 03 — Actions et décisions
 
-## Les 4 choix par dossier
-| Action | Description | Effet typique (modulé par le contexte) |
-|---|---|---|
-| Dévier la ligne | Rediriger le tram/bus sur un itinéraire alternatif | Fluidité -, satisfaction +, réputation selon contexte |
-| Retenir en terminus | Garder le véhicule en terminus le temps de réguler | Fluidité --, satisfaction -, réputation + si bien justifié |
-| Bus de renfort | Envoyer un bus pour absorber la charge | Fluidité +, satisfaction +, coût réputation/crédits si abusif |
-| Ne rien faire | Laisser le réseau suivre son cours | Aucun coût immédiat, conséquences différées possibles |
+## Les 4 choix par dossier (table verrouillée Q57–Q61)
+Effet final = **effet de base + 1d6** (dé à 6 faces, Q61), avec modificateurs
+contextuels (météo, heure de pointe, affluence — Q24).
+
+| Action | Effets de base |
+|---|---|
+| Dévier la ligne | Fluidité −10, Satisfaction +5, Réputation 0 (base en 5/10 + aléa, Q57) |
+| Retenir en terminus | Fluidité −7, Satisfaction −12, Réputation +8 si retard > 20 min sinon +4 (valeurs hors 5/10, Q58) |
+| Bus de renfort | Fluidité +12, Satisfaction +8, Réputation −3 (Q59) |
+| Ne rien faire | −2 à −8 sur une **jauge tirée au hasard** (Q60) — distinct du timer à 0 (Q25) |
 
 « Communiquer aux usagers » est un **effet secondaire** de certaines actions
 (ex. dévier inclut une communication automatique) — il n'est pas une 4e action

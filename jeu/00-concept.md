@@ -1,5 +1,7 @@
 # 00 — Concept et spec verrouillée
 
+**Titre du jeu : « Nantes en régulation »** (Q56).
+
 ## Phrase-problématique
 « Rejouer une semaine réelle du réseau de transports nantais et prendre, en
 salle de contrôle, les décisions de régulation qui préservent la fluidité du

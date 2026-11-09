@@ -1,7 +1,7 @@
 # 05 — UI et écrans (salle de contrôle, 1920×1080)
 
 ## Écrans
-1. **Écran d'accueil** (Q34) : titre, **liste des semaines proposées** (Q14) +
+1. **Écran d'accueil** (Q34) : titre **« Nantes en régulation »** (Q56), **liste des 3 semaines proposées** (Q14) +
    bouton Jouer + indicateur discret « mode hors ligne » si l'API est injoignable.
 2. **Écran de jeu (principal)** : salle de contrôle à panneaux —
    - **Panneau gauche** : carte du réseau (tracés API au lancement + fallback
