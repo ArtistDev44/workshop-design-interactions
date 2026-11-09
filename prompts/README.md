@@ -47,4 +47,5 @@ jamais l'inverse.
 | 10 | `10-methode-ressources-credits.md` | Pages protocole, corpus Nantes, crédits/brand |
 | 11 | `11-accessibilite-robustesse.md` | Contrôles accessibilité + checklist de robustesse |
 | 12 | `12-build-deploiement-qr.md` | Build, test hors ligne, déploiement GitHub Pages, README |
-| 13 | `13-jeu-salle-de-controle-p5.md` | Jeu « Salle de contrôle Nantes » (œuvre p5.js décrite dans `jeu/`) |
+| 13 | `13-donnees-vivantes-nantes.md` | Page « Nantes en direct » : visualisation de données vivante et interactive depuis les API recommandées par l'audit (`contexte/audit-api-open-data-nantes.md`), avec cache, rafraîchissement temporisé et fallback local |
+| 14 | `14-jeu-salle-de-controle-p5.md` | Jeu « Nantes en régulation » (œuvre p5.js décrite dans `jeu/`) |

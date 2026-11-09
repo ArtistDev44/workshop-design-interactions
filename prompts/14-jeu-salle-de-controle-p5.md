@@ -1,4 +1,4 @@
-# Prompt 13 — Jeu « Salle de contrôle Nantes » (œuvre p5.js)
+# Prompt 14 — Jeu « Nantes en régulation » (œuvre p5.js)
 
 ## Objectif
 Créer le jeu décrit dans `jeu/` : une salle de contrôle des transports nantais,
