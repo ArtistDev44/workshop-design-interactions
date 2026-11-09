@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Design system — Nantes, ville et métropole</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --font-display:"Nantes","Fraunces",Georgia,"Times New Roman",serif;
+  --font-text:"Marianne",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --color-primary:#00693C;
+  --color-primary-dark:#004A2A;
+  --color-primary-light:#E7F2EB;
+  --color-text:#1C1C1C;
+  --color-text-muted:#5B5B5B;
+  --color-surface:#F6F5F1;
+  --color-background:#FFFFFF;
+  --color-border:#E4E2DB;
+  --color-on-primary:#FFFFFF;
+  --space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-5:24px;--space-6:32px;--space-7:48px;--space-8:64px;--space-9:96px;
+  --radius-sm:8px;--radius-md:12px;--radius-lg:16px;--radius-pill:999px;
+  --shadow-card:0 2px 8px rgba(0,0,0,.08);
+  --shadow-card-hover:0 8px 24px rgba(0,0,0,.12);
+  --container:1280px;
+  --fs-display:3rem;--fs-h1:2.5rem;--fs-h2:2rem;--fs-h3:1.5rem;--fs-h4:1.25rem;--fs-body:1rem;--fs-small:.875rem;--fs-tag:.75rem;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;font-family:var(--font-text);font-size:var(--fs-body);line-height:1.6;color:var(--color-text);background:var(--color-background)}
+h1,h2,h3,h4,.display{font-family:var(--font-display);line-height:1.15;margin:0 0 var(--space-4)}
+img{max-width:100%;display:block}
+a{color:var(--color-primary)}
+.container{max-width:var(--container);margin:0 auto;padding:0 var(--space-5)}
+.btn{display:inline-flex;align-items:center;gap:var(--space-2);background:var(--color-primary);color:var(--color-on-primary);border:none;border-radius:var(--radius-pill);padding:var(--space-3) var(--space-5);font-family:var(--font-text);font-weight:700;font-size:var(--fs-small);text-decoration:none;cursor:pointer}
+.btn:hover{background:var(--color-primary-dark)}
+.btn--ghost{background:transparent;color:var(--color-primary);box-shadow:inset 0 0 0 2px var(--color-primary)}
+.tag{font-size:var(--fs-tag);font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--color-primary)}
+
+header.site{background:var(--color-background);border-bottom:1px solid var(--color-border);position:sticky;top:0;z-index:10}
+.header-inner{display:flex;align-items:center;justify-content:space-between;gap:var(--space-5);padding:var(--space-4) 0}
+.logo img{height:35px;width:auto}
+.header-actions{display:flex;align-items:center;gap:var(--space-5)}
+.header-actions a{font-size:var(--fs-small);font-weight:700;text-decoration:none;color:var(--color-text);display:inline-flex;align-items:center;gap:var(--space-2)}
+.header-actions a:hover{color:var(--color-primary)}
+
+.hero{position:relative;color:var(--color-on-primary);background:var(--color-primary-dark)}
+.hero-bg{position:absolute;inset:0;background:url("https://medias-metropole.nantes.fr/s3fs-public/styles/landscape_full_page_1920w/public/images/2026-10/bandeau-homepage-ile-versailles.jpg.webp") center/cover no-repeat}
+.hero-bg::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,40,24,.55),rgba(0,40,24,.75))}
+.hero-inner{position:relative;padding:var(--space-9) 0}
+.hero h1{font-size:var(--fs-display);max-width:16ch;color:var(--color-on-primary)}
+
+.quick{padding:var(--space-7) 0}
+.quick h2{font-size:var(--fs-h2)}
+.quick-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:var(--space-4);margin-top:var(--space-5)}
+.quick-grid a{display:flex;flex-direction:column;align-items:flex-start;gap:var(--space-3);padding:var(--space-4);background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);text-decoration:none;color:var(--color-text);font-weight:700;font-size:var(--fs-small)}
+.quick-grid a:hover{border-color:var(--color-primary);box-shadow:var(--shadow-card)}
+
+.section{padding:var(--space-7) 0}
+.section--surface{background:var(--color-surface)}
+.section h2{font-size:var(--fs-h1);text-transform:uppercase;letter-spacing:.02em}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:var(--space-5);margin-top:var(--space-5)}
+.card{background:var(--color-background);border:1px solid var(--color-border);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-card);transition:box-shadow .2s ease}
+.card:hover{box-shadow:var(--shadow-card-hover)}
+.card-body{padding:var(--space-4)}
+.card h3{font-size:var(--fs-h3)}
+.card .date{color:var(--color-text-muted);font-size:var(--fs-small)}
+
+.tokens{padding:var(--space-8) 0;background:var(--color-background)}
+.tokens h2{font-size:var(--fs-h2);margin-bottom:var(--space-6)}
+.tokens h3{font-size:var(--fs-h4);margin:var(--space-6) 0 var(--space-3)}
+.swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:var(--space-4)}
+.swatch{border:1px solid var(--color-border);border-radius:var(--radius-md);overflow:hidden}
+.swatch-color{height:72px}
+.swatch-meta{padding:var(--space-3);font-size:var(--fs-small)}
+.swatch-meta code{font-size:.75rem;color:var(--color-text-muted)}
+.type-scale{display:flex;flex-direction:column;gap:var(--space-4)}
+.type-scale .row{display:flex;align-items:baseline;gap:var(--space-4);border-bottom:1px solid var(--color-border);padding-bottom:var(--space-3)}
+.type-scale .row code{min-width:120px;font-size:.75rem;color:var(--color-text-muted)}
+.spacing-demo{display:flex;align-items:flex-end;gap:var(--space-3)}
+.spacing-demo div{background:var(--color-primary);color:#fff;font-size:.7rem;text-align:center;padding-top:var(--space-2)}
+footer.site{background:var(--color-primary-dark);color:var(--color-on-primary);padding:var(--space-8) 0 var(--space-6)}
+.footer-logos{display:flex;gap:var(--space-6);align-items:center;margin-bottom:var(--space-6)}
+.footer-logos img{height:44px;filter:brightness(0) invert(1)}
+footer.site a{color:var(--color-on-primary)}
+.footer-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:var(--space-5);font-size:var(--fs-small)}
+.footer-bottom{margin-top:var(--space-6);padding-top:var(--space-4);border-top:1px solid rgba(255,255,255,.25);font-size:var(--fs-small);display:flex;flex-wrap:wrap;gap:var(--space-4)}
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="container header-inner">
+    <a class="logo" href="#" aria-label="Nantes, ville et métropole — retour à la page d'accueil">
+      <img src="https://medias-metropole.nantes.fr/s3fs-public/svg/2024-12/nantes-logo.svg" alt="Nantes, ville et métropole">
+    </a>
+    <nav class="header-actions" aria-label="Accès rapides">
+      <a href="#">Accès rapides</a>
+      <a href="#">Démarches en ligne</a>
+      <a href="#">Recherche</a>
+      <a href="#">Menu</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="hero-bg" role="presentation"></div>
+  <div class="container hero-inner">
+    <h1 class="display">Bienvenue sur le site de Nantes, ville et métropole</h1>
+  </div>
+</section>
+
+<section class="quick">
+  <div class="container">
+    <h2>Comment peut-on vous aider aujourd’hui ?</h2>
+    <div class="quick-grid">
+      <a href="#">Restrictions d'eau en cours</a>
+      <a href="#">Le menu des cantines</a>
+      <a href="#">Horaires des piscines</a>
+      <a href="#">Nouveaux arrivants</a>
+      <a href="#">Demander ou renouveler un passeport</a>
+      <a href="#">Aides et bons plans</a>
+      <a href="#">Signaler un problème sur l'espace public</a>
+      <a href="#">Horaires des déchetteries</a>
+      <a href="#">Info trafic</a>
+      <a href="#">Travaux</a>
+    </div>
+    <p style="margin-top:var(--space-5)"><a class="btn" href="#">Tous les services</a></p>
+  </div>
+</section>
+
+<section class="section section--surface">
+  <div class="container">
+    <h2>Mon quartier, ma ville, ma métropole</h2>
+    <div class="cards">
+      <article class="card">
+        <div class="card-body">
+          <span class="tag">Santé</span>
+          <h3>Coup d'envoi des travaux du campus santé Franceline Ribard</h3>
+          <p class="date">30 sept. 2026</p>
+        </div>
+      </article>
+      <article class="card">
+        <div class="card-body">
+          <span class="tag">Vie des quartiers</span>
+          <h3>Nantes Nord : 10 ans de transformations urbaines et de liens</h3>
+          <p class="date">07 oct. 2026</p>
+        </div>
+      </article>
+      <article class="card">
+        <div class="card-body">
+          <span class="tag">Santé</span>
+          <h3>Maison des Enfants : prévention et santé pour les 6-11 ans</h3>
+        </div>
+      </article>
+      <article class="card">
+        <div class="card-body">
+          <span class="tag">Espaces publics</span>
+          <h3>Gloriette Petite-Hollande engage sa métamorphose en septembre</h3>
+          <p class="date">02 juill. 2026</p>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2 style="text-transform:none">Délinquance : comment Nantes agit pour éviter que les jeunes basculent ?</h2>
+    <p>Plusieurs facteurs peuvent expliquer les dérives, mais rien n’est écrit d’avance. Les stratégies de prévention, en particulier, font leurs preuves : éducation, sport, santé, accompagnement social sont parmi les leviers d’action. À Nantes, la Ville refond totalement sa politique de prévention pour mieux répondre à ce sujet complexe.</p>
+    <p style="margin-top:var(--space-4)"><a class="btn btn--ghost" href="#">Découvrir notre dossier</a></p>
+  </div>
+</section>
+
+<section class="section section--surface">
+  <div class="container">
+    <h2 style="text-transform:none">Retrouvez nos séries à déguster</h2>
+    <div class="cards">
+      <article class="card"><div class="card-body"><h3>Ils alimentent nos assiettes</h3><p class="date">9 épisodes</p></div></article>
+      <article class="card"><div class="card-body"><h3>L'eaudyssée de H2O, de la Loire à la Lo…</h3><p class="date">7 épisodes</p></div></article>
+      <article class="card"><div class="card-body"><h3>Aux petits soins pour la nature</h3><p class="date">10 épisodes</p></div></article>
+      <article class="card"><div class="card-body"><h3>Mon Nantes à moi</h3><p class="date">10 épisodes</p></div></article>
+    </div>
+  </div>
+</section>
+
+<section class="tokens" id="tokens">
+  <div class="container">
+    <h2>Tokens du design system</h2>
+
+    <h3>Couleurs</h3>
+    <div class="swatches">
+      <div class="swatch"><div class="swatch-color" style="background:#00693C"></div><div class="swatch-meta">primary<br><code>--color-primary #00693C</code></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#004A2A"></div><div class="swatch-meta">primary-dark<br><code>#004A2A</code></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#E7F2EB"></div><div class="swatch-meta">primary-light<br><code>#E7F2EB</code></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#1C1C1C"></div><div class="swatch-meta">text<br><code>#1C1C1C</code></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#5B5B5B"></div><div class="swatch-meta">text-muted<br><code>#5B5B5B</code></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#F6F5F1"></div><div class="swatch-meta">surface<br><code>#F6F5F1</code></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#FFFFFF;border-bottom:1px solid #E4E2DB"></div><div class="swatch-meta">background<br><code>#FFFFFF</code></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#E4E2DB"></div><div class="swatch-meta">border<br><code>#E4E2DB</code></div></div>
+    </div>
+
+    <h3>Typographie</h3>
+    <div class="type-scale">
+      <div class="row"><code>display</code><span class="display" style="font-size:var(--fs-display)">Nantes, ville et métropole</span></div>
+      <div class="row"><code>h1</code><h1 style="font-size:var(--fs-h1)">Un titre de niveau 1</h1></div>
+      <div class="row"><code>h2</code><h2 style="font-size:var(--fs-h2)">Un titre de niveau 2</h2></div>
+      <div class="row"><code>h3</code><h3 style="font-size:var(--fs-h3)">Un titre de niveau 3</h3></div>
+      <div class="row"><code>body</code><p style="font-size:var(--fs-body);margin:0">Corps de texte en sans-serif, interligne 1.6 — lisible et neutre.</p></div>
+      <div class="row"><code>tag</code><span class="tag">Éducation, école</span></div>
+    </div>
+    <p style="margin-top:var(--space-4);font-size:var(--fs-small);color:var(--color-text-muted)">Affichage&nbsp;: <code>--font-display: "Nantes", "Fraunces", Georgia, serif</code> (Fraunces chargé en repli web) · Texte&nbsp;: <code>--font-text: "Marianne", -apple-system, "Segoe UI", Roboto, Arial, sans-serif</code></p>
+
+    <h3>Espacement (base 4px)</h3>
+    <div class="spacing-demo">
+      <div style="width:4px;height:4px">4</div>
+      <div style="width:8px;height:8px">8</div>
+      <div style="width:12px;height:12px">12</div>
+      <div style="width:16px;height:16px">16</div>
+      <div style="width:24px;height:24px">24</div>
+      <div style="width:32px;height:32px">32</div>
+      <div style="width:48px;height:48px">48</div>
+      <div style="width:64px;height:64px">64</div>
+      <div style="width:96px;height:96px">96</div>
+    </div>
+
+    <h3>Rayons & composants</h3>
+    <p style="display:flex;gap:var(--space-4);flex-wrap:wrap;align-items:center">
+      <a class="btn" href="#">Bouton primaire (pill)</a>
+      <a class="btn btn--ghost" href="#">Bouton secondaire</a>
+      <span style="border:1px solid var(--color-border);border-radius:var(--radius-sm);padding:var(--space-2) var(--space-3);font-size:var(--fs-small)">radius-sm 8px</span>
+      <span style="border:1px solid var(--color-border);border-radius:var(--radius-md);padding:var(--space-2) var(--space-3);font-size:var(--fs-small)">radius-md 12px</span>
+      <span style="border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-2) var(--space-3);font-size:var(--fs-small)">radius-lg 16px</span>
+    </p>
+  </div>
+</section>
+
+<footer class="site">
+  <div class="container">
+    <div class="footer-logos">
+      <img src="https://medias-metropole.nantes.fr/s3fs-public/svg/2024-12/logo%20Nantes.svg" alt="Ville de Nantes">
+      <img src="https://medias-metropole.nantes.fr/s3fs-public/svg/2024-12/logo_Nantes_metropole.svg" alt="Nantes Métropole">
+    </div>
+    <div class="footer-cols">
+      <div>
+        <strong>Ville de Nantes</strong><br>
+        +33 (0)2 40 41 90 00<br>
+        2 rue de l'Hôtel de Ville<br>
+        44094 Nantes Cedex 1
+      </div>
+      <div>
+        <strong>Nantes Métropole</strong><br>
+        +33 (0)2 40 99 48 48<br>
+        2 Cours du Champ de Mars<br>
+        44923 Nantes Cedex 9
+      </div>
+      <div>
+        <a href="#">Mentions légales</a><br>
+        <a href="#">Politique de confidentialité</a><br>
+        <a href="#">Accessibilité : partiellement conforme</a><br>
+        <a href="#">Éco-conception</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>Source scrapée : metropole.nantes.fr (09/11/2026)</span>
+      <span>Tokens : voir index.md</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
