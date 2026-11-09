@@ -4,6 +4,7 @@ Règle : chaque push sur la branche main ajoute une entrée dans le tableau, la 
 
 | Date | Commit | Fichiers | Résumé |
 |---|---|---|---|
+| 2026-11-09 | ce commit (branche site/prompt-02-config-statique, fusionnée dans main) | site/astro.config.mjs, site/src/layouts/Layout.astro, journal.md | Prompt 02 : rendu statique, site + base GitHub Pages `/workshop-design-interactions/patrimoine-exe/nantes/001/`, trailingSlash always ; favicons via BASE_URL ; build et preview vérifiés. Fusion préalable de fix/audit-prompts dans main |
 | 2026-11-09 | ce commit (branche fix/audit-prompts) | prompts/ (01 à 14, README), jeu/00, 01, 02, 05, CLAUDE.md, notes.md, contexte/audit-api-open-data-nantes.md, journal.md | Corrections issues de l'audit des prompts : base GitHub Pages avec nom du dépôt, site dans site/, design-system/DESIGN.md comme référence, registre sans œuvre fictive (astro/zod), URL œuvre /001/<slug>/, ordre 11 données → 12 accessibilité → 13 déploiement (Actions + QR), instantanés réels, source du jeu = Naolib GTFS-RT + enregistrement des semaines, CLAUDE.md court |
 | 2026-11-09 | ce commit | prompts/14, journal.md | Prompt 14 « Nantes en régulation » complété avec toutes les décisions verrouillées Q1-Q61 (UI, boucle, table des effets base + 1d6, fins, raccourcis) ; jeu/ vérifié à jour |
 | 2026-11-09 | ce commit | jeu/00, jeu/03, jeu/05, journal.md | Q56-61 : titre « Nantes en régulation » ; table des effets verrouillée (base + 1d6) : dévier −10/+5/0, retenir −7/−12/+8 si retard>20, renfort +12/+8/−3, ne rien faire −2 à −8 jauge au hasard |
