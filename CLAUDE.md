@@ -7,7 +7,7 @@ Lire ce fichier plutôt que le livret complet. N'ouvrir `contexte/` que si un pr
 - Langue de travail : français.
 - Site Astro statique dans **`site/`** (commandes `npm` dans `site/`). Seule dépendance : `astro`.
 - `base` GitHub Pages : `/workshop-design-interactions/patrimoine-exe/nantes/001/` — liens et assets via `import.meta.env.BASE_URL`.
-- Jeu p5.js « Nantes en régulation » : décisions verrouillées dans `jeu/`, prompt 14.
+- Jeu p5.js « Nantes en régulation » : décisions verrouillées dans `jeu/`, prompts 14–19.
 - Design : `design-system/DESIGN.md` (couleurs, échelle), sans police Picon ni identité Nantes Métropole.
 - Données : API Open Data Nantes Métropole côté navigateur uniquement, instantanés réels dans `site/public/data/fallback/` (voir `contexte/audit-api-open-data-nantes.md`).
 

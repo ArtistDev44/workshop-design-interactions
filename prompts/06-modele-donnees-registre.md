@@ -29,7 +29,7 @@ statistiques et catalogues générés depuis les mêmes métadonnées).
    - `assets` : `{ hero?, detail?, process?, thumb?, demo? }` — **tous optionnels** :
      tant qu'une image n'existe pas, les composants affichent un emplacement neutre
      « Captation à venir », jamais une image cassée ;
-   - `lien_oeuvre` (optionnel) : chemin de l'œuvre jouable (ex. le jeu, prompt 14) ;
+   - `lien_oeuvre` (optionnel) : chemin de l'œuvre jouable (ex. le jeu, prompts 14–19) ;
    - `ai_usage` : texte de 3 à 5 lignes (optionnel).
 3. **Pas d'œuvre fictive.** Créer une seule entrée réelle :
    `site/src/content/oeuvres/pxe-nte001-g01-w01.json` pour le jeu
