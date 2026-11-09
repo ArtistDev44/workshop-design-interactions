@@ -1,0 +1,1884 @@
+{
+  "url": "https://metropole.nantes.fr/",
+  "extractedAt": "2026-11-09T10:32:23.627Z",
+  "meta": {
+    "snapshotId": "fd486597-05d4-48bd-a5c9-ad5ac57faa89",
+    "httpStatus": 200,
+    "dembrandtVersion": "0.39.2",
+    "schemaVersion": "1.19.0",
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "context": {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "deviceScaleFactor": 1,
+      "isMobile": false,
+      "hasTouch": false,
+      "colorScheme": "light",
+      "reducedMotion": "no-preference",
+      "forcedColors": "none",
+      "locale": "en-US",
+      "timezoneId": "America/New_York",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36"
+    },
+    "fontsReady": false,
+    "pendingFonts": [
+      "Picon",
+      "Picon Condensed",
+      "Picon Extended"
+    ],
+    "requestedUrl": "https://metropole.nantes.fr/",
+    "contentLength": 49724,
+    "flags": {
+      "slow": true
+    },
+    "degraded": [
+      "reveal"
+    ]
+  },
+  "siteName": "Nantes, ville et métropole",
+  "logo": {
+    "source": "img",
+    "context": "header",
+    "url": "https://medias-metropole.nantes.fr/s3fs-public/svg/2024-12/nantes-logo.svg",
+    "width": 299,
+    "height": 35,
+    "rect": {
+      "x": 20,
+      "y": 22,
+      "width": 299,
+      "height": 35
+    },
+    "natural": {
+      "width": 299,
+      "height": 35
+    },
+    "alt": "Nantes, ville et métropole - retour à la page d'accueil",
+    "type": "wordmark",
+    "reversed": false,
+    "background": "#ffffff",
+    "safeZone": {
+      "top": 0,
+      "right": 0,
+      "bottom": 0,
+      "left": 0
+    },
+    "position": {
+      "top": 22,
+      "left": 20
+    },
+    "dataUri": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjk5IiBoZWlnaHQ9IjM1IiB2aWV3Qm94PSIwIDAgMjk5IDM1IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cGF0aCBkPSJNMi4zMDM3MSAzNC41MDAxVjEuMDkyMDZIMTAuODQ3N0wyMi42NTU3IDE3LjUwODFDMjMuMDg3NyAxOC4yMjgxIDIzLjk1MTcgMTkuNjIwMSAyNC4xNDM3IDE5LjkwODFMMjQuMzM1NyAxOS44NjAxQzI0LjIzOTcgMTkuMDQ0MSAyNC4xOTE3IDE3LjE3MjEgMjQuMTkxNyAxNS45NzIxVjEuMDkyMDZIMzIuMTExN1YzNC41MDAxSDIzLjgwNzdMMTEuNjE1NyAxNy44OTIxQzExLjIzMTcgMTcuMjIwMSAxMC40MTU3IDE1Ljg3NjEgMTAuMjIzNyAxNS40OTIxTDEwLjAzMTcgMTUuNTQwMUMxMC4xMjc3IDE2LjU5NjEgMTAuMjIzNyAxOC4zMjQxIDEwLjIyMzcgMTkuNDI4MVYzNC41MDAxSDIuMzAzNzFaIiBmaWxsPSJibGFjayIvPgo8cGF0aCBkPSJNMzQuNDU0IDM0LjUwMDFMNDYuNzkgMS4wOTIwNkg1Ny4wMTRMNjguOTY2IDM0LjUwMDFINTkuOTQyTDU3LjkyNiAyOC4xNjQxSDQ1LjM5OEw0My4yMzggMzQuNTAwMUgzNC40NTRaTTUwLjk2NiAxMS43MDAxTDQ3LjU1OCAyMS43MzIxSDU1Ljg2Mkw1Mi42NDYgMTEuNzAwMUM1Mi41NSAxMS40NjAxIDUxLjk3NCA5LjczMjA2IDUxLjk3NCA5LjYzNjA2SDUxLjY4NkM1MS42ODYgOS43MzIwNiA1MS4wNjIgMTEuNTA4MSA1MC45NjYgMTEuNzAwMVoiIGZpbGw9ImJsYWNrIi8+CjxwYXRoIGQ9Ik03MS4zMDM3IDM0LjUwMDFWMS4wOTIwNkg3OS44NDc3TDkxLjY1NTcgMTcuNTA4MUM5Mi4wODc3IDE4LjIyODEgOTIuOTUxNyAxOS42MjAxIDkzLjE0MzcgMTkuOTA4MUw5My4zMzU3IDE5Ljg2MDFDOTMuMjM5NyAxOS4wNDQxIDkzLjE5MTcgMTcuMTcyMSA5My4xOTE3IDE1Ljk3MjFWMS4wOTIwNkgxMDEuMTEyVjM0LjUwMDFIOTIuODA3N0w4MC42MTU3IDE3Ljg5MjFDODAuMjMxNyAxNy4yMjAxIDc5LjQxNTcgMTUuODc2MSA3OS4yMjM3IDE1LjQ5MjFMNzkuMDMxNyAxNS41NDAxQzc5LjEyNzcgMTYuNTk2MSA3OS4yMjM3IDE4LjMyNDEgNzkuMjIzNyAxOS40MjgxVjM0LjUwMDFINzEuMzAzN1oiIGZpbGw9ImJsYWNrIi8+CjxwYXRoIGQ9Ik0xMTMuMTUgMzQuNTAwMVY4LjcyNDA2SDEwNC4wNzhWMS4wOTIwNkgxMzEuNTM0VjguNzI0MDZIMTIyLjQxNFYzNC41MDAxSDExMy4xNVoiIGZpbGw9ImJsYWNrIi8+CjxwYXRoIGQ9Ik0xMzQuNTg3IDM0LjUwMDFWMS4wOTIwNkgxNTcuNjc1VjguNjc2MDZIMTQzLjc1NVYxMy4yODQxSDE1Ni45NTVWMjAuMzQwMUgxNDMuNzU1VjI2LjkxNjFIMTU3LjY3NVYzNC41MDAxSDEzNC41ODdaIiBmaWxsPSJibGFjayIvPgo8cGF0aCBkPSJNMTcxIDM0LjgzNjFDMTY2LjQ0IDM0LjgzNjEgMTYyLjg0IDMzLjgyODEgMTYwLjU4NCAzMi41MzIxVjI0Ljc1NjFDMTYyLjk4NCAyNi4xNDgxIDE2Ni45NjggMjcuNDkyMSAxNzAuNDI0IDI3LjQ5MjFDMTcyLjk2OCAyNy40OTIxIDE3NC42OTYgMjYuOTE2MSAxNzQuNjk2IDI1LjI4NDFDMTc0LjY5NiAyMi44ODQxIDE3Mi4wNTYgMjIuMjEyMSAxNjcuMTEyIDE5Ljc2NDFDMTYyLjY0OCAxNy40NjAxIDE2MC4xNTIgMTUuMTA4MSAxNjAuMTUyIDEwLjg4NDFDMTYwLjIgMy4zNDgwNiAxNjYuOTY4IDAuNjEyMDYxIDE3Mi45MiAwLjYxMjA2MUMxNzYuOTA0IDAuNjEyMDYxIDE3OS45NzYgMS4zODAwNiAxODEuODQ4IDIuMjkyMDZWMTAuMDIwMUMxNzkuNTQ0IDguODIwMDYgMTc2LjE4NCA3Ljk1NjA2IDE3My44MzIgOC4wMDQwNkMxNzEuMjQgOC4wMDQwNiAxNjkuNTYgOC42MjgwNiAxNjkuNTYgMTAuMzA4MUMxNjkuNTYgMTIuMTMyMSAxNzEuODE2IDEzLjA0NDEgMTc0Ljg0IDE0LjI5MjFDMTc5LjQ5NiAxNi41MDAxIDE4My44MTYgMTguNTE2MSAxODMuODE2IDI0LjY2MDFDMTgzLjgxNiAzMS40MjgxIDE3OC4wNTYgMzQuODM2MSAxNzEgMzQuODM2MVoiIGZpbGw9ImJsYWNrIi8+CjxwYXRoIGQ9Ik0xOTcuMjE4IDE0LjUwMDFMMTkzLjI0IDEuOTcyMDZIMTk2LjE5MkwxOTguNTY4IDkuNDk2MDZDMTk4LjY3NiA5Ljg3NDA2IDE5OS4wNTQgMTEuMTM0MSAxOTkuMDU0IDExLjI3ODFIMTk5LjE2MkMxOTkuMTYyIDExLjEzNDEgMTk5LjUyMiA5Ljg5MjA2IDE5OS42MyA5LjQ0MjA2TDIwMS44OCAxLjk3MjA2SDIwNC42ODhMMjAwLjc4MiAxNC41MDAxSDE5Ny4yMThaIiBmaWxsPSJibGFjayIvPgo8cGF0aCBkPSJNMjA1Ljc3OCAxNC41MDAxVjEuOTcyMDZIMjA4Ljc0OFYxNC41MDAxSDIwNS43NzhaIiBmaWxsPSJibGFjayIvPgo8cGF0aCBkPSJNMjEwLjc1MiAxNC41MDAxVjEuOTcyMDZIMjEzLjcwNFYxMi4wNTIxSDIxOC45NzhWMTQuNTAwMUgyMTAuNzUyWiIgZmlsbD0iYmxhY2siLz4KPHBhdGggZD0iTTIyMC4zNjggMTQuNTAwMVYxLjk3MjA2SDIyMy4zMlYxMi4wNTIxSDIyOC41OTRWMTQuNTAwMUgyMjAuMzY4WiIgZmlsbD0iYmxhY2siLz4KPHBhdGggZD0iTTIyOS45ODMgMTQuNTAwMVYxLjk3MjA2SDIzOC4zMzVWNC40MjAwNkgyMzIuOTE3VjYuNjcwMDZIMjM4LjA2NVY4Ljk5MjA2SDIzMi45MTdWMTIuMDUyMUgyMzguMzM1VjE0LjUwMDFIMjI5Ljk4M1oiIGZpbGw9ImJsYWNrIi8+CjxwYXRoIGQ9Ik0yNDcuMjQzIDE0LjY2MjFDMjQ0LjQ3MSAxNC42NjIxIDI0My4wODUgMTMuMjU4MSAyNDMuMDg1IDExLjQwNDFDMjQzLjA4NSA5LjgyMDA2IDI0My45MzEgOC44MzAwNiAyNDUuOTI5IDcuNjc4MDZDMjQ1LjE3MyA2LjkwNDA2IDI0NC4zNDUgNi4xMTIwNiAyNDQuMzQ1IDQuNzgwMDZDMjQ0LjM0NSAyLjgzNjA2IDI0Ni4wMDEgMS43OTIwNiAyNDguMDE3IDEuNzkyMDZDMjQ5Ljg4OSAxLjc5MjA2IDI1MS40OTEgMi42OTIwNiAyNTEuNDkxIDQuNTQ2MDZDMjUxLjQ5MSA1Ljg0MjA2IDI1MC44MDcgNi43NzgwNiAyNDkuMTE1IDcuODQwMDZMMjUxLjI3NSAxMC4xOTgxQzI1MS44NTEgOS4yODAwNiAyNTIuMDg1IDguMzI2MDYgMjUyLjA4NSA2Ljc5NjA2SDI1NC4xMzdDMjU0LjEzNyA4LjkzODA2IDI1My41NzkgMTAuNDg2MSAyNTIuNzE1IDExLjc2NDFMMjU1LjIxNyAxNC41MDAxSDI1Mi4zMDFMMjUxLjExMyAxMy4yMjIxQzI1MC4xMjMgMTQuMDg2MSAyNDguODYzIDE0LjY2MjEgMjQ3LjI0MyAxNC42NjIxWk0yNDYuNjMxIDQuNjE4MDZDMjQ2LjYzMSA1LjMzODA2IDI0Ny4yMjUgNS44MDYwNiAyNDcuOTgxIDYuNTk4MDZDMjQ5LjE2OSA1Ljg0MjA2IDI0OS40MjEgNS4zMDIwNiAyNDkuNDIxIDQuNjAwMDZDMjQ5LjQyMSAzLjgwODA2IDI0OC44MDkgMy4zOTQwNiAyNDguMDUzIDMuMzk0MDZDMjQ3LjI2MSAzLjM5NDA2IDI0Ni42MzEgMy44MDgwNiAyNDYuNjMxIDQuNjE4MDZaTTI0NS41ODcgMTEuMTcwMUMyNDUuNTg3IDEyLjEwNjEgMjQ2LjMwNyAxMi42NjQxIDI0Ny41NDkgMTIuNjY0MUMyNDguNDQ5IDEyLjY2NDEgMjQ5LjEzMyAxMi4zMjIxIDI0OS43NjMgMTEuNzgyMUwyNDcuMjQzIDkuMDgyMDZDMjQ2LjEyNyA5LjczMDA2IDI0NS41ODcgMTAuMjUyMSAyNDUuNTg3IDExLjE3MDFaIiBmaWxsPSJibGFjayIvPgo8cGF0aCBkPSJNMTk0LjA2OCAzNC41MDAxVjIxLjk3MjFIMTk3Ljk1NkwyMDAuMTUyIDI4LjY4NjFDMjAwLjI2IDI5LjA0NjEgMjAwLjU0OCAzMC4xNDQxIDIwMC41NDggMzAuMjcwMUgyMDAuNjM4QzIwMC42NTYgMzAuMTQ0MSAyMDAuOTQ0IDI5LjA0NjEgMjAxLjA1MiAyOC42NjgxTDIwMy4zMiAyMS45NzIxSDIwNy4xMzZWMzQuNTAwMUgyMDQuNDcyVjI4LjA3NDFDMjA0LjQ3MiAyNy4xOTIxIDIwNC40NzIgMjYuNjE2MSAyMDQuNTA4IDI1LjgyNDFIMjA0LjRDMjA0LjM2NCAyNS45ODYxIDIwNC4xMTIgMjYuODg2MSAyMDQuMDc2IDI3LjA0ODFMMjAxLjQ4NCAzNC41MDAxSDE5OS41NThMMTk2Ljk2NiAyNi45MjIxQzE5Ni45MTIgMjYuNzYwMSAxOTYuNjc4IDI1LjkxNDEgMTk2LjY0MiAyNS43MzQxSDE5Ni41MzRDMTk2LjU4OCAyNi41NDQxIDE5Ni42MDYgMjcuMjI4MSAxOTYuNjA2IDI4LjAyMDFWMzQuNTAwMUgxOTQuMDY4WiIgZmlsbD0iYmxhY2siLz4KPHBhdGggZD0iTTIxNC4zMzkgMjEuMTQ0MUgyMTIuMjE1TDIxMy42MzcgMTguNzUwMUgyMTYuMzM3TDIxNC4zMzkgMjEuMTQ0MVpNMjA5LjA2NSAzNC41MDAxVjIxLjk3MjFIMjE3LjQxN1YyNC40MjAxSDIxMS45OTlWMjYuNjcwMUgyMTcuMTQ3VjI4Ljk5MjFIMjExLjk5OVYzMi4wNTIxSDIxNy40MTdWMzQuNTAwMUgyMDkuMDY1WiIgZmlsbD0iYmxhY2siLz4KPHBhdGggZD0iTTIyMS43MzMgMzQuNTAwMVYyNC40MzgxSDIxOC4yNDFWMjEuOTcyMUgyMjguMTc3VjI0LjQzODFIMjI0LjY4NVYzNC41MDAxSDIyMS43MzNaIiBmaWxsPSJibGFjayIvPgo8cGF0aCBkPSJNMjI5LjQ1NSAzNC41MDAxVjIxLjk3MjFIMjM0LjYzOUMyMzYuNzYzIDIxLjk3MjEgMjM5LjEzOSAyMi45MjYxIDIzOS4xMzkgMjUuOTg2MUMyMzkuMTM5IDI3LjQyNjEgMjM4LjQ3MyAyOC42MTQxIDIzNy40MTEgMjkuMzM0MUwyNDAuMDkzIDM0LjUwMDFIMjM3LjA2OUwyMzQuODU1IDMwLjA5MDFIMjMyLjQyNVYzNC41MDAxSDIyOS40NTVaTTIzNC40NTkgMjQuMjIyMUgyMzIuNDI1VjI3Ljg3NjFIMjM0LjM1MUMyMzUuNTIxIDI3Ljg3NjEgMjM2LjM0OSAyNy4zMTgxIDIzNi4zNDkgMjUuOTUwMUMyMzYuMzQ5IDI0Ljc0NDEgMjM1LjU3NSAyNC4yMjIxIDIzNC40NTkgMjQuMjIyMVoiIGZpbGw9ImJsYWNrIi8+CjxwYXRoIGQ9Ik0yNDYuNDY2IDM0LjYwODFDMjQyLjkwMiAzNC42MDgxIDI0MC4yMiAzMi4xOTYxIDI0MC4yMiAyOC4yMTgxQzI0MC4yMiAyNC4yNTgxIDI0Mi44NDggMjEuODI4MSAyNDYuNDY2IDIxLjgyODFDMjUwLjA4NCAyMS44MjgxIDI1Mi43NjYgMjQuMjU4MSAyNTIuNzY2IDI4LjIxODFDMjUyLjc2NiAzMi4xOTYxIDI1MC4wNjYgMzQuNjA4MSAyNDYuNDY2IDM0LjYwODFaTTI0Ni40ODQgMzIuMTQyMUMyNDguMzM4IDMyLjE0MjEgMjQ5LjQgMzAuMjg4MSAyNDkuNCAyOC4yMTgxQzI0OS40IDI2LjE0ODEgMjQ4LjMzOCAyNC4yOTQxIDI0Ni40ODQgMjQuMjk0MUMyNDQuNTk0IDI0LjI5NDEgMjQzLjUxNCAyNi4wNzYxIDI0My41MTQgMjguMjE4MUMyNDMuNTE0IDMwLjM3ODEgMjQ0LjU5NCAzMi4xNDIxIDI0Ni40ODQgMzIuMTQyMVoiIGZpbGw9ImJsYWNrIi8+CjxwYXRoIGQ9Ik0yNTQuMjkzIDM0LjUwMDFWMjEuOTcyMUgyNTkuNTg1QzI2MS44MTcgMjEuOTcyMSAyNjMuOTk1IDIzLjM5NDEgMjYzLjk5NSAyNi4xODQxQzI2My45OTUgMjkuMzcwMSAyNjEuNDU3IDMwLjY0ODEgMjU5LjQ3NyAzMC42NDgxSDI1Ny4yNjNWMzQuNTAwMUgyNTQuMjkzWk0yNTkuMjA3IDI0LjM2NjFIMjU3LjI2M1YyOC40MTYxSDI1OS4wOTlDMjYwLjM1OSAyOC40MTYxIDI2MS4yMDUgMjcuNzE0MSAyNjEuMjA1IDI2LjMyODFDMjYxLjIwNSAyNS4wMTQxIDI2MC4zNTkgMjQuMzY2MSAyNTkuMjA3IDI0LjM2NjFaIiBmaWxsPSJibGFjayIvPgo8cGF0aCBkPSJNMjcxLjIxNiAzNC42MDgxQzI2Ny42NTIgMzQuNjA4MSAyNjQuOTcgMzIuMTk2MSAyNjQuOTcgMjguMjE4MUMyNjQuOTcgMjQuMjU4MSAyNjcuNTk4IDIxLjgyODEgMjcxLjIxNiAyMS44MjgxQzI3NC44MzQgMjEuODI4MSAyNzcuNTE2IDI0LjI1ODEgMjc3LjUxNiAyOC4yMTgxQzI3Ny41MTYgMzIuMTk2MSAyNzQuODE2IDM0LjYwODEgMjcxLjIxNiAzNC42MDgxWk0yNzEuMjM0IDMyLjE0MjFDMjczLjA4OCAzMi4xNDIxIDI3NC4xNSAzMC4yODgxIDI3NC4xNSAyOC4yMTgxQzI3NC4xNSAyNi4xNDgxIDI3My4wODggMjQuMjk0MSAyNzEuMjM0IDI0LjI5NDFDMjY5LjM0NCAyNC4yOTQxIDI2OC4yNjQgMjYuMDc2MSAyNjguMjY0IDI4LjIxODFDMjY4LjI2NCAzMC4zNzgxIDI2OS4zNDQgMzIuMTQyMSAyNzEuMjM0IDMyLjE0MjFaIiBmaWxsPSJibGFjayIvPgo8cGF0aCBkPSJNMjc5LjA0MyAzNC41MDAxVjIxLjk3MjFIMjgxLjk5NVYzMi4wNTIxSDI4Ny4yNjlWMzQuNTAwMUgyNzkuMDQzWiIgZmlsbD0iYmxhY2siLz4KPHBhdGggZD0iTTI4OC42NTkgMzQuNTAwMVYyMS45NzIxSDI5Ny4wMTFWMjQuNDIwMUgyOTEuNTkzVjI2LjY3MDFIMjk2Ljc0MVYyOC45OTIxSDI5MS41OTNWMzIuMDUyMUgyOTcuMDExVjM0LjUwMDFIMjg4LjY1OVoiIGZpbGw9ImJsYWNrIi8+Cjwvc3ZnPgo="
+  },
+  "logoInstances": [
+    {
+      "source": "img",
+      "context": "header",
+      "url": "https://medias-metropole.nantes.fr/s3fs-public/svg/2024-12/nantes-logo.svg",
+      "width": 299,
+      "height": 35,
+      "rect": {
+        "x": 20,
+        "y": 22,
+        "width": 299,
+        "height": 35
+      },
+      "natural": {
+        "width": 299,
+        "height": 35
+      },
+      "alt": "Nantes, ville et métropole - retour à la page d'accueil",
+      "type": "wordmark",
+      "reversed": false,
+      "background": "#ffffff",
+      "safeZone": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "position": {
+        "top": 22,
+        "left": 20
+      },
+      "dataUri": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjk5IiBoZWlnaHQ9IjM1IiB2aWV3Qm94PSIwIDAgMjk5IDM1IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cGF0aCBkPSJNMi4zMDM3MSAzNC41MDAxVjEuMDkyMDZIMTAuODQ3N0wyMi42NTU3IDE3LjUwODFDMjMuMDg3NyAxOC4yMjgxIDIzLjk1MTcgMTkuNjIwMSAyNC4xNDM3IDE5LjkwODFMMjQuMzM1NyAxOS44NjAxQzI0LjIzOTcgMTkuMDQ0MSAyNC4xOTE3IDE3LjE3MjEgMjQuMTkxNyAxNS45NzIxVjEuMDkyMDZIMzIuMTExN1YzNC41MDAxSDIzLjgwNzdMMTEuNjE1NyAxNy44OTIxQzExLjIzMTcgMTcuMjIwMSAxMC40MTU3IDE1Ljg3NjEgMTAuMjIzNyAxNS40OTIxTDEwLjAzMTcgMTUuNTQwMUMxMC4xMjc3IDE2LjU5NjEgMTAuMjIzNyAxOC4zMjQxIDEwLjIyMzcgMTkuNDI4MVYzNC41MDAxSDIuMzAzNzFaIiBmaWxsPSJibGFjayIvPgo8cGF0aCBkPSJNMzQuNDU0IDM0LjUwMDFMNDYuNzkgMS4wOTIwNkg1Ny4wMTRMNjguOTY2IDM0LjUwMDFINTkuOTQyTDU3LjkyNiAyOC4xNjQxSDQ1LjM5OEw0My4yMzggMzQuNTAwMUgzNC40NTRaTTUwLjk2NiAxMS43MDAxTDQ3LjU1OCAyMS43MzIxSDU1Ljg2Mkw1Mi42NDYgMTEuNzAwMUM1Mi41NSAxMS40NjAxIDUxLjk3NCA5LjczMjA2IDUxLjk3NCA5LjYzNjA2SDUxLjY4NkM1MS42ODYgOS43MzIwNiA1MS4wNjIgMTEuNTA4MSA1MC45NjYgMTEuNzAwMVoiIGZpbGw9ImJsYWNrIi8+CjxwYXRoIGQ9Ik03MS4zMDM3IDM0LjUwMDFWMS4wOTIwNkg3OS44NDc3TDkxLjY1NTcgMTcuNTA4MUM5Mi4wODc3IDE4LjIyODEgOTIuOTUxNyAxOS42MjAxIDkzLjE0MzcgMTkuOTA4MUw5My4zMzU3IDE5Ljg2MDFDOTMuMjM5NyAxOS4wNDQxIDkzLjE5MTcgMTcuMTcyMSA5My4xOTE3IDE1Ljk3MjFWMS4wOTIwNkgxMDEuMTEyVjM0LjUwMDFIOTIuODA3N0w4MC42MTU3IDE3Ljg5MjFDODAuMjMxNyAxNy4yMjAxIDc5LjQxNTcgMTUuODc2MSA3OS4yMjM3IDE1LjQ5MjFMNzkuMDMxNyAxNS41NDAxQzc5LjEyNzcgMTYuNTk2MSA3OS4yMjM3IDE4LjMyNDEgNzkuMjIzNyAxOS40MjgxVjM0LjUwMDFINzEuMzAzN1oiIGZpbGw9ImJsYWNrIi8+CjxwYXRoIGQ9Ik0xMTMuMTUgMzQuNTAwMVY4LjcyNDA2SDEwNC4wNzhWMS4wOTIwNkgxMzEuNTM0VjguNzI0MDZIMTIyLjQxNFYzNC41MDAxSDExMy4xNVoiIGZpbGw9ImJsYWNrIi8+CjxwYXRoIGQ9Ik0xMzQuNTg3IDM0LjUwMDFWMS4wOTIwNkgxNTcuNjc1VjguNjc2MDZIMTQzLjc1NVYxMy4yODQxSDE1Ni45NTVWMjAuMzQwMUgxNDMuNzU1VjI2LjkxNjFIMTU3LjY3NVYzNC41MDAxSDEzNC41ODdaIiBmaWxsPSJibGFjayIvPgo8cGF0aCBkPSJNMTcxIDM0LjgzNjFDMTY2LjQ0IDM0LjgzNjEgMTYyLjg0IDMzLjgyODEgMTYwLjU4NCAzMi41MzIxVjI0Ljc1NjFDMTYyLjk4NCAyNi4xNDgxIDE2Ni45NjggMjcuNDkyMSAxNzAuNDI0IDI3LjQ5MjFDMTcyLjk2OCAyNy40OTIxIDE3NC42OTYgMjYuOTE2MSAxNzQuNjk2IDI1LjI4NDFDMTc0LjY5NiAyMi44ODQxIDE3Mi4wNTYgMjIuMjEyMSAxNjcuMTEyIDE5Ljc2NDFDMTYyLjY0OCAxNy40NjAxIDE2MC4xNTIgMTUuMTA4MSAxNjAuMTUyIDEwLjg4NDFDMTYwLjIgMy4zNDgwNiAxNjYuOTY4IDAuNjEyMDYxIDE3Mi45MiAwLjYxMjA2MUMxNzYuOTA0IDAuNjEyMDYxIDE3OS45NzYgMS4zODAwNiAxODEuODQ4IDIuMjkyMDZWMTAuMDIwMUMxNzkuNTQ0IDguODIwMDYgMTc2LjE4NCA3Ljk1NjA2IDE3My44MzIgOC4wMDQwNkMxNzEuMjQgOC4wMDQwNiAxNjkuNTYgOC42MjgwNiAxNjkuNTYgMTAuMzA4MUMxNjkuNTYgMTIuMTMyMSAxNzEuODE2IDEzLjA0NDEgMTc0Ljg0IDE0LjI5MjFDMTc5LjQ5NiAxNi41MDAxIDE4My44MTYgMTguNTE2MSAxODMuODE2IDI0LjY2MDFDMTgzLjgxNiAzMS40MjgxIDE3OC4wNTYgMzQuODM2MSAxNzEgMzQuODM2MVoiIGZpbGw9ImJsYWNrIi8+CjxwYXRoIGQ9Ik0xOTcuMjE4IDE0LjUwMDFMMTkzLjI0IDEuOTcyMDZIMTk2LjE5MkwxOTguNTY4IDkuNDk2MDZDMTk4LjY3NiA5Ljg3NDA2IDE5OS4wNTQgMTEuMTM0MSAxOTkuMDU0IDExLjI3ODFIMTk5LjE2MkMxOTkuMTYyIDExLjEzNDEgMTk5LjUyMiA5Ljg5MjA2IDE5OS42MyA5LjQ0MjA2TDIwMS44OCAxLjk3MjA2SDIwNC42ODhMMjAwLjc4MiAxNC41MDAxSDE5Ny4yMThaIiBmaWxsPSJibGFjayIvPgo8cGF0aCBkPSJNMjA1Ljc3OCAxNC41MDAxVjEuOTcyMDZIMjA4Ljc0OFYxNC41MDAxSDIwNS43NzhaIiBmaWxsPSJibGFjayIvPgo8cGF0aCBkPSJNMjEwLjc1MiAxNC41MDAxVjEuOTcyMDZIMjEzLjcwNFYxMi4wNTIxSDIxOC45NzhWMTQuNTAwMUgyMTAuNzUyWiIgZmlsbD0iYmxhY2siLz4KPHBhdGggZD0iTTIyMC4zNjggMTQuNTAwMVYxLjk3MjA2SDIyMy4zMlYxMi4wNTIxSDIyOC41OTRWMTQuNTAwMUgyMjAuMzY4WiIgZmlsbD0iYmxhY2siLz4KPHBhdGggZD0iTTIyOS45ODMgMTQuNTAwMVYxLjk3MjA2SDIzOC4zMzVWNC40MjAwNkgyMzIuOTE3VjYuNjcwMDZIMjM4LjA2NVY4Ljk5MjA2SDIzMi45MTdWMTIuMDUyMUgyMzguMzM1VjE0LjUwMDFIMjI5Ljk4M1oiIGZpbGw9ImJsYWNrIi8+CjxwYXRoIGQ9Ik0yNDcuMjQzIDE0LjY2MjFDMjQ0LjQ3MSAxNC42NjIxIDI0My4wODUgMTMuMjU4MSAyNDMuMDg1IDExLjQwNDFDMjQzLjA4NSA5LjgyMDA2IDI0My45MzEgOC44MzAwNiAyNDUuOTI5IDcuNjc4MDZDMjQ1LjE3MyA2LjkwNDA2IDI0NC4zNDUgNi4xMTIwNiAyNDQuMzQ1IDQuNzgwMDZDMjQ0LjM0NSAyLjgzNjA2IDI0Ni4wMDEgMS43OTIwNiAyNDguMDE3IDEuNzkyMDZDMjQ5Ljg4OSAxLjc5MjA2IDI1MS40OTEgMi42OTIwNiAyNTEuNDkxIDQuNTQ2MDZDMjUxLjQ5MSA1Ljg0MjA2IDI1MC44MDcgNi43NzgwNiAyNDkuMTE1IDcuODQwMDZMMjUxLjI3NSAxMC4xOTgxQzI1MS44NTEgOS4yODAwNiAyNTIuMDg1IDguMzI2MDYgMjUyLjA4NSA2Ljc5NjA2SDI1NC4xMzdDMjU0LjEzNyA4LjkzODA2IDI1My41NzkgMTAuNDg2MSAyNTIuNzE1IDExLjc2NDFMMjU1LjIxNyAxNC41MDAxSDI1Mi4zMDFMMjUxLjExMyAxMy4yMjIxQzI1MC4xMjMgMTQuMDg2MSAyNDguODYzIDE0LjY2MjEgMjQ3LjI0MyAxNC42NjIxWk0yNDYuNjMxIDQuNjE4MDZDMjQ2LjYzMSA1LjMzODA2IDI0Ny4yMjUgNS44MDYwNiAyNDcuOTgxIDYuNTk4MDZDMjQ5LjE2OSA1Ljg0MjA2IDI0OS40MjEgNS4zMDIwNiAyNDkuNDIxIDQuNjAwMDZDMjQ5LjQyMSAzLjgwODA2IDI0OC44MDkgMy4zOTQwNiAyNDguMDUzIDMuMzk0MDZDMjQ3LjI2MSAzLjM5NDA2IDI0Ni42MzEgMy44MDgwNiAyNDYuNjMxIDQuNjE4MDZaTTI0NS41ODcgMTEuMTcwMUMyNDUuNTg3IDEyLjEwNjEgMjQ2LjMwNyAxMi42NjQxIDI0Ny41NDkgMTIuNjY0MUMyNDguNDQ5IDEyLjY2NDEgMjQ5LjEzMyAxMi4zMjIxIDI0OS43NjMgMTEuNzgyMUwyNDcuMjQzIDkuMDgyMDZDMjQ2LjEyNyA5LjczMDA2IDI0NS41ODcgMTAuMjUyMSAyNDUuNTg3IDExLjE3MDFaIiBmaWxsPSJibGFjayIvPgo8cGF0aCBkPSJNMTk0LjA2OCAzNC41MDAxVjIxLjk3MjFIMTk3Ljk1NkwyMDAuMTUyIDI4LjY4NjFDMjAwLjI2IDI5LjA0NjEgMjAwLjU0OCAzMC4xNDQxIDIwMC41NDggMzAuMjcwMUgyMDAuNjM4QzIwMC42NTYgMzAuMTQ0MSAyMDAuOTQ0IDI5LjA0NjEgMjAxLjA1MiAyOC42NjgxTDIwMy4zMiAyMS45NzIxSDIwNy4xMzZWMzQuNTAwMUgyMDQuNDcyVjI4LjA3NDFDMjA0LjQ3MiAyNy4xOTIxIDIwNC40NzIgMjYuNjE2MSAyMDQuNTA4IDI1LjgyNDFIMjA0LjRDMjA0LjM2NCAyNS45ODYxIDIwNC4xMTIgMjYuODg2MSAyMDQuMDc2IDI3LjA0ODFMMjAxLjQ4NCAzNC41MDAxSDE5OS41NThMMTk2Ljk2NiAyNi45MjIxQzE5Ni45MTIgMjYuNzYwMSAxOTYuNjc4IDI1LjkxNDEgMTk2LjY0MiAyNS43MzQxSDE5Ni41MzRDMTk2LjU4OCAyNi41NDQxIDE5Ni42MDYgMjcuMjI4MSAxOTYuNjA2IDI4LjAyMDFWMzQuNTAwMUgxOTQuMDY4WiIgZmlsbD0iYmxhY2siLz4KPHBhdGggZD0iTTIxNC4zMzkgMjEuMTQ0MUgyMTIuMjE1TDIxMy42MzcgMTguNzUwMUgyMTYuMzM3TDIxNC4zMzkgMjEuMTQ0MVpNMjA5LjA2NSAzNC41MDAxVjIxLjk3MjFIMjE3LjQxN1YyNC40MjAxSDIxMS45OTlWMjYuNjcwMUgyMTcuMTQ3VjI4Ljk5MjFIMjExLjk5OVYzMi4wNTIxSDIxNy40MTdWMzQuNTAwMUgyMDkuMDY1WiIgZmlsbD0iYmxhY2siLz4KPHBhdGggZD0iTTIyMS43MzMgMzQuNTAwMVYyNC40MzgxSDIxOC4yNDFWMjEuOTcyMUgyMjguMTc3VjI0LjQzODFIMjI0LjY4NVYzNC41MDAxSDIyMS43MzNaIiBmaWxsPSJibGFjayIvPgo8cGF0aCBkPSJNMjI5LjQ1NSAzNC41MDAxVjIxLjk3MjFIMjM0LjYzOUMyMzYuNzYzIDIxLjk3MjEgMjM5LjEzOSAyMi45MjYxIDIzOS4xMzkgMjUuOTg2MUMyMzkuMTM5IDI3LjQyNjEgMjM4LjQ3MyAyOC42MTQxIDIzNy40MTEgMjkuMzM0MUwyNDAuMDkzIDM0LjUwMDFIMjM3LjA2OUwyMzQuODU1IDMwLjA5MDFIMjMyLjQyNVYzNC41MDAxSDIyOS40NTVaTTIzNC40NTkgMjQuMjIyMUgyMzIuNDI1VjI3Ljg3NjFIMjM0LjM1MUMyMzUuNTIxIDI3Ljg3NjEgMjM2LjM0OSAyNy4zMTgxIDIzNi4zNDkgMjUuOTUwMUMyMzYuMzQ5IDI0Ljc0NDEgMjM1LjU3NSAyNC4yMjIxIDIzNC40NTkgMjQuMjIyMVoiIGZpbGw9ImJsYWNrIi8+CjxwYXRoIGQ9Ik0yNDYuNDY2IDM0LjYwODFDMjQyLjkwMiAzNC42MDgxIDI0MC4yMiAzMi4xOTYxIDI0MC4yMiAyOC4yMTgxQzI0MC4yMiAyNC4yNTgxIDI0Mi44NDggMjEuODI4MSAyNDYuNDY2IDIxLjgyODFDMjUwLjA4NCAyMS44MjgxIDI1Mi43NjYgMjQuMjU4MSAyNTIuNzY2IDI4LjIxODFDMjUyLjc2NiAzMi4xOTYxIDI1MC4wNjYgMzQuNjA4MSAyNDYuNDY2IDM0LjYwODFaTTI0Ni40ODQgMzIuMTQyMUMyNDguMzM4IDMyLjE0MjEgMjQ5LjQgMzAuMjg4MSAyNDkuNCAyOC4yMTgxQzI0OS40IDI2LjE0ODEgMjQ4LjMzOCAyNC4yOTQxIDI0Ni40ODQgMjQuMjk0MUMyNDQuNTk0IDI0LjI5NDEgMjQzLjUxNCAyNi4wNzYxIDI0My41MTQgMjguMjE4MUMyNDMuNTE0IDMwLjM3ODEgMjQ0LjU5NCAzMi4xNDIxIDI0Ni40ODQgMzIuMTQyMVoiIGZpbGw9ImJsYWNrIi8+CjxwYXRoIGQ9Ik0yNTQuMjkzIDM0LjUwMDFWMjEuOTcyMUgyNTkuNTg1QzI2MS44MTcgMjEuOTcyMSAyNjMuOTk1IDIzLjM5NDEgMjYzLjk5NSAyNi4xODQxQzI2My45OTUgMjkuMzcwMSAyNjEuNDU3IDMwLjY0ODEgMjU5LjQ3NyAzMC42NDgxSDI1Ny4yNjNWMzQuNTAwMUgyNTQuMjkzWk0yNTkuMjA3IDI0LjM2NjFIMjU3LjI2M1YyOC40MTYxSDI1OS4wOTlDMjYwLjM1OSAyOC40MTYxIDI2MS4yMDUgMjcuNzE0MSAyNjEuMjA1IDI2LjMyODFDMjYxLjIwNSAyNS4wMTQxIDI2MC4zNTkgMjQuMzY2MSAyNTkuMjA3IDI0LjM2NjFaIiBmaWxsPSJibGFjayIvPgo8cGF0aCBkPSJNMjcxLjIxNiAzNC42MDgxQzI2Ny42NTIgMzQuNjA4MSAyNjQuOTcgMzIuMTk2MSAyNjQuOTcgMjguMjE4MUMyNjQuOTcgMjQuMjU4MSAyNjcuNTk4IDIxLjgyODEgMjcxLjIxNiAyMS44MjgxQzI3NC44MzQgMjEuODI4MSAyNzcuNTE2IDI0LjI1ODEgMjc3LjUxNiAyOC4yMTgxQzI3Ny41MTYgMzIuMTk2MSAyNzQuODE2IDM0LjYwODEgMjcxLjIxNiAzNC42MDgxWk0yNzEuMjM0IDMyLjE0MjFDMjczLjA4OCAzMi4xNDIxIDI3NC4xNSAzMC4yODgxIDI3NC4xNSAyOC4yMTgxQzI3NC4xNSAyNi4xNDgxIDI3My4wODggMjQuMjk0MSAyNzEuMjM0IDI0LjI5NDFDMjY5LjM0NCAyNC4yOTQxIDI2OC4yNjQgMjYuMDc2MSAyNjguMjY0IDI4LjIxODFDMjY4LjI2NCAzMC4zNzgxIDI2OS4zNDQgMzIuMTQyMSAyNzEuMjM0IDMyLjE0MjFaIiBmaWxsPSJibGFjayIvPgo8cGF0aCBkPSJNMjc5LjA0MyAzNC41MDAxVjIxLjk3MjFIMjgxLjk5NVYzMi4wNTIxSDI4Ny4yNjlWMzQuNTAwMUgyNzkuMDQzWiIgZmlsbD0iYmxhY2siLz4KPHBhdGggZD0iTTI4OC42NTkgMzQuNTAwMVYyMS45NzIxSDI5Ny4wMTFWMjQuNDIwMUgyOTEuNTkzVjI2LjY3MDFIMjk2Ljc0MVYyOC45OTIxSDI5MS41OTNWMzIuMDUyMUgyOTcuMDExVjM0LjUwMDFIMjg4LjY1OVoiIGZpbGw9ImJsYWNrIi8+Cjwvc3ZnPgo="
+    }
+  ],
+  "favicons": [
+    {
+      "type": "icon",
+      "url": "https://medias-metropole.nantes.fr/s3fs-public/images/2025-07/favicon-icon.png",
+      "sizes": null,
+      "dataUri": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAIAAADYYG7QAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACXElEQVRYhe2Yv+s5cRzH79ypj+ESEqWziYWFVdmVyZVJMUndQKGQQRkuk85guNlKGfwNZJAsUupSFKcY/MjR+zt8Nh9O3fv99fkM9xzf73s9epTzel0vHACA/aXoflvgMZrQu2hC76IJvQupcCdJUqlU2u/3D+cEQTQaDavVqozOZDKr1erhkGGYaDSqVAZeZ7FY2Gy2p1UMw8iyrFALAHC5XD8Ly+WycpXKn6zb7QqCoK5WOSqFZFmuVCrj8RitDQbzUm+321QqtdvtENpgkP+y4XDIcdztdkNlg0EKAQCazWa/30dlg8H3ofP5zLKsKIpIbDAkjVEUxXQ6fb/f4VEYqk7d7/dbrRYSFBohAEChUBgMBvAoZLPseDyyLCtJEiQH5XAdjUbVavV6vcJA1Ai9GqsAAEEQOp3Op4Xy+TyO40+vzudzLpebzWYfFfL7/ZFI5NXtcrnM5XLX65Uklb5tUArdbjee52mafvVAr9drt9sURX1I6HA40DTN87zBYHj1TLFYPJ1OHxL6TjgcZllWp3tOWK/X0+n0o0IkSRYKhWAwqJrwNFB9yGw28zxvt9tR2WDwjdHr9XIcp9frkdhgSDp1PB5PJpPwnO+gGR31et3n8yFBoRGiKEoQBJPJBI9CNlwDgUCtViMIApKDTAjH8UQiEYvFIDkoPz++vr44jnO73TAQxMsGh8PRarWMRqNqAvrtRygUyufzql+m/7KOyWaz4XBYXS2usBa+XC6TyUSW5Ydzj8djsViUuZvNZj6f/zynadrpdKoU+pX8uQ2aJvQumtC7aELv8g+G6hgwHzJAfgAAAABJRU5ErkJggg=="
+    },
+    {
+      "type": "og:image",
+      "url": "https://medias-metropole.nantes.fr/s3fs-public/styles/facebook_meta_image/public/images/2026-10/bandeau-homepage-ile-versailles.jpg?itok=d4lWjHaC",
+      "sizes": null
+    }
+  ],
+  "colors": {
+    "semantic": {
+      "primary": "rgb(0, 90, 225)",
+      "secondary": "rgb(255, 255, 255)",
+      "background": "rgb(255, 255, 255)",
+      "text": "rgb(0, 0, 0)",
+      "accent": "rgb(0, 202, 100)"
+    },
+    "semanticEvidence": {
+      "primary": {
+        "decision": "elected",
+        "rule": "neutral-rescue-token",
+        "reason": "near-neutral pick replaced by a declared chromatic token",
+        "tokens": [
+          "--color-primary",
+          "--form-select-indicator-color"
+        ],
+        "alternates": [
+          {
+            "color": "#0000ee",
+            "count": 6,
+            "sources": [
+              "sr-only"
+            ]
+          },
+          {
+            "color": "#00ca64",
+            "count": 4,
+            "sources": []
+          }
+        ]
+      }
+    },
+    "palette": [
+      {
+        "color": "rgb(0, 0, 0)",
+        "normalized": "#000000",
+        "count": 103,
+        "confidence": "high",
+        "sources": [
+          "tarteaucitronctabutton",
+          "skip-links",
+          "btn"
+        ],
+        "lch": "lch(0% 0 0)",
+        "oklch": "oklch(0% 0 0)",
+        "role": "surface",
+        "onColor": "#ffffff",
+        "hover": "#000000"
+      },
+      {
+        "color": "rgb(255, 255, 255)",
+        "normalized": "#ffffff",
+        "count": 92,
+        "confidence": "high",
+        "sources": [
+          "tarteaucitronctabutton",
+          "btn",
+          "footer"
+        ],
+        "tokens": [
+          "--form-input-background",
+          "--color-light",
+          "--color-secondary--second-2"
+        ],
+        "lch": "lch(100% 0.028 53.346)",
+        "oklch": "oklch(100% 0 0)",
+        "role": "surface",
+        "onColor": "#000000",
+        "hover": "#d9d9d9"
+      },
+      {
+        "color": "rgb(0, 90, 225)",
+        "normalized": "#005ae1",
+        "count": 23,
+        "confidence": "high",
+        "sources": [],
+        "tokens": [
+          "--color-primary",
+          "--form-select-indicator-color"
+        ],
+        "lch": "lch(41.045% 78.998 285.621)",
+        "oklch": "oklch(51.4408% 0.21797 260.675)",
+        "role": "accent",
+        "onColor": "#ffffff",
+        "hover": "#006cff",
+        "variantOf": "primary"
+      },
+      {
+        "color": "rgb(0, 0, 238)",
+        "normalized": "#0000ee",
+        "count": 6,
+        "confidence": "medium",
+        "sources": [
+          "sr-only"
+        ],
+        "lch": "lch(27.246% 124.513 301.369)",
+        "oklch": "oklch(42.9015% 0.29728 264.052)",
+        "role": "accent",
+        "onColor": "#ffffff",
+        "hover": "#0000ff",
+        "variantOf": "primary"
+      },
+      {
+        "color": "rgb(0, 202, 100)",
+        "normalized": "#00ca64",
+        "count": 4,
+        "confidence": "medium",
+        "sources": [],
+        "tokens": [
+          "--form-select-option-color--active",
+          "--form-checkbox-input-color",
+          "--form-select-multiple-remove-button",
+          "--color-secondary",
+          "--form-select-multiple-item-color"
+        ],
+        "lch": "lch(71.631% 71.754 147.816)",
+        "oklch": "oklch(73.4196% 0.19672 151.181)",
+        "role": "accent",
+        "onColor": "#000000",
+        "hover": "#00ac55"
+      },
+      {
+        "color": "rgb(51, 51, 51)",
+        "normalized": "#333333",
+        "count": 1,
+        "confidence": "low",
+        "sources": [],
+        "tokens": [
+          "--sk-color",
+          "--color-gray--dark",
+          "--color-gray",
+          "--form-input-border-color"
+        ],
+        "lch": "lch(21.247% 0.009 53.346)",
+        "oklch": "oklch(32.1093% 0 0)",
+        "role": "neutral",
+        "onColor": "#ffffff",
+        "hover": "#3d3d3d"
+      }
+    ],
+    "cssVariables": {
+      "--form-input-background": {
+        "value": "#fff",
+        "hex": "#ffffff",
+        "lch": "lch(100% 0.028 53.346)",
+        "oklch": "oklch(100% 0 0)",
+        "scope": "root"
+      },
+      "--form-select-option-color--active": {
+        "value": "#00ca64",
+        "hex": "#00ca64",
+        "lch": "lch(71.631% 71.754 147.816)",
+        "oklch": "oklch(73.4196% 0.19672 151.181)",
+        "scope": "root"
+      },
+      "--color-gray--dark": {
+        "value": "#343434",
+        "hex": "#343434",
+        "lch": "lch(21.704% 0.009 53.346)",
+        "oklch": "oklch(32.5037% 0 0)",
+        "scope": "root"
+      },
+      "--form-checkbox-input-color": {
+        "value": "#00ca64",
+        "hex": "#00ca64",
+        "lch": "lch(71.631% 71.754 147.816)",
+        "oklch": "oklch(73.4196% 0.19672 151.181)",
+        "scope": "root"
+      },
+      "--form-select-multiple-remove-button-background-color": {
+        "value": "#ff674a",
+        "hex": "#ff674a",
+        "lch": "lch(63.665% 74.543 39.128)",
+        "oklch": "oklch(70.1517% 0.19118 32.742)",
+        "scope": "root"
+      },
+      "--color-secondary--second": {
+        "value": "#d9f7e8",
+        "hex": "#d9f7e8",
+        "lch": "lch(94.742% 12.771 162.727)",
+        "oklch": "oklch(95.0361% 0.0371 164.077)",
+        "scope": "root"
+      },
+      "--color-secondary--second-2--mobile": {
+        "value": "#ebfbf3",
+        "hex": "#ebfbf3",
+        "lch": "lch(97.258% 6.79 163.168)",
+        "oklch": "oklch(97.4055% 0.01982 164.599)",
+        "scope": "root"
+      },
+      "--form-select-multiple-remove-button": {
+        "value": "#00ca64",
+        "hex": "#00ca64",
+        "lch": "lch(71.631% 71.754 147.816)",
+        "oklch": "oklch(73.4196% 0.19672 151.181)",
+        "scope": "root"
+      },
+      "--color-secondary": {
+        "value": "#00ca64",
+        "hex": "#00ca64",
+        "lch": "lch(71.631% 71.754 147.816)",
+        "oklch": "oklch(73.4196% 0.19672 151.181)",
+        "scope": "root"
+      },
+      "--color-primary--second": {
+        "value": "#f0f6ff",
+        "hex": "#f0f6ff",
+        "lch": "lch(96.622% 5.103 260.884)",
+        "oklch": "oklch(97.122% 0.01364 258.345)",
+        "scope": "root"
+      },
+      "--color-gray": {
+        "value": "#343434",
+        "hex": "#343434",
+        "lch": "lch(21.704% 0.009 53.346)",
+        "oklch": "oklch(32.5037% 0 0)",
+        "scope": "root"
+      },
+      "--form-select-multiple-item-color": {
+        "value": "#00ca64",
+        "hex": "#00ca64",
+        "lch": "lch(71.631% 71.754 147.816)",
+        "oklch": "oklch(73.4196% 0.19672 151.181)",
+        "scope": "root"
+      },
+      "--color-secondary--second-2": {
+        "value": "#dfffef",
+        "hex": "#dfffef",
+        "lch": "lch(97.365% 13.54 162.689)",
+        "oklch": "oklch(97.2718% 0.03932 164.037)",
+        "scope": "root"
+      },
+      "--color-gray--darker": {
+        "value": "#3a3a3a",
+        "hex": "#3a3a3a",
+        "lch": "lch(24.421% 0.01 53.346)",
+        "oklch": "oklch(34.846% 0 0)",
+        "scope": "root"
+      },
+      "--form-select-option-background-color--active": {
+        "value": "#ff674a",
+        "hex": "#ff674a",
+        "lch": "lch(63.665% 74.543 39.128)",
+        "oklch": "oklch(70.1517% 0.19118 32.742)",
+        "scope": "root"
+      },
+      "--color-primary": {
+        "value": "#005ae1",
+        "hex": "#005ae1",
+        "lch": "lch(41.045% 78.998 285.621)",
+        "oklch": "oklch(51.4408% 0.21797 260.675)",
+        "scope": "root"
+      },
+      "--form-input-border-color": {
+        "value": "#343434",
+        "hex": "#343434",
+        "lch": "lch(21.704% 0.009 53.346)",
+        "oklch": "oklch(32.5037% 0 0)",
+        "scope": "root"
+      },
+      "--form-select-indicator-color": {
+        "value": "#005ae1",
+        "hex": "#005ae1",
+        "lch": "lch(41.045% 78.998 285.621)",
+        "oklch": "oklch(51.4408% 0.21797 260.675)",
+        "scope": "root"
+      },
+      "--sk-color": {
+        "value": "#333",
+        "hex": "#333333",
+        "lch": "lch(21.247% 0.009 53.346)",
+        "oklch": "oklch(32.1093% 0 0)",
+        "scope": "root"
+      },
+      "--color-tertiary": {
+        "value": "#ff674a",
+        "hex": "#ff674a",
+        "lch": "lch(63.665% 74.543 39.128)",
+        "oklch": "oklch(70.1517% 0.19118 32.742)",
+        "scope": "root"
+      },
+      "--color-tertiary--second": {
+        "value": "#ffece8",
+        "hex": "#ffece8",
+        "lch": "lch(94.855% 7.598 35.502)",
+        "oklch": "oklch(95.7117% 0.02144 31.78)",
+        "scope": "root"
+      },
+      "--color-light": {
+        "value": "#f7f7f7",
+        "hex": "#f7f7f7",
+        "lch": "lch(97.232% 0.028 53.346)",
+        "oklch": "oklch(97.6139% 0 0)",
+        "scope": "root"
+      },
+      "--outline-color": {
+        "value": "#ff674a",
+        "hex": "#ff674a",
+        "lch": "lch(63.665% 74.543 39.128)",
+        "oklch": "oklch(70.1517% 0.19118 32.742)",
+        "scope": "root"
+      },
+      "--form-select-multiple-item-background-color": {
+        "value": "#ff674a",
+        "hex": "#ff674a",
+        "lch": "lch(63.665% 74.543 39.128)",
+        "oklch": "oklch(70.1517% 0.19118 32.742)",
+        "scope": "root"
+      }
+    },
+    "detected": [
+      {
+        "color": "rgb(0, 0, 0)",
+        "normalized": "#000000",
+        "count": 103,
+        "usageFrac": 0.44017094017094016,
+        "areaFrac": 0.04890646093356481,
+        "confidence": "high",
+        "sources": [
+          "tarteaucitronctabutton",
+          "skip-links",
+          "btn",
+          "visually-hidden"
+        ],
+        "isToken": false
+      },
+      {
+        "color": "rgb(255, 255, 255)",
+        "normalized": "#ffffff",
+        "count": 92,
+        "usageFrac": 0.39316239316239315,
+        "areaFrac": 0.7014855766030503,
+        "confidence": "high",
+        "sources": [
+          "tarteaucitronctabutton",
+          "btn",
+          "footer",
+          "preventexternal",
+          "tac-modal-opener"
+        ],
+        "isToken": true
+      },
+      {
+        "color": "rgb(0, 90, 225)",
+        "normalized": "#005ae1",
+        "count": 23,
+        "usageFrac": 0.09829059829059829,
+        "areaFrac": 0,
+        "confidence": "high",
+        "sources": [],
+        "isToken": true
+      },
+      {
+        "color": "rgb(0, 0, 238)",
+        "normalized": "#0000ee",
+        "count": 6,
+        "usageFrac": 0.02564102564102564,
+        "areaFrac": 0,
+        "confidence": "medium",
+        "sources": [
+          "sr-only"
+        ],
+        "isToken": false
+      },
+      {
+        "color": "rgb(0, 202, 100)",
+        "normalized": "#00ca64",
+        "count": 4,
+        "usageFrac": 0.017094017094017096,
+        "areaFrac": 0,
+        "confidence": "medium",
+        "sources": [],
+        "isToken": true
+      },
+      {
+        "color": "rgb(247, 247, 247)",
+        "normalized": "#f7f7f7",
+        "count": 3,
+        "usageFrac": 0.01282051282051282,
+        "areaFrac": 0.17772041356839027,
+        "confidence": "medium",
+        "sources": [],
+        "isToken": true
+      },
+      {
+        "color": "rgb(51, 51, 51)",
+        "normalized": "#333333",
+        "count": 1,
+        "usageFrac": 0.004273504273504274,
+        "areaFrac": 0,
+        "confidence": "medium",
+        "sources": [],
+        "isToken": true
+      },
+      {
+        "color": "rgb(223, 255, 239)",
+        "normalized": "#dfffef",
+        "count": 1,
+        "usageFrac": 0.004273504273504274,
+        "areaFrac": 0.0686976101167698,
+        "confidence": "medium",
+        "sources": [],
+        "isToken": true
+      },
+      {
+        "color": "rgb(52, 52, 52)",
+        "normalized": "#343434",
+        "count": 1,
+        "usageFrac": 0.004273504273504274,
+        "areaFrac": 0.0031899387782247995,
+        "confidence": "medium",
+        "sources": [],
+        "isToken": true
+      }
+    ],
+    "occurrences": [
+      {
+        "hex": "#ffffff",
+        "paints": "fill",
+        "slot": null,
+        "count": 54,
+        "area": 11819260,
+        "cssVar": "--form-input-background",
+        "state": null
+      },
+      {
+        "hex": "#000000",
+        "paints": "border",
+        "slot": null,
+        "count": 53,
+        "area": 0,
+        "cssVar": null,
+        "state": null
+      },
+      {
+        "hex": "#000000",
+        "paints": "text",
+        "slot": null,
+        "count": 27,
+        "area": 0,
+        "cssVar": null,
+        "state": null
+      },
+      {
+        "hex": "#000000",
+        "paints": "fill",
+        "slot": null,
+        "count": 23,
+        "area": 809100,
+        "cssVar": null,
+        "state": null
+      },
+      {
+        "hex": "#005ae1",
+        "paints": "border",
+        "slot": null,
+        "count": 23,
+        "area": 0,
+        "cssVar": "--color-primary",
+        "state": null
+      },
+      {
+        "hex": "#ffffff",
+        "paints": "text",
+        "slot": null,
+        "count": 23,
+        "area": 0,
+        "cssVar": "--form-input-background",
+        "state": null
+      },
+      {
+        "hex": "#ffffff",
+        "paints": "border",
+        "slot": null,
+        "count": 15,
+        "area": 0,
+        "cssVar": "--form-input-background",
+        "state": null
+      },
+      {
+        "hex": "#0000ee",
+        "paints": "text",
+        "slot": null,
+        "count": 6,
+        "area": 0,
+        "cssVar": null,
+        "state": null
+      },
+      {
+        "hex": "#00ca64",
+        "paints": "border",
+        "slot": null,
+        "count": 4,
+        "area": 0,
+        "cssVar": "--form-select-option-color--active",
+        "state": null
+      },
+      {
+        "hex": "#f7f7f7",
+        "paints": "fill",
+        "slot": null,
+        "count": 3,
+        "area": 2995120,
+        "cssVar": "--color-light",
+        "state": null
+      },
+      {
+        "hex": "#333333",
+        "paints": "text",
+        "slot": null,
+        "count": 1,
+        "area": 0,
+        "cssVar": "--sk-color",
+        "state": null
+      },
+      {
+        "hex": "#343434",
+        "paints": "fill",
+        "slot": null,
+        "count": 1,
+        "area": 53760,
+        "cssVar": "--color-gray--dark",
+        "state": null
+      },
+      {
+        "hex": "#dfffef",
+        "paints": "fill",
+        "slot": null,
+        "count": 1,
+        "area": 1157760,
+        "cssVar": "--color-secondary--second-2",
+        "state": null
+      }
+    ]
+  },
+  "typography": {
+    "styles": [
+      {
+        "context": "heading-2",
+        "count": 2,
+        "family": "Picon Condensed",
+        "fallbacks": null,
+        "size": "120px (7.50rem)",
+        "weight": 600,
+        "lineHeight": "1.00",
+        "spacing": null,
+        "transform": "uppercase"
+      },
+      {
+        "context": "display",
+        "count": 1,
+        "family": "Picon Condensed",
+        "fallbacks": null,
+        "size": "60px (3.75rem)",
+        "weight": 600,
+        "lineHeight": "1.00",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "heading-2",
+        "count": 3,
+        "family": "Picon Condensed",
+        "fallbacks": null,
+        "size": "60px (3.75rem)",
+        "weight": 600,
+        "lineHeight": "1.17",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "ui",
+        "count": 2,
+        "family": "Picon Condensed",
+        "fallbacks": null,
+        "size": "44px (2.75rem)",
+        "weight": 600,
+        "lineHeight": "1.05",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "link",
+        "count": 11,
+        "family": "Picon Condensed",
+        "fallbacks": null,
+        "size": "44px (2.75rem)",
+        "weight": 600,
+        "lineHeight": "1.05",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "heading-3",
+        "count": 9,
+        "family": "Picon Condensed",
+        "fallbacks": null,
+        "size": "44px (2.75rem)",
+        "weight": 600,
+        "lineHeight": "1.05",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "heading-2",
+        "count": 1,
+        "family": "Picon Condensed",
+        "fallbacks": null,
+        "size": "40px (2.50rem)",
+        "weight": 600,
+        "lineHeight": "1.00",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "text",
+        "count": 2,
+        "family": "Picon Condensed",
+        "fallbacks": null,
+        "size": "38px (2.38rem)",
+        "weight": 400,
+        "lineHeight": "1.11",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "text",
+        "count": 2,
+        "family": "Picon Condensed",
+        "fallbacks": null,
+        "size": "38px (2.38rem)",
+        "weight": 600,
+        "lineHeight": "1.05",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "text",
+        "count": 1,
+        "family": "Picon",
+        "fallbacks": null,
+        "size": "30px (1.88rem)",
+        "weight": 400,
+        "lineHeight": "1.07",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "heading-3",
+        "count": 2,
+        "family": "Picon Condensed",
+        "fallbacks": null,
+        "size": "30px (1.88rem)",
+        "weight": 600,
+        "lineHeight": "1.00",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "text",
+        "count": 1,
+        "family": "Picon Condensed",
+        "fallbacks": null,
+        "size": "26px (1.63rem)",
+        "weight": 600,
+        "lineHeight": "1.20",
+        "spacing": null,
+        "transform": "uppercase"
+      },
+      {
+        "context": "ui",
+        "count": 7,
+        "family": "Picon Condensed",
+        "fallbacks": null,
+        "size": "26px (1.63rem)",
+        "weight": 600,
+        "lineHeight": "1.20",
+        "spacing": null,
+        "transform": "uppercase"
+      },
+      {
+        "context": "text",
+        "count": 3,
+        "family": "Picon Condensed",
+        "fallbacks": null,
+        "size": "23px (1.44rem)",
+        "weight": 600,
+        "lineHeight": "1.00",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "link",
+        "count": 5,
+        "family": "Picon",
+        "fallbacks": null,
+        "size": "22px (1.38rem)",
+        "weight": 400,
+        "lineHeight": "1.45",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "text",
+        "count": 1,
+        "family": "Picon Condensed",
+        "fallbacks": null,
+        "size": "22px (1.38rem)",
+        "weight": 600,
+        "lineHeight": "1.45",
+        "spacing": null,
+        "transform": "uppercase"
+      },
+      {
+        "context": "body",
+        "count": 1,
+        "family": "Picon",
+        "fallbacks": null,
+        "size": "20px (1.25rem)",
+        "weight": 500,
+        "lineHeight": "1.60",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "body",
+        "count": 64,
+        "family": "Picon",
+        "fallbacks": null,
+        "size": "20px (1.25rem)",
+        "weight": 400,
+        "lineHeight": "1.60",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "link",
+        "count": 2,
+        "family": "Picon Condensed",
+        "fallbacks": null,
+        "size": "20px (1.25rem)",
+        "weight": 600,
+        "lineHeight": "1.60",
+        "spacing": null,
+        "transform": "uppercase"
+      },
+      {
+        "context": "link",
+        "count": 37,
+        "family": "Picon",
+        "fallbacks": null,
+        "size": "20px (1.25rem)",
+        "weight": 400,
+        "lineHeight": "1.60",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "ui",
+        "count": 8,
+        "family": "Picon Condensed",
+        "fallbacks": null,
+        "size": "20px (1.25rem)",
+        "weight": 600,
+        "lineHeight": "1.20",
+        "spacing": null,
+        "transform": "uppercase"
+      },
+      {
+        "context": "ui",
+        "count": 4,
+        "family": "Picon",
+        "fallbacks": null,
+        "size": "20px (1.25rem)",
+        "weight": 400,
+        "lineHeight": "1.15",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "text",
+        "count": 4,
+        "family": "Picon Condensed",
+        "fallbacks": null,
+        "size": "20px (1.25rem)",
+        "weight": 300,
+        "lineHeight": "1.90",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "link",
+        "count": 4,
+        "family": "Picon Condensed",
+        "fallbacks": null,
+        "size": "20px (1.25rem)",
+        "weight": 600,
+        "lineHeight": "1.60",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "body",
+        "count": 13,
+        "family": "Picon",
+        "fallbacks": null,
+        "size": "18px (1.13rem)",
+        "weight": 700,
+        "lineHeight": "1.78",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "ui",
+        "count": 5,
+        "family": "Picon",
+        "fallbacks": null,
+        "size": "18px (1.13rem)",
+        "weight": 400,
+        "lineHeight": "1.00",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "body",
+        "count": 1,
+        "family": "Picon",
+        "fallbacks": null,
+        "size": "18px (1.13rem)",
+        "weight": 400,
+        "lineHeight": "1.15",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "link",
+        "count": 4,
+        "family": "Picon",
+        "fallbacks": null,
+        "size": "18px (1.13rem)",
+        "weight": 400,
+        "lineHeight": "1.78",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "text",
+        "count": 4,
+        "family": "Picon Condensed",
+        "fallbacks": null,
+        "size": "18px (1.13rem)",
+        "weight": 600,
+        "lineHeight": "1.33",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "body",
+        "count": 1,
+        "family": "Picon",
+        "fallbacks": null,
+        "size": "16.8px (1.05rem)",
+        "weight": 400,
+        "lineHeight": "1.90",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "ui",
+        "count": 28,
+        "family": "Picon",
+        "fallbacks": null,
+        "size": "16px (1.00rem)",
+        "weight": 400,
+        "lineHeight": "1.00",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "body",
+        "count": 23,
+        "family": "Picon",
+        "fallbacks": null,
+        "size": "16px (1.00rem)",
+        "weight": 400,
+        "lineHeight": "1.00",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "ui",
+        "count": 7,
+        "family": "Picon",
+        "fallbacks": null,
+        "size": "16px (1.00rem)",
+        "weight": 600,
+        "lineHeight": "1.00",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "body",
+        "count": 7,
+        "family": "Picon",
+        "fallbacks": null,
+        "size": "16px (1.00rem)",
+        "weight": 600,
+        "lineHeight": "1.00",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "text",
+        "count": 27,
+        "family": "Picon Condensed",
+        "fallbacks": null,
+        "size": "16px (1.00rem)",
+        "weight": 400,
+        "lineHeight": "1.20",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "text",
+        "count": 9,
+        "family": "Picon Condensed",
+        "fallbacks": null,
+        "size": "16px (1.00rem)",
+        "weight": 400,
+        "lineHeight": "1.50",
+        "spacing": "0.5px",
+        "transform": null
+      },
+      {
+        "context": "link",
+        "count": 14,
+        "family": "Picon",
+        "fallbacks": null,
+        "size": "16px (1.00rem)",
+        "weight": 500,
+        "lineHeight": "1.00",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "body",
+        "count": 14,
+        "family": "Picon",
+        "fallbacks": null,
+        "size": "16px (1.00rem)",
+        "weight": 500,
+        "lineHeight": "1.50",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "link",
+        "count": 1,
+        "family": "Picon",
+        "fallbacks": null,
+        "size": "16px (1.00rem)",
+        "weight": 700,
+        "lineHeight": "2.00",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "link",
+        "count": 7,
+        "family": "Picon",
+        "fallbacks": null,
+        "size": "16px (1.00rem)",
+        "weight": 400,
+        "lineHeight": "2.00",
+        "spacing": null,
+        "transform": "uppercase"
+      },
+      {
+        "context": "link",
+        "count": 4,
+        "family": "Picon Condensed",
+        "fallbacks": null,
+        "size": "16px (1.00rem)",
+        "weight": 500,
+        "lineHeight": null,
+        "spacing": null,
+        "transform": "uppercase"
+      },
+      {
+        "context": "ui",
+        "count": 1,
+        "family": "Picon Condensed",
+        "fallbacks": null,
+        "size": "16px (1.00rem)",
+        "weight": 500,
+        "lineHeight": null,
+        "spacing": null,
+        "transform": "uppercase"
+      },
+      {
+        "context": "body",
+        "count": 1,
+        "family": "Picon",
+        "fallbacks": null,
+        "size": "15px (0.94rem)",
+        "weight": 400,
+        "lineHeight": null,
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "ui",
+        "count": 10,
+        "family": "Picon",
+        "fallbacks": null,
+        "size": "14px (0.88rem)",
+        "weight": 700,
+        "lineHeight": null,
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "body",
+        "count": 10,
+        "family": "Picon",
+        "fallbacks": null,
+        "size": "14px (0.88rem)",
+        "weight": 700,
+        "lineHeight": null,
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "body",
+        "count": 1,
+        "family": "Picon",
+        "fallbacks": null,
+        "size": "14px (0.88rem)",
+        "weight": 500,
+        "lineHeight": "2.29",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "ui",
+        "count": 9,
+        "family": "Picon",
+        "fallbacks": null,
+        "size": "14px (0.88rem)",
+        "weight": 400,
+        "lineHeight": null,
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "body",
+        "count": 9,
+        "family": "Picon",
+        "fallbacks": null,
+        "size": "14px (0.88rem)",
+        "weight": 400,
+        "lineHeight": null,
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "ui",
+        "count": 1,
+        "family": "Picon",
+        "fallbacks": null,
+        "size": "14px (0.88rem)",
+        "weight": 700,
+        "lineHeight": "1.15",
+        "spacing": null,
+        "transform": "uppercase"
+      },
+      {
+        "context": "ui",
+        "count": 1,
+        "family": "Picon",
+        "fallbacks": null,
+        "size": "12px (0.75rem)",
+        "weight": 700,
+        "lineHeight": null,
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "caption",
+        "count": 5,
+        "family": "Picon",
+        "fallbacks": null,
+        "size": "12px (0.75rem)",
+        "weight": 400,
+        "lineHeight": "2.67",
+        "spacing": null,
+        "transform": null
+      },
+      {
+        "context": "caption",
+        "count": 12,
+        "family": "Picon",
+        "fallbacks": null,
+        "size": "12px (0.75rem)",
+        "weight": 400,
+        "lineHeight": "2.67",
+        "spacing": null,
+        "transform": "capitalize"
+      },
+      {
+        "context": "ui",
+        "count": 3,
+        "family": "Picon",
+        "fallbacks": null,
+        "size": "12px (0.75rem)",
+        "weight": 400,
+        "lineHeight": "1.15",
+        "spacing": null,
+        "transform": "uppercase"
+      },
+      {
+        "context": "link",
+        "count": 9,
+        "family": "Picon",
+        "fallbacks": null,
+        "size": "11px (0.69rem)",
+        "weight": 700,
+        "lineHeight": "2.91",
+        "spacing": null,
+        "transform": null
+      }
+    ],
+    "sources": {
+      "googleFonts": [],
+      "adobeFonts": false,
+      "variableFonts": false,
+      "customFonts": [
+        "Picon",
+        "Picon Condensed",
+        "Picon Extended",
+        "PictosFont"
+      ],
+      "fontDisplay": "swap",
+      "urls": [
+        "https://metropole.nantes.fr/themes/custom/nantes/assets/fonts/LCTPicon/Bold/LCTPicon-Bold.woff2",
+        "https://metropole.nantes.fr/themes/custom/nantes/assets/fonts/LCTPicon/CondensedBold/LCTPicon-CondensedBold.woff2",
+        "https://metropole.nantes.fr/themes/custom/nantes/assets/fonts/LCTPicon/CondensedLight/LCTPicon-CondensedLight.woff2",
+        "https://metropole.nantes.fr/themes/custom/nantes/assets/fonts/LCTPicon/CondensedRegular/LCTPicon-CondensedRegular.woff2",
+        "https://metropole.nantes.fr/themes/custom/nantes/assets/fonts/LCTPicon/CondensedSemi-bold/LCTPicon-CondensedSemi-bold.woff2",
+        "https://metropole.nantes.fr/themes/custom/nantes/assets/fonts/LCTPicon/ExtendedBlack/LCTPicon-ExtendedBlack.woff2",
+        "https://metropole.nantes.fr/themes/custom/nantes/assets/fonts/LCTPicon/ExtendedBold/LCTPicon-ExtendedBold.woff2",
+        "https://metropole.nantes.fr/themes/custom/nantes/assets/fonts/LCTPicon/ExtendedLight/LCTPicon-ExtendedLight.woff2",
+        "https://metropole.nantes.fr/themes/custom/nantes/assets/fonts/LCTPicon/ExtendedRegular/LCTPicon-ExtendedRegular.woff2",
+        "https://metropole.nantes.fr/themes/custom/nantes/assets/fonts/LCTPicon/Light/LCTPicon-Light.woff2",
+        "https://metropole.nantes.fr/themes/custom/nantes/assets/fonts/LCTPicon/Regular/LCTPicon-Regular.woff2",
+        "https://metropole.nantes.fr/themes/custom/nantes/assets/fonts/LCTPicon/Semi-bold/LCTPicon-Semi-bold.woff2"
+      ],
+      "filteredFamilies": [
+        "Picon Extended"
+      ],
+      "selfHostedFonts": [
+        "LCTPicon-Bold.woff2",
+        "LCTPicon-CondensedLight.woff2",
+        "LCTPicon-CondensedRegular.woff2",
+        "LCTPicon-CondensedSemi-bold.woff2",
+        "LCTPicon-ExtendedBlack.woff2",
+        "LCTPicon-Regular.woff2"
+      ]
+    }
+  },
+  "spacing": {
+    "scaleType": "custom",
+    "commonValues": [
+      {
+        "px": "1px",
+        "display": "1px",
+        "rem": "0.10rem",
+        "count": 43,
+        "numericValue": 1
+      },
+      {
+        "px": "2px",
+        "display": "2px",
+        "rem": "0.20rem",
+        "count": 12,
+        "numericValue": 2
+      },
+      {
+        "px": "4px",
+        "display": "4px",
+        "rem": "0.40rem",
+        "count": 22,
+        "numericValue": 4
+      },
+      {
+        "px": "4.5px",
+        "display": "4.5px",
+        "rem": "0.45rem",
+        "count": 18,
+        "numericValue": 4.5
+      },
+      {
+        "px": "5px",
+        "display": "5px",
+        "rem": "0.50rem",
+        "count": 56,
+        "numericValue": 5
+      },
+      {
+        "px": "7px",
+        "display": "7px",
+        "rem": "0.70rem",
+        "count": 17,
+        "numericValue": 7
+      },
+      {
+        "px": "7.5px",
+        "display": "7.5px",
+        "rem": "0.75rem",
+        "count": 4,
+        "numericValue": 7.5
+      },
+      {
+        "px": "8px",
+        "display": "8px",
+        "rem": "0.80rem",
+        "count": 87,
+        "numericValue": 8
+      },
+      {
+        "px": "10px",
+        "display": "10px",
+        "rem": "1.00rem",
+        "count": 51,
+        "numericValue": 10
+      },
+      {
+        "px": "15px",
+        "display": "15px",
+        "rem": "1.50rem",
+        "count": 59,
+        "numericValue": 15
+      },
+      {
+        "px": "20px",
+        "display": "20px",
+        "rem": "2.00rem",
+        "count": 141,
+        "numericValue": 20
+      },
+      {
+        "px": "25px",
+        "display": "25px",
+        "rem": "2.50rem",
+        "count": 4,
+        "numericValue": 25
+      },
+      {
+        "px": "27px",
+        "display": "27px",
+        "rem": "2.70rem",
+        "count": 4,
+        "numericValue": 27
+      },
+      {
+        "px": "30px",
+        "display": "30px",
+        "rem": "3.00rem",
+        "count": 5,
+        "numericValue": 30
+      },
+      {
+        "px": "40px",
+        "display": "40px",
+        "rem": "4.00rem",
+        "count": 11,
+        "numericValue": 40
+      },
+      {
+        "px": "50px",
+        "display": "50px",
+        "rem": "5.00rem",
+        "count": 9,
+        "numericValue": 50
+      },
+      {
+        "px": "60px",
+        "display": "60px",
+        "rem": "6.00rem",
+        "count": 7,
+        "numericValue": 60
+      },
+      {
+        "px": "80px",
+        "display": "80px",
+        "rem": "8.00rem",
+        "count": 4,
+        "numericValue": 80
+      },
+      {
+        "px": "91.25px",
+        "display": "91.25px",
+        "rem": "9.13rem",
+        "count": 4,
+        "numericValue": 91.25
+      },
+      {
+        "px": "98.75px",
+        "display": "98.75px",
+        "rem": "9.88rem",
+        "count": 3,
+        "numericValue": 98.75
+      }
+    ]
+  },
+  "borderRadius": {
+    "values": [
+      {
+        "value": "1px",
+        "count": 6,
+        "elements": [
+          "a"
+        ],
+        "confidence": "medium",
+        "numericValue": 1
+      },
+      {
+        "value": "3px 0px 0px 3px",
+        "count": 1,
+        "elements": [
+          "input"
+        ],
+        "confidence": "low",
+        "numericValue": 3
+      },
+      {
+        "value": "4px",
+        "count": 1,
+        "elements": [
+          "link"
+        ],
+        "confidence": "low",
+        "numericValue": 4
+      },
+      {
+        "value": "5px 5px 0px 0px",
+        "count": 1,
+        "elements": [
+          "button"
+        ],
+        "confidence": "low",
+        "numericValue": 5
+      },
+      {
+        "value": "7px",
+        "count": 33,
+        "elements": [
+          "a",
+          "article",
+          "div"
+        ],
+        "confidence": "high",
+        "numericValue": 7
+      },
+      {
+        "value": "8px",
+        "count": 1,
+        "elements": [
+          "div"
+        ],
+        "confidence": "low",
+        "numericValue": 8
+      },
+      {
+        "value": "13px",
+        "count": 18,
+        "elements": [
+          "div",
+          "span"
+        ],
+        "confidence": "high",
+        "numericValue": 13
+      },
+      {
+        "value": "22px",
+        "count": 4,
+        "elements": [
+          "button",
+          "Diapositive précédente",
+          "Diapositive suivante"
+        ],
+        "confidence": "medium",
+        "numericValue": 22
+      }
+    ]
+  },
+  "borders": {
+    "combinations": [
+      {
+        "width": "1px",
+        "style": "solid",
+        "color": "rgb(0, 0, 0)",
+        "count": 35,
+        "elements": [
+          "button",
+          "div"
+        ],
+        "confidence": "high"
+      },
+      {
+        "width": "1px",
+        "style": "solid",
+        "color": "rgb(0, 90, 225)",
+        "count": 20,
+        "elements": [
+          "a"
+        ],
+        "confidence": "high"
+      },
+      {
+        "width": "1px",
+        "style": "solid",
+        "color": "rgb(255, 255, 255)",
+        "count": 8,
+        "elements": [
+          "link",
+          "button"
+        ],
+        "confidence": "medium"
+      },
+      {
+        "width": "0px 0px 1px",
+        "style": "none none solid",
+        "color": "rgb(0, 0, 0)",
+        "count": 8,
+        "elements": [
+          "div",
+          "a",
+          "li"
+        ],
+        "confidence": "medium"
+      },
+      {
+        "width": "0px 0px 1px",
+        "style": "none none solid",
+        "color": "rgb(255, 255, 255)",
+        "count": 7,
+        "elements": [
+          "a"
+        ],
+        "confidence": "medium"
+      },
+      {
+        "width": "0px 1px 1px 0px",
+        "style": "none solid solid none",
+        "color": "rgb(0, 0, 0)",
+        "count": 6,
+        "elements": [
+          "article"
+        ],
+        "confidence": "medium"
+      },
+      {
+        "width": "1px 0px",
+        "style": "solid none",
+        "color": "rgb(85, 85, 85)",
+        "count": 1,
+        "elements": [
+          "div"
+        ],
+        "confidence": "low"
+      },
+      {
+        "width": "0px 0px 0px 1px",
+        "style": "none none none solid",
+        "color": "rgb(255, 255, 255)",
+        "count": 1,
+        "elements": [
+          "button"
+        ],
+        "confidence": "low"
+      },
+      {
+        "width": "1px 0px 1px 1px",
+        "style": "solid none solid solid",
+        "color": "rgb(0, 0, 0)",
+        "count": 1,
+        "elements": [
+          "input"
+        ],
+        "confidence": "low"
+      },
+      {
+        "width": "0px 1px 1px",
+        "style": "none solid solid",
+        "color": "rgb(51, 51, 51)",
+        "count": 1,
+        "elements": [
+          "ul"
+        ],
+        "confidence": "low"
+      },
+      {
+        "width": "1px 0px",
+        "style": "solid none",
+        "color": "rgb(0, 202, 100)",
+        "count": 1,
+        "elements": [
+          "li"
+        ],
+        "confidence": "low"
+      },
+      {
+        "width": "1px 0px 0px",
+        "style": "solid none none",
+        "color": "rgb(0, 0, 0)",
+        "count": 1,
+        "elements": [
+          "div"
+        ],
+        "confidence": "low"
+      },
+      {
+        "width": "1px 0px",
+        "style": "solid none",
+        "color": "rgb(255, 255, 255)",
+        "count": 1,
+        "elements": [
+          "a"
+        ],
+        "confidence": "low"
+      }
+    ]
+  },
+  "shadows": [
+    {
+      "shadow": "rgb(84, 84, 84) 0px 40px 60px 0px",
+      "count": 1,
+      "confidence": "low"
+    },
+    {
+      "shadow": "rgba(0, 0, 0, 0.25) 0px 20px 60px 0px",
+      "count": 1,
+      "confidence": "low"
+    },
+    {
+      "shadow": "rgb(255, 255, 255) 0px 0px 2px 0px, rgb(85, 85, 85) 0px 1px 2px 0px",
+      "count": 1,
+      "confidence": "low"
+    }
+  ],
+  "gradients": [],
+  "motion": {
+    "durations": [
+      {
+        "value": "0.1s",
+        "ms": 100,
+        "count": 4
+      },
+      {
+        "value": "0.2s",
+        "ms": 200,
+        "count": 21
+      },
+      {
+        "value": "0.25s",
+        "ms": 250,
+        "count": 79
+      },
+      {
+        "value": "0.3s",
+        "ms": 300,
+        "count": 16
+      },
+      {
+        "value": "0.4s",
+        "ms": 400,
+        "count": 8
+      }
+    ],
+    "easings": [
+      {
+        "value": "ease",
+        "type": "ease",
+        "count": 76
+      },
+      {
+        "value": "ease-in-out",
+        "type": "ease-in-out",
+        "count": 35
+      },
+      {
+        "value": "ease-out",
+        "type": "ease-out",
+        "count": 17
+      }
+    ],
+    "animations": [],
+    "contexts": {
+      "button": {
+        "count": 22,
+        "durations": [
+          "0.25s",
+          "0.3s",
+          "0.2s"
+        ],
+        "easing": "ease-in-out",
+        "easingType": "ease-in-out",
+        "props": [
+          "background-color",
+          "color",
+          "border",
+          "background"
+        ]
+      },
+      "link": {
+        "count": 47,
+        "durations": [
+          "0.25s",
+          "0.1s"
+        ],
+        "easing": "ease",
+        "easingType": "ease",
+        "props": [
+          "padding-inline"
+        ]
+      }
+    },
+    "interactiveDeltas": []
+  },
+  "components": {
+    "buttons": [],
+    "inputs": {
+      "text": [],
+      "checkbox": [],
+      "radio": [],
+      "select": []
+    },
+    "links": [
+      {
+        "color": "rgb(255, 255, 255)",
+        "textDecoration": "underline",
+        "fontWeight": "400",
+        "states": {
+          "default": {
+            "color": "rgb(255, 255, 255)",
+            "textDecoration": "underline"
+          },
+          "hover": {
+            "color": "rgb(0, 0, 0)",
+            "textDecoration": "underline"
+          }
+        }
+      },
+      {
+        "color": "rgb(0, 0, 238)",
+        "textDecoration": "underline",
+        "fontWeight": "400",
+        "states": {
+          "default": {
+            "color": "rgb(0, 0, 238)",
+            "textDecoration": "underline"
+          },
+          "hover": {
+            "color": "rgb(0, 0, 0)",
+            "textDecoration": "underline"
+          }
+        }
+      },
+      {
+        "color": "rgb(0, 0, 0)",
+        "textDecoration": "none",
+        "fontWeight": "400",
+        "states": {
+          "default": {
+            "color": "rgb(0, 0, 0)",
+            "textDecoration": "none"
+          },
+          "hover": {
+            "color": "rgb(0, 0, 0)",
+            "textDecoration": "underline"
+          }
+        }
+      }
+    ],
+    "badges": {
+      "all": [],
+      "byVariant": {
+        "error": [],
+        "warning": [],
+        "success": [],
+        "info": [],
+        "neutral": []
+      }
+    }
+  },
+  "breakpoints": [
+    {
+      "px": "479px"
+    },
+    {
+      "px": "480px"
+    },
+    {
+      "px": "520px"
+    },
+    {
+      "px": "540px"
+    },
+    {
+      "px": "719px"
+    },
+    {
+      "px": "720px"
+    },
+    {
+      "px": "767px"
+    },
+    {
+      "px": "768px"
+    },
+    {
+      "px": "780px"
+    },
+    {
+      "px": "900px"
+    },
+    {
+      "px": "980px"
+    },
+    {
+      "px": "991px"
+    },
+    {
+      "px": "1179px"
+    }
+  ],
+  "iconSystem": [],
+  "frameworks": [
+    {
+      "name": "jQuery",
+      "confidence": "high",
+      "evidence": "banner jQuery v4.0.0, window.jQuery 4.0.0",
+      "category": "js-library",
+      "version": "4.0.0"
+    },
+    {
+      "name": "Drupal",
+      "confidence": "high",
+      "evidence": "generator Drupal 11 (https://www.drupal.org), window.drupalSettings",
+      "category": "site-builder",
+      "version": "11"
+    },
+    {
+      "name": "Splide",
+      "confidence": "high",
+      "evidence": "class splide x2 + class splide__track x17, window.Splide",
+      "category": "ui-library"
+    }
+  ]
+}
