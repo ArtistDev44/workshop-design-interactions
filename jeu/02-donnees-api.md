@@ -7,8 +7,13 @@
 | Open-Meteo (`api.open-meteo.com/v1/forecast` + archive) | Météo de Nantes sur la semaine choisie : température, vent, précipitations | Alertes météo, effets contextuels sur les jauges, décor météo (Q30) |
 
 ## Rejouer une semaine (Q22)
-Combinaison de deux approches : données **live au lancement** (semaine glissante)
-+ **archive Open-Meteo et incidents enregistrés** pour les semaines proposées.
+**Source officielle : les archives publiques existantes, sans aucune collecte**
+(voir `api.md` §9) — changelog daté du GTFS Naolib (incidents réels : travaux,
+déviations, manifestations, mouvements sociaux), versions archivées du GTFS sur
+transport.data.gouv.fr, archive Open-Meteo pour la météo de la semaine, agenda des
+événements filtré par date. Chaque entrée d'archive = un dossier réel embarqué dans
+`data/fallback.json`. Les flux live (SIRI lite / GTFS-RT) servent uniquement au mode
+« aujourd'hui en direct ».
 L'**affluence** n'est affichée que si une source réelle la fournit (Q23) ;
 sinon le dossier se limite à ligne + retard + raison + météo.
 La répartition incidents de lignes / alertes météo suit **les données réelles de

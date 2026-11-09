@@ -82,3 +82,17 @@ Règles communes : aucune clé requise, licence Ouverte / ODbL, CORS ouvert (`Ac
 | Flux GBFS vélos historique (`…velos-libre-service-naolib-gbfs`) | Figé depuis juin 2024 → utiliser le dataset ODS de disponibilités temps réel ou le GBFS Micromob |
 | `[Ancien] …stations-velos-libre-service…-disponibilites` (JCDecaux) | Dépublié, remplacé par le dataset ODS ci-dessus |
 | `244400404_api-temps-reel-tan`, `…info-trafic-tan-temps-reel`, `…info-trafic-tan-previsionnel` | Remplacés par SIRI lite / SIRI |
+
+## 9. Semaines rejouées — stratégie archive (sans collecte, officielle pour le rendu)
+
+Il n'existe pas d'archive des flux temps réel SIRI/GTFS-RT côté Nantes Métropole. **La source officielle des semaines rejouées est donc l'archive publique existante**, aucune collecte n'est nécessaire :
+
+| Archive | Accès | Contenu réel | Usage |
+|---|---|---|---|
+| Changelog du GTFS Naolib | Onglet « Informations » du dataset `244400404_transports_commun_naolib_nantes_metropole_gtfs` | Incidents datés réels : travaux, déviations, manifestations, mouvements sociaux (ex. « 10/10/24 : Foulées du tram, match, manifestation ») | Chaque entrée d'une semaine choisie = un dossier réel dans `data/fallback.json` |
+| Versions archivées du GTFS | « Backed up resources » sur [transport.data.gouv.fr — Réseau Naolib](https://transport.data.gouv.fr/datasets/reseau-de-transports-collectifs-naolib) | Fichiers GTFS tels qu'à une date passée | Horaires réels de la semaine rejouée |
+| Archive Open-Meteo | `https://api.open-meteo.com/v1/archive` (Nantes 47.2184, -1.5536) | Météo horaire réelle (ERA5) de toute semaine passée | Alertes météo réelles + effets contextuels |
+| Agenda des événements | `244400404_agenda-evenements-nantes-metropole_v2` via Explore API, filtre `where=` sur les dates | Événements réels d'une semaine passée | Pics d'affluence réels |
+| 6 cas figés | `data/fallback.json` (voir `07-fallback-offline.md`) | Semaine de référence hors ligne, seed fixe | Mode hors ligne garanti pour l'évaluation |
+
+Le mode « aujourd'hui en direct » (SIRI lite / GTFS-RT) reste distinct du mode « semaine rejouée » (archives). Le script `scripts/snapshot.mjs` + cron GitHub Actions reste une **option post-rendu** pour archiver soi-même les semaines futures.
