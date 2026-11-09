@@ -3,11 +3,44 @@
 ## Objectif
 Créer le jeu décrit dans `jeu/` : une salle de contrôle des transports nantais,
 façon *Paper Please*, où le joueur rejoue une semaine réelle du réseau et tranche
-des décisions de régulation à partir de données réelles (API Tanway/Lila Nantes
-Métropole + Open-Meteo), avec fallback local obligatoire (`data/fallback.json`).
+des décisions de régulation à partir de données réelles (flux temps réel **Naolib
+GTFS-RT** + Open-Meteo), avec fallback local obligatoire (`data/fallback.json`).
+
+## Emplacement
+Le jeu est une œuvre p5.js autonome, servie par le site :
+`site/public/oeuvres/pxe-nte001-g01-w01/` (remplacer `g01` par le vrai numéro de
+groupe). Il s'ouvre à
+`…/patrimoine-exe/nantes/001/oeuvres/pxe-nte001-g01-w01/index.html` et sa fiche du
+registre (prompt 06) pointe dessus via `lien_oeuvre`. Tous ses chemins sont
+**relatifs** (`./sketch.js`, `./data/fallback.json`) : il fonctionne aussi ouvert seul.
+**p5.js est copié en local** (`lib/p5.min.js`, version 1.11.11) : aucun CDN, sinon le
+jeu ne démarre pas sans réseau.
+
+## Données réelles : ce qui est possible (vérifié le 9 nov. 2026)
+- **Retards** : flux GTFS-RT `trip-updates` de Naolib,
+  `https://api.okina.fr/gateway/semgtfsrt/realtime/trip-updates/NAOLIBORG`
+  (référencé par le jeu `244400404_reseau-transports-collectifs-naolib`). Sans clé,
+  CORS autorisé, mais **format binaire protobuf (≈ 1 Mo par appel)** et **aucun
+  historique** : on ne lit que l'instant présent.
+- **Alertes / perturbations** : flux GTFS-RT `alerts` (même passerelle, `…/alerts/NAOLIBORG`).
+- **Tracés des lignes** : jeu GTFS statique `244400404_transports_commun_naolib_nantes_metropole_gtfs`.
+- **Météo** : Open-Meteo `forecast` (semaine glissante) et `archive-api.open-meteo.com`
+  (semaines passées) — JSON, sans clé.
+
+Conséquence pour « rejouer une semaine réelle » (Q14, Q22) : il faut **enregistrer
+soi-même** les semaines. Créer `site/scripts/enregistrer-semaine.mjs` (Node, lancé à la
+main pendant la semaine, jamais au build) qui interroge `trip-updates` et `alerts` à
+intervalle régulier (ex. toutes les 10 min), décode le protobuf **dans le script**,
+ne garde que les incidents (retard ≥ 10 min, alertes) et les écrit en JSON lisible
+dans `data/semaines/{date-debut}.json`. Le décodage peut utiliser une dépendance de
+développement du script (ex. `gtfs-realtime-bindings` installée en `devDependencies`) :
+**le jeu lui-même ne lit que du JSON**, jamais le protobuf. Si le groupe ne peut pas
+enregistrer 3 semaines avant le J3, les semaines proposées sont celles réellement
+enregistrées (au minimum celle du `fallback.json`) — aucun incident inventé.
 
 ## Instructions
-1. Créer la structure du livret : `index.html`, `sketch.js`, `game.js`,
+1. Créer, dans le dossier indiqué en « Emplacement », la structure du livret :
+   `index.html`, `lib/p5.min.js`, `sketch.js`, `game.js`,
    `style.css`, `data/fallback.json`, `assets/`, `source-sheet`, `grammar`
    (deux fichiers JS, Q41 : `sketch.js` = boucle p5, `game.js` = logique du jeu).
 2. Écran d'accueil : titre **« Nantes en régulation »** (Q56), liste des
@@ -15,7 +48,7 @@ Métropole + Open-Meteo), avec fallback local obligatoire (`data/fallback.json`)
    (compteur 60 / 30 / 15 s, Q16+Q55) — + bouton Jouer + indicateur « mode hors
    ligne » si l'API est injoignable (Q34). Français uniquement (Q33).
 3. Écran de jeu en 1920×1080, style carte Nantes stylisée en **géographie réelle**
-   (Q1, Q2) : tracés via API Open Data Nantes au lancement + fallback local (Q42),
+   (Q1, Q2) : tracés extraits du GTFS statique Naolib par un script (archive ZIP, trop lourde pour le navigateur) vers `data/lignes.json` (le jeu ne lit que ce JSON local, Q42),
    palette custom (Q3), deux polices — monospace pour les données, sans-serif pour
    les textes (Q4). Panneau gauche : carte + liste des lignes (alertes d'abord,
    puis retard décroissant, Q45), état en code couleur + épaisseur — vert / orange /

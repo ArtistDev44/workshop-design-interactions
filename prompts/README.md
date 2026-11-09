@@ -10,14 +10,18 @@ thème. Aucun autre starter n'est requis.
 
 ## Mode d'emploi
 
-1. Créer un dossier vide pour le site (ex. `PXE_NTE001_SITE/`) et s'y placer.
-2. Ouvrir l'assistant IA dans ce dossier (agent de code autorisé à créer/modifier des fichiers).
-3. Copier-coller le contenu de chaque prompt `NN-*.md`, **un par un**, en attendant que
-   l'étape précédente soit terminée et vérifiée avant de passer à la suivante.
+1. Le site vit dans le sous-dossier **`site/`** de ce dépôt (créé au prompt 01). Les
+   commandes `npm` se lancent dans `site/` ; `journal.md`, `todo.md`, `contexte/` et
+   `jeu/` restent à la racine du dépôt.
+2. Ouvrir l'assistant IA à la racine du dépôt (agent de code autorisé à créer/modifier
+   des fichiers). Il lit `CLAUDE.md` (règles courtes) : inutile de lui coller le livret.
+3. Donner chaque prompt `NN-*.md`, **un par un, dans l'ordre des numéros**, en attendant
+   que l'étape précédente soit terminée et vérifiée. Pour économiser les tokens : une
+   conversation (ou un `/clear`) par prompt — le dépôt garde la mémoire du travail.
 4. Ne jamais inclure de clé privée, de token ou de secret dans le code ou les prompts.
 5. À chaque push vers un dépôt du projet, ajouter une entrée dans `journal.md` (date, commit, fichiers touchés, résumé).
 
-## Références de contexte (à relire si besoin)
+## Références de contexte (à ouvrir seulement si un prompt le demande)
 
 - `contexte/PATRIMOINE.EXE - Nantes 001 — Cours étudiant B3 Design — ESD Nantes — 2026.md` — livret officiel (livrables, structure de dossier, manifest, cartel, robustesse, accessibilité).
 - `contexte/PATRIMOINE.EXE — International Computational Heritage Framework.md` — framework (registre machine-readable, identifiants `PXE-NTE001-G{nn}-W{nn}`, URL `/patrimoine-exe/nantes/001/slug/`, statuts STUDENT / SELECTED / COLLECTION, vitrine publique).
@@ -36,16 +40,24 @@ jamais l'inverse.
 | N° | Fichier | Objectif |
 |---|---|---|
 | 01 | `01-initialiser-projet-astro-base.md` | Générer le projet Astro depuis le thème Basics (preview.astro.new/basics/) |
-| 02 | `02-configurer-astro-statique.md` | Config statique + base GitHub Pages + français |
+| 02 | `02-configurer-astro-statique.md` | Config statique + base GitHub Pages (`/workshop-design-interactions/patrimoine-exe/nantes/001/`) |
 | 03 | `03-structure-dossiers-toolkit.md` | Arborescence conforme au toolkit PATRIMOINE.EXE |
-| 04 | `04-layout-design-system.md` | Layout commun + design system de l'édition |
+| 04 | `04-layout-design-system.md` | Layout commun + design system (`design-system/DESIGN.md`) |
 | 05 | `05-page-accueil-edition.md` | Page d'accueil NTE001 (manifeste, compteurs, édition) |
 | 06 | `06-modele-donnees-registre.md` | Registre machine-readable + schéma des œuvres |
-| 07 | `07-galerie-uvres.md` | Galerie des œuvres générée depuis le registre |
+| 07 | `07-galerie-oeuvres.md` | Galerie des œuvres générée depuis le registre |
 | 08 | `08-cartel-ouvre-par-slug.md` | Page œuvre + cartel au format du livret |
 | 09 | `09-statistiques-catalogue.md` | Statistiques et catalogue générés depuis les métadonnées |
 | 10 | `10-methode-ressources-credits.md` | Pages protocole, corpus Nantes, crédits/brand |
-| 11 | `11-accessibilite-robustesse.md` | Contrôles accessibilité + checklist de robustesse |
-| 12 | `12-build-deploiement-qr.md` | Build, test hors ligne, déploiement GitHub Pages, README |
-| 13 | `13-donnees-vivantes-nantes.md` | Page « Nantes en direct » : visualisation de données vivante et interactive depuis les API recommandées par l'audit (`contexte/audit-api-open-data-nantes.md`), avec cache, rafraîchissement temporisé et fallback local |
+| 11 | `11-donnees-vivantes-nantes.md` | Page « Nantes en direct » : données vivantes depuis les API recommandées par l'audit (`contexte/audit-api-open-data-nantes.md`), cache, rafraîchissement temporisé, instantanés réels en secours |
+| 12 | `12-accessibilite-robustesse.md` | Contrôles accessibilité + checklist de robustesse (y compris hors ligne) |
+| 13 | `13-build-deploiement-qr.md` | Build, déploiement GitHub Pages (Actions), README, QR codes |
 | 14 | `14-jeu-salle-de-controle-p5.md` | Jeu « Nantes en régulation » (œuvre p5.js décrite dans `jeu/`) |
+
+Le prompt 14 (jeu p5.js) est indépendant du site : il peut être mené en parallèle dès
+le prompt 03, l'œuvre étant ensuite reliée au site par sa fiche du registre (prompt 06).
+
+Historique : le 9 novembre 2026, l'ancien prompt 13 (données vivantes) est devenu le 11,
+et les anciens 11 et 12 sont devenus 12 et 13, pour que l'accessibilité et le
+déploiement vérifient aussi la page `/donnees/`. Les entrées anciennes de `journal.md`
+gardent les anciens numéros.
