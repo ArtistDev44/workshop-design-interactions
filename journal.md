@@ -4,6 +4,7 @@ Règle : chaque push sur la branche main ajoute une entrée dans le tableau, la 
 
 | Date | Commit | Fichiers | Résumé |
 |---|---|---|---|
+| 2026-11-09 | ce commit (branche audit/api-open-data-nantes) | contexte/audit-api-open-data-nantes.md, journal.md | Audit des API Open Data Nantes Métropole : 570 jeux, 9 recommandés (5 temps réel + 4 patrimoniaux), architecture données du site, économie de tokens |
 | 2026-11-09 | ce commit | journal.md | Entrées de journal pour les fusions des PR #2 et #3 dans main |
 | 2026-11-09 | e099a80 | design-system/index.html, design-system/index.md, notes.md, journal.md | Fusion dans main des branches vibe/design-system-nantes-005225 (PR #2 : design system Nantes Métropole) et vibe/notes-md-d02076 (PR #3 : notes.md wiki, API, animations) |
 | 2026-11-09 | ce commit | notes.md, journal.md | Ajout de notes.md : page prête pour le wiki, liens des API utilisées (Open-Meteo, Open Data Nantes Métropole, p5.js, GitHub Pages) et pistes d'animations (régimes temporels p5.js, CSS / IntersectionObserver / View Transitions côté site) |
