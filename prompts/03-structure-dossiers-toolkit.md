@@ -22,7 +22,7 @@ workshop-design-interactions/        (racine du dépôt — ne pas modifier ici)
     ├── public/
     │   ├── assets/                  (favicon, QR codes)
     │   ├── oeuvres/{slug}/          (captations : hero.jpg, detail-01.jpg, process.jpg,
-    │   │                             thumb.jpg, demo.mp4 — et l'œuvre p5.js, prompt 14)
+    │   │                             thumb.jpg, demo.mp4 — et l'œuvre p5.js, prompts 14–19)
     │   └── data/fallback/           (instantanés JSON des API, prompt 11)
     ├── scripts/                     (scripts Node lancés à la main, jamais au build)
     └── src/

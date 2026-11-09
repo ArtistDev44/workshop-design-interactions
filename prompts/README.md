@@ -52,10 +52,17 @@ jamais l'inverse.
 | 11 | `11-donnees-vivantes-nantes.md` | Page « Nantes en direct » : données vivantes depuis les API recommandées par l'audit (`contexte/audit-api-open-data-nantes.md`), cache, rafraîchissement temporisé, instantanés réels en secours |
 | 12 | `12-accessibilite-robustesse.md` | Contrôles accessibilité + checklist de robustesse (y compris hors ligne) |
 | 13 | `13-build-deploiement-qr.md` | Build, déploiement GitHub Pages (Actions), README, QR codes |
-| 14 | `14-jeu-salle-de-controle-p5.md` | Jeu « Nantes en régulation » (œuvre p5.js décrite dans `jeu/`) |
+| 14 | `14-jeu-salle-de-controle-p5.md` | Jeu « Nantes en régulation » — chapeau : objectif, emplacement, données réelles (œuvre p5.js décrite dans `jeu/`) |
+| 15 | `15-jeu-fondation-donnees.md` | Jeu, étape 2/6 : structure du livret, p5.js local, semaines enregistrées, `lignes.json`, `fallback.json` |
+| 16 | `16-jeu-ecrans-salle-de-controle.md` | Jeu, étape 3/6 : écran d'accueil + salle de contrôle 1920×1080 |
+| 17 | `17-jeu-boucle-effets-jauges.md` | Jeu, étape 4/6 : boucle de jeu, 3 actions + « ne rien faire », table des effets base + 1d6, jauges |
+| 18 | `18-jeu-controles-confort.md` | Jeu, étape 5/6 : raccourcis clavier, son, pause, reset, aide, meilleur bilan `localStorage` |
+| 19 | `19-jeu-fins-robustesse.md` | Jeu, étape 6/6 : 3 fins + bilan détaillé, accessibilité, vérifications finales |
 
-Le prompt 14 (jeu p5.js) est indépendant du site : il peut être mené en parallèle dès
-le prompt 03, l'œuvre étant ensuite reliée au site par sa fiche du registre (prompt 06).
+Les prompts 14–19 (jeu p5.js) sont indépendants du site : ils peuvent être menés en
+parallèle dès le prompt 03, l'œuvre étant ensuite reliée au site par sa fiche du
+registre (prompt 06). Le prompt 14 était trop long : il est découpé en 6 prompts
+(14 chapeau + 5 étapes, 15–19).
 
 Historique : le 9 novembre 2026, l'ancien prompt 13 (données vivantes) est devenu le 11,
 et les anciens 11 et 12 sont devenus 12 et 13, pour que l'accessibilité et le

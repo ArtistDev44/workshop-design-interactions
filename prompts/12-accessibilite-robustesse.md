@@ -3,7 +3,7 @@
 ## Objectif
 Appliquer au site les exigences d'accessibilité et de robustesse du livret
 (sections 13 et 14) avant toute mise en ligne — y compris la page `/donnees/`
-(prompt 11) et le lien vers le jeu (prompt 14) s'il existe déjà.
+(prompt 11) et le lien vers le jeu (prompts 14–19) s'il existe déjà.
 
 ## Instructions
 1. **Accessibilité** : vérifier et corriger — contraste ≥ 4,5:1 ; aucun flash rapide
