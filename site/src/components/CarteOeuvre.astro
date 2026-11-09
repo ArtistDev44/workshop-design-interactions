@@ -1,0 +1,102 @@
+---
+// Carte d'une œuvre dans la galerie (prompt 07).
+import { slugDe, libelleStatut, type Oeuvre } from '../lib/oeuvres';
+
+interface Props {
+	oeuvre: Oeuvre;
+}
+
+const { oeuvre } = Astro.props;
+const { data } = oeuvre;
+const base = import.meta.env.BASE_URL;
+const slug = slugDe(oeuvre);
+const lien = `${base}${slug}/`;
+const miniature = data.assets.thumb ? `${base}oeuvres/${slug}/${data.assets.thumb}` : null;
+---
+
+<li class="carte" data-statut={data.statut}>
+	<a href={lien} class="carte__lien">
+		<div class="carte__visuel">
+			{
+				miniature ? (
+					<img src={miniature} alt={`Miniature de l’œuvre « ${data.titre} »`} loading="lazy" width="600" height="400" />
+				) : (
+					<span class="carte__absent">Captation à venir</span>
+				)
+			}
+		</div>
+		<div class="carte__texte">
+			<span class="carte__id mono">{data.id}</span>
+			<h2 class="carte__titre">{data.titre}</h2>
+			<p class="carte__meta">Groupe : {data.groupe}</p>
+			<span class="carte__statut">{libelleStatut(data.statut)}</span>
+		</div>
+	</a>
+</li>
+
+<style>
+	.carte {
+		list-style: none;
+	}
+	.carte__lien {
+		display: flex;
+		flex-direction: column;
+		height: 100%;
+		border: 2px solid var(--c-texte);
+		border-radius: var(--r-lg);
+		overflow: hidden;
+		color: var(--c-texte);
+		text-decoration: none;
+		transition: border-color var(--transition);
+	}
+	.carte__lien:hover {
+		border-color: var(--c-primaire);
+	}
+	.carte__visuel {
+		aspect-ratio: 3 / 2;
+		background: var(--c-fond-alt);
+		display: grid;
+		place-items: center;
+		border-bottom: 1px solid var(--c-filet);
+	}
+	.carte__visuel img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+	.carte__absent {
+		font-family: var(--f-mono);
+		font-size: var(--t-petit);
+		color: var(--c-texte-doux);
+	}
+	.carte__texte {
+		padding: var(--e-3);
+		display: flex;
+		flex-direction: column;
+		gap: var(--e-1);
+	}
+	.carte__id {
+		font-size: 0.875rem;
+		color: var(--c-texte-doux);
+	}
+	.carte__titre {
+		font-size: var(--t-m);
+		margin: 0;
+	}
+	.carte__lien:hover .carte__titre {
+		color: var(--c-primaire);
+	}
+	.carte__meta {
+		font-size: var(--t-petit);
+		margin: 0;
+	}
+	.carte__statut {
+		align-self: flex-start;
+		margin-top: var(--e-2);
+		padding: 2px var(--e-2);
+		border: 1px solid var(--c-texte);
+		border-radius: var(--r-md);
+		font-family: var(--f-mono);
+		font-size: 0.875rem;
+	}
+</style>

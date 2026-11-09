@@ -1,0 +1,129 @@
+---
+// Galerie des œuvres générée depuis le registre (prompt 07).
+import Layout from '../../layouts/Layout.astro';
+import CarteOeuvre from '../../components/CarteOeuvre.astro';
+import { getOeuvres } from '../../lib/oeuvres';
+
+const oeuvres = await getOeuvres();
+const base = import.meta.env.BASE_URL;
+const filtres = [
+	{ valeur: 'tous', label: 'Toutes' },
+	{ valeur: 'STUDENT', label: 'STUDENT' },
+	{ valeur: 'SELECTED', label: 'SELECTED' },
+	{ valeur: 'COLLECTION', label: 'COLLECTION' },
+];
+const nb = oeuvres.length;
+---
+
+<Layout title="Œuvres" description="Galerie des œuvres de l'édition PATRIMOINE.EXE / Nantes 001.">
+	<h1>Œuvres</h1>
+	<p>
+		Les œuvres de l’édition NTE001, générées depuis le registre. Statuts curatoriaux du framework :
+		STUDENT, SELECTED et PATRIMOINE.EXE COLLECTION.
+	</p>
+
+	{
+		nb === 0 ? (
+			<p class="vide">
+				Aucune œuvre n’est encore inscrite au registre. Consultez le{' '}
+				<a href={`${base}catalogue/`}>catalogue</a> de l’édition.
+			</p>
+		) : (
+			<>
+				<div class="filtres" role="group" aria-label="Filtrer par statut" hidden data-filtres>
+					{filtres.map((f, i) => (
+						<button type="button" data-filtre={f.valeur} aria-pressed={i === 0 ? 'true' : 'false'}>
+							{f.label}
+						</button>
+					))}
+				</div>
+				<p class="compte" aria-live="polite" data-compte>
+					{nb} œuvre{nb > 1 ? 's' : ''}
+				</p>
+				<ul class="grille" data-grille>
+					{oeuvres.map((o) => (
+						<CarteOeuvre oeuvre={o} />
+					))}
+				</ul>
+				<p class="vide" hidden data-vide>
+					Aucune œuvre pour ce statut. Consultez le <a href={`${base}catalogue/`}>catalogue</a> de
+					l’édition.
+				</p>
+			</>
+		)
+	}
+</Layout>
+
+<script>
+	// Filtre côté client. Sans JavaScript, les filtres restent cachés et toutes les œuvres visibles.
+	const zone = document.querySelector<HTMLElement>('[data-filtres]');
+	const cartes = [...document.querySelectorAll<HTMLElement>('[data-grille] > [data-statut]')];
+	const compte = document.querySelector<HTMLElement>('[data-compte]');
+	const vide = document.querySelector<HTMLElement>('[data-vide]');
+
+	if (zone && compte && vide) {
+		zone.hidden = false;
+		const boutons = [...zone.querySelectorAll<HTMLButtonElement>('button[data-filtre]')];
+
+		boutons.forEach((bouton) => {
+			bouton.addEventListener('click', () => {
+				const filtre = bouton.dataset.filtre;
+				boutons.forEach((b) => b.setAttribute('aria-pressed', String(b === bouton)));
+				let visibles = 0;
+				cartes.forEach((carte) => {
+					const montre = filtre === 'tous' || carte.dataset.statut === filtre;
+					carte.hidden = !montre;
+					if (montre) visibles++;
+				});
+				compte.textContent = `${visibles} œuvre${visibles > 1 ? 's' : ''}`;
+				vide.hidden = visibles > 0;
+			});
+		});
+	}
+</script>
+
+<style>
+	.filtres {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--e-2);
+		margin: var(--e-4) 0 var(--e-2);
+	}
+	.filtres[hidden] {
+		display: none;
+	}
+	.filtres button {
+		font: inherit;
+		font-size: var(--t-petit);
+		font-family: var(--f-mono);
+		padding: var(--e-1) var(--e-3);
+		border: 2px solid var(--c-texte);
+		border-radius: var(--r-md);
+		background: var(--c-fond);
+		color: var(--c-texte);
+		cursor: pointer;
+	}
+	.filtres button[aria-pressed='true'] {
+		background: var(--c-texte);
+		color: var(--c-fond);
+	}
+	.compte {
+		font-size: var(--t-petit);
+		color: var(--c-texte-doux);
+	}
+	.grille {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+		gap: var(--e-4);
+		margin: 0;
+		padding: 0;
+	}
+	.vide {
+		padding: var(--e-4);
+		background: var(--c-fond-alt);
+		border-radius: var(--r-md);
+	}
+	.vide[hidden] {
+		display: none;
+	}
+</style>
