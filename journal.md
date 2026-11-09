@@ -4,6 +4,7 @@ Règle : chaque push sur la branche main ajoute une entrée dans le tableau, la 
 
 | Date | Commit | Fichiers | Résumé |
 |---|---|---|---|
+| 2026-11-09 | ce commit | prompts/01, prompts/README.md, journal.md | Thème Astro de départ mis à jour : thème « Basics » https://preview.astro.new/basics/ à la place du template « Just the basics » de npm create astro@latest |
 | 2026-11-09 | ce commit | design-system/, journal.md | Remplacement du design system par l'extraction dembrandt v0.39.2 de metropole.nantes.fr (DESIGN.md, tokens JSON, rapport HTML + README) ; suppression de l'ancien index.md / index.html |
 | 2026-11-09 | ce commit | journal.md | Entrées de journal pour les fusions des PR #2 et #3 dans main |
 | 2026-11-09 | e099a80 | design-system/index.html, design-system/index.md, notes.md, journal.md | Fusion dans main des branches vibe/design-system-nantes-005225 (PR #2 : design system Nantes Métropole) et vibe/notes-md-d02076 (PR #3 : notes.md wiki, API, animations) |

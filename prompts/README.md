@@ -4,8 +4,9 @@ Ce dossier contient des **prompts numérotés**, à exécuter **dans l'ordre** a
 IA dans un projet vide. Chaque prompt produit une étape vérifiable du site web de travail
 à rendre pour l'édition PXE · NTE001 (ESD Nantes, B3 Design, 9, 10 & 12 novembre 2026).
 
-Point de départ : le **projet Astro de base** (starter minimal généré par
-`npm create astro@latest`, template « Just the basics »). Aucun autre starter n'est requis.
+Point de départ : le **thème Astro « Basics »** — https://preview.astro.new/basics/ —
+lancé via `npm create astro@latest` (sélection du thème Basics) ou copié depuis la page du
+thème. Aucun autre starter n'est requis.
 
 ## Mode d'emploi
 
@@ -33,7 +34,7 @@ jamais l'inverse.
 
 | N° | Fichier | Objectif |
 |---|---|---|
-| 01 | `01-initialiser-projet-astro-base.md` | Générer le projet Astro depuis le starter de base |
+| 01 | `01-initialiser-projet-astro-base.md` | Générer le projet Astro depuis le thème Basics (preview.astro.new/basics/) |
 | 02 | `02-configurer-astro-statique.md` | Config statique + base GitHub Pages + français |
 | 03 | `03-structure-dossiers-toolkit.md` | Arborescence conforme au toolkit PATRIMOINE.EXE |
 | 04 | `04-layout-design-system.md` | Layout commun + design system de l'édition |

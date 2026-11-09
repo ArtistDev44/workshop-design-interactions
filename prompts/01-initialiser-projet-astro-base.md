@@ -1,8 +1,9 @@
-# Prompt 01 — Initialiser le projet Astro depuis le projet Astro de base
+# Prompt 01 — Initialiser le projet Astro depuis le thème Astro « Basics »
 
 ## Objectif
-Créer le squelette du site de l'édition **PATRIMOINE.EXE / NTE001** à partir du starter
-officiel Astro « de base » (template minimal), sans ajouter de dépendance externe.
+Créer le squelette du site de l'édition **PATRIMOINE.EXE / NTE001** à partir du thème
+officiel Astro **« Basics »** — https://preview.astro.new/basics/ — sans ajouter de
+dépendance externe.
 
 ## Contexte
 Édition : PXE · NTE001 · ESD Nantes · B3 Design · 9, 10 & 12 novembre 2026.
@@ -10,10 +11,12 @@ Le site est la vitrine publique de l'édition (framework : « Vitrine publique �
 machine-readable). Voir `contexte/` et `prompts/README.md`.
 
 ## Instructions
-1. Dans le dossier parent choisi, exécuter : `npm create astro@latest .` (ou créer le
-   projet dans un dossier `PXE_NTE001_SITE/` puis déplacer son contenu à la racine).
-2. Choisir le template **« Just the basics »** (starter minimal), TypeScript **strict**,
-   installer les dépendances, initialiser un dépôt git local si ce n'est pas déjà fait.
+1. Dans le dossier parent choisi, exécuter : `npm create astro@latest .` et sélectionner le
+   thème **Basics** (https://preview.astro.new/basics/) — ou copier directement le dépôt du
+   thème depuis cette page (ou créer le projet dans un dossier `PXE_NTE001_SITE/` puis
+   déplacer son contenu à la racine).
+2. Garder TypeScript **strict**, installer les dépendances, initialiser un dépôt git local
+   si ce n'est pas déjà fait.
 3. Nettoyer le contenu de démonstration : vider `src/pages/index.astro` (garder une page
    valide minimale), supprimer les composants de démo inutiles, conserver la structure
    standard Astro (`src/`, `public/`, `astro.config.mjs`, `package.json`).
