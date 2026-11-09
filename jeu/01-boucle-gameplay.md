@@ -19,6 +19,7 @@
 
 ## Paramètres de la boucle
 - Environ **15 décisions** par partie (une semaine rejouée).
-- **Compteur de temps** actif par décision ; à 0, le choix par défaut est
-  « ne rien faire » (conséquences appliquées quand même).
+- **Compteur de temps** actif par décision, **30 secondes par défaut** (barre
+  horizontale) ; à 0, le choix par défaut est « ne rien faire » (conséquences
+  appliquées quand même).
 - Fin de partie après le 15e dossier → écran de bilan et fin selon les jauges.

@@ -10,7 +10,8 @@
 - Retard réel ≥ 10 min sur une ligne → dossier « ligne en difficulté ».
 - Vent / précipitations / température hors seuils → dossier « alerte météo ».
 - Données contradictoires (horaire prévu vs retard réel, ou deux sources API en
-  désaccord) → le dossier le signale, le joueur choisit quelle source croire.
+  désaccord) → **badge « contradiction »** sur le dossier (Q9), le joueur choisit
+  quelle source croire.
 
 ## Règles du livret
 - Toujours prévoir un **fallback local** (`data/fallback.json`, voir `07-fallback-offline.md`).

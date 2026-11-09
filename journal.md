@@ -4,6 +4,7 @@ Règle : chaque push sur la branche main ajoute une entrée dans le tableau, la 
 
 | Date | Commit | Fichiers | Résumé |
 |---|---|---|---|
+| 2026-11-09 | ce commit | jeu/, journal.md | Décisions de design verrouillées (20 questions) enregistrées dans jeu/ : carte Nantes stylisée en géographie réelle, palette custom, 2 polices, météo dans le décor, barre horizontale timer 30 s, 3 barres de jauges, badge contradiction, glissement panneau, ambiance + bips, aide H, pause entre dossiers, liste de semaines, difficulté = timer 60/30/15 s, ton adaptatif, bilan détaillé, meilleur bilan localStorage |
 | 2026-11-09 | ce commit | jeu/, todo.md, prompts/13, prompts/README.md, journal.md | Ajout du cadrage du jeu « Salle de contrôle Nantes » : répertoire jeu/ (11 fichiers .md de fonctionnalités), section jeu dans todo.md, prompt 13 p5.js |
 |---|---|---|---|
 | 2026-11-09 | ce commit | prompts/01, prompts/README.md, journal.md | Thème Astro de départ mis à jour : thème « Basics » https://preview.astro.new/basics/ à la place du template « Just the basics » de npm create astro@latest |

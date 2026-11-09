@@ -18,3 +18,8 @@ Le bilan final combine les trois jauges :
 - **Fin « Semaine noire »** : au moins une jauge sous un seuil critique.
 
 Le texte de fin raconte la semaine rejouée du point de vue de la salle de contrôle.
+
+## Écran de fin (décision verrouillée Q18)
+Texte de fin + valeurs finales des trois jauges + **bilan détaillé** (nombre de
+dossiers traités, meilleures/mauvaises décisions de la semaine) + boutons
+Rejouer / changer de semaine.

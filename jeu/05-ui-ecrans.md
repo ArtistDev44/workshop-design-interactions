@@ -12,8 +12,21 @@
 4. **Écran de fin** : bilan des jauges, fin obtenue, bouton Rejouer / changer de semaine.
 
 ## Principes
-- Style « salle de contrôle » : sombre, lisible, informations de médiation en
-  contraste suffisant.
 - p5.js, `pixelDensity(1)`, testé en 1920×1080.
 - Régime temporel : interaction continue (clics/clavier) + événements (arrivée
   d'un incident).
+
+## Décisions de design verrouillées (Q1–Q10)
+- **Style** : carte Nantes stylisée en fond, avec **géographie réelle** des lignes.
+- **Palette** : custom, propre au jeu (pas les couleurs officielles Tanway).
+- **Typographie** : deux polices — monospace pour les données chiffrées,
+  sans-serif pour les textes et boutons.
+- **Météo** : visible directement dans le décor (nuages, pluie, soleil…), pas
+  seulement dans une bannière.
+- **Compteur de temps** : barre horizontale qui se vide en haut du panneau dossier.
+- **Jauges** : trois barres horizontales compactes en bandeau.
+- **Dossier** : ligne + retard + raison en priorité ; détails (affluence, météo)
+  en dessous.
+- **Contradiction de données** : badge « contradiction » sur le dossier.
+- **Arrivée d'un dossier** : le panneau glisse depuis la droite.
+- Le contraste doit rester suffisant pour les informations de médiation.
