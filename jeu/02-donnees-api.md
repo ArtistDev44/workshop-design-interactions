@@ -3,7 +3,7 @@
 ## Sources
 | Source | Données | Usage |
 |---|---|---|
-| API Tanway/Lila — Open Data Nantes Métropole | Prochains passages temps réel, retards des lignes tram/bus — **tout le réseau** (Q21) | Détection des incidents (seuil 10 min), données du dossier |
+| Flux GTFS-RT Naolib (trip-updates + alerts, via api.okina.fr, référencé par Open Data Nantes Métropole) | Prochains passages temps réel, retards des lignes tram/bus — **tout le réseau** (Q21) | Détection des incidents (seuil 10 min), données du dossier |
 | Open-Meteo (`api.open-meteo.com/v1/forecast` + archive) | Météo de Nantes sur la semaine choisie : température, vent, précipitations | Alertes météo, effets contextuels sur les jauges, décor météo (Q30) |
 
 ## Rejouer une semaine (Q22)

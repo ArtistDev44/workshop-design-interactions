@@ -29,6 +29,6 @@ source (données réelles Nantes) → grammaire (seuil de 10 min, alertes mété
 système (boucle incident → décision → jauges) → œuvre (salle de contrôle p5.js).
 
 ## Mapping justifié en une phrase
-« L'API Tanway/Lila fournit le retard réel des lignes et Open-Meteo la météo de
+« Le flux GTFS-RT Naolib fournit le retard réel des lignes et Open-Meteo la météo de
 la semaine choisie : le seuil de 10 min et les alertes météo génèrent les
 dossiers, et chaque action du joueur module les trois jauges selon le contexte. »

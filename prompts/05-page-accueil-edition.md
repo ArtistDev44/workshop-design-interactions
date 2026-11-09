@@ -22,7 +22,9 @@ de savoirs, de gestes et de mémoires que l'on peut étudier, formaliser et repr
      si le prompt 06 n'est pas encore exécuté) ;
    - la chaîne **SOURCE → GRAMMAIRE → SYSTÈME → ŒUVRE** présentée visuellement ;
    - appels vers Œuvres, Catalogue, Méthode.
-2. Aucun contenu factice : toutes les informations proviennent de `contexte/`.
+2. Aucun contenu factice : toutes les informations proviennent de ce prompt (citations
+   ci-dessus). Ne pas relire le livret complet : il n'apporte rien de plus ici.
+3. Liens internes via `import.meta.env.BASE_URL` ; fichiers dans `site/src/pages/`.
 
 ## Vérifications
 - La page s'affiche correctement en 1920×1080 et en mobile (responsive simple).

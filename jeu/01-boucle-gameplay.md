@@ -11,7 +11,7 @@
 
 ## Détection des incidents
 - **Ligne en difficulté** : retard ≥ 10 minutes par rapport aux horaires prévus
-  (données temps réel Tanway/Lila Nantes Métropole).
+  (données temps réel Naolib GTFS-RT, Nantes Métropole).
 - **Alerte météo** : seuils Open-Meteo sur la semaine choisie (vent, précipitations,
   température) impactant certaines lignes.
 - **Conflit** : deux lignes en difficulté simultanées → **choix binaire

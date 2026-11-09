@@ -85,7 +85,7 @@ src/
     datasets.js          ← liste des jeux retenus (id, select, TTL, mapping en une phrase)
   pages/
     index.astro          ← accueil de l'édition (prompt 05)
-    oeuvres/[slug].astro ← cartel + œuvre (prompt 08)
+    [slug].astro         ← cartel + œuvre (prompt 08)
     donnees.astro        ← « Nantes en direct » : une fiche par API (source, licence, fréquence, mapping)
 public/
   data/fallback/{dataset_id}.json  ← instantanés locaux, régénérés par script
@@ -142,4 +142,4 @@ Autres règles simples :
 
 1. Quelle **source patrimoniale** (P1 à P4, ou une autre du corpus) ? Elle commande tout le reste.
 2. **Zéro ou une** API temps réel (T1 à T5) ? Le livret accepte un projet purement génératif si le mapping n'est pas justifiable.
-3. Valider l'ajout de `src/lib/nantes-api.js`, `scripts/snapshot.mjs` et de la page `/donnees/` dans les prompts 06, 11 et 12 (en cours de modification), une fois ces prompts stabilisés.
+3. ~~Intégrer `src/lib/nantes-api.js`, `scripts/snapshot.mjs` et la page `/donnees/` aux prompts~~ : fait, voir `prompts/11-donnees-vivantes-nantes.md`.
