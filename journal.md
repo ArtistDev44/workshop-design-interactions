@@ -4,6 +4,7 @@ Règle : chaque push sur la branche main ajoute une entrée dans le tableau, la 
 
 | Date | Commit | Fichiers | Résumé |
 |---|---|---|---|
+| 2026-11-09 | ce commit | prompts/14, journal.md | Prompt 14 « Nantes en régulation » complété avec toutes les décisions verrouillées Q1-Q61 (UI, boucle, table des effets base + 1d6, fins, raccourcis) ; jeu/ vérifié à jour |
 | 2026-11-09 | ce commit | jeu/00, jeu/03, jeu/05, journal.md | Q56-61 : titre « Nantes en régulation » ; table des effets verrouillée (base + 1d6) : dévier −10/+5/0, retenir −7/−12/+8 si retard>20, renfort +12/+8/−3, ne rien faire −2 à −8 jauge au hasard |
 | 2026-11-09 | ce commit | jeu/04, jeu/09, prompts/13, journal.md | Fins verrouillées (Q47-55) : 3 fins bonne/moyenne/mauvaise (score ≥240 / ≥150 / <150), scénarios (direction félicite / bilan neutre / réprimande), teinte du décor, texte de fin = bilan détaillé, 3 semaines proposées = 3 niveaux de difficulté (60/30/15 s) |
 | 2026-11-09 | ce commit | jeu/, prompts/13, journal.md | Questions 39-46 enregistrées : seuils météo dérivés des données (percentile), jauges départ 50 / effets ±5 à ±15, poids égaux (Q44 décidée), 2 fichiers JS (sketch.js + game.js), tracés via API au lancement + fallback local, fin = score combiné + jauge dominante, liste des lignes = alertes d'abord puis retard décroissant, jauge < 20 = clignotement discret |

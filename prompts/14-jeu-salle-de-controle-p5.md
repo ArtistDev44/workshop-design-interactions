@@ -10,31 +10,52 @@ Métropole + Open-Meteo), avec fallback local obligatoire (`data/fallback.json`)
 1. Créer la structure du livret : `index.html`, `sketch.js`, `game.js`,
    `style.css`, `data/fallback.json`, `assets/`, `source-sheet`, `grammar`
    (deux fichiers JS, Q41 : `sketch.js` = boucle p5, `game.js` = logique du jeu).
-2. Écran d'accueil p5.js : titre, sélection de la semaine à rejouer (dans les
-   limites de l'API, ou semaine de référence du fallback), bouton Jouer.
-3. Écran de jeu en 1920×1080 : panneau gauche = carte/liste des lignes avec leur
-   état (à l'heure / en retard / alerte) et météo du jour ; panneau droit =
-   dossier courant (retard, affluence, raison, source contradictoire éventuelle),
-   3 actions + « ne rien faire », compteur de temps, 3 jauges.
-4. Boucle : incident réel (retard ≥ 10 min, ou alerte météo Open-Meteo) → choix
-   du joueur → effets contextuels sur les jauges (fluidité, satisfaction,
-   réputation) → courte narration ancrée dans les données → incident suivant.
-   Environ 15 décisions par partie ; aucun événement inventé.
-5. Si le compteur atteint 0 sans choix : appliquer « ne rien faire ».
-6. Fallback : `data/fallback.json` contient 6 cas figés ; si l'API est
-   injoignable, bascule automatique en mode hors ligne avec indicateur discret.
+2. Écran d'accueil : titre **« Nantes en régulation »** (Q56), liste des
+   **3 semaines réelles proposées** (Q14) — chacune = un niveau de difficulté
+   (compteur 60 / 30 / 15 s, Q16+Q55) — + bouton Jouer + indicateur « mode hors
+   ligne » si l'API est injoignable (Q34). Français uniquement (Q33).
+3. Écran de jeu en 1920×1080, style carte Nantes stylisée en **géographie réelle**
+   (Q1, Q2) : tracés via API Open Data Nantes au lancement + fallback local (Q42),
+   palette custom (Q3), deux polices — monospace pour les données, sans-serif pour
+   les textes (Q4). Panneau gauche : carte + liste des lignes (alertes d'abord,
+   puis retard décroissant, Q45), état en code couleur + épaisseur — vert / orange /
+   rouge clignotant (Q29), météo du jour visible **dans le décor** (Q8, Q30).
+   Panneau droit : dossier courant avec **ligne + retard + raison en priorité**
+   (Q5), badge « contradiction » si deux sources se contredisent (Q9) — mauvaise
+   source = malus réputation + conséquence réelle (Q31) — 3 actions +
+   « ne rien faire », **compteur en barre horizontale** (Q6), 3 jauges en barres
+   horizontales compactes (Q7). Arrivée du dossier : **glissement du panneau** (Q10).
+4. Boucle : incident réel (retard ≥ 10 min, ou alerte météo Open-Meteo avec seuils
+   **dérivés des données** — extrême vs normale de la semaine, Q39) → choix du
+   joueur → effets sur les jauges → narration (ton adaptatif selon jauges, Q17) →
+   incident suivant. ~15 décisions, aucun événement inventé. Conflit de deux
+   lignes = choix binaire explicite (Q27). Si le compteur atteint 0 : « ne rien
+   faire » avec les seules conséquences naturelles du dossier (Q25).
+5. Table des effets (base + **1d6**, Q57/Q61), modificateurs contextuels (Q24) :
+   - Dévier la ligne : fluidité −10, satisfaction +5, réputation 0
+   - Retenir en terminus : fluidité −7, satisfaction −12, réputation +8 si retard > 20 min sinon +4
+   - Bus de renfort : fluidité +12, satisfaction +8, réputation −3
+   - Ne rien faire : −2 à −8 sur une jauge tirée au hasard (Q60)
+   Jauges : départ **50**, poids égaux, score combiné 0–300 (Q40, Q44). Jauge < 20 :
+   clignotement discret (Q46).
+6. Fallback : `data/fallback.json` = **6 incidents d'une vraie semaine enregistrée**
+   (Q26), semaine rejouée identique à chaque fois — seed fixe (Q35).
 7. Raccourcis clavier complets (`1`/`2`/`3` actions, `0`/`Espace` ne rien faire,
-   `Entrée` valider, `R` reset avec confirmation, `P` pause entre deux dossiers,
-   `M` son, `H` aide) — jouable sans souris.
+   `Entrée` valider, `R` reset **avec confirmation** (Q38), `P` pause uniquement
+   entre deux dossiers (Q13), `M` son ambiance + bips (Q11), `H` aide = raccourcis
+   + règles (Q12, Q20)) — jouable sans souris, touch basique (Q32).
 8. Écran de fin : **3 fins** (bonne ≥ 240, moyenne ≥ 150, mauvaise < 150 sur le
-   score combiné des 3 jauges à poids égaux) — bonne : la direction félicite,
-   décor clair ; moyenne : bilan neutre nuancé ; mauvaise : la direction
-   réprimande, décor sombre. Le texte de fin intègre le bilan détaillé (jauges,
-   dossiers traités / 15, décisions clés) ; boutons Rejouer / changer de semaine.
-   Les 3 semaines proposées à l'accueil correspondent chacune à un niveau de
-   difficulté (compteur 60 / 30 / 15 s).
-8. Respecter `prefers-reduced-motion`, contraste suffisant, aucun effet
+   score combiné, Q47/Q48) — bonne : la direction félicite, décor clair (Q49, Q53) ;
+   moyenne : bilan neutre nuancé (Q50) ; mauvaise : la direction réprimande, décor
+   sombre (Q51). Le texte de fin intègre le **bilan détaillé complet** (Q54) ;
+   faits réels de la semaine uniquement dans le bilan chiffré (Q52). Boutons
+   Rejouer / changer de semaine.
+9. Respecter `prefers-reduced-motion`, contraste suffisant, aucun effet
    stroboscopique, `pixelDensity(1)`, `randomSeed` fixé pour la reproductibilité.
+
+## Décisions verrouillées
+Toutes les décisions Q1–Q61 sont dans `jeu/` (index : `jeu/README.md`) — ce prompt
+en est le résumé exécutable.
 
 ## Vérifications
 - Le jeu se lance et reste jouable sans réseau (fallback testé).
