@@ -1,0 +1,177 @@
+---
+// Page d'une œuvre, à l'URL du framework /patrimoine-exe/nantes/001/<slug>/ (prompt 08).
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
+import Layout from '../layouts/Layout.astro';
+import Cartel from '../components/Cartel.astro';
+import { getOeuvres, slugDe, type Oeuvre } from '../lib/oeuvres';
+
+export async function getStaticPaths() {
+	const oeuvres = await getOeuvres();
+	return oeuvres.map((oeuvre) => ({ params: { slug: slugDe(oeuvre) }, props: { oeuvre } }));
+}
+
+interface Props {
+	oeuvre: Oeuvre;
+}
+
+const { oeuvre } = Astro.props;
+const { data } = oeuvre;
+const slug = slugDe(oeuvre);
+const base = import.meta.env.BASE_URL;
+
+// Un fichier n'est affiché que s'il existe vraiment dans public/ : jamais d'image cassée.
+const existe = (cheminPublic: string) => existsSync(join(process.cwd(), 'public', cheminPublic));
+
+const captations = [
+	{ fichier: data.assets.hero, legende: 'Vue d’ensemble' },
+	{ fichier: data.assets.detail, legende: 'Détail' },
+	{ fichier: data.assets.process, legende: 'Processus' },
+].map((c) => ({
+	...c,
+	chemin: c.fichier && existe(`oeuvres/${slug}/${c.fichier}`) ? `${base}oeuvres/${slug}/${c.fichier}` : null,
+}));
+
+const qr = existe(`assets/qr-${slug}.png`) ? `${base}assets/qr-${slug}.png` : null;
+const lienOeuvre = data.lien_oeuvre ? `${base}${data.lien_oeuvre.replace(/^\//, '')}` : null;
+const chaine = ['Source', 'Grammaire', 'Algorithme', 'Data / interaction', 'Œuvre'];
+---
+
+<Layout title={data.titre} description={`${data.titre} — œuvre ${data.id} de l'édition PATRIMOINE.EXE / Nantes 001.`}>
+	<p class="retour"><a href={`${base}oeuvres/`}>← Toutes les œuvres</a></p>
+
+	<Cartel oeuvre={oeuvre} />
+
+	{
+		lienOeuvre && (
+			<p class="lancer">
+				<a class="bouton" href={lienOeuvre}>
+					Lancer l’œuvre →
+				</a>
+			</p>
+		)
+	}
+
+	<section aria-labelledby="t-chaine" class="bloc">
+		<h2 id="t-chaine">Chaîne de l’œuvre</h2>
+		<ol class="chaine">
+			{chaine.map((etape) => <li>{etape}</li>)}
+		</ol>
+	</section>
+
+	<section aria-labelledby="t-captation" class="bloc">
+		<h2 id="t-captation">Captation</h2>
+		<div class="captations">
+			{
+				captations.map((c) => (
+					<figure>
+						{c.chemin ? (
+							<img src={c.chemin} alt={`${c.legende} de l’œuvre « ${data.titre} »`} loading="lazy" />
+						) : (
+							<div class="absent">Captation à venir</div>
+						)}
+						<figcaption>{c.legende}</figcaption>
+					</figure>
+				))
+			}
+		</div>
+	</section>
+
+	{
+		qr && (
+			<section aria-labelledby="t-qr" class="bloc">
+				<h2 id="t-qr">Voir en ligne</h2>
+				<img class="qr" src={qr} alt={`QR code vers la page en ligne de « ${data.titre} »`} width="200" height="200" />
+			</section>
+		)
+	}
+
+	{
+		data.ai_usage && (
+			<section aria-labelledby="t-ia" class="bloc">
+				<h2 id="t-ia">AI usage</h2>
+				<p>{data.ai_usage}</p>
+			</section>
+		)
+	}
+</Layout>
+
+<style>
+	.retour {
+		font-size: var(--t-petit);
+		margin-bottom: var(--e-4);
+	}
+	.bloc {
+		max-width: 860px;
+		margin-bottom: var(--e-5);
+	}
+	.bloc h2 {
+		font-size: var(--t-m);
+	}
+	.bouton {
+		display: inline-block;
+		padding: var(--e-2) var(--e-4);
+		background: var(--c-primaire);
+		color: var(--c-fond);
+		border-radius: var(--r-md);
+		text-decoration: none;
+		font-weight: 600;
+	}
+	.bouton:hover {
+		background: var(--c-texte);
+		color: var(--c-fond);
+	}
+	.lancer {
+		margin-bottom: var(--e-5);
+	}
+	.chaine {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--e-2);
+		font-family: var(--f-mono);
+		font-size: var(--t-petit);
+	}
+	.chaine li {
+		padding: var(--e-1) var(--e-3);
+		background: var(--c-fond-alt);
+		border-radius: var(--r-md);
+	}
+	.chaine li:not(:last-child)::after {
+		content: ' →';
+		color: var(--c-primaire);
+	}
+	.captations {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+		gap: var(--e-3);
+	}
+	figure {
+		margin: 0;
+	}
+	figure img,
+	.absent {
+		width: 100%;
+		aspect-ratio: 3 / 2;
+		object-fit: cover;
+		border-radius: var(--r-md);
+	}
+	.absent {
+		display: grid;
+		place-items: center;
+		background: var(--c-fond-alt);
+		font-family: var(--f-mono);
+		font-size: var(--t-petit);
+		color: var(--c-texte-doux);
+	}
+	figcaption {
+		font-size: var(--t-petit);
+		color: var(--c-texte-doux);
+		margin-top: var(--e-1);
+	}
+	.qr {
+		image-rendering: pixelated;
+	}
+</style>
