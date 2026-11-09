@@ -1,8 +1,8 @@
 # 05 — UI et écrans (salle de contrôle, 1920×1080)
 
 ## Écrans
-1. **Écran d'accueil** : titre, sélection de la semaine réelle à rejouer
-   (dans les limites de l'API), bouton Jouer.
+1. **Écran d'accueil** (Q34) : titre, **liste des semaines proposées** (Q14) +
+   bouton Jouer + indicateur discret « mode hors ligne » si l'API est injoignable.
 2. **Écran de jeu (principal)** : salle de contrôle à panneaux —
    - **Panneau gauche** : carte/liste des lignes du réseau avec leur état
      (à l'heure / en retard / en alerte), météo du jour.
@@ -29,4 +29,8 @@
   en dessous.
 - **Contradiction de données** : badge « contradiction » sur le dossier.
 - **Arrivée d'un dossier** : le panneau glisse depuis la droite.
+- **État des lignes sur la carte** (Q29) : code couleur + épaisseur — vert = à
+  l'heure, orange = retard, **rouge clignotant = incident actif**.
+- **Décor météo** (Q8, Q30) : la météo réelle du jour se voit dans le décor.
+- **Conflit de deux lignes** (Q27) : écran « quelle ligne traiter en priorité ? ».
 - Le contraste doit rester suffisant pour les informations de médiation.

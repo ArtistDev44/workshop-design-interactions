@@ -7,11 +7,12 @@
 | `0` ou `Espace` | « Ne rien faire » |
 | `Entrée` | Valider / avancer (écran d'accueil, narration, fin) |
 | `P` | Pause — **uniquement entre deux dossiers** (jamais pendant un compteur actif) |
-| `R` | Reset de la partie en cours |
+| `R` | Reset de la partie en cours — **avec confirmation** « recommencer la semaine ? » (Q38) |
 | `M` | Couper / réactiver le son |
 | `H` ou `?` | Écran d'aide : **raccourcis + règles du jeu** (seuil 10 min, 3 actions + « ne rien faire », jauges) |
 | Clic / touch | Sélectionner une action, une ligne sur la carte, un bouton |
 
 ## Règles
-- Alternative clavier complète : le jeu est jouable **sans souris**.
+- Alternative clavier complète : le jeu est jouable **sans souris** ; le tactile
+  couvre les boutons principaux (clavier/souris + touch basique, Q32).
 - Respecter `prefers-reduced-motion` pour les animations d'interface.

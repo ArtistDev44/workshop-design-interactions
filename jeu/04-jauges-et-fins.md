@@ -19,7 +19,7 @@ Le bilan final combine les trois jauges :
 
 Le texte de fin raconte la semaine rejouée du point de vue de la salle de contrôle.
 
-## Écran de fin (décision verrouillée Q18)
-Texte de fin + valeurs finales des trois jauges + **bilan détaillé** (nombre de
-dossiers traités, meilleures/mauvaises décisions de la semaine) + boutons
-Rejouer / changer de semaine.
+## Écran de fin (décisions verrouillées Q18, Q37)
+Texte de fin + valeurs finales des trois jauges + **bilan détaillé** : nombre de
+dossiers traités / 15 et **décisions clés** (celles qui ont le plus fait monter /
+baisser les jauges) + boutons Rejouer / changer de semaine.

@@ -14,12 +14,14 @@
   (données temps réel Tanway/Lila Nantes Métropole).
 - **Alerte météo** : seuils Open-Meteo sur la semaine choisie (vent, précipitations,
   température) impactant certaines lignes.
-- **Conflit** : deux lignes en difficulté simultanées → le joueur choisit
-  laquelle traiter en priorité.
+- **Conflit** : deux lignes en difficulté simultanées → **choix binaire
+  explicite** « quelle ligne traiter en priorité ? » (Q27).
+- Répartition lignes / alertes météo : selon les données réelles de l'API (Q36).
 
 ## Paramètres de la boucle
 - Environ **15 décisions** par partie (une semaine rejouée).
 - **Compteur de temps** actif par décision, **30 secondes par défaut** (barre
-  horizontale) ; à 0, le choix par défaut est « ne rien faire » (conséquences
-  appliquées quand même).
+  horizontale) ; à 0, « ne rien faire » s'applique avec **les seules
+  conséquences naturelles de l'incident non traité** — aucun malus
+  supplémentaire (Q25).
 - Fin de partie après le 15e dossier → écran de bilan et fin selon les jauges.

@@ -4,6 +4,7 @@ Règle : chaque push sur la branche main ajoute une entrée dans le tableau, la 
 
 | Date | Commit | Fichiers | Résumé |
 |---|---|---|---|
+| 2026-11-09 | ce commit | jeu/, journal.md | Questions 21-38 enregistrées dans jeu/ : tout le réseau, semaine live + archive, affluence réelle seule, table fixe + modificateurs (Q24 décidée), timer à 0 = conséquences naturelles, fallback = 6 incidents réels, conflit = choix binaire, communiquer = effet secondaire, carte = code couleur + épaisseur, décor = météo du jour, mauvaise source = malus réputation + conséquence réelle, clavier/souris + touch basique, français uniquement, accueil minimal, rejouer = seed fixe, répartition selon API, bilan = jauges + dossiers + décisions clés, reset avec confirmation |
 | 2026-11-09 | ce commit | jeu/, journal.md | Décisions de design verrouillées (20 questions) enregistrées dans jeu/ : carte Nantes stylisée en géographie réelle, palette custom, 2 polices, météo dans le décor, barre horizontale timer 30 s, 3 barres de jauges, badge contradiction, glissement panneau, ambiance + bips, aide H, pause entre dossiers, liste de semaines, difficulté = timer 60/30/15 s, ton adaptatif, bilan détaillé, meilleur bilan localStorage |
 | 2026-11-09 | ce commit | jeu/, todo.md, prompts/13, prompts/README.md, journal.md | Ajout du cadrage du jeu « Salle de contrôle Nantes » : répertoire jeu/ (11 fichiers .md de fonctionnalités), section jeu dans todo.md, prompt 13 p5.js |
 |---|---|---|---|
