@@ -7,8 +7,9 @@ des décisions de régulation à partir de données réelles (API Tanway/Lila Na
 Métropole + Open-Meteo), avec fallback local obligatoire (`data/fallback.json`).
 
 ## Instructions
-1. Créer la structure du livret : `index.html`, `sketch.js`, `style.css`,
-   `data/fallback.json`, `assets/`, `source-sheet`, `grammar`.
+1. Créer la structure du livret : `index.html`, `sketch.js`, `game.js`,
+   `style.css`, `data/fallback.json`, `assets/`, `source-sheet`, `grammar`
+   (deux fichiers JS, Q41 : `sketch.js` = boucle p5, `game.js` = logique du jeu).
 2. Écran d'accueil p5.js : titre, sélection de la semaine à rejouer (dans les
    limites de l'API, ou semaine de référence du fallback), bouton Jouer.
 3. Écran de jeu en 1920×1080 : panneau gauche = carte/liste des lignes avec leur

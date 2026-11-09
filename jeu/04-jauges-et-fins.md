@@ -1,6 +1,9 @@
 # 04 — Jauges et fins
 
-## Les trois jauges (0–100)
+## Les trois jauges (0–100, décisions Q40, Q44)
+- **Valeur de départ : 50** ; chaque action modifie une jauge de **±5 à ±15**
+  points selon le contexte.
+- **Poids égaux** dans le score combiné (Q44, décidé : score = somme des 3 jauges).
 | Jauge | Ce qu'elle mesure |
 |---|---|
 | Fluidité du réseau | Retards absorbés, trafic global de la semaine |
@@ -10,7 +13,12 @@
 Chaque action modifie les jauges selon le **contexte** du dossier (météo,
 heure de pointe, affluence, source de données choisie en cas de contradiction).
 
-## Fins multiples
+## Fins multiples (Q43)
+Le bilan final calcule un **score combiné** (somme des 3 jauges, poids égaux) ;
+la **jauge dominante** départage. Si une jauge passe **sous 20**, la jauge
+clignote discrètement en cours de partie (Q46) et la fin « semaine noire »
+s'applique.
+
 Le bilan final combine les trois jauges :
 - **Fin « Réseau fluide »** : fluidité dominante en fin de semaine.
 - **Fin « Usagers entendus »** : satisfaction dominante.

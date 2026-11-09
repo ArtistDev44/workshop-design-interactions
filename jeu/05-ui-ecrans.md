@@ -4,8 +4,9 @@
 1. **Écran d'accueil** (Q34) : titre, **liste des semaines proposées** (Q14) +
    bouton Jouer + indicateur discret « mode hors ligne » si l'API est injoignable.
 2. **Écran de jeu (principal)** : salle de contrôle à panneaux —
-   - **Panneau gauche** : carte/liste des lignes du réseau avec leur état
-     (à l'heure / en retard / en alerte), météo du jour.
+   - **Panneau gauche** : carte du réseau (tracés API au lancement + fallback
+     local, Q42) + liste des lignes avec leur état — **alertes d'abord, puis tri
+     par retard décroissant** (Q45) — et météo du jour dans le décor (Q30).
    - **Panneau droit** : dossier courant (données de l'incident), les 3 actions
      + « ne rien faire », le compteur de temps, les trois jauges.
 3. **Écran de narration** : court texte entre deux décisions.

@@ -16,7 +16,10 @@ l'API**, sans ratio fixe (Q36).
 
 ## Mapping API → incident
 - Retard réel ≥ 10 min sur une ligne → dossier « ligne en difficulté ».
-- Vent / précipitations / température hors seuils → dossier « alerte météo ».
+- Vent / précipitations / température **extrêmes par rapport à la normale de la
+  semaine** (seuils dérivés des données, percentile — Q39) → dossier « alerte météo ».
+- Tracés géographiques des lignes : récupérés via l'**API Open Data Nantes au
+  lancement**, avec **fallback local** si indisponible (Q42).
 - Données contradictoires (horaire prévu vs retard réel, ou deux sources API en
   désaccord) → **badge « contradiction »** sur le dossier (Q9) ; choisir la
   mauvaise source entraîne un **malus de réputation + la conséquence réelle** du
