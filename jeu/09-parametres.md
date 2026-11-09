@@ -1,11 +1,12 @@
 # 09 — Paramètres
 
 ## Paramètres réglés (décisions verrouillées Q11–Q16, Q19)
-- **Semaine à rejouer** : **liste de semaines proposées** à l'accueil (dans les
-  limites de l'API), plus l'option « semaine de référence hors ligne ».
+- **Semaine à rejouer** : **liste de 3 semaines réelles proposées** à l'accueil
+  (dans les limites de l'API), plus l'option « semaine de référence hors ligne ».
+  **Chaque semaine correspond à un niveau de difficulté** (Q55).
 - **Mode en ligne / hors ligne** : forcer le fallback local.
-- **Durée du compteur** : **30 s par défaut** ; difficulté = timer uniquement
-  (facile 60 s / normal 30 s / difficile 15 s).
+- **Durée du compteur** : liée à la semaine choisie (Q16, Q55) — semaine facile
+  60 s / normale 30 s / difficile 15 s par décision.
 - **Son** : **ambiance de salle de contrôle + bips d'interface**, activé / coupé (`M`).
 - **Accessibilité** : réduction des animations (`prefers-reduced-motion`),
   contraste renforcé, taille du texte.

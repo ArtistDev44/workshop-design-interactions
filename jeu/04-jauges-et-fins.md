@@ -13,21 +13,24 @@
 Chaque action modifie les jauges selon le **contexte** du dossier (météo,
 heure de pointe, affluence, source de données choisie en cas de contradiction).
 
-## Fins multiples (Q43)
-Le bilan final calcule un **score combiné** (somme des 3 jauges, poids égaux) ;
-la **jauge dominante** départage. Si une jauge passe **sous 20**, la jauge
-clignote discrètement en cours de partie (Q46) et la fin « semaine noire »
-s'applique.
+## Les 3 fins (Q47–Q55)
+**3 fins au total : bonne, moyenne, mauvaise** — déterminées par le **score
+combiné** (somme des 3 jauges, 0–300, poids égaux Q44) :
 
-Le bilan final combine les trois jauges :
-- **Fin « Réseau fluide »** : fluidité dominante en fin de semaine.
-- **Fin « Usagers entendus »** : satisfaction dominante.
-- **Fin « Salle exemplaire »** : réputation dominante.
-- **Fin « Semaine noire »** : au moins une jauge sous un seuil critique.
+| Fin | Seuil (Q48) | Scénario (Q49–Q51) | Ambiance (Q53) |
+|---|---|---|---|
+| **Bonne** | score ≥ 240 | La **direction félicite** la salle de contrôle | Décor clair, ensoleillé |
+| **Moyenne** | 150 ≤ score < 240 | **Bilan neutre nuancé** : semaine correcte, quelques incidents mal gérés | Décor neutre |
+| **Mauvaise** | score < 150 | La **direction réprimande**, en citant les incidents mal gérés | Décor sombre, pluvieux |
 
-Le texte de fin raconte la semaine rejouée du point de vue de la salle de contrôle.
+- Si une jauge passe **sous 20** en cours de partie : clignotement discret de la
+  jauge (Q46).
+- Le **texte de fin intègre le bilan détaillé complet** (Q54) : il reste générique
+  sur les faits — les données concrètes de la semaine (pire retard, décisions clés)
+  n'apparaissent que dans le bilan chiffré (Q52).
+- **Boutons** (Q55, décidé) : Rejouer la même semaine / changer de semaine.
 
 ## Écran de fin (décisions verrouillées Q18, Q37)
-Texte de fin + valeurs finales des trois jauges + **bilan détaillé** : nombre de
-dossiers traités / 15 et **décisions clés** (celles qui ont le plus fait monter /
-baisser les jauges) + boutons Rejouer / changer de semaine.
+Texte de fin (= bilan détaillé narratif, Q54) + valeurs finales des trois jauges +
+nombre de dossiers traités / 15 + **décisions clés** (Q37) + teinte du décor selon
+la fin (Q53) + boutons Rejouer / changer de semaine.

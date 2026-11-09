@@ -24,7 +24,15 @@ Métropole + Open-Meteo), avec fallback local obligatoire (`data/fallback.json`)
 6. Fallback : `data/fallback.json` contient 6 cas figés ; si l'API est
    injoignable, bascule automatique en mode hors ligne avec indicateur discret.
 7. Raccourcis clavier complets (`1`/`2`/`3` actions, `0`/`Espace` ne rien faire,
-   `Entrée` valider, `R` reset, `M` son, `H` aide) — jouable sans souris.
+   `Entrée` valider, `R` reset avec confirmation, `P` pause entre deux dossiers,
+   `M` son, `H` aide) — jouable sans souris.
+8. Écran de fin : **3 fins** (bonne ≥ 240, moyenne ≥ 150, mauvaise < 150 sur le
+   score combiné des 3 jauges à poids égaux) — bonne : la direction félicite,
+   décor clair ; moyenne : bilan neutre nuancé ; mauvaise : la direction
+   réprimande, décor sombre. Le texte de fin intègre le bilan détaillé (jauges,
+   dossiers traités / 15, décisions clés) ; boutons Rejouer / changer de semaine.
+   Les 3 semaines proposées à l'accueil correspondent chacune à un niveau de
+   difficulté (compteur 60 / 30 / 15 s).
 8. Respecter `prefers-reduced-motion`, contraste suffisant, aucun effet
    stroboscopique, `pixelDensity(1)`, `randomSeed` fixé pour la reproductibilité.
 
