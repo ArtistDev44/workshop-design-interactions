@@ -39,8 +39,8 @@ Métropole + Open-Meteo), avec fallback local obligatoire (`data/fallback.json`)
    du dossier (Q25).
 5. Table des effets (base + **1d6**, Q57/Q61), modificateurs contextuels (Q24) :
    - Dévier la ligne : fluidité −10, satisfaction +5, réputation 0
-   - Retenir en terminus : fluidité −7, satisfaction −12, réputation +8 si retard > 20 min sinon +4
-   - Bus de renfort : fluidité +12, satisfaction +8, réputation −3
+   - Retenir en terminus : fluidité −7, satisfaction −12, réputation +8 si retard > 20 min sinon +4 (Q58)
+   - Bus de renfort : fluidité +12, satisfaction +8, réputation −3 (Q59)
    - Ne rien faire : −2 à −8 sur une jauge tirée au hasard (Q60)
    Jauges : départ **50**, poids égaux, score combiné 0–300 (Q40, Q44). Jauge < 20 :
    clignotement discret (Q46).
