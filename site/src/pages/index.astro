@@ -1,10 +1,261 @@
 ---
+// Page d'accueil de l'édition NTE001 (prompt 05).
+// Textes issus du framework PATRIMOINE.EXE et de todo.md : aucun contenu inventé.
 import Layout from '../layouts/Layout.astro';
+import edition from '../data/edition.json';
+
+const base = import.meta.env.BASE_URL;
+
+const compteurs = [
+	{ valeur: edition.compteurs.villes_activees, label: 'ville activée' },
+	{ valeur: edition.compteurs.institutions_hotes, label: 'institution hôte' },
+	{ valeur: edition.compteurs.oeuvres_publiques, label: 'œuvre publique' },
+];
+
+const chaine = ['Source', 'Grammaire', 'Système', 'Œuvre'];
+
+// Principes de l'édition, dans l'ordre de todo.md
+const principes = [
+	'Une source réelle avant un style.',
+	'Un système stable avant une technologie supplémentaire.',
+	'Un mapping justifié avant une API.',
+	'Une œuvre exposable avant une démonstration de code.',
+];
+
+const appels = [
+	{ href: 'oeuvres/', titre: 'Œuvres', texte: 'La galerie des œuvres de l’édition.' },
+	{ href: 'catalogue/', titre: 'Catalogue', texte: 'L’archive complète, œuvre par œuvre.' },
+	{ href: 'methode/', titre: 'Méthode', texte: 'Le protocole PATRIMOINE.EXE en 10 étapes.' },
+];
 ---
 
 <Layout>
-	<main>
-		<h1>PATRIMOINE.EXE · NTE001</h1>
-		<p>Site de l'édition Nantes 001 — ESD Nantes, B3 Design, 9, 10 &amp; 12 novembre 2026.</p>
-	</main>
+	<section class="edition" aria-labelledby="titre-edition">
+		<p class="edition__surtitre mono">
+			{edition.edition} · {edition.host} · {edition.type}
+		</p>
+		<h1 id="titre-edition">
+			<span>PATRIMOINE.EXE</span>
+			<span class="edition__ville">{edition.city.toUpperCase()} {edition.numero}</span>
+		</h1>
+		<p class="edition__infos">
+			Édition pilote · {edition.programme} · 9, 10 &amp; 12 novembre {edition.year}
+		</p>
+	</section>
+
+	<section class="manifeste" aria-labelledby="titre-manifeste">
+		<h2 id="titre-manifeste" class="visuellement-cache">Manifeste</h2>
+		<blockquote lang="fr">
+			<p>
+				« Le patrimoine n’est pas une banque de formes à copier, mais un ensemble de structures,
+				de savoirs, de gestes et de mémoires que l’on peut étudier, formaliser et reprogrammer. »
+			</p>
+		</blockquote>
+		<blockquote lang="en" class="manifeste__en">
+			<p>
+				“Heritage is not a bank of forms to copy, but a set of structures, knowledge, gestures
+				and memories that can be studied, formalized and reprogrammed.”
+			</p>
+		</blockquote>
+		<p class="manifeste__source">— Framework PATRIMOINE.EXE</p>
+	</section>
+
+	<section aria-labelledby="titre-compteurs">
+		<h2 id="titre-compteurs" class="visuellement-cache">L’édition en chiffres</h2>
+		<ul class="compteurs">
+			{
+				compteurs.map((c) => (
+					<li>
+						<span class="compteurs__valeur">{c.valeur}</span>
+						<span class="compteurs__label">{c.label}</span>
+					</li>
+				))
+			}
+		</ul>
+	</section>
+
+	<section class="chaine" aria-labelledby="titre-chaine">
+		<h2 id="titre-chaine">La chaîne à tenir</h2>
+		<ol class="chaine__liste">
+			{
+				chaine.map((c, i) => (
+					<li>
+						<span class="chaine__num mono">0{i + 1}</span>
+						<span class="chaine__etape">{c}</span>
+					</li>
+				))
+			}
+		</ol>
+		<ul class="principes">
+			{principes.map((p) => <li>{p}</li>)}
+		</ul>
+	</section>
+
+	<nav class="appels" aria-label="Explorer l’édition">
+		{
+			appels.map((a) => (
+				<a class="appel" href={`${base}${a.href}`}>
+					<span class="appel__titre">{a.titre} →</span>
+					<span class="appel__texte">{a.texte}</span>
+				</a>
+			))
+		}
+	</nav>
 </Layout>
+
+<style>
+	section {
+		margin-bottom: var(--e-6);
+	}
+
+	/* En-tête éditorial */
+	.edition__surtitre {
+		font-size: var(--t-petit);
+		color: var(--c-texte-doux);
+		margin-bottom: var(--e-2);
+	}
+	.edition h1 {
+		font-size: var(--t-xxl);
+		line-height: 0.95;
+		display: flex;
+		flex-direction: column;
+		margin-bottom: var(--e-3);
+	}
+	.edition__ville {
+		color: var(--c-primaire);
+	}
+	.edition__infos {
+		font-size: var(--t-s);
+	}
+
+	/* Manifeste */
+	.manifeste {
+		border-left: 6px solid var(--c-tertiaire);
+		padding-left: var(--e-4);
+	}
+	blockquote {
+		margin: 0 0 var(--e-3);
+	}
+	blockquote p {
+		font-family: var(--f-titre);
+		font-size: var(--t-m);
+		line-height: 1.2;
+		max-width: 40ch;
+		margin: 0;
+	}
+	.manifeste__en p {
+		font-size: var(--t-s);
+		color: var(--c-texte-doux);
+		font-style: italic;
+	}
+	.manifeste__source {
+		font-size: var(--t-petit);
+		color: var(--c-texte-doux);
+	}
+
+	/* Compteurs */
+	.compteurs {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+		gap: var(--e-3);
+	}
+	.compteurs li {
+		border-top: 4px solid var(--c-primaire);
+		padding-top: var(--e-2);
+		display: flex;
+		flex-direction: column;
+	}
+	.compteurs__valeur {
+		font-family: var(--f-titre);
+		font-size: var(--t-xl);
+		font-weight: 700;
+		line-height: 1;
+	}
+	.compteurs__label {
+		font-size: var(--t-petit);
+		color: var(--c-texte-doux);
+	}
+
+	/* Chaîne source → grammaire → système → œuvre */
+	.chaine__liste {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: grid;
+		gap: var(--e-3);
+		counter-reset: none;
+	}
+	.chaine__liste li {
+		position: relative;
+		display: flex;
+		flex-direction: column;
+		gap: var(--e-1);
+		padding: var(--e-3);
+		background: var(--c-fond-alt);
+		border-radius: var(--r-md);
+	}
+	.chaine__num {
+		font-size: var(--t-petit);
+		color: var(--c-texte-doux);
+	}
+	.chaine__etape {
+		font-family: var(--f-titre);
+		font-size: var(--t-m);
+		font-weight: 600;
+		color: var(--c-primaire);
+	}
+	.principes {
+		margin: var(--e-4) 0 0;
+		padding-left: var(--e-4);
+		font-size: var(--t-petit);
+	}
+	@media (min-width: 720px) {
+		.chaine__liste {
+			grid-template-columns: repeat(4, 1fr);
+		}
+		/* Flèches entre les étapes, décoratives (non lues) */
+		.chaine__liste li:not(:last-child)::after {
+			content: '→';
+			position: absolute;
+			right: calc(var(--e-3) * -1);
+			top: 50%;
+			transform: translate(50%, -50%);
+			font-size: var(--t-m);
+			color: var(--c-tertiaire);
+			z-index: 1;
+		}
+	}
+
+	/* Appels */
+	.appels {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+		gap: var(--e-3);
+	}
+	.appel {
+		display: flex;
+		flex-direction: column;
+		gap: var(--e-1);
+		padding: var(--e-4);
+		border: 2px solid var(--c-texte);
+		border-radius: var(--r-lg);
+		text-decoration: none;
+		color: var(--c-texte);
+		transition: background-color var(--transition), color var(--transition);
+	}
+	.appel:hover {
+		background: var(--c-primaire);
+		color: var(--c-fond);
+	}
+	.appel__titre {
+		font-family: var(--f-titre);
+		font-size: var(--t-m);
+		font-weight: 600;
+	}
+	.appel__texte {
+		font-size: var(--t-petit);
+	}
+</style>
