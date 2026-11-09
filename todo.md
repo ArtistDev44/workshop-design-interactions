@@ -78,6 +78,23 @@ Aucun travail obligatoire. Sauvegarde et relecture des notes possibles, rien de 
 - [ ] 15:00 Micro-exposition + soutenance
 - [ ] 16:15 Collecte + debrief : structure de dossier conforme au livret, archive complète, dépôt final
 
+## Jeu — Salle de contrôle Nantes (œuvre p5.js)
+
+Le jeu est décrit fichier par fichier dans `jeu/` (concept, boucle, API, actions,
+jauges, UI, narration, fallback, raccourcis, paramètres, accessibilité).
+
+- [ ] Lire `jeu/00-concept.md` et valider la phrase-problématique
+- [ ] Fiche-source V1 : données Tanway/Lila Nantes Métropole + Open-Meteo (archive semaine choisie)
+- [ ] Sketch minimal p5.js : salle de contrôle à deux panneaux (carte/liste des lignes à gauche, dossier à droite)
+- [ ] Boucle incident → 3 actions + « ne rien faire » → jauges contextuelles → narration
+- [ ] Mapping API : retard ≥ 10 min = dossier ; alertes météo Open-Meteo = dossiers
+- [ ] 15 décisions par partie, semaine réelle sélectionnée au lancement, aucun événement inventé
+- [ ] Compteur de temps par décision ; à 0, « ne rien faire » appliqué
+- [ ] 3 jauges (fluidité, satisfaction, réputation) + fins multiples selon le bilan
+- [ ] `data/fallback.json` : 6 cas figés, mode hors ligne jouable
+- [ ] Raccourcis clavier complets (`jeu/08-raccourcis.md`), reset `R`, test 1920×1080
+- [ ] Accessibilité : `prefers-reduced-motion`, contraste, jouable sans souris et sans audio
+
 ## Contrôles qualité
 
 ### Obligatoires du livret
