@@ -23,6 +23,7 @@ thème. Aucun autre starter n'est requis.
 - `contexte/PATRIMOINE.EXE — International Computational Heritage Framework.md` — framework (registre machine-readable, identifiants `PXE-NTE001-G{nn}-W{nn}`, URL `/patrimoine-exe/nantes/001/slug/`, statuts STUDENT / SELECTED / COLLECTION, vitrine publique).
 - `contexte/instructions-personnelles.md` — règles de travail du projet (todo, journal, chaîne source → grammaire → système → œuvre).
 - `todo.md` — vue d'ensemble du protocole 3 jours, jalons de la semaine et QR code vers le site en ligne.
+- `jeu/` — description fichier par fichier du jeu « Salle de contrôle Nantes » (concept, boucle, API, actions, jauges, UI, narration, fallback, raccourcis, paramètres, accessibilité).
 - `journal.md` — journal des pushes du dépôt, une ligne par push.
 
 ## Chaîne à tenir du début à la fin
@@ -46,3 +47,4 @@ jamais l'inverse.
 | 10 | `10-methode-ressources-credits.md` | Pages protocole, corpus Nantes, crédits/brand |
 | 11 | `11-accessibilite-robustesse.md` | Contrôles accessibilité + checklist de robustesse |
 | 12 | `12-build-deploiement-qr.md` | Build, test hors ligne, déploiement GitHub Pages, README |
+| 13 | `13-jeu-salle-de-controle-p5.md` | Jeu « Salle de contrôle Nantes » (œuvre p5.js décrite dans `jeu/`) |
