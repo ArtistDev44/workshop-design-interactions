@@ -19,7 +19,7 @@
 
 ## Décisions de design verrouillées (Q1–Q10)
 - **Style** : carte Nantes stylisée en fond, avec **géographie réelle** des lignes.
-- **Palette** : custom, propre au jeu (pas les couleurs officielles Tanway).
+- **Palette** : custom, propre au jeu (pas les couleurs officielles Naolib).
 - **Typographie** : deux polices — monospace pour les données chiffrées,
   sans-serif pour les textes et boutons.
 - **Météo** : visible directement dans le décor (nuages, pluie, soleil…), pas

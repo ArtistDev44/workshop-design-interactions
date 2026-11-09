@@ -11,7 +11,7 @@ Le site est la vitrine publique de l'édition (framework : « Vitrine publique �
 machine-readable). Voir `contexte/` et `prompts/README.md`.
 
 ## Instructions
-1. Dans le dossier parent choisi, exécuter : `npm create astro@latest .` et sélectionner le
+1. Fait le 9 nov. 2026 dans le sous-dossier `site/` du dépôt (`npm create astro@latest site -- --template basics`). Pour refaire : `npm create astro@latest .` et sélectionner le
    thème **Basics** (https://preview.astro.new/basics/) — ou copier directement le dépôt du
    thème depuis cette page (ou créer le projet dans un dossier `PXE_NTE001_SITE/` puis
    déplacer son contenu à la racine).

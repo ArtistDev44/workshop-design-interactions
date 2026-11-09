@@ -74,4 +74,4 @@ Le site est statique et doit rester fluide sans API distante. Trois leviers, dan
 2. **Révélation au scroll** avec `IntersectionObserver` (léger, vanilla JS) pour faire apparaître les cartes des œuvres.
 3. **View Transitions API** d'Astro (`<ViewTransitions />`) pour des changements de page fluides entre la galerie et les cartels.
 
-Contraintes d'accessibilité (prompts 04 et 11) : toujours respecter `prefers-reduced-motion` (désactiver ou réduire les animations), jamais d'animation flashante ni d'effet stroboscopique, durées courtes et easing doux. Une animation doit rendre la chaîne source → grammaire → système → œuvre plus lisible, jamais l'inverse.
+Contraintes d'accessibilité (prompts 04 et 12) : toujours respecter `prefers-reduced-motion` (désactiver ou réduire les animations), jamais d'animation flashante ni d'effet stroboscopique, durées courtes et easing doux. Une animation doit rendre la chaîne source → grammaire → système → œuvre plus lisible, jamais l'inverse.
