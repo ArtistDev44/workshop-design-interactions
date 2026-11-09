@@ -1,0 +1,41 @@
+{
+  "id": "PXE-NTE001-G01-W01",
+  "titre": "Nantes en régulation",
+  "auteurs": ["[À COMPLÉTER]"],
+  "groupe": "[À COMPLÉTER]",
+  "statut": "STUDENT",
+  "source": {
+    "titre": "Réseau de transports collectifs Naolib — flux temps réel GTFS-RT (retards, alertes) et météo Open-Meteo",
+    "lieu": "Nantes Métropole",
+    "type": "Données ouvertes temps réel",
+    "url": "https://data.nantesmetropole.fr/explore/dataset/244400404_reseau-transports-collectifs-naolib/",
+    "date_acces": "2026-11-09",
+    "droits": "Licence Ouverte (Nantes Métropole) ; Open-Meteo : [À COMPLÉTER]"
+  },
+  "grammaire": {
+    "regle": "Un retard réel d'au moins 10 minutes sur une ligne, ou une alerte météo extrême par rapport à la normale de la semaine, devient un dossier à trancher.",
+    "invariants": [
+      "Seuil de retard : 10 minutes",
+      "3 actions + « ne rien faire »",
+      "3 jauges : fluidité du réseau, satisfaction usagers, réputation de la salle de contrôle",
+      "Aucun événement inventé"
+    ],
+    "variables": [
+      "Semaine réelle rejouée",
+      "Météo de la semaine",
+      "Heure de pointe",
+      "Tirage 1d6 ajouté aux effets de base"
+    ]
+  },
+  "parametres": [
+    { "nom": "Semaine à rejouer", "effet": "Choisit les incidents réels et le niveau de difficulté." },
+    { "nom": "Durée du compteur", "effet": "60, 30 ou 15 secondes par décision selon la semaine : règle la pression du temps." },
+    { "nom": "Mode en ligne / hors ligne", "effet": "Données réelles du jour ou semaine de référence enregistrée (fallback local)." }
+  ],
+  "stack": "p5.js 1.11.11, JavaScript, flux GTFS-RT Naolib, Open-Meteo",
+  "mode": "interactif",
+  "fallback": "6 incidents d'une vraie semaine enregistrée dans data/fallback.json ; la semaine est rejouée à l'identique (seed fixe) avec un indicateur « mode hors ligne ».",
+  "datasets": ["244400404_reseau-transports-collectifs-naolib"],
+  "cartel": "Nantes en régulation place le visiteur dans une salle de contrôle des transports en commun nantais. Il y rejoue une semaine réelle du réseau de tram et de bus : chaque incident tiré des données réelles, un retard d'au moins dix minutes ou une alerte météo, devient un dossier à trancher sous la pression d'un compteur. Trois actions sont possibles, ou bien ne rien faire. Chaque décision modifie trois jauges, la fluidité du réseau, la satisfaction des usagers et la réputation de la salle de contrôle, selon le contexte météo et l'heure. Aucun événement n'est inventé : tous les dossiers viennent des données réelles de la semaine.",
+  "assets": {}
+}

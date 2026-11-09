@@ -8,14 +8,29 @@
   "type": "STUDIO",
   "programme": "B3 Design",
   "label": "Pilot edition · B3 Design · 9, 10 & 12 Nov. 2026",
-  "dates": ["2026-11-09", "2026-11-10", "2026-11-12"],
+  "dates": [
+    "2026-11-09",
+    "2026-11-10",
+    "2026-11-12"
+  ],
   "year": 2026,
   "compteurs": {
     "villes_activees": 1,
     "institutions_hotes": 1,
     "oeuvres_publiques": 1
   },
-  "projects": [],
-  "heritage_sources": [],
-  "datasets": []
+  "projects": [
+    "PXE-NTE001-G01-W01"
+  ],
+  "heritage_sources": [
+    {
+      "titre": "Réseau de transports collectifs Naolib",
+      "producteur": "Nantes Métropole",
+      "url": "https://data.nantesmetropole.fr/explore/dataset/244400404_reseau-transports-collectifs-naolib/",
+      "droits": "Licence Ouverte"
+    }
+  ],
+  "datasets": [
+    "244400404_reseau-transports-collectifs-naolib"
+  ]
 }
