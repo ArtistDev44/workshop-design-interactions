@@ -28,9 +28,15 @@ Métropole + Open-Meteo), avec fallback local obligatoire (`data/fallback.json`)
 4. Boucle : incident réel (retard ≥ 10 min, ou alerte météo Open-Meteo avec seuils
    **dérivés des données** — extrême vs normale de la semaine, Q39) → choix du
    joueur → effets sur les jauges → narration (ton adaptatif selon jauges, Q17) →
-   incident suivant. ~15 décisions, aucun événement inventé. Conflit de deux
-   lignes = choix binaire explicite (Q27). Si le compteur atteint 0 : « ne rien
-   faire » avec les seules conséquences naturelles du dossier (Q25).
+   incident suivant. ~15 décisions (Q15 : 30 s par défaut), aucun événement
+   inventé. Le réseau complet est concerné (Q21) ; la semaine rejouée combine
+   données **live au lancement + archive météo/incidents enregistrés** (Q22) ;
+   la répartition lignes/météo suit les données réelles de l'API, sans ratio fixe
+   (Q36). L'**affluence** n'apparaît que si une source réelle la fournit (Q23).
+   « Communiquer aux usagers » est un effet secondaire des actions, pas une 4e
+   action (Q28). Conflit de deux lignes = choix binaire explicite (Q27). Si le
+   compteur atteint 0 : « ne rien faire » avec les seules conséquences naturelles
+   du dossier (Q25).
 5. Table des effets (base + **1d6**, Q57/Q61), modificateurs contextuels (Q24) :
    - Dévier la ligne : fluidité −10, satisfaction +5, réputation 0
    - Retenir en terminus : fluidité −7, satisfaction −12, réputation +8 si retard > 20 min sinon +4
@@ -55,7 +61,10 @@ Métropole + Open-Meteo), avec fallback local obligatoire (`data/fallback.json`)
 
 ## Décisions verrouillées
 Toutes les décisions Q1–Q61 sont dans `jeu/` (index : `jeu/README.md`) — ce prompt
-en est le résumé exécutable.
+en est le résumé exécutable. Le **meilleur bilan par semaine** est mémorisé en
+`localStorage` pour comparer les parties (Q19). Le bilan de fin affiche jauges,
+dossiers traités / 15 et décisions clés (Q18, Q37) ; le score combiné des 3
+jauges détermine la fin (Q43).
 
 ## Vérifications
 - Le jeu se lance et reste jouable sans réseau (fallback testé).
