@@ -4,6 +4,8 @@ Règle : chaque push sur la branche main ajoute une entrée dans le tableau, la 
 
 | Date | Commit | Fichiers | Résumé |
 |---|---|---|---|
+| 2026-11-09 | ce commit | journal.md | Entrées de journal pour les fusions des PR #2 et #3 dans main |
+| 2026-11-09 | e099a80 | design-system/index.html, design-system/index.md, notes.md, journal.md | Fusion dans main des branches vibe/design-system-nantes-005225 (PR #2 : design system Nantes Métropole) et vibe/notes-md-d02076 (PR #3 : notes.md wiki, API, animations) |
 | 2026-11-09 | ce commit | notes.md, journal.md | Ajout de notes.md : page prête pour le wiki, liens des API utilisées (Open-Meteo, Open Data Nantes Métropole, p5.js, GitHub Pages) et pistes d'animations (régimes temporels p5.js, CSS / IntersectionObserver / View Transitions côté site) |
 | 2026-11-09 | ce commit | todo.md, contexte/instructions-personnelles.md, journal.md, prompts/README.md, prompts/03, prompts/12 | Vue d'ensemble du protocole 3 jours dans todo.md, instructions personnelles dans contexte/, création du journal, mise à jour des prompts |
 | 2026-11-09 10:05 | 4d96b7d (merge PR #1) | prompts/ | Fusion des 12 prompts numérotés pour le site Astro.js de l'édition |
