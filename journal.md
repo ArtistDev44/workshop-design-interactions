@@ -4,6 +4,7 @@ Règle : chaque push sur la branche main ajoute une entrée dans le tableau, la 
 
 | Date | Commit | Fichiers | Résumé |
 |---|---|---|---|
+| 2026-11-09 | ce commit (branche site/prompt-01-astro-basics) | site/, journal.md | Prompt 01 : projet Astro thème « Basics » dans site/, nommé pxe-nte001-site, lang fr, contenu de démo supprimé, page d'accueil minimale ; build et dev vérifiés |
 | 2026-11-09 | ce commit | prompts/01, prompts/README.md, journal.md | Thème Astro de départ mis à jour : thème « Basics » https://preview.astro.new/basics/ à la place du template « Just the basics » de npm create astro@latest |
 | 2026-11-09 | ce commit | design-system/, journal.md | Remplacement du design system par l'extraction dembrandt v0.39.2 de metropole.nantes.fr (DESIGN.md, tokens JSON, rapport HTML + README) ; suppression de l'ancien index.md / index.html |
 | 2026-11-09 | ce commit | journal.md | Entrées de journal pour les fusions des PR #2 et #3 dans main |
