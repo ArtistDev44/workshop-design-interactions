@@ -107,6 +107,42 @@ img { max-width: 100%; height: auto; }
 	border-radius: var(--r-sm);
 }
 
+/* Tableaux de données (statistiques, catalogue) */
+.tableau-defile {
+	overflow-x: auto;
+	margin-bottom: var(--e-5);
+}
+.tableau {
+	border-collapse: collapse;
+	width: 100%;
+	font-size: var(--t-petit);
+}
+.tableau caption {
+	text-align: left;
+	font-family: var(--f-titre);
+	font-size: var(--t-m);
+	font-weight: 600;
+	margin-bottom: var(--e-2);
+}
+.tableau th,
+.tableau td {
+	text-align: left;
+	vertical-align: top;
+	padding: var(--e-2) var(--e-3) var(--e-2) 0;
+	border-bottom: 1px solid var(--c-filet);
+}
+.tableau thead th {
+	font-family: var(--f-mono);
+	font-weight: 400;
+	color: var(--c-texte-doux);
+	border-bottom: 2px solid var(--c-texte);
+}
+.tableau .nombre {
+	text-align: right;
+	font-family: var(--f-mono);
+	font-variant-numeric: tabular-nums;
+}
+
 /* Lien d'évitement */
 .evitement {
 	position: absolute;
