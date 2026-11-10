@@ -39,3 +39,4 @@ dossier à trancher sous pression. »*
 | 21 | `21-loading-screen.md` | Prompt 27 : écran de chargement bleu + logo (anti-flash, fond sombre immédiat), musique de fond WebAudio dès le premier geste |
 | 22 | `22-dialogues-nantais.md` | Prompt 28 : plaintes des Nantais dans `data/messages.json` (brut, modifiable), déclenchées par les dossiers réels, réponses avec effets dans l'app Community |
 | 23 | `23-interactions-hors-ecran.md` | Prompt 29 : objets de la pièce en vue bureau (lampe persistée, store de la fenêtre avec vraie météo et heure, plante, tasse, dossiers), sans pause ni effet sur les jauges |
+| 24 | `24-bandes-sonores.md` | Prompt 30 : ambiances WebAudio contextuelles (pluie réelle, ville/tram le jour, nuit calme) et signaux (incident, compteur à 0, mail, clics au poste) |

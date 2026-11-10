@@ -157,7 +157,7 @@ function avancerTemps() {
 			if (Jeu.finDeJourneeTactique) Jeu.finDeJourneeTactique(); // prompt 23 : objectif du jour, budget épuisé
 			phase = 'mail'; // § 6 : fin de journée
 			enSieste = false;
-			Confort.Son.bip('dossier');
+			Confort.Son.bip('mail'); // prompt 30 : carillon de notification
 		}
 	} else if (phase === 'reveil' && reveil && maintenant > reveil.limite) {
 		rateReveil();
@@ -192,6 +192,7 @@ function rateReveil() {
 	nouveauDossier();
 	phase = 'decision';
 	decider('temps'); // « ne rien faire » : conséquences naturelles (Q25)
+	Confort.Son.bip('consequence'); // prompt 30
 	if (dernierResultat) Jeu.malusSieste(dernierResultat); // −5 sur la jauge concernée
 	interaction();
 }
