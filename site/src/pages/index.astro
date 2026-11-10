@@ -5,6 +5,7 @@ import Layout from '../layouts/Layout.astro';
 import edition from '../data/edition.json';
 
 const base = import.meta.env.BASE_URL;
+const urlEnLigne = new URL(base, Astro.site).href;
 
 const compteurs = [
 	{ valeur: edition.compteurs.villes_activees, label: 'ville activée' },
@@ -101,6 +102,17 @@ const appels = [
 			))
 		}
 	</nav>
+
+	<section class="qr-edition" aria-labelledby="titre-qr">
+		<h2 id="titre-qr">Le site en ligne</h2>
+		<img
+			src={`${base}assets/qr-edition.png`}
+			alt="QR code vers le site en ligne de l’édition PATRIMOINE.EXE / Nantes 001"
+			width="180"
+			height="180"
+		/>
+		<p class="mono">{urlEnLigne}</p>
+	</section>
 </Layout>
 
 <style>
@@ -227,6 +239,23 @@ const appels = [
 			color: var(--c-tertiaire);
 			z-index: 1;
 		}
+	}
+
+	/* QR code de l'édition */
+	.qr-edition {
+		margin-top: var(--e-6);
+		display: grid;
+		justify-items: start;
+		gap: var(--e-2);
+	}
+	.qr-edition h2 {
+		font-size: var(--t-m);
+		margin: 0;
+	}
+	.qr-edition p {
+		font-size: var(--t-petit);
+		overflow-wrap: anywhere;
+		margin: 0;
 	}
 
 	/* Appels */
