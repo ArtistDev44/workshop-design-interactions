@@ -62,6 +62,7 @@ jamais l'inverse.
 | 21 | `21-jeu-immersion-visuelle-mail.md` | Jeu, étape 8 : finitions visuelles — vignettage de flou et centrage du PC dans la vue bureau, clignement d'œil sur les transitions bureau ↔ écran, mail de fin de journée enrichi (événements externes + évaluation des décisions) |
 | 22 | `22-jeu-bureau-apps-gestion-nantes.md` | Jeu, étape 9 : bureau du PC applicatif — messages du patron, carte de gestion des problèmes nantais (envoi d'équipes façon 911 operator), community manager, journal ; jauges Fluidité / Réputation / Budget |
 | 23 | `23-jeu-profondeur-tactique-malus-budget.md` | Jeu, étape 10 : profondeur tactique — conseils contextuels, modificateurs (erreur système), objectifs resserrés, malus, dialogues liés au budget, fins personnalisées |
+| 24 | `24-jeu-multi-langue.md` | Jeu, étape 11 (dernier prompt) : jeu multi-langue — dictionnaire i18n externalisé (FR + EN, extensible), sélecteur de langue (accueil, paramètres, `?lang=`), persistance `localStorage`, `lang` dynamique, accessibilité des textes |
 
 Les prompts 14–19 (jeu p5.js) sont indépendants du site : ils peuvent être menés en
 parallèle dès le prompt 03, l'œuvre étant ensuite reliée au site par sa fiche du
