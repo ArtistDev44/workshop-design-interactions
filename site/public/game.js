@@ -1319,5 +1319,43 @@
 	Jeu.ralentiActif = (maintenant) => !!Jeu.ralenti && Jeu.ralenti.jour === Jeu.jourIndex && maintenant >= Jeu.ralenti.debut && maintenant < Jeu.ralenti.fin;
 	Jeu.ralentiDisponible = () => !!Jeu.ralenti && Jeu.ralenti.jour !== Jeu.jourIndex;
 
+	// =====================================================================
+	// Prompt 56 — chiffres réels de la semaine et mail du patron du dernier soir
+	// =====================================================================
+	Jeu.statsSemaine = function () {
+		const dec = (Jeu.historique || []).filter((h) => h.action);
+		const parAction = { devier: 0, retenir: 0, renfort: 0, rien: 0, temps: 0 };
+		dec.forEach((h) => (parAction[h.action] = (parAction[h.action] || 0) + 1));
+		const durees = dec.filter((h) => typeof h.dureeMs === 'number');
+		return {
+			recus: (Jeu.paquet || []).length,
+			traites: dec.filter((h) => h.action !== 'temps').length,
+			expires: parAction.temps,
+			parAction,
+			tempsMoyen: durees.length ? Math.round(durees.reduce((s, h) => s + h.dureeMs, 0) / durees.length / 100) / 10 : null, // secondes, 1 décimale
+			sources: dec.reduce((s, h) => s + (h.sources || 0), 0),
+			ralentis: (Jeu.ralenti && Jeu.ralenti.utilises) || 0,
+			objectifs: (Jeu.objectifsResultats || []).filter((o) => o.atteint).length + '/' + (Jeu.objectifsResultats || []).length,
+			jauges: Object.assign({}, Jeu.jauges),
+			score: Jeu.score(),
+		};
+	};
+	/** Mail du patron du dernier soir : félicitations, avertissement ou rappel, avec 2 à 3 vrais chiffres */
+	Jeu.mailFinSemaine = function () {
+		const s = Jeu.statsSemaine();
+		const res = Jeu.defis ? Jeu.resultatsDefis() : [];
+		const rates = res.filter((r) => !r.tenu);
+		const [ok, total] = s.objectifs.split('/').map(Number);
+		const basse = NOMS_JAUGES.slice().sort((a, b) => s.jauges[a] - s.jauges[b])[0];
+		const lignes = [T('finSemaine.intro', { score: s.score, traites: s.traites, recus: s.recus })];
+		if (total && ok === total) lignes.push(T('finSemaine.bravo', { objectifs: s.objectifs }));
+		else lignes.push(T('finSemaine.objectifs', { objectifs: s.objectifs }));
+		if (s.jauges[basse] < 40) lignes.push(T('finSemaine.alerte', { jauge: LIBELLES_JAUGES[basse], v: s.jauges[basse] }));
+		if (rates.length) lignes.push(T('finSemaine.defisRates', { liste: rates.map((r) => T('defi.' + r.id)).join(', ') }));
+		else if (res.length) lignes.push(T('finSemaine.defisTenus'));
+		if (s.expires) lignes.push(T('finSemaine.expires', { n: s.expires }));
+		return { objet: T(total && ok === total && !rates.length ? 'finSemaine.objetBravo' : 'finSemaine.objet'), lignes };
+	};
+
 	global.Jeu = Jeu;
 })(typeof window !== 'undefined' ? window : globalThis);

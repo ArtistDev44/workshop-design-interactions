@@ -230,7 +230,7 @@ function fenetrePalmares() {
 		textSize(20);
 		const j = s.m.jauges || {};
 		text(t('palmares.jauges', { f: j.fluidite, r: j.reputation, b: j.budget }), x + 56 + cols[2], ly + 6, 340, 60);
-		text(s.m.profil ? t('profil.' + s.m.profil) : '—', x + 56 + cols[3], ly + 6, 320, 60);
+		text((s.m.profil ? t('profil.' + s.m.profil) : '—') + (s.m.defis ? ' · ' + t('palmares.defis', { n: s.m.defis }) : ''), x + 56 + cols[3], ly + 6, 320, 60); // prompt 56 : défis tenus
 	});
 	textFont(POLICE_DONNEES);
 	textSize(18);

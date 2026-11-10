@@ -74,9 +74,13 @@ function finDeSemaine() {
 		if (ch === 3) p.termine = true;
 		enregistrerProgression(p);
 	}
-	if (ch === 3 && !b.demission) return lancerCinematique(b.type, b);
-	RAPPORT = { debut: millis(), bilan: b, chapitre: ch, mode: Jeu.etat.mode };
+	// Prompt 56 : le rapport (deux pages) vient avant la cinématique de la semaine 3 ; le mail du patron est mis en avant
+	RAPPORT = { debut: millis(), bilan: b, chapitre: ch, mode: Jeu.etat.mode, page: 0, stats: Jeu.statsSemaine(), cine: ch === 3 && !b.demission, mail: b.demission ? null : Jeu.mailFinSemaine() };
 	annoncer(t('rapport.imprime'));
+	if (RAPPORT.mail) {
+		fenetre = 'mailFin';
+		annoncer(String(RAPPORT.mail.objet) + '. ' + RAPPORT.mail.lignes.map(String).join(' '));
+	}
 	setTimeout(() => {
 		if (vue === 'poste' && RAPPORT) seLever(); // on se lève : la feuille glisse sur la table
 	}, 1600);
@@ -122,8 +126,11 @@ function actionRapport() {
 	if (!RAPPORT) return;
 	const ch = RAPPORT.chapitre;
 	const demission = RAPPORT.bilan.demission;
+	const cine = RAPPORT.cine;
+	const b = RAPPORT.bilan;
 	RAPPORT = null;
 	fenetre = null;
+	if (cine) return lancerCinematique(b.type, b); // prompt 56 : après le rapport de la semaine 3
 	if (ch) lancerChapitre(demission ? ch : ch + 1); // prompt 47 : après une démission, on reprend la même semaine
 	else rejouer();
 }
@@ -134,8 +141,46 @@ function quitterRapport() {
 }
 
 /** La feuille ouverte : papier, texte machine, tampon de la fin — chiffres réels de la semaine */
+/** Prompt 56 : mail du patron du dernier soir, mis en avant à l'ouverture de l'écran de fin */
+function fenetreMailFin() {
+	if (!RAPPORT || !RAPPORT.mail) return fermer();
+	const m = RAPPORT.mail;
+	const l = 1100;
+	const h = 640;
+	const x = (L - l) / 2;
+	const y = (H - h) / 2;
+	panneau(x, y, l, h, C.accent);
+	noStroke();
+	fill(C.primaire);
+	rect(x, y, l, 56);
+	textAlign(LEFT, CENTER);
+	textFont(POLICE_DONNEES);
+	textSize(20);
+	fill('#ffffff');
+	text(t('finSemaine.bandeau'), x + 32, y + 28);
+	dsTitre(String(m.objet), x + 40, y + 84, 40, C.texte, 'left');
+	noStroke();
+	textAlign(LEFT, TOP);
+	textFont(POLICE_TEXTE);
+	textSize(22);
+	textLeading(31);
+	fill(C.texte);
+	text(m.lignes.map(String).join('\n\n'), x + 40, y + 150, l - 80, h - 260);
+	bouton(x + l - 40 - 420, y + h - 96, 420, 64, t('finSemaine.lire'), fermerMailFin);
+}
+function fermerMailFin() {
+	fenetre = null;
+	setTimeout(() => RAPPORT && !fenetre && ouvrirRapport(), reduireAnimations ? 0 : 1900); // la feuille sort de l'imprimante puis s'ouvre
+}
+function changerPageRapport() {
+	if (!RAPPORT) return;
+	RAPPORT.page = RAPPORT.page ? 0 : 1;
+	annoncer(t(RAPPORT.page ? 'rapport.page2' : 'rapport.page1'));
+}
+
 function fenetreRapport() {
 	if (!RAPPORT) return fermer();
+	if (RAPPORT.page === 1) return fenetreRapportChiffres();
 	const b = RAPPORT.bilan;
 	const l = 1040;
 	const h = 900;
@@ -261,6 +306,8 @@ function fenetreRapport() {
 	if (RAPPORT.chapitre && b.demission) {
 		bouton(L / 2 - 460, by + 10, 440, 64, t('demission.reprendre'), actionRapport); // prompt 47 : même semaine
 		bouton(L / 2 + 20, by + 10, 440, 64, t('menu.menuPrincipal'), quitterRapport, false, true);
+	} else if (RAPPORT.cine) {
+		bouton(L / 2 - 220, by + 10, 440, 64, t('finSemaine.cine'), actionRapport); // prompt 56 : semaine 3 → cinématique
 	} else if (RAPPORT.chapitre) {
 		textAlign(CENTER, TOP);
 		fill('#ffffff');
@@ -268,9 +315,11 @@ function fenetreRapport() {
 		text(t('histoire.prochain', { n: RAPPORT.chapitre + 1, element: t('histoire.element.' + ELEMENTS_CHAPITRE[RAPPORT.chapitre + 1]) }), L / 2 - 500, by - 2, 1000, 30);
 		bouton(L / 2 - 220, by + 30, 440, 64, t('rapport.suivante'), actionRapport);
 	} else {
-		bouton(L / 2 - 460, by + 10, 440, 64, t('fin.rejouer'), actionRapport);
-		bouton(L / 2 + 20, by + 10, 440, 64, t('menu.menuPrincipal'), quitterRapport, false, true);
+		bouton(L / 2 - 690, by + 10, 440, 64, t('fin.rejouer'), actionRapport);
+		bouton(L / 2 - 220, by + 10, 440, 64, t('finSemaine.autre'), autreSemaine, false, true); // prompt 56 : une semaine archivée
+		bouton(L / 2 + 250, by + 10, 440, 64, t('menu.menuPrincipal'), quitterRapport, false, true);
 	}
+	boutonPageRapport(x + l, y);
 }
 
 // =====================================================================
@@ -437,4 +486,99 @@ function planPiece(type, u) {
 	else if (type === 'moyenne') fill(120, 130, 140, 50);
 	else fill(10, 14, 30, 150);
 	rect(0, 0, L, H);
+}
+
+// ——— Prompt 56 : page 2 du rapport — chiffres réels de la semaine ———
+function boutonPageRapport(xDroite, y) {
+	bouton(xDroite + 24, y + 8, 300, 50, t(RAPPORT.page ? 'rapport.versPage1' : 'rapport.versPage2'), changerPageRapport, false, true); // à droite de la feuille, sur le fond sombre (contraste)
+}
+function autreSemaine() {
+	quitterRapport();
+	if (typeof allerChoixSemaine === 'function') allerChoixSemaine();
+}
+function fenetreRapportChiffres() {
+	const s = RAPPORT.stats;
+	const b = RAPPORT.bilan;
+	const l = 1040;
+	const h = 900;
+	const x = (L - l) / 2;
+	const y = 40;
+	const encre = '#1d1a16';
+	const gris = '#5a5348';
+	noStroke();
+	fill(0, 0, 0, 90);
+	rect(x + 14, y + 18, l, h);
+	fill('#f6f1e3');
+	rect(x, y, l, h);
+	textAlign(LEFT, TOP);
+	textFont(POLICE_DONNEES);
+	textSize(18);
+	fill(gris);
+	text(t('rapport.entete') + ' · ' + t('rapport.page2court'), x + 56, y + 44);
+	textFont(POLICE_TEXTE);
+	textStyle(BOLD);
+	textSize(36);
+	fill(encre);
+	text(t('rapport.chiffresTitre'), x + 56, y + 76);
+	textStyle(NORMAL);
+	// Colonne de gauche : tableau des chiffres réels
+	const lignes = [
+		[t('stats.recus'), s.recus],
+		[t('stats.traites'), s.traites],
+		[t('stats.expires'), s.expires],
+		[t('action.devier'), s.parAction.devier],
+		[t('action.retenir'), s.parAction.retenir],
+		[t('action.renfort'), s.parAction.renfort],
+		[t('action.rien'), s.parAction.rien],
+		[t('stats.tempsMoyen'), s.tempsMoyen === null ? '—' : String(s.tempsMoyen).replace('.', Langue.actuelle === 'fr' ? ',' : '.') + ' s'],
+		[t('stats.sources'), s.sources],
+		[t('stats.ralentis'), s.ralentis],
+		[t('stats.objectifs'), s.objectifs],
+	];
+	textFont(POLICE_DONNEES);
+	textSize(19);
+	lignes.forEach(([lib, v], i) => {
+		const ly = y + 150 + i * 38;
+		fill(i % 2 ? '#efe8d6' : '#f6f1e3');
+		rect(x + 48, ly - 6, 440, 36);
+		fill(i >= 3 && i <= 6 ? gris : encre);
+		textAlign(LEFT, TOP);
+		text((i >= 3 && i <= 6 ? '   ' : '') + lib, x + 60, ly);
+		textAlign(RIGHT, TOP);
+		fill(encre);
+		text(String(v), x + 476, ly);
+	});
+	textAlign(LEFT, TOP);
+	// Colonne de droite : courbes, jauges finales, score
+	dessinerCourbesJauges(x + 580, y + 180, l - 640, 200, encre, gris);
+	textFont(POLICE_TEXTE);
+	textSize(20);
+	fill(encre);
+	text(t('stats.final', { f: s.jauges.fluidite, r: s.jauges.reputation, b: s.jauges.budget }), x + 560, y + 420, l - 600, 60);
+	textStyle(BOLD);
+	textSize(28);
+	text(t('rapport.score', { s: s.score }), x + 560, y + 480);
+	textStyle(NORMAL);
+	// Bas : défis (bonus appliqués) et profil de gestion
+	let ly = y + 590;
+	textSize(20);
+	textStyle(BOLD);
+	text(t('stats.defis'), x + 56, ly);
+	textStyle(NORMAL);
+	ly += 36;
+	textFont(POLICE_DONNEES);
+	textSize(17);
+	(b.defis || []).forEach((r) => {
+		fill(r.tenu ? '#1e5f30' : '#8a1f18');
+		text((r.tenu ? '✓ ' : '✗ ') + t('defi.' + r.id) + ' — ' + t('stats.valeur', { v: r.valeur }) + (r.tenu ? ' · ' + t('stats.bonus', { jauge: t('jaugeTitre.' + r.jauge), v: r.bonus }) : ''), x + 56, ly, l - 112, 26);
+		ly += 30;
+	});
+	const g = Jeu.profilPartie();
+	fill(gris);
+	textFont(POLICE_TEXTE);
+	textSize(18);
+	if (g) text(t('rapport.gestion', { profil: t('profil.' + g.id), n: g.n, total: g.total, action: t('profilAction.' + g.id) }), x + 56, y + h - 80, l - 112, 50);
+	boutonPageRapport(x + l, y);
+	const by = y + h + 20;
+	bouton(L / 2 - 220, by + 10, 440, 64, t(RAPPORT.cine ? 'finSemaine.cine' : RAPPORT.chapitre && !b.demission ? 'rapport.suivante' : 'fin.rejouer'), actionRapport);
 }

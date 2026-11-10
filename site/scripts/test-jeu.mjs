@@ -14,8 +14,7 @@ let controles = 0;
 const verifier = (ok, message) => (ok ? controles++ : erreurs.push(message));
 
 /** Nouveau contexte : un « window » minimal, puis les scripts du jeu dans l'ordre de index.html */
-function contexte(langue) {
-	const stockage = new Map();
+function contexte(langue, stockage = new Map(), avecHistoire = false) {
 	const ctx = {
 		console,
 		localStorage: { getItem: (k) => (stockage.has(k) ? stockage.get(k) : null), setItem: (k, v) => stockage.set(k, String(v)), removeItem: (k) => stockage.delete(k) },
@@ -26,7 +25,9 @@ function contexte(langue) {
 	ctx.window = ctx;
 	ctx.globalThis = ctx;
 	vm.createContext(ctx);
-	for (const f of ['data/lignes.js', 'data/semaines.js', 'data/fallback.js', 'data/messages.js', 'i18n.js', 'game.js']) {
+	const fichiers = ['data/lignes.js', 'data/semaines.js', 'data/fallback.js', 'data/messages.js', 'i18n.js', 'game.js'];
+	if (avecHistoire) fichiers.push('confort.js', 'histoire.js'); // prompt 56 : progression et palmarès (localStorage)
+	for (const f of fichiers) {
 		vm.runInContext(readFileSync(join(pub, f), 'utf8'), ctx, { filename: f });
 	}
 	vm.runInContext(`Langue.actuelle = ${JSON.stringify(langue)};`, ctx);
@@ -188,6 +189,36 @@ verifier(df.r1 && df.actif && !df.fini && !df.r2 && df.r3, `ralenti : ${JSON.str
 const fl = df.res.find((r) => r.id === 'fluidite60');
 verifier(fl.tenu && df.apres1.fluidite === df.avant.fluidite + 5 && df.apres2.fluidite === df.apres1.fluidite, `défis : bonus fluidité ${df.avant.fluidite} → ${df.apres1.fluidite} → ${df.apres2.fluidite}`);
 verifier(!df.res.find((r) => r.id === 'budget60').tenu && df.apres1.budget === df.avant.budget, 'défis : un défi raté ne doit rien rapporter');
+
+// Prompt 56 : chiffres du rapport de semaine, déblocage persisté, palmarès sans doublon
+const st = vm.runInContext(
+	`(() => { Jeu.chargerSemaine('2026-09-14'); Jeu.nouvellePartie();
+	const suite = ['devier', 'retenir', 'renfort', 'rien', 'temps'];
+	let n = 0;
+	while (!Jeu.terminee && n < 500) { const d = Jeu.prochainDuJour(); if (d) { Jeu.decider(suite[n % 5], d.contradiction ? d.contradiction.bonne : undefined); n++; } else { Jeu.finDeJourneeTactique(); if (!Jeu.jours[Jeu.jourIndex + 1]) break; Jeu.journeeSuivante(); } }
+	const attendu = { devier: 0, retenir: 0, renfort: 0, rien: 0, temps: 0 };
+	for (let i = 0; i < n; i++) attendu[suite[i % 5]]++;
+	return { s: Jeu.statsSemaine(), attendu, n, mail: Jeu.mailFinSemaine().lignes.map(String) }; })()`,
+	fr,
+);
+verifier(st.s.recus === st.n && st.s.traites + st.s.expires === st.n, `rapport : reçus ${st.s.recus}, traités ${st.s.traites}, expirés ${st.s.expires}, décisions ${st.n}`);
+verifier(JSON.stringify(st.s.parAction) === JSON.stringify(st.attendu), `rapport : décisions par action ${JSON.stringify(st.s.parAction)} ≠ ${JSON.stringify(st.attendu)}`);
+verifier(st.s.score === st.s.jauges.fluidite + st.s.jauges.reputation + st.s.jauges.budget, 'rapport : score ≠ somme des jauges');
+verifier(st.mail.length >= 2 && st.mail[0].includes(String(st.s.score)) && !st.mail.join(' ').includes('[À COMPLÉTER]'), 'mail du dernier soir : chiffres absents ou texte manquant');
+const stockage = new Map();
+const h1 = contexte('fr', stockage, true);
+const prog = vm.runInContext(
+	`(() => { const p = progressionHistoire(); p.scores[1] = 180; enregistrerProgression(p);
+	Confort.Bilans.enregistrer('2026-09-14', 180, { fluidite: 60, reputation: 60, budget: 60 }, { profil: 'pompier', defis: '2/3' });
+	Confort.Bilans.enregistrer('2026-09-14', 150, { fluidite: 50, reputation: 50, budget: 50 }, { profil: 'stratege', defis: '0/3' });
+	return true; })()`,
+	h1,
+);
+const h2 = contexte('fr', stockage, true); // « rechargement » : nouveau contexte, même stockage
+const relu = vm.runInContext(`({ p: progressionHistoire(), b: localStorage.getItem('pxe-nte001:jeu:meilleurs-bilans') })`, h2);
+verifier(prog && relu.p.scores[1] === 180, 'déblocage : la semaine terminée n\'est pas retrouvée après rechargement');
+const palm = JSON.parse(relu.b || '{}');
+verifier(Object.keys(palm).length === 1 && palm['2026-09-14'].score === 180 && palm['2026-09-14'].defis === '2/3', `palmarès : ${relu.b}`);
 
 // Traductions : toute clé française existe en anglais
 const manquantes = vm.runInContext('Object.keys(TRADUCTIONS.fr).filter((k) => TRADUCTIONS.en[k] === undefined)', fr);

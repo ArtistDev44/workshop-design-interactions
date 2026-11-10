@@ -118,6 +118,12 @@ function lireBlame() {
 	Sauvegarde.auto(false);
 }
 function toucheJournee() {
+	// Prompt 56 : mail du dernier soir, pages du rapport
+	if (fenetre === 'mailFin') {
+		if (keyCode === ENTER || keyCode === RETURN || keyCode === ESCAPE) fermerMailFin();
+		return true;
+	}
+	if (fenetre === 'rapport' && keyCode === TAB) return changerPageRapport(), true;
 	if (fenetre === 'cafe') return true; // prompt 52 : on boit, le clavier attend
 	if (fenetre === 'partir') {
 		if (keyCode === ESCAPE) fermer();
