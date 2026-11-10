@@ -102,13 +102,18 @@ function texteMeilleur(cle) {
 function draw() {
 	avancerTemps(); // horloge simulée, sieste, arrivée des incidents, fin de journée (immersion.js)
 	boutons = [];
+	// 1. Contenu de l'écran du PC, en 1920×1080 : l'appli de régulation, ou le système (démarrage, bureau)
+	sourisVersEcran();
 	background(C.fond);
-	if (ecran === 'accueil') dessinerAccueil();
-	else dessinerJeu();
-	if (enPause) dessinerPause();
-	// Vue d'entrée : le bureau pixel art, avec le jeu en direct dans l'écran du PC
-	if (vue !== 'poste') dessinerVueBureau();
-	else dessinerCadrePoste();
+	if (PC.etat === 'appli') {
+		if (ecran === 'accueil') dessinerAccueil();
+		else dessinerJeu();
+		if (enPause) dessinerPause();
+		dessinerFermerAppli();
+	} else dessinerOS();
+	sourisRestaurer();
+	// 2. La pièce et le moniteur autour (bureau, zoom, ou « au poste » avec la pièce visible)
+	composerVue();
 	if (phase === 'reveil' && reveil && ecran === 'jeu' && !smsActif) {
 		boutons = [];
 		dessinerReveil();
@@ -1113,6 +1118,12 @@ function keyPressed() {
 		if (keyCode === ENTER || keyCode === RETURN || key === ' ') ouvrirObjetBureau(focusBureau > 0 ? OBJETS_BUREAU[focusBureau].nom : 'ecran');
 		if (key === 'm' || key === 'M') basculerSon();
 		if (key === 'h' || key === 'H' || key === '?') ouvrir('aide');
+		return false;
+	}
+	// Au poste, système du PC (démarrage / bureau) : Entrée ouvre l'appli, Échap fait se lever
+	if (PC.etat !== 'appli') {
+		if (keyCode === ESCAPE) seLever();
+		if ((keyCode === ENTER || keyCode === RETURN || key === ' ') && PC.etat === 'os') ouvrirAppli();
 		return false;
 	}
 	// Au poste : Échap fait se lever (sauf à l'écran de fin)

@@ -47,8 +47,8 @@ let derniereImage = 0;
 // Objets cliquables du bureau (coordonnées pixel art, voir bureau.js)
 const OBJETS_BUREAU = [
 	{ nom: 'ecran', label: 'Écran du PC' },
-	{ nom: 'tuto', label: 'Livre « Tutoriel »', x: 46, y: 158, l: 40, h: 8 },
-	{ nom: 'stress', label: 'Livre « Bien gérer son stress »', x: 48, y: 149, l: 38, h: 8 },
+	{ nom: 'tuto', label: 'Livre « Tutoriel »', x: 140, y: 139, l: 36, h: 7 },
+	{ nom: 'stress', label: 'Livre « Bien gérer son stress »', x: 142, y: 131, l: 32, h: 7 },
 ];
 
 function interaction() {
@@ -430,38 +430,29 @@ function dessinerReveil() {
 
 // ——— Personnage qui somnole au bureau (§ 4), en pixel art ———
 function dessinerPersonnageSieste(g) {
+	// Vu de dos, avachi dans le fauteuil, mains derrière la tête ; « Z » qui montent (bureau.js : fauteuil en 212..268)
 	if (!enSieste) return;
-	const bob = reduireAnimations ? 0 : Math.round(Math.sin(millis() / 700) * 1); // respiration
-	const x = 40;
-	const y = 196 + bob;
-	// Fauteuil de bureau (dossier incliné) au premier plan, à gauche
-	px(g, P.contour, x - 6, y - 4, 54, 78);
-	px(g, '#3a4a5c', x - 5, y - 3, 52, 76);
-	px(g, '#4f6378', x - 3, y - 1, 6, 72);
-	// Corps (pull bleu pétrole) et bras repliés derrière la tête
-	px(g, P.contour, x + 4, y + 14, 36, 60);
-	px(g, '#1d5f6e', x + 5, y + 15, 34, 58);
-	px(g, '#2a7a8c', x + 6, y + 16, 8, 50);
-	px(g, P.contour, x - 2, y - 14, 12, 26); // bras gauche (coude levé)
-	px(g, '#1d5f6e', x - 1, y - 13, 10, 24);
-	px(g, P.contour, x + 34, y - 14, 12, 26); // bras droit
-	px(g, '#1d5f6e', x + 35, y - 13, 10, 24);
-	// Tête de profil vers le PC : peau, cheveux, œil mi-clos
-	px(g, P.contour, x + 8, y - 22, 28, 30);
-	px(g, '#e0a87a', x + 9, y - 21, 26, 28);
-	px(g, '#c98c62', x + 9, y + 2, 26, 5);
-	px(g, '#4a2f1d', x + 9, y - 21, 26, 9); // cheveux
-	px(g, '#4a2f1d', x + 9, y - 21, 6, 18);
-	px(g, P.contour, x + 26, y - 6, 6, 1); // œil mi-clos
-	px(g, '#c98c62', x + 30, y - 2, 4, 2); // nez
-	px(g, '#b3261e', x + 26, y + 3, 4, 1); // bouche
-	px(g, '#e0a87a', x + 2, y - 18, 8, 6); // mains derrière la tête
-	px(g, '#e0a87a', x + 34, y - 18, 8, 6);
-	// « Z »
-	{
-		const t = reduireAnimations ? 0 : Math.floor(millis() / 600) % 3;
-		for (let k = 0; k <= t; k++) textePixel(g, 'Z', x + 44 + k * 6, y - 30 - k * 8, '#f7f1e1');
-	}
+	const bob = reduireAnimations ? 0 : Math.round(Math.sin(millis() / 700));
+	const cx = 241;
+	const y = 160 + bob;
+	// Épaules / dos du pull au-dessus du dossier
+	px(g, P.contour, cx - 20, y + 14, 40, 6);
+	px(g, P.tissuClair, cx - 19, y + 15, 38, 5);
+	// Bras repliés, coudes écartés
+	px(g, P.contour, cx - 26, y - 2, 10, 18);
+	px(g, P.tissuClair, cx - 25, y - 1, 8, 16);
+	px(g, P.contour, cx + 16, y - 2, 10, 18);
+	px(g, P.tissuClair, cx + 17, y - 1, 8, 16);
+	// Tête (cheveux, vue de dos) et mains croisées derrière
+	disque(g, cx, y + 2, 10, P.contour);
+	disque(g, cx, y + 2, 9, '#4a2f1d');
+	disque(g, cx - 3, y - 1, 4, '#62412a');
+	px(g, '#e0a87a', cx - 10, y + 4, 20, 4); // mains
+	px(g, P.contour, cx - 10, y + 8, 20, 1);
+	px(g, '#e0a87a', cx - 11, y + 2, 2, 4); // oreilles
+	px(g, '#e0a87a', cx + 9, y + 2, 2, 4);
+	const t = reduireAnimations ? 2 : Math.floor(millis() / 600) % 3;
+	for (let k = 0; k <= t; k++) textePixel(g, 'Z', cx + 14 + k * 6, y - 16 - k * 8, '#f7f1e1');
 }
 
 // ——— Livres posés sur le plateau (§ 7) : placeholder pixel art (dos + titre) ———
@@ -469,9 +460,9 @@ function dessinerLivres(g) {
 	const t = OBJETS_BUREAU[1];
 	const s = OBJETS_BUREAU[2];
 	boite(g, t.x, t.y, t.l, t.h, '#2e6fb5', '#5a95d6', '#1d4f86');
-	textePixel(g, 'TUTO', t.x + 12, t.y + 2, '#f7f1e1');
+	textePixel(g, 'TUTO', t.x + 10, t.y + 1, '#f7f1e1');
 	boite(g, s.x, s.y, s.l, s.h, '#3f7a43', '#5f9e4f', '#2f5d3a');
-	textePixel(g, 'STRESS', s.x + 7, s.y + 2, '#f7f1e1');
+	textePixel(g, 'STRESS', s.x + 4, s.y + 1, '#f7f1e1');
 }
 
 function ouvrirObjetBureau(nom) {

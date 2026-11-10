@@ -32,3 +32,9 @@ Code : `site/public/oeuvres/pxe-nte001-g01-w01/bureau.js` (aucun fichier image, 
   (valider une décision), le téléphone (appels de la direction selon le ton des jauges), le tableau de liège
   (règles du jour).
 - Passer une partie de la décision « hors écran », sur papier, avec tampon : la dimension « bureau » du genre.
+
+## Refonte du 10/11/2026 : la pièce entière et le PC qui démarre
+- **Cadrage large** : on voit toute la pièce — porte d'entrée (panneau « SORTIE », oculus, poignée laiton, lumière du couloir, paillasson), portemanteau, tableau de liège avec plan schématique, plaque « RÉGULATION », horloge, fenêtre à rideaux (ciel et météo réels), lampadaire, grande plante, parquet en perspective, tapis, bureau en bois avec tiroirs, fauteuil vu de dos. L'écran du PC reste centré sur la page.
+- **Au poste, pas de plein écran** : le zoom s'arrête sur le moniteur (1340×754 à l'écran) ; la pièce reste visible autour, légèrement floutée. Les clics sont ramenés dans les coordonnées de l'écran.
+- **Le PC démarre** au premier passage (écran texte, logo, « Bienvenue », ~3,4 s) puis affiche le **bureau d'un système fictif (« RégulOS »)** : fond pixelisé ORIGINAL qui évoque les fonds d'écran bleus lumineux de la fin des années 2000 (aucun visuel ni logo de marque existant reproduit), icônes « Régulation Nantes » (pastille rouge quand un incident attend) et « Corbeille », barre des tâches avec horloge. Clic ou Entrée sur l'icône : l'appli de régulation s'ouvre ; la croix en haut à droite revient au bureau du système.
+- Fichiers : `site/public/bureau.js` (pièce + composition), `site/public/os.js` (démarrage + bureau du système), `immersion.js` (livres et sieste repositionnés : le personnage somnole dans le fauteuil, vu de dos).
