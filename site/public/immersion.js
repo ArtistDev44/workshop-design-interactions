@@ -42,6 +42,7 @@ const OBJETS_BUREAU = [
 	{ nom: 'ecran', label: T('objet.ecran') },
 	{ nom: 'tuto', label: T('objet.tuto'), x: 58, y: 190, l: 50, h: 9 },
 	{ nom: 'stress', label: T('objet.stress'), x: 62, y: 180, l: 44, h: 9 },
+	{ nom: 'porte', label: T('objet.porte'), infobulle: T('bureau.porte'), x: 3, y: 40, l: 20, h: 118 }, // prompt 26
 ];
 
 function interaction() {
@@ -436,6 +437,7 @@ function ouvrirObjetBureau(nom) {
 	if (nom === 'ecran') return sAsseoir();
 	if (nom === 'tuto') return ouvrir('aide'); // reprend l'écran d'aide H
 	if (nom === 'stress') return ouvrir('livre-stress');
+	if (nom === 'porte') return ouvrir('menu'); // prompt 26 : même action qu'Échap au bureau
 }
 
 /** Zones cliquables du bureau (livres) + focus clavier ; appelé par la vue bureau */
@@ -450,7 +452,8 @@ function zonesObjetsBureau() {
 			strokeWeight(PIX);
 			rect(r.x - 2 * PIX, r.y - 2 * PIX, r.l + 4 * PIX, r.h + 4 * PIX);
 			noStroke();
-			infobulle(t('objet.ouvrir', { label: o.label }), r.x, r.y - 70);
+			const ib = o.infobulle ? String(o.infobulle) : t('objet.ouvrir', { label: o.label });
+			infobulle(ib, Math.max(16, r.x), r.y < 120 ? r.y + r.h + 24 : r.y - 70);
 		}
 	});
 	if (focusBureau === 0) {

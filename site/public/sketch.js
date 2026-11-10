@@ -1165,8 +1165,22 @@ function keyPressed() {
 	// Au poste, système du PC (bureau RégulOS) : Tab = icônes, Entrée = ouvrir, Échap = fermer l'app puis se lever
 	if (PC.etat !== 'appli') {
 		if (keyCode === ESCAPE) PC.fenetre ? fermerFenetreApp() : seLever();
-		if (PC.etat !== 'os') return false;
-		if (keyCode === TAB) PC.selection = (PC.selection + (keyIsDown(SHIFT) ? ICONES_OS.length - 1 : 1)) % ICONES_OS.length;
+		if (focusQuitter && (keyCode === ENTER || keyCode === RETURN || key === ' ')) return quitterPC(), false; // prompt 26
+		if (PC.etat !== 'os') {
+			if (keyCode === TAB) basculerFocusQuitter(!focusQuitter);
+			return false;
+		}
+		if (keyCode === TAB) {
+			// Prompt 26 : le cycle Tab passe par les icônes puis par le bouton « Quitter le PC »
+			const n = ICONES_OS.length;
+			const recul = keyIsDown(SHIFT);
+			if (focusQuitter) {
+				basculerFocusQuitter(false);
+				PC.selection = recul ? n - 1 : 0;
+			} else if ((!recul && PC.selection === n - 1) || (recul && PC.selection === 0)) basculerFocusQuitter(true);
+			else PC.selection = (PC.selection + (recul ? n - 1 : 1)) % n;
+			return false;
+		}
 		if (keyCode === ENTER || keyCode === RETURN || (key === ' ' && !PC.fenetre)) ouvrirIconeOS(PC.selection);
 		if (PC.fenetre === 'carte' && ['1', '2', '3', '4'].includes(key)) envoyerEquipeCarte(Object.keys(Jeu.EQUIPES)[Number(key) - 1]);
 		if (phase === 'mail' && PC.fenetre === null && (keyCode === ENTER || keyCode === RETURN)) return false;
@@ -1174,6 +1188,9 @@ function keyPressed() {
 	}
 	// Au poste : Échap fait se lever (sauf à l'écran de fin)
 	if (keyCode === ESCAPE && !(ecran === 'jeu' && phase === 'fin')) return seLever(), false;
+	// Prompt 26 : Tab place le focus sur « Quitter le PC » (et l'en retire), Entrée l'active
+	if (keyCode === TAB) return basculerFocusQuitter(!focusQuitter), false;
+	if (focusQuitter && (keyCode === ENTER || keyCode === RETURN || key === ' ')) return quitterPC(), false;
 	if (phase === 'mail' && (keyCode === ENTER || keyCode === RETURN)) return journeeSuivante(), false;
 	// Touches valables partout
 	if (key === 'h' || key === 'H' || key === '?') return ouvrir('aide'), false;
@@ -1203,6 +1220,12 @@ function keyPressed() {
 		if (keyCode === ESCAPE || keyCode === BACKSPACE) retourAccueil();
 	}
 	if (key === ' ' || keyCode === UP_ARROW || keyCode === DOWN_ARROW) return false; // pas de défilement de la page
+}
+
+// Prompt 26 : au poste, la molette fait quitter le PC (anti-rebond dans bureau.js) ; ailleurs, scroll normal
+function mouseWheel(event) {
+	interaction();
+	if (scrollSortiePC(event.delta)) return false;
 }
 
 // Prompt 25 : la caméra du bureau ne suit la souris qu'une fois celle-ci réellement bougée sur le canevas
@@ -1277,6 +1300,7 @@ function fenetreAide() {
 		[t('aide.k.aideTouche'), t('aide.k.aide')],
 		['↑ ↓', t('aide.k.semaine')],
 		['← → ↑ ↓', t('aide.k.regarder')],
+		[t('aide.k.quitterTouche'), t('aide.k.quitter')],
 		['L', t('aide.k.langue')],
 	];
 	textSize(22);
@@ -1286,10 +1310,10 @@ function fenetreAide() {
 		textFont(POLICE_DONNEES);
 		textSize(20);
 		fill(C.accent);
-		text(k, x + 48, y + 150 + i * 34);
+		text(k, x + 48, y + 150 + i * 31);
 		textFont(POLICE_TEXTE);
 		fill(C.texte);
-		text(d, x + 230, y + 150 + i * 34);
+		text(d, x + 230, y + 150 + i * 31);
 	});
 	// Règles (00-concept, 03-actions, 04-jauges)
 	const rx = x + 760;

@@ -165,6 +165,7 @@ function dessinerPieceBureau() {
 	dessinerVueNantes(g);
 	dessinerMontantsBaie(g);
 	dessinerMurBas(g);
+	dessinerPorte(g); // prompt 26
 	dessinerPlateau(g);
 	dessinerPC(g);
 	dessinerObjetsBureau(g);
@@ -605,13 +606,7 @@ function composerVue() {
 		return;
 	}
 	if (auPoste) {
-		textFont(POLICE_DONNEES);
-		textSize(18);
-		fill(28, 39, 51, 220);
-		rect(L / 2 - 110, H - 60, 220, 36, 6);
-		fill('#FFFDF7');
-		textAlign(CENTER, CENTER);
-		text(t('bureau.seLever'), L / 2, H - 42);
+		dessinerBoutonQuitterPC();
 		return;
 	}
 	// Au bureau : survol de l'écran, objets, horloge numérique, invitation
@@ -651,6 +646,79 @@ function composerVue() {
 	fill('#FFFDF7');
 	textAlign(CENTER, CENTER);
 	text(msg, L / 2, H - 52);
+}
+
+// ——— Prompt 26 : sortir du PC — bouton « Quitter le PC », molette, porte du bureau ———
+let focusQuitter = false; // focus clavier sur le bouton « Quitter le PC » (Tab au poste)
+let dernierScrollSortie = 0;
+let cumulScroll = 0;
+const BOUTON_QUITTER = { l: 340, h: 56, marge: 40 };
+
+function rectBoutonQuitter() {
+	return { x: L - BOUTON_QUITTER.l - BOUTON_QUITTER.marge, y: H - BOUTON_QUITTER.h - 22, l: BOUTON_QUITTER.l, h: BOUTON_QUITTER.h };
+}
+/** Bouton visible au poste, sous le moniteur à droite (dans la pièce, hors de l'écran du PC). */
+function dessinerBoutonQuitterPC() {
+	const b = rectBoutonQuitter();
+	if (clignement) return; // pendant qu'on se lève, le bouton disparaît
+	bouton(b.x, b.y, b.l, b.h, t('poste.quitter_pc'), quitterPC);
+	if (focusQuitter) {
+		noFill();
+		stroke('#f2c94c');
+		strokeWeight(4);
+		rect(b.x - 8, b.y - 8, b.l + 16, b.h + 16, 14);
+		noStroke();
+	}
+}
+function quitterPC() {
+	focusQuitter = false;
+	seLever();
+}
+function basculerFocusQuitter(actif) {
+	focusQuitter = actif;
+	if (actif) annoncer(t('poste.quitter_pc_focus'));
+}
+/** Molette au poste : quitte le PC, avec anti-rebond (600 ms) et un seuil, pour qu'un scroll continu ne fasse rien d'autre. */
+function scrollSortiePC(delta) {
+	if (vue !== 'poste' || clignement || fenetre || smsActif || PC.fenetre || phase === 'mail' || phase === 'reveil') {
+		cumulScroll = 0;
+		return false;
+	}
+	const maintenant = millis();
+	if (maintenant - dernierScrollSortie < 600) return true; // anti-rebond : on « avale » le reste du geste
+	cumulScroll += Math.abs(delta);
+	if (cumulScroll < 100) return true;
+	cumulScroll = 0;
+	dernierScrollSortie = maintenant;
+	quitterPC();
+	return true;
+}
+
+/** Porte de sortie dessinée sur le mur de gauche, en perspective (pixel art, aucun fichier image). */
+function dessinerPorte(g) {
+	const o = OBJETS_BUREAU.find((x) => x.nom === 'porte');
+	if (!o) return;
+	// Pan de mur latéral (blanc) qui fuit vers la baie
+	for (let x = 0; x < 30; x++) {
+		const haut = 9 + Math.round(x * 0.6);
+		px(g, x === 29 ? '#b9bec4' : '#eef0f1', x, haut, 1, PLATEAU_Y - haut);
+	}
+	// Porte en perspective : bord proche plus haut que le bord lointain
+	for (let x = o.x; x < o.x + o.l; x++) {
+		const d = x - o.x;
+		const haut = o.y + Math.round(d * 0.6);
+		const bas = o.y + o.h - Math.round(d * 0.3);
+		px(g, P.contour, x, haut - 1, 1, bas - haut + 2);
+		if (x > o.x && x < o.x + o.l - 1) px(g, d < 3 ? '#8d949b' : '#5f6a78', x, haut, 1, bas - haut);
+	}
+	px(g, '#3c4450', o.x + 4, o.y + 10, 1, o.h - 22); // joint vertical (ouvrant)
+	px(g, P.contour, o.x + o.l - 6, o.y + Math.round(o.h * 0.5), 4, 3); // poignée
+	px(g, '#c8cdd2', o.x + o.l - 6, o.y + Math.round(o.h * 0.5), 3, 1);
+	// Pictogramme « sortie » : flèche verte au-dessus de la porte
+	px(g, P.contour, o.x + 3, o.y - 9, 15, 7);
+	px(g, '#1f7a3f', o.x + 4, o.y - 8, 13, 5);
+	px(g, '#ffffff', o.x + 7, o.y - 6, 6, 1);
+	px(g, '#ffffff', o.x + 12, o.y - 7, 1, 3);
 }
 
 // ——— Prompt 21 § 2 : clignement d'œil sur les transitions bureau ↔ écran ———
@@ -719,6 +787,7 @@ function sAsseoir() {
 
 function seLever() {
 	if (vue !== 'poste' || clignement) return;
+	focusQuitter = false;
 	if (typeof PC !== 'undefined') PC.fenetre = null; // prompt 22 : se lever referme l'app ouverte
 	clignement = { debut: millis(), sens: 'arriere', bascule: false }; // la vue bascule à mi-clignement
 	Confort.Son.bip('choix');
