@@ -94,8 +94,8 @@ jamais l'inverse.
 | 52 | `52-jeu-cafe-boost.md` | Jeu, étape 38 : boire le café (tasse en main, même animation que le téléphone) → boost temporaire : cœur qui s'accélère, pulsation rouge, lignes de vitesse, flou, champ élargi | ✅ |
 | 53 | `53-jeu-animations-feedback.md` | Jeu, étape 39 : animations de feedback — arrivée du dossier (glisser + tampon « SIGNALEMENT » + pulsation de la ligne sur la carte), jauges en eased avec deltas flottants, urgence du compteur sous 10 s (barre rouge, sablier accéléré) ; animations réduites respectées | ✅ |
 | 54 | `54-jeu-micro-interaction-sonore.md` | Jeu, étape 40 : interaction sonore au micro (push-to-talk, touche M) — amplitude, fragmentation, densité, hauteur, turbulence pilotent une texture granulaire ; voix, souffle, bruit ; VU-mètre à l'écran ; repli si micro refusé ; sans effet sur les règles Q1–Q61 | ◻ prévu |
-| 54 | `54-jeu-defis-ralenti.md` | Jeu, étape 40 : défis de semaine réels (3 tirés par la graine, +5 sur la jauge concernée si tenus, bilan dans le mail et le rapport) et ralenti tactique (touche R, pause de 10 s du compteur, 1×/jour) | ◻ prévu |
-| 55 | `55-jeu-rapport-semaine-deblocage.md` | Jeu, étape 41 : rapport de fin de semaine chiffré (dossiers, décisions, jauges, défis) + papier sur le bureau, mail du patron du dernier soir, déblocage de la semaine suivante en mode histoire, palmarès des semaines persisté | ◻ prévu |
+| 55 | `55-jeu-defis-ralenti.md` | Jeu, étape 41 : défis de semaine réels (3 tirés par la graine, +5 sur la jauge concernée si tenus, bilan dans le mail et le rapport) et ralenti tactique (touche R, pause de 10 s du compteur, 1×/jour) | ◻ prévu |
+| 56 | `56-jeu-rapport-semaine-deblocage.md` | Jeu, étape 42 : rapport de fin de semaine chiffré (dossiers, décisions, jauges, défis) + papier sur le bureau, mail du patron du dernier soir, déblocage de la semaine suivante en mode histoire, palmarès des semaines persisté | ◻ prévu |
 
 ### Statut des prompts (vérifié le 10/11/2026 dans `site/public/`)
 
