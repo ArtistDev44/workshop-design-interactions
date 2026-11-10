@@ -88,6 +88,8 @@ jamais l'inverse.
 | 46 | `46-livrables-documentation.md` | Livrables J3 (manifest, captation, version archivée), cartel corrigé, pages /cartel/ et /making-of/, guide contributeur | ✅ |
 | 47 | `47-jeu-mecaniques-narration.md` | Jeu, étape 33 : inspection surprise, palmarès et profils, journal de bord, fin « démission », épilogue personnalisé, agenda anticipé | ✅ |
 | 48 | `48-jeu-accessibilite-technique.md` | Jeu, étape 34 : daltonisme, taille du texte, lecture facile, tests automatisés, démo automatique, PWA hors ligne, courbes des jauges | ✅ |
+| 49 | `49-jeu-lofi-lisibilite-meteo.md` | Jeu, étape 35 : musique lofi CC0 et sons discrets, textes du PC lisibles, carte sans ligne météo, climat selon le mode (direct / archives) | ◻ prévu |
+| 50 | `50-jeu-enquete-sources.md` | Jeu, étape 36 : découvrir la situation — alerte vague, détails révélés en consultant carte, info trafic, météo, agenda ; plus de conseil ni de flèches d'effet | ◻ prévu |
 
 ### Statut des prompts (vérifié le 10/11/2026 dans `site/public/`)
 
