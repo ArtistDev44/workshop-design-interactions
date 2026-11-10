@@ -79,3 +79,4 @@ dossier à trancher sous pression. »*
 | 62 | `62-carte-appli-principale.md` | Prompt 68 : la Carte remplace l'appli Régulation (phase sélection sans chrono, file, gravité, onglets Enquête / Historique / Équipes), équipes limitées (effectifs, cycle, pertinence, demi-effet hors sujet) |
 | 63 | `63-revue-game-design.md` | Prompt 66 : revue game design — correctif de la file de la Carte entre deux semaines, guide en 7 étapes dont la bulle ne masque plus le dossier, aide et tutoriel complets, rapport lisible |
 | 64 | `64-fin-de-journee-nuit-sortie.md` | Prompt 69 : « Ranger le poste », la nuit tombe (21 h en 4 s), flèche « Sortie » au bord gauche, pan vers le couloir, écran noir, lendemain 6 h ou bilan |
+| 65 | `65-sieste-paupieres.md` | Sieste : paupières en surcouche plein écran (tout le contenu caché), fermeture avec sursaut et ouverture avec clignement, fondu si animations réduites |

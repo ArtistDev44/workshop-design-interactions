@@ -199,13 +199,14 @@ function draw() {
 	espaceDessin = 'ecran';
 	// 2. La pièce et le moniteur autour (bureau, zoom, ou « au poste » avec la pièce visible)
 	composerVue();
-	if (phase === 'reveil' && reveil && ecran === 'jeu' && !smsActif) {
-		boutons = [];
-		dessinerReveil();
-	}
 	dessinerBoost(); // prompt 52 : cœur, pulsation rouge, lignes de vitesse, flou
 	dessinerMicro(); // prompt 54 : oscilloscope et mesures pendant l'appui
 	dessinerOffreDemission(); // prompt 47 : les trois jauges sous 20 → « Rendre son badge »
+	dessinerSommeil(); // sieste : paupières plein écran, au-dessus de tout le contenu (fenêtres et réveil exceptés)
+	if (phase === 'reveil' && reveil && ecran === 'jeu' && !smsActif) {
+		boutons = [];
+		dessinerReveil(); // l'alarme réveille : son panneau passe au-dessus des paupières
+	}
 	if (fenetre) {
 		boutons = []; // seule la fenêtre ouverte est cliquable
 		dessinerFenetre();
