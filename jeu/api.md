@@ -64,7 +64,7 @@ Règles communes : aucune clé requise, licence Ouverte / ODbL, CORS ouvert (`Ac
 
 | API | URL | Données clés | Fréquence | Usage dans le jeu |
 |---|---|---|---|---|
-| Open-Meteo | `https://api.open-meteo.com/v1/forecast` + `/v1/archive` (Nantes 47.2184, -1.5536) | Température, vent, précipitations — prévision et **archive** (rejouer une semaine passée) | horaire | Alertes météo (seuils), effets contextuels sur les jauges, météo du panneau gauche |
+| Open-Meteo | `https://api.open-meteo.com/v1/forecast` + `https://archive-api.open-meteo.com/v1/archive` (Nantes 47.2184, -1.5536) | Température, vent, précipitations — prévision et **archive** (rejouer une semaine passée) | horaire | Alertes météo (seuils), effets contextuels sur les jauges, météo du panneau gauche |
 | transport.data.gouv.fr (PAN) | [Réseau Naolib](https://transport.data.gouv.fr/datasets/reseau-de-transports-collectifs-naolib) | Miroir des flux GTFS, NeTEx, SIRI, SIRI lite, GTFS-RT, GBFS | continu | Redondance/validation des flux Naolib |
 | Patrimoine arboré (référence livret) | `244400404_patrimoine-arbore-nantes-metropole` via Explore API | 124 583 arbres (genre, espèce, hauteur, position) | statique | Source documentaire du corpus (agrégats via `group_by`, jamais tout charger) |
 
@@ -91,7 +91,7 @@ Il n'existe pas d'archive des flux temps réel SIRI/GTFS-RT côté Nantes Métro
 |---|---|---|---|
 | Changelog du GTFS Naolib | Onglet « Informations » du dataset `244400404_transports_commun_naolib_nantes_metropole_gtfs` | Incidents datés réels : travaux, déviations, manifestations, mouvements sociaux (ex. « 10/10/24 : Foulées du tram, match, manifestation ») | Chaque entrée d'une semaine choisie = un dossier réel dans `data/fallback.json` |
 | Versions archivées du GTFS | « Backed up resources » sur [transport.data.gouv.fr — Réseau Naolib](https://transport.data.gouv.fr/datasets/reseau-de-transports-collectifs-naolib) | Fichiers GTFS tels qu'à une date passée | Horaires réels de la semaine rejouée |
-| Archive Open-Meteo | `https://api.open-meteo.com/v1/archive` (Nantes 47.2184, -1.5536) | Météo horaire réelle (ERA5) de toute semaine passée | Alertes météo réelles + effets contextuels |
+| Archive Open-Meteo | `https://archive-api.open-meteo.com/v1/archive` (Nantes 47.2184, -1.5536) | Météo horaire réelle (ERA5) de toute semaine passée | Alertes météo réelles + effets contextuels |
 | Agenda des événements | `244400404_agenda-evenements-nantes-metropole_v2` via Explore API, filtre `where=` sur les dates | Événements réels d'une semaine passée | Pics d'affluence réels |
 | 6 cas figés | `data/fallback.json` (voir `07-fallback-offline.md`) | Semaine de référence hors ligne, seed fixe | Mode hors ligne garanti pour l'évaluation |
 
