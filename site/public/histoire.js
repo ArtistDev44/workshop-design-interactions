@@ -232,7 +232,17 @@ function fenetreRapport() {
 		text(String(d.titre) + ' — ' + String(d.action || t('action.temps')), x + 56, ly + 20, l / 2 - 80, 24);
 		ly += 52;
 	});
-	dessinerCourbesJauges(x + l / 2 + 40, y + 552, l / 2 - 96, 116, encre, gris); // prompt 48 : courbes des jauges
+	dessinerCourbesJauges(x + l / 2 + 40, y + 552, l / 2 - 96, 96, encre, gris); // prompt 48 : courbes des jauges
+	// Prompt 55 : défis de la semaine (vrais chiffres) et ralentis utilisés
+	if (b.defis && b.defis.length) {
+		textFont(POLICE_DONNEES);
+		textSize(15);
+		textLeading(20);
+		fill(encre);
+		const ld = b.defis.map((r) => (r.tenu ? '✓ ' : '✗ ') + t('defi.' + r.id) + ' (' + r.valeur + ')').join(' · ');
+		text(t('rapport.defis', { liste: ld, n: b.ralentis }), x + 56, y + 676, l - 112, 44);
+		textFont(POLICE_TEXTE);
+	}
 	// Prompt 47 : profil de gestion et extrait du journal de bord du joueur
 	const m = lignesRapportMecaniques();
 	textSize(16);
@@ -240,7 +250,7 @@ function fenetreRapport() {
 	if (m.carnet) {
 		fill(encre);
 		textStyle(ITALIC);
-		text(m.carnet, x + 56, y + h - 200, l - 112, 70);
+		text(m.carnet, x + 56, y + h - 190, l - 112, 66);
 		textStyle(NORMAL);
 	}
 	fill(gris);

@@ -32,6 +32,7 @@ const enquetePossible = () => ecran === 'jeu' && (phase === 'decision' || phase 
 /** Révèle une source. payant : consultée depuis l'appli (−4 s de compteur) ; sinon geste dans la pièce */
 function revelerSource(cle, payant) {
 	if (!enquetePossible()) return false;
+	if (payant && Jeu.ralentiActif && Jeu.ralentiActif(millis())) return annoncer(t('ralenti.sourcesSuspendues')), false; // prompt 55
 	const e = enqueteDossier();
 	if (e.revele[cle]) return false;
 	e.revele[cle] = true;
@@ -77,7 +78,7 @@ function dessinerEnquete(d, x, base) {
 	const titre = e.revele.carte && d.lignes && d.lignes.length ? t('dossier.ligne', { lignes: d.lignes.join(', ') }) : t('enq.signalement.' + d.type);
 	ajusterTaille(titre, l - 200, 38, 22); // place laissée au tampon « SIGNALEMENT » (prompt 53)
 	text(titre, x + 32, base.y + 78);
-	if (!e.revele.carte || !(d.lignes && d.lignes.length)) dessinerTamponSignalement(x + base.l - 116, base.y + 90);
+	if (!e.revele.carte || !(d.lignes && d.lignes.length)) dessinerTamponSignalement(x + base.l - 116, base.y + 104);
 	textStyle(NORMAL);
 	textFont(POLICE_DONNEES);
 	textSize(17);

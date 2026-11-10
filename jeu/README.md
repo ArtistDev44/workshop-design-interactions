@@ -65,3 +65,4 @@ dossier à trancher sous pression. »*
 | 47 | `47-cafe-boost.md` | Prompt 52 : le café en main (animation du téléphone), boost de 25 s — cœur qui s'accélère, pulsation rouge des bords, lignes de vitesse, flou, champ élargi ; sources gratuites pendant le boost |
 | 48 | `48-animations-feedback.md` | Prompt 53 : arrivée du dossier (300 ms, tampon « SIGNALEMENT », ligne qui pulse), jauges qui glissent avec deltas flottants, pulsation douce sous 20, urgence du compteur sous 10 s (barre rouge, sablier qui s'emballe, tic-tac plus fort) |
 | 49 | `49-micro-interaction-sonore.md` | Prompt 54 : push-to-talk (M maintenue, micro du poste), analyse amplitude / hauteur / souffle / pics, texture granulaire (densité, hauteur, fragmentation, turbulence), repli interne, réglage Micro |
+| 50 | `50-defis-ralenti.md` | Prompt 55 : trois défis de semaine tirés par la graine (bilan réel, +5 si tenu, une fois) et ralenti tactique (R, 10 s, une fois par jour) |

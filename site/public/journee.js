@@ -242,3 +242,48 @@ function ombreObjet(g, x, y, l) {
 	const alpha = PIECE.lampe ? 115 : diffuse ? 60 : 90;
 	ombreTramee(g, x + 1, y, l, diffuse ? 3 : 2, alpha);
 }
+
+// ——— Prompt 55 : ralenti tactique (logique dans game.js : une fois par journée, 10 s) ———
+let derniereImageCompteur = 0;
+function demanderRalentiUI() {
+	if (!['decision', 'contradiction', 'conflit'].includes(phase)) return;
+	if (Jeu.ralentiActif(millis())) return;
+	if (!Jeu.demanderRalenti(millis())) {
+		Confort.Son.bip('alerte');
+		return annoncer(t('ralenti.deja'));
+	}
+	Confort.Son.clic();
+	annoncer(t('ralenti.on'));
+}
+/** Appelée à chaque image du dossier : pendant le ralenti, on repousse le début du compteur (il ne descend plus) */
+function figerCompteurRalenti() {
+	const m = millis();
+	if (derniereImageCompteur && Jeu.ralentiActif && Jeu.ralentiActif(m)) {
+		const dt = Math.min(250, m - derniereImageCompteur);
+		debutCompteur += dt;
+		arriveeDossier = Math.min(arriveeDossier, m - 2000); // pas de nouvelle animation d'arrivée
+	}
+	derniereImageCompteur = m;
+}
+function dessinerRalenti(x, base) {
+	const m = millis();
+	textFont(POLICE_DONNEES);
+	textAlign(LEFT, TOP);
+	if (Jeu.ralentiActif(m)) {
+		const reste = Math.ceil((Jeu.ralenti.fin - m) / 1000);
+		if (!reduireAnimations) {
+			noStroke();
+			fill(70, 120, 200, 40 + 25 * Math.sin(m / 400)); // voile bleu discret sur le dossier
+			rect(x, base.y, base.l, base.h);
+		}
+		fill(13, 12, 12, 235);
+		rect(x + base.l / 2 - 170, base.y + 4, 340, 34);
+		fill('#ffffff');
+		textSize(18);
+		textAlign(CENTER, CENTER);
+		text(t('ralenti.pause', { s: reste }), x + base.l / 2, base.y + 21);
+		textAlign(LEFT, TOP);
+		return;
+	}
+	if (Jeu.ralentiDisponible()) bouton(x + base.l - 250, base.y + 40, 170, 32, t('ralenti.bouton'), demanderRalentiUI, false, true); // entre l'en-tête et les secondes
+}

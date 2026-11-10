@@ -963,6 +963,7 @@ function dessinerDossier(d, meteo) {
 	}
 
 	// Compteur : barre horizontale qui se vide (Q6) — durée selon la semaine (Q16, Q55)
+	figerCompteurRalenti(); // prompt 55 : pendant le ralenti, le compteur ne descend pas
 	const duree = ((Jeu.etat.semaine && Jeu.etat.semaine.difficulte && Jeu.etat.semaine.difficulte.compteur_s) || 30) * 1000 * facteurDuree * facteurLecture(); // prompt 48 : lecture facile ×1,5
 	const reste = constrain(1 - (millis() - debutCompteur) / duree, 0, 1);
 	// Prompt 44 § 3 : tic-tac sous les 10 dernières secondes, qui s'accélère (1 s → 0,5 s → 0,25 s)
@@ -984,6 +985,7 @@ function dessinerDossier(d, meteo) {
 	textAlign(RIGHT, TOP);
 	fill(C.gris);
 	text(Math.ceil((reste * duree) / 1000) + ' s', x + base.l - 24, base.y + 42);
+	dessinerRalenti(x, base); // prompt 55 : bouton « Ralenti (R) » ou « Pause — 7 s »
 	if (reste * duree < 5000 && reste > 0 && !alerteTempsJouee && (phase === 'decision' || phase === 'contradiction')) {
 		alerteTempsJouee = true;
 		Confort.Son.bip('alerte'); // plus que 5 secondes
@@ -1555,7 +1557,8 @@ function keyPressed() {
 	if (key === 'h' || key === 'H' || key === '?') return ouvrir('aide'), false;
 	if (key === 'm' || key === 'M') return toucheMEnfoncee(), false; // prompt 54 : brève = son, maintenue = micro
 	if (ecran === 'jeu') {
-		if (key === 'r' || key === 'R') return ouvrir('reset'), false;
+		// Prompt 55 : pendant un dossier, R = ralenti tactique ; sinon R = recommencer la semaine (Q38)
+		if (key === 'r' || key === 'R') return ['decision', 'contradiction', 'conflit'].includes(phase) ? demanderRalentiUI() : ouvrir('reset'), false;
 		if (key === 'p' || key === 'P') return basculerPause(), false;
 	}
 	if (ecran === 'accueil') {
