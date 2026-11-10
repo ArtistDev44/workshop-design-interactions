@@ -25,7 +25,7 @@ function fermerMenuPrincipal() {
 	MENU.actif = false;
 	// Prompt 37 : nouvelle partie avec l'option cochée → guide « Prendre en main »
 	if (optionGuide() && Jeu.index === 0 && !(Jeu.historique || []).length) demarrerGuide();
-	PC.etat = 'appli'; // on arrive au bureau, le PC déjà allumé sur l'appli de régulation
+	PC.etat = typeof JOUR_PC !== 'undefined' && JOUR_PC.attendu ? 'eteint' : 'appli'; // on arrive au bureau, le PC déjà allumé sur l'appli (prompt 71 : sauf démarrage du jour en attente)
 	PC.fenetre = null;
 	vue = 'bureau';
 }

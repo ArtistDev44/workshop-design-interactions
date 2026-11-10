@@ -350,6 +350,50 @@ verifier(eq.policeAvant === 1 && eq.policeMatin === 2, `équipes : effectifs non
 	verifier(/ui\.phase === 'soir'/.test(readFileSync(join(pub, 'sauvegarde.js'), 'utf8')), 'soir : la sauvegarde doit reprendre la phase soir');
 }
 
+// Prompt 71 : démarrage du PC rejoué au début des 3 premières journées, une seule fois par jour
+{
+	const co = contexte('fr');
+	vm.runInContext(
+		`var L = 1920, H = 1080, ecran = 'jeu', TRANSITION_JOUR = null, smsActif = false, MENU = { actif: false }, reduireAnimations = false, __t = 0;
+		var millis = () => __t, Confort = { Son: { bip: () => {} } };`,
+		co,
+	);
+	vm.runInContext(readFileSync(join(pub, 'os.js'), 'utf8'), co, { filename: 'os.js' });
+	const r = vm.runInContext(
+		`(() => {
+		Jeu.chargerSemaine(Jeu.semainesProposees()[0].lundi);
+		Jeu.nouvellePartie();
+		const jours = [];
+		do {
+			PC.etat = 'appli';
+			TRANSITION_JOUR = { debut: 0 };
+			demarrageDuJour();
+			const eteintPendantTransition = PC.etat === 'eteint';
+			majDemarrageJour(); // écran « JOUR n » encore affiché : rien
+			const attendTransition = PC.etat !== 'demarrage';
+			TRANSITION_JOUR = null;
+			majDemarrageJour();
+			const demarre = PC.etat === 'demarrage';
+			PC.etat = 'os';
+			demarrageDuJour(); majDemarrageJour(); // même journée (reprise, retour au poste) : pas de replay
+			jours.push({ eteintPendantTransition, attendTransition, demarre, replay: PC.etat !== 'os' });
+			if (!Jeu.jours[Jeu.jourIndex + 1]) break;
+			Jeu.journeeSuivante();
+		} while (true);
+		return jours;
+	})()`,
+		co,
+	);
+	verifier(r.length >= 4, `démarrage PC : semaine trop courte (${r.length} jours)`);
+	r.forEach((j, i) => {
+		const attendu = i < 3;
+		verifier(j.demarre === attendu && j.eteintPendantTransition === attendu, `démarrage PC, jour ${i + 1} : démarrage ${j.demarre} (attendu ${attendu})`);
+		verifier(j.attendTransition, `démarrage PC, jour ${i + 1} : ne doit pas démarrer pendant l'écran « JOUR n »`);
+		verifier(!j.replay, `démarrage PC, jour ${i + 1} : rejoué deux fois dans la journée`);
+	});
+	verifier(/pcDemarre\(\)/.test(readFileSync(join(pub, 'immersion.js'), 'utf8').match(/function avancerTemps\(\)[\s\S]*?return;/)[0]), 'démarrage PC : le temps de jeu doit être suspendu pendant le démarrage');
+}
+
 // Traductions : toute clé française existe en anglais
 const manquantes = vm.runInContext('Object.keys(TRADUCTIONS.fr).filter((k) => TRADUCTIONS.en[k] === undefined)', fr);
 verifier(manquantes.length === 0, `clés sans traduction anglaise : ${manquantes.slice(0, 8).join(', ')}`);

@@ -168,6 +168,7 @@ function draw() {
 	verifierMecaniques(); // prompt 47 : inspection surprise (avant l'horloge, qui s'arrête alors)
 	majSelection(); // prompt 68 : un signalement trop longtemps en file expire
 	majSoir(); // prompt 69 : crépuscule accéléré, sortie du bureau
+	majDemarrageJour(); // prompt 71 : démarrage du PC en début de journée (jours 1 à 3)
 	avancerTemps(); // horloge simulée, sieste, arrivée des incidents, fin de journée (immersion.js)
 	if (Jeu.equipes) Jeu.majEquipes(millis()); // équipes envoyées depuis la carte (prompt 22)
 	boutons = [];

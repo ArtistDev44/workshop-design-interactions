@@ -103,7 +103,7 @@ const Sauvegarde = (function () {
 				modeHorsLigne: s.mode === 'hors ligne',
 				parametres: { son: !!R.son, contraste: !!R.contrasteRenforce, reduireAnimations: !!R.reduireAnimations, tailleTexte: 1 },
 				// Où en était l'écran : la phase, et le temps déjà écoulé du compte à rebours (recalculé à la reprise)
-				interface: { phase, ecoule: PHASES_COMPTEUR.includes(phase) ? Math.max(0, maintenant - debutCompteur) : 0 },
+				interface: { phase, ecoule: PHASES_COMPTEUR.includes(phase) ? Math.max(0, maintenant - debutCompteur) : 0, pcJour: typeof JOUR_PC !== 'undefined' ? JOUR_PC.fait : '' }, // prompt 71 : journée dont le PC a déjà démarré
 				complet: encoder(s),
 			},
 		};
@@ -250,6 +250,12 @@ const Sauvegarde = (function () {
 			facteurDuree = Jeu.modificateurActif && Jeu.modificateurActif(maintenant) === 'heure_pointe' ? 0.8 : 1;
 			arriveeDossier = debutCompteur = maintenant - (enCompteur ? Math.max(0, Number(ui.ecoule) || 0) : 0);
 			interaction();
+			if (typeof JOUR_PC !== 'undefined') {
+				// Prompt 71 : reprise en cours de journée → pas de nouveau démarrage (anciennes sauvegardes : idem)
+				JOUR_PC.fait = ui.pcJour !== undefined ? ui.pcJour : cleJourPC();
+				JOUR_PC.attendu = false;
+				demarrageDuJour();
+			}
 			derniere = new Date(o.sauvegardeLe);
 			annoncer(t('sauvegarde.reprise', { semaine: libelleSemaine(o.semaine), n: o.etat.dossierIndex + 1, total: c.paquet.length }));
 			return true;
