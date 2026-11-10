@@ -1590,8 +1590,10 @@ function dessinerFenetre() {
 }
 
 function fenetreAide() {
-	const l = 1240;
-	const h = 860;
+	// Prompt 66 : aide réorganisée — tous les raccourcis lisibles (≥ 18 px), règles de base complètes (jauges,
+	// seuils, compteur, dé, score) puis la Carte et les équipes ; malus sous les raccourcis.
+	const l = 1720;
+	const h = 1040;
 	const x = (L - l) / 2;
 	const y = (H - h) / 2;
 	panneau(x, y, l, h, C.accent);
@@ -1600,67 +1602,77 @@ function fenetreAide() {
 	fill(C.accent);
 	textFont(POLICE_TEXTE);
 	textStyle(BOLD);
-	textSize(40);
-	text(t('aide.titre'), x + 48, y + 36);
+	textSize(36);
+	text(t('aide.titre'), x + 48, y + 30);
 	textStyle(NORMAL);
-	// Raccourcis (08-raccourcis)
 	const raccourcis = [
+		[t('aide.k.entreeTouche'), t('aide.k.entree')],
+		['5 6 7 8', t('aide.k.sources')],
 		['1 / 2 / 3', t('aide.k.actions')],
 		[t('aide.k.rienTouche'), t('action.rien')],
 		['A / B', t('aide.k.ab')],
-		[t('aide.k.entreeTouche'), t('aide.k.entree')],
-		['P', t('aide.k.pause')],
+		[t('aide.k.majTouche'), t('aide.k.equipes')],
 		['R', t('aide.k.reset')],
+		['P', t('aide.k.pause')],
 		['M', t('aide.k.son')],
 		[t('aide.k.aideTouche'), t('aide.k.aide')],
-		['↑ ↓', t('aide.k.semaine')],
+		['T', t('aide.k.tuto')],
+		['L', t('aide.k.langue')],
+		['Tab', t('aide.k.objets')],
 		['← → ↑ ↓', t('aide.k.regarder')],
 		[t('aide.k.quitterTouche'), t('aide.k.quitter')],
-		['Tab', t('aide.k.objets')],
-		['L', t('aide.k.langue')],
+		['↑ ↓', t('aide.k.semaine')],
 	];
-	textSize(22);
+	textSize(24);
 	fill(C.texte);
-	text(t('aide.raccourcis'), x + 48, y + 110);
+	textStyle(BOLD);
+	text(t('aide.raccourcis'), x + 48, y + 96);
+	textStyle(NORMAL);
 	raccourcis.forEach(([k, d], i) => {
 		textFont(POLICE_DONNEES);
-		ajusterTaille(k, 172, 20);
+		ajusterTaille(k, 196, 20);
 		fill(C.accent);
-		text(k, x + 48, y + 150 + i * 28);
+		text(k, x + 48, y + 136 + i * 31);
 		textFont(POLICE_TEXTE);
-		ajusterTaille(d, 470, 20);
+		ajusterTaille(d, 580, 20);
 		fill(C.texte);
-		text(d, x + 230, y + 150 + i * 28);
+		text(d, x + 260, y + 136 + i * 31);
 	});
-	// Règles (00-concept, 03-actions, 04-jauges)
-	const rx = x + 760;
-	textSize(22);
-	fill(C.texte);
-	text(t('aide.regles'), rx, y + 110);
-	textSize(19);
-	text(
-		t('aide.texte'),
-		rx,
-		y + 150,
-		l - (rx - x) - 48,
-		560,
-	);
-	// Table des malus (prompt 23 § 4)
+	// Malus (prompt 23 § 4), sous les raccourcis
 	if (Jeu.MALUS) {
+		const ym = y + 136 + raccourcis.length * 31 + 18;
 		textFont(POLICE_TEXTE);
-		textSize(22);
+		textSize(24);
+		textStyle(BOLD);
 		fill(C.texte);
-		text(t('aide.malus'), x + 48, y + 516);
+		text(t('aide.malus'), x + 48, ym);
 		Jeu.MALUS.forEach((m, i) => {
-			textSize(16);
+			const yy = ym + 38 + i * 50;
+			textStyle(BOLD);
+			ajusterTaille(String(m.libelle), 780, 18);
 			fill(C.rouge);
-			text(m.libelle, x + 48, y + 552 + i * 46);
+			text(m.libelle, x + 48, yy);
+			textStyle(NORMAL);
+			const txt = m.condition + ' → ' + m.consequence;
+			ajusterTaille(txt, 790, 18);
 			fill(C.gris);
-			text(m.condition + ' → ' + m.consequence, x + 48, y + 572 + i * 46, 680, 24);
+			text(txt, x + 48, yy + 23);
 		});
 	}
-	bouton(x + l - 288, y + h - 104, 240, 64, t('commun.fermer'), fermer);
-	bouton(x + l - 288 - 300, y + h - 104, 280, 64, t('tuto.relancer'), lancerTutoriel, false, true); // prompt 34
+	// Règles (00-concept, 03-actions, 04-jauges) puis la Carte (prompt 68)
+	const rx = x + 900;
+	const rl = l - (rx - x) - 48;
+	textSize(24);
+	textStyle(BOLD);
+	fill(C.texte);
+	text(t('aide.regles'), rx, y + 96);
+	textStyle(NORMAL);
+	textSize(19);
+	textLeading(27);
+	text(t('aide.texte'), rx, y + 136, rl, 820);
+	textLeading(textSize() * 1.25);
+	bouton(x + l - 288, y + h - 92, 240, 60, t('commun.fermer'), fermer);
+	bouton(x + l - 288 - 300, y + h - 92, 280, 60, t('tuto.relancer'), lancerTutoriel, false, true); // prompt 34
 }
 
 function fenetreReset() {

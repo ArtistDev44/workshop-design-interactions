@@ -57,7 +57,9 @@ function cibleReelle(nom) {
 const PHASES_DOSSIER = ['decision', 'contradiction', 'conflit']; // prompt 68 : la sélection d'un signalement précède le dossier
 const ETAPES_GUIDE = [
 	{ id: 'installer', cible: () => 'ecranPC', fait: () => vue === 'poste' },
-	{ id: 'jauges', cible: () => (vue === 'poste' && PC.etat === 'appli' ? 'jauges' : vue === 'poste' ? 'iconeCarte' : 'ecranPC'), fait: () => PHASES_DOSSIER.includes(phase) },
+	{ id: 'jauges', cible: () => (vue === 'poste' && PC.etat === 'appli' ? 'jauges' : vue === 'poste' ? 'iconeCarte' : 'ecranPC'), fait: () => phase === 'selection' || PHASES_DOSSIER.includes(phase) },
+	// Prompt 66 : étape dédiée au signalement (prendre le dossier lance le compteur)
+	{ id: 'prendre', cible: () => (vue === 'poste' && PC.etat === 'appli' ? 'actions' : vue === 'poste' ? 'iconeCarte' : 'ecranPC'), fait: () => PHASES_DOSSIER.includes(phase) || phase === 'narration' || (Jeu.historique || []).length > 0 },
 	{ id: 'actions', cible: () => (vue === 'poste' && PC.etat === 'appli' ? 'actions' : vue === 'poste' ? 'iconeCarte' : 'ecranPC'), fait: () => (Jeu.historique || []).length > 0 || phase === 'narration' },
 	{ id: 'apps', cible: () => (vue !== 'poste' ? 'ecranPC' : PC.etat === 'appli' ? 'fermerAppli' : 'iconesOS'), fait: () => PC.etat === 'os' && (!!PC.fenetre || PC.flottant) },
 	{ id: 'quitter', cible: () => 'quitterPC', fait: () => vue === 'bureau' },
@@ -105,6 +107,15 @@ function etapeGuideSuivante() {
 // ——— Dessin : flèche + bulle ———
 function flecheGuide(px, py, versBas) {
 	// Flèche épaisse jaune à contour sombre (contraste sur fonds clairs et sombres), pointe sur (px, py)
+	// versBas : true (vers le bas), false (vers le haut) ou 'droite' (prompt 66)
+	if (versBas === 'droite') {
+		push();
+		translate(px, py);
+		rotate(-HALF_PI);
+		flecheGuide(0, 0, true);
+		pop();
+		return;
+	}
 	const s = versBas ? 1 : -1;
 	const pts = [
 		[0, 0],
@@ -132,11 +143,14 @@ function dessinerGuide() {
 	if (MENU.actif || ecran !== 'jeu') return;
 	const e = ETAPES_GUIDE[GUIDE.etape];
 	if (e.fait()) return etapeGuideSuivante(); // validée dès que le joueur a fait l'action, même sous une fenêtre
-	if (fenetre || smsActif || tutoriel || clignement) return;
+	if (fenetre || smsActif || tutoriel || clignement || phase === 'mail') return; // prompt 66 : le mail du soir se lit sans bulle
 	const c = cibleReelle(e.cible());
 	const texte = t('guide.etape', { n: GUIDE.etape + 1, total: ETAPES_GUIDE.length }) + ' · ' + texteEtapeGuide(e);
 	if (!c) return bulleGuide(texte, L / 2, H - 260, true);
 	const rebond = reduireAnimations ? 0 : Math.sin(millis() / 220) * 10;
+	// Prompt 66 : cible dans la colonne de droite de l'appli (jauges, dossier, croix) → bulle à sa gauche, sur la
+	// carte, pour ne jamais masquer les sources, les actions ni le texte des conséquences
+	const aGauche = vue === 'poste' && PC.etat === 'appli' && c.x > L * 0.55;
 	const cx = constrain(c.x + c.l / 2, 60, L - 60);
 	const versBas = c.y > 260; // la flèche arrive par le haut, sauf si la cible est tout en haut
 	const py = versBas ? c.y - 8 - rebond : c.y + c.h + 8 + rebond;
@@ -149,11 +163,17 @@ function dessinerGuide() {
 	strokeWeight(4);
 	rect(c.x - 10, c.y - 10, c.l + 20, c.h + 20);
 	noStroke();
+	if (aGauche) {
+		const px = c.x - 14 - rebond;
+		const pyG = constrain(c.y + c.h / 2, 120, H - 120);
+		flecheGuide(px, pyG, 'droite');
+		return bulleGuide(texte, 0, pyG, false, px - 100 - 640, true);
+	}
 	flecheGuide(cx, py, versBas);
 	bulleGuide(texte, cx, versBas ? py - 110 : py + 110, versBas);
 }
 /** Bulle sombre (texte clair, contraste > 12:1) avec « Étape suivante » et « Arrêter le guide (G) » */
-function bulleGuide(texte, cx, y, auDessus) {
+function bulleGuide(texte, cx, y, auDessus, xFixe, centreV) {
 	const l = 640;
 	textFont(POLICE_TEXTE);
 	textSize(22);
@@ -161,8 +181,8 @@ function bulleGuide(texte, cx, y, auDessus) {
 	const lignes = Math.max(1, Math.ceil((textWidth(texte) * 1.1) / (l - 48)));
 	const avecBoutons = GUIDE.actif;
 	const h = 32 + lignes * 30 + (avecBoutons ? 72 : 0);
-	const x = constrain(cx - l / 2, 24, L - l - 24);
-	const by = constrain(auDessus ? y - h : y, 24, H - h - 24);
+	const x = constrain(xFixe !== undefined ? xFixe : cx - l / 2, 24, L - l - 24);
+	const by = constrain(centreV ? y - h / 2 : auDessus ? y - h : y, 24, H - h - 24);
 	noStroke();
 	fill(0, 0, 0, 110);
 	rect(x + 6, by + 8, l, h);

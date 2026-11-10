@@ -10,7 +10,7 @@
  *   raccourcis Maj + 1/2/3/4 (police, ambulanciers, techniciens, pompiers).
  * Données réelles uniquement ; absent → « non renseigné ».
  */
-const SELECTION = { depuis: 0, arrivees: {}, traces: [], onglet: 'enquete', message: null, surbrillance: null, legendeRepliee: false };
+const SELECTION = { depuis: 0, paquet: null, arrivees: {}, traces: [], onglet: 'enquete', message: null, surbrillance: null, legendeRepliee: false };
 const compteurSemaine = () => ((Jeu.etat.semaine && Jeu.etat.semaine.difficulte && Jeu.etat.semaine.difficulte.compteur_s) || 30) * 1000;
 
 /** Dossiers arrivés (heure de jeu atteinte) et pas encore traités, dans l'ordre : la tête est le prochain à traiter */
@@ -18,6 +18,13 @@ function fileIncidents() {
 	if (ecran !== 'jeu' || !Jeu.paquet || !Jeu.horloge) return [];
 	const j = Jeu.jourCourant();
 	if (!j) return [];
+	// Prompt 66 (correctif) : les arrivées sont indexées par n° de dossier ; une nouvelle partie, semaine ou reprise
+	// (nouveau paquet) les remet à zéro — sinon les signalements expiraient dès leur arrivée la semaine suivante
+	if (SELECTION.paquet !== Jeu.paquet) {
+		SELECTION.paquet = Jeu.paquet;
+		SELECTION.arrivees = {};
+		SELECTION.traces = [];
+	}
 	const f = [];
 	for (let i = Jeu.index; i < Jeu.paquet.length; i++) {
 		const d = Jeu.paquet[i];
@@ -39,6 +46,7 @@ function entrerSelection() {
 	if (!d) return apresDecision();
 	Confort.Son.alerteDossier(d.type, fileIncidents().length);
 	annoncer(t('carte.signalement', { quoi: t('enq.signalement.' + d.type), gravite: t('gravite.' + Jeu.gravite(d)) }));
+	fileIncidents(); // met à jour les arrivées (et les remet à zéro si le paquet a changé)
 	if (SELECTION.arrivees[Jeu.index] && millis() - SELECTION.arrivees[Jeu.index] > 2 * compteurSemaine() * facteurLecture()) expirerSelection();
 }
 function selectionnerIncident() {

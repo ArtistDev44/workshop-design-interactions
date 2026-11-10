@@ -268,14 +268,17 @@ function fenetreRapport() {
 	text(t('fin.decisions'), x + 56, ly);
 	textStyle(NORMAL);
 	ly += 32;
+	// Prompt 66 : qualité en tête de ligne, texte sur deux lignes (il était coupé : « Bus de… »)
 	b.decisionsCles.slice(0, 3).forEach((d) => {
-		fill(gris);
 		textSize(15);
-		text(String(t('qualite.' + d.qualite)).toUpperCase(), x + 56, ly);
+		textLeading(19);
+		const etiquette = String(t('qualite.' + d.qualite)).toUpperCase() + ' · ';
+		fill(gris);
+		text(etiquette, x + 56, ly);
+		const decal = textWidth(etiquette);
 		fill(encre);
-		textSize(17);
-		text(String(d.titre) + ' — ' + String(d.action || t('action.temps')), x + 56, ly + 20, l / 2 - 80, 24);
-		ly += 52;
+		text(String(d.titre) + ' — ' + String(d.action || t('action.temps')), x + 56 + decal, ly, l / 2 - 80 - decal, 40);
+		ly += 45;
 	});
 	dessinerCourbesJauges(x + l / 2 + 40, y + 552, l / 2 - 96, 96, encre, gris); // prompt 48 : courbes des jauges
 	// Prompt 55 : défis de la semaine (vrais chiffres) et ralentis utilisés
