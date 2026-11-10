@@ -122,7 +122,8 @@ function disque(g, cx, cy, r, c) {
 }
 function ombreTramee(g, x, y, l, h, alpha) {
 	g.fill(43, 29, 24, alpha || 90);
-	for (let j = 0; j < h; j++) for (let i = j % 2; i < l; i += 2) g.rect(x + i, y + j, 1, 1);
+	const pas = typeof MOBILE !== 'undefined' && MOBILE.actif ? 4 : 2; // prompt 60 : ombres allégées sur téléphone
+	for (let j = 0; j < h; j++) for (let i = j % 2; i < l; i += pas) g.rect(x + i, y + j, 1, 1);
 }
 function feuillage(g, cx, cy, r) {
 	disque(g, cx, cy + 1, r + 1, P.contour);
@@ -946,7 +947,7 @@ function composerVue() {
 			? t('bureau.mail')
 			: ecran === 'jeu' && phase === 'attente' && Jeu.journeeFinie && Jeu.journeeFinie()
 				? t('bureau.finJournee') // prompt 51
-				: t('bureau.installer');
+				: t(typeof MOBILE !== 'undefined' && MOBILE.actif ? 'bureau.installerMobile' : 'bureau.installer'); // prompt 60 : consigne tactile
 	textFont(POLICE_DONNEES);
 	textSize(22);
 	const lm = textWidth(msg) + 40;

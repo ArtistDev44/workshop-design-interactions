@@ -140,3 +140,27 @@ body {
 .cb-compte {
 	font-size: calc(14px * var(--echelle-texte, 1));
 }
+
+/* Prompt 60 : téléphone — le canevas remplit la hauteur réelle (barres du navigateur comprises), pas de zoom au geste */
+body.mobile #scene {
+	height: 100dvh;
+}
+body.mobile #scene canvas {
+	touch-action: none;
+	width: min(100vw, calc(100dvh * 16 / 9)) !important;
+}
+/* Prompt 60b : en portrait, le canevas du jeu (1920×1080) reste dessiné mais invisible ; le canevas portrait
+   1080×1920 (recomposition) est affiché et reçoit les touchers */
+body.portrait #scene canvas.p5Canvas {
+	position: fixed;
+	left: 0;
+	top: 0;
+	opacity: 0;
+	pointer-events: none;
+}
+#portrait {
+	display: block;
+	width: min(100vw, calc(100dvh * 9 / 16));
+	height: auto;
+	touch-action: none;
+}

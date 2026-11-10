@@ -68,6 +68,7 @@ function dessinerOS() {
 		return;
 	}
 	if (PC.etat === 'demarrage') return dessinerDemarrage();
+	if (PC.fenetre === 'donnees') return dessinerAppliDonnees(); // prompt 61 : plein écran, barre des tâches comprise
 	drawingContext.imageSmoothingEnabled = false;
 	image(fondOS(), 0, 0, L, H);
 	drawingContext.imageSmoothingEnabled = true;
@@ -322,6 +323,7 @@ function ouvrirIconeOS(i) {
 	const cle = ICONES_OS[i].cle;
 	if (cle === 'regulation') return ouvrirAppli();
 	if (cle === 'indicateurs') return basculerIndicateurs(); // prompt 36 : app flottante
+	if (cle === 'donnees') return ouvrirDonnees(); // prompt 61 : appli plein écran
 	if (PC.etat === 'appli') PC.etat = 'os';
 	if (cle === 'carte' && typeof revelerSource === 'function') revelerSource('carte', false); // prompt 50
 	PC.fenetre = PC.fenetre === cle ? null : cle; // re-cliquer l'icône active referme l'app
