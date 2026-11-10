@@ -1504,7 +1504,7 @@ function mouseMoved() {
 function touchStarted(e) {
 	if (horsCanevas(e)) return; // prompt 60 : un bouton HTML (avis portrait, boîtes) garde son comportement normal
 	if (Sauvegarde.dialogueOuvert || CARNET.ouvert) return;
-	if (MOBILE.actif) return toucherDebut(), false; // prompt 60 : sur téléphone, le clic part au relâchement (swipe, appui long)
+	if (MOBILE.actif) return (PORTRAIT.actif ? portraitDebut(e) : toucherDebut()), false; // prompt 60 : sur téléphone, le clic part au relâchement (swipe, appui long) ; 60b : portrait
 	sourisDansCanevas = false; // au doigt, pas de caméra (la position du dernier appui resterait « collée »)
 	Confort.Son.demarrer();
 	mousePressed();

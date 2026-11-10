@@ -149,26 +149,18 @@ body.mobile #scene canvas {
 	touch-action: none;
 	width: min(100vw, calc(100dvh * 16 / 9)) !important;
 }
-#avis-portrait {
+/* Prompt 60b : en portrait, le canevas du jeu (1920×1080) reste dessiné mais invisible ; le canevas portrait
+   1080×1920 (recomposition) est affiché et reçoit les touchers */
+body.portrait #scene canvas.p5Canvas {
 	position: fixed;
-	inset: 0;
-	z-index: 30;
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-	gap: 16px;
-	padding: 24px;
-	background: rgba(13, 12, 12, 0.94);
-	color: #ffffff;
-	font-family: 'JetBrains Mono', ui-monospace, monospace;
-	font-size: 18px;
-	line-height: 1.5;
+	left: 0;
+	top: 0;
+	opacity: 0;
+	pointer-events: none;
 }
-#avis-portrait h2 {
-	margin: 0;
-	font-size: 24px;
-}
-#avis-portrait .sv-bouton {
-	min-height: 48px; /* cible tactile ≥ 44 px */
-	align-self: flex-start;
+#portrait {
+	display: block;
+	width: min(100vw, calc(100dvh * 9 / 16));
+	height: auto;
+	touch-action: none;
 }
