@@ -84,7 +84,9 @@ function finDeSemaine() {
 
 /** Écran du PC pendant que le rapport est imprimé */
 function dessinerEcranRapportImprime() {
-	background(C.fond);
+	noStroke();
+	fill(C.fond);
+	rect(0, 0, L, H); // prompt 50 : pas de background() dans la fenêtre de l'appli (il ignore la transformation)
 	noStroke();
 	dsTitre(t('rapport.imprimeTitre'), L / 2, H / 2 - 120, 56, '#ffffff', 'center');
 	noStroke();

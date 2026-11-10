@@ -1,4 +1,4 @@
-# Prompt 51 — Jeu « Nantes en régulation », étape 37 : finir sa journée à l'horloge, sablier
+# Prompt 51 — Jeu « Nantes en régulation », étape 37 : finir sa journée à l'horloge, sablier, lumière de la pièce
 
 Demande d'origine (10/11/2026) :
 
@@ -21,6 +21,22 @@ Demande d'origine (10/11/2026) :
    fait avancer le temps jusqu'au prochain dossier (ou jusqu'à la fin de journée) ; sans effet pendant un
    dossier ; animation de sable (réduite si `prefers-reduced-motion`).
 5. Le test `test-jeu.mjs` couvre le départ anticipé (dossiers réglés, malus appliqué une seule fois).
+
+## Demande complémentaire (10/11/2026)
+> Aussi, gère mieux la lumière : quand l'interrupteur est éteint et que les stores sont mis en place :
+> il faut que cela se ressente sur l'espace de travail
+
+6. **Lumière** : lampe (interrupteur) éteinte et stores baissés assombrissent réellement la pièce et le
+   bureau (table, objets, clavier), en tenant compte de l'heure (jour / nuit) ; l'écran du PC devient la
+   source de lumière principale (halo sur la table). Transitions en fondu (immédiates si animations
+   réduites) ; textes et boutons de l'interface toujours lisibles (contraste ≥ 4,5:1).
+
+> Rajoute un effet d'ombre aux livres, à la plante, au dossier et à la tasse de café (le même style
+> pour le téléphone et la souris par exemple)
+
+7. **Ombres portées** : livres, plante, dossier (rapport papier) et tasse reçoivent la même ombre tramée
+   que le téléphone et la souris (même direction, même opacité) ; le sablier aussi. L'ombre suit la
+   lumière du point 6 (plus marquée sous la lampe, plus diffuse stores baissés).
 
 ## Vérifications
 - `npm run build`, `npm test` ; essai réel : horloge avant / après 20 h, mail du lendemain, sablier ;

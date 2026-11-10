@@ -30,7 +30,16 @@ for (const src of srcs) {
 		continue;
 	}
 	const chemin = join(pub, src.replace(/^\.?\//, '').split(/[?#]/)[0]);
-	if (existsSync(chemin) && statSync(chemin).isFile()) ok();
+	if (existsSync(chemin) && statSync(chemin).isFile()) {
+		ok();
+		// Prompt 50 : syntaxe de chaque script (une erreur de syntaxe empêche tout le jeu de démarrer)
+		try {
+			new vm.Script(readFileSync(chemin, 'utf8'), { filename: src });
+			ok();
+		} catch (e) {
+			echec(`${src} : erreur de syntaxe — ${e.message}`);
+		}
+	}
 	else echec(`index.html : script introuvable ${src}`);
 }
 

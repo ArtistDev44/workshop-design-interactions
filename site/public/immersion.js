@@ -95,6 +95,7 @@ function interagirPiece(nom) {
 		texte = t(PIECE.lampe ? 'piece.lampe.on' : 'piece.lampe.off');
 	} else if (nom === 'fenetre') {
 		PIECE.store = !PIECE.store;
+		if (typeof revelerSource === 'function') revelerSource('meteo', false); // prompt 50 : regarder dehors
 		const m = meteoFenetre();
 		const maintenant = new Date();
 		const reelle = String(maintenant.getHours()).padStart(2, '0') + ':' + String(maintenant.getMinutes()).padStart(2, '0');

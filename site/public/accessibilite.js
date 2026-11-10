@@ -54,7 +54,7 @@ function installerEchelleTexte() {
 		demandee = s;
 		let v = s < 24 ? Math.min(s * ECHELLE_TEXTE, 24) : s;
 		// Prompt 49 : sur l'écran du PC (affiché à 90 %), aucun texte sous 18 px (≈ 16 px à l'écran)
-		if (typeof espaceDessin !== 'undefined' && espaceDessin === 'pc') v = Math.max(v, TAILLE_MIN_PC);
+		if (typeof espaceDessin !== 'undefined' && espaceDessin === 'pc') v = Math.max(v, typeof transformAppli !== 'undefined' && transformAppli ? 20 : TAILLE_MIN_PC); // prompt 50 : 20 px dans l'appli, réduite à 91 % en fenêtre
 		return tailleOrigine(v);
 	};
 	window.textLeading = function (s) {

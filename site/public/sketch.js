@@ -173,6 +173,12 @@ function draw() {
 	sourisVersEcran();
 	background(C.fond);
 	if (PC.etat === 'appli') {
+		// Prompt 50 : l'appli est une fenêtre de RégulOS, la barre des tâches reste visible
+		dessinerFondOS();
+		const n0 = entrerFenetreAppli();
+		noStroke();
+		fill(C.fond);
+		rect(0, 0, L, H);
 		if (ecran === 'accueil') dessinerAppliSansPartie(); // prompt 35 : l'accueil est sorti du PC (menu principal)
 		else {
 			dessinerJeu();
@@ -181,6 +187,8 @@ function draw() {
 		}
 		if (enPause) dessinerPause();
 		dessinerFermerAppli();
+		sortirFenetreAppli(n0);
+		dessinerBarreTaches();
 	} else dessinerOS();
 	dessinerIndicateurs(); // prompt 36 : app flottante, au premier plan
 	sourisRestaurer();
@@ -623,7 +631,7 @@ const carteVisible = () => vue === 'poste' && PC.etat === 'appli' && ecran === '
 /** Molette au-dessus de la carte : zoom (renvoie true si l'événement est consommé) */
 function zoomCarteMolette(delta) {
 	if (!carteVisible()) return false;
-	const m = sourisEcranPC();
+	const m = sourisAppli();
 	if (m.x < CARTE.x || m.x > CARTE.x + CARTE.l || m.y < CARTE.y || m.y > CARTE.y + CARTE.h) return false;
 	zoomerCarte(delta < 0 ? 1.2 : 1 / 1.2, m.x, m.y);
 	return true;
@@ -638,7 +646,7 @@ function commandesCarte() {
 			bornerCarte();
 		} else v.prise = null;
 	}
-	if (v.k > 1) boutons.push({ x: CARTE.x, y: CARTE.y, l: CARTE.l, h: CARTE.h, action: () => (v.prise = { x: sourisEcranPC().x, y: sourisEcranPC().y, px: v.px, py: v.py }) });
+	if (v.k > 1) boutons.push({ x: CARTE.x, y: CARTE.y, l: CARTE.l, h: CARTE.h, action: () => (v.prise = { x: sourisAppli().x, y: sourisAppli().y, px: v.px, py: v.py }) });
 	const bx = CARTE.x + CARTE.l - 64;
 	[['+', () => zoomerCarte(1.4)], ['−', () => zoomerCarte(1 / 1.4)], ['⟲', reinitialiserCarte]].forEach(([lib, act], i) => bouton(bx, CARTE.y + 16 + i * 56, 48, 48, lib, act, false, true));
 	if (v.k > 1) {
@@ -765,8 +773,9 @@ function dessinerPictosMeteo(zone, m, opacite, pluie, vent, chaud) {
 // ——— Carte : état des lignes (Q29) — vert à l'heure, orange retard, rouge clignotant incident actif ———
 function etatsLignes(dActuel) {
 	const etats = new Map();
-	(Jeu.etat.dossiers || []).forEach((d) => (d.lignes || []).forEach((n) => etats.set(n, 'retard')));
-	if (dActuel) (dActuel.lignes || []).forEach((n) => etats.set(n, 'incident'));
+	// Prompt 50 : seuls les dossiers déjà traités, et le dossier courant une fois la carte consultée
+	(Jeu.etat.dossiers || []).forEach((d, i) => i < Jeu.index && (d.lignes || []).forEach((n) => etats.set(n, 'retard')));
+	if (dActuel && dossierConnu(Jeu.index)) (dActuel.lignes || []).forEach((n) => etats.set(n, 'incident'));
 	return etats;
 }
 
@@ -807,6 +816,7 @@ function dessinerLignesEtat(zone, d) {
 function dessinerListeLignes(zone, dActuel) {
 	const parLigne = new Map();
 	(Jeu.etat.dossiers || []).forEach((d, i) => {
+		if (!dossierConnu(i)) return; // prompt 50 : pas de lignes révélées d'avance
 		(d.lignes || []).forEach((n) => {
 			const prev = parLigne.get(n) || { nom: n, alerte: false, retard: null };
 			prev.alerte = prev.alerte || d.type !== 'ligne en difficulté' || i === Jeu.index;
@@ -814,7 +824,7 @@ function dessinerListeLignes(zone, dActuel) {
 			parLigne.set(n, prev);
 		});
 	});
-	const actives = new Set((dActuel && dActuel.lignes) || []);
+	const actives = new Set((dActuel && dossierConnu(Jeu.index) && dActuel.lignes) || []);
 	const items = Array.from(parLigne.values()).sort(
 		(a, b) => (actives.has(b.nom) - actives.has(a.nom)) || (b.alerte - a.alerte) || ((b.retard || 0) - (a.retard || 0)),
 	);
@@ -832,9 +842,14 @@ function dessinerListeLignes(zone, dActuel) {
 	let y = zone.y + 58;
 	if (!items.length) {
 		textSize(18);
+		textLeading(26);
 		fill(C.gris);
-		text(t('lignes.aucune'), zone.x + 18, y);
-		y += 120;
+		// Prompt 50 : tant que la carte n'est pas consultée, aucune ligne n'est connue
+		const dC = Jeu.dossierCourant ? Jeu.dossierCourant() : null;
+		const semaineSansLigne = !(Jeu.paquet || []).some((x) => x.lignes && x.lignes.length);
+		const cache = !semaineSansLigne || (dC && dC.lignes && dC.lignes.length && !dossierConnu(Jeu.index));
+		text(t(cache ? 'lignes.aConsulter' : 'lignes.aucune').replace(/\n/g, ' '), zone.x + 18, y, zone.l - 36, 220);
+		y += 230;
 	}
 	for (const it of items.slice(0, Jeu.objectifDuJour ? 10 : 14)) {
 		const actif = actives.has(it.nom);
@@ -860,9 +875,10 @@ function dessinerListeLignes(zone, dActuel) {
 		textFont(POLICE_TEXTE);
 		textSize(14);
 		fill(C.texte);
-		text(t('bandeau.objectif', { libelle: o.libelle, v: Jeu.jauges[o.jauge] }), zone.x + 18, by + 12, zone.l - 36, 50);
+		textLeading(25);
+		text(t('bandeau.objectif', { libelle: o.libelle, v: Jeu.jauges[o.jauge] }), zone.x + 18, by + 12, zone.l - 36, 78);
 		fill(mod ? C.orange : C.gris);
-		text(mod ? mod.libelle + (mod.actionBloquee ? t('bandeau.bloquee', { action: Jeu.REGLAGES.effets[mod.actionBloquee].nom }) : '') + ' · ' + Math.ceil((mod.fin - millis()) / 1000) + ' s' : t('bandeau.aucunMod'), zone.x + 18, by + 60, zone.l - 36, 66);
+		text(mod ? mod.libelle + (mod.actionBloquee ? t('bandeau.bloquee', { action: Jeu.REGLAGES.effets[mod.actionBloquee].nom }) : '') + ' · ' + Math.ceil((mod.fin - millis()) / 1000) + ' s' : t('bandeau.aucunMod'), zone.x + 18, by + 92, zone.l - 36, 50);
 	}
 	// Légende
 	const ly = zone.y + zone.h - 120;
@@ -972,59 +988,10 @@ function dessinerDossier(d, meteo) {
 
 	// En-tête du dossier
 	textAlign(LEFT, TOP);
-	text(t('dossier.entete', { n: Jeu.index + 1, total: Jeu.paquet.length, type: tSi('type.' + d.type, d.type).toUpperCase(), affluence: d.affluence ? t('dossier.affluence') : '' }), x + 32, base.y + 42);
+	text(t('dossier.entete', { n: Jeu.index + 1, total: Jeu.paquet.length, type: tSi('type.' + d.type, d.type).toUpperCase(), affluence: '' }), x + 32, base.y + 42); // prompt 50 : l'affluence se découvre dans l'agenda
 
-	// Priorité : ligne, retard, raison
-	const ligne = d.lignes && d.lignes.length ? t('dossier.ligne', { lignes: d.lignes.join(', ') }) : t('dossier.ligneInconnue');
-	fill(C.texte);
-	textFont(POLICE_TEXTE);
-	textStyle(BOLD);
-	textSize(44);
-	text(ligne, x + 32, base.y + 84);
-	textStyle(NORMAL);
-	textFont(POLICE_DONNEES);
-	textSize(30);
-	fill(d.retard !== null ? C.rouge : C.gris);
-	text(d.retard !== null ? t('dossier.retard', { retard: d.retard }) : t('dossier.retardInconnu'), x + 32, base.y + 146);
-	if (d.retard === null) {
-		textSize(16);
-		text(t('dossier.retardArchive'), x + 32, base.y + 184);
-	}
-	fill(C.texte);
-	textFont(POLICE_TEXTE);
-	textSize(26);
-	text(t('dossier.raison', { nature: d.nature }), x + 32, base.y + 212, base.l - (d.contradiction ? 300 : 64), 60);
-
-	// Badge « contradiction » si deux sources se contredisent (Q9) — calculé au prompt 17
-	if (d.contradiction) {
-		fill(C.orange);
-		rect(x + base.l - 230, base.y + 232, 198, 36, 18);
-		fill(C.panneau);
-		textFont(POLICE_DONNEES);
-		textSize(18);
-		textAlign(CENTER, CENTER);
-		text(t('dossier.contradiction'), x + base.l - 131, base.y + 250);
-		textAlign(LEFT, TOP);
-	}
-
-	// Détails (en dessous) : date, source, texte de la source, météo
-	stroke(C.piste);
-	strokeWeight(2);
-	line(x + 32, base.y + 276, x + base.l - 32, base.y + 276);
-	noStroke();
-	textFont(POLICE_DONNEES);
-	textSize(18);
-	fill(C.gris);
-	text(dateLongue(d.date) + (d.heure ? ' · ' + d.heure : ''), x + 32, base.y + 292);
-	fill(C.texte);
-	textFont(POLICE_TEXTE);
-	textSize(21);
-	text(t('dossier.citation', { texte: d.texte_source }), x + 32, base.y + 326, base.l - 64, 120);
-	textFont(POLICE_DONNEES);
-	textSize(16);
-	fill(C.gris);
-	text(t('dossier.source', { source: d.source }), x + 32, base.y + 452, base.l - 64, 50);
-	// Prompt 43 : la météo du jour est déjà affichée sous la carte → plus répétée ici
+	// Prompt 50 : signalement vague, faits révélés source par source (enquete.js)
+	dessinerEnquete(d, x, base);
 
 	const ab = (base.l - 64 - 16) / 2;
 	if (phase === 'contradiction') {
@@ -1057,26 +1024,13 @@ function dessinerDossier(d, meteo) {
 		textSize(16);
 		fill(C.gris);
 		text(t('dossier.sourceRetenue', { libelle: d.contradiction[sourceChoisie].libelle }), x + 32, base.y + base.h - 236, base.l - 64, 30);
-	} else if (Jeu.conseil) {
-		// Conseil contextuel (prompt 23 § 1) : une phrase factuelle, jamais l'action à choisir
-		textFont(POLICE_TEXTE);
-		textSize(15);
-		fill(C.orange);
-		text(t('dossier.conseil', { conseil: Jeu.conseil(d) }), x + 32, base.y + base.h - 252, base.l - 64, 48);
-	}
+	} // prompt 50 : plus de conseil — le joueur enquête lui-même
 	const bloquee = Jeu.actionBloquee ? Jeu.actionBloquee() : null;
 	actions.forEach(([touche, nom, cle], i) => {
 		const bx = x + 32 + (i % 2) * (ab + 16);
 		const by = base.y + base.h - 200 + Math.floor(i / 2) * 88;
 		bouton(bx, by, ab, 72, touche + '  ' + nom + (cle === bloquee ? t('dossier.indispo') : ''), () => decider(cle), cle === bloquee, i === 3);
-		// Prompt 43 : effets habituels de l'action sur les trois jauges (signes de la table réelle REGLAGES.effets)
-		noStroke();
-		fill(255, 255, 255, 215);
-		textFont(POLICE_DONNEES);
-		textStyle(NORMAL);
-		ajusterTaille(effetsResumes(cle), ab - 20, 13, 10);
-		textAlign(CENTER, BOTTOM);
-		text(effetsResumes(cle), bx + ab / 2, by + 69);
+		// Prompt 50 : plus de flèches d'effet sous les boutons — les effets s'apprennent en jouant (journal, mail, rapport)
 	});
 	cibleGuide('actions', x + 32, base.y + base.h - 200, base.l - 64, 160); // prompt 37
 }
@@ -1596,6 +1550,8 @@ function keyPressed() {
 	}
 	if (ecran === 'accueil') {
 		if (keyCode === ENTER || keyCode === RETURN) ouvrirMenuPrincipal(); // prompt 35 : plus d'accueil dans le PC
+	} else if ((phase === 'decision' || phase === 'contradiction') && toucheEnquete()) {
+		// prompt 50 : 5 à 8 consultent une source
 	} else if (phase === 'decision') {
 		const actions = { 1: 'devier', 2: 'retenir', 3: 'renfort', 0: 'rien', ' ': 'rien' };
 		if (actions[key]) decider(actions[key]);

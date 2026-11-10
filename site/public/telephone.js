@@ -71,6 +71,7 @@ function ouvrirTelephone() {
 	chargerNotifications(TEL.date);
 	ouvrir('telephone');
 	leverTelephone(); // prompt 42 : on saisit le téléphone
+	if (typeof revelerSource === 'function') revelerSource('agenda', false); // prompt 50 : l'agenda du jour, consulté sur le téléphone
 	if (TEL.cache[TEL.date]) annoncer(t('tel.annonce', { n: TEL.cache[TEL.date].notifs.length }));
 }
 

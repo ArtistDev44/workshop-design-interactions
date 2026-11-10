@@ -89,8 +89,9 @@ jamais l'inverse.
 | 47 | `47-jeu-mecaniques-narration.md` | Jeu, étape 33 : inspection surprise, palmarès et profils, journal de bord, fin « démission », épilogue personnalisé, agenda anticipé | ✅ |
 | 48 | `48-jeu-accessibilite-technique.md` | Jeu, étape 34 : daltonisme, taille du texte, lecture facile, tests automatisés, démo automatique, PWA hors ligne, courbes des jauges | ✅ |
 | 49 | `49-jeu-lofi-lisibilite-meteo.md` | Jeu, étape 35 : musique lofi CC0 et sons discrets, textes du PC lisibles, carte sans ligne météo, climat selon le mode (direct / archives) | ✅ |
-| 50 | `50-jeu-enquete-sources.md` | Jeu, étape 36 : découvrir la situation — alerte vague, détails révélés en consultant carte, info trafic, météo, agenda ; plus de conseil ni de flèches d'effet | ◻ prévu |
-| 51 | `51-jeu-horloge-sablier.md` | Jeu, étape 37 : finir sa journée en cliquant l'horloge (alerte avant 20 h, blâme du patron le lendemain), sablier pour faire passer le temps entre les dossiers | ◻ prévu |
+| 50 | `50-jeu-enquete-sources.md` | Jeu, étape 36 : découvrir la situation — alerte vague, détails révélés en consultant carte, info trafic, météo, agenda ; plus de conseil ni de flèches d'effet ; appli Régulation en fenêtre (barre des tâches visible) | ✅ |
+| 51 | `51-jeu-horloge-sablier.md` | Jeu, étape 37 : finir sa journée en cliquant l'horloge (alerte avant 20 h, blâme du patron le lendemain), sablier pour faire passer le temps entre les dossiers, lumière (lampe éteinte, stores baissés) qui se ressent sur le bureau, ombres portées des objets | ◻ prévu |
+| 52 | `52-jeu-cafe-boost.md` | Jeu, étape 38 : boire le café (tasse en main, même animation que le téléphone) → boost temporaire : cœur qui s'accélère, pulsation rouge, lignes de vitesse, flou, champ élargi | ◻ prévu |
 
 ### Statut des prompts (vérifié le 10/11/2026 dans `site/public/`)
 
