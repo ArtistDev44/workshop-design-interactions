@@ -19,14 +19,4 @@ export function lien(chemin = ''): string {
 }
 
 /** Pages du menu principal (Header) — une seule liste pour tout le site. */
-export const NAVIGATION = [
-	{ chemin: '', label: 'Accueil' },
-	{ chemin: 'jeu', label: 'Jeu' },
-	{ chemin: 'oeuvres', label: 'Œuvres' },
-	{ chemin: 'catalogue', label: 'Catalogue' },
-	{ chemin: 'statistiques', label: 'Statistiques' },
-	{ chemin: 'methode', label: 'Méthode' },
-	{ chemin: 'corpus', label: 'Corpus' },
-	{ chemin: 'donnees', label: 'Données' },
-	{ chemin: 'credits', label: 'Crédits' },
-];
+export const NAVIGATION = [{ chemin: '', label: 'Jeu' }];

@@ -4,10 +4,9 @@ import { lien, BASE, NAVIGATION } from '../lib/liens';
 
 const liens = NAVIGATION.map((n) => ({ href: lien(n.chemin), label: n.label, chemin: n.chemin }));
 const chemin = Astro.url.pathname.endsWith('/') || /\.[a-z0-9]+$/i.test(Astro.url.pathname) ? Astro.url.pathname : `${Astro.url.pathname}/`;
-// Page active : l'accueil seulement à la racine ; une page d'œuvre (/…/pxe-nte001-…/) active « Œuvres »
-const estPageOeuvre = chemin.startsWith(`${BASE}pxe-nte001-`);
+// Page active : la racine (le jeu) uniquement
 const estActif = (n: { chemin: string; href: string }) =>
-	n.chemin === '' ? chemin === BASE || chemin === `${BASE}index.html` : chemin.startsWith(n.href) || (n.chemin === 'oeuvres' && estPageOeuvre);
+	n.chemin === '' ? chemin === BASE || chemin === `${BASE}index.html` : chemin.startsWith(n.href);
 ---
 
 <header class="entete">
