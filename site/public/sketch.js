@@ -199,6 +199,7 @@ function draw() {
 		boutons = [];
 		dessinerReveil();
 	}
+	dessinerBoost(); // prompt 52 : cœur, pulsation rouge, lignes de vitesse, flou
 	dessinerOffreDemission(); // prompt 47 : les trois jauges sous 20 → « Rendre son badge »
 	if (fenetre) {
 		boutons = []; // seule la fenêtre ouverte est cliquable
@@ -1617,6 +1618,7 @@ function dessinerPause() {
 
 function dessinerFenetre() {
 	if (fenetre === 'telephone') return fenetreTelephone(); // prompt 42 : le téléphone en main a son propre voile
+	if (fenetre === 'cafe') return fenetreCafe(); // prompt 52 : même animation, la tasse en main
 	voile();
 	if (fenetre === 'rapport') return fenetreRapport(); // prompt 41
 	if (fenetre === 'inspection') return fenetreInspection(); // prompt 47
