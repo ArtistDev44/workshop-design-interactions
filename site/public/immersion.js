@@ -43,7 +43,70 @@ const OBJETS_BUREAU = [
 	{ nom: 'tuto', label: T('objet.tuto'), x: 58, y: 190, l: 50, h: 9 },
 	{ nom: 'stress', label: T('objet.stress'), x: 62, y: 180, l: 44, h: 9 },
 	{ nom: 'porte', label: T('objet.porte'), infobulle: T('bureau.porte'), x: 3, y: 40, l: 20, h: 118 }, // prompt 26
+	// Prompt 29 : objets de la pièce (micro-interactions, sans effet sur les jauges ni pause)
+	{ nom: 'lampe', piece: true, label: T('piece.lampe'), infobulle: T('piece.lampe.survol'), x: 62, y: 140, l: 26, h: 12 },
+	{ nom: 'plante', piece: true, label: T('piece.plante'), infobulle: T('piece.plante.survol'), x: 69, y: 153, l: 16, h: 21 },
+	{ nom: 'tasse', piece: true, label: T('piece.tasse'), infobulle: T('piece.tasse.survol'), x: 118, y: 178, l: 22, h: 28 },
+	{ nom: 'dossiers', piece: true, label: T('piece.dossiers'), infobulle: T('piece.dossiers.survol'), x: 390, y: 160, l: 44, h: 15 },
+	{ nom: 'fenetre', piece: true, label: T('piece.fenetre'), infobulle: T('piece.fenetre.survol'), x: 340, y: 14, l: 132, h: 96 },
 ];
+
+// ——— Prompt 29 : interactions hors écran, dans la pièce ———
+const CLE_LAMPE = 'pxe-nte001:jeu:lampe';
+const PIECE = {
+	lampe: (() => {
+		try {
+			return localStorage.getItem(CLE_LAMPE) !== 'eteinte';
+		} catch (e) {
+			return true;
+		}
+	})(),
+	store: false, // store vénitien de la baie : baissé (true) ou relevé (false)
+	message: null, // { texte, objet, jusqua }
+};
+
+/** Météo affichée par la fenêtre : jour joué (archives) → météo réelle du moment → instantané local */
+function meteoFenetre() {
+	const j = ecran === 'jeu' && Jeu.jourCourant ? Jeu.jourCourant() : null;
+	const m = (j && Jeu.meteoDuJour(j.date)) || Jeu.meteoActuelle || (Jeu.fallback && Jeu.fallback.meteo && Jeu.fallback.meteo[0]) || null;
+	return m;
+}
+const nombreFr = (v) => (Langue.actuelle === 'fr' ? String(v).replace('.', ',') : String(v));
+
+function interagirPiece(nom) {
+	const hS = heureAffichee();
+	const heure = String(hS.h).padStart(2, '0') + ':' + String(hS.m).padStart(2, '0');
+	let texte;
+	if (nom === 'lampe') {
+		PIECE.lampe = !PIECE.lampe;
+		try {
+			localStorage.setItem(CLE_LAMPE, PIECE.lampe ? 'allumee' : 'eteinte');
+		} catch (e) {}
+		texte = t(PIECE.lampe ? 'piece.lampe.on' : 'piece.lampe.off');
+	} else if (nom === 'fenetre') {
+		PIECE.store = !PIECE.store;
+		const m = meteoFenetre();
+		const maintenant = new Date();
+		const reelle = String(maintenant.getHours()).padStart(2, '0') + ':' + String(maintenant.getMinutes()).padStart(2, '0');
+		const meteo = m
+			? t('piece.fenetre.meteo', { date: m.date ? m.date.split('-').reverse().join('/') : '', min: nombreFr(m.temp_min), max: nombreFr(m.temp_max), pluie: nombreFr(m.pluie_mm), vent: nombreFr(m.rafales_max) })
+			: t('piece.fenetre.inconnue');
+		texte = t(PIECE.store ? 'piece.fenetre.ferme' : 'piece.fenetre.ouvre') + ' ' + meteo + ' ' + t('piece.fenetre.heures', { reelle, jeu: heure });
+	} else if (nom === 'plante') {
+		const m = meteoFenetre();
+		texte = m && m.pluie_mm >= 1 ? t('piece.plante.pluie', { pluie: nombreFr(m.pluie_mm) }) : t('piece.plante.sec', { heure });
+	} else if (nom === 'tasse') {
+		const j = ecran === 'jeu' && Jeu.jourCourant ? Jeu.jourCourant() : null;
+		texte = j ? t('piece.tasse.jour', { heure, n: j.dossiers.length }) : t('piece.tasse.libre', { heure });
+	} else if (nom === 'dossiers') {
+		const j = ecran === 'jeu' && Jeu.jourCourant ? Jeu.jourCourant() : null;
+		texte = j ? t('piece.dossiers.jour', { n: j.dossiers.length, date: j.date.split('-').reverse().join('/') }) : t('piece.dossiers.libre');
+	}
+	PIECE.message = { texte, objet: nom, jusqua: millis() + 5000 };
+	dernierRenduBureau = 0; // la pièce est redessinée tout de suite (lampe, store)
+	annoncer(texte);
+	Confort.Son.bip('choix');
+}
 
 function interaction() {
 	inactifDepuis = millis();
@@ -438,6 +501,7 @@ function ouvrirObjetBureau(nom) {
 	if (nom === 'tuto') return ouvrir('aide'); // reprend l'écran d'aide H
 	if (nom === 'stress') return ouvrir('livre-stress');
 	if (nom === 'porte') return ouvrir('menu'); // prompt 26 : même action qu'Échap au bureau
+	if (OBJETS_BUREAU.some((o) => o.nom === nom && o.piece)) return interagirPiece(nom); // prompt 29
 }
 
 /** Zones cliquables du bureau (livres) + focus clavier ; appelé par la vue bureau */
@@ -446,6 +510,7 @@ function zonesObjetsBureau() {
 		const r = versEcranBureau(o.x, o.y, o.l, o.h); // prompt 25 : suit le dézoom et la caméra
 		boutons.push({ x: r.x, y: r.y, l: r.l, h: r.h, action: () => ouvrirObjetBureau(o.nom) });
 		const survol = mouseX >= r.x && mouseX <= r.x + r.l && mouseY >= r.y && mouseY <= r.y + r.h;
+		const enReaction = PIECE.message && PIECE.message.objet === o.nom && millis() < PIECE.message.jusqua; // prompt 29
 		if (survol || focusBureau === i + 1) {
 			noFill();
 			stroke('#f2c94c');
@@ -453,9 +518,15 @@ function zonesObjetsBureau() {
 			rect(r.x - 2 * PIX, r.y - 2 * PIX, r.l + 4 * PIX, r.h + 4 * PIX);
 			noStroke();
 			const ib = o.infobulle ? String(o.infobulle) : t('objet.ouvrir', { label: o.label });
-			infobulle(ib, Math.max(16, r.x), r.y < 120 ? r.y + r.h + 24 : r.y - 70);
+			if (!enReaction) infobulle(ib, Math.max(16, Math.min(r.x, L - textWidth(ib) - 60)), r.y < 120 ? r.y + r.h + 24 : r.y - 70);
 		}
 	});
+	// Prompt 29 : réaction de l'objet (5 s), au-dessus de l'objet, sans pause ni effet sur les jauges
+	if (PIECE.message && millis() < PIECE.message.jusqua) {
+		const o = OBJETS_BUREAU.find((x) => x.nom === PIECE.message.objet);
+		const r = versEcranBureau(o.x, o.y, o.l, o.h);
+		bulleTexte(PIECE.message.texte, r.x + r.l / 2, r.y < 160 ? r.y + r.h + 20 : r.y - 20, r.y < 160);
+	}
 	if (focusBureau === 0) {
 		const e = rectEcranPC();
 		noFill();
@@ -464,6 +535,24 @@ function zonesObjetsBureau() {
 		rect(e.x - 7 * PIX, e.y - 7 * PIX, e.l + 14 * PIX, e.h + 15 * PIX);
 		noStroke();
 	}
+}
+
+/** Bulle de texte multiligne (max 560 px), centrée sur x ; au-dessus de y, ou en dessous si dessous = true */
+function bulleTexte(texte, x, y, dessous) {
+	textFont(POLICE_DONNEES);
+	textSize(18);
+	const l = Math.min(560, textWidth(texte) + 32);
+	const lignes = Math.max(1, Math.ceil((textWidth(texte) * 1.08) / (l - 32))); // marge pour le retour à la ligne par mots
+	const h = 20 + lignes * 24;
+	const bx = constrain(x - l / 2, 16, L - l - 16);
+	const by = dessous ? y : y - h;
+	noStroke();
+	fill(28, 39, 51, 240);
+	rect(bx, by, l, h, 8);
+	fill('#FFFDF7');
+	textAlign(LEFT, TOP);
+	textLeading(24);
+	text(texte, bx + 16, by + 10, l - 32, h - 10);
 }
 
 function infobulle(texte, x, y) {

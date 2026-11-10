@@ -38,3 +38,4 @@ dossier à trancher sous pression. »*
 | 20 | `20-sortie-mode-pc.md` | Prompt 26 : sortir du PC — bouton « Quitter le PC » (clic, Tab), molette au poste avec anti-rebond, porte du bureau → menu |
 | 21 | `21-loading-screen.md` | Prompt 27 : écran de chargement bleu + logo (anti-flash, fond sombre immédiat), musique de fond WebAudio dès le premier geste |
 | 22 | `22-dialogues-nantais.md` | Prompt 28 : plaintes des Nantais dans `data/messages.json` (brut, modifiable), déclenchées par les dossiers réels, réponses avec effets dans l'app Community |
+| 23 | `23-interactions-hors-ecran.md` | Prompt 29 : objets de la pièce en vue bureau (lampe persistée, store de la fenêtre avec vraie météo et heure, plante, tasse, dossiers), sans pause ni effet sur les jauges |
