@@ -614,7 +614,7 @@ function majCamera() {
      posée avec la même transformation que la pièce, puis découpée par un masque radial (net au centre,
      flou vers les bords) ;
    - vignettage : dégradé radial sombre, plus marqué dans les coins. */
-const BORDS = { flou: 2, centreNet: 0.5, bordFlou: 0.74, vignette: 0.5 };
+const BORDS = { flou: 2, centreNet: 0.5, bordFlou: 0.74, vignette: 0.22 }; // vignettage allégé (retour de rendu)
 let cPieceFloue = null;
 let cFlouEcran = null;
 let cMasqueFlou = null;
@@ -644,7 +644,7 @@ function masqueFlouEtVignette(ox, oy, echelle) {
 		cMasqueFlou = canevas(BW, BH);
 		degradeRadial(cMasqueFlou, [[0, 'rgba(0,0,0,0)'], [BORDS.centreNet, 'rgba(0,0,0,0)'], [BORDS.bordFlou, 'rgba(0,0,0,1)'], [1, 'rgba(0,0,0,1)']]);
 		cVignette = canevas(BW, BH);
-		degradeRadial(cVignette, [[0, 'rgba(12,16,22,0)'], [0.55, 'rgba(12,16,22,0)'], [0.68, 'rgba(12,16,22,' + BORDS.vignette * 0.45 + ')'], [0.8, 'rgba(12,16,22,' + BORDS.vignette + ')']]);
+		degradeRadial(cVignette, [[0, 'rgba(12,16,22,0)'], [0.66, 'rgba(12,16,22,0)'], [0.82, 'rgba(12,16,22,' + BORDS.vignette * 0.45 + ')'], [1, 'rgba(12,16,22,' + BORDS.vignette + ')']]);
 	}
 	if (derniereCopieFloue !== dernierRenduBureau) {
 		const c = cPieceFloue.getContext('2d');
