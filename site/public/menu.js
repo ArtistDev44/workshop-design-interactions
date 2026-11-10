@@ -56,14 +56,21 @@ function entreesMenu() {
 function allerChoixSemaine() {
 	MENU.ecran = 'semaines';
 	MENU.debut = millis();
-	MENU.choixSemaine = Math.min(MENU.choixSemaine, optionsAccueil().length - 1);
+	MENU.choixSemaine = 0; // prompt 41 : le mode histoire (recommandé) est présélectionné
 	annoncer(t('mp.semaines.titre'));
 	Confort.Son.bip('choix');
 }
 function lancerDepuisMenu() {
-	const o = optionsAccueil()[MENU.choixSemaine];
-	if (!o || o.desactive) return;
-	choixAccueil = MENU.choixSemaine;
+	const m = modesNouvellePartie()[MENU.choixSemaine];
+	if (!m || m.desactive) return;
+	if (m.cle === 'histoire') {
+		// Prompt 41 : histoire terminée et relancée → on repart de la semaine 1 (le temps réel reste débloqué)
+		const p = progressionHistoire();
+		if (p.termine) enregistrerProgression(Object.assign(p, { scores: {} }));
+		const lundi = semainesHistoire()[m.chapitre - 1];
+		choixAccueil = optionsAccueil().findIndex((o) => o.lundi === lundi);
+	} else choixAccueil = optionsAccueil().findIndex((o) => o.type === 'direct');
+	if (choixAccueil < 0) return;
 	lancerPartie(); // sauvegarde existante → fenêtre « Reprendre / Nouvelle partie » (prompt 33)
 }
 
@@ -212,26 +219,54 @@ function dessinerMenuPrincipal() {
 	text(t('mp.sources'), x0, H - 40);
 }
 
+/* Prompt 41 : « Nouvelle partie » = deux modes. Histoire (recommandé) : semaine facile, normale, difficile,
+   un élément de jeu de plus chaque semaine. Temps réel : débloqué quand l'histoire est terminée. */
+function modesNouvellePartie() {
+	const p = progressionHistoire();
+	const semaines = semainesHistoire();
+	const prochain = p.termine ? 1 : [1, 2, 3].find((n) => p.scores[n] === undefined) || 1;
+	const enLigne = Jeu.enLigne !== false;
+	return [
+		{
+			cle: 'histoire',
+			titre: t('mp.mode.histoire'),
+			detail: t('mp.mode.histoire.sous'),
+			info: t('mp.mode.histoire.etat', { n: prochain, element: t('histoire.element.' + ELEMENTS_CHAPITRE[prochain]) }),
+			chapitre: prochain,
+			recommande: true,
+			desactive: semaines.length < 3,
+		},
+		{
+			cle: 'direct',
+			titre: t('mp.mode.direct'),
+			detail: t('mp.mode.direct.sous'),
+			info: !tempsReelDebloque() ? t('mp.mode.direct.verrou') : !enLigne ? t('mp.mode.direct.horsLigne') : t('accueil.direct.info', { meilleur: texteMeilleur('direct') }),
+			verrou: !tempsReelDebloque(),
+			desactive: !tempsReelDebloque() || !enLigne,
+		},
+	];
+}
 function dessinerChoixSemaine() {
-	const opts = optionsAccueil();
-	if (MENU.choixSemaine >= opts.length) MENU.choixSemaine = 0;
+	const modes = modesNouvellePartie();
+	if (MENU.choixSemaine >= modes.length) MENU.choixSemaine = 0;
 	noStroke();
-	textAlign(LEFT, TOP);
 	dsTitre(t('mp.semaines.titre'), 160, 100, 60, MENU_C.blanc, 'left');
 	noStroke();
+	textAlign(LEFT, TOP);
+	textFont(POLICE_TEXTE);
 	textSize(26);
 	fill(MENU_C.doux);
-	text(t('mp.semaines.sous'), 160, 186, 1400, 60);
+	text(t('mp.mode.sous'), 160, 186, 1500, 60);
 	const lc = 780;
-	const hc = 200;
-	opts.forEach((o, i) => {
-		const x = 160 + (i % 2) * (lc + 40);
-		const y = 270 + Math.floor(i / 2) * (hc + 32);
+	const hc = 400;
+	modes.forEach((o, i) => {
+		const x = 160 + i * (lc + 40);
+		const y = 280;
 		const sel = i === MENU.choixSemaine;
 		const survol = mouseX >= x && mouseX <= x + lc && mouseY >= y && mouseY <= y + hc;
-		const actif = sel || survol;
+		const actif = (sel || survol) && !o.verrou;
 		noStroke();
-		fill(actif ? MENU_C.blanc : 'rgba(255,255,255,0.09)');
+		fill(actif ? MENU_C.blanc : 'rgba(255,255,255,0.06)');
 		rect(x, y, lc, hc);
 		if (!actif) {
 			stroke(255, 255, 255, 60);
@@ -247,58 +282,58 @@ function dessinerChoixSemaine() {
 			rect(x - 6, y - 6, lc + 12, hc + 12);
 			noStroke();
 		}
-		const encre = o.desactive ? (actif ? '#6b7280' : 'rgba(255,255,255,0.55)') : actif ? MENU_C.encre : MENU_C.blanc;
+		const encre = o.verrou ? 'rgba(255,255,255,0.55)' : actif ? MENU_C.encre : MENU_C.blanc;
+		if (o.recommande) {
+			fill(MENU_C.bleu);
+			rect(x, y, 300, 40);
+			fill('#ffffff');
+			textAlign(LEFT, CENTER);
+			textFont(POLICE_DONNEES);
+			textSize(18);
+			text(t('mp.mode.recommande'), x + 20, y + 20);
+		}
+		if (o.verrou) {
+			// cadenas dessiné par le code
+			stroke('rgba(255,255,255,0.7)');
+			strokeWeight(6);
+			noFill();
+			arc(x + lc - 80, y + 70, 44, 50, PI, TWO_PI);
+			noStroke();
+			fill('rgba(255,255,255,0.7)');
+			rect(x + lc - 110, y + 70, 60, 46);
+		}
 		textAlign(LEFT, TOP);
 		textFont(POLICE_TEXTE);
 		textStyle(BOLD);
-		ajusterTaille(o.titre, lc - 64, 25);
+		ajusterTaille(o.titre, lc - 200, 40);
 		fill(encre);
-		text(o.titre, x + 32, y + 28);
+		text(o.titre, x + 40, y + 70);
 		textStyle(NORMAL);
-		textFont(POLICE_DONNEES);
-		textSize(21);
-		fill(actif ? MENU_C.bleu : MENU_C.doux);
-		if (o.desactive) fill(encre);
-		text(o.detail, x + 32, y + 82, lc - 64, 30);
-		textSize(18);
-		fill(actif ? 'rgba(13,12,12,0.75)' : MENU_C.doux);
-		text(o.info, x + 32, y + 124, lc - 64, 60);
-		if (o.sauvegarde) {
-			// Badge « sauvegardée » (prompt 33)
-			const lib = t('accueil.sauvegardee', { n: o.sauvegarde.etat.dossierIndex + 1, total: o.sauvegarde.etat.complet.paquet.length });
-			textSize(16);
-			const lb = textWidth(lib) + 24;
-			fill(MENU_C.bleu);
-			rect(x + lc - lb - 24, y + 26, lb, 32);
-			fill(MENU_C.blanc);
-			textAlign(CENTER, CENTER);
-			text(lib, x + lc - lb / 2 - 24, y + 42);
-		}
+		textSize(22);
+		textLeading(32);
+		fill(o.verrou ? encre : actif ? MENU_C.bleu : MENU_C.doux);
+		text(o.detail, x + 40, y + 140, lc - 80, 140);
+		textSize(19);
+		fill(o.verrou ? encre : actif ? 'rgba(13,12,12,0.75)' : MENU_C.doux);
+		text(o.info, x + 40, y + 290, lc - 80, 90);
 		boutons.push({ x, y, l: lc, h: hc, action: () => (MENU.choixSemaine === i ? lancerDepuisMenu() : (MENU.choixSemaine = i)) });
 	});
 	if (typeof dessinerOptionsNouvellePartie === 'function') dessinerOptionsNouvellePartie(160, H - 250); // prompt 37
-	const o = opts[MENU.choixSemaine];
+	const o = modes[MENU.choixSemaine];
 	bouton(L - 160 - 420, H - 150, 420, 84, t('mp.lancer'), lancerDepuisMenu, !o || o.desactive);
 	bouton(160, H - 140, 260, 68, t('mp.retour'), () => ((MENU.ecran = 'titre'), (MENU.debut = millis())), false, true);
-	if (Jeu.enLigne === false) {
-		textAlign(LEFT, CENTER);
-		textFont(POLICE_DONNEES);
-		textSize(18);
-		fill(MENU_C.doux);
-		text(t(Confort.Reglages.horsLigneForce ? 'accueil.horsLigneForce' : 'accueil.horsLigne'), 460, H - 106);
-	}
 }
 
 /** Clavier du menu principal ; renvoie true si la touche a été traitée */
 function toucheMenu() {
 	if (MENU.ecran === 'semaines') {
-		const n = optionsAccueil().length;
+		const n = modesNouvellePartie().length;
 		if (keyCode === LEFT_ARROW || keyCode === UP_ARROW || (keyCode === TAB && keyIsDown(SHIFT))) MENU.choixSemaine = (MENU.choixSemaine + n - 1) % n;
 		else if (keyCode === RIGHT_ARROW || keyCode === DOWN_ARROW || keyCode === TAB) MENU.choixSemaine = (MENU.choixSemaine + 1) % n;
 		else if (keyCode === ENTER || keyCode === RETURN) lancerDepuisMenu();
 		else if (keyCode === ESCAPE || keyCode === BACKSPACE) (MENU.ecran = 'titre'), (MENU.debut = millis());
 		else if (typeof toucheOptionsNouvellePartie === 'function') toucheOptionsNouvellePartie(); // prompt 37
-		const o = optionsAccueil()[MENU.choixSemaine];
+		const o = modesNouvellePartie()[MENU.choixSemaine];
 		if (o && (keyCode === TAB || keyCode === UP_ARROW || keyCode === DOWN_ARROW || keyCode === LEFT_ARROW || keyCode === RIGHT_ARROW)) annoncer(String(o.titre) + ' — ' + String(o.detail));
 		return true;
 	}

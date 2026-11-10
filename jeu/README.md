@@ -51,3 +51,6 @@ dossier à trancher sous pression. »*
 | 33 | `33-scroll-telephone-pluie.md` | Prompt 38 : molette ↑ pour s'installer au PC, téléphone cliquable avec notifications réelles de l'Agenda Nantes Métropole (repli local), pluie aléatoire et réaliste |
 | 34 | `34-interface-pixel-design-system.md` | Prompt 39 : toute l'interface au Pixel Design System (fond #0D0C0C, primaire #D4031C, arrondi 0, JetBrains Mono / Bitsy Pixels), textes ajustés à la police monospace |
 | 35 | `35-parallaxe-fausse-3d.md` | Prompt 40 : parallaxe multicouche — 6 plans de la pièce décalés à leur propre échelle avec la caméra (0,35 à 1,25), zones cliquables qui suivent leur plan |
+| 36 | `36-tests-difficulte.md` | Trois tests de difficulté (4 profils simulés × 3 semaines) et rééquilibrage des valeurs des actions : bonne fin de nouveau atteignable |
+| 37 | `37-mode-histoire.md` | Prompt 41 : mode histoire (facile → normale → difficile) et temps réel à débloquer, un élément de jeu de plus par semaine, rapport papier sur la table, 3 cinématiques de fin |
+| 38 | `38-telephone-en-main.md` | Prompt 42 : le téléphone pris en main (animation réutilisable) pour l'intro, les conversations du patron et les notifications |

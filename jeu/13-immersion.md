@@ -1,5 +1,7 @@
 # 13 — Couche d'immersion (prompt 20)
 
+> **Révision du 10/11/2026** : le contour rouge des incidents importants est **plus fin** (4 px au poste, 2 px vu du bureau) et tracé **à l'intérieur de l'écran du PC**, plus immersif. Il est en Error Primary `#D10B00`, à angles droits, et garde sa pulsation de 1,5 par seconde (fixe si les animations sont réduites).
+
 Ajoutée sans toucher aux décisions Q1–Q61. Code : `immersion.js` (réglages dans `IMMERSION`), branché dans `sketch.js` et `bureau.js`.
 
 - **Échap** : au poste = se lever ; au bureau = menu (Reprendre, Paramètres, Quitter). Le temps continue.

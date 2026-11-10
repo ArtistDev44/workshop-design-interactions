@@ -142,9 +142,10 @@
 		// Table des effets (Q57–Q60), prompt 22 : ordre fluidité, réputation, BUDGET (la satisfaction devient le budget).
 		// Seules les valeurs sont réajustées pour le nouveau trio ; les décisions Q57–Q61 sont inchangées.
 		effets: {
-			devier: { nom: T('action.devier'), base: [-6, 6, -3], communique: true }, // détour : un peu de fluidité perdue, usagers informés, petit coût
-			retenir: { nom: T('action.retenir'), base: [-7, null, 2] }, // réputation : +8 si retard > 20 min sinon +4 (Q58) ; économise du budget
-			renfort: { nom: T('action.renfort'), base: [12, 4, -12] }, // efficace mais cher : le budget n'est plus gratuit
+			// Équilibrage du 10/11/2026 (3 tests de difficulté, jeu/36-tests-difficulte.md) : la bonne fin redevient atteignable
+			devier: { nom: T('action.devier'), base: [-3, 8, -1], communique: true }, // détour : un peu de fluidité perdue, usagers informés, petit coût
+			retenir: { nom: T('action.retenir'), base: [-4, null, 5] }, // réputation : +8 si retard > 20 min sinon +4 (Q58) ; économise du budget
+			renfort: { nom: T('action.renfort'), base: [13, 5, -8] }, // efficace mais cher : le budget n'est plus gratuit
 			rien: { nom: T('action.rien') }, // −2 à −8 sur une jauge tirée au hasard (Q60)
 		},
 		// « base + 1d6 » (Q61) : le dé augmente l'AMPLITUDE de l'effet (même signe), d6 − 1 ∈ [0, 5] ;
@@ -314,7 +315,7 @@
 			.map((p) => Object.assign({}, p, { def: Jeu.MESSAGES.plaintes.find((x) => x.id === p.id) }))
 			.filter((p) => p.def); // une plainte retirée de messages.json depuis la sauvegarde est ignorée
 		Jeu.equipes = (s.equipes || []).map((q) => Object.assign({}, q, { depart: q.depart + maintenant, arrivee: q.arrivee + maintenant }));
-		const m = s.modificateur;
+		const m = s.modificateur && s.modificateur.id !== 'erreur_systeme' ? s.modificateur : null; // ancienne sauvegarde : l'erreur système n'existe plus
 		Jeu.modificateur = m ? Object.assign({}, m, { debut: m.debut === null ? null : m.debut + maintenant, fin: m.fin === null ? null : m.fin + maintenant }) : null;
 		Jeu.terminee = !!s.terminee;
 		return Jeu.index >= 0 && Jeu.index <= Jeu.paquet.length && !!Jeu.jours.length;
@@ -324,7 +325,11 @@
 	Jeu.score = () => NOMS_JAUGES.reduce((s, k) => s + Jeu.jauges[k], 0); // 0–300, poids égaux (Q44)
 
 	/* Conflit de deux lignes (Q27) : le dossier suivant a la même date et concerne d'autres lignes. */
+	/** Prompt 41 : éléments de jeu débloqués par chapitre du mode histoire (redéfini par histoire.js) */
+	Jeu.elementDebloque = () => true;
+
 	Jeu.conflit = function () {
+		if (!Jeu.elementDebloque('crise')) return null; // prompt 41 : conflits de lignes à partir de la semaine 3
 		const d = Jeu.dossierCourant();
 		const s = (Jeu.paquet || [])[Jeu.index + 1];
 		if (!d || !s || d.date !== s.date) return null;
@@ -907,6 +912,7 @@
 
 	/** Envoi d'une équipe sur le dossier d'index donné ; renvoie { ok, message } */
 	Jeu.envoyerEquipe = function (index, cle, maintenant) {
+		if (!Jeu.elementDebloque('equipes')) return { ok: false, message: T('histoire.verrou.equipes') }; // prompt 41 : semaine 2
 		const q = EQUIPES[cle];
 		const d = Jeu.paquet[index];
 		if (!q || !d) return { ok: false, message: T('equipe.introuvable') };
@@ -961,7 +967,6 @@
 
 	/** § 2 — Modificateurs (un par journée, tirés avec le générateur à graine fixe : partie rejouable) */
 	const MODIFICATEURS = [
-		{ id: 'erreur_systeme', duree_s: 30, libelle: T('mod.erreur_systeme') },
 		{ id: 'meteo_aggravee', duree_s: 60, libelle: T('mod.meteo_aggravee') },
 		{ id: 'heure_pointe', duree_s: 45, libelle: T('mod.heure_pointe') },
 		{ id: 'panne_messagerie', duree_s: 60, libelle: T('mod.panne_messagerie') },
@@ -971,9 +976,9 @@
 
 	/** Armé en début de journée, démarre à l'arrivée du premier incident, dure duree_s secondes réelles */
 	Jeu.tirerModificateur = function () {
+		if (!Jeu.elementDebloque('crise')) return void (Jeu.modificateur = null); // prompt 41 : imprévus à partir de la semaine 3
 		const m = Jeu.forcerModificateur ? MODIFICATEURS.find((x) => x.id === Jeu.forcerModificateur) : MODIFICATEURS[Math.floor(Jeu.alea() * MODIFICATEURS.length)];
-		const actions = ['devier', 'retenir', 'renfort', 'rien'];
-		Jeu.modificateur = Object.assign({}, m, { debut: null, fin: null, actionBloquee: m.id === 'erreur_systeme' ? actions[Math.floor(Jeu.alea() * 4)] : null });
+		Jeu.modificateur = Object.assign({}, m, { debut: null, fin: null, actionBloquee: null }); // plus d'« erreur système » (retirée sur demande)
 	};
 	Jeu.demarrerModificateur = function (maintenant) {
 		if (Jeu.modificateur && Jeu.modificateur.debut === null) {
@@ -987,7 +992,7 @@
 		const t = maintenant !== undefined ? maintenant : typeof millis === 'function' ? millis() : Date.now();
 		return t < m.fin ? m.id : null;
 	};
-	Jeu.actionBloquee = () => (Jeu.modificateurActif() === 'erreur_systeme' ? Jeu.modificateur.actionBloquee : null);
+	Jeu.actionBloquee = () => null; // les fausses erreurs système du PC ont été retirées : aucune action n'est jamais bloquée
 
 	/** § 3 — Objectifs de journée qui se resserrent */
 	const OBJECTIFS = [

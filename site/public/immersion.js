@@ -46,6 +46,7 @@ const OBJETS_BUREAU = [
 	{ nom: 'lampe', piece: true, label: T('piece.lampe'), infobulle: T('piece.lampe.survol'), x: 410, y: 86, l: 16, h: 14 }, // prompt 31 : applique murale (recalée pour le plein écran)
 	{ nom: 'plante', piece: true, label: T('piece.plante'), infobulle: T('piece.plante.survol'), x: 69, y: 153, l: 16, h: 21 },
 	{ nom: 'tasse', piece: true, label: T('piece.tasse'), infobulle: T('piece.tasse.survol'), x: 118, y: 178, l: 22, h: 28 },
+	{ nom: 'rapport', label: T('objet.rapport'), infobulle: T('objet.rapport.survol'), x: 272, y: 178, l: 58, h: 20, visible: () => !!RAPPORT }, // prompt 41 : posée entre le pied de l'écran et le clavier
 	{ nom: 'telephone', label: T('objet.telephone'), infobulle: T('objet.telephone.survol'), x: 364, y: 192, l: 26, h: 32 }, // prompt 38
 	{ nom: 'dossiers', piece: true, label: T('piece.dossiers'), infobulle: T('piece.dossiers.survol'), x: 390, y: 160, l: 44, h: 15 },
 	{ nom: 'fenetre', piece: true, label: T('piece.fenetre'), infobulle: T('piece.fenetre.survol'), x: 334, y: 14, l: 64, h: 96 }, // prompt 31 : la baie s'arrête au pan de mur
@@ -216,6 +217,7 @@ function allerFin() {
 	Sauvegarde.auto(false); // prompt 33 : partie finie → sa sauvegarde est effacée (le meilleur bilan reste)
 	bilanFin = Confort.Bilans.enregistrer(Confort.Bilans.cle(Jeu.etat), Jeu.score(), Jeu.jauges); // Q19
 	Confort.Son.bip('fin');
+	finDeSemaine(); // prompt 41 : rapport papier sur la table, ou cinématique après la semaine 3
 }
 
 // ——— Incidents importants : bordures rouges (§ 5) ———
@@ -232,11 +234,13 @@ function pulsationRouge() {
 	if (reduireAnimations) return 1;
 	return 0.55 + 0.45 * Math.sin((millis() / 1000) * Math.PI * 2 * IMMERSION.pulsationsParSeconde);
 }
+/** Contour d'alerte DANS l'écran du PC : le trait est entièrement à l'intérieur du rectangle (x, y, l, h) */
 function bordureRouge(x, y, l, h, epaisseur) {
+	const e = epaisseur / 2;
 	noFill();
-	stroke(179, 38, 30, 255 * pulsationRouge());
+	stroke(209, 11, 0, 255 * pulsationRouge()); // Error Primary du Pixel DS
 	strokeWeight(epaisseur);
-	rect(x, y, l, h, 8);
+	rect(x + e, y + e, l - epaisseur, h - epaisseur);
 	noStroke();
 }
 
@@ -315,9 +319,8 @@ function dessinerMail() {
 
 // ——— Intro SMS (§ 2) ———
 function lancerIntroSMS() {
-	smsActif = true;
-	smsIndex = 0;
-	Confort.Son.bip('dossier');
+	// Prompt 42 : le joueur saisit son téléphone ; la conversation avec Camille se lit dessus
+	lancerConversation({ contact: T('sms.camille'), sous: T('intro.salle'), messages: SMS, auFin: terminerIntro });
 }
 function smsSuivant() {
 	if (smsIndex < SMS.length - 1) {
@@ -453,62 +456,8 @@ function toucheTutoriel() {
 }
 
 function dessinerSMS() {
-	// Fond distinct (nuit bleutée) et téléphone au centre
-	noStroke();
-	fill('#16212b');
-	rect(0, 0, L, H);
-	for (let i = 0; i < 40; i++) {
-		fill(255, 255, 255, 10 + (i % 3) * 6);
-		rect((i * 211) % L, (i * 137) % H, 3, 3);
-	}
-	const tl = 560;
-	const th = 960;
-	const tx = (L - tl) / 2;
-	const ty = (H - th) / 2;
-	fill('#0b1116');
-	rect(tx - 14, ty - 14, tl + 28, th + 28, 48);
-	fill('#f3eee2');
-	rect(tx, ty, tl, th, 36);
-	// En-tête de la conversation
-	fill(C.accent);
-	rect(tx, ty, tl, 96, 36, 36, 0, 0);
-	fill('#FFFFFF');
-	textFont(POLICE_TEXTE);
-	textStyle(BOLD);
-	textSize(26);
-	textAlign(CENTER, CENTER);
-	text(t('sms.camille'), L / 2, ty + 40);
-	textStyle(NORMAL);
-	textSize(16);
-	text(t('intro.salle'), L / 2, ty + 70);
-	// Bulles
-	let y = ty + 120;
-	textAlign(LEFT, TOP);
-	for (let i = 0; i <= smsIndex; i++) {
-		const sms = SMS[i];
-		const moi = sms.de === 'moi';
-		textFont(POLICE_TEXTE);
-		textSize(22);
-		const largeurMax = tl - 160;
-		const lignes = Math.ceil(textWidth(sms.texte) / (largeurMax - 40)) || 1;
-		const bh = 24 + lignes * 30;
-		const bl = Math.min(largeurMax, textWidth(sms.texte) + 40);
-		const bx = moi ? tx + tl - 24 - bl : tx + 24;
-		fill(moi ? C.accent : '#ffffff');
-		rect(bx, y, bl, bh, 18);
-		fill(moi ? '#FFFDF7' : C.texte);
-		text(sms.texte, bx + 20, y + 12, bl - 40, bh);
-		y += bh + 16;
-	}
-	// Commandes
-	const dernier = smsIndex === SMS.length - 1;
-	textFont(POLICE_DONNEES);
-	textSize(16);
-	fill(C.gris);
-	textAlign(CENTER, TOP);
-	text(dernier ? '' : t('intro.suivant'), L / 2, ty + th - 120);
-	if (dernier) bouton(tx + 60, ty + th - 110, tl - 120, 72, t('intro.commencer'), terminerIntro);
-	else boutons.push({ x: tx, y: ty, l: tl, h: th, action: smsSuivant });
+	// Prompt 42 : plus d'écran plein : le téléphone tenu en main, devant la pièce
+	dessinerTelephoneEnMain(contenuConversation);
 }
 
 // ——— Fenêtres du bureau : menu Échap (§ 1) et livre « stress » (§ 7) ———
@@ -710,6 +659,7 @@ function pageQuiTourne(livre, debut, sens) {
 function ouvrirObjetBureau(nom) {
 	interaction();
 	if (nom === 'ecran') return sAsseoir();
+	if (nom === 'rapport') return ouvrirRapport(); // prompt 41
 	if (nom === 'telephone') return ouvrirTelephone(); // prompt 38 : notifications de l'Agenda Nantes Métropole
 	if (nom === 'commande') return lancerTutoriel(); // prompt 34 : le livre « commande » ouvre le tutoriel
 	if (nom === 'stress') return (livreOuverture = millis()), ouvrir('livre-stress');
@@ -720,6 +670,7 @@ function ouvrirObjetBureau(nom) {
 function zonesObjetsBureau() {
 	objetSurvol = null;
 	OBJETS_BUREAU.slice(1).forEach((o, i) => {
+		if (o.visible && !o.visible()) return; // prompt 41 : le rapport n'existe qu'en fin de semaine
 		const r = versEcranBureau(o.x, o.y, o.l, o.h, COEF_OBJETS[o.nom]); // prompt 25/40 : suit la caméra et le plan de l'objet
 		if (o.nom === 'commande') cibleGuide('livreCommande', r.x, r.y, r.l, r.h); // prompt 37
 		boutons.push({ x: r.x, y: r.y, l: r.l, h: r.h, action: () => ouvrirObjetBureau(o.nom) });
