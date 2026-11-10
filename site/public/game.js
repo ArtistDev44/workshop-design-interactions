@@ -237,6 +237,7 @@
 		Jeu.evenementsJournee = []; // prompt 21 § 3.1 : journal des dossiers traités
 		Jeu.messagesPatron = []; // prompt 22 : app « Messages du patron »
 		Jeu.commentaires = []; // prompt 22 : app « Community manager »
+		Jeu.plaintes = []; // prompt 28 : plaintes des Nantais (data/messages.json)
 		Jeu.equipes = []; // prompt 22 : équipes envoyées depuis la carte
 		Jeu.nonLus = { patron: 0, community: 0 };
 		Jeu.alertesJauges = {};
@@ -713,6 +714,114 @@
 		if (ev === 'trop_tard') Jeu.messagePatron(T('patron.tropTard', { sujet }));
 		Jeu.verifierAlertesPatron();
 	};
+
+	// =====================================================================
+	// Prompt 28 — plaintes des Nantais : contenu 100 % dans data/messages.json (rien de figé ici).
+	// Une plainte n'est proposée que si sa condition correspond au dossier réel joué, et ses variables
+	// ({ligne}, {retard}, {nature}) sont remplies avec les données de ce dossier — jamais inventées.
+	// =====================================================================
+	Jeu.MESSAGES = { plaintes: [] };
+	/** Valide et retient les plaintes (entrée invalide ignorée, avec un avertissement en console) */
+	Jeu.chargerMessages = function (donnees) {
+		const ok = [];
+		((donnees && donnees.plaintes) || []).forEach((p, i) => {
+			const valide =
+				p &&
+				typeof p.id === 'string' &&
+				p.texte &&
+				typeof p.texte.fr === 'string' &&
+				Array.isArray(p.reponses) &&
+				p.reponses.length >= 2 &&
+				p.reponses.every((r) => r && r.texte && typeof r.texte.fr === 'string') &&
+				p.reponses.some((r) => r.bonne === true);
+			if (valide) ok.push(p);
+			else if (global.console) console.warn('messages.json : plainte n° ' + i + ' ignorée (id, texte.fr, 2 réponses dont une « bonne » requis)');
+		});
+		Jeu.MESSAGES = { plaintes: ok };
+		return ok.length;
+	};
+	Jeu.chargerMessages(global.MESSAGES); // data/messages.js (double clic, hors ligne)
+	// Servi par un serveur : on relit le JSON brut, pour qu'une modification à la main soit prise sans rien régénérer
+	if (typeof fetch === 'function' && global.location && global.location.protocol !== 'file:')
+		fetch('./data/messages.json', { cache: 'no-store' })
+			.then((r) => (r.ok ? r.json() : null))
+			.then((d) => d && Jeu.chargerMessages(d))
+			.catch(() => {});
+
+	function variablesDossier(d) {
+		const v = {};
+		if (d.lignes && d.lignes.length) v.ligne = d.lignes.join(', ');
+		if (d.retard !== null && d.retard !== undefined) v.retard = d.retard;
+		if (d.nature) v.nature = String(d.nature).split(',')[0].trim();
+		return v;
+	}
+	function variablesUtilisees(p) {
+		const textes = [p.texte.fr, p.texte.en || ''].concat(p.reponses.map((r) => r.texte.fr + ' ' + (r.texte.en || '')));
+		return (textes.join(' ').match(/\{(\w+)\}/g) || []).map((m) => m.slice(1, -1));
+	}
+	function plainteCorrespond(p, d, vars) {
+		const c = p.condition || {};
+		if (c.type && c.type !== '*' && c.type !== d.type) return false;
+		if (c.retard_min !== undefined && !(typeof d.retard === 'number' && d.retard >= c.retard_min)) return false;
+		if (c.ligne !== undefined && !(d.lignes || []).includes(String(c.ligne))) return false;
+		if (c.nature_contient && !String(d.nature || '').toLowerCase().includes(String(c.nature_contient).toLowerCase())) return false;
+		if (c.pointe && !contexte(d).pointe) return false;
+		if (c.meteo === 'pluie' && !(((Jeu.meteoDuJour(d.date) || {}).pluie_mm || 0) >= 1)) return false;
+		return variablesUtilisees(p).every((k) => vars[k] !== undefined);
+	}
+	const specificite = (p) => Object.keys(p.condition || {}).filter((k) => !(k === 'type' && p.condition.type === '*')).length;
+
+	/** Texte d'une plainte ou d'une réponse dans la langue active (repli : français), variables remplies */
+	Jeu.texteMessage = function (champ, vars) {
+		const langue = typeof Langue !== 'undefined' ? Langue.actuelle : 'fr'; // const de i18n.js (pas une propriété de window)
+		const s = (champ && (champ[langue] || champ.fr)) || '[À COMPLÉTER]';
+		return s.replace(/\{(\w+)\}/g, (m, k) => (vars && vars[k] !== undefined ? String(vars[k]) : m));
+	};
+
+	/** À la présentation d'un dossier : au plus une plainte, la plus spécifique parmi celles qui correspondent */
+	Jeu.declencherPlainte = function (index) {
+		const d = (Jeu.paquet || [])[index];
+		if (!d || !Jeu.plaintes || Jeu.plaintes.some((p) => p.index === index)) return null;
+		if (Jeu.plaintesEnAttente().length >= Jeu.MAX_PLAINTES_EN_ATTENTE) return null; // pas trop difficile : file courte
+		const vars = variablesDossier(d);
+		const candidates = Jeu.MESSAGES.plaintes.filter((p) => plainteCorrespond(p, d, vars));
+		if (!candidates.length) return null;
+		const dejaVues = new Set(Jeu.plaintes.map((p) => p.id));
+		const neuves = candidates.filter((p) => !dejaVues.has(p.id));
+		const pool = neuves.length ? neuves : candidates;
+		const max = Math.max(...pool.map(specificite));
+		const meilleures = pool.filter((p) => specificite(p) === max);
+		const def = meilleures[index % meilleures.length]; // déterministe : ne touche pas au tirage des dés
+		const plainte = { id: def.id, def, vars, index, heure: maintenantSim(), auteur: def.auteur || '@usager_44', reponse: null };
+		Jeu.plaintes.push(plainte);
+		Jeu.nonLus.community++;
+		return plainte;
+	};
+
+	Jeu.MAX_PLAINTES_EN_ATTENTE = 3;
+	Jeu.plaintesEnAttente = () => (Jeu.plaintes || []).filter((p) => p.reponse === null);
+
+	/** Le joueur répond : effets du JSON (bornés à ±bornesEffet) appliqués aux jauges, bornées 0–100 */
+	Jeu.repondrePlainte = function (plainte, i) {
+		const r = plainte && plainte.reponse === null ? plainte.def.reponses[i] : null;
+		if (!r) return null;
+		const effets = {};
+		NOMS_JAUGES.forEach((k) => {
+			const v = Number((r.effets || {})[k]) || 0;
+			if (v) effets[k] = borner(v);
+		});
+		plainte.reponse = i;
+		plainte.bonne = r.bonne === true;
+		Jeu.appliquerDeltas(effets);
+		Jeu.commentaires.push({
+			heure: maintenantSim(),
+			auteur: T('plainte.reponseDe'),
+			texte: { toString: () => Jeu.texteMessage(r.texte, plainte.vars) },
+			delta: effets.reputation || 0,
+		});
+		return { effets, bonne: plainte.bonne };
+	};
+	Jeu.bilanPlaintes = () => ({ traitees: (Jeu.plaintes || []).filter((p) => p.reponse !== null).length, total: (Jeu.plaintes || []).length, bonnes: (Jeu.plaintes || []).filter((p) => p.bonne).length });
 
 	// Équipes envoyées depuis la carte (façon centre d'appels) : coût en budget, effets à l'arrivée
 	const EQUIPES = {

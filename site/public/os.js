@@ -367,11 +367,80 @@ function appPatron(z) {
 	if (!Jeu.messagesPatron.length) dsTexte(t('app.pasMessage'), z.x, z.y, 20, DS.blanc50, 'left');
 }
 
+// ——— Prompt 28 : plaintes des Nantais (contenu : data/messages.json) ———
+let focusReponse = 0; // réponse sélectionnée au clavier (Tab / Entrée, ou 1 / 2 / 3)
+let retourPlainte = null; // { texte, bonne, jusqua } : résultat affiché quelques secondes après une réponse
+
+function repondrePlainte(i) {
+	const p = Jeu.plaintesEnAttente()[0];
+	if (!p) return;
+	const r = Jeu.repondrePlainte(p, i);
+	if (!r) return;
+	focusReponse = 0;
+	const fx = Object.keys(r.effets)
+		.map((k) => t('jauge.' + k) + ' ' + (r.effets[k] > 0 ? '+' : '') + r.effets[k])
+		.join(' · ');
+	const texte = t(r.bonne ? 'plainte.bonne' : 'plainte.mauvaise', { effets: fx || '0' });
+	retourPlainte = { texte, bonne: r.bonne, jusqua: millis() + 5000 };
+	annoncer(texte); // aria-live
+	Confort.Son.bip(r.bonne ? 'action' : 'alerte');
+}
+
+/** Bloc « plainte en attente » : texte + réponses cliquables ; renvoie la hauteur occupée */
+function blocPlainte(z) {
+	const attente = Jeu.plaintesEnAttente();
+	let y = z.y;
+	if (retourPlainte && millis() < retourPlainte.jusqua) {
+		dsBadge(z.x + 14, y + 12, retourPlainte.bonne ? '✓' : '!', retourPlainte.bonne ? 'succes' : 'alerte');
+		dsTexte(retourPlainte.texte, z.x + 40, y, 20, DS.blanc, 'left', z.l - 40);
+		y += 44;
+	}
+	if (!attente.length) return y - z.y;
+	const p = attente[0];
+	dsTexte(t('plainte.titre', { n: attente.length }), z.x, y, 20, DS.alerte, 'left');
+	y += 36;
+	noStroke();
+	fill(DS.blanc05);
+	rect(z.x, y, z.l, 84);
+	fill(DS.alerte);
+	rect(z.x, y, 4, 84);
+	dsTexte(p.auteur + ' · ' + p.heure, z.x + 18, y + 10, 18, DS.blanc50, 'left');
+	dsTexte(Jeu.texteMessage(p.def.texte, p.vars), z.x + 18, y + 38, 20, DS.blanc, 'left', z.l - 36);
+	y += 96;
+	if (focusReponse >= p.def.reponses.length) focusReponse = 0;
+	p.def.reponses.forEach((r, i) => {
+		const h = 64;
+		const survol = mouseX >= z.x && mouseX <= z.x + z.l && mouseY >= y && mouseY <= y + h;
+		const actif = survol || focusReponse === i;
+		noStroke();
+		fill(actif ? DS.blanc15 : DS.blanc05);
+		rect(z.x, y, z.l, h);
+		if (actif) {
+			noFill();
+			stroke(DS.blanc);
+			strokeWeight(2);
+			rect(z.x + 1, y + 1, z.l - 2, h - 2);
+			noStroke();
+		}
+		dsTexte(String(i + 1), z.x + 16, y + 20, 22, DS.alerte, 'left');
+		dsTexte(Jeu.texteMessage(r.texte, p.vars), z.x + 52, y + 8, 19, DS.blanc, 'left', z.l - 70);
+		boutons.push({ x: z.x, y, l: z.l, h, action: () => repondrePlainte(i) });
+		y += h + 8;
+	});
+	dsTexte(t('plainte.aide'), z.x, y + 2, 16, DS.blanc50, 'left');
+	return y + 34 - z.y;
+}
+
 function appCommunity(z) {
 	let y = z.y;
 	dsTexte(t('app.reputation', { r: Jeu.jauges.reputation }), z.x, y, 20, DS.blanc75, 'left');
+	const bp = Jeu.bilanPlaintes ? Jeu.bilanPlaintes() : null;
+	if (bp && bp.total) dsTexte(t('plainte.compteur', { x: bp.traitees, y: bp.total }), z.x + z.l, y, 18, DS.blanc50, 'right');
 	y += 44;
-	derniers(Jeu.commentaires, 8)
+	const hp = blocPlainte({ x: z.x, y, l: z.l });
+	y += hp ? hp + 16 : 0;
+	const place = Math.max(1, Math.floor((z.y + z.h - y) / 88));
+	derniers(Jeu.commentaires, Math.min(8, place))
 		.reverse()
 		.forEach((c) => {
 			noStroke();

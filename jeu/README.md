@@ -36,3 +36,5 @@ dossier à trancher sous pression. »*
 | 18 | `18-multi-langue.md` | Prompt 24 : jeu en français et en anglais, dictionnaire `i18n.js`, textes différés, sélecteur FR / EN, touche L, aria-live |
 | 19 | `19-vue-3d-pc.md` | Prompt 25 : dézoom fixe de la vue bureau (fond visible autour de la pièce), caméra fausse 3D façon FNAF (souris hors cadre, flèches, 12 px max, parallaxe) |
 | 20 | `20-sortie-mode-pc.md` | Prompt 26 : sortir du PC — bouton « Quitter le PC » (clic, Tab), molette au poste avec anti-rebond, porte du bureau → menu |
+| 21 | `21-loading-screen.md` | Prompt 27 : écran de chargement bleu + logo (anti-flash, fond sombre immédiat), musique de fond WebAudio dès le premier geste |
+| 22 | `22-dialogues-nantais.md` | Prompt 28 : plaintes des Nantais dans `data/messages.json` (brut, modifiable), déclenchées par les dossiers réels, réponses avec effets dans l'app Community |
