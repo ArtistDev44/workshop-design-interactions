@@ -90,6 +90,7 @@ jamais l'inverse.
 | 48 | `48-jeu-accessibilite-technique.md` | Jeu, étape 34 : daltonisme, taille du texte, lecture facile, tests automatisés, démo automatique, PWA hors ligne, courbes des jauges | ✅ |
 | 49 | `49-jeu-lofi-lisibilite-meteo.md` | Jeu, étape 35 : musique lofi CC0 et sons discrets, textes du PC lisibles, carte sans ligne météo, climat selon le mode (direct / archives) | ◻ prévu |
 | 50 | `50-jeu-enquete-sources.md` | Jeu, étape 36 : découvrir la situation — alerte vague, détails révélés en consultant carte, info trafic, météo, agenda ; plus de conseil ni de flèches d'effet | ◻ prévu |
+| 51 | `51-jeu-horloge-sablier.md` | Jeu, étape 37 : finir sa journée en cliquant l'horloge (alerte avant 20 h, blâme du patron le lendemain), sablier pour faire passer le temps entre les dossiers | ◻ prévu |
 
 ### Statut des prompts (vérifié le 10/11/2026 dans `site/public/`)
 
