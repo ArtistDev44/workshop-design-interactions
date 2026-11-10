@@ -40,7 +40,7 @@ let derniereImage = 0;
 // Objets cliquables du bureau (coordonnées pixel art, voir bureau.js)
 const OBJETS_BUREAU = [
 	{ nom: 'ecran', label: T('objet.ecran') },
-	{ nom: 'commande', label: T('objet.commande'), x: 58, y: 190, l: 50, h: 9 }, // prompt 34 : remplace le livre « tuto »
+	{ nom: 'aide', label: T('objet.aide'), x: 58, y: 190, l: 50, h: 9 }, // prompt 34 : remplace le livre « tuto »
 	{ nom: 'stress', label: T('objet.stress'), x: 62, y: 180, l: 44, h: 9 },
 	// Prompt 29 : objets de la pièce (micro-interactions, sans effet sur les jauges ni pause)
 	{ nom: 'lampe', piece: true, label: T('piece.lampe'), infobulle: T('piece.lampe.survol'), x: 410, y: 86, l: 16, h: 14 }, // prompt 31 : applique murale (recalée pour le plein écran)
@@ -398,7 +398,7 @@ function terminerIntro() {
 
 // =====================================================================
 // Prompt 34 — vrai tutoriel guidé (5 étapes), superposé à l'écran ; le temps du jeu est suspendu.
-// Relancé depuis le livre « commande » et l'aide (T). « Tutoriel vu » persiste dans localStorage.
+// Relancé depuis le livre « Aide » et l'aide (T). « Tutoriel vu » persiste dans localStorage.
 // =====================================================================
 const CLE_TUTORIEL = 'pxe-nte001-tutoriel-vu';
 const ETAPES_TUTORIEL = 5;
@@ -449,7 +449,7 @@ function dessinerTutoriel() {
 	boutons = []; // seul le tutoriel est cliquable
 	voile();
 	const n = tutoriel.etape + 1;
-	// Le tutoriel est le livre « Commande » ouvert : couverture marine, page gauche = étape, page droite = texte
+	// Le tutoriel est le livre « Aide » ouvert : couverture marine, page gauche = étape, page droite = texte
 	const livre = dessinerLivreOuvert(L / 2 - 680, 120, 1360, 700, '#1c2f52', '#121f38');
 	if (livre.pret) {
 		const g = livre.gauche;
@@ -719,11 +719,11 @@ function dessinerLivres(g) {
 	const lc = leve(t);
 	const ls = leve(s);
 	ombreObjet(g, t.x, t.y + t.h, t.l + lc); // prompt 51 : ombre portée des livres (même trame que le téléphone)
-	// Livre « commande » (dessous) : couverture marine, liseré doré, marque-page qui se balance
+	// Livre « Aide » (dessous, prompt 70 : ex-« Commande ») : couverture marine, liseré doré, marque-page qui se balance
 	const yc = t.y - lc;
 	boite(g, t.x, yc, t.l, t.h, '#1c2f52', '#34507f', '#121f38');
 	px(g, '#d9b45a', t.x + 2, yc + 1, 1, t.h - 2);
-	textePixel(g, 'COMMANDE', t.x + 10, yc + 2, '#fff8e6');
+	textePixel(g, 'AIDE', t.x + 18, yc + 2, '#fff8e6'); // prompt 70 : titre centré sur la couverture
 	const balance = Math.round(Math.sin(tps / 650) * 1);
 	px(g, '#b3261e', t.x + t.l - 8 + balance, yc + t.h, 2, 4);
 	// Livre « stress » (dessus)
@@ -803,7 +803,7 @@ function ouvrirObjetBureau(nom) {
 	if (nom === 'sortie') return quitterBureau(); // prompt 69
 	if (nom === 'rapport') return ouvrirRapport(); // prompt 41
 	if (nom === 'telephone') return ouvrirTelephone(); // prompt 38 : notifications de l'Agenda Nantes Métropole
-	if (nom === 'commande') return lancerTutoriel(); // prompt 34 : le livre « commande » ouvre le tutoriel
+	if (nom === 'aide') return lancerTutoriel(); // prompt 34 / 70 : le livre « Aide » ouvre le tutoriel
 	if (nom === 'stress') return (livreOuverture = millis()), ouvrir('livre-stress');
 	if (nom === 'horloge') return clicHorloge(); // prompt 51
 	if (nom === 'tasse') return boireCafe(); // prompt 52 : le café en main, puis le boost
@@ -819,7 +819,7 @@ function zonesObjetsBureau() {
 	OBJETS_BUREAU.slice(1).forEach((o, i) => {
 		if (o.visible && !o.visible()) return; // prompt 41 : le rapport n'existe qu'en fin de semaine
 		const r = versEcranBureau(o.x, o.y, o.l, o.h, COEF_OBJETS[o.nom]); // prompt 25/40 : suit la caméra et le plan de l'objet
-		if (o.nom === 'commande') cibleGuide('livreCommande', r.x, r.y, r.l, r.h); // prompt 37
+		if (o.nom === 'aide') cibleGuide('livreAide', r.x, r.y, r.l, r.h); // prompt 37
 		boutons.push({ x: r.x, y: r.y, l: r.l, h: r.h, action: () => ouvrirObjetBureau(o.nom) });
 		const survol = mouseX >= r.x && mouseX <= r.x + r.l && mouseY >= r.y && mouseY <= r.y + r.h;
 		if (survol || focusBureau === i + 1) objetSurvol = o.nom; // les livres se soulèvent (dessinerLivres)

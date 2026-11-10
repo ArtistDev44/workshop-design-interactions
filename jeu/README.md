@@ -43,7 +43,7 @@ dossier à trancher sous pression. »*
 | 25 | `25-bureau-cadrage-chaise.md` | Prompt 31 : cadrage « sur la chaise » (recadrage centré, accoudoirs retirés), horloge murale à l'heure du jeu, applique murale à la place de la lampe d'architecte |
 | 26 | `26-bureau-style-epure.md` | Prompt 32 : pièce blanche et épurée (plafond, menuiseries, plateau, porte), bois réduit à un chant, vignettage neutre, contour de survol double lisible sur blanc |
 | 27 | `27-sauvegarde-progression.md` | Prompt 33 : sauvegarde automatique par semaine (`pxe-nte001-partie-<semaine>`), « Continuer la partie », reprise exacte (graine + tirages), export/import JSON validé dans les Paramètres |
-| 28 | `28-fenetre-loire-tutoriel.md` | Prompt 34 : baie sur la Loire (hauteur réelle Hub'Eau, repli médiane), grue aux couleurs de la ville, plus de château ni de quai, souris et téléphone en perspective, livre « Commande » et tutoriel en 5 étapes |
+| 28 | `28-fenetre-loire-tutoriel.md` | Prompt 34 : baie sur la Loire (hauteur réelle Hub'Eau, repli médiane), grue aux couleurs de la ville, plus de château ni de quai, souris et téléphone en perspective, livre « Commande » (« Aide » depuis le prompt 70) et tutoriel en 5 étapes |
 | 29 | `29-correctifs-plein-ecran-livres.md` | Retours de rendu : vue plein écran surcadrée avec bords flous et vignettage, grue opaque à l'échelle des immeubles, porte supprimée, souris et téléphone orientés vers l'écran, tasse de thé, téléphone et livres animés, livres ouverts en double page, QR codes régénérés |
 | 30 | `30-menu-principal.md` | Prompt 35 : menu principal plein écran avant le bureau (Nouvelle partie, Reprendre, Paramètres, Aide, Tutoriel), choix de la semaine sorti du PC, menu Échap modernisé |
 | 31 | `31-applications-indicateurs.md` | Prompt 36 : icônes RégulOS agrandies, Corbeille fonctionnelle, app flottante « Indicateurs » déplaçable (fluidité, réputation, budget, objectif, palier) |
@@ -80,3 +80,4 @@ dossier à trancher sous pression. »*
 | 63 | `63-revue-game-design.md` | Prompt 66 : revue game design — correctif de la file de la Carte entre deux semaines, guide en 7 étapes dont la bulle ne masque plus le dossier, aide et tutoriel complets, rapport lisible |
 | 64 | `64-fin-de-journee-nuit-sortie.md` | Prompt 69 : « Ranger le poste », la nuit tombe (21 h en 4 s), flèche « Sortie » au bord gauche, pan vers le couloir, écran noir, lendemain 6 h ou bilan |
 | 65 | `65-sieste-paupieres.md` | Sieste : paupières en surcouche plein écran (tout le contenu caché), fermeture avec sursaut et ouverture avec clignement, fondu si animations réduites |
+| 66 | `66-livre-aide.md` | Prompt 70 : le livre « Commande » devient « Aide » (objet, couverture pixel, textes FR + EN, guide) |
