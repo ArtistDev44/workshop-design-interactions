@@ -1,11 +1,11 @@
 ---
+import { lien } from '../../lib/liens';
 // Galerie des œuvres générée depuis le registre (prompt 07).
 import Layout from '../../layouts/Layout.astro';
 import CarteOeuvre from '../../components/CarteOeuvre.astro';
 import { getOeuvres } from '../../lib/oeuvres';
 
 const oeuvres = await getOeuvres();
-const base = import.meta.env.BASE_URL;
 const filtres = [
 	{ valeur: 'tous', label: 'Toutes' },
 	{ valeur: 'STUDENT', label: 'STUDENT' },
@@ -26,7 +26,7 @@ const nb = oeuvres.length;
 		nb === 0 ? (
 			<p class="vide">
 				Aucune œuvre n’est encore inscrite au registre. Consultez le{' '}
-				<a href={`${base}catalogue/`}>catalogue</a> de l’édition.
+				<a href={lien(`catalogue/`)}>catalogue</a> de l’édition.
 			</p>
 		) : (
 			<>
@@ -46,7 +46,7 @@ const nb = oeuvres.length;
 					))}
 				</ul>
 				<p class="vide" hidden data-vide>
-					Aucune œuvre pour ce statut. Consultez le <a href={`${base}catalogue/`}>catalogue</a> de
+					Aucune œuvre pour ce statut. Consultez le <a href={lien(`catalogue/`)}>catalogue</a> de
 					l’édition.
 				</p>
 			</>

@@ -1,13 +1,13 @@
 ---
+import { lien } from '../lib/liens';
 // Page d'accueil de l'édition NTE001 (prompt 05).
 // Textes issus du framework PATRIMOINE.EXE et de todo.md : aucun contenu inventé.
 import Layout from '../layouts/Layout.astro';
 import edition from '../data/edition.json';
 import { getOeuvres, lienJouable, slugDe } from '../lib/oeuvres';
 
-const base = import.meta.env.BASE_URL;
 const jouables = (await getOeuvres()).filter((o) => lienJouable(o));
-const urlEnLigne = new URL(base, Astro.site).href;
+const urlEnLigne = new URL(lien(), Astro.site).href;
 
 const compteurs = [
 	{ valeur: edition.compteurs.villes_activees, label: 'ville activée' },
@@ -88,7 +88,7 @@ const appels = [
 								<p class="jouer__id mono">{o.data.id}</p>
 								<p class="jouer__titre">{o.data.titre}</p>
 								<p class="jouer__texte">
-									{o.data.stack.split(',')[0]} · <a href={`${base}${slugDe(o)}/`}>lire le cartel</a>
+									{o.data.stack.split(',')[0]} · <a href={lien(slugDe(o))}>lire le cartel</a>
 								</p>
 							</div>
 							<a class="jouer__bouton" href={lienJouable(o)}>
@@ -121,7 +121,7 @@ const appels = [
 	<nav class="appels" aria-label="Explorer l’édition">
 		{
 			appels.map((a) => (
-				<a class="appel" href={`${base}${a.href}`}>
+				<a class="appel" href={lien(a.href)}>
 					<span class="appel__titre">{a.titre} →</span>
 					<span class="appel__texte">{a.texte}</span>
 				</a>
@@ -132,7 +132,7 @@ const appels = [
 	<section class="qr-edition" aria-labelledby="titre-qr">
 		<h2 id="titre-qr">Le site en ligne</h2>
 		<img
-			src={`${base}assets/qr-edition.png`}
+			src={lien(`assets/qr-edition.png`)}
 			alt="QR code vers le site en ligne de l’édition PATRIMOINE.EXE / Nantes 001"
 			width="180"
 			height="180"

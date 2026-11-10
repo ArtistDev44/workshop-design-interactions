@@ -1,4 +1,5 @@
 // Accès au registre des œuvres (prompt 06).
+import { lien } from './liens';
 import { getCollection, type CollectionEntry } from 'astro:content';
 
 export type Oeuvre = CollectionEntry<'oeuvres'>;
@@ -22,5 +23,5 @@ export function libelleStatut(statut: Oeuvre['data']['statut']): string {
 /** Adresse de l'œuvre jouable (champ `lien_oeuvre` du registre), ou null si elle n'est pas encore en ligne. */
 export function lienJouable(oeuvre: Oeuvre): string | null {
 	const l = oeuvre.data.lien_oeuvre;
-	return l ? `${import.meta.env.BASE_URL}${l.replace(/^\//, '')}` : null;
+	return l ? lien(l) : null;
 }

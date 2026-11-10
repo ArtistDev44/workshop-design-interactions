@@ -1,24 +1,18 @@
 ---
-// En-tête et navigation principale (prompt 04).
-const base = import.meta.env.BASE_URL;
-const liens = [
-	{ href: '', label: 'Accueil' },
-	{ href: 'oeuvres/', label: 'Œuvres' },
-	{ href: 'catalogue/', label: 'Catalogue' },
-	{ href: 'statistiques/', label: 'Statistiques' },
-	{ href: 'methode/', label: 'Méthode' },
-	{ href: 'corpus/', label: 'Corpus' },
-	{ href: 'donnees/', label: 'Données' },
-	{ href: 'credits/', label: 'Crédits' },
-];
-const chemin = Astro.url.pathname.endsWith('/') ? Astro.url.pathname : `${Astro.url.pathname}/`;
-const estActif = (href: string) =>
-	href === '' ? chemin === base : chemin.startsWith(`${base}${href}`);
+// En-tête et navigation principale (prompt 04). Liens construits par lien() (src/lib/liens.ts).
+import { lien, BASE, NAVIGATION } from '../lib/liens';
+
+const liens = NAVIGATION.map((n) => ({ href: lien(n.chemin), label: n.label, chemin: n.chemin }));
+const chemin = Astro.url.pathname.endsWith('/') || /\.[a-z0-9]+$/i.test(Astro.url.pathname) ? Astro.url.pathname : `${Astro.url.pathname}/`;
+// Page active : l'accueil seulement à la racine ; une page d'œuvre (/…/pxe-nte001-…/) active « Œuvres »
+const estPageOeuvre = chemin.startsWith(`${BASE}pxe-nte001-`);
+const estActif = (n: { chemin: string; href: string }) =>
+	n.chemin === '' ? chemin === BASE || chemin === `${BASE}index.html` : chemin.startsWith(n.href) || (n.chemin === 'oeuvres' && estPageOeuvre);
 ---
 
 <header class="entete">
 	<div class="entete__inner">
-		<a class="marque" href={base}>
+		<a class="marque" href={lien()}>
 			<span class="marque__nom">PATRIMOINE.EXE</span>
 			<span class="marque__edition">Nantes 001</span>
 		</a>
@@ -27,7 +21,7 @@ const estActif = (href: string) =>
 				{
 					liens.map((l) => (
 						<li>
-							<a href={`${base}${l.href}`} aria-current={estActif(l.href) ? 'page' : undefined}>
+							<a href={l.href} aria-current={estActif(l) ? 'page' : undefined}>
 								{l.label}
 							</a>
 						</li>

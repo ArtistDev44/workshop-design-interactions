@@ -8,7 +8,12 @@ export default defineConfig({
 	output: 'static',
 	site: 'https://artistdev44.github.io',
 	base: '/workshop-design-interactions/patrimoine-exe/nantes/001/',
-	trailingSlash: 'always',
+	// 'ignore' : /oeuvres et /oeuvres/ répondent tous deux (en local comme en ligne).
+	// Les liens générés par src/lib/liens.ts gardent toujours la barre finale.
+	trailingSlash: 'ignore',
+	// `npm run dev` / `npm run preview` ouvrent directement l'adresse du site (sinon
+	// http://localhost:4321/ affiche une 404 : le site vit sous la base ci-dessus).
+	server: { open: '/workshop-design-interactions/patrimoine-exe/nantes/001/' },
 	build: {
 		// Le déploiement sert dist/ à la racine du domaine : les href absolus
 		// préfixés par `base` (/workshop-design-interactions/...) n'y résolvent
