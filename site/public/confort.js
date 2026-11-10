@@ -29,7 +29,7 @@
 	};
 
 	// ——— Réglages (écran Paramètres, 11-direction-artistique) ———
-	const DEFAUTS = { son: true, horsLigneForce: false, reduireAnimations: false, contrasteRenforce: false, musique: 'chillin' }; // prompt 44 : choix de la musique (par défaut : un morceau CC0)
+	const DEFAUTS = { son: true, horsLigneForce: false, reduireAnimations: false, contrasteRenforce: false, musique: 'chillin', daltonisme: 'normal', tailleTexte: 100, lectureFacile: false }; // prompt 48 : accessibilité // prompt 44 : choix de la musique (par défaut : un morceau CC0)
 	const Reglages = Object.assign({}, DEFAUTS, lire(CLE_REGLAGES, {}));
 	Reglages.basculer = function (nom) {
 		Reglages[nom] = !Reglages[nom];

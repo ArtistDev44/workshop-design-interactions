@@ -428,6 +428,7 @@
 		};
 		resultat.minuteSim = Jeu.horloge ? Math.floor(Jeu.horloge.minutes) : null; // heure de la partie (prompt 20)
 		resultat.jour = d.date;
+		resultat.jaugesApres = Object.assign({}, Jeu.jauges); // prompt 48 : courbes du rapport
 		Jeu.journaliser(resultat, ctx);
 		resultat.narration = Jeu.narrer(resultat);
 		Jeu.historique.push(resultat);

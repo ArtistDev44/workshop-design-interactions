@@ -47,6 +47,7 @@ function appliquerReglages() {
 	const R = Confort.Reglages;
 	reduireAnimations = reduireAnimationsSysteme || R.reduireAnimations;
 	C.gris = R.contrasteRenforce ? 'rgba(255,255,255,0.85)' : GRIS_NORMAL; // contraste renforcé : texte secondaire plus clair
+	appliquerAccessibilite(); // prompt 48 : palette daltonisme, taille du texte
 }
 
 // ——— Confort (prompt 18) : fenêtres, pause, meilleur bilan ———
@@ -153,7 +154,7 @@ function draw() {
 	if (MENU.actif && ecran === 'jeu') fermerMenuPrincipal();
 	if (MENU.actif) {
 		boutons = [];
-		dessinerMenuPrincipal();
+		if (!dessinerDemo()) dessinerMenuPrincipal(); // prompt 48 : démo automatique après 40 s sans action
 		if (fenetre) {
 			boutons = [];
 			dessinerFenetre();
@@ -936,11 +937,11 @@ function dessinerDossier(d, meteo) {
 	}
 
 	// Compteur : barre horizontale qui se vide (Q6) — durée selon la semaine (Q16, Q55)
-	const duree = ((Jeu.etat.semaine && Jeu.etat.semaine.difficulte && Jeu.etat.semaine.difficulte.compteur_s) || 30) * 1000 * facteurDuree;
+	const duree = ((Jeu.etat.semaine && Jeu.etat.semaine.difficulte && Jeu.etat.semaine.difficulte.compteur_s) || 30) * 1000 * facteurDuree * facteurLecture(); // prompt 48 : lecture facile ×1,5
 	const reste = constrain(1 - (millis() - debutCompteur) / duree, 0, 1);
 	// Prompt 44 § 3 : tic-tac sous les 10 dernières secondes, qui s'accélère (1 s → 0,5 s → 0,25 s)
 	const resteMs = reste * duree;
-	if (resteMs > 0 && resteMs < 10000 && (phase === 'decision' || phase === 'contradiction' || phase === 'conflit')) {
+	if (!Confort.Reglages.lectureFacile && resteMs > 0 && resteMs < 10000 && (phase === 'decision' || phase === 'contradiction' || phase === 'conflit')) {
 		const pas = resteMs < 4000 ? 250 : resteMs < 7000 ? 500 : 1000;
 		if (millis() - dernierTic >= pas) {
 			dernierTic = millis();
@@ -1444,6 +1445,7 @@ function dateLongue(iso) {
 // =====================================================================
 function mousePressed() {
 	if (Sauvegarde.dialogueOuvert || CARNET.ouvert) return; // prompt 33 : clics destinés à la boîte d'import HTML
+	if (arreterDemo()) return; // prompt 48
 	Confort.Son.demarrer();
 	interaction();
 	for (let i = boutons.length - 1; i >= 0; i--) {
@@ -1463,6 +1465,7 @@ function basculerSon() {
 function keyPressed() {
 	// Prompt 33 : boîte d'import ouverte (champ texte, fichier) → le clavier lui appartient
 	if (Sauvegarde.dialogueOuvert || CARNET.ouvert) return;
+	if (arreterDemo()) return false; // prompt 48 : une touche arrête la démo automatique
 	if (CINE) return toucheCinematique(), false; // prompt 41
 	if (TRANSITION_JOUR && (keyCode === ENTER || keyCode === RETURN || key === ' ' || keyCode === ESCAPE)) return passerTransitionJour(), false; // prompt 43
 	Confort.Son.demarrer(); // l'audio ne peut démarrer qu'après un geste du joueur
@@ -1484,7 +1487,7 @@ function keyPressed() {
 	// Langue (prompt 24) : L bascule partout, sans toucher à la partie
 	if (key === 'l' || key === 'L') return Langue.suivante(), false;
 	// Prompt 47 : inspection, démission, palmarès ; J = journal de bord, D = rendre son badge
-	if (toucheMecaniques()) return false;
+	if (toucheMecaniques() || toucheAccessibilite()) return false; // prompts 47 et 48
 	// Fenêtres ouvertes : elles captent le clavier
 	if (fenetre) {
 		if (keyCode === ESCAPE || (fenetre === 'aide' && (key === 'h' || key === 'H' || key === '?'))) return fermer(), false;
@@ -1512,6 +1515,7 @@ function keyPressed() {
 			const cles = { 1: 'son', 2: 'horsLigneForce', 3: 'reduireAnimations', 4: 'contrasteRenforce' };
 			if (cles[key]) basculerReglage(cles[key]);
 			if (key === '8') musiqueSuivante(); // prompt 44
+			if (key === '9') return ouvrirAccessibilite(), false; // prompt 48
 			if (key === '5') Sauvegarde.exporter(); // prompt 33
 			if (key === '6') Sauvegarde.copier();
 			if (key === '7') return Sauvegarde.ouvrirImport(), false;
@@ -1662,6 +1666,7 @@ function dessinerFenetre() {
 	if (fenetre === 'inspection') return fenetreInspection(); // prompt 47
 	if (fenetre === 'demission') return fenetreDemission(); // prompt 47
 	if (fenetre === 'palmares') return fenetrePalmares(); // prompt 47
+	if (fenetre === 'accessibilite') return fenetreAccessibilite(); // prompt 48
 	if (fenetre === 'aide') return fenetreAide();
 	if (fenetre === 'reset') return fenetreReset();
 	if (fenetre === 'parametres') return fenetreParametres();
@@ -1790,7 +1795,7 @@ function basculerReglage(nom) {
 
 function fenetreParametres() {
 	const l = 1000;
-	const h = 956; // prompt 33 : + section « Progression » ; prompt 44 : + « Musique »
+	const h = 1052; // prompt 33 : + section « Progression » ; prompt 44 : + « Musique » ; prompt 48 : + « Accessibilité »
 	const x = (L - l) / 2;
 	const y = (H - h) / 2;
 	panneau(x, y, l, h, C.accent);
@@ -1867,6 +1872,18 @@ function fenetreParametres() {
 	bouton(x + l - 48 - 3 * lbp - 32, yp + 8, lbp, 56, t('parametres.exporter'), () => Sauvegarde.exporter(), false, true);
 	bouton(x + l - 48 - 2 * lbp - 16, yp + 8, lbp, 56, t('parametres.copier'), () => Sauvegarde.copier(), false, true);
 	bouton(x + l - 48 - lbp, yp + 8, lbp, 56, t('parametres.importer'), () => Sauvegarde.ouvrirImport(), false, true);
+	// Prompt 48 : accessibilité (daltonisme, taille du texte, lecture facile) et reprise sur un autre appareil
+	const ya = yp + 96;
+	textFont(POLICE_TEXTE);
+	textSize(26);
+	fill(C.texte);
+	textAlign(LEFT, CENTER);
+	text(t('acc.titre'), x + 48, ya + 36);
+	textFont(POLICE_DONNEES);
+	textSize(18);
+	fill(C.gris);
+	text(t('param.touche', { k: '9' }), x + 560, ya + 36);
+	bouton(x + l - 48 - 280, ya + 8, 280, 56, t('acc.ouvrir'), ouvrirAccessibilite, false, true);
 	textAlign(LEFT, TOP);
 	bouton(x + l - 288, y + h - 104, 240, 64, t('param.retour'), fermer);
 }

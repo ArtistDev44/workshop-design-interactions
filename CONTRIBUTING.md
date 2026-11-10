@@ -27,7 +27,8 @@ node scripts/preparer-semaines.mjs --semaines 2025-09-22,…   # écrit data/sem
   semaines passées en argument : y redonner les semaines existantes en plus de la nouvelle.
 - Le **mode histoire** prend trois semaines dans l'ordre facile → normale → difficile
   (`semainesHistoire()` dans `public/histoire.js`) ; ajouter une semaine ne crée pas de chapitre.
-- Vérifier l'équilibre avec `node scripts/test-difficulte.mjs`.
+- Vérifier avec `npm test` : `scripts/test-jeu.mjs` joue chaque semaine de bout en bout avec les vraies
+  fonctions du jeu (`scripts/test-difficulte.mjs` demande en plus un navigateur Playwright et un `base.mjs` hors dépôt).
 - Ne pas ouvrir à la main `public/data/fallback/` (instantané hors ligne, volumineux) :
   le régénérer avec `scripts/snapshot.mjs`.
 

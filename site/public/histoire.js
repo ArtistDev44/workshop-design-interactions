@@ -189,6 +189,7 @@ function fenetreRapport() {
 	textStyle(BOLD);
 	textSize(28);
 	fill(encre);
+	textLeading(34); // titre sur deux lignes sans chevauchement
 	text(t('rapport.score', { s: b.score }) + ' — ' + (b.demission ? t('demission.rapportTitre') : b.titre), x + 56, ly, l - 112, 80);
 	textStyle(NORMAL);
 	ly += 84;
@@ -206,7 +207,7 @@ function fenetreRapport() {
 		text(t('jaugeTitre.' + cle) + ' ' + v + '/100', jx, ly);
 		fill('#ddd5c2');
 		rect(jx, ly + 30, jl, 12);
-		fill(v < 20 ? '#b3261e' : v < 40 ? '#a15c07' : '#1e7a3c');
+		fill(couleurPapier(v)); // prompt 48 : palette daltonisme
 		rect(jx, ly + 30, (jl * v) / 100, 12);
 	});
 	ly += 70;
@@ -226,9 +227,10 @@ function fenetreRapport() {
 		text(String(t('qualite.' + d.qualite)).toUpperCase(), x + 56, ly);
 		fill(encre);
 		textSize(17);
-		text(String(d.titre) + ' — ' + String(d.action || t('action.temps')), x + 56, ly + 20, l - 112, 24);
+		text(String(d.titre) + ' — ' + String(d.action || t('action.temps')), x + 56, ly + 20, l / 2 - 80, 24);
 		ly += 52;
 	});
+	dessinerCourbesJauges(x + l / 2 + 40, y + 552, l / 2 - 96, 116, encre, gris); // prompt 48 : courbes des jauges
 	// Prompt 47 : profil de gestion et extrait du journal de bord du joueur
 	const m = lignesRapportMecaniques();
 	textSize(16);
