@@ -13,7 +13,8 @@ const BH = H / PIX; // 270
 const LARGEUR_ECRAN_PC = 168; // vue depuis la chaise : grand écran face au joueur
 const ECRAN_PC = { x: (BW - LARGEUR_ECRAN_PC) / 2, y: 46, l: LARGEUR_ECRAN_PC, h: 94 };
 // Vue « au poste » : le moniteur occupe ce rectangle (pixels écran), la pièce reste visible autour
-const ECRAN_POSTE = { x: (L - 1240) / 2, y: 96, l: 1240, h: 698 };
+// Prompt 43 : au poste, l'écran du PC occupe 90 % du canevas (10 % de « non-écran »), surtout moins d'espace dessous
+const ECRAN_POSTE = { x: (L - 1728) / 2, y: 40, l: 1728, h: 972 };
 
 let vue = 'bureau'; // 'bureau' | 'zoom-avant' | 'poste' | 'zoom-arriere'
 let debutZoom = 0;
@@ -924,10 +925,10 @@ function composerVue() {
 let focusQuitter = false; // focus clavier sur le bouton « Quitter le PC » (Tab au poste)
 let dernierScrollSortie = 0;
 let cumulScroll = 0;
-const BOUTON_QUITTER = { l: 340, h: 56, marge: 40 };
+const BOUTON_QUITTER = { l: 340, h: 50, marge: 40 };
 
 function rectBoutonQuitter() {
-	return { x: L - BOUTON_QUITTER.l - BOUTON_QUITTER.marge, y: H - BOUTON_QUITTER.h - 22, l: BOUTON_QUITTER.l, h: BOUTON_QUITTER.h };
+	return { x: L - BOUTON_QUITTER.l - BOUTON_QUITTER.marge, y: H - BOUTON_QUITTER.h - 10, l: BOUTON_QUITTER.l, h: BOUTON_QUITTER.h }; // sous l'écran (prompt 43)
 }
 /** Bouton visible au poste, sous le moniteur à droite (dans la pièce, hors de l'écran du PC). */
 function dessinerBoutonQuitterPC() {

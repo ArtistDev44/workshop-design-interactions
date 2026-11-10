@@ -95,8 +95,10 @@ function lancerConversation(conv) {
 	conversation = conv;
 	smsActif = true;
 	smsIndex = 0;
-	convDepuis = millis();
 	leverTelephone();
+	const attente = typeof resteTransitionJour === 'function' ? resteTransitionJour() : 0;
+	TEL_MAIN.debut += attente; // prompt 43 : le téléphone attend la fin de l'écran « Jour n »
+	convDepuis = millis() + attente;
 	annoncer(String(conv.contact) + ' : ' + String(conv.messages[0].texte));
 	Confort.Son.bip('dossier');
 }

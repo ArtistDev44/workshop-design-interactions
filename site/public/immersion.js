@@ -9,7 +9,7 @@
 // ——— Réglages de l'immersion (tout est ici) ———
 const IMMERSION = {
 	minutesParSeconde: 1, // rythme normal : 1 minute de journée par seconde réelle
-	compression: 10, // § 3 : ×10 quand aucun incident n'est actif
+	compression: 30, // § 3 : ×30 quand aucun incident n'est actif (prompt 43 : ×10 → ×30)
 	siesteApresMs: 20000, // § 4 : 20 s sans incident ni interaction
 	fenetreReveilMs: { 60: 3000, 30: 2000, 15: 1000 }, // § 4 : selon le compteur de la semaine
 	retardImportant: 20, // § 5 : retard ≥ 20 min = bordure rouge
@@ -121,6 +121,51 @@ function demarrerJournee() {
 	enSieste = false;
 	reveil = null;
 	interaction();
+	annoncerJournee(); // prompt 43 : écran noir « JOUR n — SEMAINE n »
+}
+
+// ——— Prompt 43 : transition entre journées — fond noir, « JOUR n — SEMAINE n » et la date, centrés ———
+const DUREE_TRANSITION_JOUR = 2800;
+let TRANSITION_JOUR = null; // { debut, jour, semaine, date }
+let derniereJourneeAnnoncee = '';
+function annoncerJournee() {
+	const j = Jeu.jourCourant ? Jeu.jourCourant() : null;
+	if (!j) return;
+	const cle = (Jeu.etat.semaine ? Jeu.etat.semaine.lundi : Jeu.etat.mode) + '|' + Jeu.jourIndex;
+	if (cle === derniereJourneeAnnoncee) return; // pas deux fois pour la même journée (intro SMS)
+	derniereJourneeAnnoncee = cle;
+	TRANSITION_JOUR = { debut: millis(), jour: Jeu.jourIndex + 1, semaine: typeof chapitreCourant === 'function' ? chapitreCourant() : 0, date: j.date };
+	annoncer(texteTransitionJour() + ' — ' + dateLongue(j.date));
+}
+function texteTransitionJour() {
+	const T0 = TRANSITION_JOUR;
+	return T0.semaine ? t('transition.jour', { j: T0.jour, s: T0.semaine }) : t('transition.jourDirect', { j: T0.jour });
+}
+function resteTransitionJour() {
+	return TRANSITION_JOUR ? Math.max(0, DUREE_TRANSITION_JOUR - (millis() - TRANSITION_JOUR.debut)) : 0;
+}
+function passerTransitionJour() {
+	TRANSITION_JOUR = null;
+}
+function dessinerTransitionJour() {
+	if (!TRANSITION_JOUR) return false;
+	const u = millis() - TRANSITION_JOUR.debut;
+	if (u >= DUREE_TRANSITION_JOUR) return (TRANSITION_JOUR = null), false;
+	const a = reduireAnimations ? 1 : u < 300 ? u / 300 : u > DUREE_TRANSITION_JOUR - 500 ? (DUREE_TRANSITION_JOUR - u) / 500 : 1;
+	boutons = [{ x: 0, y: 0, l: L, h: H, action: passerTransitionJour }];
+	noStroke();
+	fill(0, 0, 0, 255 * a);
+	rect(0, 0, L, H);
+	if (a > 0.6) {
+		dsTitre(texteTransitionJour(), L / 2, H / 2 - 60, 72, '#ffffff', 'center');
+		noStroke();
+		textAlign(CENTER, TOP);
+		textFont(POLICE_TEXTE);
+		textSize(26);
+		fill('rgba(255,255,255,0.75)');
+		text(dateLongue(TRANSITION_JOUR.date), L / 2, H / 2 + 40);
+	}
+	return true;
 }
 
 function heureAffichee() {
@@ -141,7 +186,7 @@ function avancerTemps() {
 	const maintenant = millis();
 	const dt = derniereImage ? Math.min(250, maintenant - derniereImage) : 0;
 	derniereImage = maintenant;
-	if (ecran !== 'jeu' || !Jeu.horloge || phase === 'fin' || phase === 'mail' || smsActif || enPause || tutoriel) return; // prompt 34 : le tutoriel suspend le temps
+	if (ecran !== 'jeu' || !Jeu.horloge || phase === 'fin' || phase === 'mail' || smsActif || enPause || tutoriel || TRANSITION_JOUR) return; // prompt 34 / 43 : tutoriel et transition suspendent le temps
 	const vitesse = IMMERSION.minutesParSeconde * (tempsCompresse() ? IMMERSION.compression : 1);
 	Jeu.horloge.minutes += (dt / 1000) * vitesse;
 
