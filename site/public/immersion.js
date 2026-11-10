@@ -441,7 +441,7 @@ function ouvrirObjetBureau(nom) {
 /** Zones cliquables du bureau (livres) + focus clavier ; appelé par la vue bureau */
 function zonesObjetsBureau() {
 	OBJETS_BUREAU.slice(1).forEach((o, i) => {
-		const r = { x: o.x * PIX, y: o.y * PIX, l: o.l * PIX, h: o.h * PIX };
+		const r = versEcranBureau(o.x, o.y, o.l, o.h); // prompt 25 : suit le dézoom et la caméra
 		boutons.push({ x: r.x, y: r.y, l: r.l, h: r.h, action: () => ouvrirObjetBureau(o.nom) });
 		const survol = mouseX >= r.x && mouseX <= r.x + r.l && mouseY >= r.y && mouseY <= r.y + r.h;
 		if (survol || focusBureau === i + 1) {
@@ -458,7 +458,7 @@ function zonesObjetsBureau() {
 		noFill();
 		stroke('#f2c94c');
 		strokeWeight(PIX);
-		rect(e.x - 8 * PIX, e.y - 8 * PIX, e.l + 16 * PIX, e.h + 18 * PIX);
+		rect(e.x - 7 * PIX, e.y - 7 * PIX, e.l + 14 * PIX, e.h + 15 * PIX);
 		noStroke();
 	}
 }
