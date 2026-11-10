@@ -17,22 +17,15 @@ const IMMERSION = {
 };
 
 const SMS = [
-	{ de: 'moi', texte: 'Premier jour au travail, faut pas que je me loupe.' },
-	{ de: 'Camille · cheffe de salle', texte: 'Bienvenue à la régulation ! Ton poste : surveiller le réseau Naolib et traiter les incidents qui arrivent sur ton écran.' },
-	{ de: 'Camille · cheffe de salle', texte: 'Pour chaque dossier : dévier la ligne, retenir en terminus, envoyer un bus de renfort… ou ne rien faire. Le chrono tourne.' },
-	{ de: 'Camille · cheffe de salle', texte: 'Ton objectif : garder les trois jauges au vert — fluidité du réseau, réputation de la salle, budget de la régulation.' },
-	{ de: 'Camille · cheffe de salle', texte: 'Si l’écran du PC clignote en rouge, c’est urgent. Et pas de sieste au poste !' },
-	{ de: 'moi', texte: 'Ouverture à 6h, on y va.' },
+	{ de: 'moi', texte: T('sms.0') },
+	{ de: T('sms.camille'), texte: T('sms.1') },
+	{ de: T('sms.camille'), texte: T('sms.2') },
+	{ de: T('sms.camille'), texte: T('sms.3') },
+	{ de: T('sms.camille'), texte: T('sms.4') },
+	{ de: 'moi', texte: T('sms.5') },
 ];
 
-const LIVRE_STRESS = [
-	'Bien gérer son stress au poste',
-	'Respirer : inspirez 4 secondes, bloquez 4 secondes, expirez 6 secondes. Trois cycles suffisent à faire redescendre la tension.',
-	'Un dossier à la fois : lisez la ligne, le retard et la raison avant de choisir. Le chrono est long pour les semaines faciles, utilisez-le.',
-	'Accepter l’imparfait : « ne rien faire » est parfois la moins mauvaise décision. Une journée se juge sur l’ensemble.',
-	'Faire des pauses entre deux dossiers (touche P), pas pendant : un incident ne se met pas en pause.',
-	'Demander de l’aide : le tutoriel (livre bleu) rappelle les règles et les effets des actions.',
-];
+const LIVRE_STRESS = [0, 1, 2, 3, 4, 5].map((n) => T('stress.' + n));
 
 let smsActif = false;
 let smsIndex = 0;
@@ -46,9 +39,9 @@ let derniereImage = 0;
 
 // Objets cliquables du bureau (coordonnées pixel art, voir bureau.js)
 const OBJETS_BUREAU = [
-	{ nom: 'ecran', label: 'Écran du PC' },
-	{ nom: 'tuto', label: 'Livre « Tutoriel »', x: 58, y: 190, l: 50, h: 9 },
-	{ nom: 'stress', label: 'Livre « Bien gérer son stress »', x: 62, y: 180, l: 44, h: 9 },
+	{ nom: 'ecran', label: T('objet.ecran') },
+	{ nom: 'tuto', label: T('objet.tuto'), x: 58, y: 190, l: 50, h: 9 },
+	{ nom: 'stress', label: T('objet.stress'), x: 62, y: 180, l: 44, h: 9 },
 ];
 
 function interaction() {
@@ -190,7 +183,7 @@ function dessinerAttente() {
 	textFont(POLICE_DONNEES);
 	textSize(18);
 	const j = Jeu.jourCourant();
-	text('SURVEILLANCE DU RÉSEAU · ' + (j ? dateLongue(j.date).toUpperCase() : ''), z.x + 32, z.y + 32);
+	text(t('surv.titre', { date: j ? dateLongue(j.date).toUpperCase() : '' }), z.x + 32, z.y + 32);
 	fill(C.texte);
 	textFont(POLICE_DONNEES);
 	textStyle(BOLD);
@@ -199,20 +192,20 @@ function dessinerAttente() {
 	textStyle(NORMAL);
 	textSize(26);
 	fill(C.accent);
-	if (tempsCompresse()) text('▶▶ temps accéléré ×' + IMMERSION.compression, z.x + 36, z.y + 210);
+	if (tempsCompresse()) text(t('surv.accelere', { x: IMMERSION.compression }), z.x + 36, z.y + 210);
 	textFont(POLICE_TEXTE);
 	textSize(26);
 	fill(C.texte);
 	const prochain = Jeu.prochainDuJour();
-	text(prochain ? 'Aucun incident en cours. Le réseau roule.' : 'Plus aucun incident prévu aujourd’hui. Fin de service à ' + Jeu.formaterHeure(Jeu.finJournee()) + '.', z.x + 32, z.y + 270, z.l - 64, 90);
+	text(prochain ? t('surv.calme') : t('surv.fin', { heure: Jeu.formaterHeure(Jeu.finJournee()) }), z.x + 32, z.y + 270, z.l - 64, 90);
 	textSize(20);
 	fill(C.gris);
 	const restants = Jeu.paquet.length - Jeu.index;
-	text('Dossiers restant cette semaine : ' + restants + ' / ' + Jeu.paquet.length + '\nJour ' + (Jeu.jourIndex + 1) + ' sur ' + Jeu.jours.length, z.x + 32, z.y + 380, z.l - 64, 80);
+	text(t('surv.restants', { n: restants, total: Jeu.paquet.length, j: Jeu.jourIndex + 1, jours: Jeu.jours.length }), z.x + 32, z.y + 380, z.l - 64, 80);
 	if (enSieste) {
 		fill(C.orange);
 		textSize(22);
-		text('Zzz… vous somnolez au bureau.', z.x + 32, z.y + 480);
+		text(t('surv.sieste'), z.x + 32, z.y + 480);
 	}
 }
 
@@ -229,15 +222,15 @@ function dessinerMail() {
 	noStroke();
 	fill(13, 12, 12, 200);
 	rect(0, 0, L, H);
-	dsPanneau(x, y, l, h, 'MESSAGERIE', m.positif ? 'rgba(0,251,116,0.12)' : 'rgba(212,3,28,0.25)');
-	dsBadge(x + l - 120, y + 30, '1 nouveau', m.positif ? 'succes' : 'erreur');
-	dsTexte('De : ' + m.de, x + 32, y + 84, 20, DS.blanc50, 'left');
-	dsTexte('À : régulateur · poste 3', x + 32, y + 114, 20, DS.blanc50, 'left');
-	dsTitre(m.objet.toUpperCase(), x + 32, y + 156, 28, DS.blanc, 'left');
+	dsPanneau(x, y, l, h, t('mailf.titre'), m.positif ? 'rgba(0,251,116,0.12)' : 'rgba(212,3,28,0.25)');
+	dsBadge(x + l - 120, y + 30, t('mailf.nouveau'), m.positif ? 'succes' : 'erreur');
+	dsTexte(t('mailf.de', { de: m.de }), x + 32, y + 84, 20, DS.blanc50, 'left');
+	dsTexte(t('mailf.a'), x + 32, y + 114, 20, DS.blanc50, 'left');
+	dsTitre(String(m.objet).toUpperCase(), x + 32, y + 156, 28, DS.blanc, 'left');
 	let ty = y + 220;
 	m.lignes.forEach((ligne) => {
-		const estFait = /^\d{2}:\d{2} – /.test(ligne);
-		const ok = ligne.includes('(bon choix !)');
+		const estFait = !!ligne.fait;
+		const ok = !!ligne.ok;
 		if (estFait) {
 			noStroke();
 			fill(ok ? DS.succes : DS.primaire);
@@ -248,8 +241,8 @@ function dessinerMail() {
 		textSize(estFait ? 19 : 21);
 		ty += textWidth(ligne) > l - 110 ? 60 : 36;
 	});
-	dsTexte('— La direction', x + 32, Math.min(ty + 10, y + h - 150), 20, DS.blanc50, 'left');
-	dsBouton(x + l - 420, y + h - 96, 388, 64, m.dernier ? 'Bilan de la semaine (Entrée)' : 'Journée suivante (Entrée)', journeeSuivante, 'primaire');
+	dsTexte(t('mailf.signature'), x + 32, Math.min(ty + 10, y + h - 150), 20, DS.blanc50, 'left');
+	dsBouton(x + l - 420, y + h - 96, 388, 64, t(m.dernier ? 'mailf.bilan' : 'mailf.suivante'), journeeSuivante, 'primaire');
 }
 
 // ——— Intro SMS (§ 2) ———
@@ -296,10 +289,10 @@ function dessinerSMS() {
 	textStyle(BOLD);
 	textSize(26);
 	textAlign(CENTER, CENTER);
-	text('Camille · cheffe de salle', L / 2, ty + 40);
+	text(t('sms.camille'), L / 2, ty + 40);
 	textStyle(NORMAL);
 	textSize(16);
-	text('Salle de régulation', L / 2, ty + 70);
+	text(t('intro.salle'), L / 2, ty + 70);
 	// Bulles
 	let y = ty + 120;
 	textAlign(LEFT, TOP);
@@ -325,8 +318,8 @@ function dessinerSMS() {
 	textSize(16);
 	fill(C.gris);
 	textAlign(CENTER, TOP);
-	text(dernier ? '' : 'Clic ou Entrée : message suivant', L / 2, ty + th - 120);
-	if (dernier) bouton(tx + 60, ty + th - 110, tl - 120, 72, 'Commencer (Entrée)', terminerIntro);
+	text(dernier ? '' : t('intro.suivant'), L / 2, ty + th - 120);
+	if (dernier) bouton(tx + 60, ty + th - 110, tl - 120, 72, t('intro.commencer'), terminerIntro);
 	else boutons.push({ x: tx, y: ty, l: tl, h: th, action: smsSuivant });
 }
 
@@ -343,14 +336,14 @@ function fenetreMenu() {
 	textFont(POLICE_TEXTE);
 	textStyle(BOLD);
 	textSize(40);
-	text('Menu', L / 2, y + 36);
+	text(t('menu.titre'), L / 2, y + 36);
 	textStyle(NORMAL);
 	textSize(18);
 	fill(C.gris);
-	text('Le temps continue de passer au bureau.', L / 2, y + 92);
-	bouton(x + 80, y + 140, l - 160, 72, 'Reprendre (Échap)', fermer);
-	bouton(x + 80, y + 230, l - 160, 72, 'Paramètres', () => (fenetre = 'parametres'), false, true);
-	bouton(x + 80, y + 320, l - 160, 72, 'Quitter la partie', quitterPartie, false, true);
+	text(t('menu.temps'), L / 2, y + 92);
+	bouton(x + 80, y + 140, l - 160, 72, t('menu.reprendre'), fermer);
+	bouton(x + 80, y + 230, l - 160, 72, t('accueil.parametres'), () => (fenetre = 'parametres'), false, true);
+	bouton(x + 80, y + 320, l - 160, 72, t('menu.quitter'), quitterPartie, false, true);
 }
 
 function quitterPartie() {
@@ -387,7 +380,7 @@ function fenetreLivreStress() {
 		text(p, x + 70, ty, l - 140, 110);
 		ty += 120;
 	});
-	bouton(x + l - 300, y + h - 100, 240, 64, 'Fermer (Échap)', fermer);
+	bouton(x + l - 300, y + h - 100, 240, 64, t('commun.fermer'), fermer);
 }
 
 // ——— Overlay de réveil (§ 4) ———
@@ -405,13 +398,13 @@ function dessinerReveil() {
 	textFont(POLICE_TEXTE);
 	textStyle(BOLD);
 	textSize(40);
-	text('Alerte ! Un incident arrive', L / 2, y + 36);
+	text(t('reveil.titre'), L / 2, y + 36);
 	textStyle(NORMAL);
 	textFont(POLICE_DONNEES);
 	textSize(22);
 	fill(C.texte);
-	text((reste / 1000).toFixed(1).replace('.', ',') + ' s pour réagir', L / 2, y + 98);
-	bouton(x + 120, y + 160, l - 240, 90, 'Se réveiller (Espace)', seReveiller);
+	text(t('reveil.reste', { s: (reste / 1000).toFixed(1).replace('.', Langue.actuelle === 'fr' ? ',' : '.') }), L / 2, y + 98);
+	bouton(x + 120, y + 160, l - 240, 90, t('reveil.bouton'), seReveiller);
 }
 
 // ——— Personnage qui somnole au bureau (§ 4), en pixel art ———
@@ -457,7 +450,7 @@ function zonesObjetsBureau() {
 			strokeWeight(PIX);
 			rect(r.x - 2 * PIX, r.y - 2 * PIX, r.l + 4 * PIX, r.h + 4 * PIX);
 			noStroke();
-			infobulle(o.label + ' — Entrée pour ouvrir', r.x, r.y - 70);
+			infobulle(t('objet.ouvrir', { label: o.label }), r.x, r.y - 70);
 		}
 	});
 	if (focusBureau === 0) {
