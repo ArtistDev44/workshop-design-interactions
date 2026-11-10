@@ -164,6 +164,7 @@ function dessinerPieceBureau() {
 	dessinerPlafondEtBaie(g);
 	dessinerVueNantes(g);
 	dessinerMontantsBaie(g);
+	if (typeof PIECE !== 'undefined' && PIECE.store) dessinerStore(g); // prompt 29
 	dessinerMurBas(g);
 	dessinerPorte(g); // prompt 26
 	dessinerPlateau(g);
@@ -172,6 +173,7 @@ function dessinerPieceBureau() {
 	if (typeof dessinerLivres === 'function') dessinerLivres(g);
 	dessinerAccoudoirs(g);
 	dessinerLumiere(g);
+	dessinerAmbianceLampe(g);
 	dessinerVignettage(g);
 	if (typeof dessinerPersonnageSieste === 'function') dessinerPersonnageSieste(g);
 }
@@ -301,6 +303,24 @@ function dessinerMontantsBaie(g) {
 	for (let k = 0; k < 4; k++) g.quad(30 + k * 120, 12, 46 + k * 120, 12, 6 + k * 120, BAIE_BAS, -10 + k * 120, BAIE_BAS);
 }
 
+/** Prompt 29 : store vénitien baissé sur la baie (lames claires, la ville reste visible entre les lames) */
+function dessinerStore(g) {
+	px(g, '#c8cdd2', 0, 9, BW, 4); // caisson
+	for (let y = 14; y < BAIE_BAS - 2; y += 5) {
+		px(g, '#eef0f1', 0, y, BW, 3);
+		px(g, '#c8cdd2', 0, y + 3, BW, 1);
+	}
+	for (let x = 60; x < BW; x += 120) px(g, '#9aa1a8', x, 13, 1, BAIE_BAS - 15); // cordons
+	px(g, '#8d949b', 0, BAIE_BAS - 3, BW, 2); // barre de charge
+}
+
+/** Prompt 29 : lampe éteinte → la pièce s'assombrit légèrement (l'écran du PC, dessiné après, n'est pas touché) */
+function dessinerAmbianceLampe(g) {
+	if (typeof PIECE === 'undefined' || PIECE.lampe) return;
+	g.fill(18, 22, 40, 38);
+	g.rect(0, PLATEAU_Y - 20, BW, BH - PLATEAU_Y + 20);
+}
+
 function dessinerMurBas(g) {
 	px(g, '#2a2f36', 0, BAIE_BAS, BW, 3);
 	px(g, '#e8e9ea', 0, BAIE_BAS + 3, BW, PLATEAU_Y - BAIE_BAS - 3);
@@ -363,8 +383,12 @@ function dessinerObjetsBureau(g) {
 	px(g, P.contour, 25, 150, 3, 46);
 	px(g, P.contour, 25, 148, 46, 3);
 	boite(g, 64, 142, 22, 8, '#2c3036', '#4a5058', '#1a1d21');
-	g.fill(255, 236, 190, 50);
-	g.quad(66, 150, 84, 150, 112, 196, 44, 196);
+	const lampeAllumee = typeof PIECE === 'undefined' || PIECE.lampe; // prompt 29 : lampe interactive
+	if (lampeAllumee) {
+		g.fill(255, 236, 190, 50);
+		g.quad(66, 150, 84, 150, 112, 196, 44, 196);
+		px(g, '#fff3c4', 66, 149, 18, 1); // ampoule visible sous l'abat-jour
+	}
 	// Smartphone posé (droite)
 	boite(g, 368, 196, 14, 24, '#16181b', '#2c3036', '#0a0b0c');
 	px(g, '#1d5f6e', 370, 199, 10, 16);

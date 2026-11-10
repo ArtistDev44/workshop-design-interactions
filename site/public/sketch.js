@@ -149,7 +149,14 @@ function draw() {
 		dessinerSMS();
 	}
 	dessinerClignement(); // prompt 21 § 2 : par-dessus tout, purement visuel (n'intercepte aucune entrée)
+	// Prompt 29 : curseur « main » au survol de toute zone cliquable (objets de la pièce compris)
+	const surZone = boutons.some((b) => mouseX >= b.x && mouseX <= b.x + b.l && mouseY >= b.y && mouseY <= b.y + b.h);
+	if (surZone !== curseurMain) {
+		curseurMain = surZone;
+		cursor(surZone ? HAND : ARROW);
+	}
 }
+let curseurMain = false;
 
 // =====================================================================
 // Écran d'accueil (Q34, Q56, Q14, Q16, Q55)
@@ -1341,6 +1348,7 @@ function fenetreAide() {
 		['↑ ↓', t('aide.k.semaine')],
 		['← → ↑ ↓', t('aide.k.regarder')],
 		[t('aide.k.quitterTouche'), t('aide.k.quitter')],
+		['Tab', t('aide.k.objets')],
 		['L', t('aide.k.langue')],
 	];
 	textSize(22);
@@ -1350,10 +1358,10 @@ function fenetreAide() {
 		textFont(POLICE_DONNEES);
 		textSize(20);
 		fill(C.accent);
-		text(k, x + 48, y + 150 + i * 31);
+		text(k, x + 48, y + 150 + i * 28);
 		textFont(POLICE_TEXTE);
 		fill(C.texte);
-		text(d, x + 230, y + 150 + i * 31);
+		text(d, x + 230, y + 150 + i * 28);
 	});
 	// Règles (00-concept, 03-actions, 04-jauges)
 	const rx = x + 760;
