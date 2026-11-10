@@ -1,0 +1,156 @@
+---
+import { lien } from '../lib/liens';
+// Page du jeu de l'édition (URL /jeu) : promotion de « Nantes en régulation ».
+// Textes issus du registre (src/content/oeuvres/) : aucun contenu inventé.
+import Layout from '../layouts/Layout.astro';
+import { getOeuvres, lienJouable, slugDe } from '../lib/oeuvres';
+
+const oeuvres = await getOeuvres();
+const jeu = oeuvres.find((o) => lienJouable(o));
+const jouer = jeu ? lienJouable(jeu) : null;
+const cartel = jeu ? lien(slugDe(jeu)) : lien('oeuvres/');
+const jauges = jeu ? jeu.data.grammaire.invariants.filter((i) => i.includes('jauge')) : [];
+const actions = jeu ? jeu.data.grammaire.invariants.find((i) => i.includes('actions')) : null;
+const seuil = jeu ? jeu.data.grammaire.invariants.find((i) => i.includes('Seuil')) : null;
+const inventaire = jeu ? jeu.data.grammaire.invariants.find((i) => i.includes('inventé')) : null;
+---
+
+<Layout title="Jeu" description="Nantes en régulation, le jeu de l'édition PATRIMOINE.EXE / Nantes 001 : rejouez une semaine réelle du réseau Naolib, dossier par dossier.">
+	<section class="hero-jeu" aria-labelledby="titre-jeu">
+		<p class="hero-jeu__surtitre mono">{jeu ? jeu.data.id : 'PXE-NTE001-G01-W01'}</p>
+		<h1 id="titre-jeu">{jeu ? jeu.data.titre.toUpperCase() : 'NANTES EN RÉGULATION'}</h1>
+		<p class="hero-jeu__accroche">
+			Salle de contrôle des transports nantais : rejouez une semaine réelle du réseau Naolib.
+			Chaque incident tiré des données réelles devient un dossier à trancher sous la pression d'un compteur.
+		</p>
+		<p class="hero-jeu__actions">
+			{jouer && (
+				<a class="bouton-principal" href={jouer}>
+					JOUER à « {jeu ? jeu.data.titre : 'Nantes en régulation'} » →
+				</a>
+			)}
+			<a class="bouton-secondaire" href={cartel}>Lire le cartel de l'œuvre</a>
+		</p>
+	</section>
+
+	{jeu && (
+		<section aria-labelledby="titre-regles">
+			<h2 id="titre-regles">Les règles du jeu</h2>
+			<ul class="regles">
+				{seuil && <li>{seuil}.</li>}
+				{actions && <li>{actions}.</li>}
+				{jauges.length > 0 && <li>{jauges[0]}.</li>}
+				{inventaire && <li>{inventaire}.</li>}
+			</ul>
+			<p class="hero-jeu__fallback">{jeu.data.fallback}</p>
+		</section>
+	)}
+
+	<section aria-labelledby="titre-pitch">
+		<h2 id="titre-pitch">Le pitch</h2>
+		<p>{jeu ? jeu.data.cartel : ''}</p>
+	</section>
+
+	<nav class="liens-jeu" aria-label="Voir aussi">
+		<a class="appel" href={lien('oeuvres/')}>
+			<span class="appel__titre">Les œuvres →</span>
+			<span class="appel__texte">La galerie de l'édition, dont ce jeu est l'œuvre jouable.</span>
+		</a>
+		<a class="appel" href={lien('methode/')}>
+			<span class="appel__titre">La méthode →</span>
+			<span class="appel__texte">Le protocole PATRIMOINE.EXE qui a produit ce jeu.</span>
+		</a>
+	</nav>
+</Layout>
+
+<style>
+	section {
+		margin-bottom: var(--e-6);
+	}
+	.hero-jeu {
+		border: 4px solid var(--c-texte);
+		padding: var(--e-5);
+		background: var(--c-fond-alt);
+	}
+	.hero-jeu__surtitre {
+		font-size: var(--t-petit);
+		color: var(--c-texte-doux);
+		margin-bottom: var(--e-2);
+	}
+	.hero-jeu h1 {
+		font-size: var(--t-xxl);
+		line-height: 0.95;
+		margin-bottom: var(--e-3);
+	}
+	.hero-jeu__accroche {
+		font-size: var(--t-s);
+		max-width: 60ch;
+	}
+	.hero-jeu__actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--e-3);
+		margin: 0;
+	}
+	.bouton-principal {
+		padding: var(--e-3) var(--e-5);
+		background: var(--c-primaire);
+		color: var(--c-fond);
+		text-decoration: none;
+		font-weight: 700;
+		font-size: var(--t-s);
+		border: 3px solid var(--c-texte);
+	}
+	.bouton-principal:hover {
+		background: var(--c-texte);
+		color: var(--c-fond);
+	}
+	.bouton-secondaire {
+		padding: var(--e-3) var(--e-5);
+		border: 3px solid var(--c-texte);
+		color: var(--c-texte);
+		text-decoration: none;
+		font-weight: 600;
+		font-size: var(--t-s);
+	}
+	.bouton-secondaire:hover {
+		background: var(--c-fond-alt);
+	}
+	.regles {
+		padding-left: var(--e-4);
+		font-size: var(--t-base);
+	}
+	.regles li {
+		margin-bottom: var(--e-2);
+	}
+	.hero-jeu__fallback {
+		font-size: var(--t-petit);
+		color: var(--c-texte-doux);
+	}
+	.liens-jeu {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+		gap: var(--e-3);
+	}
+	.appel {
+		display: flex;
+		flex-direction: column;
+		gap: var(--e-1);
+		padding: var(--e-4);
+		border: 2px solid var(--c-texte);
+		text-decoration: none;
+		color: var(--c-texte);
+	}
+	.appel:hover {
+		background: var(--c-primaire);
+		color: var(--c-fond);
+	}
+	.appel__titre {
+		font-family: var(--f-titre);
+		font-size: var(--t-m);
+		font-weight: 600;
+	}
+	.appel__texte {
+		font-size: var(--t-petit);
+	}
+</style>

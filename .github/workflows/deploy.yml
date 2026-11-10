@@ -1,10 +1,9 @@
-# Déploiement GitHub Pages du site de l'édition (prompt 13).
-# Le site Astro est dans site/ ; la base configurée (prompt 02) est
-# /workshop-design-interactions/patrimoine-exe/nantes/001/ alors que GitHub Pages
-# sert l'artefact à la racine du dépôt : on assemble donc _site/ avec le site
-# sous patrimoine-exe/nantes/001/ pour que les liens, styles et assets (préfixés
-# par la base) résolvent correctement — sinon le rendu n'a aucun CSS.
-name: Déployer le site sur GitHub Pages
+# Déploiement du site de l'édition (prompt 13).
+# Le site Astro est dans site/ et vit à la racine du domaine déployé
+# (Cloudflare Pages : https://workshop-design-interactions.pages.dev/) :
+# aucun préfixe de base, on publie dist/ tel quel — sinon tous les liens
+# internes résolvent vers une 404.
+name: Déployer le site
 
 on:
   push:
@@ -38,29 +37,9 @@ jobs:
         run: |
           npm ci
           npm run build
-      - name: Assembler _site/ (base GitHub Pages)
-        run: |
-          mkdir -p _site/patrimoine-exe/nantes/001
-          cp -r site/dist/. _site/patrimoine-exe/nantes/001/
-          # GitHub Pages ne lit la 404 qu'à la racine
-          cp site/dist/404.html _site/404.html
-          # Redirection de la racine du dépôt vers l'URL de l'édition
-          cat > _site/index.html <<'EOF'
-          <!doctype html>
-          <html lang="fr">
-            <head>
-              <meta charset="utf-8" />
-              <meta http-equiv="refresh" content="0; url=./patrimoine-exe/nantes/001/" />
-              <title>PATRIMOINE.EXE · NTE001</title>
-            </head>
-            <body>
-              <p><a href="./patrimoine-exe/nantes/001/">PATRIMOINE.EXE · NTE001 — aller au site de l'édition</a></p>
-            </body>
-          </html>
-          EOF
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: _site
+          path: site/dist
   deploy:
     needs: build
     runs-on: ubuntu-latest
