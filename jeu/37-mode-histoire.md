@@ -65,3 +65,8 @@ Idées étudiées : plaintes des Nantais, équipes de terrain, imprévus de jour
 | Difficile | 258 | 173 | 110 |
 
   En semaine facile, l'expert reste à 3 points de la bonne fin : c'est l'effet du hasard des dés, puisqu'il y a moins de tirages sans imprévus. La hiérarchie bien jouer / jouer au hasard / ne rien faire est conservée.
+
+## Assouplissement de la semaine 1 (10/11/2026)
+- En semaine 1 du mode histoire (prise de poste), les **bonus d'objectif du jour sont multipliés par 1,5** : +15 de budget au lieu de +10, ou +8 de réputation au lieu de +5 (`Jeu.facteurBonusObjectif`, `histoire.js`). Seuls les objectifs atteints sont récompensés davantage : le jeu passif n'en profite pas.
+- Les semaines 2 et 3 et le temps réel ne changent pas. Les règles Q1–Q61 non plus.
+- Simulation (semaine facile) : expert 237 → **257, bonne fin** ; moyen 178 → **199, fin moyenne dans les 5 parties** ; passif 92 → 101, mauvaise fin.
