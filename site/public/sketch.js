@@ -206,7 +206,10 @@ function lancerPartie() {
 	});
 }
 
+let facteurDuree = 1; // prompt 23 : heure de pointe → compteur ×0,8
 function nouveauDossier() {
+	if (Jeu.demarrerModificateur) Jeu.demarrerModificateur(millis());
+	facteurDuree = Jeu.modificateurActif && Jeu.modificateurActif(millis()) === 'heure_pointe' ? 0.8 : 1;
 	arriveeDossier = millis();
 	debutCompteur = millis();
 	sourceChoisie = null;
@@ -221,6 +224,7 @@ function nouveauDossier() {
 /* Décision du joueur (ou compteur à 0 → 'temps', Q25) */
 function decider(action) {
 	if (phase !== 'decision' && !(action === 'temps' && phase === 'contradiction')) return;
+	if (Jeu.actionBloquee && action === Jeu.actionBloquee()) return; // erreur système : action indisponible
 	dernierResultat = Jeu.decider(action, sourceChoisie);
 	if (!dernierResultat) return;
 	Confort.Son.bip(action === 'temps' ? 'alerte' : 'action');
@@ -543,7 +547,7 @@ function dessinerListeLignes(zone, dActuel) {
 		text('Les archives de cette semaine\nne citent aucune ligne précise.\nToutes les lignes sont « à l’heure »\nfaute de donnée contraire.', zone.x + 18, y);
 		y += 120;
 	}
-	for (const it of items.slice(0, 14)) {
+	for (const it of items.slice(0, Jeu.objectifDuJour ? 10 : 14)) {
 		const actif = actives.has(it.nom);
 		const couleur = actif ? C.rouge : C.orange;
 		fill(couleur);
@@ -556,6 +560,20 @@ function dessinerListeLignes(zone, dActuel) {
 		fill(actif ? C.rouge : C.gris);
 		text(actif ? 'incident actif' : it.retard !== null ? '+' + it.retard + ' min' : 'perturbation', zone.x + 140, y + 12);
 		y += 52;
+	}
+	// Bandeau tactique (prompt 23) : objectif du jour et modificateur actif
+	if (Jeu.objectifDuJour) {
+		const o = Jeu.objectifDuJour();
+		const mod = Jeu.modificateurActif() ? Jeu.modificateur : null;
+		const by = zone.y + zone.h - 250;
+		fill(mod ? C.orange : C.accent);
+		rect(zone.x + 18, by, zone.l - 36, 4);
+		textFont(POLICE_TEXTE);
+		textSize(17);
+		fill(C.texte);
+		text('Objectif : ' + o.libelle + ' (' + Jeu.jauges[o.jauge] + ')', zone.x + 18, by + 12, zone.l - 36, 44);
+		fill(mod ? C.orange : C.gris);
+		text(mod ? mod.libelle + (mod.actionBloquee ? ' (action « ' + mod.actionBloquee + ' » bloquée)' : '') + ' · ' + Math.ceil((mod.fin - millis()) / 1000) + ' s' : 'Aucun modificateur actif', zone.x + 18, by + 60, zone.l - 36, 66);
 	}
 	// Légende
 	const ly = zone.y + zone.h - 120;
@@ -626,7 +644,7 @@ function dessinerDossier(d, meteo) {
 	}
 
 	// Compteur : barre horizontale qui se vide (Q6) — durée selon la semaine (Q16, Q55)
-	const duree = ((Jeu.etat.semaine && Jeu.etat.semaine.difficulte && Jeu.etat.semaine.difficulte.compteur_s) || 30) * 1000;
+	const duree = ((Jeu.etat.semaine && Jeu.etat.semaine.difficulte && Jeu.etat.semaine.difficulte.compteur_s) || 30) * 1000 * facteurDuree;
 	const reste = constrain(1 - (millis() - debutCompteur) / duree, 0, 1);
 	noStroke();
 	fill('#E8E2D6');
@@ -738,11 +756,18 @@ function dessinerDossier(d, meteo) {
 		textSize(16);
 		fill(C.gris);
 		text('Source retenue : ' + d.contradiction[sourceChoisie].libelle, x + 32, base.y + base.h - 236, base.l - 64, 30);
+	} else if (Jeu.conseil) {
+		// Conseil contextuel (prompt 23 § 1) : une phrase factuelle, jamais l'action à choisir
+		textFont(POLICE_TEXTE);
+		textSize(17);
+		fill(C.orange);
+		text('Conseil : ' + Jeu.conseil(d), x + 32, base.y + base.h - 250, base.l - 64, 46);
 	}
+	const bloquee = Jeu.actionBloquee ? Jeu.actionBloquee() : null;
 	actions.forEach(([touche, nom, cle], i) => {
 		const bx = x + 32 + (i % 2) * (ab + 16);
 		const by = base.y + base.h - 200 + Math.floor(i / 2) * 88;
-		bouton(bx, by, ab, 72, touche + '  ' + nom, () => decider(cle), false, i === 3);
+		bouton(bx, by, ab, 72, touche + '  ' + nom + (cle === bloquee ? ' — indisponible' : ''), () => decider(cle), cle === bloquee, i === 3);
 	});
 }
 
@@ -912,6 +937,15 @@ function dessinerFin() {
 			g.x + 48,
 			g.y + 752,
 		);
+	}
+	// Profil de la semaine (prompt 23 § 6) — calculé sur la partie réellement jouée
+	if (Jeu.profilSemaine) {
+		const p = Jeu.profilSemaine();
+		fill(C.accent);
+		text('Profil : ' + p.phrase, g.x + 48, g.y + 784, g.l - 96, 30);
+		fill(C.gris);
+		textSize(17);
+		text('Objectifs atteints : ' + p.objectifs + ' · meilleur jour : ' + p.meilleurJour + ' · équipes envoyées : ' + p.equipes + ' · malus le plus fréquent : ' + p.malusFrequent, g.x + 48, g.y + 816, g.l - 96, 60);
 	}
 	const bl = (g.l - 96 - 20) / 2;
 	bouton(g.x + 48, g.y + g.h - 112, bl, 72, 'Rejouer (Entrée)', rejouer);
@@ -1258,6 +1292,20 @@ function fenetreAide() {
 		l - (rx - x) - 48,
 		560,
 	);
+	// Table des malus (prompt 23 § 4)
+	if (Jeu.MALUS) {
+		textFont(POLICE_TEXTE);
+		textSize(22);
+		fill(C.texte);
+		text('Malus', x + 48, y + 516);
+		Jeu.MALUS.forEach((m, i) => {
+			textSize(16);
+			fill(C.rouge);
+			text(m.libelle, x + 48, y + 552 + i * 46);
+			fill(C.gris);
+			text(m.condition + ' → ' + m.consequence, x + 48, y + 572 + i * 46, 680, 24);
+		});
+	}
 	bouton(x + l - 288, y + h - 104, 240, 64, 'Fermer (Échap)', fermer);
 }
 
