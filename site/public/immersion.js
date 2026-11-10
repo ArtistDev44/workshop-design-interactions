@@ -42,13 +42,13 @@ const OBJETS_BUREAU = [
 	{ nom: 'ecran', label: T('objet.ecran') },
 	{ nom: 'tuto', label: T('objet.tuto'), x: 58, y: 190, l: 50, h: 9 },
 	{ nom: 'stress', label: T('objet.stress'), x: 62, y: 180, l: 44, h: 9 },
-	{ nom: 'porte', label: T('objet.porte'), infobulle: T('bureau.porte'), x: 3, y: 40, l: 20, h: 118 }, // prompt 26
+	{ nom: 'porte', label: T('objet.porte'), infobulle: T('bureau.porte'), x: 28, y: 40, l: 20, h: 118 }, // prompt 26 (prompt 31 : décalée dans le cadrage)
 	// Prompt 29 : objets de la pièce (micro-interactions, sans effet sur les jauges ni pause)
-	{ nom: 'lampe', piece: true, label: T('piece.lampe'), infobulle: T('piece.lampe.survol'), x: 62, y: 140, l: 26, h: 12 },
+	{ nom: 'lampe', piece: true, label: T('piece.lampe'), infobulle: T('piece.lampe.survol'), x: 432, y: 86, l: 16, h: 14 }, // prompt 31 : applique murale
 	{ nom: 'plante', piece: true, label: T('piece.plante'), infobulle: T('piece.plante.survol'), x: 69, y: 153, l: 16, h: 21 },
 	{ nom: 'tasse', piece: true, label: T('piece.tasse'), infobulle: T('piece.tasse.survol'), x: 118, y: 178, l: 22, h: 28 },
 	{ nom: 'dossiers', piece: true, label: T('piece.dossiers'), infobulle: T('piece.dossiers.survol'), x: 390, y: 160, l: 44, h: 15 },
-	{ nom: 'fenetre', piece: true, label: T('piece.fenetre'), infobulle: T('piece.fenetre.survol'), x: 340, y: 14, l: 132, h: 96 },
+	{ nom: 'fenetre', piece: true, label: T('piece.fenetre'), infobulle: T('piece.fenetre.survol'), x: 334, y: 14, l: 80, h: 96 }, // prompt 31 : la baie s'arrête au pan de mur
 ];
 
 // ——— Prompt 29 : interactions hors écran, dans la pièce ———
