@@ -143,6 +143,11 @@ img { max-width: 100%; height: auto; }
 	font-variant-numeric: tabular-nums;
 }
 
+/* Cible du lien d'évitement : reçoit le focus par programme, sans cadre autour de toute la page */
+main:focus {
+	outline: none;
+}
+
 /* Lien d'évitement */
 .evitement {
 	position: absolute;
