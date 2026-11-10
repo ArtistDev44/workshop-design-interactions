@@ -1,46 +1,46 @@
-# Astro Starter Kit: Basics
+# Site de l'édition PATRIMOINE.EXE · NTE001
+
+Site statique (Astro) de l'édition Nantes 001 — ESD Nantes, B3 Design, 9, 10 & 12 novembre 2026.
+Ce README sera complété au prompt 13 (auteurs, concept, stack, données, lancement, contributions, AI usage, sources).
+
+## Lancer le projet
 
 ```sh
-npm create astro@latest -- --template basics
+cd site
+npm install
+npm run dev       # développement
+npm run build     # construit site/dist/
+npm run preview   # sert la version construite
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+Le site s'ouvre à `http://localhost:4321/workshop-design-interactions/patrimoine-exe/nantes/001/`.
 
-## 🚀 Project Structure
+## Robustesse
 
-Inside of your Astro project, you'll see the following folders and files:
+Contrôles du prompt 12 (livret, sections 13 et 14), effectués le 10/11/2026 sur les 10 pages
+(accueil, œuvres, page œuvre, catalogue, statistiques, méthode, corpus, données, crédits, 404).
 
-```text
-/
-├── public/
-│   └── favicon.svg
-├── src
-│   ├── assets
-│   │   └── astro.svg
-│   ├── components
-│   │   └── Welcome.astro
-│   ├── layouts
-│   │   └── Layout.astro
-│   └── pages
-│       └── index.astro
-└── package.json
-```
+| Contrôle | Résultat |
+|---|---|
+| Contraste texte / fond ≥ 4,5:1 (3:1 pour les grands titres), mesuré sur chaque élément de texte visible | ✅ aucune erreur |
+| `lang="fr"`, un seul `<h1>` par page, pas de saut de niveau de titre | ✅ |
+| Titres de page uniques | ✅ 10 titres différents |
+| Images avec `alt`, liens et boutons avec un nom | ✅ |
+| Tableaux avec `<th scope>` | ✅ |
+| Navigation clavier : lien « Aller au contenu », focus visible (contour 3 px), filtres et boutons utilisables | ✅ |
+| Aucune animation si l'utilisateur la refuse (`prefers-reduced-motion`) ; aucun flash ni effet stroboscopique | ✅ |
+| Contenu lisible sans JavaScript (rendu statique) ; sur `/donnees/`, message explicite à la place des valeurs | ✅ |
+| API coupée : `/donnees/` affiche les instantanés locaux avec « Données locales du JJ/MM/AAAA » | ✅ testé |
+| Aucun appel aux API au build ni dans une boucle de rendu | ✅ |
+| Assets via `import.meta.env.BASE_URL`, aucune image cassée | ✅ |
+| Aucune clé, aucun token, aucun secret dans le code | ✅ |
+| 1920×1080 et mobile (375 px) : aucun débordement horizontal | ✅ |
+| Console sans erreur continue | ✅ |
+| `rm -rf dist && npm run build` régénère le site proprement | ✅ |
 
-To learn more about the folder structure of an Astro project, refer to [our guide on project structure](https://docs.astro.build/en/basics/project-structure/).
+Corrections apportées lors de ce contrôle :
 
-## 🧞 Commands
+- le contenu principal (`<main>`), cible du lien « Aller au contenu », ne s'entoure plus d'un cadre de focus sur toute la page.
 
-All commands are run from the root of the project, from a terminal:
-
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+À faire par l'équipe : un audit Lighthouse dans le navigateur avant l'exposition, et un test réel
+Wi-Fi coupé sur la machine d'exposition.
