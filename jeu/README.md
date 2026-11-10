@@ -73,3 +73,4 @@ dossier à trancher sous pression. »*
 | 55 | `55-donnees-presentation.md` | Prompt 61 : appli « Données » plein écran (données réelles du mode joué, état, source, licence, lien d'API) et page /presentation générée depuis slides.md |
 | 56 | `56-tasse-musique-sieste.md` | Prompt 62 : tasse redessinée en pixel art (gorgée, vapeur, main), « Chillin' Poupi » par défaut, sieste qui se déclenche réellement (inactivité plus remise à zéro par les suites automatiques) |
 | 57 | `57-community-enquete-micro-webcam.md` | Prompt 63 : 0–3 réactions échelonnées aux réponses Community, enquête après coup dans le Journal (4 volets, journées), radio des chauffeurs et souffle au micro, geste de réveil à la webcam |
+| 58 | `58-micro-souffle-webcam-presence.md` | Prompt 64 : micro limité au souffle (texture et radio retirées), présence webcam réparée (part de pixels qui changent, sieste aussi pendant un dossier) |

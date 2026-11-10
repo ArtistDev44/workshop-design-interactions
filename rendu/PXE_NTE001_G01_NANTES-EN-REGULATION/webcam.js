@@ -22,9 +22,10 @@ const CAM = {
 const CAM_L = 48;
 const CAM_H = 27;
 const CAM_ABSENCE_MS = 8000;
-const CAM_SEUIL_MOUVEMENT = 1.6; // différence moyenne (0–255) entre deux images : en dessous, scène figée
+const CAM_SEUIL_PIXEL = 20; // prompt 64 : un pixel « change » s'il varie de plus de 20 niveaux (le bruit du capteur reste en dessous)
+const CAM_SEUIL_MOUVEMENT = 0.6; // % de l'image qui change en ~1,2 s : en dessous, scène figée (personne)
 const CAM_SEUIL_LUMINANCE = 18; // zone centrale presque noire : caméra masquée
-const CAM_SEUIL_GESTE = 22; // prompt 63 : différence moyenne d'un geste ample (main levée), bien au-dessus d'une présence calme
+const CAM_SEUIL_GESTE = 25; // % de l'image qui change : geste ample (main levée), bien au-dessus d'une présence calme
 const webcamAutorisee = () => Confort.Reglages.webcam === true;
 
 async function activerWebcam() {
@@ -51,6 +52,7 @@ async function activerWebcam() {
 	CAM.canevas.height = CAM_H;
 	CAM.ctx = CAM.canevas.getContext('2d', { willReadFrequently: true });
 	CAM.precedente = null;
+	CAM.historique = [];
 	CAM.absentDepuis = 0;
 	CAM.active = true;
 	CAM.minuterie = setInterval(analyserImage, 400); // hors draw
@@ -91,7 +93,7 @@ function basculerWebcamReglage() {
 // ——— Analyse d'une image (48 × 27, niveaux de gris) ———
 function analyserImage() {
 	const v = CAM.video;
-	if (!v || v.readyState < 2) return;
+	if (!v || (v.readyState !== undefined && v.readyState < 2)) return;
 	CAM.ctx.drawImage(v, 0, 0, CAM_L, CAM_H);
 	const px = CAM.ctx.getImageData(0, 0, CAM_L, CAM_H).data;
 	const gris = new Uint8Array(CAM_L * CAM_H);
@@ -105,9 +107,16 @@ function analyserImage() {
 			n++;
 		}
 	CAM.luminance = s / n;
-	let d = 0;
-	if (CAM.precedente) for (let i = 0; i < gris.length; i++) d += Math.abs(gris[i] - CAM.precedente[i]);
-	CAM.mouvement = CAM.precedente ? d / gris.length : 255;
+	// Prompt 64 : mouvement = PART des pixels qui changent nettement (> 20 niveaux) par rapport à l'image d'il y a
+	// ~1,2 s. Une moyenne de toutes les différences était dépassée par le seul bruit du capteur et les variations
+	// d'exposition d'une vraie webcam : une chaise vide paraissait toujours occupée, la sieste ne venait jamais.
+	CAM.historique = CAM.historique || [];
+	const ref = CAM.historique.length >= 3 ? CAM.historique[0] : null;
+	let changes = 0;
+	if (ref) for (let i = 0; i < gris.length; i++) if (Math.abs(gris[i] - ref[i]) > CAM_SEUIL_PIXEL) changes++;
+	CAM.mouvement = ref ? (changes * 100) / gris.length : 100; // en % de l'image
+	CAM.historique.push(gris);
+	if (CAM.historique.length > 3) CAM.historique.shift();
 	CAM.precedente = gris;
 	// Prompt 63 : pendant le réveil, un grand mouvement (lever la main devant la caméra) vaut « Se réveiller »
 	if (phase === 'reveil' && CAM.mouvement > CAM_SEUIL_GESTE && typeof seReveiller === 'function') {

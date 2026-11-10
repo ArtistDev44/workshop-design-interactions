@@ -1,4 +1,4 @@
-# Prompt 62 — Site en webapp installable (PWA complète) : manifest, service worker, icônes, bouton d'installation
+# Prompt 64 — Site en webapp installable (PWA complète) : manifest, service worker, icônes, bouton d'installation
 
 Demande d'origine (10/11/2026) :
 

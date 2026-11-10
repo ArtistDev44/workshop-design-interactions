@@ -1,11 +1,10 @@
-/* Nantes en régulation — prompt 54 : interaction sonore au micro (voix, souffle, bruit).
+/* Nantes en régulation — micro (prompt 54, simplifié au prompt 64).
  * Push-to-talk : touche M maintenue (≥ 250 ms ; un appui bref coupe le son, comme avant) ou clic maintenu sur
- * le micro du poste. getUserMedia n'est appelé qu'à ce geste. Le signal est analysé hors draw (toutes les
- * 50 ms) : amplitude (RMS), hauteur (autocorrélation), souffle/bruit (RMS sans hauteur), fragmentation
- * (pics). Ces mesures pilotent une texture GRANULAIRE faite de grains lus dans les 2 dernières secondes
- * captées : amplitude → volume et densité, hauteur → hauteur des grains, pics → grains plus courts,
- * souffle → turbulence (gigue de départ et de hauteur). Micro refusé ou absent : repli silencieux sur une
- * source synthétisée en interne, message « Micro indisponible ». Aucune incidence sur le jeu (Q1–Q61).
+ * le micro du poste. getUserMedia n'est appelé qu'à ce geste. Le signal est analysé hors draw (toutes les 50 ms) :
+ * amplitude, hauteur (autocorrélation), souffle (bruit continu sans hauteur).
+ * Un seul usage en jeu : SOUFFLER pendant le boost du café calme le cœur et ralentit le compteur (prompt 63).
+ * Prompt 64 : la texture sonore granulaire et la « radio des chauffeurs » ont été retirées à la demande du groupe.
+ * Micro refusé ou absent : message « Micro indisponible », rien d'autre ne change. Le micro ne joue aucun son.
  */
 const MICRO = {
 	ouvert: false, // push-to-talk en cours
@@ -79,12 +78,6 @@ async function demarrerMicro(par) {
 	MICRO.par = par;
 	const c = S.ctx;
 	if (!MICRO.anneau) MICRO.anneau = new Float32Array(Math.round(c.sampleRate * 2));
-	if (!MICRO.bus) {
-		MICRO.bus = c.createGain();
-		MICRO.bus.gain.value = 0.32;
-		MICRO.bus.connect(c.destination);
-	}
-	MICRO.bus.gain.setTargetAtTime(Confort.Reglages.son ? 0.32 : 0, c.currentTime, 0.05);
 	if (!MICRO.flux && !MICRO.refus) {
 		try {
 			if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('getUserMedia absent');
@@ -104,15 +97,13 @@ async function demarrerMicro(par) {
 		annoncer(t('micro.indisponible'));
 	} else annoncer(t('micro.on'));
 	MICRO.minuterieAnalyse = setInterval(analyserMicro, 50);
-	MICRO.minuterieGrains = setInterval(programmerGrains, 25);
 	MICRO.prochainGrain = c.currentTime + 0.05;
 }
 function arreterMicro() {
 	const etait = MICRO.ouvert;
 	MICRO.ouvert = false;
 	clearInterval(MICRO.minuterieAnalyse);
-	clearInterval(MICRO.minuterieGrains);
-	MICRO.minuterieAnalyse = MICRO.minuterieGrains = null;
+	MICRO.minuterieAnalyse = null;
 	MICRO.mesures = { amp: 0, hauteur: 0, souffle: 0, frag: 0, densite: 0 };
 	if (MICRO.flux) {
 		MICRO.flux.getTracks().forEach((p) => p.stop()); // le voyant micro du navigateur s'éteint
@@ -157,8 +148,7 @@ function analyserMicro() {
 	m.hauteur = hauteur ? lisse(m.hauteur || hauteur, hauteur, 0.5) : lisse(m.hauteur, 0, 0.2);
 	m.souffle = lisse(m.souffle, rms > 0.02 && !hauteur ? Math.min(1, rms * 8) : 0, 0.3); // RMS continu sans hauteur
 	m.frag = lisse(m.frag, Math.min(1, Math.max(0, pic / Math.max(rms, 1e-4) - 3) / 5), 0.4); // pics (bruit, chocs)
-	m.densite = 3 + m.amp * 45;
-	usagesMicro(50); // prompt 63 : radio des chauffeurs, souffle anti-stress
+	usagesMicro(50); // prompt 63/64 : souffle anti-stress
 	for (let i = 0; i < MICRO.forme.length; i++) MICRO.forme[i] = bufTemps[i * 16];
 }
 /** Hauteur par autocorrélation (80–1000 Hz) ; 0 si le signal n'est pas assez périodique (souffle, bruit) */
@@ -177,43 +167,6 @@ function hauteurAutocorrelation(b, sr) {
 		}
 	}
 	return energie > 0 && meilleur / energie > 0.5 ? sr / decal : 0; // clarté > 0,5 : son voisé
-}
-
-// ——— Grains ———
-function programmerGrains() {
-	const c = Confort.Son.ctx;
-	if (!c || !MICRO.ouvert) return;
-	MICRO.bus.gain.setTargetAtTime(Confort.Reglages.son ? 0.32 : 0, c.currentTime, 0.05); // toujours sous l'interrupteur Son
-	const m = MICRO.mesures;
-	if (m.amp < 0.02) return;
-	while (MICRO.prochainGrain < c.currentTime + 0.1) {
-		jouerGrain(MICRO.prochainGrain);
-		MICRO.prochainGrain += 1 / m.densite;
-	}
-}
-function jouerGrain(t0) {
-	const c = Confort.Son.ctx;
-	const m = MICRO.mesures;
-	const A = MICRO.anneau;
-	const duree = 0.16 - m.frag * 0.13; // fragmentation : grains plus courts
-	const n = Math.round(c.sampleRate * duree);
-	const turb = m.souffle; // turbulence
-	const depart = (MICRO.ecriture - Math.round(c.sampleRate * (0.3 + Math.random() * turb * 1.2)) + A.length) % A.length;
-	const tampon = c.createBuffer(1, n, c.sampleRate);
-	const d = tampon.getChannelData(0);
-	for (let i = 0; i < n; i++) d[i] = A[(depart + i) % A.length];
-	const src = c.createBufferSource();
-	src.buffer = tampon;
-	const base = m.hauteur ? constrain(m.hauteur / 220, 0.5, 2) : 1; // voix aiguë → grains plus aigus
-	src.playbackRate.value = base * (1 + (Math.random() - 0.5) * turb * 0.6);
-	const g = c.createGain();
-	const v = 0.15 + m.amp * 0.6;
-	g.gain.setValueAtTime(0.0001, t0);
-	g.gain.exponentialRampToValueAtTime(v, t0 + duree * 0.3);
-	g.gain.exponentialRampToValueAtTime(0.0001, t0 + duree);
-	src.connect(g).connect(MICRO.bus);
-	src.start(t0);
-	src.stop(t0 + duree + 0.02);
 }
 
 // ——— Affichage : oscilloscope et barres (en bas à gauche de l'écran), seulement pendant l'appui ———
@@ -247,9 +200,7 @@ function dessinerMicro() {
 	const barres = [
 		['micro.amp', m.amp],
 		['micro.hauteur', m.hauteur ? constrain((m.hauteur - 80) / 600, 0, 1) : 0],
-		['micro.densite', (m.densite - 3) / 45],
-		['micro.frag', m.frag],
-		['micro.turb', m.souffle],
+		['micro.souffleBarre', m.souffle],
 	];
 	barres.forEach(([cle, v], i) => {
 		const by = y + 36 + i * 21;
@@ -280,26 +231,14 @@ function dessinerMicroPoste(g) {
 	px(g, MICRO.ouvert ? '#ff3b30' : '#5a2a2a', x + 8, y + 20, 2, 1); // voyant
 }
 
-// ——— Prompt 63 : le micro sert au jeu (toujours facultatif, avec un équivalent) ———
-const RADIO = { voixMs: 0, dossier: -1, souffleMs: 0, annonceSouffle: 0 };
-const RADIO_VOIX_MS = 1500;
+// ——— Prompt 63/64 : souffler pendant le boost du café (bonus facultatif) ———
+const RADIO = { souffleMs: 0, annonceSouffle: 0 }; // prompt 64 : la radio des chauffeurs a été retirée, reste le souffle
 /** Appelée à chaque analyse (toutes les 50 ms) pendant l'appui */
 function usagesMicro(dt) {
 	const m = MICRO.mesures;
 	if (MICRO.interne) return; // la source de repli ne compte pas comme une vraie voix
-	// 1. Radio des chauffeurs : une voix (hauteur détectée) 1,5 s pendant un dossier → info trafic révélée, sans coût
 	const enDossier = ecran === 'jeu' && (phase === 'decision' || phase === 'contradiction');
-	if (enDossier && m.hauteur > 0 && m.amp > 0.06) RADIO.voixMs += dt;
-	else RADIO.voixMs = Math.max(0, RADIO.voixMs - dt / 2);
-	if (enDossier && RADIO.voixMs >= RADIO_VOIX_MS && RADIO.dossier !== Jeu.index) {
-		RADIO.dossier = Jeu.index;
-		RADIO.voixMs = 0;
-		if (revelerSource('trafic', false)) {
-			Confort.Son.radio && Confort.Son.radio(((Jeu.dossierCourant() || {}).lignes || []).join(''), 1);
-			annoncer(t('micro.radio'));
-		}
-	}
-	// 3. Souffle (bruit continu sans hauteur) pendant le boost du café : le cœur redescend deux fois plus vite,
+	// Souffle (bruit continu sans hauteur) pendant le boost du café : le cœur redescend deux fois plus vite,
 	//    le compteur ralentit de moitié
 	const souffle = m.souffle > 0.35 && !m.hauteur;
 	if (souffle && typeof boostActif === 'function' && boostActif()) {
