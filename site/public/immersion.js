@@ -97,6 +97,7 @@ function avancerTemps() {
 		const prochain = Jeu.prochainDuJour();
 		if (prochain && Jeu.horloge.minutes >= prochain.minute) arriveeIncident();
 		else if (!prochain && Jeu.horloge.minutes >= Jeu.finJournee()) {
+			if (Jeu.finDeJourneeTactique) Jeu.finDeJourneeTactique(); // prompt 23 : objectif du jour, budget épuisé
 			phase = 'mail'; // § 6 : fin de journée
 			enSieste = false;
 			Confort.Son.bip('dossier');

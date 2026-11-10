@@ -4,6 +4,7 @@ Règle : chaque push sur la branche main ajoute une entrée dans le tableau, la 
 
 | Date | Commit | Fichiers | Résumé |
 |---|---|---|---|
+| 2026-11-10 | ce commit (branche jeu/prompt-23-profondeur-tactique, non fusionnée) | site/public/ (game.js, sketch.js, os.js, bureau.js, immersion.js), jeu/17-profondeur-tactique.md, jeu/README.md, journal.md | Prompt 23 : conseil contextuel, modificateurs (erreur système, météo aggravée, heure de pointe, panne messagerie), objectifs de journée, table des malus, paliers de budget, profil de la semaine |
 | 2026-11-10 | ce commit | journal.md | Fusion dans main de jeu/prompt-22-bureau-apps (apps du PC, jauges fluidité / réputation / budget) |
 | 2026-11-10 | ce commit (branche jeu/prompt-22-bureau-apps, non fusionnée) | site/public/ (os.js, game.js, sketch.js, bureau.js, immersion.js), jeu/16-bureau-apps.md, jeu/README.md, journal.md | Prompt 22 : 4 apps sur le bureau RégulOS (patron, carte des incidents avec envoi d'équipes, community manager, journal), jauges fluidité / réputation / budget et table des effets réajustée |
 | 2026-11-10 | ce commit | journal.md | Fusion dans main de jeu/bureau-moderne-ds (bureau moderne vu depuis la chaise, Château des ducs, Pixel Design System sur le PC) |

@@ -341,6 +341,12 @@ function derniers(liste, n) {
 }
 
 function appPatron(z) {
+	if (Jeu.modificateurActif && Jeu.modificateurActif() === 'panne_messagerie') {
+		// Prompt 23 : panne de la messagerie — les messages arriveront à la fin de la panne
+		dsBadge(z.x + 80, z.y + 20, 'HORS LIGNE', 'erreur');
+		dsTexte('Messagerie indisponible pendant encore ' + Math.ceil((Jeu.modificateur.fin - millis()) / 1000) + ' s. Décidez seul : les consignes du patron ne passent plus.', z.x, z.y + 60, 22, DS.blanc75, 'left', z.l - 40);
+		return;
+	}
 	// Fil de bulles façon SMS (même esprit que l'intro du prompt 20), aux couleurs du design system
 	let y = z.y;
 	derniers(Jeu.messagesPatron, 9).forEach((m) => {
@@ -482,21 +488,36 @@ function appCarte(z) {
 		Object.keys(Jeu.EQUIPES).forEach((cle, i) => {
 			const q = Jeu.EQUIPES[cle];
 			const effets = Object.keys(q.effets).map((k2) => Jeu.LIBELLES_JAUGES[k2] + ' +' + q.effets[k2]).join(', ');
-			const desactive = !!dejaEnvoyee || Jeu.jauges.budget < q.cout;
-			dsBouton(panneauX, z.y + 150 + i * 92, panneauL, 64, i + 1 + ' · ' + q.nom + ' (−' + q.cout + ')', () => envoyerEquipeCarte(cle), i === 0 ? 'primaire' : 'secondaire', desactive);
+			const verrou = q.palier && Jeu.jauges.budget < q.palier;
+			const desactive = !!dejaEnvoyee || Jeu.jauges.budget < q.cout || verrou;
+			dsBouton(panneauX, z.y + 150 + i * 92, panneauL, 64, i + 1 + ' · ' + q.nom + ' (−' + q.cout + ')' + (verrou ? ' · budget ≥ ' + q.palier : ''), () => envoyerEquipeCarte(cle), i === 0 ? 'primaire' : 'secondaire', desactive);
 			dsTexte(effets, panneauX, z.y + 218 + i * 92, 15, DS.blanc50, 'left');
 		});
 		if (dejaEnvoyee) dsTexte('Équipe déjà envoyée : ' + dejaEnvoyee.nom + '.', panneauX, z.y + 530, 18, DS.infoClair, 'left', panneauL);
 	} else {
 		dsTitre('AUCUN INCIDENT', panneauX, z.y, 24, DS.blanc, 'left');
 		dsTexte('Les incidents actifs de la partie apparaissent ici, à l’emplacement réel de leur ligne.', panneauX, z.y + 44, 19, DS.blanc50, 'left', panneauL);
+		// Dernier incident résolu : y envoyer une équipe est possible, mais inutile (malus, prompt 23 § 4)
+		const dernier = Jeu.index > 0 ? Jeu.paquet[Jeu.index - 1] : null;
+		if (dernier && !Jeu.equipePour(Jeu.index - 1)) {
+			dsTexte('Dernier incident (déjà résolu) : ' + (dernier.lignes && dernier.lignes.length ? 'ligne ' + dernier.lignes.join(', ') : dernier.nature), panneauX, z.y + 130, 18, DS.blanc75, 'left', panneauL);
+			Object.keys(Jeu.EQUIPES).forEach((cle, i) => {
+				const q = Jeu.EQUIPES[cle];
+				dsBouton(panneauX, z.y + 190 + i * 76, panneauL, 56, i + 1 + ' · ' + q.nom + ' (−' + q.cout + ')', () => envoyerEquipeCarte(cle, Jeu.index - 1), 'contour', Jeu.jauges.budget < q.cout || (q.palier && Jeu.jauges.budget < q.palier));
+			});
+		}
 	}
-	if (PC.message) dsTexte(PC.message, panneauX, z.y + z.h - 60, 18, PC.message.startsWith('Budget') || PC.message.startsWith('Équipe déjà') ? DS.erreurClair : DS.succesClair, 'left', panneauL);
+	if (PC.message) dsTexte(PC.message, panneauX, z.y + z.h - 60, 18, PC.messageOk ? DS.succesClair : DS.erreurClair, 'left', panneauL);
 }
 
-function envoyerEquipeCarte(cle) {
-	if (!(typeof incidentActif === 'function' && incidentActif())) return;
-	const r = Jeu.envoyerEquipe(Jeu.index, cle, millis());
+function envoyerEquipeCarte(cle, index) {
+	const actif = typeof incidentActif === 'function' && incidentActif();
+	if (index === undefined) {
+		if (!actif) return;
+		index = Jeu.index;
+	}
+	const r = Jeu.envoyerEquipe(index, cle, millis());
 	PC.message = r.message;
+	PC.messageOk = r.ok;
 	Confort.Son.bip(r.ok ? 'action' : 'alerte');
 }

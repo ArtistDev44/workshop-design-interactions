@@ -240,6 +240,10 @@
 		Jeu.equipes = []; // prompt 22 : équipes envoyées depuis la carte
 		Jeu.nonLus = { patron: 0, community: 0 };
 		Jeu.alertesJauges = {};
+		Jeu.malus = {};
+		Jeu.objectifsResultats = [];
+		Jeu.modificateur = null;
+		Jeu.paliersBudget = {};
 		Jeu.terminee = Jeu.paquet.length === 0;
 		Jeu.preparerJournees();
 		return Jeu.paquet;
@@ -324,6 +328,8 @@
 			deltas[1] = borner(deltas[1] + REGLAGES.malusMauvaiseSource); // malus de réputation (Q31)
 		}
 
+		if (Jeu.modificateurActif && Jeu.modificateurActif() === 'meteo_aggravee') deltas = deltas.map((v) => borner(Math.round(v * 1.5))); // prompt 23 § 2.3
+		if (action === 'temps') Jeu.compterMalus('non_traite');
 		NOMS_JAUGES.forEach((k, i) => (Jeu.jauges[k] = Math.max(0, Math.min(100, Jeu.jauges[k] + deltas[i]))));
 		const resultat = {
 			dossier: d,
@@ -497,7 +503,10 @@
 		Jeu.jours = jours;
 		Jeu.jourIndex = 0;
 		Jeu.horloge = { minutes: jours[0] ? jours[0].debut || DEBUT_JOURNEE : DEBUT_JOURNEE };
-		if (jours[0] && Jeu.messagesPatron) Jeu.messagePatron(consigneDuJour());
+		if (jours[0] && Jeu.messagesPatron) {
+			Jeu.debutJourneeTactique();
+			Jeu.messagePatron(consigneDuJour());
+		}
 	};
 
 	Jeu.jourCourant = () => (Jeu.jours || [])[Jeu.jourIndex] || null;
@@ -512,7 +521,10 @@
 	Jeu.journeeSuivante = function () {
 		Jeu.jourIndex++;
 		Jeu.alertesJauges = {};
-		if (Jeu.jourCourant()) Jeu.messagePatron(consigneDuJour());
+		if (Jeu.jourCourant()) {
+			Jeu.debutJourneeTactique();
+			Jeu.messagePatron(consigneDuJour());
+		}
 		Jeu.horloge.minutes = Jeu.debutJournee();
 		return Jeu.jourCourant();
 	};
@@ -531,6 +543,7 @@
 		const i = NOMS_JAUGES.indexOf(k);
 		resultat.deltas[i] -= 5;
 		resultat.sieste = true;
+		if (Jeu.compterMalus) Jeu.compterMalus("sieste");
 		resultat.narration = Jeu.narrer(resultat);
 		resultat.narration.texte = 'Vous dormiez : l’alerte est restée sans réponse. ' + resultat.narration.texte;
 	};
@@ -625,6 +638,8 @@
 			lignes.push('Journal de la journée du ' + date + ' :');
 			duJour.forEach((e) => lignes.push(Jeu.ligneMail(e)));
 		}
+		const obj = (Jeu.objectifsResultats || []).find((o) => o.jourIndex === Jeu.jourIndex);
+		if (obj) lignes.push('Objectif du jour — ' + obj.libelle + ' : ' + (obj.atteint ? 'atteint (' + obj.effet + ').' : 'raté (' + obj.effet + ').'));
 		lignes.push('Jauges en fin de journée : fluidité ' + Jeu.jauges.fluidite + ', réputation ' + Jeu.jauges.reputation + ', budget ' + Jeu.jauges.budget + '.');
 		return {
 			de: 'Direction de la régulation',
@@ -646,12 +661,16 @@
 	Jeu.appliquerDeltas = function (d) {
 		Object.keys(d).forEach((k) => (Jeu.jauges[k] = Math.max(0, Math.min(100, Jeu.jauges[k] + d[k]))));
 		Jeu.verifierAlertesPatron();
+		if (Jeu.verifierPaliersBudget) Jeu.verifierPaliersBudget();
+		if (Jeu.verifierConseilsPatron) Jeu.verifierConseilsPatron();
 	};
 
 	function consigneDuJour() {
 		const j = Jeu.jourCourant();
 		const n = j ? j.dossiers.length : 0;
-		return 'Bonjour. ' + n + ' dossier(s) sont attendus aujourd’hui (' + (j ? j.date.split('-').reverse().join('/') : '') + '). Fluidité, réputation, budget : tu connais la règle.';
+		const o = Jeu.objectifDuJour();
+		const m = Jeu.modificateur ? ' Attention : ' + Jeu.modificateur.libelle + (Jeu.modificateur.actionBloquee ? ' (« ' + REGLAGES.effets[Jeu.modificateur.actionBloquee].nom + ' » indisponible pendant la panne)' : '') + '.' : '';
+		return 'Bonjour. ' + n + ' dossier(s) attendus aujourd’hui (' + (j ? j.date.split('-').reverse().join('/') : '') + '). Objectif : ' + o.libelle + '. Budget : ' + Jeu.jauges.budget + '.' + m;
 	}
 
 	Jeu.messagePatron = function (texte) {
@@ -708,7 +727,7 @@
 		ambulance: { nom: 'Ambulance', cout: 15, effets: { reputation: 8 } },
 		police: { nom: 'Police', cout: 10, effets: { reputation: 5, fluidite: 3 } },
 		techniciens: { nom: 'Techniciens', cout: 12, effets: { fluidite: 10 } },
-		pompiers: { nom: 'Pompiers', cout: 15, effets: { reputation: 6, fluidite: 6 } },
+		pompiers: { nom: 'Pompiers', cout: 15, palier: 70, effets: { reputation: 6, fluidite: 6 } }, // option coûteuse : débloquée si budget ≥ 70 (prompt 23 § 5.1)
 	};
 	Jeu.EQUIPES = EQUIPES;
 	Jeu.DELAI_EQUIPE_MS = 20000; // arrivée 20 s (réelles) après l'envoi
@@ -721,8 +740,16 @@
 		const d = Jeu.paquet[index];
 		if (!q || !d) return { ok: false, message: 'Incident introuvable.' };
 		if (Jeu.equipePour(index)) return { ok: false, message: 'Équipe déjà envoyée sur cet incident.' };
-		if (Jeu.jauges.budget < q.cout) return { ok: false, message: 'Budget insuffisant : ' + q.nom + ' coûte ' + q.cout + ', il reste ' + Jeu.jauges.budget + '.' };
+		if (Jeu.jauges.budget < q.cout) return { ok: false, message: 'Budget insuffisant (' + Jeu.jauges.budget + '/' + q.cout + ') : ' + q.nom + ' indisponible.' };
+		if (q.palier && Jeu.jauges.budget < q.palier) return { ok: false, message: q.nom + ' : réservé quand le budget est ≥ ' + q.palier + ' (actuel ' + Jeu.jauges.budget + ').' };
 		Jeu.appliquerDeltas({ budget: -q.cout });
+		if (index < Jeu.index) {
+			// Équipe inutile (prompt 23 § 4) : l'incident est déjà résolu — coût perdu, réputation −3
+			Jeu.compterMalus('equipe_inutile');
+			Jeu.appliquerDeltas({ reputation: -3 });
+			Jeu.equipes.push({ index, cle, nom: q.nom, cout: q.cout, depart: maintenant, arrivee: maintenant, heure: maintenantSim(), arrivee_sim: maintenantSim(), inutile: true, jour: d.date, sujet: d.lignes && d.lignes.length ? 'Ligne ' + d.lignes.join(', ') : d.nature });
+			return { ok: false, message: 'Équipe inutile : incident déjà résolu (−' + q.cout + ' budget, réputation −3).' };
+		}
 		Jeu.equipes.push({ index, cle, nom: q.nom, cout: q.cout, depart: maintenant, arrivee: maintenant + Jeu.DELAI_EQUIPE_MS, heure: maintenantSim(), arrivee_sim: null, jour: d.date, sujet: d.lignes && d.lignes.length ? 'Ligne ' + d.lignes.join(', ') : d.nature });
 		return { ok: true, message: q.nom + ' en route (−' + q.cout + ' budget).' };
 	};
@@ -730,12 +757,170 @@
 	/** À appeler à chaque image : applique les effets des équipes arrivées */
 	Jeu.majEquipes = function (maintenant) {
 		(Jeu.equipes || []).forEach((q) => {
-			if (q.arrivee_sim === null && maintenant >= q.arrivee) {
+			if (q.arrivee_sim === null && !q.inutile && maintenant >= q.arrivee) {
 				q.arrivee_sim = maintenantSim();
 				Jeu.appliquerDeltas(EQUIPES[q.cle].effets);
 				Jeu.commenter('equipe', q.sujet, null, q.nom);
 			}
 		});
+	};
+
+	// =====================================================================
+	// Prompt 23 — profondeur tactique : conseils, modificateurs, objectifs, malus, budget, profil
+	// Tout s'appuie sur les incidents, jauges et budget réels de la partie en cours.
+	// =====================================================================
+
+	/** § 1 — Conseil contextuel : une phrase, jamais une action recommandée */
+	Jeu.conseil = function (d) {
+		if (!d) return '';
+		const recents = (Jeu.evenementsJournee || []).slice(-3);
+		const repBaisse = recents.some((e) => e.deltas.reputation < 0) || (Jeu.commentaires || []).slice(-3).some((c) => c.delta < 0);
+		if (d.retard !== null && d.retard !== undefined && d.retard >= 18 && d.lignes && d.lignes.length && repBaisse)
+			return 'Ligne ' + d.lignes.join(', ') + ' à +' + d.retard + ' min, la réputation baisse déjà sur les réseaux.';
+		const basse = NOMS_JAUGES.filter((k) => Jeu.jauges[k] < 30).sort((a, b) => Jeu.jauges[a] - Jeu.jauges[b])[0];
+		if (basse) return 'Attention : ' + LIBELLES_JAUGES[basse] + ' est à ' + Jeu.jauges[basse] + ', une mauvaise décision peut la faire passer sous 20.';
+		if (d.contradiction || (Jeu.conflit && Jeu.conflit())) return 'Deux informations sont en conflit : priorisez avant d’agir.';
+		const ctx = contexte(d);
+		const m = Jeu.meteoDuJour(d.date) || {};
+		if (ctx.meteo) return 'Météo du moment (' + Math.round(m.rafales_max || 0) + ' km/h, ' + (m.pluie_mm || 0) + ' mm) : l’effet des actions sur la fluidité est modifié.';
+		if (ctx.affluence) return 'Affluence (' + String(d.nature).split(',')[0] + ') : l’effet des actions sur la réputation est modifié.';
+		if (ctx.pointe) return 'Heure de pointe : l’effet des actions sur la réputation est modifié.';
+		return 'Budget à ' + Jeu.jauges.budget + ' : chaque action a un coût ou un gain, lisez le dossier avant de choisir.';
+	};
+
+	/** § 2 — Modificateurs (un par journée, tirés avec le générateur à graine fixe : partie rejouable) */
+	const MODIFICATEURS = [
+		{ id: 'erreur_systeme', duree_s: 30, libelle: 'Erreur système sur l’ordinateur' },
+		{ id: 'meteo_aggravee', duree_s: 60, libelle: 'Météo aggravée : effets ×1,5' },
+		{ id: 'heure_pointe', duree_s: 45, libelle: 'Heure de pointe : décisions 20 % plus courtes' },
+		{ id: 'panne_messagerie', duree_s: 60, libelle: 'Panne de la messagerie du patron' },
+	];
+	Jeu.MODIFICATEURS = MODIFICATEURS;
+	Jeu.forcerModificateur = null; // test : forcer un id
+
+	/** Armé en début de journée, démarre à l'arrivée du premier incident, dure duree_s secondes réelles */
+	Jeu.tirerModificateur = function () {
+		const m = Jeu.forcerModificateur ? MODIFICATEURS.find((x) => x.id === Jeu.forcerModificateur) : MODIFICATEURS[Math.floor(Jeu.alea() * MODIFICATEURS.length)];
+		const actions = ['devier', 'retenir', 'renfort', 'rien'];
+		Jeu.modificateur = Object.assign({}, m, { debut: null, fin: null, actionBloquee: m.id === 'erreur_systeme' ? actions[Math.floor(Jeu.alea() * 4)] : null });
+	};
+	Jeu.demarrerModificateur = function (maintenant) {
+		if (Jeu.modificateur && Jeu.modificateur.debut === null) {
+			Jeu.modificateur.debut = maintenant;
+			Jeu.modificateur.fin = maintenant + Jeu.modificateur.duree_s * 1000;
+		}
+	};
+	Jeu.modificateurActif = function (maintenant) {
+		const m = Jeu.modificateur;
+		if (!m || m.debut === null) return null;
+		const t = maintenant !== undefined ? maintenant : typeof millis === 'function' ? millis() : Date.now();
+		return t < m.fin ? m.id : null;
+	};
+	Jeu.actionBloquee = () => (Jeu.modificateurActif() === 'erreur_systeme' ? Jeu.modificateur.actionBloquee : null);
+
+	/** § 3 — Objectifs de journée qui se resserrent */
+	const OBJECTIFS = [
+		{ jour: 1, jauge: 'fluidite', seuil: 40, libelle: 'Garder la fluidité ≥ 40' },
+		{ jour: 2, jauge: 'fluidite', seuil: 45, libelle: 'Garder la fluidité ≥ 45' },
+		{ jour: 3, jauge: 'reputation', seuil: 45, libelle: 'Garder la réputation ≥ 45' },
+		{ jour: 4, jauge: 'reputation', seuil: 50, libelle: 'Garder la réputation ≥ 50' },
+		{ jour: 5, jauge: 'budget', seuil: 30, libelle: 'Terminer avec un budget ≥ 30' },
+	];
+	Jeu.OBJECTIFS = OBJECTIFS;
+	Jeu.objectifDuJour = () => OBJECTIFS[Math.min(Jeu.jourIndex || 0, OBJECTIFS.length - 1)];
+
+	Jeu.debutJourneeTactique = function () {
+		Jeu.tirerModificateur();
+		Jeu.paliersBudget = {};
+	};
+
+	/** Fin de journée : objectif (bonus ou malus) et malus « budget épuisé » — une seule fois par jour */
+	Jeu.finDeJourneeTactique = function () {
+		if ((Jeu.objectifsResultats || []).some((o) => o.jourIndex === Jeu.jourIndex)) return;
+		const o = Jeu.objectifDuJour();
+		const atteint = Jeu.jauges[o.jauge] >= o.seuil;
+		let effet;
+		if (atteint) {
+			const bonus = o.jauge === 'budget' ? { reputation: 5 } : { budget: 10 };
+			Jeu.appliquerDeltas(bonus);
+			effet = 'bonus ' + Object.keys(bonus).map((k) => LIBELLES_JAUGES[k] + ' +' + bonus[k]).join(', ');
+		} else {
+			Jeu.compterMalus('objectif_rate');
+			Jeu.appliquerDeltas({ [o.jauge]: -5 });
+			effet = 'malus ' + LIBELLES_JAUGES[o.jauge] + ' −5';
+		}
+		Jeu.objectifsResultats.push({ jourIndex: Jeu.jourIndex, libelle: o.libelle, atteint, valeur: Jeu.jauges[o.jauge], effet });
+		if (Jeu.jauges.budget <= 0) {
+			// « Budget négatif » : le budget est borné à 0, le malus s'applique donc quand il est épuisé
+			Jeu.compterMalus('budget_epuise');
+			Jeu.appliquerDeltas({ reputation: -8 });
+		}
+	};
+
+	/** § 4 — Table unique des malus (affichée dans l'aide H) */
+	Jeu.MALUS = [
+		{ id: 'non_traite', libelle: 'Incident non traité', condition: 'dossier expiré sans décision', consequence: 'conséquences naturelles du dossier (Q25)' },
+		{ id: 'sieste', libelle: 'Sieste non interrompue', condition: '« Se réveiller » raté', consequence: '−5 sur la jauge de l’incident' },
+		{ id: 'objectif_rate', libelle: 'Objectif de journée raté', condition: 'jauge sous le seuil en fin de journée', consequence: '−5 sur la jauge de l’objectif' },
+		{ id: 'equipe_inutile', libelle: 'Équipe inutile', condition: 'équipe envoyée sur un incident déjà résolu', consequence: 'coût perdu, réputation −3' },
+		{ id: 'budget_epuise', libelle: 'Budget épuisé', condition: 'budget à 0 en fin de journée', consequence: 'réputation −8 (dettes)' },
+	];
+	Jeu.compterMalus = function (id) {
+		Jeu.malus = Jeu.malus || {};
+		Jeu.malus[id] = (Jeu.malus[id] || 0) + 1;
+	};
+
+	/** § 5 — Paliers de budget : messages du patron, une fois par journée et par palier */
+	Jeu.verifierPaliersBudget = function () {
+		if (!Jeu.messagesPatron || !Jeu.paliersBudget) return;
+		const b = Jeu.jauges.budget;
+		const palier = b < 20 ? 'bas' : b >= 70 ? 'haut' : 'moyen';
+		if (Jeu.paliersBudget[palier]) return;
+		Jeu.paliersBudget[palier] = true;
+		if (palier === 'bas') Jeu.messagePatron('Budget à ' + b + ' : on ne peut plus envoyer d’équipes. Trouvez des solutions sans dépenser.');
+		else if (palier === 'haut') Jeu.messagePatron('Budget à ' + b + ' : on a de la marge, envoyez des équipes si besoin (les pompiers sont disponibles).');
+		else if (Jeu.paliersBudget.bas || Jeu.paliersBudget.haut) Jeu.messagePatron('Budget à ' + b + ' : situation suivie, restez raisonnable.');
+	};
+
+	/** Conseil repris par le patron quand une jauge passe sous 30 (une fois par jauge et par jour) */
+	Jeu.verifierConseilsPatron = function () {
+		if (!Jeu.messagesPatron) return;
+		NOMS_JAUGES.forEach((k) => {
+			const cle = 'conseil_' + k;
+			if (Jeu.jauges[k] < 30 && !Jeu.alertesJauges[cle]) {
+				Jeu.alertesJauges[cle] = true;
+				Jeu.messagePatron('Attention : ' + LIBELLES_JAUGES[k] + ' est à ' + Jeu.jauges[k] + ', une mauvaise décision peut la faire passer sous 20.');
+			}
+		});
+	};
+
+	/** § 6 — Profil de la semaine (fin personnalisée), à partir des seules données réelles */
+	Jeu.profilSemaine = function () {
+		const tri = NOMS_JAUGES.slice().sort((a, b) => Jeu.jauges[b] - Jeu.jauges[a]);
+		const parJour = {};
+		(Jeu.evenementsJournee || []).forEach((e) => {
+			const pos = NOMS_JAUGES.reduce((s2, k) => s2 + Math.max(0, e.deltas[k]), 0);
+			parJour[e.jour] = (parJour[e.jour] || 0) + pos;
+		});
+		const meilleurJour = Object.keys(parJour).sort((a, b) => parJour[b] - parJour[a])[0] || null;
+		const malusFrequent = Object.keys(Jeu.malus || {}).sort((a, b) => Jeu.malus[b] - Jeu.malus[a])[0] || null;
+		const m = malusFrequent ? Jeu.MALUS.find((x) => x.id === malusFrequent) : null;
+		const atteints = (Jeu.objectifsResultats || []).filter((o) => o.atteint).length;
+		const haut = tri[0];
+		const bas = tri[tri.length - 1];
+		const phrase =
+			'Semaine ' + (Jeu.jauges[haut] >= 60 ? 'solide' : 'fragile') + ' sur ' + LIBELLES_JAUGES[haut] + ' (' + Jeu.jauges[haut] + ')' +
+			(m ? ', mais ' + Jeu.malus[malusFrequent] + ' × « ' + m.libelle.toLowerCase() + ' »' : '') + '.';
+		return {
+			phrase,
+			haut: { jauge: LIBELLES_JAUGES[haut], valeur: Jeu.jauges[haut] },
+			bas: { jauge: LIBELLES_JAUGES[bas], valeur: Jeu.jauges[bas] },
+			meilleurJour: meilleurJour ? meilleurJour.split('-').reverse().join('/') : '—',
+			malusFrequent: m ? m.libelle + ' (' + Jeu.malus[malusFrequent] + ')' : 'aucun',
+			budget: Jeu.jauges.budget,
+			equipes: (Jeu.equipes || []).length,
+			objectifs: atteints + '/' + (Jeu.objectifsResultats || []).length,
+		};
 	};
 
 	global.Jeu = Jeu;
