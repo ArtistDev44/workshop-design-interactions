@@ -24,6 +24,17 @@ import edition from '../data/edition.json';
 		</dl>
 	</section>
 
+	<section aria-labelledby="t-qr">
+		<h2 id="t-qr">Site en ligne</h2>
+		<img
+			src={`${import.meta.env.BASE_URL}assets/qr-edition.png`}
+			alt="QR code vers le site en ligne de l’édition PATRIMOINE.EXE / Nantes 001"
+			width="160"
+			height="160"
+		/>
+		<p class="mono">{new URL(import.meta.env.BASE_URL, Astro.site).href}</p>
+	</section>
+
 	<section aria-labelledby="t-nommage">
 		<h2 id="t-nommage">Convention de nommage</h2>
 		<dl>
