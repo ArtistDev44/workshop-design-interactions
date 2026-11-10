@@ -2,7 +2,9 @@
 <html lang="fr">
 	<head>
 		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="mobile-web-app-capable" content="yes" />
 		<title>Nantes en régulation — jeu de régulation des transports nantais</title>
 		<meta name="color-scheme" content="dark" />
 		<!-- Prompt 45 : SEO et partage (aucun service externe, aucun traceur) -->
@@ -110,6 +112,7 @@
 		<script src="./feedback.js"></script>
 		<script src="./micro.js"></script>
 		<script src="./webcam.js"></script>
+		<script src="./mobile.js"></script>
 		<script>
 			// Prompt 48 : service worker (jeu jouable hors ligne après une première visite) — jamais en file://
 			if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {

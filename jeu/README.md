@@ -68,3 +68,4 @@ dossier à trancher sous pression. »*
 | 50 | `50-defis-ralenti.md` | Prompt 55 : trois défis de semaine tirés par la graine (bilan réel, +5 si tenu, une fois) et ralenti tactique (R, 10 s, une fois par jour) |
 | 51 | `51-rapport-semaine-deblocage.md` | Prompt 56 : mail du patron du dernier soir, rapport en deux pages (chiffres réels de la semaine), rapport avant la cinématique, autre semaine archivée, défis au palmarès |
 | 52 | `52-webcam-presence-sieste.md` | Prompt 57 : webcam du poste (opt-in), présence par luminance centrale et mouvement en local (48×27, rien d'affiché ni envoyé), absence de 8 s → sieste, LED et « CAM » |
+| 53 | `53-mobile-fondations.md` | Prompt 60 (sous-étape 60a) : détection du téléphone, gestes (tap au relâchement, appui long, swipe), paysage plein écran, avis portrait, clavier virtuel, allègement ; ordinateur inchangé |

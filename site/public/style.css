@@ -140,3 +140,35 @@ body {
 .cb-compte {
 	font-size: calc(14px * var(--echelle-texte, 1));
 }
+
+/* Prompt 60 : téléphone — le canevas remplit la hauteur réelle (barres du navigateur comprises), pas de zoom au geste */
+body.mobile #scene {
+	height: 100dvh;
+}
+body.mobile #scene canvas {
+	touch-action: none;
+	width: min(100vw, calc(100dvh * 16 / 9)) !important;
+}
+#avis-portrait {
+	position: fixed;
+	inset: 0;
+	z-index: 30;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	gap: 16px;
+	padding: 24px;
+	background: rgba(13, 12, 12, 0.94);
+	color: #ffffff;
+	font-family: 'JetBrains Mono', ui-monospace, monospace;
+	font-size: 18px;
+	line-height: 1.5;
+}
+#avis-portrait h2 {
+	margin: 0;
+	font-size: 24px;
+}
+#avis-portrait .sv-bouton {
+	min-height: 48px; /* cible tactile ≥ 44 px */
+	align-self: flex-start;
+}
