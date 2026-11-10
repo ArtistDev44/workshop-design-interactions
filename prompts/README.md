@@ -51,7 +51,7 @@ jamais l'inverse.
 | 10 | `10-methode-ressources-credits.md` | Pages protocole, corpus Nantes, crédits/brand | 🗄 exécuté, pages retirées |
 | 11 | `11-donnees-vivantes-nantes.md` | Page « Nantes en direct » : données vivantes depuis les API recommandées par l'audit (`contexte/audit-api-open-data-nantes.md`), cache, rafraîchissement temporisé, instantanés réels en secours | ✅ (`src/lib/datasets.js`, `scripts/snapshot.mjs`, `public/data/fallback/` ; page `/donnees/` retirée) |
 | 12 | `12-accessibilite-robustesse.md` | Contrôles accessibilité + checklist de robustesse (y compris hors ligne) | 🗄 exécuté, pages retirées |
-| 13 | `13-build-deploiement-qr.md` | Build, déploiement GitHub Pages (Actions, historique — voir note en tête du prompt), README, QR codes | ✅ (workflow + QR ; QR à régénérer vers l'URL canonique, cf. note) |
+| 13 | `13-build-deploiement-qr.md` | Build, déploiement GitHub Pages (Actions, historique — voir note en tête du prompt), README, QR codes | ✅ (workflow + QR ; QR régénérés vers l'URL canonique et vérifiés au prompt 46, cf. note) |
 | 14 | `14-jeu-salle-de-controle-p5.md` | Jeu « Nantes en régulation » — chapeau : objectif, emplacement, données réelles (œuvre p5.js décrite dans `jeu/`) | ✅ main |
 | 15 | `15-jeu-fondation-donnees.md` | Jeu, étape 2/6 : structure du livret, p5.js local, semaines enregistrées, `lignes.json`, `fallback.json` | ✅ main |
 | 16 | `16-jeu-ecrans-salle-de-controle.md` | Jeu, étape 3/6 : écran d'accueil + salle de contrôle 1920×1080 | ✅ main |
@@ -85,30 +85,31 @@ jamais l'inverse.
 | 43 | `43-jeu-vue-pc-ux-temps-transitions.md` | Jeu, étape 30 : vue PC à 90 %, indicateurs redondants retirés, UX de l'écran de jeu, temps ×30, écran noir « Jour n — Semaine n » entre les journées | ✅ main |
 | 44 | `44-jeu-musiques-immersion-sonore.md` | Jeu, étape 31 : choix de la musique (morceaux pixel originaux) et immersion sonore en 7 points (salle vivante, radio, alertes par source, compte à rebours, clics d'action, jauges audibles, météo, signatures de fin) | ✅ main |
 | 45 | `45-jeu-meteo-progressive-seo.md` | Jeu, étape 32 : transitions météo progressives (jour/nuit, pluie) et SEO (description, OG image, favicon, canonique, carte Twitter) | ✅ main |
-| 46 | `46-livrables-documentation.md` | Livrables J3 (manifest, captation, version archivée), cartel corrigé, pages /cartel/ et /making-of/, guide contributeur | ✅ |
-| 47 | `47-jeu-mecaniques-narration.md` | Jeu, étape 33 : inspection surprise, palmarès et profils, journal de bord, fin « démission », épilogue personnalisé, agenda anticipé | ✅ |
-| 48 | `48-jeu-accessibilite-technique.md` | Jeu, étape 34 : daltonisme, taille du texte, lecture facile, tests automatisés, démo automatique, PWA hors ligne, courbes des jauges | ✅ |
-| 49 | `49-jeu-lofi-lisibilite-meteo.md` | Jeu, étape 35 : musique lofi CC0 et sons discrets, textes du PC lisibles, carte sans ligne météo, climat selon le mode (direct / archives) | ✅ |
-| 50 | `50-jeu-enquete-sources.md` | Jeu, étape 36 : découvrir la situation — alerte vague, détails révélés en consultant carte, info trafic, météo, agenda ; plus de conseil ni de flèches d'effet ; appli Régulation en fenêtre (barre des tâches visible) | ✅ |
-| 51 | `51-jeu-horloge-sablier.md` | Jeu, étape 37 : finir sa journée en cliquant l'horloge (alerte avant 20 h, blâme du patron le lendemain), sablier pour faire passer le temps entre les dossiers, lumière (lampe éteinte, stores baissés) qui se ressent sur le bureau, ombres portées des objets | ✅ |
-| 52 | `52-jeu-cafe-boost.md` | Jeu, étape 38 : boire le café (tasse en main, même animation que le téléphone) → boost temporaire : cœur qui s'accélère, pulsation rouge, lignes de vitesse, flou, champ élargi | ✅ |
-| 53 | `53-jeu-animations-feedback.md` | Jeu, étape 39 : animations de feedback — arrivée du dossier (glisser + tampon « SIGNALEMENT » + pulsation de la ligne sur la carte), jauges en eased avec deltas flottants, urgence du compteur sous 10 s (barre rouge, sablier accéléré) ; animations réduites respectées | ✅ |
-| 54 | `54-jeu-micro-interaction-sonore.md` | Jeu, étape 40 : interaction sonore au micro (push-to-talk, touche M) — amplitude, fragmentation, densité, hauteur, turbulence pilotent une texture granulaire ; voix, souffle, bruit ; VU-mètre à l'écran ; repli si micro refusé ; sans effet sur les règles Q1–Q61 | ✅ |
-| 57 | `57-jeu-webcam-presence-sieste.md` | Jeu, étape 43 : webcam (objet du poste + option Paramètres) — détection de présence locale (luminance centrale + mouvement, images jamais affichées) ; 8 s sans présence → sieste (mêmes règles que l'inactivité 20 s, malus inchangé) ; LED « cam active » ; repli si webcam refusée (renuméroté 57 : le n° 55 est pris par `55-jeu-defis-ralenti.md`) | ✅ |
-| 58 | `58-audit-achever-prompts-precedents.md` | Méta-prompt (hors jeu) : auditer un par un les prompts 01–57 à l'épreuve du code et des docs, terminer ceux qui sont ◻ ou partiels dans l'ordre croissant (priorité aux prompts du jeu 49–57), corriger les statuts ✅/◻ dans ce tableau, documenter dans `jeu/` et `journal.md` après chaque prompt achevé | ◻ prévu |
+| 46 | `46-livrables-documentation.md` | Livrables J3 (manifest, captation, version archivée), cartel corrigé, pages /cartel/ et /making-of/, guide contributeur | ✅ main |
+| 47 | `47-jeu-mecaniques-narration.md` | Jeu, étape 33 : inspection surprise, palmarès et profils, journal de bord, fin « démission », épilogue personnalisé, agenda anticipé | ✅ main |
+| 48 | `48-jeu-accessibilite-technique.md` | Jeu, étape 34 : daltonisme, taille du texte, lecture facile, tests automatisés, démo automatique, PWA hors ligne, courbes des jauges | ✅ main |
+| 49 | `49-jeu-lofi-lisibilite-meteo.md` | Jeu, étape 35 : musique lofi CC0 et sons discrets, textes du PC lisibles, carte sans ligne météo, climat selon le mode (direct / archives) | ✅ main |
+| 50 | `50-jeu-enquete-sources.md` | Jeu, étape 36 : découvrir la situation — alerte vague, détails révélés en consultant carte, info trafic, météo, agenda ; plus de conseil ni de flèches d'effet ; appli Régulation en fenêtre (barre des tâches visible) | ✅ main |
+| 51 | `51-jeu-horloge-sablier.md` | Jeu, étape 37 : finir sa journée en cliquant l'horloge (alerte avant 20 h, blâme du patron le lendemain), sablier pour faire passer le temps entre les dossiers, lumière (lampe éteinte, stores baissés) qui se ressent sur le bureau, ombres portées des objets | ✅ main |
+| 52 | `52-jeu-cafe-boost.md` | Jeu, étape 38 : boire le café (tasse en main, même animation que le téléphone) → boost temporaire : cœur qui s'accélère, pulsation rouge, lignes de vitesse, flou, champ élargi | ✅ main |
+| 53 | `53-jeu-animations-feedback.md` | Jeu, étape 39 : animations de feedback — arrivée du dossier (glisser + tampon « SIGNALEMENT » + pulsation de la ligne sur la carte), jauges en eased avec deltas flottants, urgence du compteur sous 10 s (barre rouge, sablier accéléré) ; animations réduites respectées | ✅ main |
+| 54 | `54-jeu-micro-interaction-sonore.md` | Jeu, étape 40 : interaction sonore au micro (push-to-talk, touche M) — amplitude, fragmentation, densité, hauteur, turbulence pilotent une texture granulaire ; voix, souffle, bruit ; VU-mètre à l'écran ; repli si micro refusé ; sans effet sur les règles Q1–Q61 | ✅ main |
+| 55 | `55-jeu-defis-ralenti.md` | Jeu, étape 41 : défis de semaine réels (3 tirés par la graine, +5 sur la jauge concernée si tenus, bilan dans le mail et le rapport) et ralenti tactique (touche R, pause de 10 s du compteur, 1×/jour) | ✅ main |
+| 56 | `56-jeu-rapport-semaine-deblocage.md` | Jeu, étape 42 : rapport de fin de semaine chiffré (dossiers, décisions, jauges, défis) + papier sur le bureau, mail du patron du dernier soir, déblocage de la semaine suivante en mode histoire, palmarès des semaines persisté | ✅ main |
+| 57 | `57-jeu-webcam-presence-sieste.md` | Jeu, étape 43 : webcam (objet du poste + option Paramètres) — détection de présence locale (luminance centrale + mouvement, images jamais affichées) ; 8 s sans présence → sieste (mêmes règles que l'inactivité 20 s, malus inchangé) ; LED « cam active » ; repli si webcam refusée (renuméroté 57 : le n° 55 est pris par `55-jeu-defis-ralenti.md`) | ✅ main |
+| 58 | `58-audit-achever-prompts-precedents.md` | Méta-prompt (hors jeu) : auditer un par un les prompts 01–57 à l'épreuve du code et des docs, terminer ceux qui sont ◻ ou partiels dans l'ordre croissant (priorité aux prompts du jeu 49–57), corriger les statuts ✅/◻ dans ce tableau, documenter dans `jeu/` et `journal.md` après chaque prompt achevé | ✅ main (audit : tous les prompts 01–57 faits, écarts listés ci-dessous) |
 | 59 | `59-checkup-site-optimisation.md` | Méta-prompt (hors jeu) : check-up exhaustif du site (build/tests, hors ligne, navigation FR+EN, accessibilité, liens/métadonnées, perfs, secrets) + optimisation du code sans changement de comportement (factorisation, code mort, allègement) + harmonisation doc ↔ code (`jeu/`, `prompts/README.md`, `README.md`, `notes.md`, `journal.md`) + rapport de check-up dans `notes.md` | ◻ prévu |
-| 55 | `55-jeu-defis-ralenti.md` | Jeu, étape 41 : défis de semaine réels (3 tirés par la graine, +5 sur la jauge concernée si tenus, bilan dans le mail et le rapport) et ralenti tactique (touche R, pause de 10 s du compteur, 1×/jour) | ✅ |
-| 56 | `56-jeu-rapport-semaine-deblocage.md` | Jeu, étape 42 : rapport de fin de semaine chiffré (dossiers, décisions, jauges, défis) + papier sur le bureau, mail du patron du dernier soir, déblocage de la semaine suivante en mode histoire, palmarès des semaines persisté | ✅ |
+| 60 | `60-jeu-adaptation-mobile.md` | Jeu, étape 44 : adaptation complète au mobile (canvas 1080×1920 en portrait, panneaux empilés, swipe, cibles ≥ 44 px, clavier virtuel) — desktop 1920×1080 inchangé, captures identiques | ◻ prévu |
 
 ### Statut des prompts (vérifié le 10/11/2026 dans `site/public/`)
 
-Légende : **✅ main** = implémenté et fusionné dans `main` ; **✅ main** = implémenté sur la
-chaîne de branches empilées, **pas encore fusionnée** dans `main` ; **◻ prévu** = rien dans le
+Légende : **✅ main** = implémenté et fusionné dans `main` (toute la chaîne des branches empilées
+25–34 l'est depuis le 10/11/2026) ; **◻ prévu** = rien dans le
 code ; **🗄 exécuté, pages retirées** = prompt du site Astro exécuté le 9/11, dont les pages ont
 été supprimées quand le jeu est passé à la racine (voir `journal.md`). Seule page Astro restante :
 `/cartel/` (prompt 33, section 6).
 
-Preuves dans le code (grep, branche du prompt 33) :
+Preuves dans le code (grep ; 14–34 relevées au prompt 33, revérifiées et complétées 35–57 au prompt 58) :
 
 | Prompt | Fichiers / symboles vérifiés |
 |---|---|
@@ -127,12 +128,33 @@ Preuves dans le code (grep, branche du prompt 33) :
 | 32 | `bureau.js` / `immersion.js` (palette blanche) |
 | 33 (sauvegarde) | `sauvegarde.js` |
 | 34 | `bureau.js` (`dessinerLoire`, `LOIRE`, Hub'Eau), `data/loire.js`, `immersion.js` (livre `commande`, `lancerTutoriel`) |
+| 35 | `menu.js` (`dessinerMenuPrincipal`, `entreesMenu`) |
+| 36 | `os.js` (`dessinerIndicateurs`, `GRILLE_OS`) |
+| 37 | `guide.js` (`ETAPES_GUIDE`, `flecheGuide`) |
+| 38 | `telephone.js` (`chargerNotifications`), `bureau.js` (`scrollSortiePC`) |
+| 39 | `ds.js` (`DS`, `dsTitre`) |
+| 40 | `bureau.js` (`COUCHES_PIECE`) |
+| 41 | `histoire.js` (`ELEMENTS_CHAPITRE`, `fenetreRapport`, `lancerCinematique`) |
+| 42 | `telephone-main.js` (`dessinerTelephoneEnMain`, `lancerConversation`) |
+| 43 | `immersion.js` (`TRANSITION_JOUR`), `sketch.js` (`bandeauEtat`), `bureau.js` (`ECRAN_POSTE`) |
+| 44 | `confort.js` (`PISTES`, `Son.radio`, `signatureFin`) |
+| 45 | `bureau.js` (`METEO_VISU`), `index.html` (`og:image`), `favicon.svg` |
+| 46 | `manifest.json`, `captures/demo.mp4`, `src/pages/making-of.astro`, `CONTRIBUTING.md`, `rendu/` |
+| 47 | `mecaniques.js` (`fenetreInspection`, `ouvrirCarnet`), `game.js` (`profilGestion`, `peutDemissionner`, `prevenirAgenda`) |
+| 48 | `accessibilite.js` (`PALETTES`, `dessinerDemo`, `dessinerCourbesJauges`), `sw.js`, `scripts/test-jeu.mjs` |
+| 49 | `audio/lofi-*.ogg`, `accessibilite.js` (`TAILLE_MIN_PC`), `immersion.js` (`meteoFenetre`, `meteo.source`) |
+| 50 | `enquete.js` (`SOURCES_ENQ`), `os.js` (`entrerFenetreAppli`, `dessinerBarreTaches`) |
+| 51 | `journee.js` (`clicHorloge`, `dessinerSablier`, `dessinerEclairage`, `ombreObjet`), `game.js` (`partirAvantLaFin`) |
+| 52 | `cafe.js` (`boireCafe`, `battreCoeur`, `surcadrageCafe`), `telephone-main.js` (paramètre `objet`) |
+| 53 | `feedback.js` (`jaugesAffichees`, `dessinerTamponSignalement`, `couleurCompteur`) |
+| 54 | `micro.js` (`getUserMedia`, `hauteurAutocorrelation`, `jouerGrain`) |
+| 55 | `game.js` (`tirerDefis`, `demanderRalenti`), `journee.js` (`dessinerRalenti`) |
+| 56 | `game.js` (`statsSemaine`, `mailFinSemaine`), `histoire.js` (`fenetreRapportChiffres`) |
+| 57 | `webcam.js` (`getUserMedia`, `joueurParti`), `immersion.js` (sieste sur absence) |
 
-Chaîne des branches non fusionnées (chacune empilée sur la précédente) :
-`jeu/prompt-26-sortie-pc` → `jeu/prompt-27-loading-screen` → `jeu/prompt-28-dialogues-nantais`
-→ `jeu/prompt-29-interactions-hors-ecran` → `jeu/prompt-30-bandes-sonores-ambiances` →
-`jeu/prompt-31-bureau-cadrage` → `jeu/prompt-32-bureau-style-epure` →
-`jeu/prompt-33-sauvegarde-progression` → `vibe/prompt-33-audit-coherence-4c094b-application` → `jeu/prompt-34-fenetre-loire-tutoriel`.
+Chaîne des branches empilées 26 → 34 : **fusionnée dans `main`** (vérifié par `git merge-base
+--is-ancestor` au prompt 58). Depuis le prompt 49, chaque prompt est fusionné dans `main` dès qu'il est
+terminé (demande du 10/11/2026).
 
 Variante non intégrée : `origin/jeu/prompt-30-bandes-sonores` (collaborateur, basée sur `main`,
 fichier `site/public/audio.js`) est une autre implémentation du prompt 30, **non fusionnée** et
@@ -153,3 +175,26 @@ Historique : le 9 novembre 2026, l'ancien prompt 13 (données vivantes) est deve
 et les anciens 11 et 12 sont devenus 12 et 13, pour que l'accessibilité et le
 déploiement vérifient aussi la page `/donnees/`. Les entrées anciennes de `journal.md`
 gardent les anciens numéros.
+
+### Audit du 10/11/2026 (prompt 58)
+
+Méthode : pour chaque prompt du jeu (14 à 57), présence des fichiers et symboles listés ci-dessus
+(script de vérification, `grep`), doc `jeu/NN-*.md` listée dans `jeu/README.md`, `npm run build` et
+`npm test` (smoke + `test-jeu.mjs`). Résultat : **tous les prompts 01–57 sont faits** ; aucun n'est
+repassé en ◻. Écarts connus, voulus ou hors de portée de l'assistant :
+
+- **13 / 46** : QR codes vérifiés identiques à ceux générés vers l'URL canonique ; le **scan réel** avec
+  un téléphone reste à faire par le groupe.
+- **26** : la porte et sa fonctionnalité ont été retirées à la demande du groupe (10/11/2026).
+- **30** : la variante du collaborateur (`origin/jeu/prompt-30-bandes-sonores`, `audio.js`) n'est pas
+  fusionnée ; c'est la version de `confort.js` qui est en service — à arbitrer par le groupe.
+- **46** : champs `[À COMPLÉTER]` à saisir par le groupe (auteurs, contributions, licence, fiche-source,
+  numéro G01) ; licence Hub'Eau et licence des morceaux Loyalty Freak Music (prompt 49) à vérifier.
+- **47** : arbre de compétences, événements chaînés, personnages récurrents, nouvelles sources, journée
+  type : **reportés par le prompt lui-même** (règles Q1–Q61 ou données à étudier).
+- **53** : dans l'appli Carte, c'est le repère d'incident qui pulse (déjà en place), pas le tracé de ligne.
+- **54 / 57** : micro et webcam vérifiés avec des périphériques simulés (Chromium) ; essai avec un vrai
+  micro et une vraie webcam, et réglage des seuils, à faire en salle.
+- `scripts/test-difficulte.mjs` dépend d'un `base.mjs` hors dépôt (Playwright) : remplacé dans
+  `npm test` par `scripts/test-jeu.mjs`.
+
