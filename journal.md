@@ -4,6 +4,7 @@ Règle : chaque push sur la branche main ajoute une entrée dans le tableau, la 
 
 | Date | Commit | Fichiers | Résumé |
 |---|---|---|---|
+| 2026-11-10 | ce commit | journal.md | Fusion dans main de jeu/prompt-22-bureau-apps (apps du PC, jauges fluidité / réputation / budget) |
 | 2026-11-10 | ce commit (branche jeu/prompt-22-bureau-apps, non fusionnée) | site/public/ (os.js, game.js, sketch.js, bureau.js, immersion.js), jeu/16-bureau-apps.md, jeu/README.md, journal.md | Prompt 22 : 4 apps sur le bureau RégulOS (patron, carte des incidents avec envoi d'équipes, community manager, journal), jauges fluidité / réputation / budget et table des effets réajustée |
 | 2026-11-10 | ce commit | journal.md | Fusion dans main de jeu/bureau-moderne-ds (bureau moderne vu depuis la chaise, Château des ducs, Pixel Design System sur le PC) |
 | 2026-11-10 | ce commit (branche jeu/bureau-moderne-ds, non fusionnée) | site/public/ (bureau.js, ds.js, os.js, immersion.js, index.html), jeu/15-bureau-moderne-design-system.md, jeu/README.md, journal.md | Bureau moderne vu depuis la chaise (baie vitrée, Château des ducs de Bretagne et grue Titan), Pixel Design System du groupe appliqué au PC (démarrage, bureau du système, barre de titre, messagerie) |
