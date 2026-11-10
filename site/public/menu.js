@@ -6,11 +6,11 @@
  */
 const MENU = { actif: true, ecran: 'titre', choix: 0, choixSemaine: 0, debut: 0 };
 const MENU_C = {
-	nuit: '#0b1b33',
-	encre: '#0b1b33',
-	bleu: '#005ae1', // primary de design-system/DESIGN.md
+	nuit: '#0D0C0C', // Background du Pixel DS (prompt 39)
+	encre: '#0D0C0C', // Secondary-Foreground
+	bleu: '#D4031C', // Primary du Pixel DS (nom de clé conservé)
 	blanc: '#ffffff',
-	doux: 'rgba(255,255,255,0.78)',
+	doux: 'rgba(255,255,255,0.75)', // White 75
 };
 
 function ouvrirMenuPrincipal() {
@@ -81,9 +81,9 @@ function fondMenu() {
 	drawingContext.imageSmoothingEnabled = true;
 	// Voile : plus sombre à gauche (lisibilité du menu), la pièce reste devinable à droite
 	const g = drawingContext.createLinearGradient(0, 0, L, 0);
-	g.addColorStop(0, 'rgba(11,27,51,0.94)');
-	g.addColorStop(0.45, 'rgba(11,27,51,0.82)');
-	g.addColorStop(1, 'rgba(11,27,51,0.45)');
+	g.addColorStop(0, 'rgba(13,12,12,0.95)');
+	g.addColorStop(0.45, 'rgba(13,12,12,0.85)');
+	g.addColorStop(1, 'rgba(13,12,12,0.5)');
 	drawingContext.fillStyle = g;
 	drawingContext.fillRect(0, 0, L, H);
 }
@@ -141,16 +141,16 @@ function carteMenu(x, y, l, h, titre, sous, action, sel, icone) {
 	noStroke();
 	if (actif) {
 		fill(MENU_C.blanc);
-		rect(x, y, l, h, 18);
+		rect(x, y, l, h);
 		fill(MENU_C.bleu);
-		rect(x, y + 14, 6, h - 28, 3);
+		rect(x, y, 8, h); // liseré primaire
 	} else {
 		fill(255, 255, 255, 22);
-		rect(x, y, l, h, 18);
+		rect(x, y, l, h);
 		stroke(255, 255, 255, 60);
 		strokeWeight(2);
 		noFill();
-		rect(x + 1, y + 1, l - 2, h - 2, 17);
+		rect(x + 1, y + 1, l - 2, h - 2);
 		noStroke();
 	}
 	if (icone) iconeMenu(icone, x + 28, y + h / 2 - 28, actif ? MENU_C.bleu : MENU_C.blanc);
@@ -158,7 +158,7 @@ function carteMenu(x, y, l, h, titre, sous, action, sel, icone) {
 	textAlign(LEFT, sous ? BOTTOM : CENTER);
 	textFont(POLICE_TEXTE);
 	textStyle(BOLD);
-	textSize(30);
+	ajusterTaille(titre, l - (tx - x) - 24, 30);
 	fill(actif ? MENU_C.encre : MENU_C.blanc);
 	text(titre, tx, sous ? y + h / 2 + 4 : y + h / 2);
 	textStyle(NORMAL);
@@ -166,7 +166,7 @@ function carteMenu(x, y, l, h, titre, sous, action, sel, icone) {
 		textAlign(LEFT, TOP);
 		textFont(POLICE_DONNEES);
 		textSize(18);
-		fill(actif ? '#3d4b5f' : MENU_C.doux);
+		fill(actif ? 'rgba(13,12,12,0.75)' : MENU_C.doux);
 		text(sous, tx, y + h / 2 + 10, l - (tx - x) - 24, 40);
 	}
 	boutons.push({ x, y, l, h, action });
@@ -175,7 +175,7 @@ function carteMenu(x, y, l, h, titre, sous, action, sel, icone) {
 		noFill();
 		stroke(MENU_C.bleu);
 		strokeWeight(4);
-		rect(x - 6, y - 6, l + 12, h + 12, 22);
+		rect(x - 6, y - 6, l + 12, h + 12);
 		noStroke();
 	}
 }
@@ -191,12 +191,8 @@ function dessinerMenuPrincipal() {
 	textSize(20);
 	fill(MENU_C.doux);
 	text('PXE-NTE001-G01-W01', x0, 120);
-	textFont(POLICE_TEXTE);
-	textStyle(BOLD);
-	textSize(96);
-	fill(MENU_C.blanc);
-	text(t('accueil.titre'), x0, 156);
-	textStyle(NORMAL);
+	dsTitre(t('accueil.titre'), x0, 160, 88, MENU_C.blanc, 'left'); // titre au style pixel (Bitsy Pixels)
+	noStroke();
 	textSize(28);
 	fill(MENU_C.doux);
 	text(t('accueil.sousTitre'), x0, 276, 900, 80);
@@ -221,12 +217,8 @@ function dessinerChoixSemaine() {
 	if (MENU.choixSemaine >= opts.length) MENU.choixSemaine = 0;
 	noStroke();
 	textAlign(LEFT, TOP);
-	textFont(POLICE_TEXTE);
-	textStyle(BOLD);
-	textSize(64);
-	fill(MENU_C.blanc);
-	text(t('mp.semaines.titre'), 160, 96);
-	textStyle(NORMAL);
+	dsTitre(t('mp.semaines.titre'), 160, 100, 60, MENU_C.blanc, 'left');
+	noStroke();
 	textSize(26);
 	fill(MENU_C.doux);
 	text(t('mp.semaines.sous'), 160, 186, 1400, 60);
@@ -240,28 +232,28 @@ function dessinerChoixSemaine() {
 		const actif = sel || survol;
 		noStroke();
 		fill(actif ? MENU_C.blanc : 'rgba(255,255,255,0.09)');
-		rect(x, y, lc, hc, 20);
+		rect(x, y, lc, hc);
 		if (!actif) {
 			stroke(255, 255, 255, 60);
 			strokeWeight(2);
 			noFill();
-			rect(x + 1, y + 1, lc - 2, hc - 2, 19);
+			rect(x + 1, y + 1, lc - 2, hc - 2);
 			noStroke();
 		}
 		if (sel) {
 			noFill();
 			stroke(MENU_C.bleu);
 			strokeWeight(4);
-			rect(x - 6, y - 6, lc + 12, hc + 12, 24);
+			rect(x - 6, y - 6, lc + 12, hc + 12);
 			noStroke();
 		}
 		const encre = o.desactive ? (actif ? '#6b7280' : 'rgba(255,255,255,0.55)') : actif ? MENU_C.encre : MENU_C.blanc;
 		textAlign(LEFT, TOP);
 		textFont(POLICE_TEXTE);
 		textStyle(BOLD);
-		textSize(25);
+		ajusterTaille(o.titre, lc - 64, 25);
 		fill(encre);
-		text(o.titre, x + 32, y + 28, lc - 64, 40);
+		text(o.titre, x + 32, y + 28);
 		textStyle(NORMAL);
 		textFont(POLICE_DONNEES);
 		textSize(21);
@@ -269,7 +261,7 @@ function dessinerChoixSemaine() {
 		if (o.desactive) fill(encre);
 		text(o.detail, x + 32, y + 82, lc - 64, 30);
 		textSize(18);
-		fill(actif ? '#3d4b5f' : MENU_C.doux);
+		fill(actif ? 'rgba(13,12,12,0.75)' : MENU_C.doux);
 		text(o.info, x + 32, y + 124, lc - 64, 60);
 		if (o.sauvegarde) {
 			// Badge « sauvegardée » (prompt 33)
@@ -277,7 +269,7 @@ function dessinerChoixSemaine() {
 			textSize(16);
 			const lb = textWidth(lib) + 24;
 			fill(MENU_C.bleu);
-			rect(x + lc - lb - 24, y + 26, lb, 32, 16);
+			rect(x + lc - lb - 24, y + 26, lb, 32);
 			fill(MENU_C.blanc);
 			textAlign(CENTER, CENTER);
 			text(lib, x + lc - lb / 2 - 24, y + 42);

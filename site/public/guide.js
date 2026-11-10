@@ -114,10 +114,10 @@ function flecheGuide(px, py, versBas) {
 		[14, -40 * s],
 		[34, -40 * s],
 	];
-	stroke('#1c2733');
+	stroke('#0D0C0C');
 	strokeWeight(8);
 	strokeJoin(ROUND);
-	fill('#f2c94c');
+	fill('#FFC138'); // Warning Primary du DS
 	beginShape();
 	pts.forEach(([x, y]) => vertex(px + x, py + y));
 	endShape(CLOSE);
@@ -141,12 +141,12 @@ function dessinerGuide() {
 	const py = versBas ? c.y - 8 - rebond : c.y + c.h + 8 + rebond;
 	// Contour de la cible
 	noFill();
-	stroke('#1c2733');
+	stroke('#0D0C0C');
 	strokeWeight(8);
-	rect(c.x - 10, c.y - 10, c.l + 20, c.h + 20, 12);
-	stroke('#f2c94c');
+	rect(c.x - 10, c.y - 10, c.l + 20, c.h + 20);
+	stroke('#FFC138');
 	strokeWeight(4);
-	rect(c.x - 10, c.y - 10, c.l + 20, c.h + 20, 12);
+	rect(c.x - 10, c.y - 10, c.l + 20, c.h + 20);
 	noStroke();
 	flecheGuide(cx, py, versBas);
 	bulleGuide(texte, cx, versBas ? py - 110 : py + 110, versBas);
@@ -163,12 +163,15 @@ function bulleGuide(texte, cx, y, auDessus) {
 	const x = constrain(cx - l / 2, 24, L - l - 24);
 	const by = constrain(auDessus ? y - h : y, 24, H - h - 24);
 	noStroke();
-	fill(0, 0, 0, 90);
-	rect(x + 6, by + 8, l, h, 16);
-	fill(11, 27, 51, 245);
-	rect(x, by, l, h, 16);
-	fill('#f2c94c');
-	rect(x, by, 8, h, 16, 0, 0, 16);
+	fill(0, 0, 0, 110);
+	rect(x + 6, by + 8, l, h);
+	fill(13, 12, 12, 248);
+	stroke(255, 255, 255, 38);
+	strokeWeight(2);
+	rect(x, by, l, h);
+	noStroke();
+	fill('#FFC138');
+	rect(x, by, 8, h);
 	fill('#ffffff');
 	textAlign(LEFT, TOP);
 	text(texte, x + 28, by + 18, l - 48, lignes * 30 + 8);
@@ -186,12 +189,12 @@ function dessinerOptionsNouvellePartie(x, y) {
 	const h = 64;
 	const survol = mouseX >= x && mouseX <= x + l && mouseY >= y && mouseY <= y + h;
 	noStroke();
-	fill(255, 255, 255, survol ? 40 : 22);
-	rect(x, y, l, h, 14);
+	fill(255, 255, 255, survol ? 38 : 13);
+	rect(x, y, l, h);
 	stroke('#ffffff');
 	strokeWeight(3);
-	fill(on ? '#005ae1' : 'rgba(0,0,0,0)');
-	rect(x + 20, y + 16, 32, 32, 6);
+	fill(on ? '#D4031C' : 'rgba(0,0,0,0)');
+	rect(x + 20, y + 16, 32, 32);
 	if (on) {
 		stroke('#ffffff');
 		strokeWeight(5);

@@ -14,11 +14,11 @@ const DS = {
 	blanc15: 'rgba(255,255,255,0.15)',
 	blanc05: 'rgba(255,255,255,0.05)',
 	noir50: 'rgba(13,12,12,0.50)',
-	succes: '#00FB74',
+	succes: '#00B74F', // Success Primary (prompt 39 : valeur exacte du design system)
 	succesClair: '#BFFFDB',
 	alerte: '#FFC138',
 	alerteClair: '#FFECC2',
-	erreur: '#D1000B',
+	erreur: '#D10B00', // Error Primary
 	erreurClair: '#FFC5C2',
 	info: '#3860FF',
 	infoClair: '#C2CEFF',

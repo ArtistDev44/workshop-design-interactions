@@ -849,9 +849,9 @@ function composerVue() {
 		const lib = String(hA.h).padStart(2, '0') + ':' + String(hA.m).padStart(2, '0') + (tempsCompresse() ? '  ▶▶ ×' + IMMERSION.compression : '');
 		const lh = textWidth(lib) + 24;
 		const ph = versEcranBureau(HORLOGE_MURALE.x, HORLOGE_MURALE.y + HORLOGE_MURALE.r + 6); // prompt 31 : sous l'horloge murale
-		fill(28, 39, 51, 220);
-		rect(ph.x - lh / 2, ph.y, lh, 34, 6);
-		fill('#FFFDF7');
+		fill(13, 12, 12, 225);
+		rect(ph.x - lh / 2, ph.y, lh, 34);
+		fill('#FFFFFF');
 		textAlign(CENTER, CENTER);
 		text(lib, ph.x, ph.y + 17);
 	}
@@ -863,9 +863,9 @@ function composerVue() {
 	textFont(POLICE_DONNEES);
 	textSize(22);
 	const lm = textWidth(msg) + 40;
-	fill(28, 39, 51, 220);
-	rect((L - lm) / 2, H - 76, lm, 48, 8);
-	fill('#FFFDF7');
+	fill(13, 12, 12, 225);
+	rect((L - lm) / 2, H - 76, lm, 48);
+	fill('#FFFFFF');
 	textAlign(CENTER, CENTER);
 	text(msg, L / 2, H - 52);
 }

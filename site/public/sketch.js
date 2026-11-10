@@ -7,18 +7,25 @@ const L = 1920;
 const H = 1080;
 
 // ——— Palette (11-direction-artistique) ———
+// Prompt 39 : palette de l'interface = jetons du Pixel Design System (design-system/pixel-design-system.md).
+// Fond #0D0C0C, texte blanc, primaire #D4031C (toujours avec texte blanc), fonctionnels succès / alerte,
+// erreur en teinte claire pour le texte (contraste ≥ 4,5:1 sur le fond sombre).
 const C = {
-	fond: '#F5EFE3',
-	panneau: '#FFFDF7',
-	texte: '#1C2733',
-	accent: '#0E3B46',
-	vert: '#1E7A3C',
-	orange: '#B45309',
-	rouge: '#B3261E',
-	gris: '#6B7280',
-	eau: '#CFE0E3',
-	eauBord: '#B5CDD2',
-	ombre: 'rgba(28,39,51,0.10)',
+	fond: '#0D0C0C',
+	panneau: '#171616', // fond + blanc 05 %
+	texte: '#FFFFFF',
+	accent: '#FFFFFF', // titres et bordures accentuées (le rouge primaire est réservé aux fonds de boutons)
+	primaire: '#D4031C',
+	vert: '#00B74F',
+	orange: '#FFC138',
+	rouge: '#FFC5C2', // Error Light : lisible en texte sur fond sombre
+	rougeFonce: '#D10B00', // Error Primary : barres et pastilles uniquement
+	gris: 'rgba(255,255,255,0.6)',
+	eau: '#1b2a44',
+	eauBord: '#2e4264',
+	ombre: 'rgba(0,0,0,0.5)',
+	bord: 'rgba(255,255,255,0.15)',
+	piste: 'rgba(255,255,255,0.15)', // fond des barres de progression
 };
 // Polices : Inter / IBM Plex Mono si installées, sinon une police système équivalente (aucun téléchargement).
 // p5 entoure le nom de guillemets : on lui passe donc UN seul nom, celui de la première police réellement installée.
@@ -28,18 +35,18 @@ function policeInstallee(candidats, generique) {
 	const ref = mesure(generique);
 	return candidats.find((n) => mesure('"' + n + '", ' + generique) !== ref) || candidats[candidats.length - 1];
 }
-const POLICE_TEXTE = policeInstallee(['Inter', 'Helvetica Neue', 'Segoe UI', 'Roboto', 'Arial'], 'monospace');
-const POLICE_DONNEES = policeInstallee(['IBM Plex Mono', 'Menlo', 'Consolas', 'DejaVu Sans Mono', 'Courier New'], 'serif');
+const POLICE_TEXTE = policeInstallee(['JetBrains Mono', 'IBM Plex Mono', 'Menlo', 'Consolas', 'DejaVu Sans Mono', 'Courier New'], 'serif'); // prompt 39 : paragraphes en JetBrains Mono
+const POLICE_DONNEES = POLICE_TEXTE;
 
 const reduireAnimationsSysteme = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 let reduireAnimations = reduireAnimationsSysteme;
-const GRIS_NORMAL = '#6B7280';
+const GRIS_NORMAL = 'rgba(255,255,255,0.6)'; // blanc 60 % sur #0D0C0C ≈ 7:1
 
 /* Applique les réglages enregistrés (écran Paramètres) */
 function appliquerReglages() {
 	const R = Confort.Reglages;
 	reduireAnimations = reduireAnimationsSysteme || R.reduireAnimations;
-	C.gris = R.contrasteRenforce ? '#374151' : GRIS_NORMAL; // gris secondaire plus foncé : contraste renforcé
+	C.gris = R.contrasteRenforce ? 'rgba(255,255,255,0.85)' : GRIS_NORMAL; // contraste renforcé : texte secondaire plus clair
 }
 
 // ——— Confort (prompt 18) : fenêtres, pause, meilleur bilan ———
@@ -449,11 +456,11 @@ function dessinerJeu() {
 	fill(C.accent);
 	textFont(POLICE_TEXTE);
 	textStyle(BOLD);
-	textSize(30);
+	ajusterTaille(t('jeu.reseau'), 220, 30);
 	text(t('jeu.reseau'), GAUCHE.x + 24, GAUCHE.y + 22);
 	textStyle(NORMAL);
 	textFont(POLICE_DONNEES);
-	textSize(20);
+	ajusterTaille(enteteMode(), 470, 20);
 	fill(C.gris);
 	text(enteteMode(), GAUCHE.x + 260, GAUCHE.y + 30);
 	// Barre d'outils (souris / touch) — équivalents des touches H, M, R
@@ -501,11 +508,11 @@ function dessinerJeuAttente() {
 	fill(C.accent);
 	textFont(POLICE_TEXTE);
 	textStyle(BOLD);
-	textSize(30);
+	ajusterTaille(t('jeu.reseau'), 220, 30);
 	text(t('jeu.reseau'), GAUCHE.x + 24, GAUCHE.y + 22);
 	textStyle(NORMAL);
 	textFont(POLICE_DONNEES);
-	textSize(20);
+	ajusterTaille(enteteMode(), 470, 20);
 	fill(C.gris);
 	text(enteteMode(), GAUCHE.x + 260, GAUCHE.y + 30);
 	dessinerDecor(CARTE, meteo, 1, true);
@@ -729,9 +736,9 @@ function dessinerListeLignes(zone, dActuel) {
 		fill(mod ? C.orange : C.accent);
 		rect(zone.x + 18, by, zone.l - 36, 4);
 		textFont(POLICE_TEXTE);
-		textSize(17);
+		textSize(14);
 		fill(C.texte);
-		text(t('bandeau.objectif', { libelle: o.libelle, v: Jeu.jauges[o.jauge] }), zone.x + 18, by + 12, zone.l - 36, 44);
+		text(t('bandeau.objectif', { libelle: o.libelle, v: Jeu.jauges[o.jauge] }), zone.x + 18, by + 12, zone.l - 36, 50);
 		fill(mod ? C.orange : C.gris);
 		text(mod ? mod.libelle + (mod.actionBloquee ? t('bandeau.bloquee', { action: Jeu.REGLAGES.effets[mod.actionBloquee].nom }) : '') + ' · ' + Math.ceil((mod.fin - millis()) / 1000) + ' s' : t('bandeau.aucunMod'), zone.x + 18, by + 60, zone.l - 36, 66);
 	}
@@ -776,13 +783,13 @@ function dessinerJauges() {
 		textFont(POLICE_DONNEES);
 		textAlign(RIGHT, TOP);
 		text(Math.round(v), x + lb, z.y + 18);
-		fill('#E8E2D6');
+		fill(C.piste);
 		rect(x, z.y + 56, lb, 22, 4);
 		// Jauge < 20 : clignotement discret (Q46), fixe si animations réduites
 		const critique = v < 20;
 		const visible = !critique || reduireAnimations || Math.floor(millis() / 700) % 2 === 0;
-		fill(critique ? C.rouge : v < 40 ? C.orange : C.vert);
-		if (!visible) fill('#D9A39E');
+		fill(critique ? C.rougeFonce : v < 40 ? C.orange : C.vert);
+		if (!visible) fill('rgba(255,197,194,0.45)');
 		rect(x, z.y + 56, (lb * constrain(v, 0, 100)) / 100, 22, 4);
 	});
 }
@@ -808,9 +815,9 @@ function dessinerDossier(d, meteo) {
 	const duree = ((Jeu.etat.semaine && Jeu.etat.semaine.difficulte && Jeu.etat.semaine.difficulte.compteur_s) || 30) * 1000 * facteurDuree;
 	const reste = constrain(1 - (millis() - debutCompteur) / duree, 0, 1);
 	noStroke();
-	fill('#E8E2D6');
+	fill(C.piste);
 	rect(x + 24, base.y + 22, base.l - 48, 14, 7);
-	fill(reste < 0.25 ? C.rouge : C.accent);
+	fill(reste < 0.25 ? C.rougeFonce : C.primaire); // prompt 39 : compteur aux couleurs du DS
 	rect(x + 24, base.y + 22, (base.l - 48) * reste, 14, 7);
 	textFont(POLICE_DONNEES);
 	textSize(16);
@@ -867,7 +874,7 @@ function dessinerDossier(d, meteo) {
 	}
 
 	// Détails (en dessous) : date, source, texte de la source, météo
-	stroke('#E8E2D6');
+	stroke(C.piste);
 	strokeWeight(2);
 	line(x + 32, base.y + 276, x + base.l - 32, base.y + 276);
 	noStroke();
@@ -921,9 +928,9 @@ function dessinerDossier(d, meteo) {
 	} else if (Jeu.conseil) {
 		// Conseil contextuel (prompt 23 § 1) : une phrase factuelle, jamais l'action à choisir
 		textFont(POLICE_TEXTE);
-		textSize(17);
+		textSize(15);
 		fill(C.orange);
-		text(t('dossier.conseil', { conseil: Jeu.conseil(d) }), x + 32, base.y + base.h - 250, base.l - 64, 46);
+		text(t('dossier.conseil', { conseil: Jeu.conseil(d) }), x + 32, base.y + base.h - 252, base.l - 64, 48);
 	}
 	const bloquee = Jeu.actionBloquee ? Jeu.actionBloquee() : null;
 	actions.forEach(([touche, nom, cle], i) => {
@@ -1020,7 +1027,7 @@ function dessinerNarration() {
 
 	// Suite automatique, ou Entrée / clic
 	const tA = constrain((millis() - debutNarration) / DUREE_NARRATION, 0, 1);
-	fill('#E8E2D6');
+	fill(C.piste);
 	rect(z.x + 32, z.y + z.h - 140, z.l - 64, 6, 3);
 	fill(couleurTon);
 	rect(z.x + 32, z.y + z.h - 140, (z.l - 64) * tA, 6, 3);
@@ -1033,9 +1040,9 @@ function dessinerNarration() {
 // ——— Écran de fin (Q47–Q55) : 3 fins, bilan détaillé, décor selon la fin (Q53) ———
 // Le décor d'ambiance n'affiche aucune donnée : c'est une teinte, pas une météo réelle.
 const AMBIANCES = {
-	bonne: { fond: '#FBF5E4', meteo: { pluie_mm: 0, rafales_max: 0, temp_min: 18, temp_max: 26 }, titre: '#1E7A3C' },
-	moyenne: { fond: '#EDE7DA', meteo: { pluie_mm: 0.5, rafales_max: 10, temp_min: 10, temp_max: 15 }, titre: '#B45309' },
-	mauvaise: { fond: '#2B3440', meteo: { pluie_mm: 9, rafales_max: 60, temp_min: 6, temp_max: 9 }, titre: '#B3261E' },
+	bonne: { fond: '#0D0C0C', meteo: { pluie_mm: 0, rafales_max: 0, temp_min: 18, temp_max: 26 }, titre: '#00B74F' },
+	moyenne: { fond: '#0D0C0C', meteo: { pluie_mm: 0.5, rafales_max: 10, temp_min: 10, temp_max: 15 }, titre: '#FFC138' },
+	mauvaise: { fond: '#0D0C0C', meteo: { pluie_mm: 9, rafales_max: 60, temp_min: 6, temp_max: 9 }, titre: '#FFC5C2' },
 };
 let bilanCalcule = null;
 
@@ -1060,11 +1067,13 @@ function dessinerFin() {
 	fill(C.texte);
 	textFont(POLICE_TEXTE);
 	textStyle(BOLD);
-	textSize(52);
+	textSize(44);
+	textLeading(54);
 	text(b.titre, g.x + 48, g.y + 84, g.l - 96, 140);
 	textStyle(NORMAL);
-	textSize(26);
-	text(b.texte, g.x + 48, g.y + 240, g.l - 96, 170);
+	textSize(21);
+	textLeading(29);
+	text(b.texte, g.x + 48, g.y + 236, g.l - 96, 180);
 
 	// Jauges finales
 	const noms = [
@@ -1082,9 +1091,9 @@ function dessinerFin() {
 		textFont(POLICE_DONNEES);
 		textAlign(RIGHT, TOP);
 		text(v + ' / 100', g.x + g.l - 48, y);
-		fill('#E8E2D6');
+		fill(C.piste);
 		rect(g.x + 48, y + 34, g.l - 96, 18, 4);
-		fill(v < 20 ? C.rouge : v < 40 ? C.orange : C.vert);
+		fill(v < 20 ? C.rougeFonce : v < 40 ? C.orange : C.vert);
 		rect(g.x + 48, y + 34, ((g.l - 96) * v) / 100, 18, 4);
 	});
 	textAlign(LEFT, TOP);
@@ -1116,11 +1125,14 @@ function dessinerFin() {
 		text(t('fin.profil', { phrase: p.phrase }), g.x + 48, g.y + 784, g.l - 96, 30);
 		fill(C.gris);
 		textSize(17);
-		text(t('fin.profilDetail', { objectifs: p.objectifs, jour: p.meilleurJour, equipes: p.equipes, malus: p.malusFrequent }), g.x + 48, g.y + 816, g.l - 96, 60);
+		const det = t('fin.profilDetail', { objectifs: p.objectifs, jour: p.meilleurJour, equipes: p.equipes, malus: p.malusFrequent });
+		textSize(13);
+		textLeading(17);
+		text(det, g.x + 48, g.y + 808, g.l - 96, 36); // prompt 39 : deux lignes au plus, au-dessus des boutons
 	}
 	const bl = (g.l - 96 - 20) / 2;
-	bouton(g.x + 48, g.y + g.h - 112, bl, 72, t('fin.rejouer'), rejouer);
-	bouton(g.x + 68 + bl, g.y + g.h - 112, bl, 72, t('fin.changer'), retourAccueil, false, true);
+	bouton(g.x + 48, g.y + g.h - 92, bl, 64, t('fin.rejouer'), rejouer); // prompt 39 : abaissés sous le profil
+	bouton(g.x + 68 + bl, g.y + g.h - 92, bl, 64, t('fin.changer'), retourAccueil, false, true);
 
 	// Panneau droit : bilan chiffré — faits réels de la semaine (Q52) et décisions clés (Q37)
 	const d = { x: 1000, y: 70, l: 840, h: 940 };
@@ -1181,7 +1193,8 @@ function dessinerFin() {
 	textFont(POLICE_DONNEES);
 	textSize(15);
 	fill(C.gris);
-	text(t('fin.sources'), d.x + 48, d.y + d.h - 50, d.l - 96, 40);
+	textLeading(20);
+	text(t('fin.sources'), d.x + 48, d.y + d.h - 60, d.l - 96, 48);
 }
 
 function retourAccueil() {
@@ -1220,34 +1233,53 @@ function tracer(t) {
 	endShape();
 }
 
+/** Prompt 39 : taille de texte réduite (de tailleMax vers tailleMin) jusqu'à tenir dans « largeur » — police monospace plus large */
+function ajusterTaille(txt, largeur, tailleMax, tailleMin) {
+	textSize(tailleMax);
+	while (textSize() > (tailleMin || 12) && textWidth(String(txt)) > largeur) textSize(textSize() - 1);
+}
+
 function panneau(x, y, l, h, bordure) {
+	// Prompt 39 : container du Pixel DS — fond sombre, bordure blanc 15 % (ou accentuée), arrondi 0
 	noStroke();
-	fill(C.ombre);
-	rect(x + 3, y + 5, l, h, 12);
 	fill(C.panneau);
-	if (bordure) {
-		stroke(bordure);
-		strokeWeight(3);
-	}
-	rect(x, y, l, h, 12);
+	stroke(bordure || C.bord);
+	strokeWeight(2);
+	rect(x + 1, y + 1, l - 2, h - 2);
 	noStroke();
 }
 
 function bouton(x, y, l, h, label, action, desactive, secondaire) {
+	// Prompt 39 : boutons du Pixel DS — primaire (fond rouge, texte blanc), contour (bordure blanche),
+	// désactivé (fond blanc 15 %, texte blanc 50 %), arrondi 0, survol / focus en double bordure
 	const survol = !desactive && mouseX >= x && mouseX <= x + l && mouseY >= y && mouseY <= y + h;
 	noStroke();
-	if (secondaire) {
-		fill(C.panneau);
-		stroke(desactive ? C.gris : C.accent);
+	if (desactive) {
+		fill(255, 255, 255, 38);
+		rect(x, y, l, h);
+	} else if (secondaire) {
+		fill(survol ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.05)');
+		stroke('#FFFFFF');
 		strokeWeight(2);
-	} else fill(desactive ? C.gris : survol ? C.texte : C.accent);
-	rect(x, y, l, h, 10);
+		rect(x + 1, y + 1, l - 2, h - 2);
+	} else {
+		fill(C.primaire);
+		rect(x, y, l, h);
+	}
+	if (survol) {
+		noFill();
+		stroke(secondaire ? '#FFFFFF' : C.primaire);
+		strokeWeight(2);
+		rect(x - 5, y - 5, l + 10, h + 10);
+		stroke(C.fond);
+		rect(x - 2, y - 2, l + 4, h + 4);
+	}
 	noStroke();
-	fill(secondaire ? (desactive ? C.gris : C.accent) : C.panneau);
+	fill(desactive ? 'rgba(255,255,255,0.5)' : '#FFFFFF');
 	textFont(POLICE_TEXTE);
 	textStyle(BOLD);
-	textSize(Math.min(30, h * 0.36));
-	while (textSize() > 14 && textWidth(label) > l - 32) textSize(textSize() - 1); // le libellé tient dans le bouton
+	textSize(Math.min(28, h * 0.34));
+	while (textSize() > 13 && textWidth(label) > l - 28) textSize(textSize() - 1); // le libellé tient dans le bouton
 	textAlign(CENTER, CENTER);
 	text(label, x + l / 2, y + h / 2);
 	textStyle(NORMAL);
@@ -1453,7 +1485,7 @@ function touchStarted() {
 // =====================================================================
 function voile() {
 	noStroke();
-	fill(28, 39, 51, 150);
+	fill(13, 12, 12, 190); // prompt 39 : voile = fond du DS
 	rect(0, 0, L, H);
 }
 
@@ -1518,10 +1550,11 @@ function fenetreAide() {
 	text(t('aide.raccourcis'), x + 48, y + 110);
 	raccourcis.forEach(([k, d], i) => {
 		textFont(POLICE_DONNEES);
-		textSize(20);
+		ajusterTaille(k, 172, 20);
 		fill(C.accent);
 		text(k, x + 48, y + 150 + i * 28);
 		textFont(POLICE_TEXTE);
+		ajusterTaille(d, 470, 20);
 		fill(C.texte);
 		text(d, x + 230, y + 150 + i * 28);
 	});
@@ -1570,7 +1603,7 @@ function fenetreReset() {
 	textSize(40);
 	text(t('reset.titre'), L / 2, y + 48);
 	textStyle(NORMAL);
-	textSize(22);
+	ajusterTaille(t('reset.texte'), l - 80, 22);
 	fill(C.gris);
 	text(t('reset.texte'), L / 2, y + 110);
 	bouton(x + 48, y + h - 112, (l - 112) / 2, 72, t('reset.oui'), confirmerReset);
@@ -1613,7 +1646,7 @@ function fenetreParametres() {
 	lignes.forEach(([k, lib, nom], i) => {
 		const ly = y + 120 + i * 96;
 		textFont(POLICE_TEXTE);
-		textSize(26);
+		ajusterTaille(lib, 490, 26);
 		fill(C.texte);
 		textAlign(LEFT, CENTER);
 		text(lib, x + 48, ly + 36);
