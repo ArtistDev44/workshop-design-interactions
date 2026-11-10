@@ -837,7 +837,7 @@ function composerVue() {
 	drawingContext.imageSmoothingEnabled = false;
 	const ox = r.x - e.x * echelle;
 	const oy = r.y - e.y * echelle;
-	const flou = (tempsCompresse() && vue === 'bureau') || auPoste;
+	const flou = auPoste; // la pièce n'est floutée qu'au poste (derrière le moniteur) ; plus de flou au bureau en temps accéléré
 	if (flou && !reduireAnimations) drawingContext.filter = auPoste ? 'blur(2px) brightness(0.85)' : 'blur(1.5px)';
 	if (auPoste || !COUCHES_PIECE[0].g) {
 		push();
