@@ -66,6 +66,11 @@ jamais l'inverse.
 | 25 | `25-jeu-vue-3d-environnement-pc.md` | Jeu, étape 12 : vue 3D / environnement PC — léger dézoom (fond visible autour de l'écran du PC), caméra fausse 3D façon FNAF (souris hors cadre / flèches directionnelles, mouvement subtil, recentrage au centre) |
 | 26 | `26-jeu-sortie-mode-pc.md` | Jeu, étape 13 : sortie du mode PC — bouton « Quitter le PC » au poste, scroll au poste, porte d'entrée/sortie cliquable au bureau (Échap conservé) |
 | 27 | `27-jeu-loading-screen.md` | Jeu, étape 14 : écran de chargement statique (fond bleu + logo, anti-flash clair→sombre) + musique de fond générée en WebAudio dès le menu |
+| 28 | `28-jeu-dialogues-nantais-messages-json.md` | Jeu, étape 15 : dialogues des Nantais (plaintes cohérentes + bonnes réponses possibles) stockés dans un `data/messages.json` brut modifiable, contenu généré depuis ce fichier, rien de figé dans le code |
+| 29 | `29-jeu-interactions-hors-ecran.md` | Jeu, étape 16 : interactions hors écran, dans la pièce autour du PC (lampe, fenêtre/rideau, autres objets cliquables en vue bureau) |
+| 30 | `30-jeu-bandes-sonores-ambiance.md` | Jeu, étape 17 : bandes sonores au-delà des voix de trame — ambiances contextuelles (pluie, ville, nuit) et alertes sonores, 100 % WebAudio généré par le code |
+| 31 | `31-jeu-bureau-cadrage-chaise.md` | Jeu, étape 18 : cadrage du bureau « sur la chaise » (vue centrée, chaise non visible), horloge déplacée du rideau vers le mur, lampadaire revu, arbres OK |
+| 32 | `32-jeu-bureau-style-epure.md` | Jeu, étape 19 : direction moderne et épurée de la pièce — murs blancs, moins de bois, beaucoup de blanc (écran du jeu inchangé) |
 
 Les prompts 14–19 (jeu p5.js) sont indépendants du site : ils peuvent être menés en
 parallèle dès le prompt 03, l'œuvre étant ensuite reliée au site par sa fiche du
