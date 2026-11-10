@@ -100,18 +100,28 @@ function texteMeilleur(cle) {
 }
 
 function draw() {
+	avancerTemps(); // horloge simulée, sieste, arrivée des incidents, fin de journée (immersion.js)
 	boutons = [];
 	background(C.fond);
 	if (ecran === 'accueil') dessinerAccueil();
 	else dessinerJeu();
 	if (enPause) dessinerPause();
+	// Vue d'entrée : le bureau pixel art, avec le jeu en direct dans l'écran du PC
+	if (vue !== 'poste') dessinerVueBureau();
+	else dessinerCadrePoste();
+	if (phase === 'reveil' && reveil && ecran === 'jeu' && !smsActif) {
+		boutons = [];
+		dessinerReveil();
+	}
 	if (fenetre) {
 		boutons = []; // seule la fenêtre ouverte est cliquable
 		dessinerFenetre();
 	}
-	// Vue d'entrée : le bureau pixel art, avec le jeu en direct dans l'écran du PC
-	if (vue !== 'poste') dessinerVueBureau();
-	else if (!fenetre) dessinerCadrePoste();
+	if (smsActif) {
+		boutons = [];
+		dessinerSMS();
+	}
+	dessinerClignement(); // prompt 21 § 2 : par-dessus tout, purement visuel (n'intercepte aucune entrée)
 }
 
 // =====================================================================
@@ -185,9 +195,8 @@ function lancerPartie() {
 	Confort.Son.bip('choix');
 	p.then(() => {
 		Jeu.nouvellePartie();
-		ecran = 'jeu';
-		enPause = false;
-		nouveauDossier();
+		demarrerJournee(); // journée 1, 6h00, en attente du premier incident
+		if (!introVue) lancerIntroSMS(); // § 2 : une seule fois, pas sur « Rejouer »
 	});
 }
 
@@ -196,12 +205,7 @@ function nouveauDossier() {
 	debutCompteur = millis();
 	sourceChoisie = null;
 	alerteTempsJouee = false;
-	if (Jeu.terminee) {
-		phase = 'fin';
-		bilanFin = Confort.Bilans.enregistrer(Confort.Bilans.cle(Jeu.etat), Jeu.score(), Jeu.jauges); // Q19
-		Confort.Son.bip('fin');
-		return;
-	}
+	if (!Jeu.dossierCourant()) return apresDecision();
 	Confort.Son.bip('dossier');
 	if (Jeu.conflit()) phase = 'conflit';
 	else if (Jeu.dossierCourant().contradiction) phase = 'contradiction';
@@ -219,7 +223,7 @@ function decider(action) {
 }
 
 function continuer() {
-	if (phase === 'narration' && !enPause) nouveauDossier();
+	if (phase === 'narration' && !enPause) apresDecision(); // retour à la surveillance (immersion.js)
 }
 
 // ——— Pause (Q13) : uniquement entre deux dossiers, c'est-à-dire pendant la narration ———
@@ -264,6 +268,7 @@ function dossierCourant() {
 
 function dessinerJeu() {
 	if (phase === 'fin') return dessinerFin();
+	if (phase === 'attente' || phase === 'reveil' || phase === 'mail') return dessinerJeuAttente();
 	const d = dossierCourant();
 	const meteo = d ? Jeu.meteoDuJour(d.date) : null;
 
@@ -316,10 +321,38 @@ function dessinerJeu() {
 	else dessinerDossier(d, meteo);
 }
 
+/* Écran de jeu sans incident actif : carte + liste, horloge simulée à droite ; mail en fin de journée */
+function dessinerJeuAttente() {
+	const j = Jeu.jourCourant();
+	const meteo = j ? Jeu.meteoDuJour(j.date) : null;
+	panneau(GAUCHE.x, GAUCHE.y, GAUCHE.l, GAUCHE.h);
+	textAlign(LEFT, TOP);
+	noStroke();
+	fill(C.accent);
+	textFont(POLICE_TEXTE);
+	textStyle(BOLD);
+	textSize(30);
+	text('Réseau Naolib', GAUCHE.x + 24, GAUCHE.y + 22);
+	textStyle(NORMAL);
+	textFont(POLICE_DONNEES);
+	textSize(20);
+	fill(C.gris);
+	text(enteteMode(), GAUCHE.x + 260, GAUCHE.y + 30);
+	dessinerDecor(CARTE, meteo, 1, true);
+	dessinerLignesEtat(CARTE, null);
+	dessinerListeLignes(LISTE, null);
+	dessinerJauges();
+	dessinerAttente();
+	if (phase === 'mail') dessinerMail();
+}
+
 function enteteMode() {
 	const e = Jeu.etat;
 	if (e.mode === 'direct') return 'temps réel · ' + new Date(e.horodatage).toLocaleString('fr-FR');
-	if (e.semaine) return 'semaine du ' + dateLongue(e.semaine.lundi) + (e.semaine.difficulte ? ' · ' + e.semaine.difficulte.niveau : '');
+	const h = heureAffichee();
+	const horloge = Jeu.jourCourant() ? ' · ' + dateLongue(Jeu.jourCourant().date) + ' · ' + String(h.h).padStart(2, '0') + ':' + String(h.m).padStart(2, '0') : '';
+	if (e.semaine) return (e.semaine.difficulte ? e.semaine.difficulte.niveau : 'semaine') + horloge;
+	if (e.mode === 'hors ligne') return 'hors ligne' + horloge;
 	return '';
 }
 
@@ -950,7 +983,7 @@ function rejouer() {
 	const p = e.mode === 'semaine' ? Jeu.chargerSemaine(e.semaine.lundi) : e.mode === 'direct' ? Jeu.chargerDirect() : Jeu.chargerHorsLigne();
 	p.then(() => {
 		Jeu.nouvellePartie();
-		nouveauDossier();
+		demarrerJournee(); // pas d'intro SMS sur « Rejouer » (§ 2)
 	});
 }
 
@@ -1027,6 +1060,7 @@ function dateLongue(iso) {
 // =====================================================================
 function mousePressed() {
 	Confort.Son.demarrer();
+	interaction();
 	for (let i = boutons.length - 1; i >= 0; i--) {
 		const b = boutons[i];
 		if (mouseX >= b.x && mouseX <= b.x + b.l && mouseY >= b.y && mouseY <= b.y + b.h) {
@@ -1042,17 +1076,21 @@ function basculerSon() {
 
 function keyPressed() {
 	Confort.Son.demarrer(); // l'audio ne peut démarrer qu'après un geste du joueur
-	// Au bureau : Entrée / Espace pour s'installer au poste ; M (son) et H (aide) restent actifs
-	if (vue !== 'poste') {
-		if (vue === 'bureau' && (keyCode === ENTER || keyCode === RETURN || key === ' ')) sAsseoir();
-		if (key === 'm' || key === 'M') basculerSon();
+	interaction();
+	// Intro SMS (§ 2) : clic / Entrée pour avancer
+	if (smsActif) {
+		if (keyCode === ENTER || keyCode === RETURN || key === ' ') smsIndex === SMS.length - 1 ? terminerIntro() : smsSuivant();
 		return false;
 	}
-	// Au poste : Échap fait se lever (sauf si une fenêtre est ouverte ou à l'écran de fin)
-	if (keyCode === ESCAPE && !fenetre && !(ecran === 'jeu' && phase === 'fin')) return seLever(), false;
+	// Réveil (§ 4) : barre d'espace
+	if (phase === 'reveil' && reveil) {
+		if (key === ' ' || keyCode === ENTER || keyCode === RETURN) seReveiller();
+		return false;
+	}
 	// Fenêtres ouvertes : elles captent le clavier
 	if (fenetre) {
-		if (keyCode === ESCAPE || (fenetre === 'aide' && (key === 'h' || key === 'H' || key === '?'))) return fermer();
+		if (keyCode === ESCAPE || (fenetre === 'aide' && (key === 'h' || key === 'H' || key === '?'))) return fermer(), false;
+		if (fenetre === 'menu' && (keyCode === ENTER || keyCode === RETURN)) return fermer(), false;
 		if (fenetre === 'reset') {
 			if (keyCode === ENTER || keyCode === RETURN || key === 'o' || key === 'O') confirmerReset();
 			if (key === 'n' || key === 'N') fermer();
@@ -1064,6 +1102,22 @@ function keyPressed() {
 		}
 		return false;
 	}
+	// Au bureau (§ 1, § 7) : Échap = menu ; Tab = objets (écran, livres) ; Entrée = ouvrir / s'installer
+	if (vue !== 'poste') {
+		if (vue !== 'bureau') return false;
+		if (keyCode === ESCAPE) return ouvrir('menu'), false;
+		if (keyCode === TAB) {
+			focusBureau = (focusBureau + (keyIsDown(SHIFT) ? OBJETS_BUREAU.length - 1 : 1)) % OBJETS_BUREAU.length;
+			return false;
+		}
+		if (keyCode === ENTER || keyCode === RETURN || key === ' ') ouvrirObjetBureau(focusBureau > 0 ? OBJETS_BUREAU[focusBureau].nom : 'ecran');
+		if (key === 'm' || key === 'M') basculerSon();
+		if (key === 'h' || key === 'H' || key === '?') ouvrir('aide');
+		return false;
+	}
+	// Au poste : Échap fait se lever (sauf à l'écran de fin)
+	if (keyCode === ESCAPE && !(ecran === 'jeu' && phase === 'fin')) return seLever(), false;
+	if (phase === 'mail' && (keyCode === ENTER || keyCode === RETURN)) return journeeSuivante(), false;
 	// Touches valables partout
 	if (key === 'h' || key === 'H' || key === '?') return ouvrir('aide'), false;
 	if (key === 'm' || key === 'M') return basculerSon(), false;
@@ -1130,6 +1184,8 @@ function dessinerFenetre() {
 	if (fenetre === 'aide') return fenetreAide();
 	if (fenetre === 'reset') return fenetreReset();
 	if (fenetre === 'parametres') return fenetreParametres();
+	if (fenetre === 'menu') return fenetreMenu();
+	if (fenetre === 'livre-stress') return fenetreLivreStress();
 }
 
 function fenetreAide() {

@@ -14,8 +14,12 @@
 const PIX = 4; // taille d'un « pixel » du décor
 const BW = L / PIX; // 480
 const BH = H / PIX; // 270
-// Écran du PC en coordonnées pixel art (144×81 = 16:9), soit 576×324 à l'écran ; centre x ≈ 1112 (> 960 : à droite)
-const ECRAN_PC = { x: 206, y: 66, l: 144, h: 81 };
+// Écran du PC en coordonnées pixel art (144×81 = 16:9), soit 576×324 à l'écran.
+// Prompt 21 § 1.1 : écran CENTRÉ horizontalement — son centre coïncide avec le centre de la page,
+// quelle que soit la largeur de la fenêtre (le canevas 16:9 est lui-même centré par style.css).
+const LARGEUR_ECRAN_PC = 144;
+const HORLOGE_X = 336;
+const ECRAN_PC = { x: (BW - LARGEUR_ECRAN_PC) / 2, y: 66, l: LARGEUR_ECRAN_PC, h: 81 };
 
 let vue = 'bureau'; // 'bureau' | 'zoom-avant' | 'poste' | 'zoom-arriere'
 let debutZoom = 0;
@@ -141,7 +145,52 @@ function dessinerPieceBureau() {
 	dessinerDossiers(g);
 	dessinerPC(g);
 	dessinerTasseTelephone(g);
+	dessinerLivres(g);
 	dessinerLumiere(g);
+	dessinerPersonnageSieste(g);
+	dessinerVignettage(g);
+}
+
+/* Prompt 21 § 1.2 — vignettage « flou » en pixel art : trames sombres de plus en plus denses vers les
+ * bords (bande de 40 px logiques, espacement 4 → 1 px, alpha croissant), sans jamais toucher l'écran
+ * du PC (marge de 5 px logiques ≈ 20 px), les livres ni la plaque. Statique : rien à couper pour
+ * prefers-reduced-motion. Aucun filtre GPU. */
+const ZONES_NETTES = () => [
+	{ x: ECRAN_PC.x - 13, y: ECRAN_PC.y - 13, l: ECRAN_PC.l + 26, h: ECRAN_PC.h + 32 }, // écran du PC + coque
+	{ x: 42, y: 144, l: 50, h: 26 }, // livres ressources
+];
+let gVignette = null; // calculé une seule fois (motif statique), puis superposé : coût quasi nul
+function dessinerVignettage(gCible) {
+	if (gVignette) return gCible.image(gVignette, 0, 0);
+	gVignette = createGraphics(BW, BH);
+	gVignette.pixelDensity(1);
+	gVignette.noSmooth();
+	const g = gVignette;
+	const bande = 40;
+	const paliers = [
+		{ de: 30, pas: 4, alpha: 38 }, // ≈ 0,15
+		{ de: 20, pas: 3, alpha: 64 },
+		{ de: 10, pas: 2, alpha: 102 },
+		{ de: 0, pas: 1, alpha: 140 }, // ≈ 0,55
+	];
+	const nettes = ZONES_NETTES();
+	const dansNette = (x, y) => nettes.some((z) => x >= z.x && x < z.x + z.l && y >= z.y && y < z.y + z.h);
+	g.noStroke();
+	for (let y = 0; y < BH; y++) {
+		for (let x = 0; x < BW; x++) {
+			const d = Math.min(x, y, BW - 1 - x, BH - 1 - y); // distance au bord le plus proche
+			if (d >= bande) {
+				x = BW - bande - 1; // saute le centre de la ligne
+				continue;
+			}
+			const p = paliers.find((pl) => d >= pl.de);
+			if ((x + y * 2) % p.pas !== 0 || (y % p.pas !== 0 && p.pas > 2)) continue;
+			if (dansNette(x, y)) continue;
+			g.fill(43, 29, 24, p.alpha); // #2b1d18
+			g.rect(x, y, 1, 1);
+		}
+	}
+	gCible.image(gVignette, 0, 0);
 }
 
 function dessinerMur(g) {
@@ -169,7 +218,7 @@ function dessinerFenetre(g) {
 	const y = 12;
 	const l = 132;
 	const h = 92;
-	const heure = new Date().getHours();
+	const heure = heureAffichee().h; // heure simulée pendant une partie (prompt 20)
 	const nuit = heure < 7 || heure >= 20;
 	const m = Jeu.meteoActuelle;
 	const pluie = m && m.pluie_mm >= 1;
@@ -223,7 +272,7 @@ function dessinerFenetre(g) {
 }
 
 function dessinerPanneauMural(g) {
-	const x = 214;
+	const x = BW / 2 - 64; // plaque centrée au-dessus du PC
 	const y = 14;
 	boite(g, x, y, 128, 22, P.panneau, '#1d5f6e', '#082a32');
 	px(g, '#174f5c', x + 3, y + 3, 122, 16);
@@ -234,7 +283,7 @@ function dessinerPanneauMural(g) {
 }
 
 function dessinerHorloge(g) {
-	const cx = 172;
+	const cx = HORLOGE_X; // à droite de la plaque (le PC centré occupe le milieu)
 	const cy = 34;
 	disque(g, cx, cy + 1, 14, P.contour);
 	disque(g, cx, cy, 13, P.boisSombre);
@@ -244,7 +293,8 @@ function dessinerHorloge(g) {
 		const a = (i / 12) * Math.PI * 2;
 		px(g, P.contour, cx + Math.round(Math.sin(a) * 9), cy - Math.round(Math.cos(a) * 9), 1, 1);
 	}
-	const d = new Date(); // heure réelle
+	const hA = heureAffichee(); // heure simulée pendant une partie, sinon heure réelle
+	const d = { getHours: () => hA.h, getMinutes: () => hA.m };
 	const aiguille = (frac, long, c) => {
 		const a = frac * Math.PI * 2;
 		for (let r = 0; r <= long; r++) px(g, c, cx + Math.round(Math.sin(a) * r), cy - Math.round(Math.cos(a) * r), 1, 1);
@@ -362,21 +412,22 @@ function dessinerLampe(g) {
 
 function dessinerDossiers(g) {
 	// Pile de chemises cartonnées (dossiers de la semaine) + tampon encreur
-	ombreTramee(g, 92, 172, 76, 6, 100);
+	// (pile resserrée à gauche du PC centré ; tampon déplacé à droite de la souris)
+	ombreTramee(g, 92, 172, 60, 6, 100);
 	for (let i = 0; i < 6; i++) {
 		const y = 166 - i * 4;
 		const dx = (i % 2) * 2 - 1;
-		boite(g, 92 + dx, y, 70, 3, i % 2 ? P.chemise : '#e2b862', '#f0cd7f', P.chemiseSombre);
-		px(g, P.papier, 96 + dx, y - 1, 60, 1); // feuilles qui dépassent
+		boite(g, 92 + dx, y, 56, 3, i % 2 ? P.chemise : '#e2b862', '#f0cd7f', P.chemiseSombre);
+		px(g, P.papier, 96 + dx, y - 1, 46, 1); // feuilles qui dépassent
 	}
-	boite(g, 98, 140, 56, 3, P.papier, P.plastiqueClair, P.papierOmbre);
+	boite(g, 98, 140, 44, 3, P.papier, P.plastiqueClair, P.papierOmbre);
 	// Étiquette rouge sur le dessus
-	px(g, P.rouge, 140, 141, 10, 2);
+	px(g, P.rouge, 128, 141, 10, 2);
 	// Tampon encreur
-	ombreTramee(g, 172, 172, 18, 4, 100);
-	boite(g, 172, 164, 16, 7, P.rouge, '#d4463c', P.rougeSombre);
-	boite(g, 177, 152, 6, 12, P.boisMoyen, P.bois, P.boisSombre);
-	disque(g, 180, 150, 3, P.boisSombre);
+	ombreTramee(g, 336, 172, 18, 4, 100);
+	boite(g, 336, 164, 16, 7, P.rouge, '#d4463c', P.rougeSombre);
+	boite(g, 341, 152, 6, 12, P.boisMoyen, P.bois, P.boisSombre);
+	disque(g, 344, 150, 3, P.boisSombre);
 }
 
 function dessinerPC(g) {
@@ -469,7 +520,10 @@ function dessinerVueBureau() {
 		dernierRenduBureau = millis();
 	}
 	drawingContext.imageSmoothingEnabled = false;
+	const flou = tempsCompresse() && !reduireAnimations && vue === 'bureau';
+	if (flou) drawingContext.filter = 'blur(1.5px)'; // § 3 : léger flou quand le temps est accéléré
 	image(gBureau, 0, 0, L, H);
+	drawingContext.filter = 'none';
 
 	const e = rectEcranPC();
 	let t = zoom ? constrain((millis() - debutZoom) / DUREE_ZOOM, 0, 1) : 0;
@@ -506,8 +560,28 @@ function dessinerVueBureau() {
 			noStroke();
 		}
 		boutons.push({ x: e.x, y: e.y, l: e.l, h: e.h, action: sAsseoir });
+		zonesObjetsBureau(); // livres cliquables + focus clavier (immersion.js)
+		// § 5 : incident important → bordure rouge pulsante autour du moniteur
+		if (incidentImportant()) bordureRouge(e.x - 10 * PIX, e.y - 10 * PIX, e.l + 20 * PIX, e.h + 22 * PIX, 3 * PIX);
+		// Horloge numérique sous la pendule pendant une partie (chiffres qui défilent vite en temps accéléré)
+		if (ecran === 'jeu' && phase !== 'fin') {
+			const hA = heureAffichee();
+			textFont(POLICE_DONNEES);
+			textSize(26);
+			const lib = String(hA.h).padStart(2, '0') + ':' + String(hA.m).padStart(2, '0') + (tempsCompresse() ? '  ▶▶ ×' + IMMERSION.compression : '');
+			const lh = textWidth(lib) + 28;
+			fill(28, 39, 51, 220);
+			rect(HORLOGE_X * PIX - lh / 2, 52 * PIX, lh, 40, 6);
+			fill('#FFFDF7');
+			textAlign(CENTER, CENTER);
+			text(lib, HORLOGE_X * PIX, 52 * PIX + 20);
+		}
 		// Invitation (texte d'interface, sur bandeau, lisible)
-		const msg = 'Cliquez sur l’écran ou appuyez sur Entrée pour vous installer au poste';
+		const msg = incidentActif()
+			? 'Incident en cours : cliquez sur l’écran du PC (Entrée) pour le traiter'
+			: phase === 'mail'
+				? 'Un nouveau mail est arrivé sur le PC : cliquez sur l’écran (Entrée)'
+				: 'Cliquez sur l’écran ou Entrée pour vous installer · Tab : objets · Échap : menu';
 		textFont(POLICE_DONNEES);
 		textSize(22);
 		const lm = textWidth(msg) + 40;
@@ -536,19 +610,75 @@ function dessinerCadrePoste() {
 	fill(P.metal);
 	textAlign(RIGHT, CENTER);
 	text('Échap : se lever', L - 28, H - 8);
+	if (incidentImportant()) bordureRouge(4, 4, L - 8, H - 8, 8); // § 5 : visible aussi en plein écran
+}
+
+// ——— Prompt 21 § 2 : clignement d'œil sur les transitions bureau ↔ écran ———
+// Paupières : fermeture ~150 ms puis ouverture ~200 ms, superposées au zoom (qui n'est pas allongé).
+// Animations réduites : simple fondu au noir de 150 ms (0 → 1 → 0), sans paupières.
+const CLIGNEMENT = { fermeture: 150, ouverture: 200, fondu: 150 };
+let clignement = null; // { debut, sens: 'avant' | 'arriere', bascule: bool }
+
+function opaciteClignement() {
+	if (!clignement) return 0;
+	const t = millis() - clignement.debut;
+	if (t < 0) return 0;
+	if (reduireAnimations) {
+		const m = CLIGNEMENT.fondu / 2;
+		return t < m ? t / m : t < CLIGNEMENT.fondu ? 1 - (t - m) / m : 0;
+	}
+	if (t < CLIGNEMENT.fermeture) return t / CLIGNEMENT.fermeture;
+	const u = t - CLIGNEMENT.fermeture;
+	return u < CLIGNEMENT.ouverture ? 1 - u / CLIGNEMENT.ouverture : 0;
+}
+
+/** Appelé à la fin de draw() : fait avancer la séquence et dessine les paupières (ou le fondu). */
+function dessinerClignement() {
+	if (!clignement) return;
+	const t = millis() - clignement.debut;
+	const milieu = reduireAnimations ? CLIGNEMENT.fondu / 2 : CLIGNEMENT.fermeture;
+	// En se levant : on ferme les yeux au poste, puis la caméra recule pendant l'ouverture
+	if (clignement.sens === 'arriere' && !clignement.bascule && t >= milieu) {
+		clignement.bascule = true;
+		vue = 'zoom-arriere';
+		debutZoom = millis();
+	}
+	const k = opaciteClignement();
+	if (k > 0) {
+		noStroke();
+		if (reduireAnimations) {
+			fill(10, 8, 7, 255 * k);
+			rect(0, 0, L, H);
+		} else {
+			// Deux paupières en bandes pixelisées (pas de 8 px) qui se rejoignent au milieu
+			const h = Math.ceil(((H / 2) * k) / 8) * 8;
+			fill('#120c0a');
+			rect(0, 0, L, h);
+			rect(0, H - h, L, h);
+			fill('#3a2a22'); // bord de paupière, un ton plus clair
+			if (h > 0 && h < H / 2) {
+				rect(0, h - 8, L, 8);
+				rect(0, H - h, L, 8);
+			}
+		}
+	}
+	const fin = reduireAnimations ? CLIGNEMENT.fondu : CLIGNEMENT.fermeture + CLIGNEMENT.ouverture;
+	if (t >= fin && (clignement.sens === 'avant' || clignement.bascule)) clignement = null;
 }
 
 function sAsseoir() {
 	if (vue !== 'bureau') return;
 	vue = 'zoom-avant';
 	debutZoom = millis();
+	// Les yeux se ferment à la fin du zoom (au moment de « plonger » dans l'écran) puis se rouvrent au poste
+	const dureeZoom = reduireAnimations ? 0 : DUREE_ZOOM;
+	clignement = { debut: millis() + dureeZoom - (reduireAnimations ? CLIGNEMENT.fondu / 2 : CLIGNEMENT.fermeture), sens: 'avant', bascule: true };
 	Confort.Son.demarrer();
 	Confort.Son.bip('choix');
 }
 
 function seLever() {
-	if (vue !== 'poste') return;
-	vue = 'zoom-arriere';
-	debutZoom = millis();
+	if (vue !== 'poste' || clignement) return;
+	clignement = { debut: millis(), sens: 'arriere', bascule: false }; // la vue bascule à mi-clignement
 	Confort.Son.bip('choix');
 }
