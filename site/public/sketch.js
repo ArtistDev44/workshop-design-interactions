@@ -64,6 +64,7 @@ let projection = null;
 let gouttes = [];
 
 function setup() {
+	Langue.detecter(); // prompt 24 : ?lang= → localStorage → navigateur → fr
 	const c = createCanvas(L, H);
 	c.parent('scene');
 	pixelDensity(1);
@@ -80,15 +81,15 @@ function optionsAccueil() {
 	const opts = Jeu.semainesProposees().map((s) => ({
 		type: 'semaine',
 		lundi: s.lundi,
-		titre: 'Semaine du ' + dateLongue(s.lundi) + ' au ' + dateLongue(s.dimanche),
-		detail: s.niveau + ' · compteur ' + s.compteur_s + ' s',
-		info: s.dossiers + ' dossier(s) d’archive · ' + s.evenements + ' événement(s) agenda' + texteMeilleur(s.lundi),
+		titre: T('accueil.semaine', { debut: { toString: () => dateLongue(s.lundi) }, fin: { toString: () => dateLongue(s.dimanche) } }),
+		detail: T('accueil.detail', { niveau: T('niveau.' + s.niveau), s: s.compteur_s }),
+		info: T('accueil.info', { d: s.dossiers, e: s.evenements, meilleur: texteMeilleur(s.lundi) }),
 	}));
 	opts.push({
 		type: 'direct',
-		titre: 'Aujourd’hui, en temps réel',
-		detail: Jeu.enLigne === false ? 'indisponible hors ligne' : 'flux GTFS-RT Naolib',
-		info: 'Retards réels ≥ 10 min mesurés maintenant' + texteMeilleur('direct'),
+		titre: T('accueil.direct.titre'),
+		detail: T(Jeu.enLigne === false ? 'accueil.direct.indispo' : 'accueil.direct.flux'),
+		info: T('accueil.direct.info', { meilleur: texteMeilleur('direct') }),
 		desactive: Jeu.enLigne === false,
 	});
 	return opts;
@@ -96,7 +97,7 @@ function optionsAccueil() {
 
 function texteMeilleur(cle) {
 	const m = Confort.Bilans.meilleur(cle);
-	return m ? ' · meilleur bilan : ' + m.score + ' / 300' : '';
+	return m ? t('accueil.meilleur', { score: m.score }) : '';
 }
 
 function draw() {
@@ -144,11 +145,11 @@ function dessinerAccueil() {
 	textStyle(BOLD);
 	textAlign(CENTER, TOP);
 	textSize(88);
-	text('Nantes en régulation', L / 2, 90);
+	text(t('accueil.titre'), L / 2, 90);
 	textStyle(NORMAL);
 	textSize(28);
 	fill(C.accent);
-	text('Salle de contrôle des transports nantais — rejouez une semaine réelle du réseau', L / 2, 200);
+	text(t('accueil.sousTitre'), L / 2, 200);
 
 	// Liste des semaines
 	const opts = optionsAccueil();
@@ -179,19 +180,20 @@ function dessinerAccueil() {
 
 	// Bouton Jouer
 	const bl = 320;
-	bouton((L - bl) / 2, y + 24, bl, 76, 'Jouer', lancerPartie, opts[choixAccueil] && opts[choixAccueil].desactive);
-	bouton((L - bl) / 2 - 260, y + 34, 220, 56, 'Paramètres', () => ouvrir('parametres'), false, true);
-	bouton((L + bl) / 2 + 40, y + 34, 220, 56, 'Aide (H)', () => ouvrir('aide'), false, true);
+	bouton((L - bl) / 2, y + 24, bl, 76, t('accueil.jouer'), lancerPartie, opts[choixAccueil] && opts[choixAccueil].desactive);
+	bouton((L - bl) / 2 - 260, y + 34, 220, 56, t('accueil.parametres'), () => ouvrir('parametres'), false, true);
+	selecteurLangue(L - 80, 40);
+	bouton((L + bl) / 2 + 40, y + 34, 220, 56, t('accueil.aide'), () => ouvrir('aide'), false, true);
 
 	// Indicateur « mode hors ligne » (Q34) : discret, gris, monospace
 	textFont(POLICE_DONNEES);
 	textSize(20);
 	textAlign(CENTER, BOTTOM);
 	fill(C.gris);
-	const statut = Jeu.enLigne === null ? 'vérification de la connexion…' : Jeu.enLigne ? '' : Confort.Reglages.horsLigneForce ? 'mode hors ligne (forcé dans les paramètres)' : 'mode hors ligne — semaines enregistrées disponibles';
+	const statut = Jeu.enLigne === null ? t('accueil.verif') : Jeu.enLigne ? '' : t(Confort.Reglages.horsLigneForce ? 'accueil.horsLigneForce' : 'accueil.horsLigne');
 	text(statut, L / 2, H - 70);
 	textSize(16);
-	text('↑ ↓ choisir · Entrée jouer · H aide · M son — sources : Open Data Nantes Métropole, Open-Meteo', L / 2, H - 36);
+	text(t('accueil.pied'), L / 2, H - 36);
 }
 
 function lancerPartie() {
@@ -227,6 +229,7 @@ function decider(action) {
 	if (Jeu.actionBloquee && action === Jeu.actionBloquee()) return; // erreur système : action indisponible
 	dernierResultat = Jeu.decider(action, sourceChoisie);
 	if (!dernierResultat) return;
+	annoncer(t('annonce.decision', { titre: dernierResultat.narration.titre, texte: dernierResultat.narration.texte }));
 	Confort.Son.bip(action === 'temps' ? 'alerte' : 'action');
 	phase = 'narration';
 	debutNarration = millis();
@@ -290,7 +293,7 @@ function dessinerJeu() {
 	textFont(POLICE_TEXTE);
 	textStyle(BOLD);
 	textSize(30);
-	text('Réseau Naolib', GAUCHE.x + 24, GAUCHE.y + 22);
+	text(t('jeu.reseau'), GAUCHE.x + 24, GAUCHE.y + 22);
 	textStyle(NORMAL);
 	textFont(POLICE_DONNEES);
 	textSize(20);
@@ -299,9 +302,9 @@ function dessinerJeu() {
 	// Barre d'outils (souris / touch) — équivalents des touches H, M, R
 	const bx = GAUCHE.x + GAUCHE.l - 24;
 	const outils = [
-		['Recommencer (R)', () => ouvrir('reset')],
-		['Son (M) : ' + (Confort.Reglages.son ? 'oui' : 'non'), basculerSon],
-		['Aide (H)', () => ouvrir('aide')],
+		[t('jeu.recommencer'), () => ouvrir('reset')],
+		[t('jeu.son', { etat: t(Confort.Reglages.son ? 'commun.oui' : 'commun.non') }), basculerSon],
+		[t('accueil.aide'), () => ouvrir('aide')],
 	];
 	let ox = bx;
 	textFont(POLICE_TEXTE);
@@ -317,7 +320,7 @@ function dessinerJeu() {
 		textSize(18);
 		fill(C.gris);
 		textAlign(RIGHT, TOP);
-		text('mode hors ligne', ox - 10, GAUCHE.y + 30);
+		text(t('jeu.horsLigne'), ox - 10, GAUCHE.y + 30);
 	}
 
 	dessinerDecor(CARTE, meteo, 1, true);
@@ -342,7 +345,7 @@ function dessinerJeuAttente() {
 	textFont(POLICE_TEXTE);
 	textStyle(BOLD);
 	textSize(30);
-	text('Réseau Naolib', GAUCHE.x + 24, GAUCHE.y + 22);
+	text(t('jeu.reseau'), GAUCHE.x + 24, GAUCHE.y + 22);
 	textStyle(NORMAL);
 	textFont(POLICE_DONNEES);
 	textSize(20);
@@ -358,11 +361,11 @@ function dessinerJeuAttente() {
 
 function enteteMode() {
 	const e = Jeu.etat;
-	if (e.mode === 'direct') return 'temps réel · ' + new Date(e.horodatage).toLocaleString('fr-FR');
+	if (e.mode === 'direct') return t('mode.direct', { date: new Date(e.horodatage).toLocaleString(localeActive()) });
 	const h = heureAffichee();
 	const horloge = Jeu.jourCourant() ? ' · ' + dateLongue(Jeu.jourCourant().date) + ' · ' + String(h.h).padStart(2, '0') + ':' + String(h.m).padStart(2, '0') : '';
-	if (e.semaine) return (e.semaine.difficulte ? e.semaine.difficulte.niveau : 'semaine') + horloge;
-	if (e.mode === 'hors ligne') return 'hors ligne' + horloge;
+	if (e.semaine) return t('niveau.' + (e.semaine.difficulte ? e.semaine.difficulte.niveau : 'semaine')) + horloge;
+	if (e.mode === 'hors ligne') return t('mode.horsLigne') + horloge;
 	return '';
 }
 
@@ -461,7 +464,7 @@ function dessinerMeteo(zone, m, opacite, sansLegende) {
 	}
 	// Légende météo (données chiffrées en monospace, sur panneau) — jamais sur un décor d'ambiance (fin)
 	if (sansLegende) return;
-	const txt = 'météo du jour : ' + fmt(m.temp_min) + '–' + fmt(m.temp_max) + ' °C · pluie ' + fmt(m.pluie_mm) + ' mm · rafales ' + fmt(m.rafales_max) + ' km/h' + (froid ? ' · gel' : '');
+	const txt = t('meteo.jour', { min: fmt(m.temp_min), max: fmt(m.temp_max), pluie: fmt(m.pluie_mm), rafales: fmt(m.rafales_max), gel: froid ? t('meteo.gel') : '' });
 	textFont(POLICE_DONNEES);
 	textSize(17);
 	const tl = textWidth(txt) + 24;
@@ -538,13 +541,13 @@ function dessinerListeLignes(zone, dActuel) {
 	textStyle(BOLD);
 	textSize(22);
 	fill(C.texte);
-	text('Lignes concernées', zone.x + 18, zone.y + 16);
+	text(t('lignes.titre'), zone.x + 18, zone.y + 16);
 	textStyle(NORMAL);
 	let y = zone.y + 58;
 	if (!items.length) {
 		textSize(18);
 		fill(C.gris);
-		text('Les archives de cette semaine\nne citent aucune ligne précise.\nToutes les lignes sont « à l’heure »\nfaute de donnée contraire.', zone.x + 18, y);
+		text(t('lignes.aucune'), zone.x + 18, y);
 		y += 120;
 	}
 	for (const it of items.slice(0, Jeu.objectifDuJour ? 10 : 14)) {
@@ -558,7 +561,7 @@ function dessinerListeLignes(zone, dActuel) {
 		text(it.nom, zone.x + 40, y + 6);
 		textSize(18);
 		fill(actif ? C.rouge : C.gris);
-		text(actif ? 'incident actif' : it.retard !== null ? '+' + it.retard + ' min' : 'perturbation', zone.x + 140, y + 12);
+		text(actif ? t('lignes.actif') : it.retard !== null ? '+' + it.retard + ' min' : t('lignes.perturbation'), zone.x + 140, y + 12);
 		y += 52;
 	}
 	// Bandeau tactique (prompt 23) : objectif du jour et modificateur actif
@@ -571,25 +574,25 @@ function dessinerListeLignes(zone, dActuel) {
 		textFont(POLICE_TEXTE);
 		textSize(17);
 		fill(C.texte);
-		text('Objectif : ' + o.libelle + ' (' + Jeu.jauges[o.jauge] + ')', zone.x + 18, by + 12, zone.l - 36, 44);
+		text(t('bandeau.objectif', { libelle: o.libelle, v: Jeu.jauges[o.jauge] }), zone.x + 18, by + 12, zone.l - 36, 44);
 		fill(mod ? C.orange : C.gris);
-		text(mod ? mod.libelle + (mod.actionBloquee ? ' (action « ' + mod.actionBloquee + ' » bloquée)' : '') + ' · ' + Math.ceil((mod.fin - millis()) / 1000) + ' s' : 'Aucun modificateur actif', zone.x + 18, by + 60, zone.l - 36, 66);
+		text(mod ? mod.libelle + (mod.actionBloquee ? t('bandeau.bloquee', { action: Jeu.REGLAGES.effets[mod.actionBloquee].nom }) : '') + ' · ' + Math.ceil((mod.fin - millis()) / 1000) + ' s' : t('bandeau.aucunMod'), zone.x + 18, by + 60, zone.l - 36, 66);
 	}
 	// Légende
 	const ly = zone.y + zone.h - 120;
 	textFont(POLICE_DONNEES);
 	textSize(16);
 	[
-		[C.vert, 'à l’heure'],
-		[C.orange, 'retard / perturbation'],
-		[C.rouge, 'incident actif' + (reduireAnimations ? '' : ' (clignote)')],
-	].forEach(([c, t], i) => {
+		[C.vert, t('legende.heure')],
+		[C.orange, t('legende.retard')],
+		[C.rouge, t('legende.actif') + (reduireAnimations ? '' : t('legende.clignote'))],
+	].forEach(([c, lib], i) => {
 		stroke(c);
 		strokeWeight(6);
 		line(zone.x + 18, ly + i * 32 + 10, zone.x + 58, ly + i * 32 + 10);
 		noStroke();
 		fill(C.texte);
-		text(t, zone.x + 70, ly + i * 32);
+		text(lib, zone.x + 70, ly + i * 32);
 	});
 }
 
@@ -599,9 +602,9 @@ function dessinerJauges() {
 	panneau(z.x, z.y, z.l, z.h);
 	const jauges = Jeu.jauges || { fluidite: 50, reputation: 50, budget: 50 }; // départ 50 (Q40)
 	const defs = [
-		['Fluidité', jauges.fluidite],
-		['Réputation', jauges.reputation],
-		['Budget', jauges.budget],
+		[t('jaugeTitre.fluidite'), jauges.fluidite],
+		[t('jaugeTitre.reputation'), jauges.reputation],
+		[t('jaugeTitre.budget'), jauges.budget],
 	];
 	const lb = (z.l - 48 - 2 * 20) / 3;
 	defs.forEach(([nom, v], i) => {
@@ -629,8 +632,8 @@ function dessinerJauges() {
 // ——— Dossier courant : ligne + retard + raison en priorité (Q5), glissement depuis la droite (Q10) ———
 function dessinerDossier(d, meteo) {
 	const base = { x: DROITE.x, y: DROITE.y + 130, l: DROITE.l, h: DROITE.h - 130 };
-	const t = reduireAnimations ? 1 : constrain((millis() - arriveeDossier) / 450, 0, 1);
-	const decal = (1 - easeOut(t)) * (L - base.x);
+	const tA = reduireAnimations ? 1 : constrain((millis() - arriveeDossier) / 450, 0, 1);
+	const decal = (1 - easeOut(tA)) * (L - base.x);
 	const x = base.x + decal;
 	panneau(x, base.y, base.l, base.h);
 
@@ -639,7 +642,7 @@ function dessinerDossier(d, meteo) {
 		fill(C.gris);
 		textFont(POLICE_TEXTE);
 		textSize(24);
-		text('Aucun dossier pour cette semaine.', x + 32, base.y + 40);
+		text(t('dossier.aucun'), x + 32, base.y + 40);
 		return;
 	}
 
@@ -661,7 +664,7 @@ function dessinerDossier(d, meteo) {
 		Confort.Son.bip('alerte'); // plus que 5 secondes
 	}
 	// Compteur à 0 : « ne rien faire » avec les seules conséquences naturelles du dossier (Q25)
-	if (reste === 0 && t === 1 && (phase === 'decision' || phase === 'contradiction')) {
+	if (reste === 0 && tA === 1 && (phase === 'decision' || phase === 'contradiction')) {
 		phase = 'decision';
 		decider('temps');
 		return;
@@ -669,10 +672,10 @@ function dessinerDossier(d, meteo) {
 
 	// En-tête du dossier
 	textAlign(LEFT, TOP);
-	text('DOSSIER ' + (Jeu.index + 1) + ' / ' + Jeu.paquet.length + ' · ' + d.type.toUpperCase() + (d.affluence ? ' · AFFLUENCE' : ''), x + 32, base.y + 42);
+	text(t('dossier.entete', { n: Jeu.index + 1, total: Jeu.paquet.length, type: tSi('type.' + d.type, d.type).toUpperCase(), affluence: d.affluence ? t('dossier.affluence') : '' }), x + 32, base.y + 42);
 
 	// Priorité : ligne, retard, raison
-	const ligne = d.lignes && d.lignes.length ? 'Ligne ' + d.lignes.join(', ') : 'Ligne non précisée';
+	const ligne = d.lignes && d.lignes.length ? t('dossier.ligne', { lignes: d.lignes.join(', ') }) : t('dossier.ligneInconnue');
 	fill(C.texte);
 	textFont(POLICE_TEXTE);
 	textStyle(BOLD);
@@ -682,15 +685,15 @@ function dessinerDossier(d, meteo) {
 	textFont(POLICE_DONNEES);
 	textSize(30);
 	fill(d.retard !== null ? C.rouge : C.gris);
-	text(d.retard !== null ? 'Retard : +' + d.retard + ' min' : 'Retard : non renseigné', x + 32, base.y + 146);
+	text(d.retard !== null ? t('dossier.retard', { retard: d.retard }) : t('dossier.retardInconnu'), x + 32, base.y + 146);
 	if (d.retard === null) {
 		textSize(16);
-		text('l’archive ne donne pas de durée de retard', x + 32, base.y + 184);
+		text(t('dossier.retardArchive'), x + 32, base.y + 184);
 	}
 	fill(C.texte);
 	textFont(POLICE_TEXTE);
 	textSize(26);
-	text('Raison : ' + d.nature, x + 32, base.y + 212, base.l - (d.contradiction ? 300 : 64), 60);
+	text(t('dossier.raison', { nature: d.nature }), x + 32, base.y + 212, base.l - (d.contradiction ? 300 : 64), 60);
 
 	// Badge « contradiction » si deux sources se contredisent (Q9) — calculé au prompt 17
 	if (d.contradiction) {
@@ -700,7 +703,7 @@ function dessinerDossier(d, meteo) {
 		textFont(POLICE_DONNEES);
 		textSize(18);
 		textAlign(CENTER, CENTER);
-		text('contradiction', x + base.l - 131, base.y + 250);
+		text(t('dossier.contradiction'), x + base.l - 131, base.y + 250);
 		textAlign(LEFT, TOP);
 	}
 
@@ -716,13 +719,13 @@ function dessinerDossier(d, meteo) {
 	fill(C.texte);
 	textFont(POLICE_TEXTE);
 	textSize(21);
-	text('« ' + d.texte_source + ' »', x + 32, base.y + 326, base.l - 64, 120);
+	text(t('dossier.citation', { texte: d.texte_source }), x + 32, base.y + 326, base.l - 64, 120);
 	textFont(POLICE_DONNEES);
 	textSize(16);
 	fill(C.gris);
-	text('Source : ' + d.source, x + 32, base.y + 452, base.l - 64, 50);
+	text(t('dossier.source', { source: d.source }), x + 32, base.y + 452, base.l - 64, 50);
 	if (meteo) {
-		text('Météo : ' + fmt(meteo.temp_min) + '–' + fmt(meteo.temp_max) + ' °C · pluie ' + fmt(meteo.pluie_mm) + ' mm · rafales ' + fmt(meteo.rafales_max) + ' km/h', x + 32, base.y + 506);
+		text(t('dossier.meteo', { min: fmt(meteo.temp_min), max: fmt(meteo.temp_max), pluie: fmt(meteo.pluie_mm), rafales: fmt(meteo.rafales_max) }), x + 32, base.y + 506);
 	}
 
 	const ab = (base.l - 64 - 16) / 2;
@@ -738,36 +741,36 @@ function dessinerDossier(d, meteo) {
 		[
 			['A', c.a.libelle, 'a'],
 			['B', c.b.libelle, 'b'],
-		].forEach(([t, lib, cle], i) => {
+		].forEach(([tA, lib, cle], i) => {
 			const by = base.y + base.h - 200 + i * 88;
-			bouton(x + 32, by, base.l - 64, 72, t + '  ' + lib, () => choisirSource(cle), false, true);
+			bouton(x + 32, by, base.l - 64, 72, tA + '  ' + lib, () => choisirSource(cle), false, true);
 		});
 		return;
 	}
 	// Actions : 3 actions + « ne rien faire » (Q5)
 	const actions = [
-		['1', 'Dévier la ligne', 'devier'],
-		['2', 'Retenir en terminus', 'retenir'],
-		['3', 'Bus de renfort', 'renfort'],
-		['0', 'Ne rien faire', 'rien'],
+		['1', t('action.devier'), 'devier'],
+		['2', t('action.retenir'), 'retenir'],
+		['3', t('action.renfort'), 'renfort'],
+		['0', t('action.rien'), 'rien'],
 	];
 	if (sourceChoisie && d.contradiction) {
 		textFont(POLICE_DONNEES);
 		textSize(16);
 		fill(C.gris);
-		text('Source retenue : ' + d.contradiction[sourceChoisie].libelle, x + 32, base.y + base.h - 236, base.l - 64, 30);
+		text(t('dossier.sourceRetenue', { libelle: d.contradiction[sourceChoisie].libelle }), x + 32, base.y + base.h - 236, base.l - 64, 30);
 	} else if (Jeu.conseil) {
 		// Conseil contextuel (prompt 23 § 1) : une phrase factuelle, jamais l'action à choisir
 		textFont(POLICE_TEXTE);
 		textSize(17);
 		fill(C.orange);
-		text('Conseil : ' + Jeu.conseil(d), x + 32, base.y + base.h - 250, base.l - 64, 46);
+		text(t('dossier.conseil', { conseil: Jeu.conseil(d) }), x + 32, base.y + base.h - 250, base.l - 64, 46);
 	}
 	const bloquee = Jeu.actionBloquee ? Jeu.actionBloquee() : null;
 	actions.forEach(([touche, nom, cle], i) => {
 		const bx = x + 32 + (i % 2) * (ab + 16);
 		const by = base.y + base.h - 200 + Math.floor(i / 2) * 88;
-		bouton(bx, by, ab, 72, touche + '  ' + nom + (cle === bloquee ? ' — indisponible' : ''), () => decider(cle), cle === bloquee, i === 3);
+		bouton(bx, by, ab, 72, touche + '  ' + nom + (cle === bloquee ? t('dossier.indispo') : ''), () => decider(cle), cle === bloquee, i === 3);
 	});
 }
 
@@ -787,17 +790,17 @@ function dessinerConflit() {
 	fill(C.orange);
 	textFont(POLICE_DONNEES);
 	textSize(18);
-	text('CONFLIT · ' + dateLongue(c.a.date), z.x + 32, z.y + 32);
+	text(t('conflit.titre', { date: dateLongue(c.a.date) }), z.x + 32, z.y + 32);
 	fill(C.texte);
 	textFont(POLICE_TEXTE);
 	textStyle(BOLD);
 	textSize(40);
-	text('Quelle ligne traiter en priorité ?', z.x + 32, z.y + 70, z.l - 64, 110);
+	text(t('conflit.question'), z.x + 32, z.y + 70, z.l - 64, 110);
 	textStyle(NORMAL);
 	[
 		['A', c.a, 'a'],
 		['B', c.b, 'b'],
-	].forEach(([t, dd, cle], i) => {
+	].forEach(([tA, dd, cle], i) => {
 		const by = z.y + 220 + i * 190;
 		bouton(z.x + 32, by, z.l - 64, 160, '', () => choisirPriorite(cle), false, true);
 		fill(C.accent);
@@ -805,7 +808,7 @@ function dessinerConflit() {
 		textFont(POLICE_TEXTE);
 		textStyle(BOLD);
 		textSize(32);
-		text(t + '  Ligne ' + dd.lignes.join(', ') + (dd.retard !== null ? '  · +' + dd.retard + ' min' : ''), z.x + 60, by + 26);
+		text(t('conflit.ligne', { lettre: tA, lignes: dd.lignes.join(', '), retard: dd.retard !== null ? '  · +' + dd.retard + ' min' : '' }), z.x + 60, by + 26);
 		textStyle(NORMAL);
 		textSize(20);
 		fill(C.texte);
@@ -831,7 +834,7 @@ function dessinerNarration() {
 	fill(couleurTon);
 	textFont(POLICE_DONNEES);
 	textSize(18);
-	text('JOURNAL DE LA SALLE · ton ' + r.narration.ton, z.x + 32, z.y + 32);
+	text(t('narration.entete', { ton: t('ton.nom.' + r.narration.ton) }), z.x + 32, z.y + 32);
 	fill(C.texte);
 	textFont(POLICE_TEXTE);
 	textStyle(BOLD);
@@ -845,26 +848,26 @@ function dessinerNarration() {
 	textFont(POLICE_DONNEES);
 	textSize(18);
 	fill(C.gris);
-	const noms = ['Fluidité', 'Réputation', 'Budget'];
+	const noms = [t('jaugeTitre.fluidite'), t('jaugeTitre.reputation'), t('jaugeTitre.budget')];
 	r.deltas.forEach((v, i) => {
-		const de = r.des[i] ? '  (dé : ' + r.des[i] + ')' : '';
+		const de = r.des[i] ? t('narration.de', { d: r.des[i] }) : '';
 		fill(v > 0 ? C.vert : v < 0 ? C.rouge : C.gris);
 		text(noms[i].padEnd(13, ' ') + (v > 0 ? '+' : '') + v + de, z.x + 32, z.y + 470 + i * 30);
 	});
-	const ctx = [r.contexte.meteo && 'météo défavorable', r.contexte.pointe && 'heure de pointe', r.contexte.affluence && 'affluence'].filter(Boolean);
+	const ctx = [r.contexte.meteo && t('ctx.meteo'), r.contexte.pointe && t('ctx.pointe'), r.contexte.affluence && t('ctx.affluence')].filter(Boolean);
 	fill(C.gris);
-	if (ctx.length) text('Contexte : ' + ctx.join(', ') + ' (effet renforcé)', z.x + 32, z.y + 570);
+	if (ctx.length) text(t('narration.contexte', { liste: ctx.join(', ') }), z.x + 32, z.y + 570);
 
 	// Suite automatique, ou Entrée / clic
-	const t = constrain((millis() - debutNarration) / DUREE_NARRATION, 0, 1);
+	const tA = constrain((millis() - debutNarration) / DUREE_NARRATION, 0, 1);
 	fill('#E8E2D6');
 	rect(z.x + 32, z.y + z.h - 140, z.l - 64, 6, 3);
 	fill(couleurTon);
-	rect(z.x + 32, z.y + z.h - 140, (z.l - 64) * t, 6, 3);
+	rect(z.x + 32, z.y + z.h - 140, (z.l - 64) * tA, 6, 3);
 	const lb = (z.l - 64 - 16) * 0.68;
-	bouton(z.x + 32, z.y + z.h - 112, lb, 72, Jeu.terminee ? 'Voir le bilan  (Entrée)' : 'Dossier suivant  (Entrée)', continuer);
-	bouton(z.x + 48 + lb, z.y + z.h - 112, z.l - 64 - 16 - lb, 72, enPause ? 'Reprendre (P)' : 'Pause (P)', basculerPause, false, true);
-	if (t >= 1 && !enPause && !fenetre) continuer();
+	bouton(z.x + 32, z.y + z.h - 112, lb, 72, t(Jeu.terminee ? 'narration.bilan' : 'narration.suivant'), continuer);
+	bouton(z.x + 48 + lb, z.y + z.h - 112, z.l - 64 - 16 - lb, 72, t(enPause ? 'pause.reprendre' : 'pause.pause'), basculerPause, false, true);
+	if (tA >= 1 && !enPause && !fenetre) continuer();
 }
 
 // ——— Écran de fin (Q47–Q55) : 3 fins, bilan détaillé, décor selon la fin (Q53) ———
@@ -893,7 +896,7 @@ function dessinerFin() {
 	textFont(POLICE_DONNEES);
 	textSize(20);
 	fill(amb.titre);
-	text('FIN ' + b.type.toUpperCase() + ' · SCORE ' + b.score + ' / 300', g.x + 48, g.y + 44);
+	text(t('fin.entete', { type: t('fin.type.' + b.type), score: b.score }), g.x + 48, g.y + 44);
 	fill(C.texte);
 	textFont(POLICE_TEXTE);
 	textStyle(BOLD);
@@ -905,9 +908,9 @@ function dessinerFin() {
 
 	// Jauges finales
 	const noms = [
-		['Fluidité du réseau', b.jauges.fluidite],
-		['Réputation de la salle', b.jauges.reputation],
-		['Budget', b.jauges.budget],
+		[t('fin.jauge.fluidite'), b.jauges.fluidite],
+		[t('fin.jauge.reputation'), b.jauges.reputation],
+		[t('fin.jauge.budget'), b.jauges.budget],
 	];
 	noms.forEach(([n, v], i) => {
 		const y = g.y + 440 + i * 76;
@@ -928,12 +931,12 @@ function dessinerFin() {
 	textFont(POLICE_DONNEES);
 	textSize(20);
 	fill(C.texte);
-	text('Dossiers traités : ' + b.traites + ' / ' + b.total + (b.sansDecision ? ' · ' + b.sansDecision + ' sans décision (temps écoulé)' : ''), g.x + 48, g.y + 680);
-	if (b.mauvaisesSources) text('Mauvaise source retenue : ' + b.mauvaisesSources + ' fois', g.x + 48, g.y + 712);
+	text(t('fin.traites', { n: b.traites, total: b.total, sans: b.sansDecision ? t('fin.sansDecision', { n: b.sansDecision }) : '' }), g.x + 48, g.y + 680);
+	if (b.mauvaisesSources) text(t('fin.mauvaisesSources', { n: b.mauvaisesSources }), g.x + 48, g.y + 712);
 	if (bilanFin && bilanFin.meilleur) {
 		fill(bilanFin.record ? C.vert : C.gris);
 		text(
-			bilanFin.record ? 'Nouveau meilleur bilan pour cette semaine !' : 'Meilleur bilan : ' + bilanFin.meilleur.score + ' / 300 (' + bilanFin.meilleur.le + ')',
+			bilanFin.record ? t('fin.record') : t('fin.meilleur', { score: bilanFin.meilleur.score, le: bilanFin.meilleur.le }),
 			g.x + 48,
 			g.y + 752,
 		);
@@ -942,14 +945,14 @@ function dessinerFin() {
 	if (Jeu.profilSemaine) {
 		const p = Jeu.profilSemaine();
 		fill(C.accent);
-		text('Profil : ' + p.phrase, g.x + 48, g.y + 784, g.l - 96, 30);
+		text(t('fin.profil', { phrase: p.phrase }), g.x + 48, g.y + 784, g.l - 96, 30);
 		fill(C.gris);
 		textSize(17);
-		text('Objectifs atteints : ' + p.objectifs + ' · meilleur jour : ' + p.meilleurJour + ' · équipes envoyées : ' + p.equipes + ' · malus le plus fréquent : ' + p.malusFrequent, g.x + 48, g.y + 816, g.l - 96, 60);
+		text(t('fin.profilDetail', { objectifs: p.objectifs, jour: p.meilleurJour, equipes: p.equipes, malus: p.malusFrequent }), g.x + 48, g.y + 816, g.l - 96, 60);
 	}
 	const bl = (g.l - 96 - 20) / 2;
-	bouton(g.x + 48, g.y + g.h - 112, bl, 72, 'Rejouer (Entrée)', rejouer);
-	bouton(g.x + 68 + bl, g.y + g.h - 112, bl, 72, 'Changer de semaine (Échap)', retourAccueil, false, true);
+	bouton(g.x + 48, g.y + g.h - 112, bl, 72, t('fin.rejouer'), rejouer);
+	bouton(g.x + 68 + bl, g.y + g.h - 112, bl, 72, t('fin.changer'), retourAccueil, false, true);
 
 	// Panneau droit : bilan chiffré — faits réels de la semaine (Q52) et décisions clés (Q37)
 	const d = { x: 1000, y: 70, l: 840, h: 940 };
@@ -959,33 +962,34 @@ function dessinerFin() {
 	textFont(POLICE_TEXTE);
 	textStyle(BOLD);
 	textSize(32);
-	text('Bilan chiffré', d.x + 48, d.y + 40);
+	text(t('fin.bilanChiffre'), d.x + 48, d.y + 40);
 	textStyle(NORMAL);
 	textFont(POLICE_DONNEES);
 	textSize(20);
 	fill(C.texte);
 	let y = d.y + 100;
 	const f = b.faits;
-	text((Jeu.etat.mode === 'direct' ? 'Relevé temps réel : ' : 'Semaine : ') + f.periode, d.x + 48, y);
+	text(t(Jeu.etat.mode === 'direct' ? 'fin.releve' : 'fin.semaine', { periode: f.periode }), d.x + 48, y);
 	y += 36;
 	text(
-		'Dossiers : ' +
-			Object.entries(f.parType)
-				.map(([t, n]) => n + ' ' + (n > 1 ? { 'alerte météo': 'alertes météo', 'ligne en difficulté': 'lignes en difficulté' }[t] || t + 's' : t))
+		t('fin.dossiers', {
+			liste: Object.entries(f.parType)
+				.map(([ty, n]) => n + ' ' + (n > 1 ? tSi('typeP.' + ty, ty + 's') : tSi('type.' + ty, ty)))
 				.join(' · '),
+		}),
 		d.x + 48,
 		y,
 		d.l - 96,
 		60,
 	);
 	y += 70;
-	text(f.pireRetard ? 'Pire retard réel : +' + f.pireRetard.minutes + ' min (ligne ' + f.pireRetard.ligne + ')' : 'Pire retard : non renseigné par les archives', d.x + 48, y);
+	text(f.pireRetard ? t('fin.pireRetard', { min: f.pireRetard.minutes, ligne: f.pireRetard.ligne }) : t('fin.pireRetardInconnu'), d.x + 48, y);
 	y += 60;
 	fill(C.accent);
 	textFont(POLICE_TEXTE);
 	textStyle(BOLD);
 	textSize(26);
-	text('Décisions clés', d.x + 48, y);
+	text(t('fin.decisions'), d.x + 48, y);
 	textStyle(NORMAL);
 	y += 46;
 	const couleurs = { meilleure: C.vert, pire: C.rouge, 'mauvaise source': C.orange };
@@ -994,7 +998,7 @@ function dessinerFin() {
 		rect(d.x + 48, y + 4, 8, 96, 3);
 		textFont(POLICE_DONNEES);
 		textSize(16);
-		text(k.qualite.toUpperCase(), d.x + 72, y);
+		text(tSi('qualite.' + k.qualite, k.qualite).toUpperCase(), d.x + 72, y);
 		fill(C.texte);
 		textFont(POLICE_TEXTE);
 		textSize(22);
@@ -1002,14 +1006,14 @@ function dessinerFin() {
 		textFont(POLICE_DONNEES);
 		textSize(18);
 		fill(C.gris);
-		const ds = ['fluidité', 'réputation', 'budget'].map((n, i) => n + ' ' + (k.deltas[i] > 0 ? '+' : '') + k.deltas[i]).join(' · ');
+		const ds = [t('jauge.fluidite'), t('jauge.reputation'), t('jauge.budget')].map((n, i) => n + ' ' + (k.deltas[i] > 0 ? '+' : '') + k.deltas[i]).join(' · ');
 		text(k.action + ' → ' + ds, d.x + 72, y + 58, d.l - 140, 50);
 		y += 126;
 	});
 	textFont(POLICE_DONNEES);
 	textSize(15);
 	fill(C.gris);
-	text('Sources : Open Data Nantes Métropole (GTFS Naolib, agenda), Open-Meteo. Aucun événement inventé.', d.x + 48, d.y + d.h - 50, d.l - 96, 40);
+	text(t('fin.sources'), d.x + 48, d.y + d.h - 50, d.l - 96, 40);
 }
 
 function retourAccueil() {
@@ -1092,7 +1096,7 @@ function fmt(v) {
 function dateLongue(iso) {
 	if (!iso) return '';
 	const [a, m, j] = iso.split('-').map(Number);
-	return new Date(Date.UTC(a, m - 1, j)).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+	return new Date(Date.UTC(a, m - 1, j)).toLocaleDateString(localeActive(), { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 }
 
 // =====================================================================
@@ -1127,6 +1131,8 @@ function keyPressed() {
 		if (key === ' ' || keyCode === ENTER || keyCode === RETURN) seReveiller();
 		return false;
 	}
+	// Langue (prompt 24) : L bascule partout, sans toucher à la partie
+	if (key === 'l' || key === 'L') return Langue.suivante(), false;
 	// Fenêtres ouvertes : elles captent le clavier
 	if (fenetre) {
 		if (keyCode === ESCAPE || (fenetre === 'aide' && (key === 'h' || key === 'H' || key === '?'))) return fermer(), false;
@@ -1224,9 +1230,9 @@ function dessinerPause() {
 	textFont(POLICE_TEXTE);
 	textStyle(BOLD);
 	textSize(48);
-	text('Pause', L / 2, H / 2 - 50);
+	text(t('pause.titre'), L / 2, H / 2 - 50);
 	textStyle(NORMAL);
-	bouton((L - 360) / 2, H / 2 + 10, 360, 72, 'Reprendre (P)', basculerPause);
+	bouton((L - 360) / 2, H / 2 + 10, 360, 72, t('pause.reprendre'), basculerPause);
 }
 
 function dessinerFenetre() {
@@ -1250,23 +1256,24 @@ function fenetreAide() {
 	textFont(POLICE_TEXTE);
 	textStyle(BOLD);
 	textSize(40);
-	text('Aide — Nantes en régulation', x + 48, y + 36);
+	text(t('aide.titre'), x + 48, y + 36);
 	textStyle(NORMAL);
 	// Raccourcis (08-raccourcis)
 	const raccourcis = [
-		['1 / 2 / 3', 'Dévier la ligne / Retenir en terminus / Bus de renfort'],
-		['0 ou Espace', 'Ne rien faire'],
-		['A / B', 'Choisir une source (contradiction) ou une ligne (conflit)'],
-		['Entrée', 'Valider, dossier suivant, rejouer'],
-		['P', 'Pause — seulement entre deux dossiers'],
-		['R', 'Recommencer la semaine (avec confirmation)'],
-		['M', 'Couper / réactiver le son'],
-		['H ou ?', 'Afficher / fermer cette aide · Échap : fermer'],
-		['↑ ↓', 'Choisir une semaine à l’accueil'],
+		['1 / 2 / 3', t('aide.k.actions')],
+		[t('aide.k.rienTouche'), t('action.rien')],
+		['A / B', t('aide.k.ab')],
+		[t('aide.k.entreeTouche'), t('aide.k.entree')],
+		['P', t('aide.k.pause')],
+		['R', t('aide.k.reset')],
+		['M', t('aide.k.son')],
+		[t('aide.k.aideTouche'), t('aide.k.aide')],
+		['↑ ↓', t('aide.k.semaine')],
+		['L', t('aide.k.langue')],
 	];
 	textSize(22);
 	fill(C.texte);
-	text('Raccourcis', x + 48, y + 110);
+	text(t('aide.raccourcis'), x + 48, y + 110);
 	raccourcis.forEach(([k, d], i) => {
 		textFont(POLICE_DONNEES);
 		textSize(20);
@@ -1280,13 +1287,10 @@ function fenetreAide() {
 	const rx = x + 760;
 	textSize(22);
 	fill(C.texte);
-	text('Règles', rx, y + 110);
+	text(t('aide.regles'), rx, y + 110);
 	textSize(19);
 	text(
-		'Chaque dossier vient de données réelles : retard ≥ 10 min (temps réel), perturbation datée (archives), alerte météo ou affluence (agenda).\n\n' +
-			'Choisissez une action avant la fin du compteur. À 0, rien n’est décidé : seules les conséquences naturelles du dossier s’appliquent.\n\n' +
-			'Chaque action modifie 3 jauges (départ 50) : fluidité, réputation, budget. Effet de base + 1 dé à 6 faces, renforcé par la météo, l’heure de pointe ou l’affluence.\n\n' +
-			'Fin de semaine : score = somme des 3 jauges (0–300).',
+		t('aide.texte'),
 		rx,
 		y + 150,
 		l - (rx - x) - 48,
@@ -1297,7 +1301,7 @@ function fenetreAide() {
 		textFont(POLICE_TEXTE);
 		textSize(22);
 		fill(C.texte);
-		text('Malus', x + 48, y + 516);
+		text(t('aide.malus'), x + 48, y + 516);
 		Jeu.MALUS.forEach((m, i) => {
 			textSize(16);
 			fill(C.rouge);
@@ -1306,7 +1310,7 @@ function fenetreAide() {
 			text(m.condition + ' → ' + m.consequence, x + 48, y + 572 + i * 46, 680, 24);
 		});
 	}
-	bouton(x + l - 288, y + h - 104, 240, 64, 'Fermer (Échap)', fermer);
+	bouton(x + l - 288, y + h - 104, 240, 64, t('commun.fermer'), fermer);
 }
 
 function fenetreReset() {
@@ -1321,13 +1325,13 @@ function fenetreReset() {
 	textFont(POLICE_TEXTE);
 	textStyle(BOLD);
 	textSize(40);
-	text('Recommencer la semaine ?', L / 2, y + 48);
+	text(t('reset.titre'), L / 2, y + 48);
 	textStyle(NORMAL);
 	textSize(22);
 	fill(C.gris);
-	text('Les jauges repartent à 50 ; la partie en cours est perdue.', L / 2, y + 110);
-	bouton(x + 48, y + h - 112, (l - 112) / 2, 72, 'Oui, recommencer (Entrée)', confirmerReset);
-	bouton(x + 64 + (l - 112) / 2, y + h - 112, (l - 112) / 2, 72, 'Non (Échap)', fermer, false, true);
+	text(t('reset.texte'), L / 2, y + 110);
+	bouton(x + 48, y + h - 112, (l - 112) / 2, 72, t('reset.oui'), confirmerReset);
+	bouton(x + 64 + (l - 112) / 2, y + h - 112, (l - 112) / 2, 72, t('reset.non'), fermer, false, true);
 }
 
 function basculerReglage(nom) {
@@ -1344,7 +1348,7 @@ function basculerReglage(nom) {
 
 function fenetreParametres() {
 	const l = 1000;
-	const h = 600;
+	const h = 720;
 	const x = (L - l) / 2;
 	const y = (H - h) / 2;
 	panneau(x, y, l, h, C.accent);
@@ -1354,14 +1358,14 @@ function fenetreParametres() {
 	textFont(POLICE_TEXTE);
 	textStyle(BOLD);
 	textSize(40);
-	text('Paramètres', x + 48, y + 36);
+	text(t('param.titre'), x + 48, y + 36);
 	textStyle(NORMAL);
 	const R = Confort.Reglages;
 	const lignes = [
-		['1', 'Son (ambiance + bips)', 'son'],
-		['2', 'Forcer le mode hors ligne', 'horsLigneForce'],
-		['3', 'Réduire les animations', 'reduireAnimations'],
-		['4', 'Contraste renforcé', 'contrasteRenforce'],
+		['1', t('param.son'), 'son'],
+		['2', t('param.horsLigne'), 'horsLigneForce'],
+		['3', t('param.animations'), 'reduireAnimations'],
+		['4', t('param.contraste'), 'contrasteRenforce'],
 	];
 	lignes.forEach(([k, lib, nom], i) => {
 		const ly = y + 120 + i * 96;
@@ -1373,13 +1377,34 @@ function fenetreParametres() {
 		textFont(POLICE_DONNEES);
 		textSize(18);
 		fill(C.gris);
-		text('touche ' + k, x + 560, ly + 36);
-		bouton(x + l - 248, ly + 6, 200, 60, R[nom] ? 'oui' : 'non', () => basculerReglage(nom), false, !R[nom]);
+		text(t('param.touche', { k }), x + 560, ly + 36);
+		bouton(x + l - 248, ly + 6, 200, 60, t(R[nom] ? 'commun.oui' : 'commun.non'), () => basculerReglage(nom), false, !R[nom]);
 	});
 	textAlign(LEFT, TOP);
 	textFont(POLICE_DONNEES);
 	textSize(16);
 	fill(C.gris);
-	text('Réglages mémorisés sur cet appareil (localStorage). Les animations sont aussi réduites si le système le demande.', x + 48, y + h - 150, l - 360, 60);
-	bouton(x + l - 288, y + h - 104, 240, 64, 'Retour (Entrée)', fermer);
+	text(t('param.note'), x + 48, y + h - 150, l - 360, 60);
+	// Langue (prompt 24) : même sélecteur qu'à l'accueil, touche L
+	textFont(POLICE_TEXTE);
+	textSize(26);
+	fill(C.texte);
+	textAlign(LEFT, CENTER);
+	text(t('langue.titre'), x + 48, y + 120 + 4 * 96 + 36);
+	textFont(POLICE_DONNEES);
+	textSize(18);
+	fill(C.gris);
+	text(t('param.touche', { k: 'L' }), x + 560, y + 120 + 4 * 96 + 36);
+	textAlign(LEFT, TOP);
+	selecteurLangue(x + l - 48, y + 120 + 4 * 96 + 10);
+	bouton(x + l - 288, y + h - 104, 240, 64, t('param.retour'), fermer);
+}
+
+/** Sélecteur de langue (prompt 24) : un bouton par entrée de LANGUES, aligné à droite sur xDroite ; touche L partout */
+function selecteurLangue(xDroite, y) {
+	const lb = 84;
+	LANGUES.forEach((lg, i) => {
+		const x = xDroite - (LANGUES.length - i) * (lb + 8);
+		bouton(x, y, lb, 52, lg.code.toUpperCase(), () => Langue.changer(lg.code), false, lg.code !== Langue.actuelle);
+	});
 }

@@ -122,17 +122,17 @@ function dessinerOS() {
 	});
 	const hA = heureAffichee();
 	dsTexte(String(hA.h).padStart(2, '0') + ':' + String(hA.m).padStart(2, '0'), L - 24, H - 46, 24, DS.blanc, 'right');
-	if (Jeu.jauges && ecran === 'jeu') dsTexte('Budget ' + Jeu.jauges.budget + ' · Réputation ' + Jeu.jauges.reputation + ' · Fluidité ' + Jeu.jauges.fluidite, L - 120, H - 44, 18, DS.blanc75, 'right');
-	else dsTexte('Tab : icônes · Entrée : ouvrir · Échap : fermer / se lever', 500, H - 44, 18, DS.blanc50, 'left');
+	if (Jeu.jauges && ecran === 'jeu') dsTexte(t('os.jauges', { b: Jeu.jauges.budget, r: Jeu.jauges.reputation, f: Jeu.jauges.fluidite }), L - 120, H - 44, 18, DS.blanc75, 'right');
+	else dsTexte(t('os.aideClavier'), 500, H - 44, 18, DS.blanc50, 'left');
 }
 
 function dessinerDemarrage() {
-	const t = millis() - PC.debut;
+	const tB = millis() - PC.debut;
 	background(DS.fond);
-	if (t < 1200) {
-		const lignes = ['REGUL-BIOS v1.07 — Poste de régulation n°3', 'Processeur ........ OK', 'Mémoire 4096 Mo ... OK', 'Réseau salle ...... OK', 'Démarrage du système…'];
-		lignes.slice(0, 1 + Math.floor(t / 220)).forEach((l, i) => dsTexte(l, 80, 80 + i * 44, 26, i === 0 ? DS.primaire : DS.blanc75, 'left'));
-	} else if (t < DUREE_DEMARRAGE - 500) {
+	if (tB < 1200) {
+		const lignes = [0, 1, 2, 3, 4].map((n) => t('os.bios.' + n));
+		lignes.slice(0, 1 + Math.floor(tB / 220)).forEach((l, i) => dsTexte(l, 80, 80 + i * 44, 26, i === 0 ? DS.primaire : DS.blanc75, 'left'));
+	} else if (tB < DUREE_DEMARRAGE - 500) {
 		// Logo du système fictif (carré rouge, angles droits) + titre pixel + barre de progression
 		const cx = L / 2;
 		const cy = H / 2 - 80;
@@ -148,7 +148,7 @@ function dessinerDemarrage() {
 		rect(cx - 36, cy - 30, 30, 14);
 		rect(cx + 6, cy - 30, 30, 14);
 		dsTitre('RegulOS', cx, cy + 96, 56, DS.blanc, 'center');
-		const p = constrain((t - 1200) / (DUREE_DEMARRAGE - 1700), 0, 1);
+		const p = constrain((tB - 1200) / (DUREE_DEMARRAGE - 1700), 0, 1);
 		stroke(DS.blanc15);
 		strokeWeight(2);
 		noFill();
@@ -163,9 +163,9 @@ function dessinerDemarrage() {
 		drawingContext.imageSmoothingEnabled = true;
 		fill(DS.noir50);
 		rect(L / 2 - 260, H / 2 - 60, 520, 120);
-		dsTitre('BIENVENUE', L / 2, H / 2 - 30, 56, DS.blanc, 'center');
+		dsTitre(t('os.bienvenue'), L / 2, H / 2 - 30, 56, DS.blanc, 'center');
 	}
-	if (t >= DUREE_DEMARRAGE) PC.etat = 'os';
+	if (tB >= DUREE_DEMARRAGE) PC.etat = 'os';
 }
 
 function iconeRegulation(x, y, s) {
@@ -205,8 +205,8 @@ function dessinerFermerAppli() {
 	rect(0, 0, L, 34);
 	fill(DS.blanc15);
 	rect(0, 34, L, 2);
-	dsTitre('REGULATION NANTES', 16, 6, 24, DS.blanc, 'left');
-	dsTexte('RégulOS · poste 3', L / 2, 8, 16, DS.blanc50, 'center');
+	dsTitre(t('os.barreTitre'), 16, 6, 24, DS.blanc, 'left');
+	dsTexte(t('os.poste'), L / 2, 8, 16, DS.blanc50, 'center');
 	const x = L - 46;
 	const y = 3;
 	const survol = mouseX >= x && mouseX <= x + 40 && mouseY >= y && mouseY <= y + 28;
@@ -229,12 +229,12 @@ function dessinerFermerAppli() {
 // Le temps ne s'arrête pas pendant la lecture d'une app (comme les livres du prompt 20).
 // =====================================================================
 const ICONES_OS = [
-	{ cle: 'regulation', nom: 'Régulation', dessin: (x, y, s) => iconeRegulation(x, y, s || 1) },
-	{ cle: 'patron', nom: 'Patron', dessin: (x, y, s) => iconePixel(x, y, s, 'enveloppe') },
-	{ cle: 'carte', nom: 'Carte', dessin: (x, y, s) => iconePixel(x, y, s, 'carte') },
-	{ cle: 'community', nom: 'Community', dessin: (x, y, s) => iconePixel(x, y, s, 'bulle') },
-	{ cle: 'journal', nom: 'Journal', dessin: (x, y, s) => iconePixel(x, y, s, 'livre') },
-	{ cle: 'corbeille', nom: 'Corbeille', dessin: (x, y) => iconeCorbeille(x, y) },
+	{ cle: 'regulation', nom: T('app.regulation'), dessin: (x, y, s) => iconeRegulation(x, y, s || 1) },
+	{ cle: 'patron', nom: T('app.patron'), dessin: (x, y, s) => iconePixel(x, y, s, 'enveloppe') },
+	{ cle: 'carte', nom: T('app.carte'), dessin: (x, y, s) => iconePixel(x, y, s, 'carte') },
+	{ cle: 'community', nom: T('app.community'), dessin: (x, y, s) => iconePixel(x, y, s, 'bulle') },
+	{ cle: 'journal', nom: T('app.journal'), dessin: (x, y, s) => iconePixel(x, y, s, 'livre') },
+	{ cle: 'corbeille', nom: T('app.corbeille'), dessin: (x, y) => iconeCorbeille(x, y) },
 ];
 
 function ouvrirIconeOS(i) {
@@ -308,7 +308,7 @@ function iconePixel(x, y, s, type) {
 }
 
 const FENETRE_APP = { x: 440, y: 56, l: 1440, h: 900 };
-const TITRES_APPS = { patron: 'MESSAGES DU PATRON', carte: 'CARTE DES INCIDENTS', community: 'COMMUNITY MANAGER', journal: 'JOURNAL DE BORD' };
+const TITRES_APPS = { patron: T('app.titre.patron'), carte: T('app.titre.carte'), community: T('app.titre.community'), journal: T('app.titre.journal') };
 
 function dessinerFenetreApp() {
 	const f = FENETRE_APP;
@@ -328,12 +328,12 @@ function dessinerFenetreApp() {
 	boutons.push({ x: cx, y: cy, l: 36, h: 36, action: fermerFenetreApp });
 	if (Jeu.nonLus && Jeu.nonLus[PC.fenetre] !== undefined) Jeu.nonLus[PC.fenetre] = 0; // lu
 	const zone = { x: f.x + 24, y: f.y + 76, l: f.l - 48, h: f.h - 170 };
-	if (!Jeu.paquet || ecran !== 'jeu') dsTexte('Aucune partie en cours : ouvrez « Régulation Nantes » et choisissez une semaine.', zone.x, zone.y, 22, DS.blanc75, 'left', zone.l);
+	if (!Jeu.paquet || ecran !== 'jeu') dsTexte(t('app.aucunePartie'), zone.x, zone.y, 22, DS.blanc75, 'left', zone.l);
 	else if (PC.fenetre === 'patron') appPatron(zone);
 	else if (PC.fenetre === 'community') appCommunity(zone);
 	else if (PC.fenetre === 'journal') appJournal(zone);
 	else if (PC.fenetre === 'carte') appCarte(zone);
-	dsBouton(f.x + f.l - 260, f.y + f.h - 80, 236, 56, 'Fermer (Échap)', fermerFenetreApp, 'contour');
+	dsBouton(f.x + f.l - 260, f.y + f.h - 80, 236, 56, t('commun.fermer'), fermerFenetreApp, 'contour');
 }
 
 function derniers(liste, n) {
@@ -343,8 +343,8 @@ function derniers(liste, n) {
 function appPatron(z) {
 	if (Jeu.modificateurActif && Jeu.modificateurActif() === 'panne_messagerie') {
 		// Prompt 23 : panne de la messagerie — les messages arriveront à la fin de la panne
-		dsBadge(z.x + 80, z.y + 20, 'HORS LIGNE', 'erreur');
-		dsTexte('Messagerie indisponible pendant encore ' + Math.ceil((Jeu.modificateur.fin - millis()) / 1000) + ' s. Décidez seul : les consignes du patron ne passent plus.', z.x, z.y + 60, 22, DS.blanc75, 'left', z.l - 40);
+		dsBadge(z.x + 80, z.y + 20, t('app.horsLigne'), 'erreur');
+		dsTexte(t('app.panne', { s: Math.ceil((Jeu.modificateur.fin - millis()) / 1000) }), z.x, z.y + 60, 22, DS.blanc75, 'left', z.l - 40);
 		return;
 	}
 	// Fil de bulles façon SMS (même esprit que l'intro du prompt 20), aux couleurs du design system
@@ -364,12 +364,12 @@ function appPatron(z) {
 		dsTexte(m.heure, z.x + z.l - 10, y + 12, 18, DS.blanc50, 'right');
 		y += h + 12;
 	});
-	if (!Jeu.messagesPatron.length) dsTexte('Pas encore de message.', z.x, z.y, 20, DS.blanc50, 'left');
+	if (!Jeu.messagesPatron.length) dsTexte(t('app.pasMessage'), z.x, z.y, 20, DS.blanc50, 'left');
 }
 
 function appCommunity(z) {
 	let y = z.y;
-	dsTexte('Réputation actuelle : ' + Jeu.jauges.reputation + '/100 — chaque commentaire la fait évoluer.', z.x, y, 20, DS.blanc75, 'left');
+	dsTexte(t('app.reputation', { r: Jeu.jauges.reputation }), z.x, y, 20, DS.blanc75, 'left');
 	y += 44;
 	derniers(Jeu.commentaires, 8)
 		.reverse()
@@ -384,22 +384,22 @@ function appCommunity(z) {
 			noStroke();
 			dsTexte(c.auteur + ' · ' + c.heure, z.x + 16, y + 10, 18, DS.blanc50, 'left');
 			dsTexte(c.texte, z.x + 16, y + 38, 20, DS.blanc, 'left', z.l - 160);
-			dsBadge(z.x + z.l - 60, y + 38, (c.delta > 0 ? '+' : '') + c.delta + ' rép.', c.delta > 0 ? 'succes' : 'erreur');
+			dsBadge(z.x + z.l - 60, y + 38, t('app.rep', { d: (c.delta > 0 ? '+' : '') + c.delta }), c.delta > 0 ? 'succes' : 'erreur');
 			y += 88;
 		});
-	if (!Jeu.commentaires.length) dsTexte('Aucun commentaire pour l’instant.', z.x, y, 20, DS.blanc50, 'left');
+	if (!Jeu.commentaires.length) dsTexte(t('app.aucunCommentaire'), z.x, y, 20, DS.blanc50, 'left');
 }
 
 function appJournal(z) {
 	const j = Jeu.jourCourant();
 	let y = z.y;
-	dsTitre('JOURNEE DU ' + (j ? j.date.split('-').reverse().join('/') : ''), z.x, y, 24, DS.blanc, 'left');
+	dsTitre(t('app.journee', { date: j ? j.date.split('-').reverse().join('/') : '' }), z.x, y, 24, DS.blanc, 'left');
 	y += 50;
-	const lignes = (Jeu.evenementsJournee || []).filter((e) => j && e.jour === j.date).map((e) => ({ t: Jeu.ligneMail(e), ok: Jeu.evaluer(e) === 'bon choix !' }));
+	const lignes = (Jeu.evenementsJournee || []).filter((e) => j && e.jour === j.date).map((e) => ({ t: Jeu.ligneMail(e), ok: Jeu.evaluer(e) === 'bon' }));
 	(Jeu.equipes || [])
 		.filter((q) => j && q.jour === j.date)
-		.forEach((q) => lignes.push({ t: q.heure + ' – ' + q.nom + ' envoyée : ' + q.sujet + ' (−' + q.cout + ' budget) → ' + (q.arrivee_sim ? 'arrivée à ' + q.arrivee_sim : 'en route'), ok: true, equipe: true }));
-	if (!lignes.length) dsTexte('Rien à signaler pour l’instant.', z.x, y, 20, DS.blanc50, 'left');
+		.forEach((q) => lignes.push({ t: T('app.equipeEnvoyee', { heure: q.heure, nom: q.nom, sujet: q.sujet, cout: q.cout, etat: q.arrivee_sim ? T('app.arrivee', { h: q.arrivee_sim }) : T('app.enRoute') }), ok: true, equipe: true }));
+	if (!lignes.length) dsTexte(t('app.rien'), z.x, y, 20, DS.blanc50, 'left');
 	lignes.forEach((l) => {
 		noStroke();
 		fill(l.equipe ? DS.info : l.ok ? DS.succes : DS.primaire);
@@ -479,28 +479,28 @@ function appCarte(z) {
 		strokeWeight(2);
 		rect(p.x - 18, p.y - 18, 36, 36);
 		noStroke();
-		dsTexte(p.libre ? 'Réseau (lieu non précisé par la source)' : 'Ligne ' + actif.lignes.join(', '), p.x + 24, p.y + 14, 16, DS.blanc, 'left');
+		dsTexte(p.libre ? t('carte.lieuInconnu') : t('dossier.ligne', { lignes: actif.lignes.join(', ') }), p.x + 24, p.y + 14, 16, DS.blanc, 'left');
 		// Panneau latéral : incident + équipes
-		dsTitre('INCIDENT', panneauX, z.y, 24, DS.blanc, 'left');
-		dsTexte((actif.lignes && actif.lignes.length ? 'Ligne ' + actif.lignes.join(', ') + ' · ' : '') + actif.nature + (actif.retard !== null && actif.retard !== undefined ? ' · +' + actif.retard + ' min' : ''), panneauX, z.y + 44, 19, DS.blanc75, 'left', panneauL);
-		dsTexte('Budget disponible : ' + Jeu.jauges.budget, panneauX, z.y + 104, 19, DS.alerte, 'left');
+		dsTitre(t('carte.incident'), panneauX, z.y, 24, DS.blanc, 'left');
+		dsTexte((actif.lignes && actif.lignes.length ? t('dossier.ligne', { lignes: actif.lignes.join(', ') }) + ' · ' : '') + actif.nature + (actif.retard !== null && actif.retard !== undefined ? ' · +' + actif.retard + ' min' : ''), panneauX, z.y + 44, 19, DS.blanc75, 'left', panneauL);
+		dsTexte(t('carte.budget', { b: Jeu.jauges.budget }), panneauX, z.y + 104, 19, DS.alerte, 'left');
 		const dejaEnvoyee = Jeu.equipePour(Jeu.index);
 		Object.keys(Jeu.EQUIPES).forEach((cle, i) => {
 			const q = Jeu.EQUIPES[cle];
 			const effets = Object.keys(q.effets).map((k2) => Jeu.LIBELLES_JAUGES[k2] + ' +' + q.effets[k2]).join(', ');
 			const verrou = q.palier && Jeu.jauges.budget < q.palier;
 			const desactive = !!dejaEnvoyee || Jeu.jauges.budget < q.cout || verrou;
-			dsBouton(panneauX, z.y + 150 + i * 92, panneauL, 64, i + 1 + ' · ' + q.nom + ' (−' + q.cout + ')' + (verrou ? ' · budget ≥ ' + q.palier : ''), () => envoyerEquipeCarte(cle), i === 0 ? 'primaire' : 'secondaire', desactive);
+			dsBouton(panneauX, z.y + 150 + i * 92, panneauL, 64, i + 1 + ' · ' + q.nom + ' (−' + q.cout + ')' + (verrou ? t('carte.palier', { p: q.palier }) : ''), () => envoyerEquipeCarte(cle), i === 0 ? 'primaire' : 'secondaire', desactive);
 			dsTexte(effets, panneauX, z.y + 218 + i * 92, 15, DS.blanc50, 'left');
 		});
-		if (dejaEnvoyee) dsTexte('Équipe déjà envoyée : ' + dejaEnvoyee.nom + '.', panneauX, z.y + 530, 18, DS.infoClair, 'left', panneauL);
+		if (dejaEnvoyee) dsTexte(t('carte.deja', { nom: dejaEnvoyee.nom }), panneauX, z.y + 530, 18, DS.infoClair, 'left', panneauL);
 	} else {
-		dsTitre('AUCUN INCIDENT', panneauX, z.y, 24, DS.blanc, 'left');
-		dsTexte('Les incidents actifs de la partie apparaissent ici, à l’emplacement réel de leur ligne.', panneauX, z.y + 44, 19, DS.blanc50, 'left', panneauL);
+		dsTitre(t('carte.aucun'), panneauX, z.y, 24, DS.blanc, 'left');
+		dsTexte(t('carte.explication'), panneauX, z.y + 44, 19, DS.blanc50, 'left', panneauL);
 		// Dernier incident résolu : y envoyer une équipe est possible, mais inutile (malus, prompt 23 § 4)
 		const dernier = Jeu.index > 0 ? Jeu.paquet[Jeu.index - 1] : null;
 		if (dernier && !Jeu.equipePour(Jeu.index - 1)) {
-			dsTexte('Dernier incident (déjà résolu) : ' + (dernier.lignes && dernier.lignes.length ? 'ligne ' + dernier.lignes.join(', ') : dernier.nature), panneauX, z.y + 130, 18, DS.blanc75, 'left', panneauL);
+			dsTexte(t('carte.dernier', { quoi: dernier.lignes && dernier.lignes.length ? t('carte.ligneMin', { lignes: dernier.lignes.join(', ') }) : dernier.nature }), panneauX, z.y + 130, 18, DS.blanc75, 'left', panneauL);
 			Object.keys(Jeu.EQUIPES).forEach((cle, i) => {
 				const q = Jeu.EQUIPES[cle];
 				dsBouton(panneauX, z.y + 190 + i * 76, panneauL, 56, i + 1 + ' · ' + q.nom + ' (−' + q.cout + ')', () => envoyerEquipeCarte(cle, Jeu.index - 1), 'contour', Jeu.jauges.budget < q.cout || (q.palier && Jeu.jauges.budget < q.palier));

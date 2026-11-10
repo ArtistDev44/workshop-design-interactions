@@ -520,7 +520,7 @@ function composerVue() {
 		rect(L / 2 - 110, H - 60, 220, 36, 6);
 		fill('#FFFDF7');
 		textAlign(CENTER, CENTER);
-		text('Échap : se lever', L / 2, H - 42);
+		text(t('bureau.seLever'), L / 2, H - 42);
 		return;
 	}
 	// Au bureau : survol de l'écran, objets, horloge numérique, invitation
@@ -547,10 +547,10 @@ function composerVue() {
 		text(lib, HORLOGE_X * PIX, 152 * PIX + 17);
 	}
 	const msg = incidentActif()
-		? 'Incident en cours : cliquez sur l’écran du PC (Entrée) pour le traiter'
+		? t('bureau.incident')
 		: phase === 'mail'
-			? 'Un nouveau mail est arrivé sur le PC : cliquez sur l’écran (Entrée)'
-			: 'Cliquez sur le PC ou Entrée pour vous installer · Tab : objets · Échap : menu';
+			? t('bureau.mail')
+			: t('bureau.installer');
 	textFont(POLICE_DONNEES);
 	textSize(22);
 	const lm = textWidth(msg) + 40;
@@ -653,5 +653,5 @@ function glitchEcran(r) {
 	textFont(DS.policeTexte);
 	textSize(18);
 	textAlign(LEFT, CENTER);
-	text('⚠ ERREUR SYSTÈME · action « ' + Jeu.modificateur.actionBloquee + ' » HS', r.x + r.l - 368, r.y + 38);
+	text(t('bureau.erreur', { action: Jeu.REGLAGES.effets[Jeu.modificateur.actionBloquee].nom }), r.x + r.l - 368, r.y + 38);
 }

@@ -34,7 +34,7 @@
 	/** Mode « semaine rejouée » (archives). */
 	Jeu.chargerSemaine = function (lundi) {
 		const s = Jeu.semaines && Jeu.semaines.semaines[lundi];
-		if (!s) return Jeu.chargerHorsLigne('Semaine introuvable : semaine de référence hors ligne.');
+		if (!s) return Jeu.chargerHorsLigne(T('charge.introuvable'));
 		Jeu.etat = { mode: 'semaine', semaine: s, dossiers: s.dossiers.slice(), horsLigne: false, message: '' };
 		return Promise.resolve(Jeu.etat);
 	};
@@ -48,18 +48,18 @@
 			dossiers: fb ? fb.dossiers.slice() : [],
 			seed: fb ? fb.seed : 1001,
 			horsLigne: true,
-			message: message || 'Mode hors ligne : semaine de référence enregistrée.',
+			message: message || T('charge.horsLigne'),
 		};
 		return Promise.resolve(Jeu.etat);
 	};
 
 	/** Mode « aujourd'hui en direct » : un seul appel GTFS-RT au lancement, repli hors ligne si échec. */
 	Jeu.chargerDirect = function () {
-		if (!global.PXE_GTFSRT) return Jeu.chargerHorsLigne('Décodeur absent : mode hors ligne.');
+		if (!global.PXE_GTFSRT) return Jeu.chargerHorsLigne(T('charge.decodeur'));
 		return global.PXE_GTFSRT.charger(global.PXE_GTFSRT.FLUX.tripUpdates, DELAI_DIRECT_MS)
 			.then(function (flux) {
 				const retards = global.PXE_GTFSRT.retardsParLigne(flux, SEUIL_RETARD_MIN);
-				if (!retards.length) return Jeu.chargerHorsLigne('Aucun retard ≥ 10 min en ce moment : semaine de référence.');
+				if (!retards.length) return Jeu.chargerHorsLigne(T('charge.aucunRetard'));
 				const quand = new Date((flux.horodatage || Date.now() / 1000) * 1000);
 				Jeu.etat = {
 					mode: 'direct',
@@ -72,8 +72,8 @@
 							nature: 'retard',
 							lignes: [Jeu.nomLigne(r.ligne)],
 							retard: r.retardMin, // retard réel lu dans le flux (minutes)
-							source: 'Flux GTFS-RT trip-updates Naolib (temps réel)',
-							texte_source: 'Retard de ' + r.retardMin + ' min mesuré sur la ligne ' + Jeu.nomLigne(r.ligne),
+							source: T('direct.source'),
+							texte_source: T('direct.texte', { retard: r.retardMin, ligne: Jeu.nomLigne(r.ligne) }),
 						};
 					}),
 					horsLigne: false,
@@ -83,7 +83,7 @@
 				return Jeu.etat;
 			})
 			.catch(function () {
-				return Jeu.chargerHorsLigne('Flux temps réel injoignable : mode hors ligne.');
+				return Jeu.chargerHorsLigne(T('charge.injoignable'));
 			});
 	};
 
@@ -142,10 +142,10 @@
 		// Table des effets (Q57–Q60), prompt 22 : ordre fluidité, réputation, BUDGET (la satisfaction devient le budget).
 		// Seules les valeurs sont réajustées pour le nouveau trio ; les décisions Q57–Q61 sont inchangées.
 		effets: {
-			devier: { nom: 'Dévier la ligne', base: [-6, 6, -3], communique: true }, // détour : un peu de fluidité perdue, usagers informés, petit coût
-			retenir: { nom: 'Retenir en terminus', base: [-7, null, 2] }, // réputation : +8 si retard > 20 min sinon +4 (Q58) ; économise du budget
-			renfort: { nom: 'Bus de renfort', base: [12, 4, -12] }, // efficace mais cher : le budget n'est plus gratuit
-			rien: { nom: 'Ne rien faire' }, // −2 à −8 sur une jauge tirée au hasard (Q60)
+			devier: { nom: T('action.devier'), base: [-6, 6, -3], communique: true }, // détour : un peu de fluidité perdue, usagers informés, petit coût
+			retenir: { nom: T('action.retenir'), base: [-7, null, 2] }, // réputation : +8 si retard > 20 min sinon +4 (Q58) ; économise du budget
+			renfort: { nom: T('action.renfort'), base: [12, 4, -12] }, // efficace mais cher : le budget n'est plus gratuit
+			rien: { nom: T('action.rien') }, // −2 à −8 sur une jauge tirée au hasard (Q60)
 		},
 		// « base + 1d6 » (Q61) : le dé augmente l'AMPLITUDE de l'effet (même signe), d6 − 1 ∈ [0, 5] ;
 		// un effet de base nul reste nul. Résultat borné à ±15 (04-jauges : « ±5 à ±15 »).
@@ -165,7 +165,7 @@
 	};
 	Jeu.REGLAGES = REGLAGES;
 	const NOMS_JAUGES = ['fluidite', 'reputation', 'budget'];
-	const LIBELLES_JAUGES = { fluidite: 'fluidité', reputation: 'réputation', budget: 'budget' };
+	const LIBELLES_JAUGES = { fluidite: T('jauge.fluidite'), reputation: T('jauge.reputation'), budget: T('jauge.budget') };
 	Jeu.NOMS_JAUGES = NOMS_JAUGES;
 	Jeu.LIBELLES_JAUGES = LIBELLES_JAUGES;
 
@@ -200,9 +200,9 @@
 		const annoncee = an + '-' + String(m[2]).padStart(2, '0') + '-' + String(m[1]).padStart(2, '0');
 		if (annoncee === d.date) return null;
 		return {
-			question: 'Deux dates pour le même dossier : laquelle croire ?',
-			a: { libelle: 'Date de publication du changelog : ' + d.date, date: d.date },
-			b: { libelle: 'Date annoncée dans le texte : ' + annoncee, date: annoncee },
+			question: T('contra.question'),
+			a: { libelle: T('contra.a', { date: d.date }), date: d.date },
+			b: { libelle: T('contra.b', { date: annoncee }), date: annoncee },
 			bonne: 'b', // la perturbation a lieu à la date annoncée ; la publication la précède
 		};
 	}
@@ -270,7 +270,7 @@
 		const p = Jeu.paquet;
 		p[Jeu.index].conflitTranche = p[Jeu.index + 1].conflitTranche = true; // on ne repose pas la question pour la même paire
 		if (choix === 'b') [p[Jeu.index], p[Jeu.index + 1]] = [p[Jeu.index + 1], p[Jeu.index]];
-		Jeu.historique.push({ type: 'priorité', texte: 'Priorité donnée à la ligne ' + Jeu.dossierCourant().lignes.join(', ') });
+		Jeu.historique.push({ type: 'priorité', texte: T('histo.priorite', { lignes: Jeu.dossierCourant().lignes.join(', ') }) });
 	};
 
 	/* Contexte du dossier (Q24) : météo défavorable, heure de pointe, affluence. */
@@ -334,7 +334,7 @@
 		const resultat = {
 			dossier: d,
 			action,
-			nomAction: action === 'temps' ? 'Temps écoulé : aucune décision' : REGLAGES.effets[action].nom,
+			nomAction: action === 'temps' ? T('action.temps') : REGLAGES.effets[action].nom,
 			deltas,
 			des,
 			contexte: ctx,
@@ -361,28 +361,19 @@
 	Jeu.narrer = function (r) {
 		const d = r.dossier;
 		const quand = d.date.split('-').reverse().join('/') + (d.heure ? ' ' + d.heure : '');
-		const objet = d.lignes && d.lignes.length ? 'ligne ' + d.lignes.join(', ') : d.type === 'événement' ? 'affluence' : d.nature;
+		const objet = d.lignes && d.lignes.length ? T('narr.objetLigne', { lignes: d.lignes.join(', ') }) : d.type === 'événement' ? T('narr.objetAffluence') : d.nature;
 		const fait = d.retard !== null && d.retard !== undefined ? ' (+' + d.retard + ' min)' : '';
-		const bilan = r.deltas
-			.map((v, i) => (v ? LIBELLES_JAUGES[NOMS_JAUGES[i]] + ' ' + (v > 0 ? '+' : '') + v : null))
-			.filter(Boolean)
-			.join(', ');
+		const items = r.deltas.map((v, i) => (v ? T('delta', { jauge: LIBELLES_JAUGES[NOMS_JAUGES[i]], v: (v > 0 ? '+' : '') + v }) : null)).filter(Boolean);
 		const ton = Jeu.ton();
-		const reaction = {
-			neutre: 'La salle de contrôle garde la main.',
-			tendu: 'Les téléphones sonnent : la direction suit la semaine de près.',
-			critique: 'La direction exige des explications : la confiance s’effrite.',
-		}[ton];
 		return {
-			titre: quand + ' — ' + objet + fait,
-			texte:
-				r.nomAction +
-				'.' +
-				(r.communique ? ' Les usagers sont informés de la déviation.' : '') +
-				(r.mauvaiseSource ? ' La mauvaise date a été retenue : la perturbation a surpris le réseau.' : '') +
-				(bilan ? ' ' + bilan.charAt(0).toUpperCase() + bilan.slice(1) + '.' : ' Aucun effet sur les jauges.') +
-				' ' +
-				reaction,
+			titre: T('narr.titre', { quand, objet, fait }),
+			texte: T('narr.texte', {
+				action: r.nomAction,
+				communique: r.communique ? T('narr.communique') : '',
+				source: r.mauvaiseSource ? T('narr.mauvaiseSource') : '',
+				bilan: items.length ? T('narr.bilan', { liste: Liste(items, ', ', true) }) : T('narr.aucunEffet'),
+				reaction: T('ton.' + ton),
+			}),
 			ton,
 		};
 	};
@@ -392,22 +383,16 @@
 	// =====================================================================
 	const FINS = {
 		bonne: {
-			titre: 'La direction félicite la salle de contrôle',
-			texte:
-				'La semaine a été tenue. Face aux perturbations, les décisions ont préservé la fluidité du réseau, ' +
-				'les usagers ont été pris en compte et la salle de contrôle sort renforcée de ces sept jours.',
+			titre: T('fin.bonne.titre'),
+			texte: T('fin.bonne.texte'),
 		},
 		moyenne: {
-			titre: 'Semaine correcte, avec des zones d’ombre',
-			texte:
-				'Le réseau a fonctionné, mais pas sans à-coups. Plusieurs décisions ont tenu, d’autres ont coûté ' +
-				'en fluidité, en réputation ou en budget : le bilan est nuancé.',
+			titre: T('fin.moyenne.titre'),
+			texte: T('fin.moyenne.texte'),
 		},
 		mauvaise: {
-			titre: 'La direction réprimande la salle de contrôle',
-			texte:
-				'La semaine a échappé à la salle de contrôle. Des incidents ont été mal gérés et les jauges en portent la ' +
-				'trace : la direction demande des comptes sur les décisions listées dans le bilan.',
+			titre: T('fin.mauvaise.titre'),
+			texte: T('fin.mauvaise.texte'),
 		},
 	};
 
@@ -466,7 +451,7 @@
 	// =====================================================================
 	const DEBUT_JOURNEE = 6 * 60; // 6h00
 	const FIN_JOURNEE = 20 * 60; // 20h00
-	const NOMS_JAUGES_LONGS = { fluidite: 'la fluidité du réseau', reputation: 'la réputation de la salle', budget: 'le budget' };
+	const NOMS_JAUGES_LONGS = { fluidite: T('jaugeLong.fluidite'), reputation: T('jaugeLong.reputation'), budget: T('jaugeLong.budget') };
 
 	/**
 	 * Découpe le paquet en journées (une par date réelle) et fixe l'heure d'arrivée de chaque dossier
@@ -545,7 +530,7 @@
 		resultat.sieste = true;
 		if (Jeu.compterMalus) Jeu.compterMalus("sieste");
 		resultat.narration = Jeu.narrer(resultat);
-		resultat.narration.texte = 'Vous dormiez : l’alerte est restée sans réponse. ' + resultat.narration.texte;
+		resultat.narration.texte = T('narr.sieste', { texte: resultat.narration.texte });
 	};
 
 	// ——— Prompt 21 § 3 : journal de la journée et évaluation calculée des décisions ———
@@ -568,8 +553,8 @@
 
 	/** Événement externe réel du dossier (nature, météo, affluence) — jamais inventé */
 	function externe(d, ctx) {
-		let e = d.type === 'événement' ? 'affluence (' + String(d.nature).split(',')[0] + ')' : d.type === 'ligne en difficulté' ? 'retard mesuré' : d.nature;
-		if (ctx.meteo && d.type !== 'alerte météo') e += ' + météo défavorable';
+		let e = d.type === 'événement' ? T('ext.affluence', { nature: String(d.nature).split(',')[0] }) : d.type === 'ligne en difficulté' ? T('ext.retard') : d.nature;
+		if (ctx.meteo && d.type !== 'alerte météo') e = T('ext.meteo', { e });
 		return e;
 	}
 
@@ -585,11 +570,12 @@
 			heure: r.minuteSim === null ? '' : String(Math.floor(r.minuteSim / 60) % 24).padStart(2, '0') + ':' + String(Math.floor(r.minuteSim) % 60).padStart(2, '0'),
 			ligne: d.lignes && d.lignes.length ? d.lignes.join(', ') : null,
 			externe: externe(d, ctx),
+			externeCourt: d.type === 'événement' ? String(d.nature).split(',')[0] : d.type === 'ligne en difficulté' ? T('ext.retard') : d.nature,
 			retard: d.retard === undefined ? null : d.retard,
 			action: r.action === 'temps' ? null : r.nomAction,
 			cleAction: r.action,
 			deltas, // deltas réels (référence vers le résultat : la sieste ratée les met à jour)
-			meilleureAction: meilleure === 'rien' ? 'Ne rien faire' : REGLAGES.effets[meilleure].nom,
+			meilleureAction: REGLAGES.effets[meilleure].nom,
 			cleMeilleure: meilleure,
 			attendus,
 			resultat: r,
@@ -601,26 +587,34 @@
 
 	/** Évaluation calculée (§ 3.2) : « bon choix ! », « raté », « aucun détour » ou « trop tard » */
 	Jeu.evaluer = function (e) {
-		if (e.cleAction === 'temps') return 'trop tard';
+		// Codes (traduits à l'affichage par t('eval.' + code)) : 'bon', 'rate', 'aucun_detour', 'trop_tard'
+		if (e.cleAction === 'temps') return 'trop_tard';
 		const actions = ['devier', 'retenir', 'renfort'];
-		if (e.cleMeilleure === 'rien' || actions.every((a) => e.attendus[a] < 0)) return e.cleAction === 'rien' ? 'bon choix !' : 'aucun détour';
-		return e.attendus[e.cleAction] >= e.attendus[e.cleMeilleure] - 0.01 ? 'bon choix !' : 'raté';
+		if (e.cleMeilleure === 'rien' || actions.every((a) => e.attendus[a] < 0)) return e.cleAction === 'rien' ? 'bon' : 'aucun_detour';
+		return e.attendus[e.cleAction] >= e.attendus[e.cleMeilleure] - 0.01 ? 'bon' : 'rate';
 	};
 
 	Jeu.ligneMail = function (e) {
-		const sujet = e.ligne ? 'Ligne ' + e.ligne : 'Réseau';
-		const retard = e.retard !== null ? ' + retard ' + e.retard + ' min' : '';
+		const sujet = e.ligne ? T('sujet.ligne', { ligne: e.ligne }) : T('sujet.reseau');
+		const retard = e.retard !== null ? T('mail.retard', { retard: e.retard }) : '';
 		const ev = Jeu.evaluer(e);
 		const suite =
 			e.cleAction === 'temps'
-				? 'aucune décision (trop tard' + (e.resultat.sieste ? ', sieste' : '') + ')'
-				: e.action + ' (' + ev + (ev === 'raté' ? ', il fallait : ' + e.meilleureAction : '') + ')';
-		const impacts = NOMS_JAUGES.filter((k) => e.deltas[k] < 0).map((k) => LIBELLES_JAUGES[k] + ' ' + e.deltas[k]);
-		return (
-			e.heure + ' – ' + sujet + ' : ' + e.externe + retard + ' → ' + suite +
-			(e.resultat.mauvaiseSource ? ' — mauvaise date retenue' : '') +
-			(ev !== 'bon choix !' && impacts.length ? ' → ' + impacts.join(', ') : '')
-		);
+				? T(e.resultat.sieste ? 'mail.tropTardSieste' : 'mail.tropTard')
+				: T(ev === 'rate' ? 'mail.suiteRate' : 'mail.suite', { action: e.action, ev: T('eval.' + ev), meilleure: e.meilleureAction });
+		const impacts = NOMS_JAUGES.filter((k) => e.deltas[k] < 0).map((k) => T('delta', { jauge: LIBELLES_JAUGES[k], v: e.deltas[k] }));
+		const ligne = T('mail.ligne', {
+			heure: e.heure,
+			sujet,
+			externe: e.externe,
+			retard,
+			suite,
+			source: e.resultat.mauvaiseSource ? T('mail.mauvaiseDate') : '',
+			impacts: ev !== 'bon' && impacts.length ? T('mail.impacts', { liste: Liste(impacts, ', ') }) : '',
+		});
+		ligne.fait = true; // ligne de fait (couleur dans le mail)
+		ligne.ok = ev === 'bon';
+		return ligne;
 	};
 
 	/**
@@ -631,19 +625,19 @@
 		const j = Jeu.jourCourant();
 		const duJour = (Jeu.evenementsJournee || []).filter((e) => e.jour === (j && j.date)).sort((a, b) => a.heure.localeCompare(b.heure));
 		const date = j ? j.date.split('-').reverse().join('/') : '';
-		const parfaite = duJour.length > 0 && duJour.every((e) => Jeu.evaluer(e) === 'bon choix !' && !e.resultat.mauvaiseSource);
+		const parfaite = duJour.length > 0 && duJour.every((e) => Jeu.evaluer(e) === 'bon' && !e.resultat.mauvaiseSource);
 		const lignes = [];
-		if (parfaite) lignes.push('Tout a été géré dans les temps, belle journée.');
+		if (parfaite) lignes.push(T('mail.parfait'));
 		else {
-			lignes.push('Journal de la journée du ' + date + ' :');
+			lignes.push(T('mail.journal', { date }));
 			duJour.forEach((e) => lignes.push(Jeu.ligneMail(e)));
 		}
 		const obj = (Jeu.objectifsResultats || []).find((o) => o.jourIndex === Jeu.jourIndex);
-		if (obj) lignes.push('Objectif du jour — ' + obj.libelle + ' : ' + (obj.atteint ? 'atteint (' + obj.effet + ').' : 'raté (' + obj.effet + ').'));
-		lignes.push('Jauges en fin de journée : fluidité ' + Jeu.jauges.fluidite + ', réputation ' + Jeu.jauges.reputation + ', budget ' + Jeu.jauges.budget + '.');
+		if (obj) lignes.push(T('mail.objectif', { libelle: obj.libelle, resultat: T(obj.atteint ? 'mail.atteint' : 'mail.rate', { effet: obj.effet }) }));
+		lignes.push(T('mail.jauges', { f: Jeu.jauges.fluidite, r: Jeu.jauges.reputation, b: Jeu.jauges.budget }));
 		return {
-			de: 'Direction de la régulation',
-			objet: (parfaite ? 'Merci pour cette journée — ' : 'Points à revoir — ') + date,
+			de: T('mail.de'),
+			objet: T(parfaite ? 'mail.objetMerci' : 'mail.objetRevoir', { date }),
 			positif: parfaite,
 			lignes,
 			dernier: Jeu.jourIndex >= (Jeu.jours || []).length - 1,
@@ -669,12 +663,14 @@
 		const j = Jeu.jourCourant();
 		const n = j ? j.dossiers.length : 0;
 		const o = Jeu.objectifDuJour();
-		const m = Jeu.modificateur ? ' Attention : ' + Jeu.modificateur.libelle + (Jeu.modificateur.actionBloquee ? ' (« ' + REGLAGES.effets[Jeu.modificateur.actionBloquee].nom + ' » indisponible pendant la panne)' : '') + '.' : '';
-		return 'Bonjour. ' + n + ' dossier(s) attendus aujourd’hui (' + (j ? j.date.split('-').reverse().join('/') : '') + '). Objectif : ' + o.libelle + '. Budget : ' + Jeu.jauges.budget + '.' + m;
+		const mo = Jeu.modificateur;
+		const m = mo ? (mo.actionBloquee ? T('patron.modBloque', { libelle: mo.libelle, action: REGLAGES.effets[mo.actionBloquee].nom }) : T('patron.mod', { libelle: mo.libelle })) : '';
+		return T('patron.consigne', { n, date: j ? j.date.split('-').reverse().join('/') : '', objectif: o.libelle, budget: Jeu.jauges.budget, mod: m });
 	}
 
 	Jeu.messagePatron = function (texte) {
 		Jeu.messagesPatron.push({ heure: maintenantSim(), texte });
+		if (typeof annoncer === 'function') annoncer(texte); // aria-live, langue active
 		Jeu.nonLus.patron++;
 	};
 
@@ -684,28 +680,24 @@
 		NOMS_JAUGES.forEach((k) => {
 			if (Jeu.jauges[k] < REGLAGES.seuilCritique && !Jeu.alertesJauges[k]) {
 				Jeu.alertesJauges[k] = true;
-				Jeu.messagePatron('Alerte : ' + LIBELLES_JAUGES[k] + ' à ' + Jeu.jauges[k] + '/100. Redresse ça tout de suite.');
+				Jeu.messagePatron(T('patron.alerte', { jauge: LIBELLES_JAUGES[k], v: Jeu.jauges[k] }));
 			}
 		});
 	};
 
 	// Commentaires nantais : modèles courts remplis avec les données réelles du dossier (pseudonymes fictifs)
 	const PSEUDOS = ['@usager_44', '@nantaise_du_tram', '@velo_et_bus', '@ile_de_nantes', '@quai_de_la_fosse', '@chantenay_matin'];
-	const COMMENTAIRES = {
-		bon: ['{sujet} : c’était réglé en {heure}, merci la régul 👍', 'Bien vu pour {sujet}, on a à peine senti le problème.', '{sujet} : info claire et solution rapide. Bravo.'],
-		mauvais: ['{sujet}{retard} et personne pour gérer ? Sérieux…', 'Encore {sujet}{retard}. Vous dormez à la régul ?', '{sujet} : zéro info, zéro solution. Bof.'],
-		equipe: ['{equipe} sur place pour {sujet}, ça fait plaisir de voir réagir.'],
-	};
+	const COMMENTAIRES = { bon: 3, mauvais: 3, equipe: 1 }; // nombre de modèles par sorte (textes : i18n.js, clés com.<sorte>.<n>)
 	const DELTA_REPUTATION = { bon: 2, mauvais: -3, equipe: 1 };
 
 	Jeu.commenter = function (sorte, sujet, retard, equipe) {
-		const modeles = COMMENTAIRES[sorte];
 		const n = Jeu.commentaires.length;
-		const texte = modeles[n % modeles.length]
-			.replace('{sujet}', sujet)
-			.replace('{retard}', retard !== null && retard !== undefined ? ' (+' + retard + ' min)' : '')
-			.replace('{heure}', maintenantSim())
-			.replace('{equipe}', equipe || '');
+		const texte = T('com.' + sorte + '.' + (n % COMMENTAIRES[sorte]), {
+			sujet,
+			retard: retard !== null && retard !== undefined ? ' (+' + retard + ' min)' : '',
+			heure: maintenantSim(),
+			equipe: equipe || '',
+		});
 		const delta = DELTA_REPUTATION[sorte];
 		Jeu.commentaires.push({ heure: maintenantSim(), auteur: PSEUDOS[n % PSEUDOS.length], texte, delta });
 		Jeu.nonLus.community++;
@@ -714,20 +706,20 @@
 
 	/** Après chaque dossier traité : un commentaire nantais et, si c'est raté, une réaction du patron */
 	Jeu.reagirApps = function (e) {
-		const sujet = e.ligne ? 'Ligne ' + e.ligne : String(e.externe).split(' (')[0];
+		const sujet = e.ligne ? T('sujet.ligne', { ligne: e.ligne }) : e.externeCourt || e.externe;
 		const ev = Jeu.evaluer(e);
-		Jeu.commenter(ev === 'bon choix !' ? 'bon' : 'mauvais', sujet, e.retard);
-		if (ev === 'raté') Jeu.messagePatron(sujet + ' : « ' + e.action + ' », vraiment ? Il fallait « ' + e.meilleureAction + ' ».');
-		if (ev === 'trop tard') Jeu.messagePatron(sujet + ' : personne n’a réagi. Ça ne doit pas se reproduire.');
+		Jeu.commenter(ev === 'bon' ? 'bon' : 'mauvais', sujet, e.retard);
+		if (ev === 'rate') Jeu.messagePatron(T('patron.rate', { sujet, action: e.action, meilleure: e.meilleureAction }));
+		if (ev === 'trop_tard') Jeu.messagePatron(T('patron.tropTard', { sujet }));
 		Jeu.verifierAlertesPatron();
 	};
 
 	// Équipes envoyées depuis la carte (façon centre d'appels) : coût en budget, effets à l'arrivée
 	const EQUIPES = {
-		ambulance: { nom: 'Ambulance', cout: 15, effets: { reputation: 8 } },
-		police: { nom: 'Police', cout: 10, effets: { reputation: 5, fluidite: 3 } },
-		techniciens: { nom: 'Techniciens', cout: 12, effets: { fluidite: 10 } },
-		pompiers: { nom: 'Pompiers', cout: 15, palier: 70, effets: { reputation: 6, fluidite: 6 } }, // option coûteuse : débloquée si budget ≥ 70 (prompt 23 § 5.1)
+		ambulance: { nom: T('equipe.ambulance'), cout: 15, effets: { reputation: 8 } },
+		police: { nom: T('equipe.police'), cout: 10, effets: { reputation: 5, fluidite: 3 } },
+		techniciens: { nom: T('equipe.techniciens'), cout: 12, effets: { fluidite: 10 } },
+		pompiers: { nom: T('equipe.pompiers'), cout: 15, palier: 70, effets: { reputation: 6, fluidite: 6 } }, // option coûteuse : débloquée si budget ≥ 70 (prompt 23 § 5.1)
 	};
 	Jeu.EQUIPES = EQUIPES;
 	Jeu.DELAI_EQUIPE_MS = 20000; // arrivée 20 s (réelles) après l'envoi
@@ -738,20 +730,20 @@
 	Jeu.envoyerEquipe = function (index, cle, maintenant) {
 		const q = EQUIPES[cle];
 		const d = Jeu.paquet[index];
-		if (!q || !d) return { ok: false, message: 'Incident introuvable.' };
-		if (Jeu.equipePour(index)) return { ok: false, message: 'Équipe déjà envoyée sur cet incident.' };
-		if (Jeu.jauges.budget < q.cout) return { ok: false, message: 'Budget insuffisant (' + Jeu.jauges.budget + '/' + q.cout + ') : ' + q.nom + ' indisponible.' };
-		if (q.palier && Jeu.jauges.budget < q.palier) return { ok: false, message: q.nom + ' : réservé quand le budget est ≥ ' + q.palier + ' (actuel ' + Jeu.jauges.budget + ').' };
+		if (!q || !d) return { ok: false, message: T('equipe.introuvable') };
+		if (Jeu.equipePour(index)) return { ok: false, message: T('equipe.deja') };
+		if (Jeu.jauges.budget < q.cout) return { ok: false, message: T('equipe.budget', { budget: Jeu.jauges.budget, cout: q.cout, nom: q.nom }) };
+		if (q.palier && Jeu.jauges.budget < q.palier) return { ok: false, message: T('equipe.palier', { nom: q.nom, palier: q.palier, budget: Jeu.jauges.budget }) };
 		Jeu.appliquerDeltas({ budget: -q.cout });
 		if (index < Jeu.index) {
 			// Équipe inutile (prompt 23 § 4) : l'incident est déjà résolu — coût perdu, réputation −3
 			Jeu.compterMalus('equipe_inutile');
 			Jeu.appliquerDeltas({ reputation: -3 });
-			Jeu.equipes.push({ index, cle, nom: q.nom, cout: q.cout, depart: maintenant, arrivee: maintenant, heure: maintenantSim(), arrivee_sim: maintenantSim(), inutile: true, jour: d.date, sujet: d.lignes && d.lignes.length ? 'Ligne ' + d.lignes.join(', ') : d.nature });
-			return { ok: false, message: 'Équipe inutile : incident déjà résolu (−' + q.cout + ' budget, réputation −3).' };
+			Jeu.equipes.push({ index, cle, nom: q.nom, cout: q.cout, depart: maintenant, arrivee: maintenant, heure: maintenantSim(), arrivee_sim: maintenantSim(), inutile: true, jour: d.date, sujet: d.lignes && d.lignes.length ? T('sujet.ligne', { ligne: d.lignes.join(', ') }) : d.nature });
+			return { ok: false, message: T('equipe.inutile', { cout: q.cout }) };
 		}
-		Jeu.equipes.push({ index, cle, nom: q.nom, cout: q.cout, depart: maintenant, arrivee: maintenant + Jeu.DELAI_EQUIPE_MS, heure: maintenantSim(), arrivee_sim: null, jour: d.date, sujet: d.lignes && d.lignes.length ? 'Ligne ' + d.lignes.join(', ') : d.nature });
-		return { ok: true, message: q.nom + ' en route (−' + q.cout + ' budget).' };
+		Jeu.equipes.push({ index, cle, nom: q.nom, cout: q.cout, depart: maintenant, arrivee: maintenant + Jeu.DELAI_EQUIPE_MS, heure: maintenantSim(), arrivee_sim: null, jour: d.date, sujet: d.lignes && d.lignes.length ? T('sujet.ligne', { ligne: d.lignes.join(', ') }) : d.nature });
+		return { ok: true, message: T('equipe.enRoute', { nom: q.nom, cout: q.cout }) };
 	};
 
 	/** À appeler à chaque image : applique les effets des équipes arrivées */
@@ -776,24 +768,24 @@
 		const recents = (Jeu.evenementsJournee || []).slice(-3);
 		const repBaisse = recents.some((e) => e.deltas.reputation < 0) || (Jeu.commentaires || []).slice(-3).some((c) => c.delta < 0);
 		if (d.retard !== null && d.retard !== undefined && d.retard >= 18 && d.lignes && d.lignes.length && repBaisse)
-			return 'Ligne ' + d.lignes.join(', ') + ' à +' + d.retard + ' min, la réputation baisse déjà sur les réseaux.';
+			return T('conseil.retard', { lignes: d.lignes.join(', '), retard: d.retard });
 		const basse = NOMS_JAUGES.filter((k) => Jeu.jauges[k] < 30).sort((a, b) => Jeu.jauges[a] - Jeu.jauges[b])[0];
-		if (basse) return 'Attention : ' + LIBELLES_JAUGES[basse] + ' est à ' + Jeu.jauges[basse] + ', une mauvaise décision peut la faire passer sous 20.';
-		if (d.contradiction || (Jeu.conflit && Jeu.conflit())) return 'Deux informations sont en conflit : priorisez avant d’agir.';
+		if (basse) return T('conseil.basse', { jauge: LIBELLES_JAUGES[basse], v: Jeu.jauges[basse] });
+		if (d.contradiction || (Jeu.conflit && Jeu.conflit())) return T('conseil.conflit');
 		const ctx = contexte(d);
 		const m = Jeu.meteoDuJour(d.date) || {};
-		if (ctx.meteo) return 'Météo du moment (' + Math.round(m.rafales_max || 0) + ' km/h, ' + (m.pluie_mm || 0) + ' mm) : l’effet des actions sur la fluidité est modifié.';
-		if (ctx.affluence) return 'Affluence (' + String(d.nature).split(',')[0] + ') : l’effet des actions sur la réputation est modifié.';
-		if (ctx.pointe) return 'Heure de pointe : l’effet des actions sur la réputation est modifié.';
-		return 'Budget à ' + Jeu.jauges.budget + ' : chaque action a un coût ou un gain, lisez le dossier avant de choisir.';
+		if (ctx.meteo) return T('conseil.meteo', { rafales: Math.round(m.rafales_max || 0), pluie: m.pluie_mm || 0 });
+		if (ctx.affluence) return T('conseil.affluence', { nature: String(d.nature).split(',')[0] });
+		if (ctx.pointe) return T('conseil.pointe');
+		return T('conseil.budget', { b: Jeu.jauges.budget });
 	};
 
 	/** § 2 — Modificateurs (un par journée, tirés avec le générateur à graine fixe : partie rejouable) */
 	const MODIFICATEURS = [
-		{ id: 'erreur_systeme', duree_s: 30, libelle: 'Erreur système sur l’ordinateur' },
-		{ id: 'meteo_aggravee', duree_s: 60, libelle: 'Météo aggravée : effets ×1,5' },
-		{ id: 'heure_pointe', duree_s: 45, libelle: 'Heure de pointe : décisions 20 % plus courtes' },
-		{ id: 'panne_messagerie', duree_s: 60, libelle: 'Panne de la messagerie du patron' },
+		{ id: 'erreur_systeme', duree_s: 30, libelle: T('mod.erreur_systeme') },
+		{ id: 'meteo_aggravee', duree_s: 60, libelle: T('mod.meteo_aggravee') },
+		{ id: 'heure_pointe', duree_s: 45, libelle: T('mod.heure_pointe') },
+		{ id: 'panne_messagerie', duree_s: 60, libelle: T('mod.panne_messagerie') },
 	];
 	Jeu.MODIFICATEURS = MODIFICATEURS;
 	Jeu.forcerModificateur = null; // test : forcer un id
@@ -820,11 +812,11 @@
 
 	/** § 3 — Objectifs de journée qui se resserrent */
 	const OBJECTIFS = [
-		{ jour: 1, jauge: 'fluidite', seuil: 40, libelle: 'Garder la fluidité ≥ 40' },
-		{ jour: 2, jauge: 'fluidite', seuil: 45, libelle: 'Garder la fluidité ≥ 45' },
-		{ jour: 3, jauge: 'reputation', seuil: 45, libelle: 'Garder la réputation ≥ 45' },
-		{ jour: 4, jauge: 'reputation', seuil: 50, libelle: 'Garder la réputation ≥ 50' },
-		{ jour: 5, jauge: 'budget', seuil: 30, libelle: 'Terminer avec un budget ≥ 30' },
+		{ jour: 1, jauge: 'fluidite', seuil: 40, libelle: T('obj.garder', { jauge: LIBELLES_JAUGES.fluidite, seuil: 40 }) },
+		{ jour: 2, jauge: 'fluidite', seuil: 45, libelle: T('obj.garder', { jauge: LIBELLES_JAUGES.fluidite, seuil: 45 }) },
+		{ jour: 3, jauge: 'reputation', seuil: 45, libelle: T('obj.garder', { jauge: LIBELLES_JAUGES.reputation, seuil: 45 }) },
+		{ jour: 4, jauge: 'reputation', seuil: 50, libelle: T('obj.garder', { jauge: LIBELLES_JAUGES.reputation, seuil: 50 }) },
+		{ jour: 5, jauge: 'budget', seuil: 30, libelle: T('obj.budget', { seuil: 30 }) },
 	];
 	Jeu.OBJECTIFS = OBJECTIFS;
 	Jeu.objectifDuJour = () => OBJECTIFS[Math.min(Jeu.jourIndex || 0, OBJECTIFS.length - 1)];
@@ -843,11 +835,11 @@
 		if (atteint) {
 			const bonus = o.jauge === 'budget' ? { reputation: 5 } : { budget: 10 };
 			Jeu.appliquerDeltas(bonus);
-			effet = 'bonus ' + Object.keys(bonus).map((k) => LIBELLES_JAUGES[k] + ' +' + bonus[k]).join(', ');
+			effet = T('obj.bonus', { liste: Liste(Object.keys(bonus).map((k) => T('delta', { jauge: LIBELLES_JAUGES[k], v: '+' + bonus[k] })), ', ') });
 		} else {
 			Jeu.compterMalus('objectif_rate');
 			Jeu.appliquerDeltas({ [o.jauge]: -5 });
-			effet = 'malus ' + LIBELLES_JAUGES[o.jauge] + ' −5';
+			effet = T('obj.malus', { jauge: LIBELLES_JAUGES[o.jauge] });
 		}
 		Jeu.objectifsResultats.push({ jourIndex: Jeu.jourIndex, libelle: o.libelle, atteint, valeur: Jeu.jauges[o.jauge], effet });
 		if (Jeu.jauges.budget <= 0) {
@@ -859,11 +851,11 @@
 
 	/** § 4 — Table unique des malus (affichée dans l'aide H) */
 	Jeu.MALUS = [
-		{ id: 'non_traite', libelle: 'Incident non traité', condition: 'dossier expiré sans décision', consequence: 'conséquences naturelles du dossier (Q25)' },
-		{ id: 'sieste', libelle: 'Sieste non interrompue', condition: '« Se réveiller » raté', consequence: '−5 sur la jauge de l’incident' },
-		{ id: 'objectif_rate', libelle: 'Objectif de journée raté', condition: 'jauge sous le seuil en fin de journée', consequence: '−5 sur la jauge de l’objectif' },
-		{ id: 'equipe_inutile', libelle: 'Équipe inutile', condition: 'équipe envoyée sur un incident déjà résolu', consequence: 'coût perdu, réputation −3' },
-		{ id: 'budget_epuise', libelle: 'Budget épuisé', condition: 'budget à 0 en fin de journée', consequence: 'réputation −8 (dettes)' },
+		{ id: 'non_traite', libelle: T('malus.non_traite.l'), condition: T('malus.non_traite.c'), consequence: T('malus.non_traite.q') },
+		{ id: 'sieste', libelle: T('malus.sieste.l'), condition: T('malus.sieste.c'), consequence: T('malus.sieste.q') },
+		{ id: 'objectif_rate', libelle: T('malus.objectif_rate.l'), condition: T('malus.objectif_rate.c'), consequence: T('malus.objectif_rate.q') },
+		{ id: 'equipe_inutile', libelle: T('malus.equipe_inutile.l'), condition: T('malus.equipe_inutile.c'), consequence: T('malus.equipe_inutile.q') },
+		{ id: 'budget_epuise', libelle: T('malus.budget_epuise.l'), condition: T('malus.budget_epuise.c'), consequence: T('malus.budget_epuise.q') },
 	];
 	Jeu.compterMalus = function (id) {
 		Jeu.malus = Jeu.malus || {};
@@ -877,9 +869,9 @@
 		const palier = b < 20 ? 'bas' : b >= 70 ? 'haut' : 'moyen';
 		if (Jeu.paliersBudget[palier]) return;
 		Jeu.paliersBudget[palier] = true;
-		if (palier === 'bas') Jeu.messagePatron('Budget à ' + b + ' : on ne peut plus envoyer d’équipes. Trouvez des solutions sans dépenser.');
-		else if (palier === 'haut') Jeu.messagePatron('Budget à ' + b + ' : on a de la marge, envoyez des équipes si besoin (les pompiers sont disponibles).');
-		else if (Jeu.paliersBudget.bas || Jeu.paliersBudget.haut) Jeu.messagePatron('Budget à ' + b + ' : situation suivie, restez raisonnable.');
+		if (palier === 'bas') Jeu.messagePatron(T('patron.budgetBas', { b }));
+		else if (palier === 'haut') Jeu.messagePatron(T('patron.budgetHaut', { b }));
+		else if (Jeu.paliersBudget.bas || Jeu.paliersBudget.haut) Jeu.messagePatron(T('patron.budgetMoyen', { b }));
 	};
 
 	/** Conseil repris par le patron quand une jauge passe sous 30 (une fois par jauge et par jour) */
@@ -889,7 +881,7 @@
 			const cle = 'conseil_' + k;
 			if (Jeu.jauges[k] < 30 && !Jeu.alertesJauges[cle]) {
 				Jeu.alertesJauges[cle] = true;
-				Jeu.messagePatron('Attention : ' + LIBELLES_JAUGES[k] + ' est à ' + Jeu.jauges[k] + ', une mauvaise décision peut la faire passer sous 20.');
+				Jeu.messagePatron(T('conseil.basse', { jauge: LIBELLES_JAUGES[k], v: Jeu.jauges[k] }));
 			}
 		});
 	};
@@ -909,14 +901,18 @@
 		const haut = tri[0];
 		const bas = tri[tri.length - 1];
 		const phrase =
-			'Semaine ' + (Jeu.jauges[haut] >= 60 ? 'solide' : 'fragile') + ' sur ' + LIBELLES_JAUGES[haut] + ' (' + Jeu.jauges[haut] + ')' +
-			(m ? ', mais ' + Jeu.malus[malusFrequent] + ' × « ' + m.libelle.toLowerCase() + ' »' : '') + '.';
+			T('profil.phrase', {
+				qualite: T(Jeu.jauges[haut] >= 60 ? 'profil.solide' : 'profil.fragile'),
+				jauge: LIBELLES_JAUGES[haut],
+				v: Jeu.jauges[haut],
+				malus: m ? T('profil.malus', { n: Jeu.malus[malusFrequent], libelle: m.libelle }) : '',
+			});
 		return {
 			phrase,
 			haut: { jauge: LIBELLES_JAUGES[haut], valeur: Jeu.jauges[haut] },
 			bas: { jauge: LIBELLES_JAUGES[bas], valeur: Jeu.jauges[bas] },
 			meilleurJour: meilleurJour ? meilleurJour.split('-').reverse().join('/') : '—',
-			malusFrequent: m ? m.libelle + ' (' + Jeu.malus[malusFrequent] + ')' : 'aucun',
+			malusFrequent: m ? T('profil.malusFrequent', { libelle: m.libelle, n: Jeu.malus[malusFrequent] }) : T('profil.aucun'),
 			budget: Jeu.jauges.budget,
 			equipes: (Jeu.equipes || []).length,
 			objectifs: atteints + '/' + (Jeu.objectifsResultats || []).length,
