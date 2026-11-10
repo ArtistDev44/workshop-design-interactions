@@ -1,5 +1,5 @@
 /* Nantes en régulation — la pièce de régulation en pixel art (vue d'entrée du jeu).
- * Cadrage large : on voit toute la pièce — porte d'entrée, portemanteau, fenêtre, tableau de liège,
+ * Vue depuis la chaise, plein écran (bords coupés, flous et vignettés), baie sur la Loire,
  * bureau au centre avec le PC (écran centré sur la page, prompt 21), fauteuil, tapis, lampe, plante.
  * Clic sur le PC (ou Entrée) : zoom jusqu'au moniteur SANS plein écran — la pièce reste visible autour.
  * Le PC démarre puis affiche un bureau (système fictif, voir os.js) avec l'icône de l'appli de régulation.
@@ -167,7 +167,6 @@ function dessinerPieceBureau() {
 	if (typeof PIECE !== 'undefined' && PIECE.store) dessinerStore(g); // prompt 29
 	dessinerMurDroit(g); // prompt 31 : pan de mur blanc avec l'horloge murale et l'applique
 	dessinerMurBas(g);
-	dessinerPorte(g); // prompt 26
 	dessinerPlateau(g);
 	dessinerPC(g);
 	dessinerObjetsBureau(g);
@@ -175,7 +174,7 @@ function dessinerPieceBureau() {
 	// Prompt 31 : plus d'accoudoirs (la chaise n'est plus visible : on est assis dessus)
 	dessinerLumiere(g);
 	dessinerAmbianceLampe(g);
-	dessinerVignettage(g);
+	// Vignettage : désormais fixe à l'écran (masqueFlouEtVignette), plus cuit dans l'image de la pièce
 	if (typeof dessinerPersonnageSieste === 'function') dessinerPersonnageSieste(g);
 }
 
@@ -212,7 +211,7 @@ function dessinerVueNantes(g) {
 	});
 	// Prompt 34 : grue au pied de la ville (même ligne d'horizon, même teinte que les immeubles),
 	// plus de château, de quai, de route ni d'arbres : la baie donne directement sur la Loire.
-	dessinerGrueTitan(g, 330, HORIZON_VILLE, nuit);
+	dessinerGrueTitan(g, 344, HORIZON_VILLE, nuit);
 	dessinerLoire(g, nuit, pluie, haut, bas);
 	if (pluie) {
 		g.fill('#cfd8e0');
@@ -224,22 +223,22 @@ function dessinerVueNantes(g) {
    Prompt 34 : posée sur la ligne d'horizon des immeubles et de leur couleur (elle se fond dans la ville). */
 const HORIZON_VILLE = 122; // bas des immeubles lointains
 function dessinerGrueTitan(g, x, base, nuit) {
-	const jaune = nuit ? '#0f1626' : '#8b96a3';
-	const jauneOmbre = nuit ? '#1a2336' : '#7a8592';
-	px(g, P.contour, x + 30, base - 76, 12, 76);
-	px(g, jaune, x + 31, base - 75, 10, 75);
-	for (let y = base - 72; y < base; y += 8) {
-		px(g, jauneOmbre, x + 31, y, 10, 1);
-		for (let k = 0; k < 8; k++) px(g, jauneOmbre, x + 31 + k, y + k, 1, 1);
-	}
-	px(g, P.contour, x - 20, base - 84, 112, 8); // flèche
-	px(g, jaune, x - 19, base - 83, 110, 6);
-	for (let k = -18; k < 90; k += 6) px(g, jauneOmbre, x + k, base - 83, 1, 6);
-	px(g, P.contour, x + 26, base - 96, 20, 12); // cabine / contrepoids
-	px(g, jaune, x + 27, base - 95, 18, 10);
-	px(g, nuit ? '#e8c46a' : '#5f6a78', x + 30, base - 92, 6, 4); // vitre de la cabine (allumée la nuit)
-	px(g, P.contour, x + 82, base - 76, 1, 30); // câble
-	px(g, '#3c4450', x + 79, base - 46, 7, 4); // crochet
+	// Correctif : grue à l'échelle des immeubles lointains (≈ 40 px de haut, comme les plus hauts) et
+	// silhouette pleine, opaque, un ton plus sombre que la ville — plus de treillis « transparent » sur le ciel.
+	const fond = nuit ? '#0b111d' : '#6f7a87';
+	const trait = nuit ? '#1a2336' : '#5b6572';
+	const bord = nuit ? '#05080f' : '#4a535e';
+	px(g, bord, x + 19, base - 37, 8, 37); // tour
+	px(g, fond, x + 20, base - 36, 6, 36);
+	for (let y = base - 34; y < base; y += 5) for (let k = 0; k < 5; k++) px(g, trait, x + 20 + k, y + k, 1, 1); // croisillons, sur fond plein
+	px(g, bord, x - 6, base - 42, 60, 5); // flèche
+	px(g, fond, x - 5, base - 41, 58, 3);
+	for (let k = -4; k < 52; k += 4) px(g, trait, x + k, base - 41, 1, 3);
+	px(g, bord, x + 16, base - 49, 13, 8); // cabine / contrepoids
+	px(g, fond, x + 17, base - 48, 11, 6);
+	px(g, nuit ? '#e8c46a' : '#5f6a78', x + 19, base - 47, 4, 3); // vitre (allumée la nuit)
+	px(g, bord, x + 47, base - 37, 1, 14); // câble
+	px(g, bord, x + 45, base - 23, 5, 3); // crochet
 }
 
 // ——— Prompt 34 : la Loire, dont la hauteur suit la hauteur d'eau réelle (Hub'Eau, station M800001010) ———
@@ -322,8 +321,8 @@ function dessinerMontantsBaie(g) {
 }
 
 // Prompt 31 : pan de mur à droite de la baie, horloge murale (heure du jeu) et applique (la lampe du prompt 29)
-const MUR_DROIT_X = 420;
-const HORLOGE_MURALE = { x: 440, y: 44, r: 13 };
+const MUR_DROIT_X = 402; // correctif plein écran : pan de mur rapproché pour rester dans le champ
+const HORLOGE_MURALE = { x: 418, y: 44, r: 13 };
 function dessinerMurDroit(g) {
 	px(g, '#f4f5f6', MUR_DROIT_X, 9, BW - MUR_DROIT_X, BAIE_BAS - 9);
 	px(g, '#b9bec4', MUR_DROIT_X - 2, 9, 3, BAIE_BAS - 9); // dormant de la baie (laqué clair, prompt 32)
@@ -418,32 +417,88 @@ function dessinerPC(g) {
 
 /* Prompt 34 : souris et téléphone en perspective, comme le clavier — chaque ligne s'élargit vers l'avant
    (bord arrière étroit, bord avant large), avec une ombre tramée sur le plateau. */
-function trapeze(g, cx, y0, h, demi0, demi1, couleur, bord, arrondi) {
+// Orientation vers l'écran : les fuyantes du plateau convergent vers (240, POINT_FUITE_Y). Un objet posé à
+// droite du clavier est donc légèrement pivoté, son haut penché vers le centre, comme la table elle-même.
+const POINT_FUITE_Y = -130; // demi-largeur du plateau = 210 + 0,7 × (y − 170) → nulle à y = −130
+function penteVersEcran(cx, yBas) {
+	return (cx - 240) / (yBas - POINT_FUITE_Y); // décalage horizontal par ligne
+}
+/** Décalage horizontal d'une ligne y (absolue) pour un objet de pied (cx, yBas) orienté vers l'écran */
+function decalVersEcran(cx, yBas, y) {
+	return penteVersEcran(cx, yBas) * (y - yBas);
+}
+function trapeze(g, cx, y0, h, demi0, demi1, couleur, bord, arrondi, yBas) {
+	const pied = yBas === undefined ? y0 + h - 1 : yBas;
 	for (let y = 0; y < h; y++) {
 		const t = y / Math.max(1, h - 1);
 		let demi = demi0 + (demi1 - demi0) * t;
 		if (arrondi && (y < arrondi || y >= h - arrondi)) demi -= arrondi - Math.min(y, h - 1 - y); // coins arrondis
-		px(g, bord && (y === 0 || y === h - 1) ? bord : couleur, cx - demi, y0 + y, demi * 2, 1);
+		const c = cx + decalVersEcran(cx, pied, y0 + y);
+		px(g, bord && (y === 0 || y === h - 1) ? bord : couleur, c - demi, y0 + y, demi * 2, 1);
 		if (bord) {
-			px(g, bord, cx - demi, y0 + y, 1, 1);
-			px(g, bord, cx + demi - 1, y0 + y, 1, 1);
+			px(g, bord, c - demi, y0 + y, 1, 1);
+			px(g, bord, c + demi - 1, y0 + y, 1, 1);
 		}
 	}
 }
 function dessinerSourisPerspective(g, cx, y0) {
-	ombreTramee(g, cx - 8, y0 + 18, 17, 2, 90);
+	const pied = y0 + 17;
+	const d = (y) => cx + decalVersEcran(cx, pied, y);
+	ombreTramee(g, Math.round(d(pied)) - 8, y0 + 18, 17, 2, 90);
 	trapeze(g, cx, y0, 18, 4.5, 7.5, '#2c3036', P.contour, 3);
-	px(g, '#4a5058', cx - 3, y0 + 2, 6, 1); // reflet
-	px(g, '#16181b', cx, y0 + 1, 1, 6); // séparation des boutons
-	px(g, '#6b7280', cx - 1, y0 + 3, 2, 2); // molette
+	px(g, '#4a5058', d(y0 + 2) - 3, y0 + 2, 6, 1); // reflet
+	for (let y = y0 + 1; y < y0 + 7; y++) px(g, '#16181b', d(y), y, 1, 1); // séparation des boutons (suit l'inclinaison)
+	px(g, '#6b7280', d(y0 + 3) - 1, y0 + 3, 2, 2); // molette
+	px(g, '#2c3036', d(y0) - 1, y0 - 3, 1, 3); // départ du câble, vers l'écran
 }
+/* Téléphone : notification réelle du jeu ? Non — simple animation d'ambiance : l'écran s'allume ~1,5 s toutes
+   les 9 s (bulle de notification), avec une petite vibration de 1 px. Animations réduites : écran fixe. */
 function dessinerTelephonePerspective(g, cx, y0) {
-	ombreTramee(g, cx - 10, y0 + 27, 21, 2, 90);
-	trapeze(g, cx, y0, 27, 7, 9, '#0a0b0c', P.contour, 1); // coque fine, coins arrondis
-	trapeze(g, cx, y0 + 2, 23, 6, 8, '#1d5f6e', null, 0); // écran bord à bord
-	for (let y = 0; y < 23; y += 2) px(g, '#2a7a8c', cx - 4 - y * 0.12, y0 + 3 + y, 3, 1); // reflet diagonal
-	px(g, '#0a0b0c', cx - 1, y0 + 3, 2, 1); // point caméra (pas de bouton physique)
-	px(g, '#5f9eb0', cx - 3, y0 + 23, 6 + 0.5, 1); // barre d'accueil gestuelle
+	const pied = y0 + 26;
+	const cycle = reduireAnimations ? 99999 : millis() % 9000;
+	const allume = cycle < 1500;
+	const vibre = allume && cycle < 450 && Math.floor(millis() / 60) % 2 ? 1 : 0;
+	const x = cx + vibre;
+	const d = (y) => x + decalVersEcran(cx, pied, y);
+	ombreTramee(g, Math.round(d(pied)) - 10, y0 + 27, 21, 2, 90);
+	trapeze(g, x, y0, 27, 7, 9, '#0a0b0c', P.contour, 1, pied); // coque fine
+	trapeze(g, x, y0 + 2, 23, 6, 8, allume ? '#2a8aa0' : '#1d5f6e', null, 0, pied); // écran bord à bord
+	for (let y = 0; y < 23; y += 2) px(g, allume ? '#5fb4c6' : '#2a7a8c', d(y0 + 3 + y) - 4 - y * 0.12, y0 + 3 + y, 3, 1); // reflet
+	px(g, '#0a0b0c', d(y0 + 3) - 1, y0 + 3, 2, 1); // point caméra
+	px(g, '#5f9eb0', d(y0 + 23) - 3, y0 + 23, 6, 1); // barre gestuelle
+	if (allume) {
+		// Bulle de notification (lignes de texte stylisées, aucune donnée affichée)
+		px(g, '#eef6f8', d(y0 + 7) - 5, y0 + 7, 10, 5);
+		px(g, '#2a8aa0', d(y0 + 8) - 4, y0 + 8, 2, 2);
+		px(g, '#9aa8b6', d(y0 + 8) - 1, y0 + 8, 5, 1);
+		px(g, '#c8d2da', d(y0 + 10) - 1, y0 + 10, 4, 1);
+	}
+}
+
+/* Tasse de thé : thé ambré, sachet dont l'étiquette se balance doucement, volutes de vapeur qui montent. */
+function dessinerTasseThe(g) {
+	boite(g, 120, 188, 14, 18, '#f7f1e1', '#ffffff', '#d8cfb6');
+	px(g, P.contour, 134, 192, 4, 1); // anse
+	px(g, P.contour, 137, 192, 1, 8);
+	px(g, P.contour, 134, 199, 4, 1);
+	px(g, '#b5762e', 121, 189, 12, 2); // thé
+	px(g, '#d39a52', 123, 189, 4, 1); // reflet du thé
+	const tps = reduireAnimations ? 0 : millis();
+	const balance = Math.round(Math.sin(tps / 700) * 1.5);
+	// Fil du sachet passé par-dessus le bord gauche, étiquette qui pend à l'extérieur (côté opposé à l'anse)
+	px(g, '#bfb59c', 122, 186, 1, 3);
+	px(g, '#bfb59c', 119, 187, 3, 1);
+	px(g, '#bfb59c', 118 + Math.min(0, balance), 188, 1, 4);
+	boite(g, 115 + balance, 192, 5, 6, '#f0c35a', '#f8da8c', '#c99a35'); // étiquette
+	if (!reduireAnimations) {
+		for (let k = 0; k < 3; k++) {
+			const p = ((tps / 1600 + k / 3) % 1); // 0 → 1 : la volute monte et s'efface
+			g.fill(255, 255, 255, Math.round(140 * (1 - p)));
+			const vy = 186 - p * 16;
+			g.rect(123 + k * 4 + Math.round(Math.sin(tps / 400 + k * 2) * 1.5), vy, 1, 3);
+			g.rect(124 + k * 4 + Math.round(Math.sin(tps / 400 + k * 2 + 1) * 1.5), vy - 3, 1, 2);
+		}
+	}
 }
 
 function dessinerObjetsBureau(g) {
@@ -456,17 +511,7 @@ function dessinerObjetsBureau(g) {
 	}
 	ombreTramee(g, 176, 222, 128, 3, 90);
 	dessinerSourisPerspective(g, 336, 204);
-	// Tasse (gauche)
-	boite(g, 120, 188, 14, 18, '#f7f1e1', '#ffffff', '#d8cfb6');
-	px(g, P.contour, 134, 192, 4, 1);
-	px(g, P.contour, 137, 192, 1, 8);
-	px(g, P.contour, 134, 199, 4, 1);
-	px(g, '#5a3b26', 121, 189, 12, 2);
-	if (!reduireAnimations) {
-		const t = Math.floor(millis() / 300);
-		g.fill(255, 255, 255, 110);
-		for (let k = 0; k < 3; k++) g.rect(124 + k * 3 + ((t + k) % 2), 180 - k * 3 - (t % 3), 1, 3);
-	}
+	dessinerTasseThe(g); // tasse de thé animée (sachet, vapeur)
 	// Prompt 31 : la lampe d'architecte devient une applique murale (dessinerMurDroit), l'horloge passe au mur
 	dessinerTelephonePerspective(g, 376, 194); // prompt 34 : smartphone récent, en perspective
 	// Pile de dossiers (droite, au fond)
@@ -484,49 +529,23 @@ function dessinerLumiere(g) {
 	g.rect(ECRAN_PC.x - 20, ECRAN_PC.y + ECRAN_PC.h, ECRAN_PC.l + 40, 40); // lueur de l'écran
 }
 
-/* Vignettage pixel art (prompt 21 § 1.2), statique : calculé une fois puis superposé. */
-let gVignette = null;
-function dessinerVignettage(gCible) {
-	if (!gVignette) {
-		gVignette = createGraphics(BW, BH);
-		gVignette.pixelDensity(1);
-		gVignette.noSmooth();
-		const g = gVignette;
-		g.noStroke();
-		const bande = 30;
-		const paliers = [{ de: 22, pas: 4, alpha: 38 }, { de: 14, pas: 3, alpha: 64 }, { de: 7, pas: 2, alpha: 102 }, { de: 0, pas: 1, alpha: 140 }];
-		for (let y = 0; y < BH; y++)
-			for (let x = 0; x < BW; x++) {
-				const d = Math.min(x, y, BW - 1 - x, BH - 1 - y);
-				if (d >= bande) {
-					x = BW - bande - 1;
-					continue;
-				}
-				const p = paliers.find((pl) => d >= pl.de);
-				if ((x + y * 2) % p.pas !== 0 || (y % p.pas !== 0 && p.pas > 2)) continue;
-				g.fill(28, 32, 40, Math.round(p.alpha * 0.8)); // prompt 32 : vignettage neutre (gris bleuté), plus léger sur le blanc
-				g.rect(x, y, 1, 1);
-			}
-	}
-	gCible.image(gVignette, 0, 0);
-}
-
 // ——— Prompt 25 : dézoom fixe de la vue bureau + caméra fausse 3D (façon FNAF, mouvement subtil) ———
-// La pièce est affichée à 88 % : ~6 % de marge de chaque côté à 1920×1080 (115 px), où l'on voit le
-// « fond » (la pièce elle-même, assombrie et plus lointaine). Quand la souris sort du cadre de l'écran
-// du PC (ou qu'une flèche est maintenue), la caméra regarde doucement de ce côté : la pièce glisse
-// d'au plus 12 px, le fond de 5 px (parallaxe = profondeur). Retour au centre : recentrage progressif.
-// Animations réduites, vue au poste, zooms, fenêtres ouvertes : caméra strictement centrée.
-const DEZOOM = 0.88;
+// Révision du prompt 25 : le jeu occupe TOUT l'écran. La pièce est légèrement plus grande que le canevas
+// (SURCADRAGE 1,05 : ~48 px coupés à gauche et à droite, ~27 px en haut et en bas), ce qui laisse à la
+// caméra la place de bouger sans jamais montrer de bord. Les extrémités sont adoucies par un vignettage
+// et un masque de flou fixes à l'écran (masqueFlouEtVignette). Quand la souris sort du cadre de l'écran
+// du PC (ou qu'une flèche est maintenue), la caméra regarde doucement de ce côté (12 px au plus) ;
+// retour au centre : recentrage progressif. Animations réduites, poste, zooms, fenêtres : caméra centrée.
+const SURCADRAGE = 1.05;
 // Prompt 31 : cadrage « sur la chaise » — on ne montre que la partie centrale de la pièce (16:9, centrée
 // sur le PC) : le poste est plus proche, les accoudoirs du fauteuil sortent du champ.
 const CADRAGE = { x: 24, y: 6, l: 432, h: 243 };
-const CAMERA = { max: 12, maxFond: 5, lissage: 0.1, x: 0, y: 0 };
+const CAMERA = { max: 12, lissage: 0.1, x: 0, y: 0 };
 let sourisDansCanevas = false; // pas de caméra tant que la souris n'a pas bougé sur le canevas (touch, chargement)
 
 function origineBureau() {
 	// Cadre de la pièce sur le canevas (dézoom + caméra) et taille d'un pixel art (u) dans ce cadre
-	return { x: (L * (1 - DEZOOM)) / 2 + CAMERA.x, y: (H * (1 - DEZOOM)) / 2 + CAMERA.y, k: DEZOOM, u: (L * DEZOOM) / CADRAGE.l };
+	return { x: (L * (1 - SURCADRAGE)) / 2 + CAMERA.x, y: (H * (1 - SURCADRAGE)) / 2 + CAMERA.y, k: SURCADRAGE, u: (L * SURCADRAGE) / CADRAGE.l };
 }
 /** Prompt 32 : contour de survol / focus double — trait sombre #1c2733 (15:1 sur les murs blancs) doublé de jaune */
 function contourSurvol(x, y, l, h) {
@@ -589,15 +608,65 @@ function majCamera() {
 	if (Math.abs(CAMERA.y) < 0.05) CAMERA.y = 0;
 }
 
-/** Fond visible autour de la pièce dézoomée : la pièce elle-même, plus grande, assombrie, qui bouge moins. */
-function dessinerFondBureau(echelle) {
-	if (vue === 'poste') return;
-	const p = CAMERA.max ? CAMERA.maxFond / CAMERA.max : 0;
-	const s = 1.04;
-	image(gBureau, (L - L * s) / 2 + CAMERA.x * p, (H - H * s) / 2 + CAMERA.y * p, L * s, H * s);
-	noStroke();
-	fill(12, 16, 22, 215);
-	rect(0, 0, L, H);
+/* Vignettage + masque de flou des bords, fixes à l'écran (la pièce bouge dessous avec la caméra).
+   Tout se fait en basse résolution (480×270) puis est agrandi avec lissage : coût négligeable par image.
+   - flou : copie floutée de la pièce, recalculée seulement quand la pièce est redessinée (toutes les 125 ms),
+     posée avec la même transformation que la pièce, puis découpée par un masque radial (net au centre,
+     flou vers les bords) ;
+   - vignettage : dégradé radial sombre, plus marqué dans les coins. */
+const BORDS = { flou: 2, centreNet: 0.5, bordFlou: 0.74, vignette: 0.5 };
+let cPieceFloue = null;
+let cFlouEcran = null;
+let cMasqueFlou = null;
+let cVignette = null;
+let derniereCopieFloue = -1;
+function canevas(l, h) {
+	const c = document.createElement('canvas');
+	c.width = l;
+	c.height = h;
+	return c;
+}
+function degradeRadial(c, stops) {
+	const ctx = c.getContext('2d');
+	ctx.save();
+	ctx.scale(1, c.height / c.width); // ellipse à la proportion de l'écran
+	const r = Math.hypot(c.width / 2, c.width / 2);
+	const g = ctx.createRadialGradient(c.width / 2, c.width / 2, 0, c.width / 2, c.width / 2, r);
+	stops.forEach(([pos, coul]) => g.addColorStop(pos, coul));
+	ctx.fillStyle = g;
+	ctx.fillRect(0, 0, c.width, c.width);
+	ctx.restore();
+}
+function masqueFlouEtVignette(ox, oy, echelle) {
+	if (!cMasqueFlou) {
+		cPieceFloue = canevas(BW, BH);
+		cFlouEcran = canevas(BW, BH);
+		cMasqueFlou = canevas(BW, BH);
+		degradeRadial(cMasqueFlou, [[0, 'rgba(0,0,0,0)'], [BORDS.centreNet, 'rgba(0,0,0,0)'], [BORDS.bordFlou, 'rgba(0,0,0,1)'], [1, 'rgba(0,0,0,1)']]);
+		cVignette = canevas(BW, BH);
+		degradeRadial(cVignette, [[0, 'rgba(12,16,22,0)'], [0.55, 'rgba(12,16,22,0)'], [0.68, 'rgba(12,16,22,' + BORDS.vignette * 0.45 + ')'], [0.8, 'rgba(12,16,22,' + BORDS.vignette + ')']]);
+	}
+	if (derniereCopieFloue !== dernierRenduBureau) {
+		const c = cPieceFloue.getContext('2d');
+		c.clearRect(0, 0, BW, BH);
+		c.filter = 'blur(' + BORDS.flou + 'px)';
+		c.drawImage(gBureau.elt, 0, 0, BW, BH);
+		c.filter = 'none';
+		derniereCopieFloue = dernierRenduBureau;
+	}
+	const k = BW / L; // canevas → basse résolution
+	const f = cFlouEcran.getContext('2d');
+	f.globalCompositeOperation = 'source-over';
+	f.clearRect(0, 0, BW, BH);
+	f.drawImage(cPieceFloue, ox * k, oy * k, BW * echelle, BH * echelle);
+	f.globalCompositeOperation = 'destination-in';
+	f.drawImage(cMasqueFlou, 0, 0);
+	f.globalCompositeOperation = 'source-over';
+	const ctx = drawingContext;
+	ctx.imageSmoothingEnabled = true;
+	ctx.drawImage(cFlouEcran, 0, 0, L, H);
+	ctx.drawImage(cVignette, 0, 0, L, H);
+	ctx.imageSmoothingEnabled = false;
 }
 
 // ——— Composition : pièce + écran du PC (bureau, zoom, poste) ———
@@ -651,11 +720,11 @@ function composerVue() {
 		boutons = boutons.map((b) => Object.assign({}, b, { x: r.x + b.x * k, y: r.y + b.y * k, l: b.l * k, h: b.h * k }));
 	} else boutons = [];
 
-	if (!dernierRenduBureau || millis() - dernierRenduBureau > 125) {
+	if (!dernierRenduBureau || millis() - dernierRenduBureau > (reduireAnimations ? 250 : 66)) {
 		dessinerPieceBureau();
 		dernierRenduBureau = millis();
 	}
-	// Pièce : dézoomée au bureau (prompt 25), agrandie autour du moniteur au poste (et pendant le zoom)
+	// Pièce : plein écran légèrement surcadrée au bureau (prompt 25 révisé), agrandie autour du moniteur au poste
 	const e = rectEcranBase();
 	const echelle = r.l / e.l;
 	clear();
@@ -663,22 +732,6 @@ function composerVue() {
 	drawingContext.imageSmoothingEnabled = false;
 	const ox = r.x - e.x * echelle;
 	const oy = r.y - e.y * echelle;
-	dessinerFondBureau(echelle);
-	// Prompt 31 : la pièce n'est montrée que dans son cadrage (découpe qui grandit avec le zoom vers le poste)
-	const cadre = { x: ox + CADRAGE.x * PIX * echelle, y: oy + CADRAGE.y * PIX * echelle, l: CADRAGE.l * PIX * echelle, h: CADRAGE.h * PIX * echelle };
-	const decoupe = vue !== 'poste' && (cadre.x > 0 || cadre.y > 0 || cadre.x + cadre.l < L || cadre.y + cadre.h < H);
-	if (decoupe) {
-		// Ombre portée de la pièce sur le fond : elle se détache comme un plan plus proche
-		noStroke();
-		fill(0, 0, 0, 90);
-		rect(cadre.x + 6, cadre.y + 10, cadre.l, cadre.h);
-		fill(P.contour);
-		rect(cadre.x - PIX, cadre.y - PIX, cadre.l + 2 * PIX, cadre.h + 2 * PIX);
-		drawingContext.save();
-		drawingContext.beginPath();
-		drawingContext.rect(cadre.x, cadre.y, cadre.l, cadre.h);
-		drawingContext.clip();
-	}
 	const flou = (tempsCompresse() && vue === 'bureau') || auPoste;
 	if (flou && !reduireAnimations) drawingContext.filter = auPoste ? 'blur(2px) brightness(0.85)' : 'blur(1.5px)';
 	push();
@@ -686,8 +739,8 @@ function composerVue() {
 	scale(echelle);
 	image(gBureau, 0, 0, L, H);
 	pop();
-	if (decoupe) drawingContext.restore();
 	drawingContext.filter = 'none';
+	if (vue !== 'poste') masqueFlouEtVignette(ox, oy, echelle); // bords flous + vignettage (fixes à l'écran)
 	if (auPoste && reduireAnimations) {
 		noStroke();
 		fill(28, 39, 51, 60);
@@ -752,7 +805,7 @@ function composerVue() {
 	text(msg, L / 2, H - 52);
 }
 
-// ——— Prompt 26 : sortir du PC — bouton « Quitter le PC », molette, porte du bureau ———
+// ——— Prompt 26 : sortir du PC — bouton « Quitter le PC » et molette (la porte a été retirée) ———
 let focusQuitter = false; // focus clavier sur le bouton « Quitter le PC » (Tab au poste)
 let dernierScrollSortie = 0;
 let cumulScroll = 0;
@@ -796,34 +849,6 @@ function scrollSortiePC(delta) {
 	dernierScrollSortie = maintenant;
 	quitterPC();
 	return true;
-}
-
-/** Porte de sortie dessinée sur le mur de gauche, en perspective (pixel art, aucun fichier image). */
-function dessinerPorte(g) {
-	const o = OBJETS_BUREAU.find((x) => x.nom === 'porte');
-	if (!o) return;
-	// Pan de mur latéral (blanc) qui fuit vers la baie
-	const finMur = o.x + o.l + 6;
-	for (let x = 0; x < finMur; x++) {
-		const haut = 9 + Math.round(Math.max(0, x - CADRAGE.x) * 0.6);
-		px(g, x === finMur - 1 ? '#b9bec4' : '#eef0f1', x, haut, 1, PLATEAU_Y - haut);
-	}
-	// Porte en perspective : bord proche plus haut que le bord lointain
-	for (let x = o.x; x < o.x + o.l; x++) {
-		const d = x - o.x;
-		const haut = o.y + Math.round(d * 0.6);
-		const bas = o.y + o.h - Math.round(d * 0.3);
-		px(g, P.contour, x, haut - 1, 1, bas - haut + 2);
-		if (x > o.x && x < o.x + o.l - 1) px(g, d < 3 ? '#c8cdd2' : '#f7f8f9', x, haut, 1, bas - haut); // porte blanche (prompt 32)
-	}
-	px(g, '#b9bec4', o.x + 4, o.y + 10, 1, o.h - 22); // joint vertical (ouvrant)
-	px(g, P.contour, o.x + o.l - 6, o.y + Math.round(o.h * 0.5), 4, 3); // poignée
-	px(g, '#c8cdd2', o.x + o.l - 6, o.y + Math.round(o.h * 0.5), 3, 1);
-	// Pictogramme « sortie » : flèche verte au-dessus de la porte
-	px(g, P.contour, o.x + 3, o.y - 9, 15, 7);
-	px(g, '#1f7a3f', o.x + 4, o.y - 8, 13, 5);
-	px(g, '#ffffff', o.x + 7, o.y - 6, 6, 1);
-	px(g, '#ffffff', o.x + 12, o.y - 7, 1, 3);
 }
 
 // ——— Prompt 21 § 2 : clignement d'œil sur les transitions bureau ↔ écran ———

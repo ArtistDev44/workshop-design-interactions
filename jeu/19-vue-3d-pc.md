@@ -1,5 +1,7 @@
 # 19 — Vue 3D / environnement PC (prompt 25)
 
+> **Révision du 10/11/2026 (retour de rendu)** : le prompt avait été mal compris. Le jeu occupe désormais **tout l'écran** : plus de dézoom ni de fond autour de la pièce. La pièce est surcadrée à 1,05 (`SURCADRAGE`) : ses extrémités sont coupées (~48 px à gauche et à droite, ~27 px en haut et en bas), ce qui laisse à la caméra (12 px au plus) la place de bouger sans montrer de bord. Les bords sont adoucis par un **masque de flou** et un **vignettage**, tous deux fixes à l'écran (`masqueFlouEtVignette`, en basse résolution puis agrandis). Le vignettage pixel art qui était cuit dans l'image de la pièce est retiré. Détails : `29-correctifs-plein-ecran-livres.md`.
+
 Décisions verrouillées. La vue bureau se lit comme un ordinateur posé dans une pièce : la pièce est légèrement dézoomée et une caméra « fausse 3D » regarde autour du PC. Les décisions Q1–Q61, la boucle de jeu et les apps du PC ne changent pas.
 
 Note de numérotation : le prompt demandait `jeu/18-vue-3d-pc.md`, mais le n° 18 est déjà pris par le multi-langue (prompt 24). Ce fichier prend donc le n° 19.

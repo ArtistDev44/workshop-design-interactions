@@ -42,13 +42,12 @@ const OBJETS_BUREAU = [
 	{ nom: 'ecran', label: T('objet.ecran') },
 	{ nom: 'commande', label: T('objet.commande'), x: 58, y: 190, l: 50, h: 9 }, // prompt 34 : remplace le livre « tuto »
 	{ nom: 'stress', label: T('objet.stress'), x: 62, y: 180, l: 44, h: 9 },
-	{ nom: 'porte', label: T('objet.porte'), infobulle: T('bureau.porte'), x: 28, y: 40, l: 20, h: 118 }, // prompt 26 (prompt 31 : décalée dans le cadrage)
 	// Prompt 29 : objets de la pièce (micro-interactions, sans effet sur les jauges ni pause)
-	{ nom: 'lampe', piece: true, label: T('piece.lampe'), infobulle: T('piece.lampe.survol'), x: 432, y: 86, l: 16, h: 14 }, // prompt 31 : applique murale
+	{ nom: 'lampe', piece: true, label: T('piece.lampe'), infobulle: T('piece.lampe.survol'), x: 410, y: 86, l: 16, h: 14 }, // prompt 31 : applique murale (recalée pour le plein écran)
 	{ nom: 'plante', piece: true, label: T('piece.plante'), infobulle: T('piece.plante.survol'), x: 69, y: 153, l: 16, h: 21 },
 	{ nom: 'tasse', piece: true, label: T('piece.tasse'), infobulle: T('piece.tasse.survol'), x: 118, y: 178, l: 22, h: 28 },
 	{ nom: 'dossiers', piece: true, label: T('piece.dossiers'), infobulle: T('piece.dossiers.survol'), x: 390, y: 160, l: 44, h: 15 },
-	{ nom: 'fenetre', piece: true, label: T('piece.fenetre'), infobulle: T('piece.fenetre.survol'), x: 334, y: 14, l: 80, h: 96 }, // prompt 31 : la baie s'arrête au pan de mur
+	{ nom: 'fenetre', piece: true, label: T('piece.fenetre'), infobulle: T('piece.fenetre.survol'), x: 334, y: 14, l: 64, h: 96 }, // prompt 31 : la baie s'arrête au pan de mur
 ];
 
 // ——— Prompt 29 : interactions hors écran, dans la pièce ———
@@ -349,7 +348,8 @@ function tutorielVu() {
 }
 function lancerTutoriel() {
 	fenetre = null;
-	tutoriel = { etape: 0, focus: 'suivant' };
+	tutoriel = { etape: 0, focus: 'suivant', tourne: 0, sens: 1 };
+	livreOuverture = millis();
 	annoncerEtapeTutoriel();
 }
 function annoncerEtapeTutoriel() {
@@ -367,6 +367,8 @@ function etapeSuivante() {
 	if (!tutoriel) return;
 	if (tutoriel.etape >= ETAPES_TUTORIEL - 1) return fermerTutoriel();
 	tutoriel.etape++;
+	tutoriel.tourne = millis(); // la page tourne vers la gauche
+	tutoriel.sens = 1;
 	tutoriel.focus = 'suivant';
 	Confort.Son.bip('choix');
 	annoncerEtapeTutoriel();
@@ -374,6 +376,8 @@ function etapeSuivante() {
 function etapePrecedente() {
 	if (!tutoriel || tutoriel.etape === 0) return;
 	tutoriel.etape--;
+	tutoriel.tourne = millis();
+	tutoriel.sens = -1;
 	annoncerEtapeTutoriel();
 }
 function dessinerTutoriel() {
@@ -381,45 +385,53 @@ function dessinerTutoriel() {
 	boutons = []; // seul le tutoriel est cliquable
 	voile();
 	const n = tutoriel.etape + 1;
-	const l = 1100;
-	const h = 560;
-	const x = (L - l) / 2;
-	const y = (H - h) / 2;
-	panneau(x, y, l, h, C.accent);
-	noStroke();
-	textAlign(LEFT, TOP);
-	textFont(POLICE_DONNEES);
-	textSize(20);
-	fill(C.gris);
-	text(t('tuto.etape', { n, total: ETAPES_TUTORIEL }), x + 56, y + 40);
-	// Pastilles de progression (statiques)
-	for (let i = 0; i < ETAPES_TUTORIEL; i++) {
-		fill(i <= tutoriel.etape ? C.accent : '#D6D0C4');
-		rect(x + l - 56 - (ETAPES_TUTORIEL - i) * 30, y + 46, 20, 8, 4);
+	// Le tutoriel est le livre « Commande » ouvert : couverture marine, page gauche = étape, page droite = texte
+	const livre = dessinerLivreOuvert(L / 2 - 680, 120, 1360, 700, '#1c2f52', '#121f38');
+	if (livre.pret) {
+		const g = livre.gauche;
+		const d = livre.droite;
+		noStroke();
+		textAlign(LEFT, TOP);
+		textFont(POLICE_DONNEES);
+		textSize(20);
+		fill('#6b5d45');
+		text(t('tuto.etape', { n, total: ETAPES_TUTORIEL }), g.x, g.y);
+		for (let i = 0; i < ETAPES_TUTORIEL; i++) {
+			fill(i <= tutoriel.etape ? '#1c2f52' : '#d9cfb8');
+			rect(g.x + i * 30, g.y + 40, 20, 8, 4);
+		}
+		fill('#1c2f52');
+		textFont(POLICE_TEXTE);
+		textStyle(BOLD);
+		textSize(46);
+		textLeading(56);
+		text(t('tuto.' + n + '.titre'), g.x, g.y + 90, g.l, 200);
+		textStyle(NORMAL);
+		textSize(19);
+		fill('#6b5d45');
+		text(t('tuto.pied'), g.x, g.y + g.h - 60, g.l, 60);
+		fill('#1c2733');
+		textSize(23);
+		textLeading(34);
+		text(t('tuto.' + n + '.texte'), d.x, d.y, d.l, d.h);
+		textLeading(30);
+		pageQuiTourne(livre, tutoriel.tourne, tutoriel.sens);
 	}
-	fill(C.accent);
-	textFont(POLICE_TEXTE);
-	textStyle(BOLD);
-	textSize(40);
-	text(t('tuto.' + n + '.titre'), x + 56, y + 78);
-	textStyle(NORMAL);
-	fill(C.texte);
-	textSize(24);
-	textLeading(36);
-	text(t('tuto.' + n + '.texte'), x + 56, y + 150, l - 112, h - 280);
+	// Boutons sous le livre
+	const by = 120 + 700 + 40;
 	const lb = 300;
 	const derniere = n === ETAPES_TUTORIEL;
-	bouton(x + l - 56 - lb, y + h - 108, lb, 68, t(derniere ? 'tuto.terminer' : 'tuto.suivant'), etapeSuivante);
-	bouton(x + 56, y + h - 108, 260, 68, t('tuto.passer'), fermerTutoriel, false, true);
-	if (tutoriel.etape > 0) bouton(x + 56 + 280, y + h - 108, 260, 68, t('tuto.precedent'), etapePrecedente, false, true);
-	// Focus clavier visible (Tab)
-	const f = tutoriel.focus === 'suivant' ? { x: x + l - 56 - lb, l: lb } : tutoriel.focus === 'precedent' ? { x: x + 336, l: 260 } : { x: x + 56, l: 260 };
+	const pos = { passer: L / 2 - 680, precedent: L / 2 - 680 + 320, suivant: L / 2 + 680 - lb };
+	bouton(pos.suivant, by, lb, 68, t(derniere ? 'tuto.terminer' : 'tuto.suivant'), etapeSuivante);
+	bouton(pos.passer, by, lb, 68, t('tuto.passer'), fermerTutoriel, false, true);
+	if (tutoriel.etape > 0) bouton(pos.precedent, by, lb, 68, t('tuto.precedent'), etapePrecedente, false, true);
 	noFill();
-	stroke('#1c2733');
+	stroke('#f2c94c');
 	strokeWeight(4);
-	rect(f.x - 8, y + h - 116, f.l + 16, 84, 14);
+	rect(pos[tutoriel.focus] - 8, by - 8, lb + 16, 84, 14);
 	noStroke();
 }
+
 /** Clavier du tutoriel : Entrée = bouton focalisé, → suivant, ← précédent, Tab = focus, Échap = passer */
 function toucheTutoriel() {
 	if (!tutoriel) return false;
@@ -529,33 +541,35 @@ function quitterPartie() {
 }
 
 function fenetreLivreStress() {
-	const l = 1000;
-	const h = 860;
-	const x = (L - l) / 2;
-	const y = (H - h) / 2;
-	// Page de livre : papier, marge, reliure
-	noStroke();
-	fill('#6e4a2c');
-	rect(x - 16, y - 16, l + 32, h + 32, 10);
-	fill('#f7f1e1');
-	rect(x, y, l, h, 6);
-	fill('#e6dcc4');
-	rect(x, y, 26, h);
-	textAlign(LEFT, TOP);
-	fill('#3f7a43');
-	textFont(POLICE_TEXTE);
-	textStyle(BOLD);
-	textSize(40);
-	text(LIVRE_STRESS[0], x + 70, y + 50, l - 140, 60);
-	textStyle(NORMAL);
-	textSize(25);
-	fill(C.texte);
-	let ty = y + 140;
-	LIVRE_STRESS.slice(1).forEach((p) => {
-		text(p, x + 70, ty, l - 140, 110);
-		ty += 120;
-	});
-	bouton(x + l - 300, y + h - 100, 240, 64, t('commun.fermer'), fermer);
+	// Le livre « Bien gérer son stress » s'ouvre : couverture verte, deux pages
+	const livre = dessinerLivreOuvert(L / 2 - 680, 110, 1360, 720, '#3f7a43', '#2f5d3a');
+	if (livre.pret) {
+		const g = livre.gauche;
+		const d = livre.droite;
+		noStroke();
+		textAlign(LEFT, TOP);
+		fill('#2f5d3a');
+		textFont(POLICE_TEXTE);
+		textStyle(BOLD);
+		textSize(40);
+		textLeading(50);
+		text(LIVRE_STRESS[0], g.x, g.y, g.l, 120);
+		textStyle(NORMAL);
+		textSize(23);
+		textLeading(32);
+		fill('#1c2733');
+		let ty = g.y + 150;
+		LIVRE_STRESS.slice(1, 3).forEach((p) => {
+			text(p, g.x, ty, g.l, 180);
+			ty += 190;
+		});
+		ty = d.y;
+		LIVRE_STRESS.slice(3).forEach((p) => {
+			text(p, d.x, ty, d.l, 180);
+			ty += 190;
+		});
+	}
+	bouton(L / 2 + 680 - 260, 110 + 720 + 40, 260, 64, t('commun.fermer'), fermer);
 }
 
 // ——— Overlay de réveil (§ 4) ———
@@ -600,29 +614,106 @@ function dessinerPersonnageSieste(g) {
 function dessinerLivres(g) {
 	const t = OBJETS_BUREAU[1];
 	const s = OBJETS_BUREAU[2];
-	// Prompt 34 : livre « commande » (couverture marine, liseré doré, titre en capitales pixel)
-	boite(g, t.x, t.y, t.l, t.h, '#1c2f52', '#34507f', '#121f38');
-	px(g, '#d9b45a', t.x + 2, t.y + 1, 1, t.h - 2);
-	textePixel(g, 'COMMANDE', t.x + 10, t.y + 2, '#fff8e6');
-	boite(g, s.x, s.y, s.l, s.h, '#3f7a43', '#5f9e4f', '#2f5d3a');
-	textePixel(g, 'STRESS', s.x + 10, s.y + 2, '#f7f1e1');
+	const tps = reduireAnimations ? 0 : millis();
+	// Livre survolé ou focalisé : il se soulève de 2 px (ombre dessous) ; animations réduites : 1 px, sans transition
+	const leve = (o) => (vue === 'bureau' && objetSurvol === o.nom ? (reduireAnimations ? 1 : 2) : 0);
+	const lc = leve(t);
+	const ls = leve(s);
+	if (lc) ombreTramee(g, t.x, t.y + t.h, t.l, 2, 110);
+	// Livre « commande » (dessous) : couverture marine, liseré doré, marque-page qui se balance
+	const yc = t.y - lc;
+	boite(g, t.x, yc, t.l, t.h, '#1c2f52', '#34507f', '#121f38');
+	px(g, '#d9b45a', t.x + 2, yc + 1, 1, t.h - 2);
+	textePixel(g, 'COMMANDE', t.x + 10, yc + 2, '#fff8e6');
+	const balance = Math.round(Math.sin(tps / 650) * 1);
+	px(g, '#b3261e', t.x + t.l - 8 + balance, yc + t.h, 2, 4);
+	// Livre « stress » (dessus)
+	if (ls) ombreTramee(g, s.x, s.y + s.h, s.l, 2, 110);
+	const ys = s.y - ls - lc; // posé sur l'autre : il suit aussi le soulèvement du livre du dessous
+	boite(g, s.x, ys, s.l, s.h, '#3f7a43', '#5f9e4f', '#2f5d3a');
+	textePixel(g, 'STRESS', s.x + 10, ys + 2, '#f7f1e1');
+}
+
+// ——— Livres : soulevés au survol, ouverts en vrai livre (deux pages) quand on les clique ———
+let objetSurvol = null; // objet survolé ou focalisé à l'image précédente
+let livreOuverture = 0; // millis() de l'ouverture du livre affiché
+const DUREE_OUVERTURE_LIVRE = 450;
+const DUREE_PAGE = 380;
+
+/** Dessine un livre ouvert (couverture, deux pages, dos, tranches, marque-page) ; s'ouvre depuis le dos.
+ *  Renvoie les zones de texte des deux pages et « pret » quand l'ouverture est assez avancée pour écrire. */
+function dessinerLivreOuvert(x, y, l, h, couv, couvSombre) {
+	const k = reduireAnimations ? 1 : easeOut(constrain((millis() - livreOuverture) / DUREE_OUVERTURE_LIVRE, 0, 1));
+	const cx = x + l / 2;
+	const demi = (l / 2) * Math.max(0.04, k);
+	noStroke();
+	fill(0, 0, 0, 70);
+	rect(cx - demi + 14, y + 22, demi * 2, h, 14); // ombre portée
+	fill(couvSombre);
+	rect(cx - demi - 6, y - 6, demi * 2 + 12, h + 16, 12); // couverture
+	fill(couv);
+	rect(cx - demi, y - 10, demi * 2, h + 12, 10);
+	// Tranches (feuilles empilées) puis pages
+	for (let i = 3; i >= 1; i--) {
+		fill(i % 2 ? '#e8dfc9' : '#f3ecda');
+		rect(cx - demi + 12 + i * 2, y + 8 + i * 3, demi * 2 - 24 - i * 4, h - 22, 4);
+	}
+	fill('#fbf6ea');
+	rect(cx - demi + 12, y + 6, demi - 12, h - 20, 6, 0, 0, 6);
+	rect(cx, y + 6, demi - 12, h - 20, 0, 6, 6, 0);
+	// Creux du dos : ombre douce au centre
+	for (let i = 0; i < 6; i++) {
+		fill(80, 60, 30, 26 - i * 4);
+		rect(cx - 18 + i * 3, y + 6, 36 - i * 6, h - 20);
+	}
+	// Marque-page (ruban) qui dépasse en bas de la page droite
+	fill('#b3261e');
+	rect(cx + demi * 0.55, y + h - 20, 14, 46);
+	triangle(cx + demi * 0.55, y + h + 26, cx + demi * 0.55 + 14, y + h + 26, cx + demi * 0.55 + 7, y + h + 16);
+	const marge = 64;
+	return {
+		pret: k > 0.85,
+		k,
+		cx,
+		y,
+		h,
+		demi,
+		gauche: { x: cx - demi + 12 + marge, y: y + 60, l: demi - 12 - marge * 2, h: h - 140 },
+		droite: { x: cx + marge, y: y + 60, l: demi - 12 - marge * 2, h: h - 140 },
+	};
+}
+
+/** Une page qui tourne (vers la gauche si sens = 1) : la feuille se replie sur le dos puis retombe de l'autre côté */
+function pageQuiTourne(livre, debut, sens) {
+	if (reduireAnimations || !debut) return;
+	const u = (millis() - debut) / DUREE_PAGE;
+	if (u >= 1) return;
+	const largeur = (livre.demi - 12) * Math.abs(1 - 2 * u); // 1 → 0 → 1
+	const premiereMoitie = u < 0.5;
+	const aDroite = sens > 0 ? premiereMoitie : !premiereMoitie;
+	noStroke();
+	fill(80, 60, 30, 40);
+	rect(aDroite ? livre.cx : livre.cx - largeur - 8, livre.y + 6, largeur + 8, livre.h - 20); // ombre de la feuille
+	fill('#fbf6ea');
+	rect(aDroite ? livre.cx : livre.cx - largeur, livre.y + 6, largeur, livre.h - 20);
 }
 
 function ouvrirObjetBureau(nom) {
 	interaction();
 	if (nom === 'ecran') return sAsseoir();
 	if (nom === 'commande') return lancerTutoriel(); // prompt 34 : le livre « commande » ouvre le tutoriel
-	if (nom === 'stress') return ouvrir('livre-stress');
-	if (nom === 'porte') return ouvrir('menu'); // prompt 26 : même action qu'Échap au bureau
+	if (nom === 'stress') return (livreOuverture = millis()), ouvrir('livre-stress');
 	if (OBJETS_BUREAU.some((o) => o.nom === nom && o.piece)) return interagirPiece(nom); // prompt 29
 }
 
 /** Zones cliquables du bureau (livres) + focus clavier ; appelé par la vue bureau */
 function zonesObjetsBureau() {
+	objetSurvol = null;
 	OBJETS_BUREAU.slice(1).forEach((o, i) => {
 		const r = versEcranBureau(o.x, o.y, o.l, o.h); // prompt 25 : suit le dézoom et la caméra
 		boutons.push({ x: r.x, y: r.y, l: r.l, h: r.h, action: () => ouvrirObjetBureau(o.nom) });
 		const survol = mouseX >= r.x && mouseX <= r.x + r.l && mouseY >= r.y && mouseY <= r.y + r.h;
+		if (survol || focusBureau === i + 1) objetSurvol = o.nom; // les livres se soulèvent (dessinerLivres)
 		const enReaction = PIECE.message && PIECE.message.objet === o.nom && millis() < PIECE.message.jusqua; // prompt 29
 		if (survol || focusBureau === i + 1) {
 			contourSurvol(r.x - 2 * PIX, r.y - 2 * PIX, r.l + 4 * PIX, r.h + 4 * PIX);
