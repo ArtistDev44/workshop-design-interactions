@@ -344,7 +344,9 @@ verifier(eq.policeAvant === 1 && eq.policeMatin === 2, `équipes : effectifs non
 	for (const [k, v] of Object.entries(r)) if (k !== 'texteFin') verifier(v === true, `soir (prompt 69) : ${k} = ${v}`);
 	verifier(r.texteFin === 'Fin de la semaine', `soir : texte du dernier soir « ${r.texteFin} »`);
 	const imm = readFileSync(join(pub, 'immersion.js'), 'utf8');
-	const garde = (imm.match(/function avancerTemps\(\)[\s\S]*?\n\tif \(([^\n]*)\) return;/) || [])[1] || '';
+	const garde = ((imm.match(/function tempsSuspendu\(\) \{\n\treturn ([^\n]*);/) || [])[1] || '') + (/function avancerTemps\(\)[\s\S]*?if \(tempsSuspendu\(\)\) return;/.test(imm) ? '' : ' SANS GARDE');
+	verifier(!garde.includes('SANS GARDE'), 'avancerTemps doit s\'arrêter quand tempsSuspendu()');
+	verifier(/function tempsCompresse\(\)[^}]*!tempsSuspendu\(\)/.test(imm), '« ×30 » ne doit s\'afficher que si le temps file');
 	verifier(garde.includes("phase === 'soir'"), 'soir : le temps (incidents, sieste, sablier) ne doit pas avancer pendant le soir');
 	verifier(/phase === 'soir'\) return; \/\/ prompt 69/.test(readFileSync(join(pub, 'webcam.js'), 'utf8')), 'soir : la main devant la webcam ne doit pas lancer de sieste le soir');
 	verifier(/ui\.phase === 'soir'/.test(readFileSync(join(pub, 'sauvegarde.js'), 'utf8')), 'soir : la sauvegarde doit reprendre la phase soir');
@@ -391,7 +393,7 @@ verifier(eq.policeAvant === 1 && eq.policeMatin === 2, `équipes : effectifs non
 		verifier(j.attendTransition, `démarrage PC, jour ${i + 1} : ne doit pas démarrer pendant l'écran « JOUR n »`);
 		verifier(!j.replay, `démarrage PC, jour ${i + 1} : rejoué deux fois dans la journée`);
 	});
-	verifier(/pcDemarre\(\)/.test(readFileSync(join(pub, 'immersion.js'), 'utf8').match(/function avancerTemps\(\)[\s\S]*?return;/)[0]), 'démarrage PC : le temps de jeu doit être suspendu pendant le démarrage');
+	verifier(/pcDemarre\(\)/.test((readFileSync(join(pub, 'immersion.js'), 'utf8').match(/function tempsSuspendu\(\) \{\n\treturn [^\n]*;/) || [''])[0]), 'démarrage PC : le temps de jeu doit être suspendu pendant le démarrage (et « ×30 » masqué)');
 }
 
 // Traductions : toute clé française existe en anglais

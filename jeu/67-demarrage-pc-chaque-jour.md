@@ -15,6 +15,8 @@ Code : `os.js` (`JOUR_PC`, `demarrageDuJour`, `majDemarrageJour`, `pcDemarre`), 
   sauvegardes : considérées comme déjà démarrées).
 - **Temps de jeu suspendu** pendant le démarrage (aucun incident, horloge figée). Le démarrage ne se coupe pas
   (comme au lancement).
+- Correctif du 11/11/2026 : pendant le démarrage, l'horloge du bureau n'affiche plus « ▶▶ ×30 ». Une seule
+  condition `tempsSuspendu()` sert à arrêter le temps et à masquer l'indicateur (aussi en pause, tutoriel, soir…).
 - **Animations réduites** : démarrage écourté — écran d'accueil statique 0,5 s, puis le bureau.
 
 ## Vérifications
