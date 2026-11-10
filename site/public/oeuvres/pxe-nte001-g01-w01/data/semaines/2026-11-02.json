@@ -1,0 +1,316 @@
+{
+ "lundi": "2026-11-02",
+ "dimanche": "2026-11-08",
+ "preparee_le": "2026-11-10T08:32:35.708Z",
+ "dossiers": [
+  {
+   "date": "2026-11-04",
+   "type": "perturbation",
+   "nature": "manifestation",
+   "lignes": [],
+   "retard": null,
+   "source": "Changelog du GTFS Naolib (Open Data Nantes Métropole, Licence Ouverte)",
+   "texte_source": "Adaptation manifestation du jeudi 05/11"
+  },
+  {
+   "date": "2026-11-06",
+   "type": "perturbation",
+   "nature": "manifestation",
+   "lignes": [],
+   "retard": null,
+   "source": "Changelog du GTFS Naolib (Open Data Nantes Métropole, Licence Ouverte)",
+   "texte_source": "Adaptation manifestation du samedi 07/11"
+  }
+ ],
+ "evenements": [
+  {
+   "date": "2026-11-02",
+   "type": "événement",
+   "nature": "Exposition",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Le livre d’artiste concours et exposition – Musée de l'imprimerie — Musée-atelier de l'imprimerie de Nantes, Nantes"
+  },
+  {
+   "date": "2026-11-02",
+   "type": "événement",
+   "nature": "Exposition",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Exposition « 200 photographies pour 200 ans d'histoire » — Archives Départementales de Loire-Atlantique, Nantes"
+  },
+  {
+   "date": "2026-11-02",
+   "type": "événement",
+   "nature": "Cirque - Magie - Marionnettes, Concert - Musique, Conférence - Débat - Réunion publique, Contes - Lecture - Poésie, Danse - Performance - Bal, Défilé - Parade - Arts de la rue, Evènement sportif, Exposition, Fête - Festival, Jeux - Jeux vidéo, Marché - Vide-greniers - Brocante, Projection, Rencontre - Forum, Salon, Stage - Atelier - Activité à partager, Théâtre - Humour, Visite - Balade",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Raconte moi une histoire — Manou Partages, Nantes"
+  },
+  {
+   "date": "2026-11-02",
+   "type": "événement",
+   "nature": "Exposition",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Exposition Le Muséum au fil du temps — Place de la Monnaie, Nantes"
+  },
+  {
+   "date": "2026-11-02",
+   "type": "événement",
+   "nature": "Rencontre - Forum",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Don du sang — Maison du don, Nantes — Maison du don, Nantes"
+  },
+  {
+   "date": "2026-11-03",
+   "type": "événement",
+   "nature": "Marché - Vide-greniers - Brocante",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Epicerie solidaire \"Le Comptoir d'Halvêque\" — salle des 4 carrés, Nantes"
+  },
+  {
+   "date": "2026-11-03",
+   "type": "événement",
+   "nature": "Stage - Atelier - Activité à partager",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Jardinage au jardin partagé Paysages Nourriciers du Breil — Parc Georges Méliès, Nantes"
+  },
+  {
+   "date": "2026-11-03",
+   "type": "événement",
+   "nature": "Rencontre - Forum",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Permanence « Point Conseil Budget » — Mairie de quartier Ile de Nantes, Nantes"
+  },
+  {
+   "date": "2026-11-04",
+   "type": "événement",
+   "nature": "Rencontre - Forum",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Pause-café — RIG Malville, Nantes"
+  },
+  {
+   "date": "2026-11-04",
+   "type": "événement",
+   "nature": "Rencontre - Forum",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Une mutuelle pour tous les Nantais et Nantaises – Permanence MCRN mutuelle solidaire — CCAS - Centre Communal d'Action Sociale de Nantes, Nantes"
+  },
+  {
+   "date": "2026-11-04",
+   "type": "événement",
+   "nature": "Théâtre - Humour",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "CHERS PARENTS — Théâtre 100 Noms, Nantes"
+  },
+  {
+   "date": "2026-11-04",
+   "type": "événement",
+   "nature": "Stage - Atelier - Activité à partager",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Programme de sensibilisation aux discriminations · Magma'Nantes #10 — Open Lande, Nantes"
+  },
+  {
+   "date": "2026-11-04",
+   "type": "événement",
+   "nature": "Visite - Balade",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Animation enfants – Château des ducs de Bretagne — Château des ducs de bretagne - musée d'histoire de Nantes, Nantes"
+  },
+  {
+   "date": "2026-11-04",
+   "type": "événement",
+   "nature": "Conférence - Débat - Réunion publique, Exposition",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Exposition « Architecture (s) et grands ensembles » — École nationale supérieure d’architecture - ensa, Nantes"
+  },
+  {
+   "date": "2026-11-04",
+   "type": "événement",
+   "nature": "Rencontre - Forum",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Point d'Information Nantes Solidaire — Espace Départemental des Solidarités Cassin, Nantes"
+  },
+  {
+   "date": "2026-11-04",
+   "type": "événement",
+   "nature": "Contes - Lecture - Poésie",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Contes & comptines — Centre socioculturel des Bourderies, Nantes"
+  },
+  {
+   "date": "2026-11-05",
+   "type": "événement",
+   "nature": "Stage - Atelier - Activité à partager",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Parcours de 8 séances numériques seniors — Espace seniors Barberie, Nantes"
+  },
+  {
+   "date": "2026-11-05",
+   "type": "événement",
+   "nature": "Stage - Atelier - Activité à partager",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Atelier couture et arts du fil — Centre socioculturel des Bourderies, Nantes"
+  },
+  {
+   "date": "2026-11-05",
+   "type": "événement",
+   "nature": "Théâtre - Humour",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "LE PORTEUR D'HISTOIRE — Théâtre 100 Noms, Nantes"
+  },
+  {
+   "date": "2026-11-06",
+   "type": "événement",
+   "nature": "Théâtre - Humour",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Monsieur Malaussène au théâtre — Théâtre de la rue de belleville, Nantes"
+  },
+  {
+   "date": "2026-11-07",
+   "type": "événement",
+   "nature": "Contes - Lecture - Poésie",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Sous un coin de parapluie — Médiathèque Ormédo - Orvault, Orvault"
+  },
+  {
+   "date": "2026-11-07",
+   "type": "événement",
+   "nature": "Théâtre - Humour",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Jeanne et Marguerite — Théâtre de la rue de belleville, Nantes"
+  },
+  {
+   "date": "2026-11-07",
+   "type": "événement",
+   "nature": "Stage - Atelier - Activité à partager",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Les Brunchs ALF 44 — Centre socioculturel Le Grand B, Saint-Herblain"
+  },
+  {
+   "date": "2026-11-08",
+   "type": "événement",
+   "nature": "Exposition",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "1er dimanche du mois : entrée gratuite au musée Jules Verne — Musée Jules Verne, Nantes"
+  },
+  {
+   "date": "2026-11-08",
+   "type": "événement",
+   "nature": "Exposition, Visite - Balade",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Visite guidée de l'exposition Maternités — Chronographe (Le), Rezé"
+  },
+  {
+   "date": "2026-11-08",
+   "type": "événement",
+   "nature": "Projection",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Ciné P'tits Mômes — Ciné-Théâtre Bonne Garde, Nantes"
+  }
+ ],
+ "meteo": [
+  {
+   "date": "2026-11-02",
+   "temp_min": 5.4,
+   "temp_max": 13.4,
+   "pluie_mm": 0.1,
+   "rafales_max": 48.2
+  },
+  {
+   "date": "2026-11-03",
+   "temp_min": 6.9,
+   "temp_max": 10.9,
+   "pluie_mm": 0.1,
+   "rafales_max": 45.4
+  },
+  {
+   "date": "2026-11-04",
+   "temp_min": 6.3,
+   "temp_max": 10.7,
+   "pluie_mm": 0,
+   "rafales_max": 40
+  },
+  {
+   "date": "2026-11-05",
+   "temp_min": 5.7,
+   "temp_max": 10.6,
+   "pluie_mm": 0,
+   "rafales_max": 25.9
+  },
+  {
+   "date": "2026-11-06",
+   "temp_min": 4.9,
+   "temp_max": 14.1,
+   "pluie_mm": 0,
+   "rafales_max": 15.8
+  },
+  {
+   "date": "2026-11-07",
+   "temp_min": 3.2,
+   "temp_max": 14.4,
+   "pluie_mm": 0,
+   "rafales_max": 20.2
+  },
+  {
+   "date": "2026-11-08",
+   "temp_min": 3.7,
+   "temp_max": 10.2,
+   "pluie_mm": 0.1,
+   "rafales_max": 29.9
+  }
+ ],
+ "difficulte": {
+  "niveau": "normale",
+  "compteur_s": 30
+ }
+}
