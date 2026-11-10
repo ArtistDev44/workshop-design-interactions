@@ -20,6 +20,13 @@ Direction choisie (question posée le 10/11/2026) : **enquête par les sources**
 4. Le guide « Prendre en main » et le tutoriel expliquent la nouvelle façon de jouer.
 5. Le test automatisé (`test-jeu.mjs`) reste vert : la logique de `game.js` (effets, dés) ne change pas.
 
+## Demande complémentaire (10/11/2026)
+> l'appli de régulation doit cesser de se comporter en appli fullscreen : la barre des tâches doit
+> rester visible
+
+6. L'appli Régulation devient une **fenêtre** de RégulOS : la barre des tâches reste visible en bas
+   (icônes, heure, jauges), comme pour les autres applis ; clics et clavier inchangés.
+
 ## Vérifications
 - `npm run build`, `npm test` ; partie réelle (révélations, décisions sans tout savoir) ; FR + EN ;
   clavier. Documenter dans `jeu/45-…`. Fusion `main` sur demande.
