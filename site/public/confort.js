@@ -3,6 +3,7 @@
  * (navigation privée, stockage bloqué : le jeu fonctionne quand même, sans mémoire).
  * Son (Q11) : synthétisé avec Web Audio (aucun fichier, aucun réseau) — ambiance de salle de contrôle
  * (souffle grave + ronron de ventilation) et bips d'interface. Démarre au premier geste du joueur.
+ * Prompt 27 : musique de fond générée (arpèges lents, boucle de 4 accords), même interrupteur Son (M).
  */
 (function (global) {
 	'use strict';
@@ -73,8 +74,10 @@
 			}
 			if (Son.ctx.state === 'suspended') Son.ctx.resume();
 			if (!Son.ambiance) Son.ambiance = Son.creerAmbiance();
+			Musique.demarrer();
 		},
 		couper: function () {
+			Musique.arreter();
 			if (Son.ambiance) {
 				Son.ambiance.forEach((n) => {
 					try {
@@ -135,6 +138,79 @@
 			});
 		},
 	};
+
+	// ——— Musique de fond (prompt 27) : 100 % WebAudio, aucun fichier ———
+	// Boucle de 4 accords (la mineur 7, fa majeur 7, do majeur, sol majeur), arpège montant-descendant
+	// en croches à 72 BPM, onde triangle adoucie par un passe-bas, plus une basse tenue par accord.
+	// Ordonnanceur « lookahead » : un setInterval de 100 ms programme les notes des 300 ms suivantes.
+	const ACCORDS = [
+		[220.0, 261.63, 329.63, 392.0], // Am7
+		[174.61, 220.0, 261.63, 329.63], // Fmaj7
+		[130.81, 196.0, 261.63, 329.63], // C
+		[196.0, 246.94, 293.66, 392.0], // G
+	];
+	const MOTIF = [0, 1, 2, 3, 2, 1, 2, 1]; // 8 croches par mesure
+	const Musique = {
+		bus: null,
+		minuterie: null,
+		pas: 0,
+		prochaine: 0,
+		volume: 0.05,
+		croche: 60 / 72 / 2,
+		demarrer: function () {
+			if (Musique.minuterie || !Son.ctx || !Reglages.son) return;
+			const c = Son.ctx;
+			Musique.bus = c.createGain();
+			Musique.bus.gain.setValueAtTime(0.0001, c.currentTime);
+			Musique.bus.gain.exponentialRampToValueAtTime(Musique.volume, c.currentTime + 2); // entrée en fondu
+			const filtre = c.createBiquadFilter();
+			filtre.type = 'lowpass';
+			filtre.frequency.value = 1400;
+			Musique.bus.connect(filtre).connect(Son.maitre);
+			Musique.prochaine = c.currentTime + 0.1;
+			Musique.minuterie = setInterval(Musique.programmer, 100);
+		},
+		arreter: function () {
+			if (Musique.minuterie) clearInterval(Musique.minuterie);
+			Musique.minuterie = null;
+			if (Musique.bus && Son.ctx) {
+				const b = Musique.bus;
+				b.gain.cancelScheduledValues(Son.ctx.currentTime);
+				b.gain.setValueAtTime(b.gain.value, Son.ctx.currentTime);
+				b.gain.linearRampToValueAtTime(0, Son.ctx.currentTime + 0.2);
+				setTimeout(() => b.disconnect(), 400);
+			}
+			Musique.bus = null;
+		},
+		note: function (f, t0, duree, gain, type) {
+			const c = Son.ctx;
+			const o = c.createOscillator();
+			const g = c.createGain();
+			o.type = type || 'triangle';
+			o.frequency.value = f;
+			g.gain.setValueAtTime(0.0001, t0);
+			g.gain.exponentialRampToValueAtTime(gain, t0 + 0.03);
+			g.gain.exponentialRampToValueAtTime(0.0001, t0 + duree);
+			o.connect(g).connect(Musique.bus);
+			o.start(t0);
+			o.stop(t0 + duree + 0.05);
+		},
+		programmer: function () {
+			const c = Son.ctx;
+			if (!c || !Musique.bus) return;
+			if (Musique.prochaine < c.currentTime) Musique.prochaine = c.currentTime + 0.05; // onglet en arrière-plan
+			while (Musique.prochaine < c.currentTime + 0.3) {
+				const mesure = Math.floor(Musique.pas / MOTIF.length) % ACCORDS.length;
+				const temps = Musique.pas % MOTIF.length;
+				const accord = ACCORDS[mesure];
+				Musique.note(accord[MOTIF[temps]] * 2, Musique.prochaine, Musique.croche * 1.8, 0.5);
+				if (temps === 0) Musique.note(accord[0] / 2, Musique.prochaine, Musique.croche * MOTIF.length, 0.6, 'sine'); // basse tenue
+				Musique.prochaine += Musique.croche;
+				Musique.pas++;
+			}
+		},
+	};
+	Son.musique = Musique;
 
 	global.Confort = { Reglages: Reglages, Bilans: Bilans, Son: Son };
 })(typeof window !== 'undefined' ? window : globalThis);

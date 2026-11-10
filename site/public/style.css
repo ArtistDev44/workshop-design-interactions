@@ -3,8 +3,8 @@ html,
 body {
 	margin: 0;
 	height: 100%;
-	background: #f5efe3;
-	color: #1c2733;
+	background: #0c1016; /* prompt 27 : sombre dès le premier affichage, même teinte que le fond autour de la pièce */
+	color: #ffffff;
 	font-family: Inter, system-ui, sans-serif;
 }
 #scene {

@@ -65,6 +65,8 @@ let gouttes = [];
 
 function setup() {
 	Langue.detecter(); // prompt 24 : ?lang= → localStorage → navigateur → fr
+	const msgChargement = document.getElementById('chargement-message');
+	if (msgChargement) msgChargement.textContent = t('chargement.message'); // prompt 27 : dans la langue active
 	const c = createCanvas(L, H);
 	c.parent('scene');
 	c.elt.addEventListener('mouseleave', () => (sourisDansCanevas = false)); // prompt 25 : la caméra se recentre
@@ -101,7 +103,24 @@ function texteMeilleur(cle) {
 	return m ? t('accueil.meilleur', { score: m.score }) : '';
 }
 
+// Prompt 27 : l'écran de chargement (index.html) disparaît au premier draw() effectif — fondu 300 ms,
+// immédiat si les animations sont réduites. Il ne bloque jamais l'accès au jeu (pointer-events: none).
+let chargementMasque = false;
+function masquerChargement() {
+	chargementMasque = true;
+	const el = document.getElementById('chargement');
+	if (!el) return;
+	const fin = () => {
+		el.hidden = true;
+		el.setAttribute('aria-hidden', 'true');
+	};
+	if (reduireAnimations) return fin();
+	el.classList.add('masque');
+	setTimeout(fin, 350);
+}
+
 function draw() {
+	if (!chargementMasque) masquerChargement();
 	avancerTemps(); // horloge simulée, sieste, arrivée des incidents, fin de journée (immersion.js)
 	if (Jeu.equipes) Jeu.majEquipes(millis()); // équipes envoyées depuis la carte (prompt 22)
 	boutons = [];
