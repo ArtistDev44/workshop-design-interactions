@@ -18,6 +18,15 @@ Demande du groupe (10/11/2026) : un jeu plus complet, inspiré **indirectement**
 
 Code : `site/public/oeuvres/pxe-nte001-g01-w01/bureau.js` (aucun fichier image, tout est dessiné par le code).
 
+## Style (mise à jour du 10/11/2026, image de référence du groupe)
+- Pixel art riche : **contours sombres** (`#2b1d18`), ombrages en 3–4 tons (lumière en haut à gauche,
+  ombre en bas à droite), **textures** (enduit du mur, veinage et lattes du bois, liège), **feuillages ronds
+  en couches** (arbres dehors, grande plante), **ombres portées tramées**, lumière chaude de la fenêtre et
+  léger vignettage.
+- **Cadrage plus proche** : le plateau remplit le bas de l'image, le PC est plus grand (écran 576×324 à
+  l'écran) et toujours légèrement à droite.
+- Le décor est redessiné 8 fois par seconde (≈ 6 ms) pour rester fluide.
+
 ## Pistes pour la suite (à décider par le groupe)
 - Rendre les objets du bureau interactifs : la pile de dossiers (= dossiers de la semaine), le tampon
   (valider une décision), le téléphone (appels de la direction selon le ton des jauges), le tableau de liège
