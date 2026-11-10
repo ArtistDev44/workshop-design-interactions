@@ -28,3 +28,4 @@ dossier à trancher sous pression. »*
 | 10 | `10-accessibilite-robustesse.md` | Checklist accessibilité et robustesse du jeu |
 | 11 | `11-direction-artistique.md` | Direction artistique verrouillée : palette, polices, low poly léger |
 | 12 | `12-bureau-pixel.md` | Bureau en pixel art : vue d'entrée, PC avec le jeu en direct, zoom au poste |
+| 13 | `13-immersion.md` | Immersion : SMS, journées, horloge ×10, sieste, alertes rouges, mail, livres |
