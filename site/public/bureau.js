@@ -213,10 +213,55 @@ function dessinerVueNantes(g) {
 	// plus de château, de quai, de route ni d'arbres : la baie donne directement sur la Loire.
 	dessinerGrueTitan(g, 344, HORIZON_VILLE, nuit);
 	dessinerLoire(g, nuit, pluie, haut, bas);
-	if (pluie) {
-		g.fill('#cfd8e0');
-		for (let i = 0; i < 70; i++) g.rect((i * 37) % BW, 10 + ((i * 23 + Math.floor(millis() / 50)) % (BAIE_BAS - 14)), 1, 3);
+	if (pluie) dessinerPluie(g, m, nuit);
+}
+
+/* Prompt 38 : pluie aléatoire et réaliste. Gouttes tirées une fois (graine fixe, pas de motif répété) :
+   longueur, vitesse, opacité et phase propres ; densité selon la pluie réelle du jour (pluie_mm),
+   inclinaison selon les rafales réelles (rafales_max) ; quelques gouttes posées sur la vitre qui
+   glissent lentement. Animations réduites : pluie figée, deux fois moins dense. */
+let GOUTTES = null;
+let GOUTTES_VITRE = null;
+function aleaPluie(graine) {
+	let a = graine >>> 0;
+	return () => {
+		a = (a * 1664525 + 1013904223) >>> 0;
+		return a / 4294967296;
+	};
+}
+function dessinerPluie(g, m, nuit) {
+	if (!GOUTTES) {
+		const r = aleaPluie(44000);
+		GOUTTES = Array.from({ length: 220 }, () => ({ x: r() * (BW + 60) - 30, p: r(), v: 0.55 + r() * 0.9, l: 2 + Math.floor(r() * 5), a: 50 + Math.floor(r() * 110), proche: r() < 0.18 }));
+		GOUTTES_VITRE = Array.from({ length: 26 }, () => ({ x: Math.floor(r() * MUR_DROIT_X), y0: 12 + r() * (BAIE_BAS - 30), v: 0.002 + r() * 0.006, p: r(), l: 1 + Math.floor(r() * 3) }));
 	}
+	const mm = (m && m.pluie_mm) || 1;
+	const densite = constrain(0.25 + mm / 10, 0.25, 1) * (reduireAnimations ? 0.5 : 1);
+	const n = Math.round(GOUTTES.length * densite);
+	const pente = constrain(((m && m.rafales_max) || 0) / 90, 0, 0.6); // vent → gouttes inclinées
+	const tps = reduireAnimations ? 0 : millis() / 1000;
+	const haut = 10;
+	const course = BAIE_BAS - haut;
+	const c = nuit ? [150, 165, 190] : [215, 225, 235];
+	for (let i = 0; i < n; i++) {
+		const d = GOUTTES[i];
+		const vitesse = (d.proche ? 1.6 : 1) * d.v; // gouttes proches plus rapides et plus longues
+		const y = haut + ((d.p + tps * vitesse * 1.6) % 1) * course;
+		const x = d.x - (y - haut) * pente;
+		const l = d.proche ? d.l + 3 : d.l;
+		g.fill(c[0], c[1], c[2], d.proche ? Math.min(255, d.a + 40) : d.a);
+		for (let k = 0; k < l; k++) g.rect(Math.round(x - k * pente), Math.round(y - k), 1, 1);
+	}
+	// Gouttes sur la vitre : points clairs qui glissent lentement puis réapparaissent ailleurs
+	GOUTTES_VITRE.forEach((v) => {
+		const u = (v.p + tps * v.v) % 1;
+		const y = v.y0 + u * 30;
+		if (y > BAIE_BAS - 3) return;
+		g.fill(235, 242, 248, 150 * (1 - u));
+		g.rect(v.x, Math.round(y), 1, v.l + 1);
+		g.fill(255, 255, 255, 190 * (1 - u));
+		g.rect(v.x, Math.round(y) + v.l, 1, 1);
+	});
 }
 
 /* Grue Titan (île de Nantes) : tour en treillis et longue flèche horizontale.
@@ -858,9 +903,13 @@ function basculerFocusQuitter(actif) {
 }
 /** Molette au poste : quitte le PC, avec anti-rebond (600 ms) et un seuil, pour qu'un scroll continu ne fasse rien d'autre. */
 function scrollSortiePC(delta) {
-	if (vue !== 'poste' || clignement || fenetre || smsActif || PC.fenetre || phase === 'mail' || phase === 'reveil') {
+	// Prompt 38 : molette vers le haut au bureau → s'installer au PC ; vers le bas au poste → se lever
+	const versPC = vue === 'bureau' && delta < 0;
+	const versBureau = vue === 'poste' && delta > 0;
+	const bloque = clignement || fenetre || smsActif || (typeof tutoriel !== 'undefined' && tutoriel) || (typeof MENU !== 'undefined' && MENU.actif);
+	if (bloque || (!versPC && !versBureau) || (versBureau && (PC.fenetre || phase === 'mail' || phase === 'reveil'))) {
 		cumulScroll = 0;
-		return false;
+		return vue === 'poste' && !bloque && !PC.fenetre ? true : false; // au poste, le scroll ne fait pas défiler la page
 	}
 	const maintenant = millis();
 	if (maintenant - dernierScrollSortie < 600) return true; // anti-rebond : on « avale » le reste du geste
@@ -868,7 +917,8 @@ function scrollSortiePC(delta) {
 	if (cumulScroll < 100) return true;
 	cumulScroll = 0;
 	dernierScrollSortie = maintenant;
-	quitterPC();
+	if (versPC) sAsseoir();
+	else quitterPC();
 	return true;
 }
 

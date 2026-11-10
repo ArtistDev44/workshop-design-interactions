@@ -48,3 +48,4 @@ dossier à trancher sous pression. »*
 | 30 | `30-menu-principal.md` | Prompt 35 : menu principal plein écran avant le bureau (Nouvelle partie, Reprendre, Paramètres, Aide, Tutoriel), choix de la semaine sorti du PC, menu Échap modernisé |
 | 31 | `31-applications-indicateurs.md` | Prompt 36 : icônes RégulOS agrandies, Corbeille fonctionnelle, app flottante « Indicateurs » déplaçable (fluidité, réputation, budget, objectif, palier) |
 | 32 | `32-prendre-en-main.md` | Prompt 37 : option « Prendre en main » à la première partie, 6 étapes fléchées validées par les actions du joueur, cibles relevées au dessin |
+| 33 | `33-scroll-telephone-pluie.md` | Prompt 38 : molette ↑ pour s'installer au PC, téléphone cliquable avec notifications réelles de l'Agenda Nantes Métropole (repli local), pluie aléatoire et réaliste |

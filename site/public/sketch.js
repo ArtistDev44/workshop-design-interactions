@@ -1314,6 +1314,7 @@ function keyPressed() {
 	if (fenetre) {
 		if (keyCode === ESCAPE || (fenetre === 'aide' && (key === 'h' || key === 'H' || key === '?'))) return fermer(), false;
 		if (fenetre === 'aide' && (key === 't' || key === 'T')) return lancerTutoriel(), false; // prompt 34
+		if (fenetre === 'telephone' && (keyCode === ENTER || keyCode === RETURN)) return fermer(), false; // prompt 38
 		if (fenetre === 'menu') {
 			// Prompt 35 : menu Échap modernisé — ↑ ↓ / Tab pour choisir, Entrée pour valider
 			const n = ENTREES_PAUSE.length;
@@ -1479,6 +1480,7 @@ function dessinerFenetre() {
 	if (fenetre === 'reprise') return fenetreReprise();
 	if (fenetre === 'menu') return fenetreMenu();
 	if (fenetre === 'livre-stress') return fenetreLivreStress();
+	if (fenetre === 'telephone') return fenetreTelephone(); // prompt 38
 }
 
 function fenetreAide() {
