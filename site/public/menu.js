@@ -23,6 +23,8 @@ function ouvrirMenuPrincipal() {
 }
 function fermerMenuPrincipal() {
 	MENU.actif = false;
+	// Prompt 37 : nouvelle partie avec l'option cochée → guide « Prendre en main »
+	if (optionGuide() && Jeu.index === 0 && !(Jeu.historique || []).length) demarrerGuide();
 	PC.etat = 'appli'; // on arrive au bureau, le PC déjà allumé sur l'appli de régulation
 	PC.fenetre = null;
 	vue = 'bureau';
@@ -282,7 +284,7 @@ function dessinerChoixSemaine() {
 		}
 		boutons.push({ x, y, l: lc, h: hc, action: () => (MENU.choixSemaine === i ? lancerDepuisMenu() : (MENU.choixSemaine = i)) });
 	});
-	if (typeof dessinerOptionsNouvellePartie === 'function') dessinerOptionsNouvellePartie(160, H - 210); // prompt 37
+	if (typeof dessinerOptionsNouvellePartie === 'function') dessinerOptionsNouvellePartie(160, H - 250); // prompt 37
 	const o = opts[MENU.choixSemaine];
 	bouton(L - 160 - 420, H - 150, 420, 84, t('mp.lancer'), lancerDepuisMenu, !o || o.desactive);
 	bouton(160, H - 140, 260, 68, t('mp.retour'), () => ((MENU.ecran = 'titre'), (MENU.debut = millis())), false, true);

@@ -76,7 +76,7 @@ jamais l'inverse.
 | 34 | `34-jeu-fenetre-loire-tutoriel.md` | Jeu, étape 21 : fond de la baie vitrée corrigé (plus de trottoir/route/arbres ni de château, grue au niveau des bâtiments et de leur couleur), Loire à la place avec hauteur réelle via API (fallback local), souris et téléphone en perspective (téléphone récent), livre « tuto » remplacé par « commande », vrai tutoriel guidé | ✅ main |
 | 35 | `35-jeu-menu-principal-modernise.md` | Jeu, étape 22 : menu principal modernisé avant le bureau (Nouvelle partie, Reprendre, Paramètres, Aide, Tutoriel, langue), choix de la semaine sorti du PC, menu Échap modernisé | ✅ branche |
 | 36 | `36-jeu-applications-indicateurs.md` | Jeu, étape 23 : toutes les applis fonctionnelles (Corbeille comprise), icônes agrandies, app flottante « Indicateurs » (fluidité, réputation, budget) | ✅ branche |
-| 37 | `37-jeu-mode-prendre-en-main.md` | Jeu, étape 24 : option « Prendre en main » à la première partie, flèches guidées vers ce qu'il est possible de faire | ◻ prévu |
+| 37 | `37-jeu-mode-prendre-en-main.md` | Jeu, étape 24 : option « Prendre en main » à la première partie, flèches guidées vers ce qu'il est possible de faire | ✅ branche |
 | 38 | `38-jeu-transition-scroll-telephone-pluie.md` | Jeu, étape 25 : molette vers le haut pour s'installer au PC, notifications d'événements réels (Agenda Nantes Métropole) au clic sur le téléphone, pluie aléatoire et réaliste | ◻ prévu |
 
 ### Statut des prompts (vérifié le 10/11/2026 dans `site/public/`)

@@ -96,6 +96,8 @@ function dessinerOS() {
 		rect(x + g.l / 2 - tl / 2, y + 138, tl, 36);
 		dsTexte(ic.nom, x + g.l / 2, y + 142, 22, DS.blanc, 'center');
 		boutons.push({ x, y, l: g.l, h: g.h, action: () => ouvrirIconeOS(i) });
+		if (i === 0) cibleGuide('iconeRegulation', x, y, g.l, g.h); // prompt 37
+		if (i === 1) cibleGuide('iconesOS', x, y, g.l * 2 + g.ecart, g.h * 3 + g.ecart * 2); // patron, carte, community, journal, indicateurs
 		const b = ic.cle === 'indicateurs' ? (PC.flottant ? '●' : '') : badgeIcone(ic.cle);
 		if (b) dsBadge(x + g.l - 34, y + 20, b, ic.cle === 'indicateurs' ? 'succes' : 'erreur');
 	});
@@ -235,6 +237,7 @@ function dessinerFermerAppli() {
 	line(x + 26, y + 8, x + 14, y + 20);
 	noStroke();
 	boutons.push({ x, y, l: 40, h: 28, action: fermerAppli });
+	cibleGuide('fermerAppli', x, y, 40, 28); // prompt 37
 }
 
 // =====================================================================

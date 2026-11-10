@@ -795,6 +795,7 @@ function composerVue() {
 		contourSurvol(r.x - 7 * PIX, r.y - 7 * PIX, r.l + 14 * PIX, r.h + 15 * PIX);
 	}
 	boutons.push({ x: r.x - 5 * PIX, y: r.y - 5 * PIX, l: r.l + 10 * PIX, h: r.h + 11 * PIX, action: sAsseoir });
+	cibleGuide('ecranPC', r.x, r.y, r.l, r.h); // prompt 37
 	zonesObjetsBureau();
 	if (ecran === 'jeu' && phase !== 'fin') {
 		const hA = heureAffichee();
@@ -838,6 +839,7 @@ function dessinerBoutonQuitterPC() {
 	const b = rectBoutonQuitter();
 	if (clignement) return; // pendant qu'on se lève, le bouton disparaît
 	bouton(b.x, b.y, b.l, b.h, t('poste.quitter_pc'), quitterPC);
+	cibleGuide('quitterPC', b.x, b.y, b.l, b.h); // prompt 37
 	if (focusQuitter) {
 		noFill();
 		stroke('#f2c94c');

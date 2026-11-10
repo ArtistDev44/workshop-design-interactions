@@ -47,3 +47,4 @@ dossier à trancher sous pression. »*
 | 29 | `29-correctifs-plein-ecran-livres.md` | Retours de rendu : vue plein écran surcadrée avec bords flous et vignettage, grue opaque à l'échelle des immeubles, porte supprimée, souris et téléphone orientés vers l'écran, tasse de thé, téléphone et livres animés, livres ouverts en double page, QR codes régénérés |
 | 30 | `30-menu-principal.md` | Prompt 35 : menu principal plein écran avant le bureau (Nouvelle partie, Reprendre, Paramètres, Aide, Tutoriel), choix de la semaine sorti du PC, menu Échap modernisé |
 | 31 | `31-applications-indicateurs.md` | Prompt 36 : icônes RégulOS agrandies, Corbeille fonctionnelle, app flottante « Indicateurs » déplaçable (fluidité, réputation, budget, objectif, palier) |
+| 32 | `32-prendre-en-main.md` | Prompt 37 : option « Prendre en main » à la première partie, 6 étapes fléchées validées par les actions du joueur, cibles relevées au dessin |

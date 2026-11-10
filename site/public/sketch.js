@@ -152,6 +152,8 @@ function draw() {
 	if (Jeu.equipes) Jeu.majEquipes(millis()); // équipes envoyées depuis la carte (prompt 22)
 	boutons = [];
 	// 1. Contenu de l'écran du PC, en 1920×1080 : l'appli de régulation, ou le système (démarrage, bureau)
+	ciblesGuide = {}; // prompt 37 : cibles des flèches, relevées pendant le dessin
+	espaceDessin = 'pc';
 	sourisVersEcran();
 	background(C.fond);
 	if (PC.etat === 'appli') {
@@ -165,6 +167,7 @@ function draw() {
 	} else dessinerOS();
 	dessinerIndicateurs(); // prompt 36 : app flottante, au premier plan
 	sourisRestaurer();
+	espaceDessin = 'ecran';
 	// 2. La pièce et le moniteur autour (bureau, zoom, ou « au poste » avec la pièce visible)
 	composerVue();
 	if (phase === 'reveil' && reveil && ecran === 'jeu' && !smsActif) {
@@ -179,6 +182,7 @@ function draw() {
 		boutons = [];
 		dessinerSMS();
 	}
+	dessinerGuide(); // prompt 37 : flèches « Prendre en main »
 	dessinerTutoriel(); // prompt 34 : par-dessus l'écran et les fenêtres
 	dessinerClignement(); // prompt 21 § 2 : par-dessus tout, purement visuel (n'intercepte aucune entrée)
 	majCurseur();
@@ -306,7 +310,7 @@ function lancerNouvellePartie() {
 		Jeu.nouvellePartie();
 		demarrerJournee(); // journée 1, 6h00, en attente du premier incident
 		if (!introVue) lancerIntroSMS(); // § 2 : une seule fois, pas sur « Rejouer »
-		else if (!tutorielVu()) lancerTutoriel(); // prompt 34 : première partie sans SMS
+		else if (!tutorielVu() && !optionGuide()) lancerTutoriel(); // prompt 34 (pas si le guide « Prendre en main » est choisi)
 	});
 }
 
@@ -753,6 +757,7 @@ function dessinerListeLignes(zone, dActuel) {
 function dessinerJauges() {
 	const z = { x: DROITE.x, y: DROITE.y, l: DROITE.l, h: 110 };
 	panneau(z.x, z.y, z.l, z.h);
+	cibleGuide('jauges', z.x, z.y, z.l, z.h); // prompt 37
 	const jauges = Jeu.jauges || { fluidite: 50, reputation: 50, budget: 50 }; // départ 50 (Q40)
 	const defs = [
 		[t('jaugeTitre.fluidite'), jauges.fluidite],
@@ -926,6 +931,7 @@ function dessinerDossier(d, meteo) {
 		const by = base.y + base.h - 200 + Math.floor(i / 2) * 88;
 		bouton(bx, by, ab, 72, touche + '  ' + nom + (cle === bloquee ? t('dossier.indispo') : ''), () => decider(cle), cle === bloquee, i === 3);
 	});
+	cibleGuide('actions', x + 32, base.y + base.h - 200, base.l - 64, 160); // prompt 37
 }
 
 function choisirSource(cle) {
@@ -1298,6 +1304,8 @@ function keyPressed() {
 		if (key === ' ' || keyCode === ENTER || keyCode === RETURN) seReveiller();
 		return false;
 	}
+	// Prompt 37 : G arrête le guide « Prendre en main »
+	if ((key === 'g' || key === 'G') && GUIDE.actif && !MENU.actif) return arreterGuide(), false;
 	// Prompt 34 : le tutoriel capte le clavier (L reste disponible pour changer de langue)
 	if (tutoriel && !(key === 'l' || key === 'L')) return toucheTutoriel(), false;
 	// Langue (prompt 24) : L bascule partout, sans toucher à la partie

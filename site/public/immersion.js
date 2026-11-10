@@ -329,7 +329,7 @@ function terminerIntro() {
 	introVue = true;
 	demarrerJournee();
 	vue = 'bureau'; // on arrive au bureau : l'ouverture est à 6h
-	if (!tutorielVu()) lancerTutoriel(); // prompt 34 : à la première partie, juste après les SMS
+	if (!tutorielVu() && !GUIDE.actif) lancerTutoriel(); // prompt 34 : à la première partie, juste après les SMS (sauf guide)
 }
 
 // =====================================================================
@@ -719,6 +719,7 @@ function zonesObjetsBureau() {
 	objetSurvol = null;
 	OBJETS_BUREAU.slice(1).forEach((o, i) => {
 		const r = versEcranBureau(o.x, o.y, o.l, o.h); // prompt 25 : suit le dézoom et la caméra
+		if (o.nom === 'commande') cibleGuide('livreCommande', r.x, r.y, r.l, r.h); // prompt 37
 		boutons.push({ x: r.x, y: r.y, l: r.l, h: r.h, action: () => ouvrirObjetBureau(o.nom) });
 		const survol = mouseX >= r.x && mouseX <= r.x + r.l && mouseY >= r.y && mouseY <= r.y + r.h;
 		if (survol || focusBureau === i + 1) objetSurvol = o.nom; // les livres se soulèvent (dessinerLivres)
