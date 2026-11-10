@@ -58,125 +58,101 @@ function fondOS() {
 	return g;
 }
 
-/** Contenu de l'écran quand l'appli n'est pas ouverte (démarrage ou bureau du système) */
+/** Contenu de l'écran quand l'appli n'est pas ouverte (démarrage ou bureau du système) — Pixel Design System */
 function dessinerOS() {
 	if (PC.etat === 'eteint') {
 		background('#050607');
 		return;
 	}
 	if (PC.etat === 'demarrage') return dessinerDemarrage();
-	// Bureau du système
 	drawingContext.imageSmoothingEnabled = false;
 	image(fondOS(), 0, 0, L, H);
 	drawingContext.imageSmoothingEnabled = true;
-	// Icônes du bureau
+	// Icônes du bureau : libellé monospace, sélection en carré blanc 15 % + bordure (angles droits)
 	const icones = [
-		{ nom: 'Régulation Nantes', action: ouvrirAppli, dessin: iconeRegulation },
-		{ nom: 'Corbeille', action: () => {}, dessin: iconeCorbeille },
+		{ nom: 'Régulation Nantes', dessin: iconeRegulation },
+		{ nom: 'Corbeille', dessin: iconeCorbeille },
 	];
 	icones.forEach((ic, i) => {
-		const x = 60;
-		const y = 60 + i * 190;
+		const x = 48;
+		const y = 48 + i * 196;
 		const sel = PC.selection === i;
-		const survol = mouseX >= x && mouseX <= x + 150 && mouseY >= y && mouseY <= y + 170;
+		const survol = mouseX >= x && mouseX <= x + 168 && mouseY >= y && mouseY <= y + 176;
 		noStroke();
 		if (sel || survol) {
-			fill(255, 255, 255, sel ? 60 : 35);
-			stroke(255, 255, 255, 120);
+			fill(DS.blanc15);
+			rect(x, y, 168, 176);
+			stroke(DS.blanc);
 			strokeWeight(2);
-			rect(x, y, 150, 170, 6);
+			noFill();
+			rect(x + 1, y + 1, 166, 174);
 			noStroke();
 		}
-		ic.dessin(x + 35, y + 16);
-		textFont(POLICE_TEXTE);
-		textSize(20);
-		textAlign(CENTER, TOP);
-		fill(0, 0, 0, 140);
-		text(ic.nom, x + 76, y + 122, 150, 50);
-		fill('#ffffff');
-		text(ic.nom, x + 75, y + 121, 150, 50);
-		boutons.push({ x, y, l: 150, h: 170, action: i === 0 ? ouvrirAppli : () => (PC.selection = i) });
-		// Pastille : incidents en attente dans l'appli
-		if (i === 0 && typeof incidentActif === 'function' && (incidentActif() || phase === 'mail')) {
-			fill('#b3261e');
-			circle(x + 120, y + 22, 34);
-			fill('#ffffff');
-			textAlign(CENTER, CENTER);
-			textStyle(BOLD);
-			text('!', x + 120, y + 22);
-			textStyle(NORMAL);
-		}
+		ic.dessin(x + 44, y + 16);
+		fill(DS.noir50);
+		textFont(DS.policeTexte);
+		textSize(18);
+		const tl = textWidth(ic.nom) + 12;
+		rect(x + 84 - tl / 2, y + 116, tl, 30);
+		dsTexte(ic.nom, x + 84, y + 120, 18, DS.blanc, 'center');
+		boutons.push({ x, y, l: 168, h: 176, action: i === 0 ? ouvrirAppli : () => (PC.selection = i) });
+		if (i === 0 && typeof incidentActif === 'function' && (incidentActif() || phase === 'mail')) dsBadge(x + 136, y + 18, '!', 'erreur');
 	});
-	// Barre des tâches (verre sombre), bouton rond, appli épinglée, horloge
-	fill(10, 24, 40, 200);
+	// Barre des tâches : fond #0D0C0C, filet blanc 15 %, bouton « démarrer » rouge, appli épinglée, horloge
+	noStroke();
+	fill(DS.fond);
 	rect(0, H - 64, L, 64);
-	fill(255, 255, 255, 30);
+	fill(DS.blanc15);
 	rect(0, H - 64, L, 2);
-	fill('#2f8fd8');
-	circle(46, H - 32, 48);
-	fill(255, 255, 255, 120);
-	circle(40, H - 40, 18);
-	fill(255, 255, 255, PC.etat === 'appli' ? 60 : 30);
-	rect(96, H - 58, 64, 52, 6);
-	iconeRegulation(104, H - 54, 0.4);
+	fill(DS.primaire);
+	rect(8, H - 56, 120, 48);
+	dsTitre('REGUL', 68, H - 48, 28, DS.blanc, 'center');
+	fill(PC.etat === 'appli' ? DS.blanc15 : DS.blanc05);
+	rect(140, H - 56, 60, 48);
+	iconeRegulation(150, H - 52, 0.5);
 	const hA = heureAffichee();
-	fill('#ffffff');
-	textFont(POLICE_DONNEES);
-	textSize(22);
-	textAlign(RIGHT, CENTER);
-	text(String(hA.h).padStart(2, '0') + ':' + String(hA.m).padStart(2, '0'), L - 30, H - 32);
-	textAlign(LEFT, CENTER);
-	textSize(18);
-	fill(255, 255, 255, 200);
-	text('Cliquez sur « Régulation Nantes » pour ouvrir l’application (Entrée)', 200, H - 32);
+	dsTexte(String(hA.h).padStart(2, '0') + ':' + String(hA.m).padStart(2, '0'), L - 24, H - 46, 24, DS.blanc, 'right');
+	dsTexte('Cliquez sur « Régulation Nantes » pour ouvrir l’application (Entrée)', 224, H - 44, 18, DS.blanc50, 'left');
 }
 
 function dessinerDemarrage() {
 	const t = millis() - PC.debut;
-	background('#050607');
+	background(DS.fond);
 	if (t < 1200) {
-		// Écran de démarrage texte (style BIOS)
-		textFont(POLICE_DONNEES);
-		textSize(26);
-		textAlign(LEFT, TOP);
-		fill('#c9d2db');
-		const lignes = ['REGUL-BIOS v1.07  —  Poste de régulation n°3', 'Processeur ........ OK', 'Mémoire 4096 Mo ... OK', 'Réseau salle ...... OK', 'Démarrage du système…'];
-		lignes.slice(0, 1 + Math.floor(t / 220)).forEach((l, i) => text(l, 80, 80 + i * 44));
+		const lignes = ['REGUL-BIOS v1.07 — Poste de régulation n°3', 'Processeur ........ OK', 'Mémoire 4096 Mo ... OK', 'Réseau salle ...... OK', 'Démarrage du système…'];
+		lignes.slice(0, 1 + Math.floor(t / 220)).forEach((l, i) => dsTexte(l, 80, 80 + i * 44, 26, i === 0 ? DS.primaire : DS.blanc75, 'left'));
 	} else if (t < DUREE_DEMARRAGE - 500) {
-		// Logo du système fictif + barre de chargement
-		noStroke();
+		// Logo du système fictif (carré rouge, angles droits) + titre pixel + barre de progression
 		const cx = L / 2;
-		const cy = H / 2 - 60;
-		fill('#2f8fd8');
-		rect(cx - 70, cy - 70, 140, 140, 28);
-		fill('#ffffff');
-		rect(cx - 44, cy - 10, 88, 20, 6); // rail
-		circle(cx - 26, cy + 34, 22);
-		circle(cx + 26, cy + 34, 22);
-		rect(cx - 50, cy - 46, 100, 30, 8); // tram
-		fill('#2f8fd8');
-		rect(cx - 40, cy - 40, 30, 16, 3);
-		rect(cx + 10, cy - 40, 30, 16, 3);
-		fill('#e8eef3');
-		textFont(POLICE_TEXTE);
-		textSize(40);
-		textAlign(CENTER, TOP);
-		text('RégulOS', cx, cy + 100);
-		const p = (t - 1200) / (DUREE_DEMARRAGE - 1700);
-		fill(255, 255, 255, 40);
-		rect(cx - 160, cy + 180, 320, 10, 5);
-		fill('#7fc4ff');
-		const k = reduireAnimations ? constrain(p, 0, 1) : (p * 3) % 1;
-		rect(cx - 160 + (reduireAnimations ? 0 : k * 260), cy + 180, reduireAnimations ? 320 * k : 60, 10, 5);
+		const cy = H / 2 - 80;
+		noStroke();
+		fill(DS.primaire);
+		rect(cx - 64, cy - 64, 128, 128);
+		fill(DS.blanc);
+		rect(cx - 44, cy - 36, 88, 28);
+		rect(cx - 40, cy - 4, 80, 12);
+		rect(cx - 30, cy + 16, 16, 16);
+		rect(cx + 14, cy + 16, 16, 16);
+		fill(DS.primaire);
+		rect(cx - 36, cy - 30, 30, 14);
+		rect(cx + 6, cy - 30, 30, 14);
+		dsTitre('RegulOS', cx, cy + 96, 56, DS.blanc, 'center');
+		const p = constrain((t - 1200) / (DUREE_DEMARRAGE - 1700), 0, 1);
+		stroke(DS.blanc15);
+		strokeWeight(2);
+		noFill();
+		rect(cx - 200, cy + 190, 400, 20);
+		noStroke();
+		fill(DS.primaire);
+		const blocs = Math.floor(p * 24);
+		for (let k = 0; k < blocs; k++) rect(cx - 196 + k * 16.4, cy + 194, 12, 12); // progression par blocs (pixel)
 	} else {
 		drawingContext.imageSmoothingEnabled = false;
 		image(fondOS(), 0, 0, L, H);
 		drawingContext.imageSmoothingEnabled = true;
-		fill('#ffffff');
-		textFont(POLICE_TEXTE);
-		textSize(48);
-		textAlign(CENTER, CENTER);
-		text('Bienvenue', L / 2, H / 2);
+		fill(DS.noir50);
+		rect(L / 2 - 260, H / 2 - 60, 520, 120);
+		dsTitre('BIENVENUE', L / 2, H / 2 - 30, 56, DS.blanc, 'center');
 	}
 	if (t >= DUREE_DEMARRAGE) PC.etat = 'os';
 }
@@ -211,18 +187,28 @@ function iconeCorbeille(x, y) {
 	for (let k = 0; k < 3; k++) rect(x + 24 + k * 12, y + 26, 4, 44, 2);
 }
 
-/** Petite croix (en haut à droite de l'appli) pour revenir au bureau du système */
+/** Barre de titre de l'appli (Pixel Design System) : titre pixel + bouton fermer carré → retour au bureau du système */
 function dessinerFermerAppli() {
+	noStroke();
+	fill(DS.fond);
+	rect(0, 0, L, 34);
+	fill(DS.blanc15);
+	rect(0, 34, L, 2);
+	dsTitre('REGULATION NANTES', 16, 6, 24, DS.blanc, 'left');
+	dsTexte('RégulOS · poste 3', L / 2, 8, 16, DS.blanc50, 'center');
 	const x = L - 46;
-	const y = 6;
-	const survol = mouseX >= x && mouseX <= x + 38 && mouseY >= y && mouseY <= y + 28;
-	noStroke();
-	fill(survol ? '#b3261e' : 'rgba(28,39,51,0.75)');
-	rect(x, y, 38, 28, 4);
-	stroke('#ffffff');
+	const y = 3;
+	const survol = mouseX >= x && mouseX <= x + 40 && mouseY >= y && mouseY <= y + 28;
+	fill(survol ? DS.primaire : DS.fond);
+	rect(x, y, 40, 28);
+	stroke(survol ? DS.primaire : DS.blanc);
+	strokeWeight(2);
+	noFill();
+	rect(x + 1, y + 1, 38, 26);
+	stroke(DS.blanc);
 	strokeWeight(3);
-	line(x + 13, y + 8, x + 25, y + 20);
-	line(x + 25, y + 8, x + 13, y + 20);
+	line(x + 14, y + 8, x + 26, y + 20);
+	line(x + 26, y + 8, x + 14, y + 20);
 	noStroke();
-	boutons.push({ x, y, l: 38, h: 28, action: fermerAppli });
+	boutons.push({ x, y, l: 40, h: 28, action: fermerAppli });
 }
