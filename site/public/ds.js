@@ -123,7 +123,9 @@ function dsBouton(x, y, l, h, label, action, variante, desactive) {
 	}
 	noStroke();
 	textFont(DS.policeTexte);
-	textSize(Math.min(24, h * 0.38));
+	let taille = Math.min(24, h * 0.38);
+	textSize(taille);
+	while (taille > 18 && textWidth(label + '  ›') > l - 24) textSize(--taille); // prompt 66 : le libellé reste dans le bouton
 	fill(desactive ? DS.blanc50 : v.texte);
 	textAlign(CENTER, CENTER);
 	text(label + '  ›', x + l / 2, y + h / 2);
