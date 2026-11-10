@@ -721,6 +721,7 @@ function ouvrirObjetBureau(nom) {
 	if (nom === 'commande') return lancerTutoriel(); // prompt 34 : le livre « commande » ouvre le tutoriel
 	if (nom === 'stress') return (livreOuverture = millis()), ouvrir('livre-stress');
 	if (nom === 'horloge') return clicHorloge(); // prompt 51
+	if (nom === 'tasse') return boireCafe(); // prompt 52 : le café en main, puis le boost
 	if (nom === 'sablier') return clicSablier(); // prompt 51
 	if (OBJETS_BUREAU.some((o) => o.nom === nom && o.piece)) return interagirPiece(nom); // prompt 29
 }

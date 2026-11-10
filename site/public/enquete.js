@@ -36,7 +36,7 @@ function revelerSource(cle, payant) {
 	if (e.revele[cle]) return false;
 	e.revele[cle] = true;
 	e.depuis[cle] = millis();
-	if (payant) debutCompteur -= ENQ_COUT_MS;
+	if (payant) debutCompteur -= typeof coutSourceCafe === 'function' ? coutSourceCafe(ENQ_COUT_MS) : ENQ_COUT_MS; // prompt 52 : gratuit pendant le boost du café
 	Confort.Son.clic();
 	annoncer(t('enq.source.' + cle) + ' : ' + texteSource(cle, Jeu.dossierCourant()).join(' '));
 	return true;

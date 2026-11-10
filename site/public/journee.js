@@ -118,6 +118,7 @@ function lireBlame() {
 	Sauvegarde.auto(false);
 }
 function toucheJournee() {
+	if (fenetre === 'cafe') return true; // prompt 52 : on boit, le clavier attend
 	if (fenetre === 'partir') {
 		if (keyCode === ESCAPE) fermer();
 		else if (keyCode === ENTER || keyCode === RETURN) partirQuandMeme();

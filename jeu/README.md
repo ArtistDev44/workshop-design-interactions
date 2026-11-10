@@ -62,3 +62,4 @@ dossier à trancher sous pression. »*
 | 44 | `44-lofi-lisibilite-meteo.md` | Prompt 49 : lofi CC0 par défaut et bruitages en retrait, textes du PC ≥ 18 px, carte sans météo, climat selon le mode (direct : API ; semaine : archives) |
 | 45 | `45-enquete-sources.md` | Prompt 50 : signalement vague, faits révélés par carte, info trafic, météo, agenda (5 à 8, −4 s) ou par la pièce ; plus de conseil ni de flèches ; appli Régulation en fenêtre, barre des tâches visible |
 | 46 | `46-horloge-sablier-lumiere.md` | Prompt 51 : finir sa journée à l'horloge (alerte, départ anticipé, blâme du patron le lendemain), sablier, lumière de la pièce (lampe, stores, heure, halo de l'écran), ombres portées |
+| 47 | `47-cafe-boost.md` | Prompt 52 : le café en main (animation du téléphone), boost de 25 s — cœur qui s'accélère, pulsation rouge des bords, lignes de vitesse, flou, champ élargi ; sources gratuites pendant le boost |

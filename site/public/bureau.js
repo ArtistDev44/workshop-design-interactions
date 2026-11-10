@@ -585,23 +585,21 @@ function dessinerTelephonePerspective(g, cx, y0) {
 	}
 }
 
-/* Tasse de thé : thé ambré, sachet dont l'étiquette se balance doucement, volutes de vapeur qui montent. */
+/* Tasse de café (prompt 52, thé avant) : café, volutes de vapeur ; vide une fois bue dans la journée. */
 function dessinerTasseThe(g) {
 	ombreObjet(g, 120, 206, 19); // prompt 51
 	boite(g, 120, 188, 14, 18, '#f7f1e1', '#ffffff', '#d8cfb6');
 	px(g, P.contour, 134, 192, 4, 1); // anse
 	px(g, P.contour, 137, 192, 1, 8);
 	px(g, P.contour, 134, 199, 4, 1);
-	px(g, '#b5762e', 121, 189, 12, 2); // thé
-	px(g, '#d39a52', 123, 189, 4, 1); // reflet du thé
-	const tps = reduireAnimations ? 0 : millis();
-	const balance = Math.round(Math.sin(tps / 700) * 1.5);
-	// Fil du sachet passé par-dessus le bord gauche, étiquette qui pend à l'extérieur (côté opposé à l'anse)
-	px(g, '#bfb59c', 122, 186, 1, 3);
-	px(g, '#bfb59c', 119, 187, 3, 1);
-	px(g, '#bfb59c', 118 + Math.min(0, balance), 188, 1, 4);
-	boite(g, 115 + balance, 192, 5, 6, '#f0c35a', '#f8da8c', '#c99a35'); // étiquette
-	if (!reduireAnimations) {
+	// Prompt 52 : café (vide une fois bu dans la journée)
+	const bu = typeof CAFE !== 'undefined' && CAFE.jour === cleJourCafe();
+	if (!bu) {
+		px(g, '#3b2416', 121, 189, 12, 2); // café
+		px(g, '#6b4426', 123, 189, 4, 1); // crème
+	} else px(g, '#cfc6ae', 121, 189, 12, 1); // fond de tasse
+	const tps = reduireAnimations || bu ? 0 : millis();
+	if (!reduireAnimations && tps) {
 		for (let k = 0; k < 3; k++) {
 			const p = ((tps / 1600 + k / 3) % 1); // 0 → 1 : la volute monte et s'efface
 			g.fill(255, 255, 255, Math.round(140 * (1 - p)));
@@ -634,7 +632,7 @@ function dessinerObjetsDuFond(g) {
 }
 function dessinerObjetsProches(g) {
 	dessinerSourisPerspective(g, 336, 204);
-	dessinerTasseThe(g); // tasse de thé animée (sachet, vapeur)
+	dessinerTasseThe(g); // tasse de café (prompt 52), vapeur
 	dessinerTelephonePerspective(g, 376, 194); // prompt 34 : smartphone récent, en perspective
 	if (typeof dessinerLivres === 'function') dessinerLivres(g);
 	if (typeof dessinerFeuilleRapport === 'function') dessinerFeuilleRapport(g); // prompt 41
@@ -654,7 +652,7 @@ function dessinerLumiere(g) {
 // et un masque de flou fixes à l'écran (masqueFlouEtVignette). Quand la souris sort du cadre de l'écran
 // du PC (ou qu'une flèche est maintenue), la caméra regarde doucement de ce côté (12 px au plus) ;
 // retour au centre : recentrage progressif. Animations réduites, poste, zooms, fenêtres : caméra centrée.
-const SURCADRAGE = 1.05;
+let SURCADRAGE = 1.05; // prompt 52 : élargi (jusqu'à 1,025) pendant le boost du café — voir surcadrageCafe
 // Prompt 31 : cadrage « sur la chaise » — on ne montre que la partie centrale de la pièce (16:9, centrée
 // sur le PC) : le poste est plus proche, les accoudoirs du fauteuil sortent du champ.
 const CADRAGE = { x: 24, y: 6, l: 432, h: 243 };
@@ -846,6 +844,7 @@ function sourisRestaurer() {
 
 /** Dessine la pièce et l'écran par-dessus le contenu (déjà dessiné en 1920×1080 sur le canevas). */
 function composerVue() {
+	SURCADRAGE = typeof surcadrageCafe === 'function' ? surcadrageCafe() : 1.05; // prompt 52
 	majCamera();
 	const r = rectEcranCourant();
 	const auPoste = vue === 'poste';
