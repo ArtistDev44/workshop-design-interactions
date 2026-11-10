@@ -1,0 +1,26 @@
+[
+ {
+  "lundi": "2026-09-14",
+  "dimanche": "2026-09-20",
+  "dossiers": 4,
+  "evenements": 11,
+  "niveau": "facile",
+  "compteur_s": 60
+ },
+ {
+  "lundi": "2026-11-02",
+  "dimanche": "2026-11-08",
+  "dossiers": 2,
+  "evenements": 26,
+  "niveau": "normale",
+  "compteur_s": 30
+ },
+ {
+  "lundi": "2026-10-12",
+  "dimanche": "2026-10-18",
+  "dossiers": 3,
+  "evenements": 20,
+  "niveau": "difficile",
+  "compteur_s": 15
+ }
+]

@@ -1,0 +1,207 @@
+{
+ "lundi": "2026-09-14",
+ "dimanche": "2026-09-20",
+ "preparee_le": "2026-11-10T08:32:35.529Z",
+ "dossiers": [
+  {
+   "date": "2026-09-14",
+   "heure": "15:00",
+   "type": "alerte météo",
+   "nature": "température",
+   "valeur": "30 °C",
+   "seuil_semaine_p95": "27.5 °C",
+   "ligne": null,
+   "retard": null,
+   "source": "Archive Open-Meteo (ERA5), Nantes",
+   "texte_source": "température : 30 °C le 2026-09-14 à 15:00 (95e percentile de la semaine : 27.5 °C)"
+  },
+  {
+   "date": "2026-09-15",
+   "type": "perturbation",
+   "nature": "événement",
+   "lignes": [
+    "97"
+   ],
+   "retard": null,
+   "source": "Changelog du GTFS Naolib (Open Data Nantes Métropole, Licence Ouverte)",
+   "texte_source": "Feu d'artifice ligne 97"
+  },
+  {
+   "date": "2026-09-15",
+   "heure": "18:00",
+   "type": "alerte météo",
+   "nature": "rafales de vent",
+   "valeur": "50.4 km/h",
+   "seuil_semaine_p95": "40 km/h",
+   "ligne": null,
+   "retard": null,
+   "source": "Archive Open-Meteo (ERA5), Nantes",
+   "texte_source": "rafales de vent : 50.4 km/h le 2026-09-15 à 18:00 (95e percentile de la semaine : 40 km/h)"
+  },
+  {
+   "date": "2026-09-17",
+   "type": "perturbation",
+   "nature": "événement",
+   "lignes": [],
+   "retard": null,
+   "source": "Changelog du GTFS Naolib (Open Data Nantes Métropole, Licence Ouverte)",
+   "texte_source": "Foulées sur la 97 le 4/10 et pour des foulées sur la 50 le 26/09."
+  }
+ ],
+ "evenements": [
+  {
+   "date": "2026-09-14",
+   "type": "événement",
+   "nature": "Stage - Atelier - Activité à partager",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Ateliers parents-enfants — Les Cabanes des Loulous, Couëron"
+  },
+  {
+   "date": "2026-09-14",
+   "type": "événement",
+   "nature": "Exposition",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Le livre d’artiste concours et exposition – Musée de l'imprimerie — Musée-atelier de l'imprimerie de Nantes, Nantes"
+  },
+  {
+   "date": "2026-09-14",
+   "type": "événement",
+   "nature": "Exposition",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Exposition Le Muséum au fil du temps — Place de la Monnaie, Nantes"
+  },
+  {
+   "date": "2026-09-15",
+   "type": "événement",
+   "nature": "Marché - Vide-greniers - Brocante",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Epicerie solidaire \"Le Comptoir d'Halvêque\" — salle des 4 carrés, Nantes"
+  },
+  {
+   "date": "2026-09-15",
+   "type": "événement",
+   "nature": "Exposition",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Exposition « 200 photographies pour 200 ans d'histoire » — Archives Départementales de Loire-Atlantique, Nantes"
+  },
+  {
+   "date": "2026-09-15",
+   "type": "événement",
+   "nature": "Stage - Atelier - Activité à partager",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Jardinage au jardin partagé Paysages Nourriciers du Breil — Parc Georges Méliès, Nantes"
+  },
+  {
+   "date": "2026-09-16",
+   "type": "événement",
+   "nature": "Rencontre - Forum",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Pause-café — RIG Malville, Nantes"
+  },
+  {
+   "date": "2026-09-17",
+   "type": "événement",
+   "nature": "Rencontre - Forum, Salon",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "PINS Point Information Nantes Solidaire — RIG Malville, Nantes"
+  },
+  {
+   "date": "2026-09-17",
+   "type": "événement",
+   "nature": "Stage - Atelier - Activité à partager",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Atelier couture et arts du fil — Centre socioculturel des Bourderies, Nantes"
+  },
+  {
+   "date": "2026-09-18",
+   "type": "événement",
+   "nature": "Stage - Atelier - Activité à partager",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Repair café numérique - Atelier de réparation d'ordinateurs — Maison de quartier des Haubans, Nantes"
+  },
+  {
+   "date": "2026-09-19",
+   "type": "événement",
+   "nature": "Contes - Lecture - Poésie",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Sous un coin de parapluie — Médiathèque Ormédo - Orvault, Orvault"
+  }
+ ],
+ "meteo": [
+  {
+   "date": "2026-09-14",
+   "temp_min": 14.9,
+   "temp_max": 30,
+   "pluie_mm": 0,
+   "rafales_max": 22.3
+  },
+  {
+   "date": "2026-09-15",
+   "temp_min": 13.8,
+   "temp_max": 28.1,
+   "pluie_mm": 0,
+   "rafales_max": 50.4
+  },
+  {
+   "date": "2026-09-16",
+   "temp_min": 12.8,
+   "temp_max": 22.2,
+   "pluie_mm": 0.2,
+   "rafales_max": 24.5
+  },
+  {
+   "date": "2026-09-17",
+   "temp_min": 12.1,
+   "temp_max": 20.7,
+   "pluie_mm": 0.1,
+   "rafales_max": 41
+  },
+  {
+   "date": "2026-09-18",
+   "temp_min": 11,
+   "temp_max": 21.4,
+   "pluie_mm": 0,
+   "rafales_max": 38.2
+  },
+  {
+   "date": "2026-09-19",
+   "temp_min": 12.7,
+   "temp_max": 22.5,
+   "pluie_mm": 0,
+   "rafales_max": 36.7
+  },
+  {
+   "date": "2026-09-20",
+   "temp_min": 13.6,
+   "temp_max": 24.1,
+   "pluie_mm": 0,
+   "rafales_max": 22.7
+  }
+ ],
+ "difficulte": {
+  "niveau": "facile",
+  "compteur_s": 60
+ }
+}
