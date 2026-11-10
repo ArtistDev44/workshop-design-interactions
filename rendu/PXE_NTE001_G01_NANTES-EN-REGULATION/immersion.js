@@ -205,6 +205,7 @@ function avancerTemps() {
 	if (ecran !== 'jeu' || !Jeu.horloge || phase === 'fin' || phase === 'mail' || smsActif || enPause || tutoriel || TRANSITION_JOUR || mecaniquesSuspendentTemps()) return; // prompt 34 / 43 : tutoriel et transition suspendent le temps
 	const vitesse = IMMERSION.minutesParSeconde * (tempsCompresse() ? IMMERSION.compression : 1) * facteurSablier(); // prompt 51 : sablier
 	Jeu.horloge.minutes += (dt / 1000) * vitesse;
+	if (Jeu.majSuivis && Jeu.majSuivis()) Confort.Son.bip('choix'); // prompt 63 : une réaction arrive sur Community
 
 	if (phase === 'attente') {
 		// Sieste après 20 s sans incident ni interaction (§ 4)

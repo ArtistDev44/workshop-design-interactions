@@ -937,7 +937,54 @@
 			texte: { toString: () => Jeu.texteMessage(r.texte, plainte.vars) },
 			delta: effets.reputation || 0,
 		});
+		Jeu.programmerSuivis(plainte); // prompt 63 : 0 à 3 réactions, à des heures variées
 		return { effets, bonne: plainte.bonne };
+	};
+
+	// Prompt 63 — réactions en chaîne : tirées par hachage (graine + plainte), sans toucher aux dés de la partie
+	Jeu.NB_MODELES_SUIVI = 4; // textes : i18n.js, suivi.<bonne|mauvaise>.<n>
+	Jeu.programmerSuivis = function (plainte) {
+		const h = (k) => hacher(String(Jeu.graine) + '|suivi|' + plainte.id + '|' + plainte.index + '|' + k);
+		const n = h('n') % 4; // 0 à 3 réactions
+		const base = Jeu.horloge ? Math.floor(Jeu.horloge.minutes) : 0;
+		plainte.suivis = [];
+		for (let i = 0; i < n; i++) {
+			const delai = [4, 12, 35, 90, 240, 600][h('d' + i) % 6] + (h('j' + i) % 20); // certains répondent vite, d'autres tard (parfois le lendemain)
+			plainte.suivis.push({
+				jour: Jeu.jourIndex,
+				minute: base + delai + i * 7,
+				modele: h('m' + i) % Jeu.NB_MODELES_SUIVI,
+				auteur: i === 0 ? plainte.auteur : PSEUDOS[h('a' + i) % PSEUDOS.length],
+				delta: plainte.bonne ? 1 : -1,
+				livre: false,
+			});
+		}
+		return plainte.suivis;
+	};
+	/** Livre les réactions arrivées à échéance (heure de jeu dépassée, ou journée suivante) ; renvoie le nombre livré */
+	Jeu.majSuivis = function () {
+		if (!Jeu.plaintes || !Jeu.horloge) return 0;
+		let n = 0;
+		Jeu.plaintes.forEach((p) =>
+			(p.suivis || []).forEach((sv) => {
+				if (sv.livre) return;
+				const fin = Jeu.finJournee();
+				const echu = Jeu.jourIndex > sv.jour ? Jeu.horloge.minutes >= Jeu.debutJournee() + Math.max(0, sv.minute - fin) : Jeu.horloge.minutes >= sv.minute;
+				if (!echu) return;
+				sv.livre = true; // le modèle 0 cite la nature du dossier : il n'est pris que si elle existe
+				n++;
+				Jeu.commentaires.push({
+					heure: maintenantSim(),
+					auteur: sv.auteur,
+					texte: T('suivi.' + (p.bonne ? 'bonne' : 'mauvaise') + '.' + (!p.vars.nature && sv.modele === 0 ? 1 : sv.modele), { ligne: p.vars.ligne || '', nature: p.vars.nature || '', auteur: p.auteur }),
+					delta: sv.delta,
+					suivi: true,
+				});
+				Jeu.nonLus.community++;
+				Jeu.appliquerDeltas({ reputation: sv.delta });
+			}),
+		);
+		return n;
 	};
 	Jeu.bilanPlaintes = () => ({ traitees: (Jeu.plaintes || []).filter((p) => p.reponse !== null).length, total: (Jeu.plaintes || []).length, bonnes: (Jeu.plaintes || []).filter((p) => p.bonne).length });
 

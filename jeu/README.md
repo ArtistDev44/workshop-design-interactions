@@ -72,3 +72,4 @@ dossier à trancher sous pression. »*
 | 54 | `54-mobile-portrait.md` | Prompt 60 (sous-étape 60b) : mise en page portrait par recomposition (canevas 1080×1920) — appli en colonne défilante, objets du bureau en grosses cibles, fenêtres et objets en main recadrés ; ordinateur inchangé |
 | 55 | `55-donnees-presentation.md` | Prompt 61 : appli « Données » plein écran (données réelles du mode joué, état, source, licence, lien d'API) et page /presentation générée depuis slides.md |
 | 56 | `56-tasse-musique-sieste.md` | Prompt 62 : tasse redessinée en pixel art (gorgée, vapeur, main), « Chillin' Poupi » par défaut, sieste qui se déclenche réellement (inactivité plus remise à zéro par les suites automatiques) |
+| 57 | `57-community-enquete-micro-webcam.md` | Prompt 63 : 0–3 réactions échelonnées aux réponses Community, enquête après coup dans le Journal (4 volets, journées), radio des chauffeurs et souffle au micro, geste de réveil à la webcam |
