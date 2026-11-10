@@ -8,11 +8,11 @@
 		<!-- Prompt 27 : fond sombre et écran de chargement posés AVANT tout CSS externe et tout script (aucun flash clair) -->
 		<style>
 			html, body { margin: 0; background: #0c1016; color: #ffffff; }
-			#chargement { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; background: #005ae1; color: #ffffff; font-family: Inter, system-ui, sans-serif; text-align: center; transition: opacity 300ms ease-out; }
+			#chargement { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; background: #0d0c0c; color: #ffffff; font-family: 'JetBrains Mono', ui-monospace, monospace; text-align: center; transition: opacity 300ms ease-out; }
 			#chargement.masque { opacity: 0; pointer-events: none; }
 			#chargement[hidden] { display: none; }
 			#chargement .logo { display: block; margin: 0 auto 24px; width: 96px; height: 80px; }
-			#chargement .titre { margin: 0; font-size: clamp(28px, 4vw, 56px); font-weight: 700; letter-spacing: -0.01em; }
+			#chargement .titre { margin: 0; font-family: 'Bitsy Pixels', ui-monospace, 'JetBrains Mono', monospace; font-size: clamp(28px, 4vw, 56px); font-weight: 700; }
 			#chargement .code { margin: 8px 0 0; font-family: ui-monospace, 'JetBrains Mono', monospace; font-size: clamp(14px, 1.4vw, 20px); }
 			#chargement .etat { margin: 28px 0 0; font-size: clamp(14px, 1.4vw, 20px); }
 			@media (prefers-reduced-motion: reduce) { #chargement { transition: none; } }
@@ -25,7 +25,7 @@
 				<!-- Pictogramme dessiné en SVG inline : un moniteur et une ligne de bus (aucun fichier image) -->
 				<svg class="logo" viewBox="0 0 24 20" aria-hidden="true" shape-rendering="crispEdges">
 					<rect x="1" y="1" width="22" height="14" fill="#ffffff" />
-					<rect x="3" y="3" width="18" height="10" fill="#005ae1" />
+					<rect x="3" y="3" width="18" height="10" fill="#d4031c" />
 					<rect x="4" y="9" width="16" height="1" fill="#ffffff" />
 					<rect x="6" y="7" width="3" height="3" fill="#00ca64" />
 					<rect x="15" y="7" width="3" height="3" fill="#ffffff" />

@@ -472,7 +472,7 @@ function dessinerSMS() {
 	// En-tête de la conversation
 	fill(C.accent);
 	rect(tx, ty, tl, 96, 36, 36, 0, 0);
-	fill('#FFFDF7');
+	fill('#FFFFFF');
 	textFont(POLICE_TEXTE);
 	textStyle(BOLD);
 	textSize(26);
@@ -526,15 +526,15 @@ function fenetreMenu() {
 	const x = (L - l) / 2;
 	const y = (H - h) / 2;
 	noStroke();
-	fill(11, 27, 51, 240);
-	rect(x, y, l, h, 24);
+	fill(13, 12, 12, 245);
+	stroke(255, 255, 255, 38);
+	strokeWeight(2);
+	rect(x, y, l, h);
+	noStroke();
+	dsTitre(t('menu.titre'), x + 48, y + 40, 44, '#ffffff', 'left');
+	noStroke();
 	textAlign(LEFT, TOP);
-	fill('#ffffff');
 	textFont(POLICE_TEXTE);
-	textStyle(BOLD);
-	textSize(44);
-	text(t('menu.titre'), x + 48, y + 40);
-	textStyle(NORMAL);
 	textSize(19);
 	fill('rgba(255,255,255,0.78)');
 	text(t('menu.temps'), x + 48, y + 104);
@@ -754,9 +754,9 @@ function bulleTexte(texte, x, y, dessous) {
 	const bx = constrain(x - l / 2, 16, L - l - 16);
 	const by = dessous ? y : y - h;
 	noStroke();
-	fill(28, 39, 51, 240);
-	rect(bx, by, l, h, 8);
-	fill('#FFFDF7');
+	fill(13, 12, 12, 240);
+	rect(bx, by, l, h);
+	fill('#FFFFFF');
 	textAlign(LEFT, TOP);
 	textLeading(24);
 	text(texte, bx + 16, by + 10, l - 32, h - 10);
@@ -767,9 +767,9 @@ function infobulle(texte, x, y) {
 	textSize(18);
 	const l = textWidth(texte) + 28;
 	noStroke();
-	fill(28, 39, 51, 230);
-	rect(x, y, l, 40, 6);
-	fill('#FFFDF7');
+	fill(13, 12, 12, 235);
+	rect(x, y, l, 40);
+	fill('#FFFFFF');
 	textAlign(LEFT, CENTER);
 	text(texte, x + 14, y + 20);
 }
