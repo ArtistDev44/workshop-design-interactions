@@ -513,11 +513,7 @@ function zonesObjetsBureau() {
 		const survol = mouseX >= r.x && mouseX <= r.x + r.l && mouseY >= r.y && mouseY <= r.y + r.h;
 		const enReaction = PIECE.message && PIECE.message.objet === o.nom && millis() < PIECE.message.jusqua; // prompt 29
 		if (survol || focusBureau === i + 1) {
-			noFill();
-			stroke('#f2c94c');
-			strokeWeight(PIX);
-			rect(r.x - 2 * PIX, r.y - 2 * PIX, r.l + 4 * PIX, r.h + 4 * PIX);
-			noStroke();
+			contourSurvol(r.x - 2 * PIX, r.y - 2 * PIX, r.l + 4 * PIX, r.h + 4 * PIX);
 			const ib = o.infobulle ? String(o.infobulle) : t('objet.ouvrir', { label: o.label });
 			if (!enReaction) infobulle(ib, Math.max(16, Math.min(r.x, L - textWidth(ib) - 60)), r.y < 120 ? r.y + r.h + 24 : r.y - 70);
 		}
@@ -530,11 +526,7 @@ function zonesObjetsBureau() {
 	}
 	if (focusBureau === 0) {
 		const e = rectEcranPC();
-		noFill();
-		stroke('#f2c94c');
-		strokeWeight(PIX);
-		rect(e.x - 7 * PIX, e.y - 7 * PIX, e.l + 14 * PIX, e.h + 15 * PIX);
-		noStroke();
+		contourSurvol(e.x - 7 * PIX, e.y - 7 * PIX, e.l + 14 * PIX, e.h + 15 * PIX);
 	}
 }
 
