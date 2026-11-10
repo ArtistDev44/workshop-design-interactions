@@ -158,6 +158,7 @@ function avancerTemps() {
 			phase = 'mail'; // § 6 : fin de journée
 			enSieste = false;
 			Confort.Son.bip('mail'); // prompt 30 : carillon de notification
+			Sauvegarde.auto(true); // prompt 33 : fin de journée
 		}
 	} else if (phase === 'reveil' && reveil && maintenant > reveil.limite) {
 		rateReveil();
@@ -207,10 +208,12 @@ function journeeSuivante() {
 	if (Jeu.terminee || !Jeu.jours[Jeu.jourIndex + 1]) return allerFin();
 	Jeu.journeeSuivante();
 	demarrerJournee();
+	Sauvegarde.auto(false); // prompt 33
 }
 
 function allerFin() {
 	phase = 'fin';
+	Sauvegarde.auto(false); // prompt 33 : partie finie → sa sauvegarde est effacée (le meilleur bilan reste)
 	bilanFin = Confort.Bilans.enregistrer(Confort.Bilans.cle(Jeu.etat), Jeu.score(), Jeu.jauges); // Q19
 	Confort.Son.bip('fin');
 }

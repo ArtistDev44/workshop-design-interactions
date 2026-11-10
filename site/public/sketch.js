@@ -87,6 +87,7 @@ function optionsAccueil() {
 		titre: T('accueil.semaine', { debut: { toString: () => dateLongue(s.lundi) }, fin: { toString: () => dateLongue(s.dimanche) } }),
 		detail: T('accueil.detail', { niveau: T('niveau.' + s.niveau), s: s.compteur_s }),
 		info: T('accueil.info', { d: s.dossiers, e: s.evenements, meilleur: texteMeilleur(s.lundi) }),
+		sauvegarde: Sauvegarde.pour(s.lundi), // prompt 33
 	}));
 	opts.push({
 		type: 'direct',
@@ -94,6 +95,7 @@ function optionsAccueil() {
 		detail: T(Jeu.enLigne === false ? 'accueil.direct.indispo' : 'accueil.direct.flux'),
 		info: T('accueil.direct.info', { meilleur: texteMeilleur('direct') }),
 		desactive: Jeu.enLigne === false,
+		sauvegarde: Sauvegarde.pour('direct'),
 	});
 	return opts;
 }
@@ -140,7 +142,10 @@ function draw() {
 	background(C.fond);
 	if (PC.etat === 'appli') {
 		if (ecran === 'accueil') dessinerAccueil();
-		else dessinerJeu();
+		else {
+			dessinerJeu();
+			indicateurSauvegarde(); // prompt 33
+		}
 		if (enPause) dessinerPause();
 		dessinerFermerAppli();
 	} else dessinerOS();
@@ -212,9 +217,39 @@ function dessinerAccueil() {
 		fill(C.gris);
 		textSize(18);
 		text(o.info, x0 + 32, y + 92);
+		if (o.sauvegarde) {
+			// Prompt 33 : badge « sauvegardée » en haut à droite de la carte de la semaine
+			textAlign(RIGHT, TOP);
+			fill(C.accent);
+			text(t('accueil.sauvegardee', { n: o.sauvegarde.etat.dossierIndex + 1, total: o.sauvegarde.etat.complet.paquet.length }), x0 + lp - 24, y + 66);
+			textAlign(LEFT, TOP);
+		}
 		boutons.push({ x: x0, y, l: lp, h, action: () => (choixAccueil = i) });
 		y += h + 14;
 	});
+
+	// Prompt 33 : « Continuer la partie » (sauvegarde la plus récente), visible seulement s'il y en a une
+	const recente = Sauvegarde.lister()[0];
+	if (recente) {
+		bouton(80, 262, 380, 76, t('accueil.continuer'), continuerPartie);
+		textFont(POLICE_DONNEES);
+		textSize(17);
+		fill(C.texte);
+		textAlign(LEFT, TOP);
+		const d = new Date(recente.sauvegardeLe);
+		text(
+			t('accueil.continuerDetail', {
+				semaine: Sauvegarde.libelleSemaine(recente.semaine),
+				n: recente.etat.dossierIndex + 1,
+				total: recente.etat.complet.paquet.length,
+				heure: String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'),
+			}),
+			80,
+			350,
+			380,
+			80,
+		);
+	}
 
 	// Bouton Jouer
 	const bl = 320;
@@ -237,6 +272,15 @@ function dessinerAccueil() {
 function lancerPartie() {
 	const o = optionsAccueil()[choixAccueil];
 	if (!o || o.desactive) return;
+	// Prompt 33 : une sauvegarde existe pour cette semaine → « Reprendre » ou « Nouvelle partie » (écrasement confirmé)
+	if (o.sauvegarde) return ouvrir('reprise');
+	lancerNouvellePartie();
+}
+function lancerNouvellePartie() {
+	const o = optionsAccueil()[choixAccueil];
+	if (!o || o.desactive) return;
+	if (o.sauvegarde) Sauvegarde.effacer(o.sauvegarde.semaine);
+	fenetre = null;
 	const p = o.type === 'direct' ? Jeu.chargerDirect() : Jeu.chargerSemaine(o.lundi);
 	Confort.Son.bip('choix');
 	p.then(() => {
@@ -272,6 +316,7 @@ function decider(action) {
 	Confort.Son.bip(action === 'temps' ? 'alerte' : 'action');
 	phase = 'narration';
 	debutNarration = millis();
+	Sauvegarde.auto(false); // prompt 33 : après chaque décision (l'annonce de la décision n'est pas écrasée)
 }
 
 function continuer() {
@@ -287,6 +332,7 @@ function basculerPause() {
 	} else {
 		enPause = true;
 		debutPause = millis();
+		Sauvegarde.auto(true); // prompt 33 : à la pause, avec annonce
 	}
 	Confort.Son.bip('choix');
 }
@@ -303,7 +349,43 @@ function fermer() {
 function confirmerReset() {
 	fenetre = null;
 	enPause = false;
+	Sauvegarde.effacer(Sauvegarde.semaineCourante()); // prompt 33 : le reset efface la sauvegarde de la semaine
 	rejouer();
+}
+
+// ——— Prompt 33 : reprendre une partie sauvegardée ———
+function continuerPartie() {
+	const o = Sauvegarde.lister()[0];
+	if (o) Sauvegarde.reprendre(o);
+}
+function reprendreSemaineChoisie() {
+	const o = optionsAccueil()[choixAccueil];
+	fenetre = null;
+	if (o && o.sauvegarde) Sauvegarde.reprendre(o.sauvegarde);
+}
+function fenetreReprise() {
+	const o = optionsAccueil()[choixAccueil];
+	if (!o || !o.sauvegarde) return fermer();
+	const l = 860;
+	const h = 340;
+	const x = (L - l) / 2;
+	const y = (H - h) / 2;
+	panneau(x, y, l, h, C.accent);
+	textAlign(CENTER, TOP);
+	noStroke();
+	fill(C.texte);
+	textFont(POLICE_TEXTE);
+	textStyle(BOLD);
+	textSize(36);
+	text(t('reprise.titre'), L / 2, y + 44);
+	textStyle(NORMAL);
+	textSize(22);
+	fill(C.gris);
+	text(t('reprise.texte', { n: o.sauvegarde.etat.dossierIndex + 1, total: o.sauvegarde.etat.complet.paquet.length }), x + 48, y + 104, l - 96, 80);
+	const lb = (l - 128) / 3;
+	bouton(x + 48, y + h - 112, lb, 72, t('reprise.reprendre'), reprendreSemaineChoisie);
+	bouton(x + 64 + lb, y + h - 112, lb, 72, t('reprise.nouvelle'), lancerNouvellePartie, false, true);
+	bouton(x + 80 + 2 * lb, y + h - 112, lb, 72, t('reprise.annuler'), fermer, false, true);
 }
 
 // =====================================================================
@@ -316,6 +398,18 @@ const DROITE = { x: 1230, y: 40, l: 650, h: 1000 };
 
 function dossierCourant() {
 	return Jeu.dossierCourant ? Jeu.dossierCourant() : null;
+}
+
+/** Prompt 33 : indicateur discret « Partie sauvegardée à hh:mm », en bas à droite de l'écran du jeu */
+function indicateurSauvegarde() {
+	const s = Sauvegarde.texteIndicateur();
+	if (!s) return;
+	textFont(POLICE_DONNEES);
+	textSize(16);
+	textAlign(RIGHT, BOTTOM);
+	noStroke();
+	fill(C.gris);
+	text(s, L - 44, H - 14);
 }
 
 function dessinerJeu() {
@@ -1151,6 +1245,7 @@ function dateLongue(iso) {
 // Entrées : souris, touch, clavier (raccourcis complets, 08-raccourcis)
 // =====================================================================
 function mousePressed() {
+	if (Sauvegarde.dialogueOuvert) return; // prompt 33 : clics destinés à la boîte d'import HTML
 	Confort.Son.demarrer();
 	interaction();
 	for (let i = boutons.length - 1; i >= 0; i--) {
@@ -1168,6 +1263,8 @@ function basculerSon() {
 }
 
 function keyPressed() {
+	// Prompt 33 : boîte d'import ouverte (champ texte, fichier) → le clavier lui appartient
+	if (Sauvegarde.dialogueOuvert) return;
 	Confort.Son.demarrer(); // l'audio ne peut démarrer qu'après un geste du joueur
 	interaction();
 	// Intro SMS (§ 2) : clic / Entrée pour avancer
@@ -1190,9 +1287,16 @@ function keyPressed() {
 			if (keyCode === ENTER || keyCode === RETURN || key === 'o' || key === 'O') confirmerReset();
 			if (key === 'n' || key === 'N') fermer();
 		}
+		if (fenetre === 'reprise') {
+			if (keyCode === ENTER || keyCode === RETURN) reprendreSemaineChoisie();
+			if (key === 'n' || key === 'N') lancerNouvellePartie();
+		}
 		if (fenetre === 'parametres') {
 			const cles = { 1: 'son', 2: 'horsLigneForce', 3: 'reduireAnimations', 4: 'contrasteRenforce' };
 			if (cles[key]) basculerReglage(cles[key]);
+			if (key === '5') Sauvegarde.exporter(); // prompt 33
+			if (key === '6') Sauvegarde.copier();
+			if (key === '7') return Sauvegarde.ouvrirImport(), false;
 			if (keyCode === ENTER || keyCode === RETURN) fermer();
 		}
 		return false;
@@ -1263,6 +1367,7 @@ function keyPressed() {
 		const n = optionsAccueil().length;
 		if (keyCode === UP_ARROW) choixAccueil = (choixAccueil + n - 1) % n;
 		if (keyCode === DOWN_ARROW) choixAccueil = (choixAccueil + 1) % n;
+		if ((key === 'c' || key === 'C') && Sauvegarde.lister().length) continuerPartie(); // prompt 33
 		if (keyCode === ENTER || keyCode === RETURN) lancerPartie();
 	} else if (phase === 'decision') {
 		const actions = { 1: 'devier', 2: 'retenir', 3: 'renfort', 0: 'rien', ' ': 'rien' };
@@ -1295,6 +1400,7 @@ function mouseMoved() {
 
 // Touch basique (Q32) : un appui = un clic sur les boutons
 function touchStarted() {
+	if (Sauvegarde.dialogueOuvert) return;
 	sourisDansCanevas = false; // au doigt, pas de caméra (la position du dernier appui resterait « collée »)
 	Confort.Son.demarrer();
 	mousePressed();
@@ -1330,6 +1436,7 @@ function dessinerFenetre() {
 	if (fenetre === 'aide') return fenetreAide();
 	if (fenetre === 'reset') return fenetreReset();
 	if (fenetre === 'parametres') return fenetreParametres();
+	if (fenetre === 'reprise') return fenetreReprise();
 	if (fenetre === 'menu') return fenetreMenu();
 	if (fenetre === 'livre-stress') return fenetreLivreStress();
 }
@@ -1441,7 +1548,7 @@ function basculerReglage(nom) {
 
 function fenetreParametres() {
 	const l = 1000;
-	const h = 720;
+	const h = 860; // prompt 33 : + section « Progression »
 	const x = (L - l) / 2;
 	const y = (H - h) / 2;
 	panneau(x, y, l, h, C.accent);
@@ -1477,7 +1584,7 @@ function fenetreParametres() {
 	textFont(POLICE_DONNEES);
 	textSize(16);
 	fill(C.gris);
-	text(t('param.note'), x + 48, y + h - 150, l - 360, 60);
+	text(t('param.note'), x + 48, y + h - 104, l - 360, 60);
 	// Langue (prompt 24) : même sélecteur qu'à l'accueil, touche L
 	textFont(POLICE_TEXTE);
 	textSize(26);
@@ -1490,6 +1597,18 @@ function fenetreParametres() {
 	text(t('param.touche', { k: 'L' }), x + 560, y + 120 + 4 * 96 + 36);
 	textAlign(LEFT, TOP);
 	selecteurLangue(x + l - 48, y + 120 + 4 * 96 + 10);
+	// Prompt 33 : Progression — exporter (fichier), copier (presse-papiers), importer (fichier ou texte collé)
+	const yp = y + 120 + 5 * 96;
+	textFont(POLICE_TEXTE);
+	textSize(26);
+	fill(C.texte);
+	textAlign(LEFT, CENTER);
+	text(t('parametres.progression'), x + 48, yp + 36);
+	const lbp = 200;
+	bouton(x + l - 48 - 3 * lbp - 32, yp + 8, lbp, 56, t('parametres.exporter'), () => Sauvegarde.exporter(), false, true);
+	bouton(x + l - 48 - 2 * lbp - 16, yp + 8, lbp, 56, t('parametres.copier'), () => Sauvegarde.copier(), false, true);
+	bouton(x + l - 48 - lbp, yp + 8, lbp, 56, t('parametres.importer'), () => Sauvegarde.ouvrirImport(), false, true);
+	textAlign(LEFT, TOP);
 	bouton(x + l - 288, y + h - 104, 240, 64, t('param.retour'), fermer);
 }
 
