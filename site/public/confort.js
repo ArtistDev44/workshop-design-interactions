@@ -29,12 +29,14 @@
 	};
 
 	// ——— Réglages (écran Paramètres, 11-direction-artistique) ———
-	const DEFAUTS = { son: true, horsLigneForce: false, reduireAnimations: false, contrasteRenforce: false, musique: 'softly', daltonisme: 'normal', tailleTexte: 100, lectureFacile: false, micro: true, webcam: false }; // prompt 57 : webcam désactivée par défaut (opt-in) // prompt 48 : accessibilité ; prompt 54 : micro (push-to-talk) // prompt 44 : choix de la musique ; prompt 49 : lofi CC0 par défaut
+	const DEFAUTS = { son: true, horsLigneForce: false, reduireAnimations: false, contrasteRenforce: false, musique: 'chillin', daltonisme: 'normal', tailleTexte: 100, lectureFacile: false, micro: true, webcam: false }; // prompt 57 : webcam désactivée par défaut (opt-in) // prompt 48 : accessibilité ; prompt 54 : micro (push-to-talk) // prompt 44 : choix de la musique ; prompt 62 : Chillin' Poupi par défaut
 	const Reglages = Object.assign({}, DEFAUTS, lire(CLE_REGLAGES, {}));
 	// Prompt 49 : une seule fois, la musique passe au lofi (l'ancien défaut « chillin » n'était pas un choix)
-	if (!lire('pxe-nte001:jeu:lofi-v49', false)) {
-		if (Reglages.musique === 'chillin') Reglages.musique = 'softly';
-		ecrire('pxe-nte001:jeu:lofi-v49', true);
+	// Prompt 62 : « Chillin' Poupi » redevient le morceau principal (une seule bascule pour ceux restés sur le lofi par défaut)
+	if (!lire('pxe-nte001:jeu:chillin-v62', false)) {
+		if (Reglages.musique === 'softly') Reglages.musique = 'chillin';
+		ecrire('pxe-nte001:jeu:chillin-v62', true);
+		ecrire('pxe-nte001:jeu:lofi-v49', true); // l'ancienne bascule vers le lofi ne doit plus jouer
 	}
 	Reglages.basculer = function (nom) {
 		Reglages[nom] = !Reglages[nom];

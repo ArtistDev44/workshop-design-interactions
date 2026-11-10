@@ -71,3 +71,4 @@ dossier à trancher sous pression. »*
 | 53 | `53-mobile-fondations.md` | Prompt 60 (sous-étape 60a) : détection du téléphone, gestes (tap au relâchement, appui long, swipe), paysage plein écran, avis portrait, clavier virtuel, allègement ; ordinateur inchangé |
 | 54 | `54-mobile-portrait.md` | Prompt 60 (sous-étape 60b) : mise en page portrait par recomposition (canevas 1080×1920) — appli en colonne défilante, objets du bureau en grosses cibles, fenêtres et objets en main recadrés ; ordinateur inchangé |
 | 55 | `55-donnees-presentation.md` | Prompt 61 : appli « Données » plein écran (données réelles du mode joué, état, source, licence, lien d'API) et page /presentation générée depuis slides.md |
+| 56 | `56-tasse-musique-sieste.md` | Prompt 62 : tasse redessinée en pixel art (gorgée, vapeur, main), « Chillin' Poupi » par défaut, sieste qui se déclenche réellement (inactivité plus remise à zéro par les suites automatiques) |
