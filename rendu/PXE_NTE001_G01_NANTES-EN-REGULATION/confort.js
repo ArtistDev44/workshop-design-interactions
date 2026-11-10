@@ -29,8 +29,13 @@
 	};
 
 	// ——— Réglages (écran Paramètres, 11-direction-artistique) ———
-	const DEFAUTS = { son: true, horsLigneForce: false, reduireAnimations: false, contrasteRenforce: false, musique: 'chillin', daltonisme: 'normal', tailleTexte: 100, lectureFacile: false }; // prompt 48 : accessibilité // prompt 44 : choix de la musique (par défaut : un morceau CC0)
+	const DEFAUTS = { son: true, horsLigneForce: false, reduireAnimations: false, contrasteRenforce: false, musique: 'softly', daltonisme: 'normal', tailleTexte: 100, lectureFacile: false, micro: true, webcam: false }; // prompt 57 : webcam désactivée par défaut (opt-in) // prompt 48 : accessibilité ; prompt 54 : micro (push-to-talk) // prompt 44 : choix de la musique ; prompt 49 : lofi CC0 par défaut
 	const Reglages = Object.assign({}, DEFAUTS, lire(CLE_REGLAGES, {}));
+	// Prompt 49 : une seule fois, la musique passe au lofi (l'ancien défaut « chillin » n'était pas un choix)
+	if (!lire('pxe-nte001:jeu:lofi-v49', false)) {
+		if (Reglages.musique === 'chillin') Reglages.musique = 'softly';
+		ecrire('pxe-nte001:jeu:lofi-v49', true);
+	}
 	Reglages.basculer = function (nom) {
 		Reglages[nom] = !Reglages[nom];
 		const a_sauver = {};
@@ -76,7 +81,7 @@
 			if (!Son.ctx) {
 				Son.ctx = new AC();
 				Son.maitre = Son.ctx.createGain();
-				Son.maitre.gain.value = 0.5;
+				Son.maitre.gain.value = 0.16; // prompt 49 : bruitages, ambiance et radio en retrait (0,5 avant) ; la musique lofi passe par son propre élément audio
 				Son.maitre.connect(Son.ctx.destination);
 			}
 			if (Son.ctx.state === 'suspended') Son.ctx.resume();
@@ -421,7 +426,7 @@
 	Son.tic = function (urgence) {
 		if (!pret()) return;
 		const u = Math.max(0, Math.min(1, urgence || 0));
-		ton(900 + u * 700, Son.ctx.currentTime, 0.03, 0.03 + u * 0.05, 'square');
+		ton(900 + u * 700, Son.ctx.currentTime, 0.03, 0.03 + u * 0.1, 'square'); // prompt 53 : plus fort quand l'échéance approche
 	};
 	/** 4. Clic de console propre à chaque action */
 	Son.clicAction = function (action) {
@@ -470,6 +475,10 @@
 	   générés en WebAudio : aucun fichier, jouables hors ligne. Chaque piste = tempo, 4 accords, motif d'arpège,
 	   ondes, filtre et éventuelle percussion 8 bits (grosse caisse sinus, charleston en bruit). */
 	const PISTES = {
+		// Prompt 49 : lo-fi CC0 (Loyalty Freak Music, Wikimedia Commons), en fond — voir audio/CREDITS.md
+		softly: { fichier: 'audio/lofi-softly', volume: 0.32 },
+		work: { fichier: 'audio/lofi-work', volume: 0.3 },
+		standing: { fichier: 'audio/lofi-standing', volume: 0.3 },
 		// Vrais morceaux libres de droits, CC0 (Komiku, via Wikimedia Commons) : voir audio/CREDITS.md
 		chillin: { fichier: 'audio/chillin-poupi', volume: 0.3 },
 		horizon: { fichier: 'audio/travel-to-the-horizon', volume: 0.26 },
@@ -501,7 +510,7 @@
 		minuterie: null,
 		pas: 0,
 		prochaine: 0,
-		volume: 0.05,
+		volume: 0.15, // prompt 49 : compense le gain maître abaissé (morceaux composés en code, même niveau qu'avant)
 		croche: 60 / 72 / 2,
 		demarrer: function () {
 			if (Musique.minuterie || !Son.ctx || !Reglages.son) return;

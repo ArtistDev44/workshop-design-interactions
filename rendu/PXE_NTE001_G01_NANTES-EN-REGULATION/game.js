@@ -55,6 +55,7 @@
 
 	/** Mode « aujourd'hui en direct » : un seul appel GTFS-RT au lancement, repli hors ligne si échec. */
 	Jeu.chargerDirect = function () {
+		Jeu.verifierConnexion(); // prompt 49 : en direct, la météo est rechargée depuis l'API au lancement de la partie
 		if (!global.PXE_GTFSRT) return Jeu.chargerHorsLigne(T('charge.decodeur'));
 		return global.PXE_GTFSRT.charger(global.PXE_GTFSRT.FLUX.tripUpdates, DELAI_DIRECT_MS)
 			.then(function (flux) {
@@ -250,6 +251,11 @@
 		Jeu.inspection = null; // prompt 47 : inspection surprise de la semaine
 		Jeu.agendaPrevenus = {}; // prompt 47 : jours où le patron a déjà prévenu d'un afflux
 		Jeu.demission = false; // prompt 47 : fin « démission »
+		Jeu.depart = null; // prompt 51 : départ avant la fin de la journée
+		Jeu.blame = null; // prompt 51 : mail du patron le lendemain
+		Jeu.defis = null; // prompt 55 : tirés dans preparerJournees (après le paquet)
+		Jeu.defisAppliques = null;
+		Jeu.ralenti = { jour: -1, debut: 0, fin: 0, utilises: 0 }; // prompt 55
 		Jeu.terminee = Jeu.paquet.length === 0;
 		Jeu.preparerJournees();
 		return Jeu.paquet;
@@ -300,6 +306,11 @@
 			carnet: Jeu.carnet || '',
 			inspection: Jeu.inspection,
 			agendaPrevenus: Object.assign({}, Jeu.agendaPrevenus),
+			depart: Jeu.depart,
+			blame: Jeu.blame,
+			defis: Jeu.defis,
+			defisAppliques: Jeu.defisAppliques,
+			ralenti: Jeu.ralenti ? { jour: Jeu.ralenti.jour, utilises: Jeu.ralenti.utilises, debut: 0, fin: 0 } : null,
 			terminee: Jeu.terminee,
 		};
 	};
@@ -320,6 +331,11 @@
 		['nonLus', 'alertesJauges', 'malus', 'paliersBudget', 'agendaPrevenus'].forEach((k) => (Jeu[k] = s[k] || {}));
 		Jeu.carnet = typeof s.carnet === 'string' ? s.carnet.slice(0, Jeu.CARNET_MAX) : ''; // prompt 47
 		Jeu.inspection = s.inspection || null;
+		Jeu.depart = s.depart || null; // prompt 51
+		Jeu.blame = s.blame || null;
+		Jeu.defis = s.defis || Jeu.tirerDefis(); // prompt 55 (ancienne sauvegarde : tirés à la reprise, même graine)
+		Jeu.defisAppliques = s.defisAppliques || null;
+		Jeu.ralenti = s.ralenti || { jour: -1, debut: 0, fin: 0, utilises: 0 };
 		Jeu.plaintes = (s.plaintes || [])
 			.map((p) => Object.assign({}, p, { def: Jeu.MESSAGES.plaintes.find((x) => x.id === p.id) }))
 			.filter((p) => p.def); // une plainte retirée de messages.json depuis la sauvegarde est ignorée
@@ -510,6 +526,8 @@
 		Jeu.paquet.forEach((d) => (parType[d.type] = (parType[d.type] || 0) + 1));
 		return {
 			type,
+			defis: Jeu.defis ? Jeu.resultatsDefis() : [], // prompt 55
+			ralentis: (Jeu.ralenti && Jeu.ralenti.utilises) || 0,
 			demission: !!Jeu.demission, // prompt 47
 			titre: FINS[type].titre,
 			texte: FINS[type].texte,
@@ -575,9 +593,11 @@
 		Jeu.jours = jours;
 		Jeu.jourIndex = 0;
 		Jeu.horloge = { minutes: jours[0] ? jours[0].debut || DEBUT_JOURNEE : DEBUT_JOURNEE };
+		Jeu.defis = Jeu.tirerDefis(); // prompt 55 : trois défis tirés par la graine
 		if (jours[0] && Jeu.messagesPatron) {
 			Jeu.debutJourneeTactique();
 			Jeu.messagePatron(consigneDuJour());
+			Jeu.messagePatron(T('patron.defis', { liste: Jeu.defis.map((id) => T('defi.' + id)).join(' · ') })); // prompt 55 : annoncés le premier matin
 			Jeu.prevenirAgenda(); // prompt 47
 		}
 	};
@@ -598,6 +618,7 @@
 			Jeu.debutJourneeTactique();
 			Jeu.messagePatron(consigneDuJour());
 			Jeu.prevenirAgenda(); // prompt 47
+			Jeu.appliquerBlame(); // prompt 51 : départ anticipé la veille
 		}
 		Jeu.horloge.minutes = Jeu.debutJournee();
 		return Jeu.jourCourant();
@@ -724,6 +745,13 @@
 		const obj = (Jeu.objectifsResultats || []).find((o) => o.jourIndex === Jeu.jourIndex);
 		if (obj) lignes.push(T('mail.objectif', { libelle: obj.libelle, resultat: T(obj.atteint ? 'mail.atteint' : 'mail.rate', { effet: obj.effet }) }));
 		lignes.push(T('mail.jauges', { f: Jeu.jauges.fluidite, r: Jeu.jauges.reputation, b: Jeu.jauges.budget }));
+		// Prompt 55 : défis rappelés chaque soir ; le dernier soir, leur bilan avec les vrais chiffres
+		if (Jeu.defis && Jeu.defis.length) {
+			if (Jeu.jourIndex >= (Jeu.jours || []).length - 1) {
+				lignes.push(T('mail.defisBilan'));
+				Jeu.resultatsDefis().forEach((r) => lignes.push(T(r.tenu ? 'defi.tenu' : 'defi.rate', { defi: T('defi.' + r.id), valeur: r.valeur, bonus: T('delta', { jauge: LIBELLES_JAUGES[r.jauge], v: '+' + r.bonus }) })));
+			} else lignes.push(T('mail.defis', { liste: Jeu.defis.map((id) => T('defi.' + id)).join(' · ') }));
+		}
 		const style = Jeu.profilGestion(duJour.map((e) => e.cleAction)); // prompt 47 : épilogue personnalisé
 		if (style) lignes.push(T('mail.style', { profil: T('profil.' + style.id), n: style.n, total: style.total, action: T('profilAction.' + style.id) }));
 		return {
@@ -963,6 +991,7 @@
 	// =====================================================================
 
 	/** § 1 — Conseil contextuel : une phrase, jamais une action recommandée */
+	// Prompt 59 : plus affiché depuis le prompt 50 (le joueur enquête lui-même) ; conservé pour la doc jeu/17
 	Jeu.conseil = function (d) {
 		if (!d) return '';
 		const recents = (Jeu.evenementsJournee || []).slice(-3);
@@ -1042,6 +1071,7 @@
 			effet = T('obj.malus', { jauge: LIBELLES_JAUGES[o.jauge] });
 		}
 		Jeu.objectifsResultats.push({ jourIndex: Jeu.jourIndex, libelle: o.libelle, atteint, valeur: Jeu.jauges[o.jauge], effet });
+		if (Jeu.jourIndex >= (Jeu.jours || []).length - 1) Jeu.appliquerDefis(); // prompt 55 : fin de semaine
 		if (Jeu.jauges.budget <= 0) {
 			// « Budget négatif » : le budget est borné à 0, le malus s'applique donc quand il est épuisé
 			Jeu.compterMalus('budget_epuise');
@@ -1209,6 +1239,124 @@
 
 	/** Démission possible quand les trois jauges sont sous le seuil critique (Q46) */
 	Jeu.peutDemissionner = () => !Jeu.terminee && !!Jeu.jauges && NOMS_JAUGES.every((k) => Jeu.jauges[k] < REGLAGES.seuilCritique);
+
+	// =====================================================================
+	// Prompt 51 — finir sa journée à l'horloge ; départ anticipé et blâme du patron le lendemain
+	// =====================================================================
+	Jeu.MALUS_DEPART = -8; // réputation : le patron retire sa confiance
+	Jeu.dossiersRestantsDuJour = function () {
+		const j = Jeu.jourCourant();
+		return j ? j.dossiers.filter((d) => Jeu.paquet.indexOf(d) >= Jeu.index).length : 0;
+	};
+	/** La journée est-elle finie (plus de dossier du jour et heure de fin atteinte) ? */
+	Jeu.journeeFinie = () => !Jeu.prochainDuJour() && !!Jeu.horloge && Jeu.horloge.minutes >= Jeu.finJournee();
+	/**
+	 * Départ avant la fin : les dossiers restants du jour suivent la règle « non traité » (Q25, conséquences
+	 * naturelles) ; le blâme sera appliqué une seule fois, à l'ouverture de la journée suivante.
+	 */
+	Jeu.partirAvantLaFin = function (heure) {
+		const laisses = Jeu.dossiersRestantsDuJour();
+		let garde = 0;
+		while (Jeu.prochainDuJour() && garde++ < 200) Jeu.decider('temps');
+		Jeu.depart = { jour: (Jeu.jourCourant() || {}).date || null, heure, fin: hhmm(Jeu.finJournee()), laisses, applique: false };
+		return Jeu.depart;
+	};
+	Jeu.appliquerBlame = function () {
+		const d = Jeu.depart;
+		if (!d || d.applique) return null;
+		d.applique = true;
+		Jeu.appliquerDeltas({ reputation: Jeu.MALUS_DEPART });
+		const texte = T('patron.blame', { date: d.jour ? d.jour.split('-').reverse().join('/') : '', heure: d.heure, fin: d.fin, n: d.laisses, malus: Jeu.MALUS_DEPART });
+		Jeu.messagePatron(texte);
+		Jeu.blame = { texte, lu: false, malus: Jeu.MALUS_DEPART };
+		return Jeu.blame;
+	};
+
+	// =====================================================================
+	// Prompt 55 — défis de semaine (calculés sur la partie réelle) et ralenti tactique
+	// =====================================================================
+	const DEFIS = {
+		zero_expire: { jauge: 'reputation', valeur: () => (Jeu.historique || []).filter((h) => h.action === 'temps').length, tenu: (v) => v === 0 },
+		budget60: { jauge: 'budget', valeur: () => Jeu.jauges.budget, tenu: (v) => v >= 60 },
+		fluidite60: { jauge: 'fluidite', valeur: () => Jeu.jauges.fluidite, tenu: (v) => v >= 60 },
+		plaintes: { jauge: 'reputation', valeur: () => { const b = Jeu.bilanPlaintes(); return b.traitees + '/' + b.total; }, tenu: () => { const b = Jeu.bilanPlaintes(); return b.traitees === b.total; }, element: 'plaintes' },
+		equipes: { jauge: 'reputation', valeur: () => (Jeu.malus || {}).equipe_inutile || 0, tenu: (v) => v === 0, element: 'equipes' },
+	};
+	Jeu.DEFIS = Object.keys(DEFIS);
+	Jeu.BONUS_DEFI = 5;
+	/** Trois défis distincts, choisis par hachage de la graine (le générateur de dés n'est pas consommé) */
+	Jeu.tirerDefis = function () {
+		const possibles = Object.keys(DEFIS).filter((id) => !DEFIS[id].element || Jeu.elementDebloque(DEFIS[id].element));
+		const h = (id) => hacher(String(Jeu.graine) + '|defi|' + id);
+		return possibles.sort((a, b) => h(a) - h(b)).slice(0, 3);
+	};
+	Jeu.resultatsDefis = function () {
+		return (Jeu.defis || []).map((id) => {
+			const d = DEFIS[id];
+			const valeur = d.valeur();
+			return { id, jauge: d.jauge, valeur, tenu: !!d.tenu(valeur), bonus: Jeu.BONUS_DEFI };
+		});
+	};
+	/** Bonus des défis tenus : +5 sur la jauge concernée, une seule fois, en fin de semaine (pas après une démission) */
+	Jeu.appliquerDefis = function () {
+		if (Jeu.defisAppliques || !Jeu.defis || Jeu.demission) return null;
+		const res = Jeu.resultatsDefis();
+		Jeu.defisAppliques = res;
+		res.filter((r) => r.tenu).forEach((r) => Jeu.appliquerDeltas({ [r.jauge]: r.bonus }));
+		return res;
+	};
+
+	/** Ralenti tactique : compteur suspendu 10 s, une fois par journée de jeu ; aucun effet sur les jauges */
+	Jeu.DUREE_RALENTI_MS = 10000;
+	Jeu.demanderRalenti = function (maintenant) {
+		const r = Jeu.ralenti;
+		if (r.jour === Jeu.jourIndex) return false; // déjà utilisé aujourd'hui
+		r.jour = Jeu.jourIndex;
+		r.debut = maintenant;
+		r.fin = maintenant + Jeu.DUREE_RALENTI_MS;
+		r.utilises++;
+		return true;
+	};
+	Jeu.ralentiActif = (maintenant) => !!Jeu.ralenti && Jeu.ralenti.jour === Jeu.jourIndex && maintenant >= Jeu.ralenti.debut && maintenant < Jeu.ralenti.fin;
+	Jeu.ralentiDisponible = () => !!Jeu.ralenti && Jeu.ralenti.jour !== Jeu.jourIndex;
+
+	// =====================================================================
+	// Prompt 56 — chiffres réels de la semaine et mail du patron du dernier soir
+	// =====================================================================
+	Jeu.statsSemaine = function () {
+		const dec = (Jeu.historique || []).filter((h) => h.action);
+		const parAction = { devier: 0, retenir: 0, renfort: 0, rien: 0, temps: 0 };
+		dec.forEach((h) => (parAction[h.action] = (parAction[h.action] || 0) + 1));
+		const durees = dec.filter((h) => typeof h.dureeMs === 'number');
+		return {
+			recus: (Jeu.paquet || []).length,
+			traites: dec.filter((h) => h.action !== 'temps').length,
+			expires: parAction.temps,
+			parAction,
+			tempsMoyen: durees.length ? Math.round(durees.reduce((s, h) => s + h.dureeMs, 0) / durees.length / 100) / 10 : null, // secondes, 1 décimale
+			sources: dec.reduce((s, h) => s + (h.sources || 0), 0),
+			ralentis: (Jeu.ralenti && Jeu.ralenti.utilises) || 0,
+			objectifs: (Jeu.objectifsResultats || []).filter((o) => o.atteint).length + '/' + (Jeu.objectifsResultats || []).length,
+			jauges: Object.assign({}, Jeu.jauges),
+			score: Jeu.score(),
+		};
+	};
+	/** Mail du patron du dernier soir : félicitations, avertissement ou rappel, avec 2 à 3 vrais chiffres */
+	Jeu.mailFinSemaine = function () {
+		const s = Jeu.statsSemaine();
+		const res = Jeu.defis ? Jeu.resultatsDefis() : [];
+		const rates = res.filter((r) => !r.tenu);
+		const [ok, total] = s.objectifs.split('/').map(Number);
+		const basse = NOMS_JAUGES.slice().sort((a, b) => s.jauges[a] - s.jauges[b])[0];
+		const lignes = [T('finSemaine.intro', { score: s.score, traites: s.traites, recus: s.recus })];
+		if (total && ok === total) lignes.push(T('finSemaine.bravo', { objectifs: s.objectifs }));
+		else lignes.push(T('finSemaine.objectifs', { objectifs: s.objectifs }));
+		if (s.jauges[basse] < 40) lignes.push(T('finSemaine.alerte', { jauge: LIBELLES_JAUGES[basse], v: s.jauges[basse] }));
+		if (rates.length) lignes.push(T('finSemaine.defisRates', { liste: rates.map((r) => T('defi.' + r.id)).join(', ') }));
+		else if (res.length) lignes.push(T('finSemaine.defisTenus'));
+		if (s.expires) lignes.push(T('finSemaine.expires', { n: s.expires }));
+		return { objet: T(total && ok === total && !rates.length ? 'finSemaine.objetBravo' : 'finSemaine.objet'), lignes };
+	};
 
 	global.Jeu = Jeu;
 })(typeof window !== 'undefined' ? window : globalThis);

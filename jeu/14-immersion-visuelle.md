@@ -19,3 +19,6 @@ Sans toucher aux décisions Q1–Q61. Fichiers : `site/public/bureau.js`, `sketc
 
 ## À savoir (équilibre)
 Avec la table des effets actuelle, **le bus de renfort est toujours la meilleure action** (+17 attendu contre −5 pour dévier et −11 à −15 pour retenir) : le mail dit donc « raté » à toute autre décision, et « aucun détour » n'apparaît jamais. C'est un choix d'équilibrage à revoir par le groupe (prompt 23, profondeur tactique).
+
+## Mise à jour (prompt 59, check-up du 10/11/2026)
+- `dessinerVignettage` a été remplacé par `masqueFlouEtVignette` (`bureau.js`, révision du prompt 25 : vignette et flou fixes sur les bords).

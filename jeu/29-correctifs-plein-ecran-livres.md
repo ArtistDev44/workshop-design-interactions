@@ -57,3 +57,6 @@ Retours de rendu appliqués après le prompt 34. Les décisions Q1–Q61 et la b
 - Avant, toute la pièce était floutée de 1,5 px en vue bureau pendant l'attente d'un incident (temps accéléré ×10). Comme on revient presque toujours au bureau dans cet état, le flou semblait « rester » après le passage au PC.
 - Désormais, la pièce n'est floutée qu'**au poste**, derrière le moniteur. En vue bureau, elle est toujours nette.
 - Le temps accéléré reste signalé par l'étiquette « ▶▶ ×10 » sous l'horloge. Le liseré flou de 36 px des bords et le vignettage des coins ne changent pas.
+
+## Mise à jour (prompt 59, check-up du 10/11/2026)
+- `dessinerPorte` a été supprimé avec la porte, à la demande du groupe (10/11/2026).

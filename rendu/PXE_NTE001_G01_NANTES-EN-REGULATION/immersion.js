@@ -50,6 +50,10 @@ const OBJETS_BUREAU = [
 	{ nom: 'telephone', label: T('objet.telephone'), infobulle: T('objet.telephone.survol'), x: 364, y: 192, l: 26, h: 32 }, // prompt 38
 	{ nom: 'dossiers', piece: true, label: T('piece.dossiers'), infobulle: T('piece.dossiers.survol'), x: 390, y: 160, l: 44, h: 15 },
 	{ nom: 'fenetre', piece: true, label: T('piece.fenetre'), infobulle: T('piece.fenetre.survol'), x: 334, y: 14, l: 64, h: 96 }, // prompt 31 : la baie s'arrête au pan de mur
+	{ nom: 'horloge', label: T('objet.horloge'), infobulle: T('objet.horloge.survol'), x: 404, y: 30, l: 28, h: 29 }, // prompt 51 : finir sa journée
+	{ nom: 'sablier', label: T('objet.sablier'), infobulle: T('objet.sablier.survol'), x: 302, y: 169, l: 14, h: 22 }, // prompt 51 : faire passer le temps
+	{ nom: 'webcam', label: T('objet.webcam'), infobulle: T('objet.webcam.survol'), x: 234, y: 39, l: 13, h: 8 }, // prompt 57 : webcam posée sur l'écran
+	{ nom: 'micro', label: T('objet.micro'), infobulle: T('objet.micro.survol'), x: 150, y: 170, l: 12, h: 24 }, // prompt 54 : micro du poste (appui maintenu)
 ];
 
 // ——— Prompt 29 : interactions hors écran, dans la pièce ———
@@ -66,12 +70,21 @@ const PIECE = {
 	message: null, // { texte, objet, jusqua }
 };
 
-/** Météo affichée par la fenêtre : jour joué (archives) → météo réelle du moment → instantané local */
+/** Météo affichée (fenêtre, pluie, ambiances) — prompt 49 : elle suit le mode de jeu.
+ * Partie en direct : API Open-Meteo chargée en direct. Semaine passée / hors ligne : données archivées du
+ * jour joué, jamais la météo d'aujourd'hui. Hors partie (menu) : météo du moment, sinon l'instantané local. */
 function meteoFenetre() {
-	const j = ecran === 'jeu' && Jeu.jourCourant ? Jeu.jourCourant() : null;
-	const m = (j && Jeu.meteoDuJour(j.date)) || Jeu.meteoActuelle || (Jeu.fallback && Jeu.fallback.meteo && Jeu.fallback.meteo[0]) || null;
-	return m;
+	const enPartie = ecran === 'jeu' && Jeu.etat && Jeu.etat.mode;
+	if (enPartie && Jeu.etat.mode !== 'direct') {
+		const j = Jeu.jourCourant ? Jeu.jourCourant() : null;
+		return j ? Jeu.meteoDuJour(j.date) : null;
+	}
+	return Jeu.meteoActuelle || (Jeu.fallback && Jeu.fallback.meteo && Jeu.fallback.meteo[0]) || null;
 }
+// En direct, la météo de l'API est rafraîchie toutes les 30 minutes (hors draw, jamais pendant une semaine passée)
+setInterval(() => {
+	if (ecran === 'jeu' && Jeu.etat && Jeu.etat.mode === 'direct' && !Confort.Reglages.horsLigneForce) Jeu.verifierConnexion();
+}, 30 * 60 * 1000);
 const nombreFr = (v) => (Langue.actuelle === 'fr' ? String(v).replace('.', ',') : String(v));
 
 function interagirPiece(nom) {
@@ -86,13 +99,16 @@ function interagirPiece(nom) {
 		texte = t(PIECE.lampe ? 'piece.lampe.on' : 'piece.lampe.off');
 	} else if (nom === 'fenetre') {
 		PIECE.store = !PIECE.store;
+		if (typeof revelerSource === 'function') revelerSource('meteo', false); // prompt 50 : regarder dehors
 		const m = meteoFenetre();
 		const maintenant = new Date();
 		const reelle = String(maintenant.getHours()).padStart(2, '0') + ':' + String(maintenant.getMinutes()).padStart(2, '0');
 		const meteo = m
 			? t('piece.fenetre.meteo', { date: m.date ? m.date.split('-').reverse().join('/') : '', min: nombreFr(m.temp_min), max: nombreFr(m.temp_max), pluie: nombreFr(m.pluie_mm), vent: nombreFr(m.rafales_max) })
 			: t('piece.fenetre.inconnue');
-		texte = t(PIECE.store ? 'piece.fenetre.ferme' : 'piece.fenetre.ouvre') + ' ' + meteo + ' ' + t('piece.fenetre.heures', { reelle, jeu: heure });
+		// Prompt 49 : la source du climat suit le mode de jeu
+		const sourceMeteo = !m ? '' : ecran === 'jeu' && Jeu.etat.mode && Jeu.etat.mode !== 'direct' ? t('meteo.source.archive') : t('meteo.source.direct');
+		texte = t(PIECE.store ? 'piece.fenetre.ferme' : 'piece.fenetre.ouvre') + ' ' + (sourceMeteo ? meteo.replace(/\.$/, '') + sourceMeteo + '.' : meteo) + ' ' + t('piece.fenetre.heures', { reelle, jeu: heure });
 	} else if (nom === 'plante') {
 		const m = meteoFenetre();
 		texte = m && m.pluie_mm >= 1 ? t('piece.plante.pluie', { pluie: nombreFr(m.pluie_mm) }) : t('piece.plante.sec', { heure });
@@ -187,25 +203,20 @@ function avancerTemps() {
 	const dt = derniereImage ? Math.min(250, maintenant - derniereImage) : 0;
 	derniereImage = maintenant;
 	if (ecran !== 'jeu' || !Jeu.horloge || phase === 'fin' || phase === 'mail' || smsActif || enPause || tutoriel || TRANSITION_JOUR || mecaniquesSuspendentTemps()) return; // prompt 34 / 43 : tutoriel et transition suspendent le temps
-	const vitesse = IMMERSION.minutesParSeconde * (tempsCompresse() ? IMMERSION.compression : 1);
+	const vitesse = IMMERSION.minutesParSeconde * (tempsCompresse() ? IMMERSION.compression : 1) * facteurSablier(); // prompt 51 : sablier
 	Jeu.horloge.minutes += (dt / 1000) * vitesse;
 
 	if (phase === 'attente') {
 		// Sieste après 20 s sans incident ni interaction (§ 4)
-		if (!enSieste && maintenant - inactifDepuis > IMMERSION.siesteApresMs) {
+		// Prompt 57 : la sieste vient aussi quand la webcam ne voit plus le joueur (8 s d'absence)
+		if (!enSieste && (maintenant - inactifDepuis > IMMERSION.siesteApresMs || joueurParti())) {
 			enSieste = true;
 			debutSieste = maintenant;
 			if (vue === 'poste') seLever(); // on se cale dans le fauteuil : retour à la vue bureau
 		}
 		const prochain = Jeu.prochainDuJour();
 		if (prochain && Jeu.horloge.minutes >= prochain.minute) arriveeIncident();
-		else if (!prochain && Jeu.horloge.minutes >= Jeu.finJournee()) {
-			if (Jeu.finDeJourneeTactique) Jeu.finDeJourneeTactique(); // prompt 23 : objectif du jour, budget épuisé
-			phase = 'mail'; // § 6 : fin de journée
-			enSieste = false;
-			Confort.Son.bip('mail'); // prompt 30 : carillon de notification
-			Sauvegarde.auto(true); // prompt 33 : fin de journée
-		}
+		else if (!prochain && Jeu.horloge.minutes >= Jeu.finJournee()) finJourneeAtteinte(); // prompt 51 : l'horloge s'arrête, le joueur clique dessus pour partir (journee.js)
 	} else if (phase === 'reveil' && reveil && maintenant > reveil.limite) {
 		rateReveil();
 	}
@@ -263,7 +274,9 @@ function allerFin() {
 	const cle = Confort.Bilans.cle(Jeu.etat);
 	const g = Jeu.profilPartie(); // prompt 47 : profil de gestion gardé au palmarès
 	// Une démission n'entre pas au palmarès (prompt 47)
-	bilanFin = Jeu.demission ? { meilleur: Confort.Bilans.meilleur(cle), record: false } : Confort.Bilans.enregistrer(cle, Jeu.score(), Jeu.jauges, { profil: g ? g.id : null }); // Q19
+	if (!Jeu.demission && Jeu.appliquerDefis) Jeu.appliquerDefis(); // prompt 55/56 : semaine finie sans soirée (départ le dernier jour) → bonus quand même, une fois
+	const defisTenus = Jeu.defisAppliques ? Jeu.defisAppliques.filter((r) => r.tenu).length + '/' + Jeu.defisAppliques.length : null;
+	bilanFin = Jeu.demission ? { meilleur: Confort.Bilans.meilleur(cle), record: false } : Confort.Bilans.enregistrer(cle, Jeu.score(), Jeu.jauges, { profil: g ? g.id : null, defis: defisTenus }); // Q19 ; prompt 56 : défis tenus au palmarès
 	Confort.Son.bip('fin');
 	finDeSemaine(); // prompt 41 : rapport papier sur la table, ou cinématique après la semaine 3
 }
@@ -369,12 +382,6 @@ function dessinerMail() {
 function lancerIntroSMS() {
 	// Prompt 42 : le joueur saisit son téléphone ; la conversation avec Camille se lit dessus
 	lancerConversation({ contact: T('sms.camille'), sous: T('intro.salle'), messages: SMS, auFin: terminerIntro });
-}
-function smsSuivant() {
-	if (smsIndex < SMS.length - 1) {
-		smsIndex++;
-		Confort.Son.bip('choix');
-	}
 }
 function terminerIntro() {
 	smsActif = false;
@@ -626,7 +633,7 @@ function dessinerLivres(g) {
 	const leve = (o) => (vue === 'bureau' && objetSurvol === o.nom ? (reduireAnimations ? 1 : 2) : 0);
 	const lc = leve(t);
 	const ls = leve(s);
-	if (lc) ombreTramee(g, t.x, t.y + t.h, t.l, 2, 110);
+	ombreObjet(g, t.x, t.y + t.h, t.l + lc); // prompt 51 : ombre portée des livres (même trame que le téléphone)
 	// Livre « commande » (dessous) : couverture marine, liseré doré, marque-page qui se balance
 	const yc = t.y - lc;
 	boite(g, t.x, yc, t.l, t.h, '#1c2f52', '#34507f', '#121f38');
@@ -635,7 +642,7 @@ function dessinerLivres(g) {
 	const balance = Math.round(Math.sin(tps / 650) * 1);
 	px(g, '#b3261e', t.x + t.l - 8 + balance, yc + t.h, 2, 4);
 	// Livre « stress » (dessus)
-	if (ls) ombreTramee(g, s.x, s.y + s.h, s.l, 2, 110);
+	if (ls) ombreTramee(g, s.x, s.y + s.h - lc, s.l, 1, 90); // livre du dessus soulevé : ombre sur l'autre livre
 	const ys = s.y - ls - lc; // posé sur l'autre : il suit aussi le soulèvement du livre du dessous
 	boite(g, s.x, ys, s.l, s.h, '#3f7a43', '#5f9e4f', '#2f5d3a');
 	textePixel(g, 'STRESS', s.x + 10, ys + 2, '#f7f1e1');
@@ -712,6 +719,11 @@ function ouvrirObjetBureau(nom) {
 	if (nom === 'telephone') return ouvrirTelephone(); // prompt 38 : notifications de l'Agenda Nantes Métropole
 	if (nom === 'commande') return lancerTutoriel(); // prompt 34 : le livre « commande » ouvre le tutoriel
 	if (nom === 'stress') return (livreOuverture = millis()), ouvrir('livre-stress');
+	if (nom === 'horloge') return clicHorloge(); // prompt 51
+	if (nom === 'tasse') return boireCafe(); // prompt 52 : le café en main, puis le boost
+	if (nom === 'micro') return clicMicro(); // prompt 54 : push-to-talk
+	if (nom === 'webcam') return clicWebcam(); // prompt 57 : présence
+	if (nom === 'sablier') return clicSablier(); // prompt 51
 	if (OBJETS_BUREAU.some((o) => o.nom === nom && o.piece)) return interagirPiece(nom); // prompt 29
 }
 
