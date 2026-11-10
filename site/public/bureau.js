@@ -158,24 +158,59 @@ function textePixel(g, txt, x, y, c) {
 // donne sur Nantes : le Château des ducs de Bretagne (à gauche) et la grue Titan jaune (à droite).
 const BAIE_BAS = 150; // bas de la baie vitrée
 const PLATEAU_Y = 170; // bord arrière du plateau
+/* Prompt 40 : la pièce est dessinée en PLANS (calques transparents 480×270), chacun décalé avec la caméra
+   selon son propre coefficient (k × décalage) : le lointain bouge peu, les objets proches un peu plus.
+   k = 1 est la référence (plateau, écran du PC). Avec une caméra à 0 (poste, zoom, animations réduites),
+   tous les plans sont alignés. gBureau reste l'image composée (menu principal, poste, bords flous). */
+const COUCHES_PIECE = [
+	{ nom: 'lointain', k: 0.35, dessin: (g) => dessinerVueNantes(g) }, // ciel, ville, grue, Loire, péniche, pluie
+	{
+		nom: 'baie',
+		k: 0.7,
+		dessin: (g) => {
+			dessinerPlafondEtBaie(g);
+			dessinerMontantsBaie(g);
+			if (typeof PIECE !== 'undefined' && PIECE.store) dessinerStore(g); // prompt 29
+			dessinerMurDroit(g); // prompt 31 : pan de mur blanc, horloge murale, applique
+			dessinerMurBas(g);
+		},
+	},
+	{
+		nom: 'plateau',
+		k: 1,
+		dessin: (g) => {
+			dessinerPlateau(g);
+			dessinerPC(g);
+			dessinerLumiere(g);
+		},
+	},
+	{ nom: 'fond', k: 1.1, dessin: (g) => dessinerObjetsDuFond(g) }, // clavier, dossiers, plante
+	{ nom: 'proche', k: 1.25, dessin: (g) => dessinerObjetsProches(g) }, // souris, tasse, téléphone, livres
+	{
+		nom: 'voile',
+		k: 1,
+		dessin: (g) => {
+			dessinerAmbianceLampe(g);
+			if (typeof dessinerPersonnageSieste === 'function') dessinerPersonnageSieste(g);
+		},
+	},
+];
+/** Coefficient de plan des objets cliquables : leurs zones suivent leur plan */
+const COEF_OBJETS = { commande: 1.25, stress: 1.25, tasse: 1.25, telephone: 1.25, plante: 1.1, dossiers: 1.1, lampe: 0.7, fenetre: 0.7 };
+
 function dessinerPieceBureau() {
-	const g = gBureau;
-	g.noStroke();
-	dessinerPlafondEtBaie(g);
-	dessinerVueNantes(g);
-	dessinerMontantsBaie(g);
-	if (typeof PIECE !== 'undefined' && PIECE.store) dessinerStore(g); // prompt 29
-	dessinerMurDroit(g); // prompt 31 : pan de mur blanc avec l'horloge murale et l'applique
-	dessinerMurBas(g);
-	dessinerPlateau(g);
-	dessinerPC(g);
-	dessinerObjetsBureau(g);
-	if (typeof dessinerLivres === 'function') dessinerLivres(g);
-	// Prompt 31 : plus d'accoudoirs (la chaise n'est plus visible : on est assis dessus)
-	dessinerLumiere(g);
-	dessinerAmbianceLampe(g);
-	// Vignettage : désormais fixe à l'écran (masqueFlouEtVignette), plus cuit dans l'image de la pièce
-	if (typeof dessinerPersonnageSieste === 'function') dessinerPersonnageSieste(g);
+	COUCHES_PIECE.forEach((c) => {
+		if (!c.g) {
+			c.g = createGraphics(BW, BH);
+			c.g.pixelDensity(1);
+			c.g.noSmooth();
+		}
+		c.g.clear();
+		c.g.noStroke();
+		c.dessin(c.g);
+	});
+	gBureau.clear();
+	COUCHES_PIECE.forEach((c) => gBureau.image(c.g, 0, 0));
 }
 
 function dessinerPlafondEtBaie(g) {
@@ -546,8 +581,9 @@ function dessinerTasseThe(g) {
 	}
 }
 
-function dessinerObjetsBureau(g) {
-	// Clavier (perspective), souris, tasse, lampe, téléphone, horloge de bureau, dossiers, petite plante
+/* Prompt 40 : objets répartis en deux plans — fond du plateau (clavier, dossiers, plante) et proches */
+function dessinerObjetsDuFond(g) {
+	// Clavier (perspective)
 	for (let y = 196; y < 222; y++) {
 		const t = (y - 196) / 26;
 		const demi = 64 + t * 14;
@@ -555,16 +591,18 @@ function dessinerObjetsBureau(g) {
 		if (y > 198 && y < 219 && (y - 199) % 5 < 3) for (let k = -demi + 4; k < demi - 6; k += 7 + t * 2) px(g, '#4a5058', 240 + k, y, 5 + t * 2, 1);
 	}
 	ombreTramee(g, 176, 222, 128, 3, 90);
-	dessinerSourisPerspective(g, 336, 204);
-	dessinerTasseThe(g); // tasse de thé animée (sachet, vapeur)
-	// Prompt 31 : la lampe d'architecte devient une applique murale (dessinerMurDroit), l'horloge passe au mur
-	dessinerTelephonePerspective(g, 376, 194); // prompt 34 : smartphone récent, en perspective
 	// Pile de dossiers (droite, au fond)
 	for (let i = 0; i < 4; i++) boite(g, 392 + (i % 2), 172 - i * 3, 40, 2, i % 2 ? '#dfe7ef' : '#ffffff', '#ffffff', '#9aa8b6'); // chemises claires (prompt 32)
 	px(g, P.rouge, 418, 163, 8, 1);
 	// Petite plante grasse (gauche, au fond)
 	boite(g, 70, 164, 14, 10, '#e8e9ea', '#ffffff', '#c3c7cb');
 	feuillage(g, 77, 158, 6);
+}
+function dessinerObjetsProches(g) {
+	dessinerSourisPerspective(g, 336, 204);
+	dessinerTasseThe(g); // tasse de thé animée (sachet, vapeur)
+	dessinerTelephonePerspective(g, 376, 194); // prompt 34 : smartphone récent, en perspective
+	if (typeof dessinerLivres === 'function') dessinerLivres(g);
 }
 
 function dessinerLumiere(g) {
@@ -605,9 +643,10 @@ function contourSurvol(x, y, l, h) {
 }
 
 /** Rectangle en coordonnées pixel art (480×270) → pixels du canevas, en vue bureau (cadrage + dézoom + caméra). */
-function versEcranBureau(x, y, l, h) {
+function versEcranBureau(x, y, l, h, k) {
 	const o = origineBureau();
-	return { x: o.x + (x - CADRAGE.x) * o.u, y: o.y + (y - CADRAGE.y) * o.u, l: (l || 0) * o.u, h: (h || 0) * o.u };
+	const d = (k === undefined ? 1 : k) - 1; // prompt 40 : décalage propre au plan de l'élément
+	return { x: o.x + d * CAMERA.x + (x - CADRAGE.x) * o.u, y: o.y + d * CAMERA.y + (y - CADRAGE.y) * o.u, l: (l || 0) * o.u, h: (h || 0) * o.u };
 }
 
 /** Flèches maintenues (←→↑↓) → direction, sauf si le focus est dans un champ ou un menu. */
@@ -661,6 +700,7 @@ function majCamera() {
    - vignettage : dégradé radial sombre, plus marqué dans les coins. */
 const BORDS = { flou: 2, bande: 36, vignette: 0.22 }; // bande floue d'épaisseur constante (36 px) le long des 4 bords — plus d'ellipse qui mordait dans les coins
 let cPieceFloue = null;
+let cCouches = null; // prompt 40 : composition des plans décalés
 let cFlouEcran = null;
 let cMasqueFlou = null;
 let cVignette = null;
@@ -798,11 +838,21 @@ function composerVue() {
 	const oy = r.y - e.y * echelle;
 	const flou = (tempsCompresse() && vue === 'bureau') || auPoste;
 	if (flou && !reduireAnimations) drawingContext.filter = auPoste ? 'blur(2px) brightness(0.85)' : 'blur(1.5px)';
-	push();
-	translate(ox, oy);
-	scale(echelle);
-	image(gBureau, 0, 0, L, H);
-	pop();
+	if (auPoste || !COUCHES_PIECE[0].g) {
+		push();
+		translate(ox, oy);
+		scale(echelle);
+		image(gBureau, 0, 0, L, H);
+		pop();
+	} else {
+		// Prompt 40 : plans composés hors écran avec leur décalage propre, puis posés en une fois (flou éventuel compris)
+		if (!cCouches) cCouches = canevas(L, H);
+		const cc = cCouches.getContext('2d');
+		cc.clearRect(0, 0, L, H);
+		cc.imageSmoothingEnabled = false;
+		COUCHES_PIECE.forEach((c) => cc.drawImage(c.g.elt, ox + (c.k - 1) * CAMERA.x, oy + (c.k - 1) * CAMERA.y, L * echelle, H * echelle));
+		drawingContext.drawImage(cCouches, 0, 0);
+	}
 	drawingContext.filter = 'none';
 	if (vue !== 'poste') masqueFlouEtVignette(ox, oy, echelle); // bords flous + vignettage (fixes à l'écran)
 	if (auPoste && reduireAnimations) {
@@ -848,7 +898,7 @@ function composerVue() {
 		textSize(22);
 		const lib = String(hA.h).padStart(2, '0') + ':' + String(hA.m).padStart(2, '0') + (tempsCompresse() ? '  ▶▶ ×' + IMMERSION.compression : '');
 		const lh = textWidth(lib) + 24;
-		const ph = versEcranBureau(HORLOGE_MURALE.x, HORLOGE_MURALE.y + HORLOGE_MURALE.r + 6); // prompt 31 : sous l'horloge murale
+		const ph = versEcranBureau(HORLOGE_MURALE.x, HORLOGE_MURALE.y + HORLOGE_MURALE.r + 6, 0, 0, 0.7); // sous l'horloge murale, plan « baie » (prompt 40)
 		fill(13, 12, 12, 225);
 		rect(ph.x - lh / 2, ph.y, lh, 34);
 		fill('#FFFFFF');

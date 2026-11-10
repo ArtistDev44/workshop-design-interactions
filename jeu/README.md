@@ -50,3 +50,4 @@ dossier à trancher sous pression. »*
 | 32 | `32-prendre-en-main.md` | Prompt 37 : option « Prendre en main » à la première partie, 6 étapes fléchées validées par les actions du joueur, cibles relevées au dessin |
 | 33 | `33-scroll-telephone-pluie.md` | Prompt 38 : molette ↑ pour s'installer au PC, téléphone cliquable avec notifications réelles de l'Agenda Nantes Métropole (repli local), pluie aléatoire et réaliste |
 | 34 | `34-interface-pixel-design-system.md` | Prompt 39 : toute l'interface au Pixel Design System (fond #0D0C0C, primaire #D4031C, arrondi 0, JetBrains Mono / Bitsy Pixels), textes ajustés à la police monospace |
+| 35 | `35-parallaxe-fausse-3d.md` | Prompt 40 : parallaxe multicouche — 6 plans de la pièce décalés à leur propre échelle avec la caméra (0,35 à 1,25), zones cliquables qui suivent leur plan |
