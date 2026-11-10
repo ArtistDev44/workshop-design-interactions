@@ -81,3 +81,4 @@ dossier à trancher sous pression. »*
 | 64 | `64-fin-de-journee-nuit-sortie.md` | Prompt 69 : « Ranger le poste », la nuit tombe (21 h en 4 s), flèche « Sortie » au bord gauche, pan vers le couloir, écran noir, lendemain 6 h ou bilan |
 | 65 | `65-sieste-paupieres.md` | Sieste : paupières en surcouche plein écran (tout le contenu caché), fermeture avec sursaut et ouverture avec clignement, fondu si animations réduites |
 | 66 | `66-livre-aide.md` | Prompt 70 : le livre « Commande » devient « Aide » (objet, couverture pixel, textes FR + EN, guide) |
+| 67 | `67-demarrage-pc-chaque-jour.md` | Prompt 71 : démarrage du PC rejoué au début des jours 1 à 3 (après « JOUR n »), une fois par jour, temps suspendu, écourté si animations réduites |

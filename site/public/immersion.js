@@ -141,6 +141,7 @@ function demarrerJournee() {
 	reveil = null;
 	interaction();
 	annoncerJournee(); // prompt 43 : écran noir « JOUR n — SEMAINE n »
+	demarrageDuJour(); // prompt 71 : le PC redémarre les 3 premiers jours
 }
 
 // ——— Prompt 43 : transition entre journées — fond noir, « JOUR n — SEMAINE n » et la date, centrés ———
@@ -205,7 +206,7 @@ function avancerTemps() {
 	const maintenant = millis();
 	const dt = derniereImage ? Math.min(250, maintenant - derniereImage) : 0;
 	derniereImage = maintenant;
-	if (ecran !== 'jeu' || !Jeu.horloge || phase === 'fin' || phase === 'mail' || phase === 'soir' || smsActif || enPause || tutoriel || TRANSITION_JOUR || mecaniquesSuspendentTemps()) return; // prompt 34 / 43 : tutoriel et transition suspendent le temps
+	if (ecran !== 'jeu' || !Jeu.horloge || phase === 'fin' || phase === 'mail' || phase === 'soir' || pcDemarre() || smsActif || enPause || tutoriel || TRANSITION_JOUR || mecaniquesSuspendentTemps()) return; // prompt 34 / 43 : tutoriel et transition suspendent le temps
 	const vitesse = IMMERSION.minutesParSeconde * (tempsCompresse() ? IMMERSION.compression : 1) * facteurSablier(); // prompt 51 : sablier
 	Jeu.horloge.minutes += (dt / 1000) * vitesse;
 	if (Jeu.majSuivis && Jeu.majSuivis()) Confort.Son.bip('choix'); // prompt 63 : une réaction arrive sur Community

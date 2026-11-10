@@ -15,6 +15,36 @@ function demarrerPC() {
 	PC.debut = millis();
 	Confort.Son.bip('dossier');
 }
+// ——— Prompt 71 : le PC redémarre au début de chacune des 3 premières journées de la partie ———
+// La journée commence PC éteint ; à la fin de l'écran « JOUR n — SEMAINE n », le démarrage (BIOS, logo,
+// barre de chargement, bip) se joue en entier, visible sur le moniteur ; à partir du jour 4, rien ne change.
+// Une seule fois par journée (clé gardée dans la sauvegarde) ; temps de jeu suspendu pendant le démarrage.
+const JOURS_DEMARRAGE = 3;
+const JOUR_PC = { attendu: false, fait: '' };
+function cleJourPC() {
+	return (Jeu.etat && Jeu.etat.semaine ? Jeu.etat.semaine.lundi : (Jeu.etat && Jeu.etat.mode) || '') + '|' + Jeu.jourIndex;
+}
+/** Appelée au début de chaque journée (demarrerJournee) et à la reprise d'une sauvegarde */
+function demarrageDuJour() {
+	if (ecran !== 'jeu' || !Jeu.jourCourant || !Jeu.jourCourant()) return;
+	const cle = cleJourPC();
+	if (JOUR_PC.fait === cle) return; // déjà démarré aujourd'hui : pas de replay
+	JOUR_PC.fait = cle;
+	if (Jeu.jourIndex >= JOURS_DEMARRAGE) return;
+	JOUR_PC.attendu = true;
+	PC.fenetre = null;
+	PC.etat = 'eteint';
+}
+/** Une fois par image : lance le démarrage dès que l'écran de transition du jour est passé */
+function majDemarrageJour() {
+	if (!JOUR_PC.attendu || ecran !== 'jeu' || TRANSITION_JOUR || smsActif || MENU.actif) return;
+	JOUR_PC.attendu = false;
+	if (PC.etat !== 'eteint') return; // le joueur l'a déjà allumé en s'installant
+	demarrerPC();
+	if (reduireAnimations) PC.debut = millis() - (DUREE_DEMARRAGE - 500); // animations réduites : écran d'accueil statique, 0,5 s
+}
+const pcDemarre = () => PC.etat === 'demarrage';
+
 function ouvrirAppli() {
 	if (PC.etat !== 'os') return;
 	PC.etat = 'appli';
