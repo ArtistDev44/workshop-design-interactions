@@ -75,3 +75,4 @@ dossier à trancher sous pression. »*
 | 57 | `57-community-enquete-micro-webcam.md` | Prompt 63 : 0–3 réactions échelonnées aux réponses Community, enquête après coup dans le Journal (4 volets, journées), radio des chauffeurs et souffle au micro, geste de réveil à la webcam |
 | 58 | `58-micro-souffle-webcam-presence.md` | Prompt 64 : micro limité au souffle (texture et radio retirées), présence webcam réparée (part de pixels qui changent, sieste aussi pendant un dossier) |
 | 59 | `59-webapp-installable.md` | Prompt 65 : webapp installable — manifest complet (maskable, captures, raccourcis), précache généré de tout le site, réseau d'abord pour les pages, bandeau de nouvelle version, bouton d'installation |
+| 61 | `61-main-webcam-sieste.md` | Prompt 67 : une main montrée à la webcam lance ou interrompt la sieste (couleur peau + mouvement, local) ; l'absence ne déclenche plus la sieste |
