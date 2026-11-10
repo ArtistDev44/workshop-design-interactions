@@ -140,7 +140,7 @@ const GLYPHES = {
 	R: '110101110101101', E: '111100110100111', G: '111100101101111', U: '101101101101111', L: '100100100100111',
 	A: '010101111101101', T: '111010010010010', I: '111010010010111', O: '111101101101111', N: '101111111111101',
 	S: '111100111001111', C: '111100100100111', D: '110101101101110', P: '111101111100100', Z: '111001010100111',
-	M: '101111111101101', // prompt 34 (livre « COMMANDE »)
+	M: '101111111101101', // prompt 34 (ancien livre « COMMANDE »)
 	' ': '000000000000000', 0: '111101101101111', 1: '010110010010111', 2: '111001111100111', 3: '111001111001111',
 	4: '101101111001001', 5: '111100111001111', 6: '111100111101111', 7: '111001001001001', 8: '111101111101111', 9: '111101111001111',
 };
@@ -199,7 +199,7 @@ const COUCHES_PIECE = [
 	},
 ];
 /** Coefficient de plan des objets cliquables : leurs zones suivent leur plan */
-const COEF_OBJETS = { rapport: 1.25, commande: 1.25, stress: 1.25, tasse: 1.25, telephone: 1.25, plante: 1.1, dossiers: 1.1, lampe: 0.7, fenetre: 0.7, horloge: 0.7, sablier: 1.1, micro: 1.1, webcam: 1 }; // prompt 51 : horloge (mur), sablier (fond du plateau)
+const COEF_OBJETS = { rapport: 1.25, aide: 1.25, stress: 1.25, tasse: 1.25, telephone: 1.25, plante: 1.1, dossiers: 1.1, lampe: 0.7, fenetre: 0.7, horloge: 0.7, sablier: 1.1, micro: 1.1, webcam: 1 }; // prompt 51 : horloge (mur), sablier (fond du plateau)
 
 function dessinerPieceBureau() {
 	COUCHES_PIECE.forEach((c) => {
