@@ -253,6 +253,9 @@
 		Jeu.demission = false; // prompt 47 : fin « démission »
 		Jeu.depart = null; // prompt 51 : départ avant la fin de la journée
 		Jeu.blame = null; // prompt 51 : mail du patron le lendemain
+		Jeu.defis = null; // prompt 55 : tirés dans preparerJournees (après le paquet)
+		Jeu.defisAppliques = null;
+		Jeu.ralenti = { jour: -1, debut: 0, fin: 0, utilises: 0 }; // prompt 55
 		Jeu.terminee = Jeu.paquet.length === 0;
 		Jeu.preparerJournees();
 		return Jeu.paquet;
@@ -305,6 +308,9 @@
 			agendaPrevenus: Object.assign({}, Jeu.agendaPrevenus),
 			depart: Jeu.depart,
 			blame: Jeu.blame,
+			defis: Jeu.defis,
+			defisAppliques: Jeu.defisAppliques,
+			ralenti: Jeu.ralenti ? { jour: Jeu.ralenti.jour, utilises: Jeu.ralenti.utilises, debut: 0, fin: 0 } : null,
 			terminee: Jeu.terminee,
 		};
 	};
@@ -327,6 +333,9 @@
 		Jeu.inspection = s.inspection || null;
 		Jeu.depart = s.depart || null; // prompt 51
 		Jeu.blame = s.blame || null;
+		Jeu.defis = s.defis || Jeu.tirerDefis(); // prompt 55 (ancienne sauvegarde : tirés à la reprise, même graine)
+		Jeu.defisAppliques = s.defisAppliques || null;
+		Jeu.ralenti = s.ralenti || { jour: -1, debut: 0, fin: 0, utilises: 0 };
 		Jeu.plaintes = (s.plaintes || [])
 			.map((p) => Object.assign({}, p, { def: Jeu.MESSAGES.plaintes.find((x) => x.id === p.id) }))
 			.filter((p) => p.def); // une plainte retirée de messages.json depuis la sauvegarde est ignorée
@@ -517,6 +526,8 @@
 		Jeu.paquet.forEach((d) => (parType[d.type] = (parType[d.type] || 0) + 1));
 		return {
 			type,
+			defis: Jeu.defis ? Jeu.resultatsDefis() : [], // prompt 55
+			ralentis: (Jeu.ralenti && Jeu.ralenti.utilises) || 0,
 			demission: !!Jeu.demission, // prompt 47
 			titre: FINS[type].titre,
 			texte: FINS[type].texte,
@@ -582,9 +593,11 @@
 		Jeu.jours = jours;
 		Jeu.jourIndex = 0;
 		Jeu.horloge = { minutes: jours[0] ? jours[0].debut || DEBUT_JOURNEE : DEBUT_JOURNEE };
+		Jeu.defis = Jeu.tirerDefis(); // prompt 55 : trois défis tirés par la graine
 		if (jours[0] && Jeu.messagesPatron) {
 			Jeu.debutJourneeTactique();
 			Jeu.messagePatron(consigneDuJour());
+			Jeu.messagePatron(T('patron.defis', { liste: Jeu.defis.map((id) => T('defi.' + id)).join(' · ') })); // prompt 55 : annoncés le premier matin
 			Jeu.prevenirAgenda(); // prompt 47
 		}
 	};
@@ -732,6 +745,13 @@
 		const obj = (Jeu.objectifsResultats || []).find((o) => o.jourIndex === Jeu.jourIndex);
 		if (obj) lignes.push(T('mail.objectif', { libelle: obj.libelle, resultat: T(obj.atteint ? 'mail.atteint' : 'mail.rate', { effet: obj.effet }) }));
 		lignes.push(T('mail.jauges', { f: Jeu.jauges.fluidite, r: Jeu.jauges.reputation, b: Jeu.jauges.budget }));
+		// Prompt 55 : défis rappelés chaque soir ; le dernier soir, leur bilan avec les vrais chiffres
+		if (Jeu.defis && Jeu.defis.length) {
+			if (Jeu.jourIndex >= (Jeu.jours || []).length - 1) {
+				lignes.push(T('mail.defisBilan'));
+				Jeu.resultatsDefis().forEach((r) => lignes.push(T(r.tenu ? 'defi.tenu' : 'defi.rate', { defi: T('defi.' + r.id), valeur: r.valeur, bonus: T('delta', { jauge: LIBELLES_JAUGES[r.jauge], v: '+' + r.bonus }) })));
+			} else lignes.push(T('mail.defis', { liste: Jeu.defis.map((id) => T('defi.' + id)).join(' · ') }));
+		}
 		const style = Jeu.profilGestion(duJour.map((e) => e.cleAction)); // prompt 47 : épilogue personnalisé
 		if (style) lignes.push(T('mail.style', { profil: T('profil.' + style.id), n: style.n, total: style.total, action: T('profilAction.' + style.id) }));
 		return {
@@ -1050,6 +1070,7 @@
 			effet = T('obj.malus', { jauge: LIBELLES_JAUGES[o.jauge] });
 		}
 		Jeu.objectifsResultats.push({ jourIndex: Jeu.jourIndex, libelle: o.libelle, atteint, valeur: Jeu.jauges[o.jauge], effet });
+		if (Jeu.jourIndex >= (Jeu.jours || []).length - 1) Jeu.appliquerDefis(); // prompt 55 : fin de semaine
 		if (Jeu.jauges.budget <= 0) {
 			// « Budget négatif » : le budget est borné à 0, le malus s'applique donc quand il est épuisé
 			Jeu.compterMalus('budget_epuise');
@@ -1249,6 +1270,54 @@
 		Jeu.blame = { texte, lu: false, malus: Jeu.MALUS_DEPART };
 		return Jeu.blame;
 	};
+
+	// =====================================================================
+	// Prompt 55 — défis de semaine (calculés sur la partie réelle) et ralenti tactique
+	// =====================================================================
+	const DEFIS = {
+		zero_expire: { jauge: 'reputation', valeur: () => (Jeu.historique || []).filter((h) => h.action === 'temps').length, tenu: (v) => v === 0 },
+		budget60: { jauge: 'budget', valeur: () => Jeu.jauges.budget, tenu: (v) => v >= 60 },
+		fluidite60: { jauge: 'fluidite', valeur: () => Jeu.jauges.fluidite, tenu: (v) => v >= 60 },
+		plaintes: { jauge: 'reputation', valeur: () => { const b = Jeu.bilanPlaintes(); return b.traitees + '/' + b.total; }, tenu: () => { const b = Jeu.bilanPlaintes(); return b.traitees === b.total; }, element: 'plaintes' },
+		equipes: { jauge: 'reputation', valeur: () => (Jeu.malus || {}).equipe_inutile || 0, tenu: (v) => v === 0, element: 'equipes' },
+	};
+	Jeu.DEFIS = Object.keys(DEFIS);
+	Jeu.BONUS_DEFI = 5;
+	/** Trois défis distincts, choisis par hachage de la graine (le générateur de dés n'est pas consommé) */
+	Jeu.tirerDefis = function () {
+		const possibles = Object.keys(DEFIS).filter((id) => !DEFIS[id].element || Jeu.elementDebloque(DEFIS[id].element));
+		const h = (id) => hacher(String(Jeu.graine) + '|defi|' + id);
+		return possibles.sort((a, b) => h(a) - h(b)).slice(0, 3);
+	};
+	Jeu.resultatsDefis = function () {
+		return (Jeu.defis || []).map((id) => {
+			const d = DEFIS[id];
+			const valeur = d.valeur();
+			return { id, jauge: d.jauge, valeur, tenu: !!d.tenu(valeur), bonus: Jeu.BONUS_DEFI };
+		});
+	};
+	/** Bonus des défis tenus : +5 sur la jauge concernée, une seule fois, en fin de semaine (pas après une démission) */
+	Jeu.appliquerDefis = function () {
+		if (Jeu.defisAppliques || !Jeu.defis || Jeu.demission) return null;
+		const res = Jeu.resultatsDefis();
+		Jeu.defisAppliques = res;
+		res.filter((r) => r.tenu).forEach((r) => Jeu.appliquerDeltas({ [r.jauge]: r.bonus }));
+		return res;
+	};
+
+	/** Ralenti tactique : compteur suspendu 10 s, une fois par journée de jeu ; aucun effet sur les jauges */
+	Jeu.DUREE_RALENTI_MS = 10000;
+	Jeu.demanderRalenti = function (maintenant) {
+		const r = Jeu.ralenti;
+		if (r.jour === Jeu.jourIndex) return false; // déjà utilisé aujourd'hui
+		r.jour = Jeu.jourIndex;
+		r.debut = maintenant;
+		r.fin = maintenant + Jeu.DUREE_RALENTI_MS;
+		r.utilises++;
+		return true;
+	};
+	Jeu.ralentiActif = (maintenant) => !!Jeu.ralenti && Jeu.ralenti.jour === Jeu.jourIndex && maintenant >= Jeu.ralenti.debut && maintenant < Jeu.ralenti.fin;
+	Jeu.ralentiDisponible = () => !!Jeu.ralenti && Jeu.ralenti.jour !== Jeu.jourIndex;
 
 	global.Jeu = Jeu;
 })(typeof window !== 'undefined' ? window : globalThis);

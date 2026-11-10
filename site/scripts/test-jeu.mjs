@@ -165,6 +165,30 @@ verifier(dep.delta === Math.max(-dep.avant, -8), `départ anticipé : blâme de 
 verifier(dep.blame && dep.blame.includes('09:30') && !dep.blame.includes('[À COMPLÉTER]'), 'départ anticipé : mail du patron sans l\'heure du départ');
 verifier(dep.encore === 0, `départ anticipé : blâme appliqué deux fois (${dep.encore})`);
 
+// Prompt 55 : défis tirés par la graine, bonus une seule fois ; ralenti une fois par jour
+const df = vm.runInContext(
+	`(() => { Jeu.chargerSemaine('2026-09-14'); Jeu.nouvellePartie();
+	const a = Jeu.defis.slice(); Jeu.nouvellePartie(); const b = Jeu.defis.slice();
+	const t0 = Jeu.tirages; Jeu.tirerDefis(); const dixAvant = Jeu.tirages - t0; // le tirage des défis ne consomme pas les dés
+	// Ralenti
+	const r1 = Jeu.demanderRalenti(1000), actif = Jeu.ralentiActif(5000), fini = Jeu.ralentiActif(11000), r2 = Jeu.demanderRalenti(20000);
+	Jeu.journeeSuivante(); const r3 = Jeu.demanderRalenti(30000);
+	// Défis : on force des valeurs connues, on applique deux fois
+	Jeu.defis = ['budget60', 'fluidite60', 'zero_expire'];
+	Jeu.jauges = { fluidite: 70, reputation: 40, budget: 20 };
+	const avant = Object.assign({}, Jeu.jauges);
+	const res = Jeu.appliquerDefis(); const apres1 = Object.assign({}, Jeu.jauges);
+	Jeu.appliquerDefis(); const apres2 = Object.assign({}, Jeu.jauges);
+	return { a, b, tirages: dixAvant, r1, actif, fini, r2, r3, res, avant, apres1, apres2 }; })()`,
+	fr,
+);
+verifier(df.a.length === 3 && new Set(df.a).size === 3 && JSON.stringify(df.a) === JSON.stringify(df.b), `défis : tirage non reproductible ${JSON.stringify(df.a)} / ${JSON.stringify(df.b)}`);
+verifier(df.tirages === 0, `défis : le tirage a consommé le générateur de dés (${df.tirages})`);
+verifier(df.r1 && df.actif && !df.fini && !df.r2 && df.r3, `ralenti : ${JSON.stringify([df.r1, df.actif, df.fini, df.r2, df.r3])}`);
+const fl = df.res.find((r) => r.id === 'fluidite60');
+verifier(fl.tenu && df.apres1.fluidite === df.avant.fluidite + 5 && df.apres2.fluidite === df.apres1.fluidite, `défis : bonus fluidité ${df.avant.fluidite} → ${df.apres1.fluidite} → ${df.apres2.fluidite}`);
+verifier(!df.res.find((r) => r.id === 'budget60').tenu && df.apres1.budget === df.avant.budget, 'défis : un défi raté ne doit rien rapporter');
+
 // Traductions : toute clé française existe en anglais
 const manquantes = vm.runInContext('Object.keys(TRADUCTIONS.fr).filter((k) => TRADUCTIONS.en[k] === undefined)', fr);
 verifier(manquantes.length === 0, `clés sans traduction anglaise : ${manquantes.slice(0, 8).join(', ')}`);
