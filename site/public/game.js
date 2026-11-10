@@ -314,7 +314,7 @@
 			.map((p) => Object.assign({}, p, { def: Jeu.MESSAGES.plaintes.find((x) => x.id === p.id) }))
 			.filter((p) => p.def); // une plainte retirée de messages.json depuis la sauvegarde est ignorée
 		Jeu.equipes = (s.equipes || []).map((q) => Object.assign({}, q, { depart: q.depart + maintenant, arrivee: q.arrivee + maintenant }));
-		const m = s.modificateur;
+		const m = s.modificateur && s.modificateur.id !== 'erreur_systeme' ? s.modificateur : null; // ancienne sauvegarde : l'erreur système n'existe plus
 		Jeu.modificateur = m ? Object.assign({}, m, { debut: m.debut === null ? null : m.debut + maintenant, fin: m.fin === null ? null : m.fin + maintenant }) : null;
 		Jeu.terminee = !!s.terminee;
 		return Jeu.index >= 0 && Jeu.index <= Jeu.paquet.length && !!Jeu.jours.length;
@@ -961,7 +961,6 @@
 
 	/** § 2 — Modificateurs (un par journée, tirés avec le générateur à graine fixe : partie rejouable) */
 	const MODIFICATEURS = [
-		{ id: 'erreur_systeme', duree_s: 30, libelle: T('mod.erreur_systeme') },
 		{ id: 'meteo_aggravee', duree_s: 60, libelle: T('mod.meteo_aggravee') },
 		{ id: 'heure_pointe', duree_s: 45, libelle: T('mod.heure_pointe') },
 		{ id: 'panne_messagerie', duree_s: 60, libelle: T('mod.panne_messagerie') },
@@ -972,8 +971,7 @@
 	/** Armé en début de journée, démarre à l'arrivée du premier incident, dure duree_s secondes réelles */
 	Jeu.tirerModificateur = function () {
 		const m = Jeu.forcerModificateur ? MODIFICATEURS.find((x) => x.id === Jeu.forcerModificateur) : MODIFICATEURS[Math.floor(Jeu.alea() * MODIFICATEURS.length)];
-		const actions = ['devier', 'retenir', 'renfort', 'rien'];
-		Jeu.modificateur = Object.assign({}, m, { debut: null, fin: null, actionBloquee: m.id === 'erreur_systeme' ? actions[Math.floor(Jeu.alea() * 4)] : null });
+		Jeu.modificateur = Object.assign({}, m, { debut: null, fin: null, actionBloquee: null }); // plus d'« erreur système » (retirée sur demande)
 	};
 	Jeu.demarrerModificateur = function (maintenant) {
 		if (Jeu.modificateur && Jeu.modificateur.debut === null) {
@@ -987,7 +985,7 @@
 		const t = maintenant !== undefined ? maintenant : typeof millis === 'function' ? millis() : Date.now();
 		return t < m.fin ? m.id : null;
 	};
-	Jeu.actionBloquee = () => (Jeu.modificateurActif() === 'erreur_systeme' ? Jeu.modificateur.actionBloquee : null);
+	Jeu.actionBloquee = () => null; // les fausses erreurs système du PC ont été retirées : aucune action n'est jamais bloquée
 
 	/** § 3 — Objectifs de journée qui se resserrent */
 	const OBJECTIFS = [

@@ -1,5 +1,7 @@
 # 17 — Profondeur tactique, malus et économie (prompt 23)
 
+> **Révision du 10/11/2026 (retour de rendu)** : le modificateur **« erreur système sur l'ordinateur »** est **supprimé** : plus de fausse panne, d'écran qui glitche, de bannière « ERREUR SYSTÈME » ni d'action bloquée. Il reste trois modificateurs : météo aggravée, heure de pointe, panne de la messagerie du patron. Une sauvegarde qui contenait cette erreur est reprise sans modificateur.
+
 Décisions verrouillées. Aucune donnée inventée : conseils, objectifs et profil sont calculés à partir des incidents réels de la semaine, des jauges et du budget de la partie en cours.
 
 ## Conseil contextuel (`Jeu.conseil(d)`)

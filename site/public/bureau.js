@@ -867,8 +867,7 @@ function composerVue() {
 	noStroke();
 	fill(255, 255, 255, 14); // reflet sur la vitre
 	quad(r.x, r.y, r.x + r.l * 0.3, r.y, r.x + r.l * 0.12, r.y + r.h, r.x, r.y + r.h);
-	if (incidentImportant()) bordureRouge(r.x - 14, r.y - 14, r.l + 28, r.h + 28, auPoste ? 8 : 3 * PIX);
-	if (auPoste && Jeu.modificateurActif && Jeu.modificateurActif() === 'erreur_systeme') glitchEcran(r);
+	if (incidentImportant()) bordureRouge(r.x, r.y, r.l, r.h, auPoste ? 4 : 2); // fin, à l'intérieur de l'écran du PC (plus immersif)
 
 	if (vue === 'zoom-avant' || vue === 'zoom-arriere') {
 		const t = reduireAnimations ? 1 : (millis() - debutZoom) / DUREE_ZOOM;
@@ -1042,28 +1041,4 @@ function seLever() {
 	if (typeof PC !== 'undefined') PC.fenetre = null; // prompt 22 : se lever referme l'app ouverte
 	clignement = { debut: millis(), sens: 'arriere', bascule: false }; // la vue bascule à mi-clignement
 	Confort.Son.bip('choix');
-}
-
-/** Prompt 23 : « erreur système » — bandes de l'écran décalées (≤ 3 changements/s, sans flash) ;
- * animations réduites : icône d'erreur fixe à la place. */
-function glitchEcran(r) {
-	const src = copieHaute;
-	if (!reduireAnimations) {
-		const graine = Math.floor(millis() / 400); // 2,5 changements par seconde
-		for (let i = 0; i < 4; i++) {
-			const a = Math.abs(Math.sin(graine * 12.9898 + i * 78.233) * 43758.5453) % 1;
-			const b = Math.abs(Math.sin(graine * 4.1414 + i * 19.19) * 1234.567) % 1;
-			const sy = a * src.height * 0.92;
-			const sh = src.height * 0.05;
-			drawingContext.drawImage(src, 0, sy, src.width, sh, r.x + (b - 0.5) * 48, r.y + (sy / src.height) * r.h, r.l, (sh / src.height) * r.h);
-		}
-	}
-	noStroke();
-	fill(DS.erreur);
-	rect(r.x + r.l - 380, r.y + 16, 364, 44);
-	fill(DS.blanc);
-	textFont(DS.policeTexte);
-	textSize(18);
-	textAlign(LEFT, CENTER);
-	text(t('bureau.erreur', { action: Jeu.REGLAGES.effets[Jeu.modificateur.actionBloquee].nom }), r.x + r.l - 368, r.y + 38);
 }

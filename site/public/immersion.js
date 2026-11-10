@@ -232,11 +232,13 @@ function pulsationRouge() {
 	if (reduireAnimations) return 1;
 	return 0.55 + 0.45 * Math.sin((millis() / 1000) * Math.PI * 2 * IMMERSION.pulsationsParSeconde);
 }
+/** Contour d'alerte DANS l'écran du PC : le trait est entièrement à l'intérieur du rectangle (x, y, l, h) */
 function bordureRouge(x, y, l, h, epaisseur) {
+	const e = epaisseur / 2;
 	noFill();
-	stroke(179, 38, 30, 255 * pulsationRouge());
+	stroke(209, 11, 0, 255 * pulsationRouge()); // Error Primary du Pixel DS
 	strokeWeight(epaisseur);
-	rect(x, y, l, h, 8);
+	rect(x + e, y + e, l - epaisseur, h - epaisseur);
 	noStroke();
 }
 
