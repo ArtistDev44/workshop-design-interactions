@@ -1,5 +1,7 @@
 # 20 — Sortie du mode PC (prompt 26)
 
+> **Révision du 10/11/2026** : la porte du bureau et sa fonctionnalité sont **supprimées** (dessin, objet cliquable, textes `bureau.porte` / `objet.porte`). On sort du PC par le bouton « Quitter le PC », la molette ou Échap ; Échap au bureau ouvre toujours le menu.
+
 Décisions verrouillées. On peut quitter le PC de trois façons visibles, en plus d'Échap qui ne change pas. Les décisions Q1–Q61 et la boucle de jeu restent les mêmes.
 
 Note de numérotation : le prompt demandait `jeu/19-sortie-mode-pc.md`, mais le n° 19 est déjà pris par la vue 3D (prompt 25). Ce fichier prend donc le n° 20.

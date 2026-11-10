@@ -1,5 +1,7 @@
 # 28 — Fenêtre sur la Loire, perspective du bureau, livre « Commande » et tutoriel (prompt 34)
 
+> **Révision du 10/11/2026** : la grue est plus petite (≈ 40 px, l'échelle des immeubles) et sa silhouette est pleine et opaque. La souris et le téléphone sont pivotés vers l'écran. Le tutoriel s'affiche dans le livre « Commande » ouvert. Voir `29-correctifs-plein-ecran-livres.md`.
+
 Décisions verrouillées. Les décisions Q1–Q61 et la boucle de jeu ne changent pas. Le tutoriel suspend l'horloge simulée, comme les SMS de l'intro.
 
 Note de numérotation : le prompt demandait `jeu/18-fenetre-loire-tutoriel.md`, mais le n° 18 est déjà pris (multi-langue). Ce fichier prend donc le n° 28.

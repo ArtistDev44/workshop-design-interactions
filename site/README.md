@@ -107,8 +107,8 @@ Wi-Fi coupé sur la machine d'exposition.
 - QR codes dans `public/assets/` : `qr-edition.png` (accueil, crédits) et `qr-{slug}.png` (page de chaque œuvre). Pour en régénérer un :
 
   ```sh
-  npx --yes qrcode@1.5.4 -o public/assets/qr-edition.png -w 600 -m 2 "https://workshop-design-interactions.pages.dev/"
-  npx --yes qrcode@1.5.4 -o public/assets/qr-pxe-nte001-g01-w01.png -w 600 -m 2 "https://workshop-design-interactions.pages.dev/cartel/"
+  qrencode -o public/assets/qr-edition.png -s 20 -m 2 -l M "https://workshop-design-interactions.pages.dev/"
+  qrencode -o public/assets/qr-pxe-nte001-g01-w01.png -s 20 -m 2 -l M "https://workshop-design-interactions.pages.dev/cartel/"
   ```
 
   ⚠ Les PNG actuels datent du prompt 13 (10/11/2026) et ont été générés avec l'ancienne adresse GitHub Pages (404) : **à régénérer** avec ces commandes, puis à tester avec un téléphone en conditions réelles avant l'exposition.
