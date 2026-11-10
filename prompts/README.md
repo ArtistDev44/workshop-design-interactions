@@ -58,11 +58,14 @@ jamais l'inverse.
 | 17 | `17-jeu-boucle-effets-jauges.md` | Jeu, étape 4/6 : boucle de jeu, 3 actions + « ne rien faire », table des effets base + 1d6, jauges |
 | 18 | `18-jeu-controles-confort.md` | Jeu, étape 5/6 : raccourcis clavier, son, pause, reset, aide, meilleur bilan `localStorage` |
 | 19 | `19-jeu-fins-robustesse.md` | Jeu, étape 6/6 : 3 fins + bilan détaillé, accessibilité, vérifications finales |
+| 20 | `20-jeu-immersion-mode-ordinateur.md` | Jeu, étape 7 : couche d'immersion — intro SMS, horloge simulée avec compression du temps, sieste « Se réveiller », bordures rouges d'alerte, mail de fin de journée, livres ressources au bureau |
 
 Les prompts 14–19 (jeu p5.js) sont indépendants du site : ils peuvent être menés en
 parallèle dès le prompt 03, l'œuvre étant ensuite reliée au site par sa fiche du
 registre (prompt 06). Le prompt 14 était trop long : il est découpé en 6 prompts
-(14 chapeau + 5 étapes, 15–19).
+(14 chapeau + 5 étapes, 15–19). Le prompt 20 s'y ajoute après le bureau pixel art
+(`jeu/12-bureau-pixel.md`) : il pose la couche d'immersion sans toucher aux décisions
+verrouillées Q1–Q61.
 
 Historique : le 9 novembre 2026, l'ancien prompt 13 (données vivantes) est devenu le 11,
 et les anciens 11 et 12 sont devenus 12 et 13, pour que l'accessibilité et le
