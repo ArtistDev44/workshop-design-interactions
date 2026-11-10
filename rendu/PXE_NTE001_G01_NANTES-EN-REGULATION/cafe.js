@@ -23,9 +23,10 @@ function boireCafe() {
 	CAFE.debutBu = millis();
 	CAFE.jour = cleJourCafe();
 	ouvrir('cafe');
-	leverTelephone(); // animation réutilisable : l'objet monte du bas de l'écran, tenu en main
+	Confort.Son.clic();
 	annoncer(t('cafe.boire'));
-	setTimeout(() => baisserTelephone(finGorgee), reduireAnimations ? 900 : 2600);
+	// Prompt 62 : chronologie propre à la tasse (montée, vapeur, gorgée, descente), puis le boost
+	setTimeout(finGorgee, reduireAnimations ? 1000 : DUREE_GORGEE);
 }
 function finGorgee() {
 	CAFE.boit = false;
@@ -48,43 +49,102 @@ const boostActif = () => intensiteBoost() > 0;
 /** Prompt 50 : pendant le boost, consulter une source ne coûte pas de temps */
 const coutSourceCafe = (cout) => (boostActif() ? 0 : cout);
 
-// ——— La tasse en main ———
+// ——— La tasse en main (prompt 62 : pixel art, même grain que la pièce) ———
+const DUREE_GORGEE = 2800;
+const PIX_TASSE = 15; // taille d'un « pixel » de la tasse à l'écran
+const PAL_TASSE = { contour: '#2b1d14', blanc: '#f4efe4', clair: '#ffffff', ombre: '#d8ceba', ombre2: '#bfb39c', cafe: '#3b2416', creme: '#8a5a32', rouge: '#D4031C', rougeClair: '#ec4a57', peau: '#e2ab84', peauOmbre: '#c08461', peauContour: '#6b3f2a', manche: '#1d2a3a', mancheClair: '#2c3f57' };
 function fenetreCafe() {
-	dessinerTelephoneEnMain(contenuTasse, true);
-}
-function contenuTasse(e) {
-	// La coque du téléphone n'est pas dessinée (mode objet) : on dessine une grande tasse dans la zone
-	const cx = e.x + e.l / 2;
 	const u = millis() - CAFE.debutBu;
-	const incl = reduireAnimations ? 0 : constrain((u - 700) / 600, 0, 1) * (u < 2200 ? 1 : Math.max(0, 1 - (u - 2200) / 300));
+	const fin = reduireAnimations ? 1000 : DUREE_GORGEE;
+	// Avancement : montée (0–450 ms), attente, gorgée (1 100–2 050 ms), descente (2 350–2 800 ms)
+	const monte = reduireAnimations ? 1 : easeOut(constrain(u / 450, 0, 1)) * (1 - easeOut(constrain((u - (fin - 450)) / 450, 0, 1)));
+	const gorgee = reduireAnimations ? 0 : Math.sin(Math.PI * constrain((u - 1100) / 950, 0, 1)); // 0 → 1 → 0
+	const bu = reduireAnimations ? 0 : constrain((u - 1300) / 600, 0, 1); // le niveau du café baisse pendant la gorgée
+	noStroke();
+	fill(13, 12, 12, 150 * monte);
+	rect(0, 0, L, H);
+	if (monte <= 0.01) return;
+	const s = PIX_TASSE * (1 + 0.22 * gorgee); // la tasse se rapproche
+	const cx = L * 0.56 - 60 * gorgee;
+	const cy = lerp(H + 420, H * 0.6, monte) - 300 * gorgee;
 	push();
-	// On porte la tasse à la bouche : elle monte, grossit (elle se rapproche) et s'incline vers soi
-	translate(cx - 20, e.y + e.h * 0.58 - incl * 120);
-	scale(1.25 + incl * 0.2);
-	rotate(incl * 0.18);
-	noStroke();
-	fill('#f7f1e1');
-	rect(-150, -170, 300, 330, 0, 0, 40, 40);
-	fill('#d8cfb6');
-	rect(110, -170, 40, 330, 0, 0, 40, 0);
-	noFill();
-	stroke('#f7f1e1');
-	strokeWeight(34);
-	arc(150, -10, 130, 170, -HALF_PI, HALF_PI); // anse
-	noStroke();
-	fill('#3b2416'); // café
-	rect(-136, -170, 272, 44 - incl * 30);
-	fill('#5a3a24');
-	rect(-110, -166, 90, 8);
+	translate(cx, cy);
+	rotate(-0.42 * gorgee); // on la penche vers soi
+	translate(-13 * s, -13 * s);
+	dessinerTassePixel(s, bu, u);
 	pop();
-	if (!reduireAnimations && incl < 0.5) {
-		for (let k = 0; k < 4; k++) {
-			const p = (millis() / 1400 + k / 4) % 1;
-			fill(255, 255, 255, 120 * (1 - p));
-			const vx = cx - 80 + k * 50 + Math.sin(millis() / 300 + k) * 10;
-			rect(vx, e.y + e.h * 0.55 - 200 - p * 160, 10, 40);
+}
+/** Mug 20 × 24 « pixels » + anse + main ; s = taille d'un pixel, bu = 0 (pleine) → 1 (bue en partie) */
+function dessinerTassePixel(s, bu, u) {
+	const P = PAL_TASSE;
+	const r = (x, y, l, h, c) => {
+		fill(c);
+		rect(Math.round(x * s), Math.round(y * s), Math.ceil(l * s), Math.ceil(h * s));
+	};
+	noStroke();
+	// Vapeur : volutes fines (demi-pixels) qui ondulent en montant et s'effacent (figées si animations réduites)
+	for (let k = 0; k < 3; k++) {
+		const depart = reduireAnimations ? 0 : ((u / 2200 + k / 3) % 1); // chaque filet naît, monte et se dissipe
+		for (let j = 0; j < 14; j++) {
+			const p = j / 14; // position le long du filet (0 = au ras du café)
+			const a = Math.round(120 * (1 - p) * Math.sin(Math.PI * Math.min(1, depart + 0.15)) * (1 - bu * 0.6));
+			const ox = 5 + k * 5 + Math.sin(p * 5 + k * 2 + (reduireAnimations ? 0 : u / 450)) * (0.6 + p * 1.6);
+			fill(255, 255, 255, a);
+			rect(ox * s, (-1 - p * 10 - depart * 2) * s, s * 0.55, s * 0.8); // segments jointifs : un filet continu
 		}
 	}
+	// Anse (derrière la main) : anneau épais aux angles adoucis
+	r(20, 8, 5, 2, P.contour);
+	r(24, 9, 2, 8, P.contour);
+	r(20, 16, 5, 2, P.contour);
+	r(20, 9, 4, 1, P.blanc);
+	r(24, 10, 1, 6, P.ombre);
+	r(20, 16, 4, 1, P.ombre);
+	// Corps aux coins arrondis : contour, émail, ombrage à droite, reflet à gauche
+	r(1, 2, 18, 22, P.contour);
+	r(0, 3, 20, 20, P.contour);
+	r(1, 3, 18, 20, P.blanc);
+	r(2, 22, 16, 1, P.blanc);
+	r(14, 3, 4, 20, P.ombre);
+	r(17, 4, 1, 18, P.ombre2);
+	r(2, 6, 2, 12, P.clair);
+	r(2, 19, 1, 2, P.clair);
+	r(3, 22, 14, 1, P.ombre2);
+	// Bandeau rouge (Pixel DS) avec un liseré clair et l'ombre du côté droit
+	r(1, 13, 18, 3, P.rouge);
+	r(1, 13, 18, 1, P.rougeClair);
+	r(14, 13, 4, 3, '#a8031a');
+	// Ouverture ovale vue de trois quarts : rebord clair, café, reflet de crème (le café baisse quand on boit)
+	r(2, 0, 16, 1, P.contour);
+	r(1, 1, 18, 3, P.contour);
+	r(2, 1, 16, 2, P.blanc);
+	const niveau = bu > 0.5 ? 1 : 0;
+	r(3, 1 + niveau, 14, 2 - niveau, P.cafe);
+	r(4, 2, 12, 1, P.cafe);
+	if (!niveau) {
+		r(5, 1, 4, 1, P.creme);
+		r(6, 2, 2, 1, P.creme);
+	}
+	// Main : pouce sur l'anse, trois doigts repliés aux jointures arrondies, poignet et manche
+	r(18, 5, 7, 4, P.peauContour);
+	r(19, 6, 5, 2, P.peau);
+	r(19, 7, 5, 1, P.peauOmbre);
+	r(23, 6, 1, 1, '#f3cdb0'); // ongle du pouce
+	for (let k = 0; k < 3; k++) {
+		const y = 10 + k * 2;
+		r(22, y, 6, 2, P.peauContour);
+		r(21, y + 0.5, 1, 1, P.peauContour); // jointure arrondie
+		r(22, y, 5, 1, P.peau);
+		r(22, y + 1, 5, 1, P.peauOmbre);
+		r(22, y, 1, 1, '#f0c3a2'); // reflet de la jointure
+	}
+	r(24, 16, 7, 9, P.peauContour);
+	r(25, 16, 5, 8, P.peau);
+	r(28, 16, 2, 8, P.peauOmbre);
+	r(25, 16, 1, 6, '#f0c3a2');
+	r(23, 23, 11, 12, P.manche);
+	r(24, 23, 3, 12, P.mancheClair);
+	r(23, 23, 11, 1, '#0d141d');
 }
 
 // ——— Battements du cœur (Web Audio, sous l'interrupteur Son) ———

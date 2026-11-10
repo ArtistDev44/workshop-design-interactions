@@ -252,13 +252,14 @@ function rateReveil() {
 	decider('temps'); // « ne rien faire » : conséquences naturelles (Q25)
 	Confort.Son.bip('consequence'); // prompt 30
 	if (dernierResultat) Jeu.malusSieste(dernierResultat); // −5 sur la jauge concernée
-	interaction();
+	// Prompt 62 : pas d'interaction() ici — le joueur n'a rien fait, il peut se rendormir
 }
 
 /** Après la narration d'une décision : incident suivant de la journée, ou attente de la fin de journée */
 function apresDecision() {
 	phase = 'attente';
-	interaction();
+	// Prompt 62 : plus d'interaction() ici. Après un compteur à 0, la suite est automatique : elle remettait
+	// l'inactivité à zéro et un joueur absent ne s'endormait jamais. Ses vrais gestes (clic, touche) le font.
 }
 
 function journeeSuivante() {
