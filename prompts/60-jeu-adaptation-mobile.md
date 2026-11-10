@@ -66,7 +66,7 @@ règle : `game.js` (Q1–Q61, effets, dés) et `test-jeu.mjs` ne sont pas touch�
   info-bulle, swipe = molette), paysage mobile plein écran (`100dvh`), message portrait HTML avec
   « Continuer en portrait », clavier virtuel (`visualViewport`), particules et ombres allégées, textes
   tactiles ; ordinateur inchangé.
-- **60b — mise en page portrait dédiée** (à faire) : `L` / `H` dynamiques (aujourd'hui constantes
+- **60b — mise en page portrait dédiée** (fait, par recomposition : voir `jeu/54-mobile-portrait.md`) — plan initial : `L` / `H` dynamiques (aujourd'hui constantes
   1920 × 1080 dont dérivent tous les rectangles), canevas 1080 × 1920, panneaux empilés de l'appli
   Régulation (carte, dossier + sources, compteur + actions), défilement vertical, fenêtres bornées à la
   largeur, bureau recadré en hauteur ; captures desktop comparées à `rendu/`.

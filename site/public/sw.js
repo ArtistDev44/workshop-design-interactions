@@ -4,7 +4,7 @@
  * Les API (Open Data, Open-Meteo, Hub'Eau) ne sont jamais mises en cache ici : le jeu a déjà ses
  * instantanés hors ligne (data/fallback.js). Enregistré seulement en http(s), jamais en file://.
  */
-const VERSION = 'nte-regulation-v9'; // prompt 49
+const VERSION = 'nte-regulation-v10'; // prompt 49
 const ESSENTIELS = [
 	'./',
 	'./index.html',
@@ -39,6 +39,7 @@ const ESSENTIELS = [
 	'./micro.js',
 	'./webcam.js',
 	'./mobile.js',
+	'./portrait.js',
 	'./favicon.svg',
 	'./manifest.webmanifest',
 ];
