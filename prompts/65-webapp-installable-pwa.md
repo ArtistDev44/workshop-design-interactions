@@ -1,4 +1,4 @@
-# Prompt 64 — Site en webapp installable (PWA complète) : manifest, service worker, icônes, bouton d'installation
+# Prompt 65 — Site en webapp installable (PWA complète) : manifest, service worker, icônes, bouton d'installation
 
 Demande d'origine (10/11/2026) :
 
@@ -46,5 +46,5 @@ en http(s) uniquement). Ce prompt la rend **installable partout** et vérifiable
 - `cd site && npm run build && npm test` (smoke + test-jeu) OK.
 - Installation réelle testée (Chrome/Edge desktop + Android) : bouton Install, icône écran d'accueil,
   lancement en fullscreen/standalone, hors ligne complet ; `file://` inchangé (pas de sw, jeu jouable).
-- `git diff` relu : aucun secret, aucune dépendance ajoutée. FR + EN. Documenter dans `jeu/52-…`.
+- `git diff` relu : aucun secret, aucune dépendance ajoutée. FR + EN. Documenter dans `jeu/59-…`.
   Branche dédiée ; fusion `main` sur demande.

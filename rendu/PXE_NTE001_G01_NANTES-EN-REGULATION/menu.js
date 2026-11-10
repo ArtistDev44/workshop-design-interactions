@@ -225,6 +225,16 @@ function dessinerMenuPrincipal() {
 		carteMenu(x0, y, 620, h, t('mp.' + it.cle), it.sous, it.action, i === MENU.choix, it.icone);
 	});
 	selecteurLangue(L - 80, 56);
+	// Prompt 65 : installation de la webapp (seulement si le navigateur la propose) ; mention une fois installée
+	if (installationPossible()) bouton(L - 80 - 420, 130, 420, 64, t('pwa.installer'), installerApplication, false, true);
+	else if (estInstallee()) {
+		textAlign(RIGHT, TOP);
+		textFont(POLICE_DONNEES);
+		textSize(18);
+		fill(MENU_C.doux);
+		text(t('pwa.badge'), L - 80, 130);
+		textAlign(LEFT, TOP);
+	}
 	textAlign(LEFT, BOTTOM);
 	textFont(POLICE_DONNEES);
 	textSize(18);

@@ -8,11 +8,12 @@
   "scripts": {
     "dev": "astro dev",
     "messages": "node scripts/generer-messages.mjs",
-    "prebuild": "node scripts/generer-messages.mjs",
+    "prebuild": "node scripts/generer-messages.mjs && node scripts/generer-sw.mjs",
     "build": "astro build",
     "preview": "astro preview",
     "test": "node scripts/smoke.mjs && node scripts/test-jeu.mjs",
-    "astro": "astro"
+    "astro": "astro",
+    "sw": "node scripts/generer-sw.mjs"
   },
   "dependencies": {
     "astro": "^7.4.7"

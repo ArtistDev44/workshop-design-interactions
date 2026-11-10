@@ -93,6 +93,27 @@ for (const f of sources) {
 	else ok();
 }
 
+// 3 bis. Webapp installable (prompt 65) : manifest complet, icônes présentes, précache couvrant tout public/
+{
+	let m = null;
+	try {
+		m = JSON.parse(readFileSync(join(pub, 'manifest.webmanifest'), 'utf8'));
+		ok();
+	} catch (e) {
+		echec('manifest.webmanifest : JSON invalide');
+	}
+	if (m) {
+		for (const champ of ['name', 'short_name', 'start_url', 'display', 'icons', 'theme_color', 'id', 'scope']) m[champ] ? ok() : echec(`manifest.webmanifest : champ ${champ} manquant`);
+		(m.icons || []).forEach((i) => (existsSync(join(pub, i.src)) ? ok() : echec(`manifest : icône absente ${i.src}`)));
+		(m.icons || []).some((i) => /maskable/.test(i.purpose || '')) ? ok() : echec('manifest : aucune icône maskable');
+		(m.screenshots || []).forEach((i) => (existsSync(join(pub, i.src)) ? ok() : echec(`manifest : capture absente ${i.src}`)));
+	}
+	const sw = readFileSync(join(pub, 'sw.js'), 'utf8');
+	/const VERSION = 'nte-regulation-[0-9a-f]{10}'/.test(sw) ? ok() : echec('sw.js : VERSION non générée (lancer npm run sw ou npm run build)');
+	const liste = new Set([...sw.matchAll(/"(\.\/[^"]*)"/g)].map((x) => x[1]));
+	for (const ref of [...html.matchAll(/(?:src|href)="(\.\/[^"#?]+)"/g)].map((x) => x[1])) liste.has(ref) ? ok() : echec(`sw.js : ${ref} (index.html) absent du précache`);
+}
+
 // 4. Build (facultatif)
 const dist = join(racine, 'dist');
 if (existsSync(dist)) {

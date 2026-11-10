@@ -1,4 +1,4 @@
-# Prompt 65 — Jeu « Nantes en régulation », étape 48 : revue complète du game design pour la compréhensibilité joueur
+# Prompt 66 — Jeu « Nantes en régulation », étape 49 : revue complète du game design pour la compréhensibilité joueur
 
 Demande d'origine (10/11/2026) :
 
@@ -51,7 +51,7 @@ Les améliorations passent par ces canaux-là. `game.js` (règles, effets, dés)
   conservée (contraste, clavier, aria-live, animations réduites, pas de flash).
 - Rapport de revue dans `notes.md` (section « Revue game design du … ») : axes couverts, frictions
   trouvées (avec captures si besoin dans `site/public/captures/`), améliorations faites (commits),
-  reste ouvert. Documenter les changements joueur dans `jeu/53-…`. `journal.md` à jour.
+  reste ouvert. Documenter les changements joueur dans `jeu/60-…`. `journal.md` à jour.
 
 ## Vérifications
 - 3 parties complètes rejouées après améliorations, FR + EN, clavier seul, animations réduites :

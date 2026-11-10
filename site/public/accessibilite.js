@@ -177,6 +177,7 @@ function fenetreAccessibilite() {
 	textAlign(LEFT, TOP);
 	bouton(x + 48, y + h - 104, 300, 64, t('parametres.exporter'), () => Sauvegarde.exporter(), false, true);
 	bouton(x + 364, y + h - 104, 300, 64, t('parametres.importer'), () => Sauvegarde.ouvrirImport(), false, true);
+	if (installationPossible()) bouton(x + 680, y + h - 104, 300, 64, t('pwa.installerCourt'), installerApplication); // prompt 65
 	bouton(x + l - 288, y + h - 104, 240, 64, t('param.retour'), () => (fenetre = 'parametres'));
 }
 function toucheAccessibilite() {

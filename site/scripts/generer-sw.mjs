@@ -1,0 +1,38 @@
+// Prompt 65 : liste de précache du service worker générée au build (npm run build → prebuild).
+// Parcourt public/ (tout ce que le site sert) et ajoute les pages générées par Astro, puis écrit la liste et une
+// VERSION calculée sur le contenu dans public/sw.js, entre les repères « précache:début » et « précache:fin ».
+// Une modification de n'importe quel fichier change la version : les joueurs reçoivent la mise à jour.
+import { readFileSync, writeFileSync, readdirSync, statSync } from 'node:fs';
+import { join, relative, sep } from 'node:path';
+import { createHash } from 'node:crypto';
+import { fileURLToPath } from 'node:url';
+
+const pub = fileURLToPath(new URL('../public/', import.meta.url));
+const PAGES_ASTRO = ['./cartel/', './making-of/', './presentation/']; // générées dans dist/, servies en ligne
+const EXCLUS = new Set(['sw.js']); // le service worker ne se met pas lui-même en cache
+
+function lister(dossier) {
+	return readdirSync(dossier).flatMap((nom) => {
+		const chemin = join(dossier, nom);
+		return statSync(chemin).isDirectory() ? lister(chemin) : [chemin];
+	});
+}
+const fichiers = lister(pub)
+	.map((f) => relative(pub, f).split(sep).join('/'))
+	.filter((f) => !EXCLUS.has(f) && !f.startsWith('.'))
+	.sort();
+const hash = createHash('sha1');
+fichiers.forEach((f) => hash.update(f).update(readFileSync(join(pub, f))));
+const version = 'nte-regulation-' + hash.digest('hex').slice(0, 10);
+const liste = ['./', ...fichiers.map((f) => './' + f), ...PAGES_ASTRO];
+
+const swChemin = join(pub, 'sw.js');
+const sw = readFileSync(swChemin, 'utf8');
+const debut = '/* précache:début (généré par scripts/generer-sw.mjs — ne pas modifier à la main) */';
+const fin = '/* précache:fin */';
+const i = sw.indexOf(debut);
+const j = sw.indexOf(fin);
+if (i < 0 || j < 0) throw new Error('sw.js : repères précache:début / précache:fin introuvables');
+const bloc = `${debut}\nconst VERSION = '${version}';\nconst ESSENTIELS = ${JSON.stringify(liste, null, '\t')};\n`;
+writeFileSync(swChemin, sw.slice(0, i) + bloc + sw.slice(j));
+console.log(`sw.js : ${liste.length} entrées en précache, ${version}`);
