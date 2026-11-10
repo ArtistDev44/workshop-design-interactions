@@ -59,13 +59,15 @@ jamais l'inverse.
 | 18 | `18-jeu-controles-confort.md` | Jeu, étape 5/6 : raccourcis clavier, son, pause, reset, aide, meilleur bilan `localStorage` |
 | 19 | `19-jeu-fins-robustesse.md` | Jeu, étape 6/6 : 3 fins + bilan détaillé, accessibilité, vérifications finales |
 | 20 | `20-jeu-immersion-mode-ordinateur.md` | Jeu, étape 7 : couche d'immersion — intro SMS, horloge simulée avec compression du temps, sieste « Se réveiller », bordures rouges d'alerte, mail de fin de journée, livres ressources au bureau |
+| 21 | `21-jeu-trains-fenetre-bureau.md` | Jeu, étape 8 : tramways derrière la fenêtre du bureau, pilotés par les données réelles — GTFS-RT VehiclePositions en direct, passages bakés depuis le GTFS archivé pour les semaines passées |
 
 Les prompts 14–19 (jeu p5.js) sont indépendants du site : ils peuvent être menés en
 parallèle dès le prompt 03, l'œuvre étant ensuite reliée au site par sa fiche du
 registre (prompt 06). Le prompt 14 était trop long : il est découpé en 6 prompts
 (14 chapeau + 5 étapes, 15–19). Le prompt 20 s'y ajoute après le bureau pixel art
 (`jeu/12-bureau-pixel.md`) : il pose la couche d'immersion sans toucher aux décisions
-verrouillées Q1–Q61.
+verrouillées Q1–Q61. Le prompt 21 ajoute les tramways qui passent derrière la fenêtre du
+bureau, à partir des données réelles du réseau (direct et semaines archivées).
 
 Historique : le 9 novembre 2026, l'ancien prompt 13 (données vivantes) est devenu le 11,
 et les anciens 11 et 12 sont devenus 12 et 13, pour que l'accessibilité et le
