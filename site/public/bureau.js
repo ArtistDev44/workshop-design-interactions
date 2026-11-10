@@ -25,6 +25,7 @@ let vue = 'bureau'; // 'bureau' | 'zoom-avant' | 'poste' | 'zoom-arriere'
 let debutZoom = 0;
 const DUREE_ZOOM = 700;
 let gBureau = null; // image pixel art du bureau (480×270)
+let gBureauFlou = null; // copie floue du décor : flou de profondeur derrière le PC
 let copieBasse = null; // miniature du jeu pour l'écran du PC (puis agrandie : effet pixel)
 let copieHaute = null; // copie pleine résolution pour le zoom
 let survolEcran = false;
@@ -191,6 +192,21 @@ function dessinerVignettage(gCible) {
 		}
 	}
 	gCible.image(gVignette, 0, 0);
+}
+
+/* Flou de profondeur derrière le PC : copie floue du décor, recalculée avec le décor (8 fois/s).
+ * Le PC (écran + coque, zone nette du vignettage) est redessiné NET par-dessus : la pièce paraît
+ * derrière, floue. Effet statique (aucun mouvement) : actif même avec prefers-reduced-motion. */
+function dessinerBureauFlou() {
+	if (!gBureauFlou) {
+		gBureauFlou = createGraphics(BW, BH);
+		gBureauFlou.pixelDensity(1);
+	}
+	const ctx = gBureauFlou.drawingContext;
+	gBureauFlou.clear();
+	ctx.filter = 'blur(2px)'; // en pixels logiques (480×270) ≈ 8 px à l'écran ; dessin légèrement débordant pour éviter les bords transparents
+	gBureauFlou.image(gBureau, -2, -2, BW + 4, BH + 4);
+	ctx.filter = 'none';
 }
 
 function dessinerMur(g) {
@@ -517,12 +533,20 @@ function dessinerVueBureau() {
 	// la vapeur et l'horloge, sans ralentir le jeu affiché dans l'écran.
 	if (!dernierRenduBureau || millis() - dernierRenduBureau > 125) {
 		dessinerPieceBureau();
+		dessinerBureauFlou();
 		dernierRenduBureau = millis();
 	}
 	drawingContext.imageSmoothingEnabled = false;
 	const flou = tempsCompresse() && !reduireAnimations && vue === 'bureau';
-	if (flou) drawingContext.filter = 'blur(1.5px)'; // § 3 : léger flou quand le temps est accéléré
-	image(gBureau, 0, 0, L, H);
+	if (flou) {
+		drawingContext.filter = 'blur(1.5px)'; // § 3 : léger flou quand le temps est accéléré
+		image(gBureau, 0, 0, L, H);
+	} else {
+		// Flou derrière le PC : la pièce est floue, seule la zone du PC reste nette
+		image(gBureauFlou || gBureau, 0, 0, L, H);
+		const z = ZONES_NETTES()[0]; // écran du PC + coque
+		image(gBureau, z.x, z.y, z.l, z.h, z.x * PIX, z.y * PIX, z.l * PIX, z.h * PIX);
+	}
 	drawingContext.filter = 'none';
 
 	const e = rectEcranPC();

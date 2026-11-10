@@ -17,5 +17,10 @@ Sans toucher aux décisions Q1–Q61. Fichiers : `site/public/bureau.js`, `sketc
 - Évaluation **calculée** : on compare l'effet attendu de chaque action sur ce dossier (table Q57–Q60, dé moyen, modificateurs Q24) ; « bon choix ! » si l'action choisie est la meilleure, « raté » (avec l'action qui était meilleure) sinon, « aucun détour » si aucune action n'aide, « trop tard » si le compteur a expiré.
 - Journée parfaite : une seule ligne « Tout a été géré dans les temps, belle journée. ». Les jauges réelles de fin de journée sont toujours rappelées.
 
+## 4. Flou de profondeur derrière le PC
+- `gBureauFlou` (`dessinerBureauFlou`) : copie floue du décor (`blur(2px)` en logiques ≈ 8 px écran), recalculée à chaque rendu du décor (8 fois/s, coût faible).
+- À l'affichage (`dessinerVueBureau`, vue bureau sans zoom) : la pièce est dessinée floue, puis la zone nette du vignettage (écran du PC + coque, `ZONES_NETTES()[0]`) est redessinée nette par-dessus → le PC ressort, la pièce paraît derrière, floue.
+- Statique (aucun mouvement) : actif même avec `prefers-reduced-motion`. Le flou de temps accéléré (§ 3 de l'horloge) reste prioritaire quand le temps est compressé. Aucun filtre appliqué pendant les zooms.
+
 ## À savoir (équilibre)
 Avec la table des effets actuelle, **le bus de renfort est toujours la meilleure action** (+17 attendu contre −5 pour dévier et −11 à −15 pour retenir) : le mail dit donc « raté » à toute autre décision, et « aucun détour » n'apparaît jamais. C'est un choix d'équilibrage à revoir par le groupe (prompt 23, profondeur tactique).
