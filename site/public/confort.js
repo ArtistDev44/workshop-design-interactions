@@ -75,9 +75,11 @@
 			if (Son.ctx.state === 'suspended') Son.ctx.resume();
 			if (!Son.ambiance) Son.ambiance = Son.creerAmbiance();
 			Musique.demarrer();
+			Ambiances.demarrer();
 		},
 		couper: function () {
 			Musique.arreter();
+			Ambiances.arreter();
 			if (Son.ambiance) {
 				Son.ambiance.forEach((n) => {
 					try {
@@ -118,9 +120,11 @@
 			o2.start();
 			return [bruit, o1, o2];
 		},
-		/** Bip d'interface : 'action' | 'dossier' | 'alerte' | 'choix' | 'fin' */
+		/** Bip d'interface : 'action' | 'dossier' | 'alerte' | 'choix' | 'fin'
+		 *  Prompt 30 : 'incident' | 'consequence' | 'mail' (signaux d'événements, timbres distincts, < 1 s) */
 		bip: function (type) {
 			if (!Reglages.son || !Son.ctx) return;
+			if (SIGNAUX[type]) return Son.signal(SIGNAUX[type]);
 			const notes = { action: [660], dossier: [520, 780], alerte: [880, 880], choix: [440], fin: [523, 659, 784] }[type] || [600];
 			const c = Son.ctx;
 			notes.forEach((f, i) => {
@@ -138,6 +142,154 @@
 			});
 		},
 	};
+
+	// ——— Prompt 30 : signaux d'événements (courts, non agressifs, timbres distincts des bips) ———
+	// notes : [fréquence Hz, départ s, durée s] ; volume crête faible ; onde propre à chaque signal.
+	const SIGNAUX = {
+		incident: { onde: 'square', crete: 0.05, filtre: 1800, notes: [[784, 0, 0.12], [587, 0.14, 0.18]] }, // deux tons descendants
+		consequence: { onde: 'sawtooth', crete: 0.045, filtre: 900, notes: [[330, 0, 0.18], [247, 0.2, 0.18], [196, 0.4, 0.3]] }, // compteur à 0
+		mail: { onde: 'sine', crete: 0.1, filtre: 4000, notes: [[1047, 0, 0.16], [1319, 0.12, 0.16], [1568, 0.24, 0.3]] }, // carillon de notification
+	};
+	Son.signal = function (s) {
+		const c = Son.ctx;
+		const f = c.createBiquadFilter();
+		f.type = 'lowpass';
+		f.frequency.value = s.filtre;
+		f.connect(Son.maitre);
+		s.notes.forEach(([freq, depart, duree]) => {
+			const o = c.createOscillator();
+			const g = c.createGain();
+			o.type = s.onde;
+			o.frequency.value = freq;
+			const t0 = c.currentTime + depart;
+			g.gain.setValueAtTime(0.0001, t0);
+			g.gain.exponentialRampToValueAtTime(s.crete, t0 + 0.015);
+			g.gain.exponentialRampToValueAtTime(0.0001, t0 + duree);
+			o.connect(g).connect(f);
+			o.start(t0);
+			o.stop(t0 + duree + 0.05);
+		});
+		setTimeout(() => f.disconnect(), 1200);
+	};
+	/** Clic très discret (interactions au poste) : 12 ms de bruit filtré */
+	Son.clic = function () {
+		if (!Reglages.son || !Son.ctx) return;
+		const c = Son.ctx;
+		const n = Math.floor(c.sampleRate * 0.012);
+		const b = c.createBuffer(1, n, c.sampleRate);
+		const d = b.getChannelData(0);
+		for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
+		const src = c.createBufferSource();
+		src.buffer = b;
+		const f = c.createBiquadFilter();
+		f.type = 'bandpass';
+		f.frequency.value = 2500;
+		const g = c.createGain();
+		g.gain.value = 0.12;
+		src.connect(f).connect(g).connect(Son.maitre);
+		src.start();
+	};
+
+	// ——— Prompt 30 : ambiances contextuelles (boucles continues, très faibles) ———
+	// pluie : bruit blanc en passe-bande 1,2–5 kHz avec lente ondulation ; ville : grondement grave
+	// (bruit passe-bas 160 Hz) + passage d'un tram au loin toutes les ~40 s ; nuit : la ville s'efface.
+	// Chaque couche suit une cible de volume avec setTargetAtTime (constante 0,33 s ≈ fondu de 1 s).
+	const Ambiances = {
+		couches: null,
+		contexte: { pluie: false, nuit: false, actif: false },
+		minuterieTram: null,
+		bruit: function (c, secondes) {
+			const b = c.createBuffer(1, c.sampleRate * secondes, c.sampleRate);
+			const d = b.getChannelData(0);
+			for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+			const s = c.createBufferSource();
+			s.buffer = b;
+			s.loop = true;
+			return s;
+		},
+		demarrer: function () {
+			if (Ambiances.couches || !Son.ctx || !Reglages.son) return;
+			const c = Son.ctx;
+			const pluie = Ambiances.bruit(c, 3);
+			const fp = c.createBiquadFilter();
+			fp.type = 'bandpass';
+			fp.frequency.value = 2600;
+			fp.Q.value = 0.6;
+			const gp = c.createGain();
+			gp.gain.value = 0;
+			const lfo = c.createOscillator(); // ondulation lente de l'averse
+			lfo.frequency.value = 0.13;
+			const gOnde = c.createGain(); // étage d'ondulation (1 ± 0,3), avant le volume cible : à 0, silence total
+			gOnde.gain.value = 1;
+			const glfo = c.createGain();
+			glfo.gain.value = 0.3;
+			lfo.connect(glfo).connect(gOnde.gain);
+			pluie.connect(fp).connect(gOnde).connect(gp).connect(Son.maitre);
+			const ville = Ambiances.bruit(c, 4);
+			const fv = c.createBiquadFilter();
+			fv.type = 'lowpass';
+			fv.frequency.value = 160;
+			const gv = c.createGain();
+			gv.gain.value = 0;
+			ville.connect(fv).connect(gv).connect(Son.maitre);
+			pluie.start();
+			ville.start();
+			lfo.start();
+			Ambiances.couches = { pluie, ville, lfo, gp, gv };
+			Ambiances.appliquer();
+			Ambiances.minuterieTram = setInterval(Ambiances.tram, 40000);
+		},
+		arreter: function () {
+			if (Ambiances.minuterieTram) clearInterval(Ambiances.minuterieTram);
+			Ambiances.minuterieTram = null;
+			if (!Ambiances.couches) return;
+			const k = Ambiances.couches;
+			[k.pluie, k.ville, k.lfo].forEach((n) => {
+				try {
+					n.stop();
+				} catch (e) {}
+			});
+			Ambiances.couches = null;
+		},
+		/** Contexte réel : { pluie, nuit, actif } — actif = une partie ou la pièce est affichée */
+		regler: function (ctx) {
+			const a = Ambiances.contexte;
+			if (a.pluie === !!ctx.pluie && a.nuit === !!ctx.nuit && a.actif === !!ctx.actif) return;
+			Ambiances.contexte = { pluie: !!ctx.pluie, nuit: !!ctx.nuit, actif: !!ctx.actif };
+			Ambiances.appliquer();
+		},
+		appliquer: function () {
+			const k = Ambiances.couches;
+			if (!k) return;
+			const a = Ambiances.contexte;
+			const t = Son.ctx.currentTime;
+			k.gp.gain.setTargetAtTime(a.actif && a.pluie ? 0.02 : 0, t, 0.33);
+			k.gv.gain.setTargetAtTime(a.actif ? (a.nuit ? 0.012 : 0.05) : 0, t, 0.33);
+		},
+		/** Tram au loin : glissando grave filtré de 3 s, seulement en journée */
+		tram: function () {
+			const a = Ambiances.contexte;
+			if (!Son.ctx || !Ambiances.couches || !a.actif || a.nuit) return;
+			const c = Son.ctx;
+			const o = c.createOscillator();
+			o.type = 'sawtooth';
+			const f = c.createBiquadFilter();
+			f.type = 'lowpass';
+			f.frequency.value = 380;
+			const g = c.createGain();
+			const t0 = c.currentTime;
+			o.frequency.setValueAtTime(70, t0);
+			o.frequency.linearRampToValueAtTime(110, t0 + 1.5);
+			o.frequency.linearRampToValueAtTime(80, t0 + 3);
+			g.gain.setValueAtTime(0.0001, t0);
+			g.gain.exponentialRampToValueAtTime(0.012, t0 + 1.2);
+			g.gain.exponentialRampToValueAtTime(0.0001, t0 + 3);
+			o.connect(f).connect(g).connect(Son.maitre);
+			o.start(t0);
+			o.stop(t0 + 3.1);
+		},
+	};
+	Son.ambiances = Ambiances;
 
 	// ——— Musique de fond (prompt 27) : 100 % WebAudio, aucun fichier ———
 	// Boucle de 4 accords (la mineur 7, fa majeur 7, do majeur, sol majeur), arpège montant-descendant

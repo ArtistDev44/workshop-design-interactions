@@ -119,8 +119,19 @@ function masquerChargement() {
 	setTimeout(fin, 350);
 }
 
+// Prompt 30 : contexte des ambiances (pluie réelle du jour, nuit simulée), réévalué une fois par seconde
+let dernierContexteSonore = 0;
+function majAmbianceSonore() {
+	if (millis() - dernierContexteSonore < 1000 || !Confort.Son.ambiances) return;
+	dernierContexteSonore = millis();
+	const m = typeof meteoFenetre === 'function' ? meteoFenetre() : Jeu.meteoActuelle;
+	const h = heureAffichee().h;
+	Confort.Son.ambiances.regler({ pluie: !!(m && m.pluie_mm >= 1), nuit: h < 7 || h >= 20, actif: PC.etat !== 'eteint' || ecran === 'jeu' });
+}
+
 function draw() {
 	if (!chargementMasque) masquerChargement();
+	majAmbianceSonore();
 	avancerTemps(); // horloge simulée, sieste, arrivée des incidents, fin de journée (immersion.js)
 	if (Jeu.equipes) Jeu.majEquipes(millis()); // équipes envoyées depuis la carte (prompt 22)
 	boutons = [];
@@ -245,7 +256,7 @@ function nouveauDossier() {
 	alerteTempsJouee = false;
 	if (!Jeu.dossierCourant()) return apresDecision();
 	if (Jeu.declencherPlainte) Jeu.declencherPlainte(Jeu.index); // prompt 28 : plainte liée au dossier réel (app Community)
-	Confort.Son.bip('dossier');
+	Confort.Son.bip('incident'); // prompt 30 : signal d'arrivée d'incident (timbre distinct)
 	if (Jeu.conflit()) phase = 'conflit';
 	else if (Jeu.dossierCourant().contradiction) phase = 'contradiction';
 	else phase = 'decision';
@@ -695,6 +706,7 @@ function dessinerDossier(d, meteo) {
 	if (reste === 0 && tA === 1 && (phase === 'decision' || phase === 'contradiction')) {
 		phase = 'decision';
 		decider('temps');
+		Confort.Son.bip('consequence'); // prompt 30 : compteur à 0
 		return;
 	}
 
@@ -1144,6 +1156,7 @@ function mousePressed() {
 	for (let i = boutons.length - 1; i >= 0; i--) {
 		const b = boutons[i];
 		if (mouseX >= b.x && mouseX <= b.x + b.l && mouseY >= b.y && mouseY <= b.y + b.h) {
+			if (vue === 'poste') Confort.Son.clic(); // prompt 30 : clic très discret au poste
 			b.action();
 			return;
 		}
