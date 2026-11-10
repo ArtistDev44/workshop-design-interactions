@@ -84,6 +84,7 @@ jamais l'inverse.
 | 42 | `42-jeu-telephone-en-main.md` | Jeu, étape 29 : le joueur saisit son téléphone (animation réutilisable) pour les dialogues et les notifications | ✅ main |
 | 43 | `43-jeu-vue-pc-ux-temps-transitions.md` | Jeu, étape 30 : vue PC à 90 %, indicateurs redondants retirés, UX de l'écran de jeu, temps ×30, écran noir « Jour n — Semaine n » entre les journées | ✅ main |
 | 44 | `44-jeu-musiques-immersion-sonore.md` | Jeu, étape 31 : choix de la musique (morceaux pixel originaux) et immersion sonore en 7 points (salle vivante, radio, alertes par source, compte à rebours, clics d'action, jauges audibles, météo, signatures de fin) | ✅ main |
+| 45 | `45-jeu-meteo-progressive-seo.md` | Jeu, étape 32 : transitions météo progressives (jour/nuit, pluie) et SEO (description, OG image, favicon, canonique, carte Twitter) | ✅ main |
 
 ### Statut des prompts (vérifié le 10/11/2026 dans `site/public/`)
 
