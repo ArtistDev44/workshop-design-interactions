@@ -29,7 +29,7 @@
 	};
 
 	// ——— Réglages (écran Paramètres, 11-direction-artistique) ———
-	const DEFAUTS = { son: true, horsLigneForce: false, reduireAnimations: false, contrasteRenforce: false, musique: 'chillin' }; // prompt 44 : choix de la musique (par défaut : un morceau CC0)
+	const DEFAUTS = { son: true, horsLigneForce: false, reduireAnimations: false, contrasteRenforce: false, musique: 'chillin', daltonisme: 'normal', tailleTexte: 100, lectureFacile: false }; // prompt 48 : accessibilité // prompt 44 : choix de la musique (par défaut : un morceau CC0)
 	const Reglages = Object.assign({}, DEFAUTS, lire(CLE_REGLAGES, {}));
 	Reglages.basculer = function (nom) {
 		Reglages[nom] = !Reglages[nom];
@@ -52,12 +52,12 @@
 		cle: (etat) => (etat.mode === 'semaine' ? etat.semaine.lundi : etat.mode), // 'direct' | 'hors ligne'
 		meilleur: (cle) => lire(CLE_BILANS, {})[cle] || null,
 		/** Enregistre le bilan s'il bat le précédent ; renvoie { meilleur, record } */
-		enregistrer: function (cle, score, jauges) {
+		enregistrer: function (cle, score, jauges, extra) {
 			const tous = lire(CLE_BILANS, {});
 			const ancien = tous[cle] || null;
 			const record = !ancien || score > ancien.score;
 			if (record) {
-				tous[cle] = { score: score, jauges: Object.assign({}, jauges), le: new Date().toISOString().slice(0, 10) };
+				tous[cle] = Object.assign({ score: score, jauges: Object.assign({}, jauges), le: new Date().toISOString().slice(0, 10) }, extra || {}); // prompt 47 : profil
 				ecrire(CLE_BILANS, tous);
 			}
 			return { meilleur: tous[cle] || ancien, record: record, ancien: ancien };

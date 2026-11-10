@@ -67,13 +67,14 @@ function finDeSemaine() {
 	const ch = chapitreCourant();
 	const b = Jeu.bilan();
 	Confort.Son.signatureFin(b.type); // prompt 44 § 7 : signature sonore propre à la fin
-	if (ch) {
+	if (ch && !b.demission) {
+		// prompt 47 : une démission ne valide pas le chapitre
 		const p = progressionHistoire();
 		p.scores[ch] = b.score;
 		if (ch === 3) p.termine = true;
 		enregistrerProgression(p);
 	}
-	if (ch === 3) return lancerCinematique(b.type, b);
+	if (ch === 3 && !b.demission) return lancerCinematique(b.type, b);
 	RAPPORT = { debut: millis(), bilan: b, chapitre: ch, mode: Jeu.etat.mode };
 	annoncer(t('rapport.imprime'));
 	setTimeout(() => {
@@ -118,9 +119,10 @@ function ouvrirRapport() {
 function actionRapport() {
 	if (!RAPPORT) return;
 	const ch = RAPPORT.chapitre;
+	const demission = RAPPORT.bilan.demission;
 	RAPPORT = null;
 	fenetre = null;
-	if (ch) lancerChapitre(ch + 1);
+	if (ch) lancerChapitre(demission ? ch : ch + 1); // prompt 47 : après une démission, on reprend la même semaine
 	else rejouer();
 }
 function quitterRapport() {
@@ -163,20 +165,21 @@ function fenetreRapport() {
 	fill(gris);
 	text(t('rapport.periode', { p: b.faits.periode }), x + 56, y + 130);
 	// Tampon de la fin (incliné)
-	const couleurs = { bonne: '#1e7a3c', moyenne: '#a15c07', mauvaise: '#b3261e' };
+	const couleurs = { bonne: '#1e7a3c', moyenne: '#a15c07', mauvaise: '#b3261e', demission: '#b3261e' };
+	const tampon = b.demission ? 'demission' : b.type; // prompt 47
 	push();
 	translate(x + l - 210, y + 120);
 	rotate(-0.12);
 	noFill();
-	stroke(couleurs[b.type]);
+	stroke(couleurs[tampon]);
 	strokeWeight(5);
 	rect(-130, -42, 260, 84);
 	noStroke();
-	fill(couleurs[b.type]);
+	fill(couleurs[tampon]);
 	textAlign(CENTER, CENTER);
 	textStyle(BOLD);
 	textSize(30);
-	text(t('rapport.tampon.' + b.type), 0, 0);
+	text(t('rapport.tampon.' + tampon), 0, 0);
 	textStyle(NORMAL);
 	pop();
 	// Score et texte de la fin
@@ -186,13 +189,14 @@ function fenetreRapport() {
 	textStyle(BOLD);
 	textSize(28);
 	fill(encre);
-	text(t('rapport.score', { s: b.score }) + ' — ' + b.titre, x + 56, ly, l - 112, 80);
+	textLeading(34); // titre sur deux lignes sans chevauchement
+	text(t('rapport.score', { s: b.score }) + ' — ' + (b.demission ? t('demission.rapportTitre') : b.titre), x + 56, ly, l - 112, 80);
 	textStyle(NORMAL);
 	ly += 84;
 	textSize(19);
 	textLeading(27);
 	fill(encre);
-	text(b.texte, x + 56, ly, l - 112, 90);
+	text(b.demission ? t('demission.rapportTexte') : b.texte, x + 56, ly, l - 112, 90);
 	ly += 100;
 	// Jauges
 	[['fluidite', b.jauges.fluidite], ['reputation', b.jauges.reputation], ['budget', b.jauges.budget]].forEach(([cle, v], i) => {
@@ -203,7 +207,7 @@ function fenetreRapport() {
 		text(t('jaugeTitre.' + cle) + ' ' + v + '/100', jx, ly);
 		fill('#ddd5c2');
 		rect(jx, ly + 30, jl, 12);
-		fill(v < 20 ? '#b3261e' : v < 40 ? '#a15c07' : '#1e7a3c');
+		fill(couleurPapier(v)); // prompt 48 : palette daltonisme
 		rect(jx, ly + 30, (jl * v) / 100, 12);
 	});
 	ly += 70;
@@ -223,18 +227,29 @@ function fenetreRapport() {
 		text(String(t('qualite.' + d.qualite)).toUpperCase(), x + 56, ly);
 		fill(encre);
 		textSize(17);
-		text(String(d.titre) + ' — ' + String(d.action || t('action.temps')), x + 56, ly + 20, l - 112, 24);
+		text(String(d.titre) + ' — ' + String(d.action || t('action.temps')), x + 56, ly + 20, l / 2 - 80, 24);
 		ly += 52;
 	});
-	if (Jeu.profilSemaine) {
-		const p = Jeu.profilSemaine();
-		fill(gris);
-		textSize(16);
-		text(t('fin.profil', { phrase: p.phrase }), x + 56, y + h - 120, l - 112, 60);
+	dessinerCourbesJauges(x + l / 2 + 40, y + 552, l / 2 - 96, 116, encre, gris); // prompt 48 : courbes des jauges
+	// Prompt 47 : profil de gestion et extrait du journal de bord du joueur
+	const m = lignesRapportMecaniques();
+	textSize(16);
+	textLeading(22);
+	if (m.carnet) {
+		fill(encre);
+		textStyle(ITALIC);
+		text(m.carnet, x + 56, y + h - 200, l - 112, 70);
+		textStyle(NORMAL);
 	}
+	fill(gris);
+	if (Jeu.profilSemaine) text(t('fin.profil', { phrase: Jeu.profilSemaine().phrase }), x + 56, y + h - 120, l - 112, 48);
+	if (m.gestion) text(m.gestion, x + 56, y + h - 66, l - 112, 44);
 	// Prochaine étape (sous la feuille)
 	const by = y + h + 20;
-	if (RAPPORT.chapitre) {
+	if (RAPPORT.chapitre && b.demission) {
+		bouton(L / 2 - 460, by + 10, 440, 64, t('demission.reprendre'), actionRapport); // prompt 47 : même semaine
+		bouton(L / 2 + 20, by + 10, 440, 64, t('menu.menuPrincipal'), quitterRapport, false, true);
+	} else if (RAPPORT.chapitre) {
 		textAlign(CENTER, TOP);
 		fill('#ffffff');
 		textSize(18);
