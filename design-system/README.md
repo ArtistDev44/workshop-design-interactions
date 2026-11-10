@@ -14,3 +14,4 @@ Fichiers :
 - `report-metropole-nantes-fr.html` — rapport HTML autonome généré par dembrandt.
 
 Remplace l'ancien `index.md` / `index.html` rédigés à la main. Pour régénérer : relancer la commande dembrandt ci-dessus puis recopier les sorties dans ce dossier.
+- `pixel-design-system-community.pdf` — « Pixel Design System (Community) », export PDF d'un fichier Figma communautaire, ajouté le 2026-11-10 comme référence visuelle (source et licence : [À COMPLÉTER]).
