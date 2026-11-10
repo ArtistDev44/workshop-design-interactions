@@ -184,7 +184,7 @@ Vérifié par `ls` / `grep` dans le dépôt : seuls les éléments existants son
 ### Livrables manquants
 - [x] `manifest.json` au modèle du livret : `site/public/manifest.json` (prompt 46 ; `authors`, `license` et la licence Hub'Eau restent `[À COMPLÉTER]`)
 - [ ] Cartel 80–120 mots : texte présent dans `site/src/content/oeuvres/pxe-nte001-g01-w01.json` (validé au build, affiché sur `/cartel/`) ; « satisfaction des usagers » remplacée par « budget » (prompt 46) — relecture finale par le groupe
-- [x] Captures : `site/public/captures/` — `hero.jpg`, `detail-01.jpg`, `process.jpg`, `thumb.jpg`, `demo.mp4` (27 s), issues du vrai rendu (prompt 46)
+- [x] Captures : `site/public/captures/` — `hero.jpg`, `detail-01.jpg`, `process.jpg`, `thumb.jpg`, `demo.mp4` (28 s, refaite au prompt 59), issues du vrai rendu (prompt 46)
 - [ ] QR codes `site/public/assets/qr-*.png` : vérifiés identiques à ceux générés vers l'URL canonique (prompt 46) — reste à tester le scan en conditions réelles
 - [ ] Checklist de robustesse complète au preflight (refresh, sans API, 1920×1080, console)
 - [x] Version finale sauvegardée : `rendu/PXE_NTE001_G01_NANTES-EN-REGULATION/` (lancée hors ligne par `file://`, sans erreur ; prompt 46)
@@ -192,7 +192,7 @@ Vérifié par `ls` / `grep` dans le dépôt : seuls les éléments existants son
 ### `[À COMPLÉTER]` qui attendent une saisie humaine du groupe
 - [ ] `site/README.md` : Auteurs (noms et rôles), Contributions (nominatives), AI usage (ce qui a été relu, réécrit, testé)
 - [ ] `site/src/content/oeuvres/pxe-nte001-g01-w01.json` : `auteurs`, `groupe` (et confirmer le numéro G01 de l'identifiant)
-- [ ] `site/public/source-sheet.md` : Contexte, 3 propriétés observables, 1 propriété volontairement écartée
+- [ ] `site/public/source-sheet.md` : Contexte et 3 propriétés observables remplis (prompt 59) ; reste à **confirmer la propriété volontairement écartée** proposée
 - [ ] `LICENSE` : choisir la licence du code (recommandation : **MIT**) et nommer les titulaires des droits
 - [ ] Déploiement : documenter comment Cloudflare Pages publie le site (intégration Git ou dépôt manuel) ; `.github/workflows/deploy.yml` publie sur GitHub Pages (404) — le garder, le corriger ou le supprimer
 

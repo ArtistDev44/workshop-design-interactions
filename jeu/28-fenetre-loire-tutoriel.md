@@ -56,3 +56,6 @@ Note de numérotation : le prompt demandait `jeu/18-fenetre-loire-tutoriel.md`, 
   - tutoriel lancé après les SMS, temps suspendu, Entrée et → avancent, Tab + Entrée passe, `tutoriel-vu = oui` ;
   - relance par le livre et par T dans l'aide.
 - Captures : jour pluvieux et nuit. Plus de château, d'arbres ni de quai ; grue grise au niveau des immeubles ; péniche sur la Loire.
+
+## Mise à jour (prompt 59, check-up du 10/11/2026)
+- `dessinerChateauDesDucs` n'existe plus dans `bureau.js` : la vue par la baie (`dessinerVueNantes`) garde la ville, la grue Titan, la Loire et la péniche.

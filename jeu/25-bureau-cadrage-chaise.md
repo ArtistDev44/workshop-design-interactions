@@ -35,3 +35,6 @@ Note de numérotation : le prompt demandait `jeu/18-bureau-cadrage-chaise.md`, m
   - porte et bouton Quitter ;
   - objets, dont la lampe en applique ;
   - FR et EN, en ligne et hors ligne.
+
+## Mise à jour (prompt 59, check-up du 10/11/2026)
+- `dessinerAccoudoirs` n'existe plus : avec le cadrage « sur la chaise » (`CADRAGE`), les accoudoirs sont hors champ et leur dessin a été retiré.

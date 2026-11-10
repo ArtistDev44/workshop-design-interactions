@@ -173,6 +173,12 @@ function draw() {
 	sourisVersEcran();
 	background(C.fond);
 	if (PC.etat === 'appli') {
+		// Prompt 50 : l'appli est une fenêtre de RégulOS, la barre des tâches reste visible
+		dessinerFondOS();
+		const n0 = entrerFenetreAppli();
+		noStroke();
+		fill(C.fond);
+		rect(0, 0, L, H);
 		if (ecran === 'accueil') dessinerAppliSansPartie(); // prompt 35 : l'accueil est sorti du PC (menu principal)
 		else {
 			dessinerJeu();
@@ -181,6 +187,8 @@ function draw() {
 		}
 		if (enPause) dessinerPause();
 		dessinerFermerAppli();
+		sortirFenetreAppli(n0);
+		dessinerBarreTaches();
 	} else dessinerOS();
 	dessinerIndicateurs(); // prompt 36 : app flottante, au premier plan
 	sourisRestaurer();
@@ -191,6 +199,8 @@ function draw() {
 		boutons = [];
 		dessinerReveil();
 	}
+	dessinerBoost(); // prompt 52 : cœur, pulsation rouge, lignes de vitesse, flou
+	dessinerMicro(); // prompt 54 : oscilloscope et mesures pendant l'appui
 	dessinerOffreDemission(); // prompt 47 : les trois jauges sous 20 → « Rendre son badge »
 	if (fenetre) {
 		boutons = []; // seule la fenêtre ouverte est cliquable
@@ -216,115 +226,15 @@ function majCurseur() {
 }
 let curseurMain = false;
 
-// =====================================================================
-// Écran d'accueil (Q34, Q56, Q14, Q16, Q55)
-// =====================================================================
-function dessinerAccueil() {
-	// Décor identique au jeu, en grand et atténué, avec la météo du moment si disponible
-	dessinerDecor({ x: 0, y: 0, l: L, h: H }, Jeu.meteoActuelle, 0.55, false);
-
-	// Titre
-	noStroke();
-	fill(C.texte);
-	textFont(POLICE_TEXTE);
-	textStyle(BOLD);
-	textAlign(CENTER, TOP);
-	textSize(88);
-	text(t('accueil.titre'), L / 2, 90);
-	textStyle(NORMAL);
-	textSize(28);
-	fill(C.accent);
-	text(t('accueil.sousTitre'), L / 2, 200);
-
-	// Liste des semaines
-	const opts = optionsAccueil();
-	const lp = 900;
-	const x0 = (L - lp) / 2;
-	let y = 262;
-	opts.forEach((o, i) => {
-		const sel = i === choixAccueil;
-		const h = 124;
-		panneau(x0, y, lp, h, sel ? C.accent : null);
-		textAlign(LEFT, TOP);
-		fill(o.desactive ? C.gris : sel ? C.accent : C.texte);
-		textFont(POLICE_TEXTE);
-		textStyle(sel ? BOLD : NORMAL);
-		textSize(30);
-		text(o.titre, x0 + 32, y + 20);
-		textStyle(NORMAL);
-		textFont(POLICE_DONNEES);
-		textSize(22);
-		fill(o.desactive ? C.gris : sel ? C.accent : C.texte);
-		text(o.detail, x0 + 32, y + 62);
-		fill(C.gris);
-		textSize(18);
-		text(o.info, x0 + 32, y + 92);
-		if (o.sauvegarde) {
-			// Prompt 33 : badge « sauvegardée » en haut à droite de la carte de la semaine
-			textAlign(RIGHT, TOP);
-			fill(C.accent);
-			text(t('accueil.sauvegardee', { n: o.sauvegarde.etat.dossierIndex + 1, total: o.sauvegarde.etat.complet.paquet.length }), x0 + lp - 24, y + 66);
-			textAlign(LEFT, TOP);
-		}
-		boutons.push({ x: x0, y, l: lp, h, action: () => (choixAccueil = i) });
-		y += h + 14;
-	});
-
-	// Prompt 33 : « Continuer la partie » (sauvegarde la plus récente), visible seulement s'il y en a une
-	const recente = Sauvegarde.lister()[0];
-	if (recente) {
-		bouton(80, 262, 380, 76, t('accueil.continuer'), continuerPartie);
-		textFont(POLICE_DONNEES);
-		textSize(17);
-		fill(C.texte);
-		textAlign(LEFT, TOP);
-		const d = new Date(recente.sauvegardeLe);
-		text(
-			t('accueil.continuerDetail', {
-				semaine: Sauvegarde.libelleSemaine(recente.semaine),
-				n: recente.etat.dossierIndex + 1,
-				total: recente.etat.complet.paquet.length,
-				heure: String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'),
-			}),
-			80,
-			350,
-			380,
-			80,
-		);
-	}
-
-	// Bouton Jouer
-	const bl = 320;
-	bouton((L - bl) / 2, y + 24, bl, 76, t('accueil.jouer'), lancerPartie, opts[choixAccueil] && opts[choixAccueil].desactive);
-	bouton((L - bl) / 2 - 260, y + 34, 220, 56, t('accueil.parametres'), () => ouvrir('parametres'), false, true);
-	selecteurLangue(L - 80, 40);
-	bouton((L + bl) / 2 + 40, y + 34, 220, 56, t('accueil.aide'), () => ouvrir('aide'), false, true);
-
-	// Indicateur « mode hors ligne » (Q34) : discret, gris, monospace
-	textFont(POLICE_DONNEES);
-	textSize(20);
-	textAlign(CENTER, BOTTOM);
-	fill(C.gris);
-	const statut = Jeu.enLigne === null ? t('accueil.verif') : Jeu.enLigne ? '' : t(Confort.Reglages.horsLigneForce ? 'accueil.horsLigneForce' : 'accueil.horsLigne');
-	text(statut, L / 2, H - 70);
-	textSize(16);
-	text(t('accueil.pied'), L / 2, H - 36);
-}
-
-/** Prompt 43 : « F ▼  R ▲  B ▼ » d'après les signes de base des effets (réputation de « retenir » : +4 / +8, Q58) */
-function effetsResumes(cle) {
-	if (cle === 'rien') return t('effets.rien');
-	const base = Jeu.REGLAGES.effets[cle].base;
-	const fl = (v) => (v === null || v > 0 ? '▲' : v < 0 ? '▼' : '=');
-	return t('effets.resume', { f: fl(base[0]), r: fl(base[1]), b: fl(base[2]) });
-}
+// Prompt 59 : l'ancien écran d'accueil du PC (dessinerAccueil, hors parcours depuis le prompt 35) et le résumé des
+// effets sous les actions (effetsResumes, retiré au prompt 50) ont été supprimés : ils n'étaient plus appelés.
 
 /** Prompt 43 : bandeau d'état en bas de l'écran du jeu — ce qu'il faut faire maintenant */
 function bandeauEtat() {
 	if (ecran !== 'jeu') return;
 	const cle = { attente: 'attente', reveil: 'attente', decision: 'decision', contradiction: 'contradiction', conflit: 'conflit', narration: 'narration', mail: 'mail', fin: 'fin' }[phase];
 	if (!cle) return;
-	const txt = t('etat.' + cle, { x: IMMERSION.compression });
+	const txt = phase === 'attente' && Jeu.journeeFinie && Jeu.journeeFinie() ? t('etat.finJournee', { fin: Jeu.formaterHeure(Jeu.finJournee()) }) : t('etat.' + cle, { x: IMMERSION.compression }); // prompt 51
 	const urgent = ['decision', 'contradiction', 'conflit'].includes(phase);
 	noStroke();
 	fill(urgent ? C.primaire : 'rgba(255,255,255,0.08)');
@@ -383,15 +293,21 @@ function nouveauDossier() {
 	if (Jeu.conflit()) phase = 'conflit';
 	else if (Jeu.dossierCourant().contradiction) phase = 'contradiction';
 	else phase = 'decision';
+	annoncer(t('annonce.signalement', { quoi: t('enq.signalement.' + dInc.type) })); // prompt 53 : arrivée annoncée (aria-live)
 }
 
 /* Décision du joueur (ou compteur à 0 → 'temps', Q25) */
 function decider(action) {
 	if (phase !== 'decision' && !(action === 'temps' && phase === 'contradiction')) return;
 	if (Jeu.actionBloquee && action === Jeu.actionBloquee()) return; // erreur système : action indisponible
+	// Prompt 56 : mesures de la décision (temps réel de décision, sources consultées) pour le rapport de semaine
+	const mesures = { dureeMs: Math.max(0, millis() - arriveeDossier), sources: typeof enqueteDossier === 'function' ? Object.keys(enqueteDossier().revele).length : 0 };
 	dernierResultat = Jeu.decider(action, sourceChoisie);
 	if (!dernierResultat) return;
-	annoncer(t('annonce.decision', { titre: dernierResultat.narration.titre, texte: dernierResultat.narration.texte }));
+	if (action !== 'temps') Object.assign(dernierResultat, mesures);
+	else dernierResultat.sources = mesures.sources;
+	const dj = dernierResultat.deltas.map((v, i) => t('jaugeTitre.' + ['fluidite', 'reputation', 'budget'][i]) + ' ' + (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v)).join(', ');
+	annoncer(t('annonce.decision', { titre: dernierResultat.narration.titre, texte: dernierResultat.narration.texte }) + ' ' + dj + '.'); // prompt 53 : variations annoncées
 	Confort.Son.clicAction(action); // prompt 44 § 4 : un clic de console par action
 	Confort.Son.jauges(dernierResultat.deltas); // § 5 : chute brutale ou remontée nette, audibles
 	phase = 'narration';
@@ -623,7 +539,7 @@ const carteVisible = () => vue === 'poste' && PC.etat === 'appli' && ecran === '
 /** Molette au-dessus de la carte : zoom (renvoie true si l'événement est consommé) */
 function zoomCarteMolette(delta) {
 	if (!carteVisible()) return false;
-	const m = sourisEcranPC();
+	const m = sourisAppli();
 	if (m.x < CARTE.x || m.x > CARTE.x + CARTE.l || m.y < CARTE.y || m.y > CARTE.y + CARTE.h) return false;
 	zoomerCarte(delta < 0 ? 1.2 : 1 / 1.2, m.x, m.y);
 	return true;
@@ -638,7 +554,7 @@ function commandesCarte() {
 			bornerCarte();
 		} else v.prise = null;
 	}
-	if (v.k > 1) boutons.push({ x: CARTE.x, y: CARTE.y, l: CARTE.l, h: CARTE.h, action: () => (v.prise = { x: sourisEcranPC().x, y: sourisEcranPC().y, px: v.px, py: v.py }) });
+	if (v.k > 1) boutons.push({ x: CARTE.x, y: CARTE.y, l: CARTE.l, h: CARTE.h, action: () => (v.prise = { x: sourisAppli().x, y: sourisAppli().y, px: v.px, py: v.py }) });
 	const bx = CARTE.x + CARTE.l - 64;
 	[['+', () => zoomerCarte(1.4)], ['−', () => zoomerCarte(1 / 1.4)], ['⟲', reinitialiserCarte]].forEach(([lib, act], i) => bouton(bx, CARTE.y + 16 + i * 56, 48, 48, lib, act, false, true));
 	if (v.k > 1) {
@@ -694,7 +610,7 @@ function dessinerDecor(zone, meteo, opacite, avecCadre, sansLegende) {
 			l.traces.forEach(tracer);
 		}
 	}
-	dessinerMeteo(zone, meteo, opacite, sansLegende, avecCadre); // carte de l'appli : légende seule, sans soleil ni nuages
+	if (!avecCadre) dessinerMeteo(zone, meteo, opacite, sansLegende, false); // prompt 49 : plus aucune météo sur la carte de l'appli (ni pictos, ni ligne chiffrée)
 	drawingContext.restore();
 	pop();
 }
@@ -765,15 +681,15 @@ function dessinerPictosMeteo(zone, m, opacite, pluie, vent, chaud) {
 // ——— Carte : état des lignes (Q29) — vert à l'heure, orange retard, rouge clignotant incident actif ———
 function etatsLignes(dActuel) {
 	const etats = new Map();
-	(Jeu.etat.dossiers || []).forEach((d) => (d.lignes || []).forEach((n) => etats.set(n, 'retard')));
-	if (dActuel) (dActuel.lignes || []).forEach((n) => etats.set(n, 'incident'));
+	// Prompt 50 : seuls les dossiers déjà traités, et le dossier courant une fois la carte consultée
+	(Jeu.etat.dossiers || []).forEach((d, i) => i < Jeu.index && (d.lignes || []).forEach((n) => etats.set(n, 'retard')));
+	if (dActuel && dossierConnu(Jeu.index)) (dActuel.lignes || []).forEach((n) => etats.set(n, 'incident'));
 	return etats;
 }
 
 function dessinerLignesEtat(zone, d) {
 	if (!Jeu.lignes) return;
 	const etats = etatsLignes(d);
-	const clignote = reduireAnimations ? true : Math.floor(millis() / 500) % 2 === 0;
 	push();
 	drawingContext.save();
 	drawingContext.beginPath();
@@ -786,8 +702,12 @@ function dessinerLignesEtat(zone, d) {
 	for (const l of liste) {
 		const e = etats.get(l.nom);
 		if (e === 'incident') {
-			stroke(C.rouge);
-			strokeWeight(clignote ? 8 : 4);
+			// Prompt 53 : la ligne du dossier pulse doucement (épaisseur et opacité), sans clignotement sec
+			const p = pulsationDouce(1.2);
+			const c = color(C.rouge);
+			c.setAlpha(255 * (0.6 + 0.4 * p));
+			stroke(c);
+			strokeWeight(4 + 5 * p);
 		} else if (e === 'retard') {
 			stroke(C.orange);
 			strokeWeight(5);
@@ -807,6 +727,7 @@ function dessinerLignesEtat(zone, d) {
 function dessinerListeLignes(zone, dActuel) {
 	const parLigne = new Map();
 	(Jeu.etat.dossiers || []).forEach((d, i) => {
+		if (!dossierConnu(i)) return; // prompt 50 : pas de lignes révélées d'avance
 		(d.lignes || []).forEach((n) => {
 			const prev = parLigne.get(n) || { nom: n, alerte: false, retard: null };
 			prev.alerte = prev.alerte || d.type !== 'ligne en difficulté' || i === Jeu.index;
@@ -814,7 +735,7 @@ function dessinerListeLignes(zone, dActuel) {
 			parLigne.set(n, prev);
 		});
 	});
-	const actives = new Set((dActuel && dActuel.lignes) || []);
+	const actives = new Set((dActuel && dossierConnu(Jeu.index) && dActuel.lignes) || []);
 	const items = Array.from(parLigne.values()).sort(
 		(a, b) => (actives.has(b.nom) - actives.has(a.nom)) || (b.alerte - a.alerte) || ((b.retard || 0) - (a.retard || 0)),
 	);
@@ -832,9 +753,14 @@ function dessinerListeLignes(zone, dActuel) {
 	let y = zone.y + 58;
 	if (!items.length) {
 		textSize(18);
+		textLeading(26);
 		fill(C.gris);
-		text(t('lignes.aucune'), zone.x + 18, y);
-		y += 120;
+		// Prompt 50 : tant que la carte n'est pas consultée, aucune ligne n'est connue
+		const dC = Jeu.dossierCourant ? Jeu.dossierCourant() : null;
+		const semaineSansLigne = !(Jeu.paquet || []).some((x) => x.lignes && x.lignes.length);
+		const cache = !semaineSansLigne || (dC && dC.lignes && dC.lignes.length && !dossierConnu(Jeu.index));
+		text(t(cache ? 'lignes.aConsulter' : 'lignes.aucune').replace(/\n/g, ' '), zone.x + 18, y, zone.l - 36, 220);
+		y += 230;
 	}
 	for (const it of items.slice(0, Jeu.objectifDuJour ? 10 : 14)) {
 		const actif = actives.has(it.nom);
@@ -860,9 +786,10 @@ function dessinerListeLignes(zone, dActuel) {
 		textFont(POLICE_TEXTE);
 		textSize(14);
 		fill(C.texte);
-		text(t('bandeau.objectif', { libelle: o.libelle, v: Jeu.jauges[o.jauge] }), zone.x + 18, by + 12, zone.l - 36, 50);
+		textLeading(25);
+		text(t('bandeau.objectif', { libelle: o.libelle, v: Jeu.jauges[o.jauge] }), zone.x + 18, by + 12, zone.l - 36, 78);
 		fill(mod ? C.orange : C.gris);
-		text(mod ? mod.libelle + (mod.actionBloquee ? t('bandeau.bloquee', { action: Jeu.REGLAGES.effets[mod.actionBloquee].nom }) : '') + ' · ' + Math.ceil((mod.fin - millis()) / 1000) + ' s' : t('bandeau.aucunMod'), zone.x + 18, by + 60, zone.l - 36, 66);
+		text(mod ? mod.libelle + (mod.actionBloquee ? t('bandeau.bloquee', { action: Jeu.REGLAGES.effets[mod.actionBloquee].nom }) : '') + ' · ' + Math.ceil((mod.fin - millis()) / 1000) + ' s' : t('bandeau.aucunMod'), zone.x + 18, by + 92, zone.l - 36, 50);
 	}
 	// Légende
 	const ly = zone.y + zone.h - 120;
@@ -888,13 +815,14 @@ function dessinerJauges() {
 	panneau(z.x, z.y, z.l, z.h);
 	cibleGuide('jauges', z.x, z.y, z.l, z.h); // prompt 37
 	const jauges = Jeu.jauges || { fluidite: 50, reputation: 50, budget: 50 }; // départ 50 (Q40)
+	const aff = jaugesAffichees(); // prompt 53 : barres qui glissent vers leur nouvelle valeur
 	const defs = [
-		[t('jaugeTitre.fluidite'), jauges.fluidite],
-		[t('jaugeTitre.reputation'), jauges.reputation],
-		[t('jaugeTitre.budget'), jauges.budget],
+		[t('jaugeTitre.fluidite'), jauges.fluidite, 'fluidite'],
+		[t('jaugeTitre.reputation'), jauges.reputation, 'reputation'],
+		[t('jaugeTitre.budget'), jauges.budget, 'budget'],
 	];
 	const lb = (z.l - 48 - 2 * 20) / 3;
-	defs.forEach(([nom, v], i) => {
+	defs.forEach(([nom, v, cle], i) => {
 		const x = z.x + 24 + i * (lb + 20);
 		textAlign(LEFT, TOP);
 		noStroke();
@@ -907,22 +835,24 @@ function dessinerJauges() {
 		text(Math.round(v), x + lb, z.y + 18);
 		fill(C.piste);
 		rect(x, z.y + 56, lb, 22, 4);
-		// Jauge < 20 : clignotement discret (Q46), fixe si animations réduites
-		const critique = v < 20;
-		const visible = !critique || reduireAnimations || Math.floor(millis() / 700) % 2 === 0;
-		fill(critique ? C.rougeFonce : v < 40 ? C.orange : C.vert);
-		if (!visible) fill('rgba(255,197,194,0.45)');
-		rect(x, z.y + 56, (lb * constrain(v, 0, 100)) / 100, 22, 4);
+		// Jauge < 20 (Q46) : pulsation douce en opacité (prompt 53), fixe si animations réduites
+		const va = aff[cle];
+		const critique = va < 20;
+		const c = color(critique ? C.rougeFonce : va < 40 ? C.orange : C.vert);
+		if (critique) c.setAlpha(255 * opaciteCritique());
+		fill(c);
+		rect(x, z.y + 56, (lb * constrain(va, 0, 100)) / 100, 22, 4);
 		// Prompt 43 : repères des seuils réels (20 critique, 40 orange) sur chaque jauge
 		fill(255, 255, 255, 170);
 		[20, 40].forEach((s) => rect(x + (lb * s) / 100 - 1, z.y + 52, 2, 30));
+		dessinerDeltasJauge(cle, x, z.y + 56, lb); // prompt 53 : delta réel qui flotte puis s'efface
 	});
 }
 
 // ——— Dossier courant : ligne + retard + raison en priorité (Q5), glissement depuis la droite (Q10) ———
 function dessinerDossier(d, meteo) {
 	const base = { x: DROITE.x, y: DROITE.y + 130, l: DROITE.l, h: DROITE.h - 130 };
-	const tA = reduireAnimations ? 1 : constrain((millis() - arriveeDossier) / 450, 0, 1);
+	const tA = reduireAnimations ? 1 : constrain((millis() - arriveeDossier) / 300, 0, 1); // prompt 53 : 300 ms, ease out
 	const decal = (1 - easeOut(tA)) * (L - base.x);
 	const x = base.x + decal;
 	panneau(x, base.y, base.l, base.h);
@@ -937,6 +867,7 @@ function dessinerDossier(d, meteo) {
 	}
 
 	// Compteur : barre horizontale qui se vide (Q6) — durée selon la semaine (Q16, Q55)
+	figerCompteurRalenti(); // prompt 55 : pendant le ralenti, le compteur ne descend pas
 	const duree = ((Jeu.etat.semaine && Jeu.etat.semaine.difficulte && Jeu.etat.semaine.difficulte.compteur_s) || 30) * 1000 * facteurDuree * facteurLecture(); // prompt 48 : lecture facile ×1,5
 	const reste = constrain(1 - (millis() - debutCompteur) / duree, 0, 1);
 	// Prompt 44 § 3 : tic-tac sous les 10 dernières secondes, qui s'accélère (1 s → 0,5 s → 0,25 s)
@@ -951,13 +882,14 @@ function dessinerDossier(d, meteo) {
 	noStroke();
 	fill(C.piste);
 	rect(x + 24, base.y + 22, base.l - 48, 14, 7);
-	fill(reste < 0.25 ? C.rougeFonce : C.primaire); // prompt 39 : compteur aux couleurs du DS
+	fill(couleurCompteur(resteMs)); // prompt 53 : sous 10 s, rouge qui pulse doucement
 	rect(x + 24, base.y + 22, (base.l - 48) * reste, 14, 7);
 	textFont(POLICE_DONNEES);
 	textSize(16);
 	textAlign(RIGHT, TOP);
 	fill(C.gris);
 	text(Math.ceil((reste * duree) / 1000) + ' s', x + base.l - 24, base.y + 42);
+	dessinerRalenti(x, base); // prompt 55 : bouton « Ralenti (R) » ou « Pause — 7 s »
 	if (reste * duree < 5000 && reste > 0 && !alerteTempsJouee && (phase === 'decision' || phase === 'contradiction')) {
 		alerteTempsJouee = true;
 		Confort.Son.bip('alerte'); // plus que 5 secondes
@@ -972,59 +904,10 @@ function dessinerDossier(d, meteo) {
 
 	// En-tête du dossier
 	textAlign(LEFT, TOP);
-	text(t('dossier.entete', { n: Jeu.index + 1, total: Jeu.paquet.length, type: tSi('type.' + d.type, d.type).toUpperCase(), affluence: d.affluence ? t('dossier.affluence') : '' }), x + 32, base.y + 42);
+	text(t('dossier.entete', { n: Jeu.index + 1, total: Jeu.paquet.length, type: tSi('type.' + d.type, d.type).toUpperCase(), affluence: '' }), x + 32, base.y + 42); // prompt 50 : l'affluence se découvre dans l'agenda
 
-	// Priorité : ligne, retard, raison
-	const ligne = d.lignes && d.lignes.length ? t('dossier.ligne', { lignes: d.lignes.join(', ') }) : t('dossier.ligneInconnue');
-	fill(C.texte);
-	textFont(POLICE_TEXTE);
-	textStyle(BOLD);
-	textSize(44);
-	text(ligne, x + 32, base.y + 84);
-	textStyle(NORMAL);
-	textFont(POLICE_DONNEES);
-	textSize(30);
-	fill(d.retard !== null ? C.rouge : C.gris);
-	text(d.retard !== null ? t('dossier.retard', { retard: d.retard }) : t('dossier.retardInconnu'), x + 32, base.y + 146);
-	if (d.retard === null) {
-		textSize(16);
-		text(t('dossier.retardArchive'), x + 32, base.y + 184);
-	}
-	fill(C.texte);
-	textFont(POLICE_TEXTE);
-	textSize(26);
-	text(t('dossier.raison', { nature: d.nature }), x + 32, base.y + 212, base.l - (d.contradiction ? 300 : 64), 60);
-
-	// Badge « contradiction » si deux sources se contredisent (Q9) — calculé au prompt 17
-	if (d.contradiction) {
-		fill(C.orange);
-		rect(x + base.l - 230, base.y + 232, 198, 36, 18);
-		fill(C.panneau);
-		textFont(POLICE_DONNEES);
-		textSize(18);
-		textAlign(CENTER, CENTER);
-		text(t('dossier.contradiction'), x + base.l - 131, base.y + 250);
-		textAlign(LEFT, TOP);
-	}
-
-	// Détails (en dessous) : date, source, texte de la source, météo
-	stroke(C.piste);
-	strokeWeight(2);
-	line(x + 32, base.y + 276, x + base.l - 32, base.y + 276);
-	noStroke();
-	textFont(POLICE_DONNEES);
-	textSize(18);
-	fill(C.gris);
-	text(dateLongue(d.date) + (d.heure ? ' · ' + d.heure : ''), x + 32, base.y + 292);
-	fill(C.texte);
-	textFont(POLICE_TEXTE);
-	textSize(21);
-	text(t('dossier.citation', { texte: d.texte_source }), x + 32, base.y + 326, base.l - 64, 120);
-	textFont(POLICE_DONNEES);
-	textSize(16);
-	fill(C.gris);
-	text(t('dossier.source', { source: d.source }), x + 32, base.y + 452, base.l - 64, 50);
-	// Prompt 43 : la météo du jour est déjà affichée sous la carte → plus répétée ici
+	// Prompt 50 : signalement vague, faits révélés source par source (enquete.js)
+	dessinerEnquete(d, x, base);
 
 	const ab = (base.l - 64 - 16) / 2;
 	if (phase === 'contradiction') {
@@ -1057,26 +940,13 @@ function dessinerDossier(d, meteo) {
 		textSize(16);
 		fill(C.gris);
 		text(t('dossier.sourceRetenue', { libelle: d.contradiction[sourceChoisie].libelle }), x + 32, base.y + base.h - 236, base.l - 64, 30);
-	} else if (Jeu.conseil) {
-		// Conseil contextuel (prompt 23 § 1) : une phrase factuelle, jamais l'action à choisir
-		textFont(POLICE_TEXTE);
-		textSize(15);
-		fill(C.orange);
-		text(t('dossier.conseil', { conseil: Jeu.conseil(d) }), x + 32, base.y + base.h - 252, base.l - 64, 48);
-	}
+	} // prompt 50 : plus de conseil — le joueur enquête lui-même
 	const bloquee = Jeu.actionBloquee ? Jeu.actionBloquee() : null;
 	actions.forEach(([touche, nom, cle], i) => {
 		const bx = x + 32 + (i % 2) * (ab + 16);
 		const by = base.y + base.h - 200 + Math.floor(i / 2) * 88;
 		bouton(bx, by, ab, 72, touche + '  ' + nom + (cle === bloquee ? t('dossier.indispo') : ''), () => decider(cle), cle === bloquee, i === 3);
-		// Prompt 43 : effets habituels de l'action sur les trois jauges (signes de la table réelle REGLAGES.effets)
-		noStroke();
-		fill(255, 255, 255, 215);
-		textFont(POLICE_DONNEES);
-		textStyle(NORMAL);
-		ajusterTaille(effetsResumes(cle), ab - 20, 13, 10);
-		textAlign(CENTER, BOTTOM);
-		text(effetsResumes(cle), bx + ab / 2, by + 69);
+		// Prompt 50 : plus de flèches d'effet sous les boutons — les effets s'apprennent en jouant (journal, mail, rapport)
 	});
 	cibleGuide('actions', x + 32, base.y + base.h - 200, base.l - 64, 160); // prompt 37
 }
@@ -1487,7 +1357,7 @@ function keyPressed() {
 	// Langue (prompt 24) : L bascule partout, sans toucher à la partie
 	if (key === 'l' || key === 'L') return Langue.suivante(), false;
 	// Prompt 47 : inspection, démission, palmarès ; J = journal de bord, D = rendre son badge
-	if (toucheMecaniques() || toucheAccessibilite()) return false; // prompts 47 et 48
+	if (toucheMecaniques() || toucheAccessibilite() || toucheJournee()) return false; // prompts 47, 48 et 51
 	// Fenêtres ouvertes : elles captent le clavier
 	if (fenetre) {
 		if (keyCode === ESCAPE || (fenetre === 'aide' && (key === 'h' || key === 'H' || key === '?'))) return fermer(), false;
@@ -1536,7 +1406,7 @@ function keyPressed() {
 			return false;
 		}
 		if (keyCode === ENTER || keyCode === RETURN || key === ' ') ouvrirObjetBureau(focusBureau > 0 ? OBJETS_BUREAU[focusBureau].nom : 'ecran');
-		if (key === 'm' || key === 'M') basculerSon();
+		if (key === 'm' || key === 'M') toucheMEnfoncee(); // prompt 54 : brève = son, maintenue = micro
 		if (key === 'h' || key === 'H' || key === '?') ouvrir('aide');
 		return false;
 	}
@@ -1589,13 +1459,16 @@ function keyPressed() {
 	if (phase === 'mail' && (keyCode === ENTER || keyCode === RETURN)) return journeeSuivante(), false;
 	// Touches valables partout
 	if (key === 'h' || key === 'H' || key === '?') return ouvrir('aide'), false;
-	if (key === 'm' || key === 'M') return basculerSon(), false;
+	if (key === 'm' || key === 'M') return toucheMEnfoncee(), false; // prompt 54 : brève = son, maintenue = micro
 	if (ecran === 'jeu') {
-		if (key === 'r' || key === 'R') return ouvrir('reset'), false;
+		// Prompt 55 : pendant un dossier, R = ralenti tactique ; sinon R = recommencer la semaine (Q38)
+		if (key === 'r' || key === 'R') return ['decision', 'contradiction', 'conflit'].includes(phase) ? demanderRalentiUI() : ouvrir('reset'), false;
 		if (key === 'p' || key === 'P') return basculerPause(), false;
 	}
 	if (ecran === 'accueil') {
 		if (keyCode === ENTER || keyCode === RETURN) ouvrirMenuPrincipal(); // prompt 35 : plus d'accueil dans le PC
+	} else if ((phase === 'decision' || phase === 'contradiction') && toucheEnquete()) {
+		// prompt 50 : 5 à 8 consultent une source
 	} else if (phase === 'decision') {
 		const actions = { 1: 'devier', 2: 'retenir', 3: 'renfort', 0: 'rien', ' ': 'rien' };
 		if (actions[key]) decider(actions[key]);
@@ -1661,12 +1534,16 @@ function dessinerPause() {
 
 function dessinerFenetre() {
 	if (fenetre === 'telephone') return fenetreTelephone(); // prompt 42 : le téléphone en main a son propre voile
+	if (fenetre === 'cafe') return fenetreCafe(); // prompt 52 : même animation, la tasse en main
 	voile();
 	if (fenetre === 'rapport') return fenetreRapport(); // prompt 41
+	if (fenetre === 'mailFin') return fenetreMailFin(); // prompt 56
 	if (fenetre === 'inspection') return fenetreInspection(); // prompt 47
 	if (fenetre === 'demission') return fenetreDemission(); // prompt 47
 	if (fenetre === 'palmares') return fenetrePalmares(); // prompt 47
 	if (fenetre === 'accessibilite') return fenetreAccessibilite(); // prompt 48
+	if (fenetre === 'partir') return fenetrePartir(); // prompt 51
+	if (fenetre === 'blame') return fenetreBlame(); // prompt 51
 	if (fenetre === 'aide') return fenetreAide();
 	if (fenetre === 'reset') return fenetreReset();
 	if (fenetre === 'parametres') return fenetreParametres();
@@ -1774,7 +1651,7 @@ function fenetreReset() {
 /** Prompt 44 : morceau suivant (mémorisé), joué tout de suite si le son est actif */
 function musiqueSuivante() {
 	const liste = Confort.Son.musique.pistes();
-	const i = liste.indexOf(Confort.Reglages.musique || 'chillin');
+	const i = liste.indexOf(Confort.Reglages.musique || 'softly');
 	const suivante = liste[(i + 1) % liste.length];
 	Confort.Son.demarrer();
 	Confort.Son.musique.changer(suivante);
@@ -1855,7 +1732,7 @@ function fenetreParametres() {
 	textSize(18);
 	fill(C.gris);
 	text(t('param.touche', { k: '8' }), x + 560, ym + 36);
-	bouton(x + l - 48 - 280, ym + 8, 280, 56, '♪ ' + t('musique.' + (Confort.Reglages.musique || 'chillin')), musiqueSuivante, false, true);
+	bouton(x + l - 48 - 280, ym + 8, 280, 56, '♪ ' + t('musique.' + (Confort.Reglages.musique || 'softly')), musiqueSuivante, false, true);
 	textFont(POLICE_DONNEES);
 	textSize(14);
 	fill(C.gris);

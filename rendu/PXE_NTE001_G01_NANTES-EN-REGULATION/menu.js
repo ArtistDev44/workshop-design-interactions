@@ -363,7 +363,9 @@ function toucheMenu() {
 
 /** Appli de régulation sans partie en cours (prompt 35) : l'accueil n'est plus dans le PC */
 function dessinerAppliSansPartie() {
-	background(C.fond);
+	noStroke();
+	fill(C.fond);
+	rect(0, 0, L, H); // prompt 50 : pas de background() dans la fenêtre de l'appli (il ignore la transformation)
 	const l = 900;
 	const h = 360;
 	const x = (L - l) / 2;

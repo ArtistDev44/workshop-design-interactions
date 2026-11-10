@@ -155,8 +155,8 @@ function textePixel(g, txt, x, y, c) {
 
 // ——— La pièce : open space moderne, vue à la première personne depuis la chaise ———
 // Le joueur est assis : le plateau occupe le bas de l'image (en perspective), le grand écran est
-// face à lui, les accoudoirs de son fauteuil dépassent dans les coins. Derrière, une baie vitrée
-// donne sur Nantes : le Château des ducs de Bretagne (à gauche) et la grue Titan jaune (à droite).
+// face à lui (les accoudoirs sont hors champ depuis le cadrage du prompt 31). Derrière, une baie vitrée
+// donne sur Nantes : silhouettes de la ville et grue Titan jaune (à droite), la Loire et sa péniche au premier plan.
 const BAIE_BAS = 150; // bas de la baie vitrée
 const PLATEAU_Y = 170; // bord arrière du plateau
 /* Prompt 40 : la pièce est dessinée en PLANS (calques transparents 480×270), chacun décalé avec la caméra

@@ -35,8 +35,9 @@ function avancementTelephone() {
 	return reduireAnimations ? 1 : easeOut(constrain((millis() - TEL_MAIN.debut) / DUREE_TEL_MAIN, 0, 1));
 }
 
-/** Dessine le téléphone tenu en main. contenu(ecran, pret) dessine l'écran ({x, y, l, h}). */
-function dessinerTelephoneEnMain(contenu) {
+/** Dessine le téléphone tenu en main. contenu(ecran, pret) dessine l'écran ({x, y, l, h}).
+ * Prompt 52 : objet = true → même animation et même main, sans la coque du téléphone (tasse de café). */
+function dessinerTelephoneEnMain(contenu, objet) {
 	const k = avancementTelephone();
 	if (k <= 0) return;
 	const pl = TEL_MAIN.l;
@@ -46,18 +47,20 @@ function dessinerTelephoneEnMain(contenu) {
 	noStroke();
 	fill(13, 12, 12, 150 * k); // la pièce reste visible, assombrie
 	rect(0, 0, L, H);
-	// Ombre portée puis coque fine (coins arrondis : objet physique, hors Pixel DS)
-	fill(0, 0, 0, 90);
-	rect(x + 18, y + 22, pl, ph, 60);
-	fill('#0a0b0c');
-	rect(x, y, pl, ph, 60);
-	fill('#2c3036');
-	rect(x + pl - 4, y + 220, 6, 90, 3); // bouton latéral
 	const e = { x: x + 16, y: y + 16, l: pl - 32, h: ph - 32 };
-	fill('#0d0c0c');
-	rect(e.x, e.y, e.l, e.h, 46);
-	fill('#0a0b0c');
-	circle(x + pl / 2, e.y + 24, 16); // caméra
+	if (!objet) {
+		// Ombre portée puis coque fine (coins arrondis : objet physique, hors Pixel DS)
+		fill(0, 0, 0, 90);
+		rect(x + 18, y + 22, pl, ph, 60);
+		fill('#0a0b0c');
+		rect(x, y, pl, ph, 60);
+		fill('#2c3036');
+		rect(x + pl - 4, y + 220, 6, 90, 3); // bouton latéral
+		fill('#0d0c0c');
+		rect(e.x, e.y, e.l, e.h, 46);
+		fill('#0a0b0c');
+		circle(x + pl / 2, e.y + 24, 16); // caméra
+	}
 	if (contenu) contenu(e, k >= 1);
 	dessinerMain(x, y, pl, ph);
 }

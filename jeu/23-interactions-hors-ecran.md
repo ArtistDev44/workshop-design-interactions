@@ -41,3 +41,6 @@ Note de numérotation : le prompt demandait `jeu/16-interactions-hors-ecran.md`,
   - fenêtre : météo réelle du jour en ligne, instantané local du 12/10/2026 hors ligne ;
   - jauges inchangées ;
   - Tab ×5 → lampe, Entrée → bascule.
+
+## Mise à jour (prompt 59, check-up du 10/11/2026)
+- `dessinerAmbianceLampe` a été remplacé au prompt 51 par `dessinerEclairage` (`journee.js`) : lampe, stores et heure assombrissent toute la pièce, halo de l'écran.

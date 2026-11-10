@@ -7,12 +7,13 @@
 function verifierMecaniques() {
 	if (MENU.actif || ecran !== 'jeu' || phase !== 'attente' || fenetre || smsActif || tutoriel || TRANSITION_JOUR || enPause || CARNET.ouvert) return;
 	if (typeof CINE !== 'undefined' && CINE) return;
+	if (verifierBlame()) return; // prompt 51 : le mail du patron passe avant tout
 	const i = Jeu.inspection && !Jeu.inspection.reponse ? Jeu.inspection : Jeu.preparerInspection();
 	if (i && !i.reponse) ouvrirInspection();
 }
 /** Le temps s'arrête pendant l'inspection et quand le journal de bord est ouvert */
 function mecaniquesSuspendentTemps() {
-	return fenetre === 'inspection' || fenetre === 'demission' || CARNET.ouvert;
+	return fenetre === 'inspection' || fenetre === 'demission' || fenetre === 'partir' || fenetre === 'blame' || fenetre === 'cafe' || CARNET.ouvert;
 }
 
 // ——— Inspection surprise (une fois par semaine) ———
@@ -229,7 +230,7 @@ function fenetrePalmares() {
 		textSize(20);
 		const j = s.m.jauges || {};
 		text(t('palmares.jauges', { f: j.fluidite, r: j.reputation, b: j.budget }), x + 56 + cols[2], ly + 6, 340, 60);
-		text(s.m.profil ? t('profil.' + s.m.profil) : '—', x + 56 + cols[3], ly + 6, 320, 60);
+		text((s.m.profil ? t('profil.' + s.m.profil) : '—') + (s.m.defis ? ' · ' + t('palmares.defis', { n: s.m.defis }) : ''), x + 56 + cols[3], ly + 6, 320, 60); // prompt 56 : défis tenus
 	});
 	textFont(POLICE_DONNEES);
 	textSize(18);

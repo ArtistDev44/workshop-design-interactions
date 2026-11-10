@@ -991,6 +991,7 @@
 	// =====================================================================
 
 	/** § 1 — Conseil contextuel : une phrase, jamais une action recommandée */
+	// Prompt 59 : plus affiché depuis le prompt 50 (le joueur enquête lui-même) ; conservé pour la doc jeu/17
 	Jeu.conseil = function (d) {
 		if (!d) return '';
 		const recents = (Jeu.evenementsJournee || []).slice(-3);

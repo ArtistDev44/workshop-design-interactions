@@ -39,7 +39,8 @@ function basculerOptionGuide() {
 }
 
 function cibleGuide(nom, x, y, l, h) {
-	ciblesGuide[nom] = { x, y, l, h, espace: espaceDessin };
+	const A = typeof transformAppli !== 'undefined' ? transformAppli : null; // prompt 50 : appli en fenêtre
+	ciblesGuide[nom] = A ? { x: A.x + x * A.k, y: A.y + y * A.k, l: l * A.k, h: h * A.k, espace: espaceDessin } : { x, y, l, h, espace: espaceDessin };
 }
 /** Cible convertie en coordonnées réelles du canevas (ou null si elle n'est pas visible à cette image) */
 function cibleReelle(nom) {

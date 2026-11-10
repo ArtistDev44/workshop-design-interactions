@@ -41,6 +41,7 @@ function appliquerAccessibilite() {
 // ——— Taille du texte : seuls les petits textes (< 24 px) grandissent, jusqu'à 24 px au plus ; les titres et
 // grands textes gardent leur taille, pour que les mises en page denses (appli, rapport) ne se chevauchent pas ———
 let ECHELLE_TEXTE = 1;
+const TAILLE_MIN_PC = 18;
 let tailleOrigine = null;
 let interligneOrigine = null;
 function installerEchelleTexte() {
@@ -51,7 +52,10 @@ function installerEchelleTexte() {
 	window.textSize = function (s) {
 		if (s === undefined) return demandee === null ? tailleOrigine() : demandee;
 		demandee = s;
-		return tailleOrigine(s < 24 ? Math.min(s * ECHELLE_TEXTE, 24) : s);
+		let v = s < 24 ? Math.min(s * ECHELLE_TEXTE, 24) : s;
+		// Prompt 49 : sur l'écran du PC (affiché à 90 %), aucun texte sous 18 px (≈ 16 px à l'écran)
+		if (typeof espaceDessin !== 'undefined' && espaceDessin === 'pc') v = Math.max(v, typeof transformAppli !== 'undefined' && transformAppli ? 20 : TAILLE_MIN_PC); // prompt 50 : 20 px dans l'appli, réduite à 91 % en fenêtre
+		return tailleOrigine(v);
 	};
 	window.textLeading = function (s) {
 		if (s === undefined) return interligneOrigine();
@@ -95,7 +99,7 @@ function ouvrirAccessibilite() {
 }
 function fenetreAccessibilite() {
 	const l = 1240;
-	const h = 1000;
+	const h = 1060;
 	const x = (L - l) / 2;
 	const y = (H - h) / 2;
 	const R = Confort.Reglages;
@@ -112,9 +116,11 @@ function fenetreAccessibilite() {
 		['1', t('acc.daltonisme'), t('acc.dalt.' + (R.daltonisme || 'normal')), changerDaltonisme, false],
 		['2', t('acc.taille'), (R.tailleTexte || 100) + ' %', changerTailleTexte, false],
 		['3', t('acc.lecture'), t(R.lectureFacile ? 'commun.oui' : 'commun.non'), basculerLectureFacile, !R.lectureFacile],
+		['4', t('micro.reglage'), t(R.micro !== false ? 'commun.oui' : 'commun.non'), basculerMicroReglage, R.micro === false], // prompt 54
+		['5', t('webcam.reglage'), t(CAM.active ? 'webcam.etat.on' : R.webcam ? 'webcam.etat.attente' : 'commun.non'), basculerWebcamReglage, !R.webcam], // prompt 57
 	];
 	lignes.forEach(([k, lib, valeur, action, secondaire], i) => {
-		const ly = y + 120 + i * 96;
+		const ly = y + 116 + i * 82;
 		textFont(POLICE_TEXTE);
 		ajusterTaille(lib, 520, 26);
 		fill(C.texte);
@@ -134,18 +140,18 @@ function fenetreAccessibilite() {
 	[['bon', p.bon], ['alerte', p.alerte], ['critique', p.critique]].forEach(([n, c], i) => {
 		const px0 = x + 48 + i * 260;
 		fill(c);
-		rect(px0, y + 410, 120, 18);
+		rect(px0, y + 532, 120, 18);
 		fill(C.texte);
-		text(t('acc.niveau.' + n), px0 + 132, y + 419);
+		text(t('acc.niveau.' + n), px0 + 132, y + 541);
 	});
 	textAlign(LEFT, TOP);
 	textFont(POLICE_TEXTE);
 	textSize(18);
 	fill(C.gris);
 	textLeading(26);
-	text(t('acc.lecture.detail'), x + 48, y + 446, l - 96, 66);
+	text(t('acc.lecture.detail'), x + 48, y + 562, l - 96, 66);
 	// Reprise sur un autre appareil : QR code vers le jeu + export / import JSON
-	const yr = y + 544;
+	const yr = y + 646;
 	fill(C.bord);
 	rect(x + 48, yr - 18, l - 96, 2);
 	fill(C.texte);
@@ -156,7 +162,7 @@ function fenetreAccessibilite() {
 	textSize(19);
 	textLeading(28);
 	fill(C.texte);
-	text(t('acc.reprise.texte'), x + 48, yr + 48, l - 96 - 280, 290);
+	text(t('acc.reprise.texte'), x + 48, yr + 48, l - 96 - 280, 240);
 	const q = 220;
 	if (imageQR && imageQR !== 'echec' && imageQR.width > 1) {
 		fill('#ffffff');
@@ -178,6 +184,8 @@ function toucheAccessibilite() {
 	if (key === '1') changerDaltonisme();
 	else if (key === '2') changerTailleTexte();
 	else if (key === '3') basculerLectureFacile();
+	else if (key === '4') basculerMicroReglage(); // prompt 54
+	else if (key === '5') basculerWebcamReglage(); // prompt 57
 	else if (keyCode === ESCAPE || keyCode === BACKSPACE) fenetre = 'parametres';
 	return true;
 }

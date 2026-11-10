@@ -23,3 +23,6 @@ Vérifié le 10/11/2026 (prompt 19) : parties complètes en semaine d'archive, e
 « contraste renforcé » ; clignotements à 1–1,4 Hz (sous le seuil stroboscopique de 3 Hz) ;
 `pixelDensity(1)`, `randomSeed` et dés à graine fixe (partie hors ligne rejouée : même score).
 Reste à faire par l'équipe : écouter le son, tester sur l'écran tactile et la machine d'exposition.
+
+## Mise à jour (prompt 59, check-up du 10/11/2026)
+- `noiseSeed` n'est plus appelé : le décor n'utilise plus `noise()` ; la graine fixe passe par `randomSeed` (fallback) et le générateur de `game.js` (`initialiserAlea`).

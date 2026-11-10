@@ -383,12 +383,6 @@ function lancerIntroSMS() {
 	// Prompt 42 : le joueur saisit son téléphone ; la conversation avec Camille se lit dessus
 	lancerConversation({ contact: T('sms.camille'), sous: T('intro.salle'), messages: SMS, auFin: terminerIntro });
 }
-function smsSuivant() {
-	if (smsIndex < SMS.length - 1) {
-		smsIndex++;
-		Confort.Son.bip('choix');
-	}
-}
 function terminerIntro() {
 	smsActif = false;
 	introVue = true;
