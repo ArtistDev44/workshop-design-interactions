@@ -3,7 +3,10 @@
  * des années 2000 (dégradé, traînées de lumière, bulles floues), pixelisé ; aucun logo ni visuel de
  * marque existant n'est reproduit. Tout est dessiné par le code (contenu 1920×1080 de l'écran du PC).
  */
-const PC = { etat: 'eteint', debut: 0, selection: 0, fenetre: null, message: '' }; // etat : 'eteint' | 'demarrage' | 'os' | 'appli' ; fenetre : null | 'patron' | 'carte' | 'community' | 'journal'
+const PC = { etat: 'eteint', debut: 0, selection: 0, fenetre: null, message: '', flottant: false };
+// Prompt 36 : grille d'icônes agrandie et barre des tâches plus haute
+const GRILLE_OS = { x: 36, y: 36, l: 200, h: 200, ecart: 16, lignes: 4, echelle: 1.35 };
+const BARRE_OS = 84; // etat : 'eteint' | 'demarrage' | 'os' | 'appli' ; fenetre : null | 'patron' | 'carte' | 'community' | 'journal'
 const DUREE_DEMARRAGE = 3400;
 let gFondOS = null;
 
@@ -68,62 +71,68 @@ function dessinerOS() {
 	drawingContext.imageSmoothingEnabled = false;
 	image(fondOS(), 0, 0, L, H);
 	drawingContext.imageSmoothingEnabled = true;
-	// Icônes du bureau (2 colonnes) : libellé monospace, sélection en carré blanc 15 % + bordure (angles droits)
+	// Icônes du bureau (2 colonnes × 4) — prompt 36 : agrandies (icône 108 px au lieu de 80, libellé 22 px)
 	ICONES_OS.forEach((ic, i) => {
-		const x = 48 + Math.floor(i / 3) * 196;
-		const y = 48 + (i % 3) * 196;
+		const g = GRILLE_OS;
+		const x = g.x + Math.floor(i / g.lignes) * (g.l + g.ecart);
+		const y = g.y + (i % g.lignes) * (g.h + g.ecart);
 		const sel = PC.selection === i;
-		const survol = mouseX >= x && mouseX <= x + 168 && mouseY >= y && mouseY <= y + 176;
+		const survol = mouseX >= x && mouseX <= x + g.l && mouseY >= y && mouseY <= y + g.h;
 		noStroke();
 		if (sel || survol) {
 			fill(DS.blanc15);
-			rect(x, y, 168, 176);
+			rect(x, y, g.l, g.h);
 			stroke(DS.blanc);
 			strokeWeight(2);
 			noFill();
-			rect(x + 1, y + 1, 166, 174);
+			rect(x + 1, y + 1, g.l - 2, g.h - 2);
 			noStroke();
 		}
-		ic.dessin(x + 44, y + 16, 1);
+		ic.dessin(x + (g.l - 80 * g.echelle) / 2, y + 14, g.echelle);
 		fill(DS.noir50);
 		textFont(DS.policeTexte);
-		textSize(18);
-		const tl = textWidth(ic.nom) + 12;
-		rect(x + 84 - tl / 2, y + 116, tl, 30);
-		dsTexte(ic.nom, x + 84, y + 120, 18, DS.blanc, 'center');
-		boutons.push({ x, y, l: 168, h: 176, action: () => ouvrirIconeOS(i) });
-		const b = badgeIcone(ic.cle);
-		if (b) dsBadge(x + 140, y + 18, b, 'erreur');
+		textSize(22);
+		const tl = textWidth(String(ic.nom)) + 16;
+		rect(x + g.l / 2 - tl / 2, y + 138, tl, 36);
+		dsTexte(ic.nom, x + g.l / 2, y + 142, 22, DS.blanc, 'center');
+		boutons.push({ x, y, l: g.l, h: g.h, action: () => ouvrirIconeOS(i) });
+		if (i === 0) cibleGuide('iconeRegulation', x, y, g.l, g.h); // prompt 37
+		if (i === 1) cibleGuide('iconesOS', x, y, g.l * 2 + g.ecart, g.h * 3 + g.ecart * 2); // patron, carte, community, journal, indicateurs
+		const b = ic.cle === 'indicateurs' ? (PC.flottant ? '●' : '') : badgeIcone(ic.cle);
+		if (b) dsBadge(x + g.l - 34, y + 20, b, ic.cle === 'indicateurs' ? 'succes' : 'erreur');
 	});
 	// Fenêtre d'application ouverte (prompt 22)
 	if (PC.fenetre) dessinerFenetreApp();
-	// Barre des tâches : fond #0D0C0C, filet blanc 15 %, bouton « démarrer » rouge, applis épinglées, horloge
+	// Barre des tâches (prompt 36 : agrandie, 84 px, icônes 72 px)
+	const tb = H - BARRE_OS;
 	noStroke();
 	fill(DS.fond);
-	rect(0, H - 64, L, 64);
+	rect(0, tb, L, BARRE_OS);
 	fill(DS.blanc15);
-	rect(0, H - 64, L, 2);
+	rect(0, tb, L, 2);
 	fill(DS.primaire);
-	rect(8, H - 56, 120, 48);
-	dsTitre('REGUL', 68, H - 48, 28, DS.blanc, 'center');
-	ICONES_OS.slice(0, 5).forEach((ic, i) => {
-		const x = 140 + i * 68;
-		const actif = (ic.cle === 'regulation' && PC.etat === 'appli') || PC.fenetre === ic.cle;
+	rect(8, tb + 10, 140, BARRE_OS - 20);
+	dsTitre('REGUL', 78, tb + 22, 32, DS.blanc, 'center');
+	ICONES_OS.filter((ic) => ic.cle !== 'corbeille').forEach((ic) => {
+		const i = ICONES_OS.indexOf(ic);
+		const k = ICONES_OS.filter((x) => x.cle !== 'corbeille').indexOf(ic);
+		const x = 164 + k * 84;
+		const actif = (ic.cle === 'regulation' && PC.etat === 'appli') || PC.fenetre === ic.cle || (ic.cle === 'indicateurs' && PC.flottant);
 		fill(actif ? DS.blanc15 : DS.blanc05);
-		rect(x, H - 56, 60, 48);
+		rect(x, tb + 8, 76, BARRE_OS - 16);
 		if (actif) {
 			fill(DS.primaire);
-			rect(x, H - 10, 60, 2);
+			rect(x, tb + BARRE_OS - 10, 76, 3);
 		}
-		ic.dessin(x + 10, H - 52, 0.5);
-		boutons.push({ x, y: H - 56, l: 60, h: 48, action: () => ouvrirIconeOS(i) });
-		const b = badgeIcone(ic.cle);
-		if (b) dsBadge(x + 54, H - 54, b, 'erreur');
+		ic.dessin(x + 10, tb + 12, 0.7);
+		boutons.push({ x, y: tb + 8, l: 76, h: BARRE_OS - 16, action: () => ouvrirIconeOS(i) });
+		const b = ic.cle === 'indicateurs' ? '' : badgeIcone(ic.cle);
+		if (b) dsBadge(x + 68, tb + 10, b, 'erreur');
 	});
 	const hA = heureAffichee();
-	dsTexte(String(hA.h).padStart(2, '0') + ':' + String(hA.m).padStart(2, '0'), L - 24, H - 46, 24, DS.blanc, 'right');
-	if (Jeu.jauges && ecran === 'jeu') dsTexte(t('os.jauges', { b: Jeu.jauges.budget, r: Jeu.jauges.reputation, f: Jeu.jauges.fluidite }), L - 120, H - 44, 18, DS.blanc75, 'right');
-	else dsTexte(t('os.aideClavier'), 500, H - 44, 18, DS.blanc50, 'left');
+	dsTexte(String(hA.h).padStart(2, '0') + ':' + String(hA.m).padStart(2, '0'), L - 24, tb + 24, 28, DS.blanc, 'right');
+	if (Jeu.jauges && ecran === 'jeu') dsTexte(t('os.jauges', { b: Jeu.jauges.budget, r: Jeu.jauges.reputation, f: Jeu.jauges.fluidite }), L - 130, tb + 28, 20, DS.blanc75, 'right');
+	else dsTexte(t('os.aideClavier'), 790, tb + 28, 18, DS.blanc50, 'left');
 }
 
 function dessinerDemarrage() {
@@ -188,7 +197,12 @@ function iconeRegulation(x, y, s) {
 	circle(40, 40, 16);
 	pop();
 }
-function iconeCorbeille(x, y) {
+function iconeCorbeille(x, y, s) {
+	push();
+	translate(x, y);
+	scale(s || 1);
+	x = 0;
+	y = 0;
 	noStroke();
 	fill('#cfd8e0');
 	rect(x + 14, y + 16, 52, 62, 6);
@@ -196,6 +210,7 @@ function iconeCorbeille(x, y) {
 	rect(x + 8, y + 8, 64, 10, 4);
 	fill('#7f8c99');
 	for (let k = 0; k < 3; k++) rect(x + 24 + k * 12, y + 26, 4, 44, 2);
+	pop();
 }
 
 /** Barre de titre de l'appli (Pixel Design System) : titre pixel + bouton fermer carré → retour au bureau du système */
@@ -222,6 +237,7 @@ function dessinerFermerAppli() {
 	line(x + 26, y + 8, x + 14, y + 20);
 	noStroke();
 	boutons.push({ x, y, l: 40, h: 28, action: fermerAppli });
+	cibleGuide('fermerAppli', x, y, 40, 28); // prompt 37
 }
 
 // =====================================================================
@@ -234,14 +250,15 @@ const ICONES_OS = [
 	{ cle: 'carte', nom: T('app.carte'), dessin: (x, y, s) => iconePixel(x, y, s, 'carte') },
 	{ cle: 'community', nom: T('app.community'), dessin: (x, y, s) => iconePixel(x, y, s, 'bulle') },
 	{ cle: 'journal', nom: T('app.journal'), dessin: (x, y, s) => iconePixel(x, y, s, 'livre') },
-	{ cle: 'corbeille', nom: T('app.corbeille'), dessin: (x, y) => iconeCorbeille(x, y) },
+	{ cle: 'indicateurs', nom: T('app.indicateurs'), dessin: (x, y, s) => iconeIndicateurs(x, y, s || 1) }, // prompt 36
+	{ cle: 'corbeille', nom: T('app.corbeille'), dessin: (x, y, s) => iconeCorbeille(x, y, s) },
 ];
 
 function ouvrirIconeOS(i) {
 	PC.selection = i;
 	const cle = ICONES_OS[i].cle;
 	if (cle === 'regulation') return ouvrirAppli();
-	if (cle === 'corbeille') return;
+	if (cle === 'indicateurs') return basculerIndicateurs(); // prompt 36 : app flottante
 	if (PC.etat === 'appli') PC.etat = 'os';
 	PC.fenetre = PC.fenetre === cle ? null : cle; // re-cliquer l'icône active referme l'app
 	PC.message = '';
@@ -307,8 +324,8 @@ function iconePixel(x, y, s, type) {
 	pop();
 }
 
-const FENETRE_APP = { x: 440, y: 56, l: 1440, h: 900 };
-const TITRES_APPS = { patron: T('app.titre.patron'), carte: T('app.titre.carte'), community: T('app.titre.community'), journal: T('app.titre.journal') };
+const FENETRE_APP = { x: 470, y: 40, l: 1410, h: 900 }; // prompt 36 : décalée pour les icônes agrandies
+const TITRES_APPS = { patron: T('app.titre.patron'), carte: T('app.titre.carte'), community: T('app.titre.community'), journal: T('app.titre.journal'), corbeille: T('app.titre.corbeille') };
 
 function dessinerFenetreApp() {
 	const f = FENETRE_APP;
@@ -328,7 +345,10 @@ function dessinerFenetreApp() {
 	boutons.push({ x: cx, y: cy, l: 36, h: 36, action: fermerFenetreApp });
 	if (Jeu.nonLus && Jeu.nonLus[PC.fenetre] !== undefined) Jeu.nonLus[PC.fenetre] = 0; // lu
 	const zone = { x: f.x + 24, y: f.y + 76, l: f.l - 48, h: f.h - 170 };
-	if (!Jeu.paquet || ecran !== 'jeu') dsTexte(t('app.aucunePartie'), zone.x, zone.y, 22, DS.blanc75, 'left', zone.l);
+	if (!Jeu.paquet || ecran !== 'jeu') {
+		dsTexte(t('app.aucunePartie'), zone.x, zone.y, 22, DS.blanc75, 'left', zone.l);
+		dsBouton(zone.x, zone.y + 80, 340, 60, t('menu.menuPrincipal'), ouvrirMenuPrincipal); // prompt 36
+	} else if (PC.fenetre === 'corbeille') appCorbeille(zone);
 	else if (PC.fenetre === 'patron') appPatron(zone);
 	else if (PC.fenetre === 'community') appCommunity(zone);
 	else if (PC.fenetre === 'journal') appJournal(zone);
@@ -589,4 +609,154 @@ function envoyerEquipeCarte(cle, index) {
 	PC.message = r.message;
 	PC.messageOk = r.ok;
 	Confort.Son.bip(r.ok ? 'action' : 'alerte');
+}
+
+// =====================================================================
+// Prompt 36 — Corbeille (plaintes traitées) et app flottante « Indicateurs »
+// =====================================================================
+function appCorbeille(z) {
+	const liste = (Jeu.plaintes || []).filter((p) => p.reponse !== null && !p.masquee);
+	dsTexte(t('app.corbeille.intro', { n: liste.length }), z.x, z.y, 20, DS.blanc75, 'left', z.l - 320);
+	if (liste.length) dsBouton(z.x + z.l - 300, z.y - 8, 300, 52, t('app.corbeille.vider'), viderCorbeille, 'contour');
+	let y = z.y + 64;
+	if (!liste.length) dsTexte(t('app.corbeille.vide'), z.x, y, 20, DS.blanc50, 'left');
+	liste
+		.slice()
+		.reverse()
+		.slice(0, 6)
+		.forEach((p) => {
+			const r = p.def.reponses[p.reponse];
+			noStroke();
+			fill(DS.blanc05);
+			rect(z.x, y, z.l, 104);
+			fill(p.bonne ? DS.succes : DS.alerte);
+			rect(z.x, y, 4, 104);
+			dsTexte(p.auteur + ' · ' + p.heure, z.x + 18, y + 10, 16, DS.blanc50, 'left');
+			dsTexte(Jeu.texteMessage(p.def.texte, p.vars), z.x + 18, y + 32, 18, DS.blanc, 'left', z.l - 200);
+			dsTexte('↳ ' + Jeu.texteMessage(r.texte, p.vars), z.x + 18, y + 66, 17, DS.blanc75, 'left', z.l - 200);
+			const rep = Number((r.effets || {}).reputation) || 0;
+			dsBadge(z.x + z.l - 90, y + 40, t(p.bonne ? 'app.corbeille.bonne' : 'app.corbeille.mauvaise') + ' ' + (rep > 0 ? '+' : '') + rep, p.bonne ? 'succes' : 'alerte');
+			y += 116;
+		});
+}
+function viderCorbeille() {
+	(Jeu.plaintes || []).forEach((p) => {
+		if (p.reponse !== null) p.masquee = true; // retirées de la liste seulement : jauges et bilan inchangés
+	});
+	annoncer(t('app.corbeille.videe'));
+	Confort.Son.bip('choix');
+}
+
+function iconeIndicateurs(x, y, s) {
+	push();
+	translate(x, y);
+	scale(s);
+	noStroke();
+	fill('#0e3b46');
+	rect(0, 0, 80, 80, 12);
+	[['#1e7a3c', 52], ['#d39a2e', 36], ['#3860ff', 24]].forEach(([c, h], i) => {
+		fill(c);
+		rect(14 + i * 20, 66 - h, 14, h, 2);
+	});
+	fill('#f5efe3');
+	rect(10, 68, 60, 4, 2);
+	pop();
+}
+
+// Fenêtre flottante, toujours au premier plan, déplaçable par sa barre de titre ; position mémorisée
+const CLE_INDICATEURS = 'pxe-nte001:jeu:indicateurs';
+const INDIC = (() => {
+	let pos = { x: 1440, y: 120 };
+	try {
+		const o = JSON.parse(localStorage.getItem(CLE_INDICATEURS) || 'null');
+		if (o && Number.isFinite(o.x) && Number.isFinite(o.y)) pos = o;
+	} catch (e) {}
+	return { l: 460, h: 392, pos, prise: null };
+})();
+function basculerIndicateurs() {
+	PC.flottant = !PC.flottant;
+	if (PC.flottant) annoncer(t('indic.annonce', { f: Jeu.jauges ? Jeu.jauges.fluidite : 50, r: Jeu.jauges ? Jeu.jauges.reputation : 50, b: Jeu.jauges ? Jeu.jauges.budget : 50 }));
+	Confort.Son.bip('choix');
+}
+/** Souris dans les coordonnées de l'écran du PC (utile dans une action de clic, appelée hors de draw) */
+function sourisEcranPC() {
+	if (vue !== 'poste') return { x: mouseX, y: mouseY };
+	const r = ECRAN_POSTE;
+	return { x: ((mouseX - r.x) * L) / r.l, y: ((mouseY - r.y) * H) / r.h };
+}
+function couleurJauge(v) {
+	return v < 20 ? DS.erreur : v < 40 ? DS.alerte : DS.succes;
+}
+/** Dessinée par-dessus le bureau RégulOS et l'appli de régulation (coordonnées de l'écran du PC) */
+function dessinerIndicateurs() {
+	if (!PC.flottant || PC.etat === 'eteint' || PC.etat === 'demarrage') return;
+	const I = INDIC;
+	if (I.prise) {
+		if (mouseIsPressed) {
+			I.pos.x = constrain(mouseX - I.prise.dx, 0, L - I.l);
+			I.pos.y = constrain(mouseY - I.prise.dy, 0, H - BARRE_OS - I.h);
+		} else {
+			I.prise = null;
+			try {
+				localStorage.setItem(CLE_INDICATEURS, JSON.stringify(I.pos));
+			} catch (e) {}
+		}
+	}
+	const { x, y } = I.pos;
+	noStroke();
+	fill(0, 0, 0, 110);
+	rect(x + 8, y + 10, I.l, I.h); // ombre : la fenêtre flotte
+	fill(DS.fond);
+	rect(x, y, I.l, I.h);
+	stroke(DS.blanc15);
+	strokeWeight(2);
+	noFill();
+	rect(x + 1, y + 1, I.l - 2, I.h - 2);
+	noStroke();
+	// Barre de titre (poignée de déplacement)
+	fill(I.prise ? DS.primaire : '#1d1b1b');
+	rect(x, y, I.l, 44);
+	dsTitre(t('indic.titre'), x + 14, y + 8, 22, DS.blanc, 'left');
+	dsTexte('⠿', x + I.l - 84, y + 10, 20, DS.blanc50, 'left');
+	boutons.push({
+		x,
+		y,
+		l: I.l - 48,
+		h: 44,
+		action: () => {
+			const m = sourisEcranPC();
+			I.prise = { dx: m.x - I.pos.x, dy: m.y - I.pos.y };
+		},
+	});
+	const cx = x + I.l - 42;
+	fill(DS.fond);
+	rect(cx, y + 6, 32, 32);
+	stroke(DS.blanc);
+	strokeWeight(3);
+	line(cx + 9, y + 15, cx + 23, y + 29);
+	line(cx + 23, y + 15, cx + 9, y + 29);
+	noStroke();
+	boutons.push({ x: cx, y: y + 6, l: 32, h: 32, action: basculerIndicateurs });
+	if (!Jeu.jauges || ecran !== 'jeu') {
+		dsTexte(t('indic.aucunePartie'), x + 18, y + 66, 18, DS.blanc75, 'left', I.l - 36);
+		return;
+	}
+	// Variation due à la dernière décision (deltas réels du journal)
+	const dernier = (Jeu.evenementsJournee || [])[Jeu.evenementsJournee.length - 1];
+	['fluidite', 'reputation', 'budget'].forEach((k, i) => {
+		const v = Jeu.jauges[k];
+		const ly = y + 62 + i * 74;
+		dsTexte(t('jaugeTitre.' + k), x + 18, ly, 20, DS.blanc, 'left');
+		dsTexte(v + ' / 100', x + I.l - 18, ly, 20, DS.blanc, 'right');
+		fill(DS.blanc15);
+		rect(x + 18, ly + 32, I.l - 36, 14);
+		fill(couleurJauge(v));
+		rect(x + 18, ly + 32, ((I.l - 36) * v) / 100, 14);
+		const d = dernier && dernier.deltas ? dernier.deltas[k] : null;
+		if (d) dsTexte((d > 0 ? '▲ +' : '▼ ') + d, x + I.l - 132, ly, 16, d > 0 ? DS.succes : DS.alerte, 'right');
+	});
+	const o = Jeu.objectifDuJour ? Jeu.objectifDuJour() : null;
+	if (o) dsTexte(t('indic.objectif', { libelle: o.libelle, ok: Jeu.jauges[o.jauge] >= o.seuil ? '✓' : '✗' }), x + 18, y + 284, 16, DS.blanc75, 'left', I.l - 36);
+	const b = Jeu.jauges.budget;
+	dsTexte(t(b < 20 ? 'indic.budgetBas' : b >= 70 ? 'indic.budgetHaut' : 'indic.budgetMoyen'), x + 18, y + 336, 16, DS.blanc50, 'left', I.l - 36);
 }

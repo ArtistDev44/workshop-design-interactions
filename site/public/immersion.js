@@ -46,6 +46,7 @@ const OBJETS_BUREAU = [
 	{ nom: 'lampe', piece: true, label: T('piece.lampe'), infobulle: T('piece.lampe.survol'), x: 410, y: 86, l: 16, h: 14 }, // prompt 31 : applique murale (recalée pour le plein écran)
 	{ nom: 'plante', piece: true, label: T('piece.plante'), infobulle: T('piece.plante.survol'), x: 69, y: 153, l: 16, h: 21 },
 	{ nom: 'tasse', piece: true, label: T('piece.tasse'), infobulle: T('piece.tasse.survol'), x: 118, y: 178, l: 22, h: 28 },
+	{ nom: 'telephone', label: T('objet.telephone'), infobulle: T('objet.telephone.survol'), x: 364, y: 192, l: 26, h: 32 }, // prompt 38
 	{ nom: 'dossiers', piece: true, label: T('piece.dossiers'), infobulle: T('piece.dossiers.survol'), x: 390, y: 160, l: 44, h: 15 },
 	{ nom: 'fenetre', piece: true, label: T('piece.fenetre'), infobulle: T('piece.fenetre.survol'), x: 334, y: 14, l: 64, h: 96 }, // prompt 31 : la baie s'arrête au pan de mur
 ];
@@ -329,7 +330,7 @@ function terminerIntro() {
 	introVue = true;
 	demarrerJournee();
 	vue = 'bureau'; // on arrive au bureau : l'ouverture est à 6h
-	if (!tutorielVu()) lancerTutoriel(); // prompt 34 : à la première partie, juste après les SMS
+	if (!tutorielVu() && !GUIDE.actif) lancerTutoriel(); // prompt 34 : à la première partie, juste après les SMS (sauf guide)
 }
 
 // =====================================================================
@@ -511,29 +512,37 @@ function dessinerSMS() {
 }
 
 // ——— Fenêtres du bureau : menu Échap (§ 1) et livre « stress » (§ 7) ———
+// Prompt 35 : menu Échap modernisé (même style que le menu principal)
+let choixPause = 0;
+const ENTREES_PAUSE = [
+	{ cle: 'menu.reprendre', icone: 'lecture', action: () => fermer() },
+	{ cle: 'accueil.parametres', icone: 'reglages', action: () => (fenetre = 'parametres') },
+	{ cle: 'accueil.aide', icone: 'aide', action: () => (fenetre = 'aide') },
+	{ cle: 'menu.menuPrincipal', icone: 'menu', action: () => quitterPartie() },
+];
 function fenetreMenu() {
-	const l = 640;
-	const h = 470;
+	const l = 700;
+	const h = 640;
 	const x = (L - l) / 2;
 	const y = (H - h) / 2;
-	panneau(x, y, l, h, C.accent);
-	textAlign(CENTER, TOP);
 	noStroke();
-	fill(C.accent);
+	fill(11, 27, 51, 240);
+	rect(x, y, l, h, 24);
+	textAlign(LEFT, TOP);
+	fill('#ffffff');
 	textFont(POLICE_TEXTE);
 	textStyle(BOLD);
-	textSize(40);
-	text(t('menu.titre'), L / 2, y + 36);
+	textSize(44);
+	text(t('menu.titre'), x + 48, y + 40);
 	textStyle(NORMAL);
-	textSize(18);
-	fill(C.gris);
-	text(t('menu.temps'), L / 2, y + 92);
-	bouton(x + 80, y + 140, l - 160, 72, t('menu.reprendre'), fermer);
-	bouton(x + 80, y + 230, l - 160, 72, t('accueil.parametres'), () => (fenetre = 'parametres'), false, true);
-	bouton(x + 80, y + 320, l - 160, 72, t('menu.quitter'), quitterPartie, false, true);
+	textSize(19);
+	fill('rgba(255,255,255,0.78)');
+	text(t('menu.temps'), x + 48, y + 104);
+	ENTREES_PAUSE.forEach((e, i) => carteMenu(x + 48, y + 160 + i * 112, l - 96, 88, t(e.cle), null, e.action, i === choixPause, e.icone));
 }
 
 function quitterPartie() {
+	if (ecran === 'jeu') Sauvegarde.auto(false); // prompt 35 : on retrouve la partie avec « Reprendre »
 	fenetre = null;
 	enSieste = false;
 	reveil = null;
@@ -701,6 +710,7 @@ function pageQuiTourne(livre, debut, sens) {
 function ouvrirObjetBureau(nom) {
 	interaction();
 	if (nom === 'ecran') return sAsseoir();
+	if (nom === 'telephone') return ouvrirTelephone(); // prompt 38 : notifications de l'Agenda Nantes Métropole
 	if (nom === 'commande') return lancerTutoriel(); // prompt 34 : le livre « commande » ouvre le tutoriel
 	if (nom === 'stress') return (livreOuverture = millis()), ouvrir('livre-stress');
 	if (OBJETS_BUREAU.some((o) => o.nom === nom && o.piece)) return interagirPiece(nom); // prompt 29
@@ -711,6 +721,7 @@ function zonesObjetsBureau() {
 	objetSurvol = null;
 	OBJETS_BUREAU.slice(1).forEach((o, i) => {
 		const r = versEcranBureau(o.x, o.y, o.l, o.h); // prompt 25 : suit le dézoom et la caméra
+		if (o.nom === 'commande') cibleGuide('livreCommande', r.x, r.y, r.l, r.h); // prompt 37
 		boutons.push({ x: r.x, y: r.y, l: r.l, h: r.h, action: () => ouvrirObjetBureau(o.nom) });
 		const survol = mouseX >= r.x && mouseX <= r.x + r.l && mouseY >= r.y && mouseY <= r.y + r.h;
 		if (survol || focusBureau === i + 1) objetSurvol = o.nom; // les livres se soulèvent (dessinerLivres)

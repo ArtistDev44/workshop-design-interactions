@@ -135,14 +135,29 @@ function majAmbianceSonore() {
 function draw() {
 	if (!chargementMasque) masquerChargement();
 	majAmbianceSonore();
+	// Prompt 35 : menu principal plein écran avant le bureau ; il se ferme dès qu'une partie démarre ou reprend
+	if (MENU.actif && ecran === 'jeu') fermerMenuPrincipal();
+	if (MENU.actif) {
+		boutons = [];
+		dessinerMenuPrincipal();
+		if (fenetre) {
+			boutons = [];
+			dessinerFenetre();
+		}
+		dessinerTutoriel();
+		majCurseur();
+		return;
+	}
 	avancerTemps(); // horloge simulée, sieste, arrivée des incidents, fin de journée (immersion.js)
 	if (Jeu.equipes) Jeu.majEquipes(millis()); // équipes envoyées depuis la carte (prompt 22)
 	boutons = [];
 	// 1. Contenu de l'écran du PC, en 1920×1080 : l'appli de régulation, ou le système (démarrage, bureau)
+	ciblesGuide = {}; // prompt 37 : cibles des flèches, relevées pendant le dessin
+	espaceDessin = 'pc';
 	sourisVersEcran();
 	background(C.fond);
 	if (PC.etat === 'appli') {
-		if (ecran === 'accueil') dessinerAccueil();
+		if (ecran === 'accueil') dessinerAppliSansPartie(); // prompt 35 : l'accueil est sorti du PC (menu principal)
 		else {
 			dessinerJeu();
 			indicateurSauvegarde(); // prompt 33
@@ -150,7 +165,9 @@ function draw() {
 		if (enPause) dessinerPause();
 		dessinerFermerAppli();
 	} else dessinerOS();
+	dessinerIndicateurs(); // prompt 36 : app flottante, au premier plan
 	sourisRestaurer();
+	espaceDessin = 'ecran';
 	// 2. La pièce et le moniteur autour (bureau, zoom, ou « au poste » avec la pièce visible)
 	composerVue();
 	if (phase === 'reveil' && reveil && ecran === 'jeu' && !smsActif) {
@@ -165,9 +182,13 @@ function draw() {
 		boutons = [];
 		dessinerSMS();
 	}
+	dessinerGuide(); // prompt 37 : flèches « Prendre en main »
 	dessinerTutoriel(); // prompt 34 : par-dessus l'écran et les fenêtres
 	dessinerClignement(); // prompt 21 § 2 : par-dessus tout, purement visuel (n'intercepte aucune entrée)
-	// Prompt 29 : curseur « main » au survol de toute zone cliquable (objets de la pièce compris)
+	majCurseur();
+}
+/** Prompt 29 : curseur « main » au survol de toute zone cliquable (objets de la pièce compris) */
+function majCurseur() {
 	const surZone = boutons.some((b) => mouseX >= b.x && mouseX <= b.x + b.l && mouseY >= b.y && mouseY <= b.y + b.h);
 	if (surZone !== curseurMain) {
 		curseurMain = surZone;
@@ -289,7 +310,7 @@ function lancerNouvellePartie() {
 		Jeu.nouvellePartie();
 		demarrerJournee(); // journée 1, 6h00, en attente du premier incident
 		if (!introVue) lancerIntroSMS(); // § 2 : une seule fois, pas sur « Rejouer »
-		else if (!tutorielVu()) lancerTutoriel(); // prompt 34 : première partie sans SMS
+		else if (!tutorielVu() && !optionGuide()) lancerTutoriel(); // prompt 34 (pas si le guide « Prendre en main » est choisi)
 	});
 }
 
@@ -736,6 +757,7 @@ function dessinerListeLignes(zone, dActuel) {
 function dessinerJauges() {
 	const z = { x: DROITE.x, y: DROITE.y, l: DROITE.l, h: 110 };
 	panneau(z.x, z.y, z.l, z.h);
+	cibleGuide('jauges', z.x, z.y, z.l, z.h); // prompt 37
 	const jauges = Jeu.jauges || { fluidite: 50, reputation: 50, budget: 50 }; // départ 50 (Q40)
 	const defs = [
 		[t('jaugeTitre.fluidite'), jauges.fluidite],
@@ -909,6 +931,7 @@ function dessinerDossier(d, meteo) {
 		const by = base.y + base.h - 200 + Math.floor(i / 2) * 88;
 		bouton(bx, by, ab, 72, touche + '  ' + nom + (cle === bloquee ? t('dossier.indispo') : ''), () => decider(cle), cle === bloquee, i === 3);
 	});
+	cibleGuide('actions', x + 32, base.y + base.h - 200, base.l - 64, 160); // prompt 37
 }
 
 function choisirSource(cle) {
@@ -1164,6 +1187,7 @@ function dessinerFin() {
 function retourAccueil() {
 	bilanCalcule = null;
 	ecran = 'accueil';
+	ouvrirMenuPrincipal(); // prompt 35 : retour à l'écran titre
 }
 
 function rejouer() {
@@ -1280,6 +1304,8 @@ function keyPressed() {
 		if (key === ' ' || keyCode === ENTER || keyCode === RETURN) seReveiller();
 		return false;
 	}
+	// Prompt 37 : G arrête le guide « Prendre en main »
+	if ((key === 'g' || key === 'G') && GUIDE.actif && !MENU.actif) return arreterGuide(), false;
 	// Prompt 34 : le tutoriel capte le clavier (L reste disponible pour changer de langue)
 	if (tutoriel && !(key === 'l' || key === 'L')) return toucheTutoriel(), false;
 	// Langue (prompt 24) : L bascule partout, sans toucher à la partie
@@ -1288,7 +1314,16 @@ function keyPressed() {
 	if (fenetre) {
 		if (keyCode === ESCAPE || (fenetre === 'aide' && (key === 'h' || key === 'H' || key === '?'))) return fermer(), false;
 		if (fenetre === 'aide' && (key === 't' || key === 'T')) return lancerTutoriel(), false; // prompt 34
-		if (fenetre === 'menu' && (keyCode === ENTER || keyCode === RETURN)) return fermer(), false;
+		if (fenetre === 'telephone' && (keyCode === ENTER || keyCode === RETURN)) return fermer(), false; // prompt 38
+		if (fenetre === 'menu') {
+			// Prompt 35 : menu Échap modernisé — ↑ ↓ / Tab pour choisir, Entrée pour valider
+			const n = ENTREES_PAUSE.length;
+			if (keyCode === UP_ARROW || (keyCode === TAB && keyIsDown(SHIFT))) choixPause = (choixPause + n - 1) % n;
+			else if (keyCode === DOWN_ARROW || keyCode === TAB) choixPause = (choixPause + 1) % n;
+			else if (keyCode === ENTER || keyCode === RETURN) ENTREES_PAUSE[choixPause].action();
+			if (keyCode === UP_ARROW || keyCode === DOWN_ARROW || keyCode === TAB) annoncer(t(ENTREES_PAUSE[choixPause].cle));
+			return false;
+		}
 		if (fenetre === 'reset') {
 			if (keyCode === ENTER || keyCode === RETURN || key === 'o' || key === 'O') confirmerReset();
 			if (key === 'n' || key === 'N') fermer();
@@ -1307,6 +1342,8 @@ function keyPressed() {
 		}
 		return false;
 	}
+	// Prompt 35 : menu principal (écran titre / choix de la semaine)
+	if (MENU.actif) return toucheMenu(), false;
 	// Au bureau (§ 1, § 7) : Échap = menu ; Tab = objets (écran, livres) ; Entrée = ouvrir / s'installer
 	if (vue !== 'poste') {
 		if (vue !== 'bureau') return false;
@@ -1320,6 +1357,8 @@ function keyPressed() {
 		if (key === 'h' || key === 'H' || key === '?') ouvrir('aide');
 		return false;
 	}
+	// Prompt 36 : I ouvre / ferme l'app flottante « Indicateurs » (au poste)
+	if (key === 'i' || key === 'I') return basculerIndicateurs(), false;
 	// Au poste, système du PC (bureau RégulOS) : Tab = icônes, Entrée = ouvrir, Échap = fermer l'app puis se lever
 	if (PC.etat !== 'appli') {
 		if (keyCode === ESCAPE) PC.fenetre ? fermerFenetreApp() : seLever();
@@ -1370,11 +1409,7 @@ function keyPressed() {
 		if (key === 'p' || key === 'P') return basculerPause(), false;
 	}
 	if (ecran === 'accueil') {
-		const n = optionsAccueil().length;
-		if (keyCode === UP_ARROW) choixAccueil = (choixAccueil + n - 1) % n;
-		if (keyCode === DOWN_ARROW) choixAccueil = (choixAccueil + 1) % n;
-		if ((key === 'c' || key === 'C') && Sauvegarde.lister().length) continuerPartie(); // prompt 33
-		if (keyCode === ENTER || keyCode === RETURN) lancerPartie();
+		if (keyCode === ENTER || keyCode === RETURN) ouvrirMenuPrincipal(); // prompt 35 : plus d'accueil dans le PC
 	} else if (phase === 'decision') {
 		const actions = { 1: 'devier', 2: 'retenir', 3: 'renfort', 0: 'rien', ' ': 'rien' };
 		if (actions[key]) decider(actions[key]);
@@ -1445,6 +1480,7 @@ function dessinerFenetre() {
 	if (fenetre === 'reprise') return fenetreReprise();
 	if (fenetre === 'menu') return fenetreMenu();
 	if (fenetre === 'livre-stress') return fenetreLivreStress();
+	if (fenetre === 'telephone') return fenetreTelephone(); // prompt 38
 }
 
 function fenetreAide() {
