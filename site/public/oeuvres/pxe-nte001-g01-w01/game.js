@@ -87,5 +87,50 @@
 			});
 	};
 
+	/**
+	 * Météo du jour d'un dossier (semaines d'archives / hors ligne) : { temp_min, temp_max, pluie_mm, rafales_max }.
+	 * En mode direct, la météo vient d'Open-Meteo forecast (Jeu.meteoActuelle).
+	 */
+	Jeu.meteoDuJour = function (date) {
+		if (Jeu.etat.mode === 'direct') return Jeu.meteoActuelle;
+		const src = (Jeu.etat.mode === 'hors ligne' ? Jeu.fallback && Jeu.fallback.meteo : Jeu.etat.semaine && Jeu.etat.semaine.meteo) || [];
+		return src.find((m) => m.date === date) || src[0] || null;
+	};
+
+	/**
+	 * Test de connexion léger au lancement (Q34) + météo réelle du moment pour le décor :
+	 * Open-Meteo forecast (JSON, sans clé). Échec → indicateur « mode hors ligne ».
+	 */
+	Jeu.meteoActuelle = null;
+	Jeu.enLigne = null;
+	Jeu.verifierConnexion = function () {
+		const ctrl = new AbortController();
+		const t = setTimeout(() => ctrl.abort(), 4000);
+		const url =
+			'https://api.open-meteo.com/v1/forecast?latitude=47.2184&longitude=-1.5536&timezone=Europe%2FParis' +
+			'&daily=temperature_2m_min,temperature_2m_max,precipitation_sum,wind_gusts_10m_max&forecast_days=1';
+		return fetch(url, { signal: ctrl.signal })
+			.then((r) => {
+				if (!r.ok) throw new Error(String(r.status));
+				return r.json();
+			})
+			.then((d) => {
+				Jeu.meteoActuelle = {
+					date: d.daily.time[0],
+					temp_min: d.daily.temperature_2m_min[0],
+					temp_max: d.daily.temperature_2m_max[0],
+					pluie_mm: d.daily.precipitation_sum[0],
+					rafales_max: d.daily.wind_gusts_10m_max[0],
+				};
+				Jeu.enLigne = true;
+				return true;
+			})
+			.catch(() => {
+				Jeu.enLigne = false;
+				return false;
+			})
+			.finally(() => clearTimeout(t));
+	};
+
 	global.Jeu = Jeu;
 })(typeof window !== 'undefined' ? window : globalThis);

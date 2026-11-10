@@ -119,6 +119,24 @@ for (const [forme, route] of formesRetenues) {
 	if (l && simple.length > 1) (l.traces ??= []).push(simple);
 }
 
+// ——— Décor : rivières (Loire, Erdre, Sèvre…) de l'occupation du sol 2022 (couche 1, 11-direction-artistique) ———
+const SOL = '244400404_occupation-sol-2022-niveau-3-nantes-metropole';
+const whereEau = encodeURIComponent("l_niveau='Rivières et cours d’eau divers (canaux, etc.)'");
+const geo = await (await fetch(`https://data.nantesmetropole.fr/api/explore/v2.1/catalog/datasets/${SOL}/exports/geojson?where=${whereEau}`)).json();
+const eau = [];
+for (const f of geo.features) {
+	if ((f.properties.surface || 0) < 20000) continue; // ignorer les petits fossés
+	const polys = f.geometry.type === 'Polygon' ? [f.geometry.coordinates] : f.geometry.coordinates;
+	for (const p of polys) {
+		// Anneau fermé : premier point = dernier, on simplifie donc chaque moitié séparément
+		const r = p[0];
+		const mi = Math.floor(r.length / 2);
+		const simple = [...douglasPeucker(r.slice(0, mi + 1), TOLERANCE * 1.5).slice(0, -1), ...douglasPeucker(r.slice(mi), TOLERANCE * 1.5)];
+		const anneau = simple.map(([lon, lat]) => [arrondi(lon), arrondi(lat)]);
+		if (anneau.length > 3) eau.push(anneau);
+	}
+}
+
 // ——— Écriture ———
 const liste = [...lignes.values()].filter((l) => l.traces?.length).sort((a, b) => a.ordre - b.ordre);
 const tous = liste.flatMap((l) => l.traces.flat());
@@ -132,9 +150,11 @@ const sortie = {
 		nord: Math.max(...tous.map((p) => p[1])),
 	},
 	lignes: liste.map(({ ordre, ...l }) => l),
+	eau,
+	sourceEau: `Open Data Nantes Métropole — ${SOL} (Licence Ouverte), catégorie « Rivières et cours d’eau »`,
 };
 const json = JSON.stringify(sortie);
 await writeFile(new URL('lignes.json', JEU), json + '\n');
 await writeFile(new URL('lignes.js', JEU), `window.PXE_LIGNES = ${json};\n`);
 await rm(dossierTmp, { recursive: true, force: true });
-console.log(`✓ ${liste.length} lignes, ${tous.length} points, ${(json.length / 1024).toFixed(0)} Ko`);
+console.log(`✓ ${liste.length} lignes, ${tous.length} points, ${eau.length} surfaces d'eau, ${(json.length / 1024).toFixed(0)} Ko`);
