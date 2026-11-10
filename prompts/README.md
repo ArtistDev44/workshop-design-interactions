@@ -74,6 +74,9 @@ jamais l'inverse.
 | 33 | `33-jeu-sauvegarde-progression-import-export.md` | Jeu, étape 20 : sauvegarde auto de la progression en `localStorage` (reprise « Continuer la partie ») + export/import JSON de la progression dans les Paramètres, validation stricte | ✅ main (`sauvegarde.js`) |
 | 33 | `33-audit-coherence-leviers.md` | Méta-prompt (hors jeu) : audit de cohérence du dépôt et leviers d'amélioration — URL canonique unique, `[À COMPLÉTER]`, statut des prompts 24–32, livrables J3, smoke test, coquille Astro, LICENSE | ✅ ce prompt (branche `vibe/prompt-33-audit-coherence-4c094b-application`) |
 | 34 | `34-jeu-fenetre-loire-tutoriel.md` | Jeu, étape 21 : fond de la baie vitrée corrigé (plus de trottoir/route/arbres ni de château, grue au niveau des bâtiments et de leur couleur), Loire à la place avec hauteur réelle via API (fallback local), souris et téléphone en perspective (téléphone récent), livre « tuto » remplacé par « commande », vrai tutoriel guidé | ✅ main |
+| 35 | `35-jeu-menu-principal-modernise.md` | Jeu, étape 22 : menu principal modernisé avant le bureau (Nouvelle partie, Reprendre, Paramètres, Aide, Tutoriel, langue), choix de la semaine sorti du PC, menu Échap modernisé | ◻ prévu |
+| 36 | `36-jeu-applications-indicateurs.md` | Jeu, étape 23 : toutes les applis fonctionnelles (Corbeille comprise), icônes agrandies, app flottante « Indicateurs » (fluidité, réputation, budget) | ◻ prévu |
+| 37 | `37-jeu-mode-prendre-en-main.md` | Jeu, étape 24 : option « Prendre en main » à la première partie, flèches guidées vers ce qu'il est possible de faire | ◻ prévu |
 
 ### Statut des prompts (vérifié le 10/11/2026 dans `site/public/`)
 
