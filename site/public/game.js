@@ -232,6 +232,7 @@
 		Jeu.index = 0;
 		Jeu.historique = [];
 		Jeu.terminee = Jeu.paquet.length === 0;
+		Jeu.preparerJournees();
 		return Jeu.paquet;
 	};
 
@@ -325,6 +326,8 @@
 			mauvaiseSource,
 			communique: action !== 'temps' && !!(REGLAGES.effets[action] || {}).communique,
 		};
+		resultat.minuteSim = Jeu.horloge ? Math.floor(Jeu.horloge.minutes) : null; // heure de la partie (prompt 20)
+		resultat.jour = d.date;
 		resultat.narration = Jeu.narrer(resultat);
 		Jeu.historique.push(resultat);
 		Jeu.index++;
@@ -439,6 +442,143 @@
 				pireRetard: pire ? { ligne: (pire.lignes || []).join(', '), minutes: pire.retard } : null,
 				parType,
 			},
+		};
+	};
+
+	// =====================================================================
+	// Prompt 20 — journées de travail, horloge simulée, sieste, mail de fin de journée
+	// =====================================================================
+	const DEBUT_JOURNEE = 6 * 60; // 6h00
+	const FIN_JOURNEE = 20 * 60; // 20h00
+	const NOMS_JAUGES_LONGS = { fluidite: 'la fluidité du réseau', satisfaction: 'la satisfaction usagers', reputation: 'la réputation de la salle' };
+
+	/**
+	 * Découpe le paquet en journées (une par date réelle) et fixe l'heure d'arrivée de chaque dossier
+	 * dans la journée de travail : l'heure réelle si la source la donne (alertes météo), sinon des
+	 * créneaux réguliers entre 7h et 19h. Cette heure est l'heure DE LA PARTIE, pas un fait inventé.
+	 */
+	Jeu.preparerJournees = function () {
+		const parJour = new Map();
+		Jeu.paquet.forEach((d) => {
+			if (!parJour.has(d.date)) parJour.set(d.date, []);
+			parJour.get(d.date).push(d);
+		});
+		const jours = [];
+		Array.from(parJour.keys())
+			.sort()
+			.forEach((date) => {
+				const ds = parJour.get(date);
+				const sans = ds.filter((d) => !d.heure);
+				sans.forEach((d, i) => (d.minute = 7 * 60 + Math.round(((i + 1) * 12 * 60) / (sans.length + 1))));
+				ds.filter((d) => d.heure).forEach((d) => (d.minute = Number(d.heure.slice(0, 2)) * 60 + Number(d.heure.slice(3, 5))));
+				ds.sort((a, b) => a.minute - b.minute);
+				jours.push({ date, dossiers: ds });
+			});
+		// Mode « aujourd'hui » : la journée part de l'heure réelle et les incidents arrivent toutes les 20 min
+		if (Jeu.etat.mode === 'direct' && jours.length) {
+			const maintenant = new Date();
+			const m0 = maintenant.getHours() * 60 + maintenant.getMinutes();
+			jours[0].debut = m0;
+			jours[0].dossiers.forEach((d, i) => (d.minute = m0 + 10 + i * 20));
+			jours[0].fin = m0 + 20 + jours[0].dossiers.length * 20;
+		}
+		Jeu.paquet = jours.flatMap((j) => j.dossiers);
+		Jeu.etat.dossiers = Jeu.paquet;
+		Jeu.jours = jours;
+		Jeu.jourIndex = 0;
+		Jeu.horloge = { minutes: jours[0] ? jours[0].debut || DEBUT_JOURNEE : DEBUT_JOURNEE };
+	};
+
+	Jeu.jourCourant = () => (Jeu.jours || [])[Jeu.jourIndex] || null;
+	Jeu.debutJournee = () => (Jeu.jourCourant() && Jeu.jourCourant().debut) || DEBUT_JOURNEE;
+	Jeu.finJournee = () => (Jeu.jourCourant() && Jeu.jourCourant().fin) || FIN_JOURNEE;
+	/** Reste-t-il un dossier à traiter aujourd'hui ? (sinon : fin de journée, puis mail) */
+	Jeu.prochainDuJour = function () {
+		const d = Jeu.dossierCourant();
+		const j = Jeu.jourCourant();
+		return d && j && d.date === j.date ? d : null;
+	};
+	Jeu.journeeSuivante = function () {
+		Jeu.jourIndex++;
+		Jeu.horloge.minutes = Jeu.debutJournee();
+		return Jeu.jourCourant();
+	};
+	Jeu.formaterHeure = function (minutes) {
+		const m = Math.floor(minutes) % (24 * 60);
+		return Math.floor(m / 60) + 'h' + String(m % 60).padStart(2, '0');
+	};
+
+	/** Jauge touchée par un dossier (pour le malus de sieste) */
+	Jeu.jaugeConcernee = (d) => (d.type === 'événement' ? 'satisfaction' : 'fluidite');
+
+	/** Sieste ratée (prompt 20 § 4) : −5 sur la jauge concernée, en plus des conséquences naturelles. */
+	Jeu.malusSieste = function (resultat) {
+		const k = Jeu.jaugeConcernee(resultat.dossier);
+		Jeu.jauges[k] = Math.max(0, Jeu.jauges[k] - 5);
+		const i = NOMS_JAUGES.indexOf(k);
+		resultat.deltas[i] -= 5;
+		resultat.sieste = true;
+		resultat.narration = Jeu.narrer(resultat);
+		resultat.narration.texte = 'Vous dormiez : l’alerte est restée sans réponse. ' + resultat.narration.texte;
+	};
+
+	/** Un dossier a-t-il été mal géré ? (pas de réaction, sieste, mauvaise source, ou bilan nettement négatif) */
+	function malGere(r) {
+		const total = r.deltas.reduce((a, b) => a + b, 0);
+		return r.action === 'temps' || r.sieste || r.mauvaiseSource || total <= -6;
+	}
+	function quoi(d) {
+		if (d.lignes && d.lignes.length) return 'ligne ' + d.lignes.join(', ') + (d.retard !== null && d.retard !== undefined ? ', retard ' + d.retard + ' min' : '');
+		return d.nature + (d.texte_source ? ' (« ' + String(d.texte_source).slice(0, 60) + (String(d.texte_source).length > 60 ? '…' : '') + ' »)' : '');
+	}
+	function constat(r) {
+		if (r.sieste) return 'l’alerte a sonné pendant une sieste, personne n’a réagi.';
+		if (r.action === 'temps') return 'personne n’a réagi.';
+		if (r.mauvaiseSource) return 'la mauvaise date a été retenue (« ' + r.nomAction + ' »).';
+		const pires = r.deltas
+			.map((v, i) => [v, NOMS_JAUGES[i]])
+			.filter(([v]) => v < 0)
+			.map(([v, k]) => LIBELLES_JAUGES[k] + ' ' + v)
+			.join(', ');
+		return 'décision « ' + r.nomAction + ' », ' + pires + '.';
+	}
+
+	/**
+	 * Mail de fin de journée (prompt 20 § 6) : ne parle que de ce qui ne va pas, heure par heure,
+	 * à partir des dossiers RÉELLEMENT joués aujourd'hui ; les dossiers bien gérés tiennent en une ligne.
+	 */
+	Jeu.mailDuJour = function () {
+		const j = Jeu.jourCourant();
+		const duJour = (Jeu.historique || []).filter((h) => h.action && h.jour === (j && j.date));
+		const mal = duJour.filter(malGere).sort((a, b) => (a.minuteSim || 0) - (b.minuteSim || 0));
+		const bien = duJour.length - mal.length;
+		const date = j ? j.date.split('-').reverse().join('/') : '';
+		const lignes = [];
+		if (!mal.length) {
+			lignes.push('Bonne journée au poste : les ' + duJour.length + ' incident(s) du ' + date + ' ont tous reçu une réponse adaptée.');
+			if (duJour[0]) lignes.push('Exemple : ' + Jeu.formaterHeure(duJour[0].minuteSim) + ' — ' + quoi(duJour[0].dossier) + ' : « ' + duJour[0].nomAction + ' ».');
+		} else {
+			lignes.push('Voici ce qui n’a pas fonctionné aujourd’hui (' + date + ') :');
+			mal.forEach((r) => lignes.push(Jeu.formaterHeure(r.minuteSim) + ' — ' + quoi(r.dossier) + ' : ' + constat(r)));
+			lignes.push(bien ? bien + ' autre(s) incident(s) ont été traités correctement.' : 'Aucun incident n’a été traité correctement.');
+		}
+		// État des jauges : valeurs réelles, en citant le nombre d'incidents qui les ont fait baisser
+		const basses = NOMS_JAUGES.filter((k) => Jeu.jauges[k] < 40);
+		basses.forEach((k) => {
+			const i = NOMS_JAUGES.indexOf(k);
+			const n = duJour.filter((r) => r.deltas[i] < 0).length;
+			lignes.push(
+				NOMS_JAUGES_LONGS[k].charAt(0).toUpperCase() + NOMS_JAUGES_LONGS[k].slice(1) + ' est à ' + Jeu.jauges[k] + '/100' +
+					(Jeu.jauges[k] < 20 ? ', au point mort' : '') + (n ? ', après ' + n + ' incident(s) qui l’ont fait baisser.' : '.'),
+			);
+		});
+		if (!basses.length) lignes.push('Jauges : fluidité ' + Jeu.jauges.fluidite + ', satisfaction ' + Jeu.jauges.satisfaction + ', réputation ' + Jeu.jauges.reputation + '.');
+		return {
+			de: 'Direction de la régulation',
+			objet: (mal.length ? 'Points à revoir — ' : 'Merci pour cette journée — ') + date,
+			positif: !mal.length,
+			lignes,
+			dernier: Jeu.jourIndex >= (Jeu.jours || []).length - 1,
 		};
 	};
 

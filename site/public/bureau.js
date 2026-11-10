@@ -141,7 +141,9 @@ function dessinerPieceBureau() {
 	dessinerDossiers(g);
 	dessinerPC(g);
 	dessinerTasseTelephone(g);
+	dessinerLivres(g);
 	dessinerLumiere(g);
+	dessinerPersonnageSieste(g);
 }
 
 function dessinerMur(g) {
@@ -169,7 +171,7 @@ function dessinerFenetre(g) {
 	const y = 12;
 	const l = 132;
 	const h = 92;
-	const heure = new Date().getHours();
+	const heure = heureAffichee().h; // heure simulée pendant une partie (prompt 20)
 	const nuit = heure < 7 || heure >= 20;
 	const m = Jeu.meteoActuelle;
 	const pluie = m && m.pluie_mm >= 1;
@@ -244,7 +246,8 @@ function dessinerHorloge(g) {
 		const a = (i / 12) * Math.PI * 2;
 		px(g, P.contour, cx + Math.round(Math.sin(a) * 9), cy - Math.round(Math.cos(a) * 9), 1, 1);
 	}
-	const d = new Date(); // heure réelle
+	const hA = heureAffichee(); // heure simulée pendant une partie, sinon heure réelle
+	const d = { getHours: () => hA.h, getMinutes: () => hA.m };
 	const aiguille = (frac, long, c) => {
 		const a = frac * Math.PI * 2;
 		for (let r = 0; r <= long; r++) px(g, c, cx + Math.round(Math.sin(a) * r), cy - Math.round(Math.cos(a) * r), 1, 1);
@@ -469,7 +472,10 @@ function dessinerVueBureau() {
 		dernierRenduBureau = millis();
 	}
 	drawingContext.imageSmoothingEnabled = false;
+	const flou = tempsCompresse() && !reduireAnimations && vue === 'bureau';
+	if (flou) drawingContext.filter = 'blur(1.5px)'; // § 3 : léger flou quand le temps est accéléré
 	image(gBureau, 0, 0, L, H);
+	drawingContext.filter = 'none';
 
 	const e = rectEcranPC();
 	let t = zoom ? constrain((millis() - debutZoom) / DUREE_ZOOM, 0, 1) : 0;
@@ -506,8 +512,28 @@ function dessinerVueBureau() {
 			noStroke();
 		}
 		boutons.push({ x: e.x, y: e.y, l: e.l, h: e.h, action: sAsseoir });
+		zonesObjetsBureau(); // livres cliquables + focus clavier (immersion.js)
+		// § 5 : incident important → bordure rouge pulsante autour du moniteur
+		if (incidentImportant()) bordureRouge(e.x - 10 * PIX, e.y - 10 * PIX, e.l + 20 * PIX, e.h + 22 * PIX, 3 * PIX);
+		// Horloge numérique sous la pendule pendant une partie (chiffres qui défilent vite en temps accéléré)
+		if (ecran === 'jeu' && phase !== 'fin') {
+			const hA = heureAffichee();
+			textFont(POLICE_DONNEES);
+			textSize(26);
+			const lib = String(hA.h).padStart(2, '0') + ':' + String(hA.m).padStart(2, '0') + (tempsCompresse() ? '  ▶▶ ×' + IMMERSION.compression : '');
+			const lh = textWidth(lib) + 28;
+			fill(28, 39, 51, 220);
+			rect(172 * PIX - lh / 2, 52 * PIX, lh, 40, 6);
+			fill('#FFFDF7');
+			textAlign(CENTER, CENTER);
+			text(lib, 172 * PIX, 52 * PIX + 20);
+		}
 		// Invitation (texte d'interface, sur bandeau, lisible)
-		const msg = 'Cliquez sur l’écran ou appuyez sur Entrée pour vous installer au poste';
+		const msg = incidentActif()
+			? 'Incident en cours : cliquez sur l’écran du PC (Entrée) pour le traiter'
+			: phase === 'mail'
+				? 'Un nouveau mail est arrivé sur le PC : cliquez sur l’écran (Entrée)'
+				: 'Cliquez sur l’écran ou Entrée pour vous installer · Tab : objets · Échap : menu';
 		textFont(POLICE_DONNEES);
 		textSize(22);
 		const lm = textWidth(msg) + 40;
@@ -536,6 +562,7 @@ function dessinerCadrePoste() {
 	fill(P.metal);
 	textAlign(RIGHT, CENTER);
 	text('Échap : se lever', L - 28, H - 8);
+	if (incidentImportant()) bordureRouge(4, 4, L - 8, H - 8, 8); // § 5 : visible aussi en plein écran
 }
 
 function sAsseoir() {
