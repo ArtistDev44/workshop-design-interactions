@@ -1684,7 +1684,7 @@ function fenetreReset() {
 /** Prompt 44 : morceau suivant (mémorisé), joué tout de suite si le son est actif */
 function musiqueSuivante() {
 	const liste = Confort.Son.musique.pistes();
-	const i = liste.indexOf(Confort.Reglages.musique || 'origine');
+	const i = liste.indexOf(Confort.Reglages.musique || 'chillin');
 	const suivante = liste[(i + 1) % liste.length];
 	Confort.Son.demarrer();
 	Confort.Son.musique.changer(suivante);
@@ -1765,7 +1765,12 @@ function fenetreParametres() {
 	textSize(18);
 	fill(C.gris);
 	text(t('param.touche', { k: '8' }), x + 560, ym + 36);
-	bouton(x + l - 48 - 280, ym + 8, 280, 56, '♪ ' + t('musique.' + (Confort.Reglages.musique || 'origine')), musiqueSuivante, false, true);
+	bouton(x + l - 48 - 280, ym + 8, 280, 56, '♪ ' + t('musique.' + (Confort.Reglages.musique || 'chillin')), musiqueSuivante, false, true);
+	textFont(POLICE_DONNEES);
+	textSize(14);
+	fill(C.gris);
+	textAlign(LEFT, TOP);
+	text(t('param.musiqueCredits'), x + 48, ym + 70, 640, 24); // crédits des morceaux CC0
 	// Prompt 33 : Progression — exporter (fichier), copier (presse-papiers), importer (fichier ou texte collé)
 	const yp = y + 120 + 6 * 96;
 	textFont(POLICE_TEXTE);

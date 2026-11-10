@@ -34,3 +34,15 @@ Quatre morceaux **originaux composés pour le projet**, donc libres de droits, d
   - signaux déclenchés : alerte de dossier (perturbation), tic-tac de plus en plus urgent, radio, clic d'action, jauges, signature de fin ;
   - contexte d'ambiance calculé avec pluie, vent et chaleur.
 - Tests des prompts 25 à 42 relancés, sans régression.
+
+## Musiques CC0 importées (10/11/2026)
+- Trois vrais morceaux chiptune **sous licence CC0 1.0** de **Komiku**, importés depuis Wikimedia Commons dans `site/public/audio/`. La licence a été vérifiée sur la page de chaque fichier via l'API Commons, et l'empreinte SHA-1 contrôlée au téléchargement :
+  - « Chillin' Poupi » (40 s, calme), **musique par défaut** d'un nouveau joueur ;
+  - « Travel to the Horizon » (96 s, entraînant) ;
+  - « Night in a seashell » (64 s, nocturne).
+- Formats : `.ogg` (originaux Vorbis) et `.mp3` (128 kb/s, conversion ffmpeg) pour les navigateurs qui ne lisent pas l'OGG. Au total, 7,3 Mo.
+- Crédits et sources : `site/public/audio/CREDITS.md`. Ils sont aussi rappelés dans les Paramètres, sous la ligne « Musique ».
+- Lecture : un élément `<audio>` en boucle, avec un fondu d'entrée de 2 s et de sortie de 0,6 s. Il démarre au premier geste et suit l'interrupteur Son (M). Il fonctionne hors ligne et par double clic, car les fichiers sont locaux.
+- Les quatre morceaux composés en code restent proposés. La touche 8 fait défiler les 7 morceaux.
+- OpenGameArt n'a pas pu servir de source : le site refuse les lectures automatisées (erreur 403). Je ne l'ai pas contourné.
+- Test : lecture OGG active et qui avance, passage au morceau suivant, retour aux morceaux en code, coupure et relance du son, sans erreur console.
