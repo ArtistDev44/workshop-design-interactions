@@ -141,6 +141,30 @@ const dem = vm.runInContext(
 );
 verifier(JSON.stringify(dem) === '[false,true,false]', `démission : ${JSON.stringify(dem)}`);
 
+// Prompt 51 : départ avant la fin — dossiers du jour réglés, blâme appliqué une seule fois le lendemain
+const dep = vm.runInContext(
+	`(() => { Jeu.chargerSemaine('2026-09-14'); Jeu.nouvellePartie();
+	Jeu.decider('renfort');
+	const restants = Jeu.dossiersRestantsDuJour();
+	const d = Jeu.partirAvantLaFin('09:30');
+	const toutRegle = !Jeu.prochainDuJour();
+	Jeu.finDeJourneeTactique();
+	const avant = Jeu.jauges.reputation;
+	Jeu.journeeSuivante();
+	const apres = Jeu.jauges.reputation;
+	const blame = Jeu.blame && String(Jeu.blame.texte);
+	Jeu.finDeJourneeTactique(); const avant2 = Jeu.jauges.reputation;
+	while (Jeu.prochainDuJour()) Jeu.decider('retenir');
+	Jeu.finDeJourneeTactique(); const r2 = Jeu.jauges.reputation; Jeu.journeeSuivante();
+	return { restants, laisses: d.laisses, toutRegle, delta: apres - avant, avant, blame, encore: Jeu.jauges.reputation - r2 }; })()`,
+	fr,
+);
+verifier(dep.laisses === dep.restants && dep.restants > 0, `départ anticipé : ${dep.laisses} dossier(s) laissés au lieu de ${dep.restants}`);
+verifier(dep.toutRegle, 'départ anticipé : des dossiers du jour restent en suspens');
+verifier(dep.delta === Math.max(-dep.avant, -8), `départ anticipé : blâme de ${dep.delta} au lieu de −8`);
+verifier(dep.blame && dep.blame.includes('09:30') && !dep.blame.includes('[À COMPLÉTER]'), 'départ anticipé : mail du patron sans l\'heure du départ');
+verifier(dep.encore === 0, `départ anticipé : blâme appliqué deux fois (${dep.encore})`);
+
 // Traductions : toute clé française existe en anglais
 const manquantes = vm.runInContext('Object.keys(TRADUCTIONS.fr).filter((k) => TRADUCTIONS.en[k] === undefined)', fr);
 verifier(manquantes.length === 0, `clés sans traduction anglaise : ${manquantes.slice(0, 8).join(', ')}`);

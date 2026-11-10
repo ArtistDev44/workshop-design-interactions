@@ -50,6 +50,8 @@ const OBJETS_BUREAU = [
 	{ nom: 'telephone', label: T('objet.telephone'), infobulle: T('objet.telephone.survol'), x: 364, y: 192, l: 26, h: 32 }, // prompt 38
 	{ nom: 'dossiers', piece: true, label: T('piece.dossiers'), infobulle: T('piece.dossiers.survol'), x: 390, y: 160, l: 44, h: 15 },
 	{ nom: 'fenetre', piece: true, label: T('piece.fenetre'), infobulle: T('piece.fenetre.survol'), x: 334, y: 14, l: 64, h: 96 }, // prompt 31 : la baie s'arrête au pan de mur
+	{ nom: 'horloge', label: T('objet.horloge'), infobulle: T('objet.horloge.survol'), x: 404, y: 30, l: 28, h: 29 }, // prompt 51 : finir sa journée
+	{ nom: 'sablier', label: T('objet.sablier'), infobulle: T('objet.sablier.survol'), x: 302, y: 169, l: 14, h: 22 }, // prompt 51 : faire passer le temps
 ];
 
 // ——— Prompt 29 : interactions hors écran, dans la pièce ———
@@ -199,7 +201,7 @@ function avancerTemps() {
 	const dt = derniereImage ? Math.min(250, maintenant - derniereImage) : 0;
 	derniereImage = maintenant;
 	if (ecran !== 'jeu' || !Jeu.horloge || phase === 'fin' || phase === 'mail' || smsActif || enPause || tutoriel || TRANSITION_JOUR || mecaniquesSuspendentTemps()) return; // prompt 34 / 43 : tutoriel et transition suspendent le temps
-	const vitesse = IMMERSION.minutesParSeconde * (tempsCompresse() ? IMMERSION.compression : 1);
+	const vitesse = IMMERSION.minutesParSeconde * (tempsCompresse() ? IMMERSION.compression : 1) * facteurSablier(); // prompt 51 : sablier
 	Jeu.horloge.minutes += (dt / 1000) * vitesse;
 
 	if (phase === 'attente') {
@@ -211,13 +213,7 @@ function avancerTemps() {
 		}
 		const prochain = Jeu.prochainDuJour();
 		if (prochain && Jeu.horloge.minutes >= prochain.minute) arriveeIncident();
-		else if (!prochain && Jeu.horloge.minutes >= Jeu.finJournee()) {
-			if (Jeu.finDeJourneeTactique) Jeu.finDeJourneeTactique(); // prompt 23 : objectif du jour, budget épuisé
-			phase = 'mail'; // § 6 : fin de journée
-			enSieste = false;
-			Confort.Son.bip('mail'); // prompt 30 : carillon de notification
-			Sauvegarde.auto(true); // prompt 33 : fin de journée
-		}
+		else if (!prochain && Jeu.horloge.minutes >= Jeu.finJournee()) finJourneeAtteinte(); // prompt 51 : l'horloge s'arrête, le joueur clique dessus pour partir (journee.js)
 	} else if (phase === 'reveil' && reveil && maintenant > reveil.limite) {
 		rateReveil();
 	}
@@ -638,7 +634,7 @@ function dessinerLivres(g) {
 	const leve = (o) => (vue === 'bureau' && objetSurvol === o.nom ? (reduireAnimations ? 1 : 2) : 0);
 	const lc = leve(t);
 	const ls = leve(s);
-	if (lc) ombreTramee(g, t.x, t.y + t.h, t.l, 2, 110);
+	ombreObjet(g, t.x, t.y + t.h, t.l + lc); // prompt 51 : ombre portée des livres (même trame que le téléphone)
 	// Livre « commande » (dessous) : couverture marine, liseré doré, marque-page qui se balance
 	const yc = t.y - lc;
 	boite(g, t.x, yc, t.l, t.h, '#1c2f52', '#34507f', '#121f38');
@@ -647,7 +643,7 @@ function dessinerLivres(g) {
 	const balance = Math.round(Math.sin(tps / 650) * 1);
 	px(g, '#b3261e', t.x + t.l - 8 + balance, yc + t.h, 2, 4);
 	// Livre « stress » (dessus)
-	if (ls) ombreTramee(g, s.x, s.y + s.h, s.l, 2, 110);
+	if (ls) ombreTramee(g, s.x, s.y + s.h - lc, s.l, 1, 90); // livre du dessus soulevé : ombre sur l'autre livre
 	const ys = s.y - ls - lc; // posé sur l'autre : il suit aussi le soulèvement du livre du dessous
 	boite(g, s.x, ys, s.l, s.h, '#3f7a43', '#5f9e4f', '#2f5d3a');
 	textePixel(g, 'STRESS', s.x + 10, ys + 2, '#f7f1e1');
@@ -724,6 +720,8 @@ function ouvrirObjetBureau(nom) {
 	if (nom === 'telephone') return ouvrirTelephone(); // prompt 38 : notifications de l'Agenda Nantes Métropole
 	if (nom === 'commande') return lancerTutoriel(); // prompt 34 : le livre « commande » ouvre le tutoriel
 	if (nom === 'stress') return (livreOuverture = millis()), ouvrir('livre-stress');
+	if (nom === 'horloge') return clicHorloge(); // prompt 51
+	if (nom === 'sablier') return clicSablier(); // prompt 51
 	if (OBJETS_BUREAU.some((o) => o.nom === nom && o.piece)) return interagirPiece(nom); // prompt 29
 }
 

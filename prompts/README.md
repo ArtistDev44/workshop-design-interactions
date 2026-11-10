@@ -90,9 +90,10 @@ jamais l'inverse.
 | 48 | `48-jeu-accessibilite-technique.md` | Jeu, étape 34 : daltonisme, taille du texte, lecture facile, tests automatisés, démo automatique, PWA hors ligne, courbes des jauges | ✅ |
 | 49 | `49-jeu-lofi-lisibilite-meteo.md` | Jeu, étape 35 : musique lofi CC0 et sons discrets, textes du PC lisibles, carte sans ligne météo, climat selon le mode (direct / archives) | ✅ |
 | 50 | `50-jeu-enquete-sources.md` | Jeu, étape 36 : découvrir la situation — alerte vague, détails révélés en consultant carte, info trafic, météo, agenda ; plus de conseil ni de flèches d'effet ; appli Régulation en fenêtre (barre des tâches visible) | ✅ |
-| 51 | `51-jeu-horloge-sablier.md` | Jeu, étape 37 : finir sa journée en cliquant l'horloge (alerte avant 20 h, blâme du patron le lendemain), sablier pour faire passer le temps entre les dossiers, lumière (lampe éteinte, stores baissés) qui se ressent sur le bureau, ombres portées des objets | ◻ prévu |
+| 51 | `51-jeu-horloge-sablier.md` | Jeu, étape 37 : finir sa journée en cliquant l'horloge (alerte avant 20 h, blâme du patron le lendemain), sablier pour faire passer le temps entre les dossiers, lumière (lampe éteinte, stores baissés) qui se ressent sur le bureau, ombres portées des objets | ✅ |
 | 52 | `52-jeu-cafe-boost.md` | Jeu, étape 38 : boire le café (tasse en main, même animation que le téléphone) → boost temporaire : cœur qui s'accélère, pulsation rouge, lignes de vitesse, flou, champ élargi | ◻ prévu |
 | 53 | `53-jeu-animations-feedback.md` | Jeu, étape 39 : animations de feedback — arrivée du dossier (glisser + tampon « SIGNALEMENT » + pulsation de la ligne sur la carte), jauges en eased avec deltas flottants, urgence du compteur sous 10 s (barre rouge, sablier accéléré) ; animations réduites respectées | ◻ prévu |
+| 54 | `54-jeu-defis-ralenti.md` | Jeu, étape 40 : défis de semaine réels (3 tirés par la graine, +5 sur la jauge concernée si tenus, bilan dans le mail et le rapport) et ralenti tactique (touche R, pause de 10 s du compteur, 1×/jour) | ◻ prévu |
 
 ### Statut des prompts (vérifié le 10/11/2026 dans `site/public/`)
 

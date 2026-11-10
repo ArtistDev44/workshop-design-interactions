@@ -332,7 +332,7 @@ function bandeauEtat() {
 	if (ecran !== 'jeu') return;
 	const cle = { attente: 'attente', reveil: 'attente', decision: 'decision', contradiction: 'contradiction', conflit: 'conflit', narration: 'narration', mail: 'mail', fin: 'fin' }[phase];
 	if (!cle) return;
-	const txt = t('etat.' + cle, { x: IMMERSION.compression });
+	const txt = phase === 'attente' && Jeu.journeeFinie && Jeu.journeeFinie() ? t('etat.finJournee', { fin: Jeu.formaterHeure(Jeu.finJournee()) }) : t('etat.' + cle, { x: IMMERSION.compression }); // prompt 51
 	const urgent = ['decision', 'contradiction', 'conflit'].includes(phase);
 	noStroke();
 	fill(urgent ? C.primaire : 'rgba(255,255,255,0.08)');
@@ -1441,7 +1441,7 @@ function keyPressed() {
 	// Langue (prompt 24) : L bascule partout, sans toucher à la partie
 	if (key === 'l' || key === 'L') return Langue.suivante(), false;
 	// Prompt 47 : inspection, démission, palmarès ; J = journal de bord, D = rendre son badge
-	if (toucheMecaniques() || toucheAccessibilite()) return false; // prompts 47 et 48
+	if (toucheMecaniques() || toucheAccessibilite() || toucheJournee()) return false; // prompts 47, 48 et 51
 	// Fenêtres ouvertes : elles captent le clavier
 	if (fenetre) {
 		if (keyCode === ESCAPE || (fenetre === 'aide' && (key === 'h' || key === 'H' || key === '?'))) return fermer(), false;
@@ -1623,6 +1623,8 @@ function dessinerFenetre() {
 	if (fenetre === 'demission') return fenetreDemission(); // prompt 47
 	if (fenetre === 'palmares') return fenetrePalmares(); // prompt 47
 	if (fenetre === 'accessibilite') return fenetreAccessibilite(); // prompt 48
+	if (fenetre === 'partir') return fenetrePartir(); // prompt 51
+	if (fenetre === 'blame') return fenetreBlame(); // prompt 51
 	if (fenetre === 'aide') return fenetreAide();
 	if (fenetre === 'reset') return fenetreReset();
 	if (fenetre === 'parametres') return fenetreParametres();

@@ -251,6 +251,8 @@
 		Jeu.inspection = null; // prompt 47 : inspection surprise de la semaine
 		Jeu.agendaPrevenus = {}; // prompt 47 : jours où le patron a déjà prévenu d'un afflux
 		Jeu.demission = false; // prompt 47 : fin « démission »
+		Jeu.depart = null; // prompt 51 : départ avant la fin de la journée
+		Jeu.blame = null; // prompt 51 : mail du patron le lendemain
 		Jeu.terminee = Jeu.paquet.length === 0;
 		Jeu.preparerJournees();
 		return Jeu.paquet;
@@ -301,6 +303,8 @@
 			carnet: Jeu.carnet || '',
 			inspection: Jeu.inspection,
 			agendaPrevenus: Object.assign({}, Jeu.agendaPrevenus),
+			depart: Jeu.depart,
+			blame: Jeu.blame,
 			terminee: Jeu.terminee,
 		};
 	};
@@ -321,6 +325,8 @@
 		['nonLus', 'alertesJauges', 'malus', 'paliersBudget', 'agendaPrevenus'].forEach((k) => (Jeu[k] = s[k] || {}));
 		Jeu.carnet = typeof s.carnet === 'string' ? s.carnet.slice(0, Jeu.CARNET_MAX) : ''; // prompt 47
 		Jeu.inspection = s.inspection || null;
+		Jeu.depart = s.depart || null; // prompt 51
+		Jeu.blame = s.blame || null;
 		Jeu.plaintes = (s.plaintes || [])
 			.map((p) => Object.assign({}, p, { def: Jeu.MESSAGES.plaintes.find((x) => x.id === p.id) }))
 			.filter((p) => p.def); // une plainte retirée de messages.json depuis la sauvegarde est ignorée
@@ -599,6 +605,7 @@
 			Jeu.debutJourneeTactique();
 			Jeu.messagePatron(consigneDuJour());
 			Jeu.prevenirAgenda(); // prompt 47
+			Jeu.appliquerBlame(); // prompt 51 : départ anticipé la veille
 		}
 		Jeu.horloge.minutes = Jeu.debutJournee();
 		return Jeu.jourCourant();
@@ -1210,6 +1217,38 @@
 
 	/** Démission possible quand les trois jauges sont sous le seuil critique (Q46) */
 	Jeu.peutDemissionner = () => !Jeu.terminee && !!Jeu.jauges && NOMS_JAUGES.every((k) => Jeu.jauges[k] < REGLAGES.seuilCritique);
+
+	// =====================================================================
+	// Prompt 51 — finir sa journée à l'horloge ; départ anticipé et blâme du patron le lendemain
+	// =====================================================================
+	Jeu.MALUS_DEPART = -8; // réputation : le patron retire sa confiance
+	Jeu.dossiersRestantsDuJour = function () {
+		const j = Jeu.jourCourant();
+		return j ? j.dossiers.filter((d) => Jeu.paquet.indexOf(d) >= Jeu.index).length : 0;
+	};
+	/** La journée est-elle finie (plus de dossier du jour et heure de fin atteinte) ? */
+	Jeu.journeeFinie = () => !Jeu.prochainDuJour() && !!Jeu.horloge && Jeu.horloge.minutes >= Jeu.finJournee();
+	/**
+	 * Départ avant la fin : les dossiers restants du jour suivent la règle « non traité » (Q25, conséquences
+	 * naturelles) ; le blâme sera appliqué une seule fois, à l'ouverture de la journée suivante.
+	 */
+	Jeu.partirAvantLaFin = function (heure) {
+		const laisses = Jeu.dossiersRestantsDuJour();
+		let garde = 0;
+		while (Jeu.prochainDuJour() && garde++ < 200) Jeu.decider('temps');
+		Jeu.depart = { jour: (Jeu.jourCourant() || {}).date || null, heure, fin: hhmm(Jeu.finJournee()), laisses, applique: false };
+		return Jeu.depart;
+	};
+	Jeu.appliquerBlame = function () {
+		const d = Jeu.depart;
+		if (!d || d.applique) return null;
+		d.applique = true;
+		Jeu.appliquerDeltas({ reputation: Jeu.MALUS_DEPART });
+		const texte = T('patron.blame', { date: d.jour ? d.jour.split('-').reverse().join('/') : '', heure: d.heure, fin: d.fin, n: d.laisses, malus: Jeu.MALUS_DEPART });
+		Jeu.messagePatron(texte);
+		Jeu.blame = { texte, lu: false, malus: Jeu.MALUS_DEPART };
+		return Jeu.blame;
+	};
 
 	global.Jeu = Jeu;
 })(typeof window !== 'undefined' ? window : globalThis);
