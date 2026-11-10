@@ -142,9 +142,10 @@
 		// Table des effets (Q57–Q60), prompt 22 : ordre fluidité, réputation, BUDGET (la satisfaction devient le budget).
 		// Seules les valeurs sont réajustées pour le nouveau trio ; les décisions Q57–Q61 sont inchangées.
 		effets: {
-			devier: { nom: T('action.devier'), base: [-6, 6, -3], communique: true }, // détour : un peu de fluidité perdue, usagers informés, petit coût
-			retenir: { nom: T('action.retenir'), base: [-7, null, 2] }, // réputation : +8 si retard > 20 min sinon +4 (Q58) ; économise du budget
-			renfort: { nom: T('action.renfort'), base: [12, 4, -12] }, // efficace mais cher : le budget n'est plus gratuit
+			// Équilibrage du 10/11/2026 (3 tests de difficulté, jeu/36-tests-difficulte.md) : la bonne fin redevient atteignable
+			devier: { nom: T('action.devier'), base: [-3, 8, -1], communique: true }, // détour : un peu de fluidité perdue, usagers informés, petit coût
+			retenir: { nom: T('action.retenir'), base: [-4, null, 5] }, // réputation : +8 si retard > 20 min sinon +4 (Q58) ; économise du budget
+			renfort: { nom: T('action.renfort'), base: [13, 5, -8] }, // efficace mais cher : le budget n'est plus gratuit
 			rien: { nom: T('action.rien') }, // −2 à −8 sur une jauge tirée au hasard (Q60)
 		},
 		// « base + 1d6 » (Q61) : le dé augmente l'AMPLITUDE de l'effet (même signe), d6 − 1 ∈ [0, 5] ;

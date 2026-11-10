@@ -23,11 +23,13 @@ Une équipe par incident ; refus explicite si le budget est insuffisant ; arriv�
 
 ## Jauges : Fluidité / Réputation / Budget
 La « satisfaction » devient le **budget** ; score = somme des 3 (Q44 inchangé). Nouvelle table (ordre fluidité, réputation, budget ; base + 1d6, Q57–Q61 inchangées) :
+> Valeurs rééquilibrées le 10/11/2026 après trois tests de difficulté (voir `36-tests-difficulte.md`).
+
 | Action | Fluidité | Réputation | Budget |
 |---|---|---|---|
-| Dévier la ligne | −6 | +6 | −3 |
-| Retenir en terminus | −7 | +8 si retard > 20 min, sinon +4 (Q58) | +2 |
-| Bus de renfort | +12 | +4 | −12 |
+| Dévier la ligne | −3 | +8 | −1 |
+| Retenir en terminus | −4 | +8 si retard > 20 min, sinon +4 (Q58) | +5 |
+| Bus de renfort | +13 | +5 | −8 |
 | Ne rien faire | −2 à −8 sur une jauge au hasard (Q60) | | |
 Modificateurs (Q24) : météo → fluidité ; heure de pointe et affluence → réputation. Conséquence naturelle d'un événement non traité et malus de sieste : réputation. Malus « mauvaise source » (Q31) : réputation.
 Équilibre : le bus de renfort reste le meilleur en moyenne (+4 attendu) mais coûte cher en budget, partagé avec les équipes — à affiner au prompt 23.
