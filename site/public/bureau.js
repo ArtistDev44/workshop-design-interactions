@@ -12,7 +12,6 @@ const BH = H / PIX; // 270
 // Écran du PC (16:9) en coordonnées pixel art, centré horizontalement (prompt 21 § 1.1)
 const LARGEUR_ECRAN_PC = 168; // vue depuis la chaise : grand écran face au joueur
 const ECRAN_PC = { x: (BW - LARGEUR_ECRAN_PC) / 2, y: 46, l: LARGEUR_ECRAN_PC, h: 94 };
-const HORLOGE_X = 300;
 // Vue « au poste » : le moniteur occupe ce rectangle (pixels écran), la pièce reste visible autour
 const ECRAN_POSTE = { x: (L - 1240) / 2, y: 96, l: 1240, h: 698 };
 
@@ -165,13 +164,14 @@ function dessinerPieceBureau() {
 	dessinerVueNantes(g);
 	dessinerMontantsBaie(g);
 	if (typeof PIECE !== 'undefined' && PIECE.store) dessinerStore(g); // prompt 29
+	dessinerMurDroit(g); // prompt 31 : pan de mur blanc avec l'horloge murale et l'applique
 	dessinerMurBas(g);
 	dessinerPorte(g); // prompt 26
 	dessinerPlateau(g);
 	dessinerPC(g);
 	dessinerObjetsBureau(g);
 	if (typeof dessinerLivres === 'function') dessinerLivres(g);
-	dessinerAccoudoirs(g);
+	// Prompt 31 : plus d'accoudoirs (la chaise n'est plus visible : on est assis dessus)
 	dessinerLumiere(g);
 	dessinerAmbianceLampe(g);
 	dessinerVignettage(g);
@@ -303,15 +303,54 @@ function dessinerMontantsBaie(g) {
 	for (let k = 0; k < 4; k++) g.quad(30 + k * 120, 12, 46 + k * 120, 12, 6 + k * 120, BAIE_BAS, -10 + k * 120, BAIE_BAS);
 }
 
+// Prompt 31 : pan de mur à droite de la baie, horloge murale (heure du jeu) et applique (la lampe du prompt 29)
+const MUR_DROIT_X = 420;
+const HORLOGE_MURALE = { x: 440, y: 44, r: 13 };
+function dessinerMurDroit(g) {
+	px(g, '#f4f5f6', MUR_DROIT_X, 9, BW - MUR_DROIT_X, BAIE_BAS - 9);
+	px(g, '#2a2f36', MUR_DROIT_X - 2, 9, 3, BAIE_BAS - 9); // dormant de la baie
+	px(g, '#dfe2e5', MUR_DROIT_X + 1, 9, 2, BAIE_BAS - 9); // ombre du dormant
+	// Horloge murale ronde : cadran blanc, contour sombre, aiguilles à l'heure du jeu
+	const h = HORLOGE_MURALE;
+	disque(g, h.x + 1, h.y + 2, h.r + 1, '#c8cdd2'); // ombre portée
+	disque(g, h.x, h.y, h.r + 1, P.contour);
+	disque(g, h.x, h.y, h.r - 1, '#ffffff');
+	for (let k = 0; k < 12; k++) {
+		const a = (k / 12) * Math.PI * 2;
+		px(g, k % 3 ? '#9aa1a8' : P.contour, h.x + Math.round(Math.sin(a) * (h.r - 3)), h.y - Math.round(Math.cos(a) * (h.r - 3)), 1, 1);
+	}
+	const hA = heureAffichee();
+	const aiguille = (angle, long, c) => {
+		for (let i = 0; i <= long; i++) px(g, c, h.x + Math.round(Math.sin(angle) * i), h.y - Math.round(Math.cos(angle) * i), 1, 1);
+	};
+	aiguille((((hA.h % 12) + hA.m / 60) / 12) * Math.PI * 2, h.r - 7, P.contour);
+	aiguille((hA.m / 60) * Math.PI * 2, h.r - 4, P.contour);
+	px(g, '#d4031c', h.x, h.y, 1, 1);
+	// Applique murale (lampe interactive) : cylindre sombre, flux de lumière chaude sur le mur
+	const lampe = typeof OBJETS_BUREAU !== 'undefined' ? OBJETS_BUREAU.find((o) => o.nom === 'lampe') : null;
+	if (!lampe) return;
+	const lx = lampe.x + lampe.l / 2;
+	const allumee = typeof PIECE === 'undefined' || PIECE.lampe;
+	if (allumee) {
+		g.fill(255, 226, 160, 46);
+		g.quad(lx - 4, lampe.y + lampe.h, lx + 4, lampe.y + lampe.h, lx + 14, BAIE_BAS, lx - 14, BAIE_BAS);
+		g.quad(lx - 3, lampe.y, lx + 3, lampe.y, lx + 8, lampe.y - 18, lx - 8, lampe.y - 18);
+	}
+	boite(g, lx - 4, lampe.y + 2, 8, lampe.h - 4, '#2c3036', '#4a5058', '#1a1d21');
+	px(g, '#9aa1a8', lx - 1, lampe.y + lampe.h / 2, 2, 1); // patère
+	if (allumee) px(g, '#fff3c4', lx - 3, lampe.y + lampe.h - 2, 6, 1);
+}
+
 /** Prompt 29 : store vénitien baissé sur la baie (lames claires, la ville reste visible entre les lames) */
 function dessinerStore(g) {
-	px(g, '#c8cdd2', 0, 9, BW, 4); // caisson
+	const lb = MUR_DROIT_X; // prompt 31 : la baie s'arrête au pan de mur de droite
+	px(g, '#c8cdd2', 0, 9, lb, 4); // caisson
 	for (let y = 14; y < BAIE_BAS - 2; y += 5) {
-		px(g, '#eef0f1', 0, y, BW, 3);
-		px(g, '#c8cdd2', 0, y + 3, BW, 1);
+		px(g, '#eef0f1', 0, y, lb, 3);
+		px(g, '#c8cdd2', 0, y + 3, lb, 1);
 	}
-	for (let x = 60; x < BW; x += 120) px(g, '#9aa1a8', x, 13, 1, BAIE_BAS - 15); // cordons
-	px(g, '#8d949b', 0, BAIE_BAS - 3, BW, 2); // barre de charge
+	for (let x = 60; x < lb; x += 120) px(g, '#9aa1a8', x, 13, 1, BAIE_BAS - 15); // cordons
+	px(g, '#8d949b', 0, BAIE_BAS - 3, lb, 2); // barre de charge
 }
 
 /** Prompt 29 : lampe éteinte → la pièce s'assombrit légèrement (l'écran du PC, dessiné après, n'est pas touché) */
@@ -378,42 +417,16 @@ function dessinerObjetsBureau(g) {
 		g.fill(255, 255, 255, 110);
 		for (let k = 0; k < 3; k++) g.rect(124 + k * 3 + ((t + k) % 2), 180 - k * 3 - (t % 3), 1, 3);
 	}
-	// Lampe d'architecte moderne (gauche)
-	boite(g, 14, 196, 26, 5, '#2c3036', '#4a5058', '#1a1d21');
-	px(g, P.contour, 25, 150, 3, 46);
-	px(g, P.contour, 25, 148, 46, 3);
-	boite(g, 64, 142, 22, 8, '#2c3036', '#4a5058', '#1a1d21');
-	const lampeAllumee = typeof PIECE === 'undefined' || PIECE.lampe; // prompt 29 : lampe interactive
-	if (lampeAllumee) {
-		g.fill(255, 236, 190, 50);
-		g.quad(66, 150, 84, 150, 112, 196, 44, 196);
-		px(g, '#fff3c4', 66, 149, 18, 1); // ampoule visible sous l'abat-jour
-	}
+	// Prompt 31 : la lampe d'architecte devient une applique murale (dessinerMurDroit), l'horloge passe au mur
 	// Smartphone posé (droite)
 	boite(g, 368, 196, 14, 24, '#16181b', '#2c3036', '#0a0b0c');
 	px(g, '#1d5f6e', 370, 199, 10, 16);
-	// Horloge de bureau numérique (heure du jeu)
-	boite(g, HORLOGE_X - 18, 176, 36, 13, '#16181b', '#2c3036', '#0a0b0c');
-	const hA = heureAffichee();
-	textePixel(g, String(hA.h).padStart(2, '0') + ' ' + String(hA.m).padStart(2, '0'), HORLOGE_X - 13, 180, '#ff5a52');
-	px(g, '#ff5a52', HORLOGE_X - 1, 181, 1, 1);
-	px(g, '#ff5a52', HORLOGE_X - 1, 183, 1, 1);
 	// Pile de dossiers (droite, au fond)
 	for (let i = 0; i < 4; i++) boite(g, 392 + (i % 2), 172 - i * 3, 40, 2, i % 2 ? P.chemise : '#e2b862', '#f0cd7f', P.chemiseSombre);
 	px(g, P.rouge, 418, 163, 8, 1);
 	// Petite plante grasse (gauche, au fond)
 	boite(g, 70, 164, 14, 10, '#e8e9ea', '#ffffff', '#c3c7cb');
 	feuillage(g, 77, 158, 6);
-}
-
-function dessinerAccoudoirs(g) {
-	// Accoudoirs du fauteuil du joueur, au premier plan dans les coins
-	[[-6, 1], [BW - 46, -1]].forEach(([x, s]) => {
-		px(g, P.contour, x, 236, 52, 40);
-		px(g, '#25292e', x + 1, 237, 50, 38);
-		px(g, '#3a4048', x + 1, 237, 50, 4);
-		px(g, '#1a1d21', x + (s > 0 ? 40 : 1), 241, 10, 34);
-	});
 }
 
 function dessinerLumiere(g) {
@@ -457,17 +470,20 @@ function dessinerVignettage(gCible) {
 // d'au plus 12 px, le fond de 5 px (parallaxe = profondeur). Retour au centre : recentrage progressif.
 // Animations réduites, vue au poste, zooms, fenêtres ouvertes : caméra strictement centrée.
 const DEZOOM = 0.88;
+// Prompt 31 : cadrage « sur la chaise » — on ne montre que la partie centrale de la pièce (16:9, centrée
+// sur le PC) : le poste est plus proche, les accoudoirs du fauteuil sortent du champ.
+const CADRAGE = { x: 24, y: 6, l: 432, h: 243 };
 const CAMERA = { max: 12, maxFond: 5, lissage: 0.1, x: 0, y: 0 };
 let sourisDansCanevas = false; // pas de caméra tant que la souris n'a pas bougé sur le canevas (touch, chargement)
 
 function origineBureau() {
-	return { x: (L * (1 - DEZOOM)) / 2 + CAMERA.x, y: (H * (1 - DEZOOM)) / 2 + CAMERA.y, k: DEZOOM };
+	// Cadre de la pièce sur le canevas (dézoom + caméra) et taille d'un pixel art (u) dans ce cadre
+	return { x: (L * (1 - DEZOOM)) / 2 + CAMERA.x, y: (H * (1 - DEZOOM)) / 2 + CAMERA.y, k: DEZOOM, u: (L * DEZOOM) / CADRAGE.l };
 }
-/** Rectangle en coordonnées pixel art (480×270) → pixels du canevas, en vue bureau (dézoom + caméra). */
+/** Rectangle en coordonnées pixel art (480×270) → pixels du canevas, en vue bureau (cadrage + dézoom + caméra). */
 function versEcranBureau(x, y, l, h) {
 	const o = origineBureau();
-	const u = PIX * o.k;
-	return { x: o.x + x * u, y: o.y + y * u, l: (l || 0) * u, h: (h || 0) * u };
+	return { x: o.x + (x - CADRAGE.x) * o.u, y: o.y + (y - CADRAGE.y) * o.u, l: (l || 0) * o.u, h: (h || 0) * o.u };
 }
 
 /** Flèches maintenues (←→↑↓) → direction, sauf si le focus est dans un champ ou un menu. */
@@ -515,12 +531,12 @@ function majCamera() {
 
 /** Fond visible autour de la pièce dézoomée : la pièce elle-même, plus grande, assombrie, qui bouge moins. */
 function dessinerFondBureau(echelle) {
-	if (echelle >= 1) return;
+	if (vue === 'poste') return;
 	const p = CAMERA.max ? CAMERA.maxFond / CAMERA.max : 0;
 	const s = 1.04;
 	image(gBureau, (L - L * s) / 2 + CAMERA.x * p, (H - H * s) / 2 + CAMERA.y * p, L * s, H * s);
 	noStroke();
-	fill(12, 16, 22, 196);
+	fill(12, 16, 22, 215);
 	rect(0, 0, L, H);
 }
 
@@ -588,13 +604,20 @@ function composerVue() {
 	const ox = r.x - e.x * echelle;
 	const oy = r.y - e.y * echelle;
 	dessinerFondBureau(echelle);
-	if (echelle < 1) {
+	// Prompt 31 : la pièce n'est montrée que dans son cadrage (découpe qui grandit avec le zoom vers le poste)
+	const cadre = { x: ox + CADRAGE.x * PIX * echelle, y: oy + CADRAGE.y * PIX * echelle, l: CADRAGE.l * PIX * echelle, h: CADRAGE.h * PIX * echelle };
+	const decoupe = vue !== 'poste' && (cadre.x > 0 || cadre.y > 0 || cadre.x + cadre.l < L || cadre.y + cadre.h < H);
+	if (decoupe) {
 		// Ombre portée de la pièce sur le fond : elle se détache comme un plan plus proche
 		noStroke();
 		fill(0, 0, 0, 90);
-		rect(ox + 6, oy + 10, L * echelle, H * echelle);
+		rect(cadre.x + 6, cadre.y + 10, cadre.l, cadre.h);
 		fill(P.contour);
-		rect(ox - PIX, oy - PIX, L * echelle + 2 * PIX, H * echelle + 2 * PIX);
+		rect(cadre.x - PIX, cadre.y - PIX, cadre.l + 2 * PIX, cadre.h + 2 * PIX);
+		drawingContext.save();
+		drawingContext.beginPath();
+		drawingContext.rect(cadre.x, cadre.y, cadre.l, cadre.h);
+		drawingContext.clip();
 	}
 	const flou = (tempsCompresse() && vue === 'bureau') || auPoste;
 	if (flou && !reduireAnimations) drawingContext.filter = auPoste ? 'blur(2px) brightness(0.85)' : 'blur(1.5px)';
@@ -603,6 +626,7 @@ function composerVue() {
 	scale(echelle);
 	image(gBureau, 0, 0, L, H);
 	pop();
+	if (decoupe) drawingContext.restore();
 	drawingContext.filter = 'none';
 	if (auPoste && reduireAnimations) {
 		noStroke();
@@ -650,7 +674,7 @@ function composerVue() {
 		textSize(22);
 		const lib = String(hA.h).padStart(2, '0') + ':' + String(hA.m).padStart(2, '0') + (tempsCompresse() ? '  ▶▶ ×' + IMMERSION.compression : '');
 		const lh = textWidth(lib) + 24;
-		const ph = versEcranBureau(HORLOGE_X, 152);
+		const ph = versEcranBureau(HORLOGE_MURALE.x, HORLOGE_MURALE.y + HORLOGE_MURALE.r + 6); // prompt 31 : sous l'horloge murale
 		fill(28, 39, 51, 220);
 		rect(ph.x - lh / 2, ph.y, lh, 34, 6);
 		fill('#FFFDF7');
@@ -723,9 +747,10 @@ function dessinerPorte(g) {
 	const o = OBJETS_BUREAU.find((x) => x.nom === 'porte');
 	if (!o) return;
 	// Pan de mur latéral (blanc) qui fuit vers la baie
-	for (let x = 0; x < 30; x++) {
-		const haut = 9 + Math.round(x * 0.6);
-		px(g, x === 29 ? '#b9bec4' : '#eef0f1', x, haut, 1, PLATEAU_Y - haut);
+	const finMur = o.x + o.l + 6;
+	for (let x = 0; x < finMur; x++) {
+		const haut = 9 + Math.round(Math.max(0, x - CADRAGE.x) * 0.6);
+		px(g, x === finMur - 1 ? '#b9bec4' : '#eef0f1', x, haut, 1, PLATEAU_Y - haut);
 	}
 	// Porte en perspective : bord proche plus haut que le bord lointain
 	for (let x = o.x; x < o.x + o.l; x++) {
