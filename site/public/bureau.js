@@ -610,11 +610,11 @@ function majCamera() {
 
 /* Vignettage + masque de flou des bords, fixes à l'écran (la pièce bouge dessous avec la caméra).
    Tout se fait en basse résolution (480×270) puis est agrandi avec lissage : coût négligeable par image.
-   - flou : copie floutée de la pièce, recalculée seulement quand la pièce est redessinée (toutes les 125 ms),
-     posée avec la même transformation que la pièce, puis découpée par un masque radial (net au centre,
-     flou vers les bords) ;
+   - flou : copie floutée de la pièce, recalculée seulement quand la pièce est redessinée,
+     posée avec la même transformation que la pièce, puis découpée par une bande de 36 px le long des
+     quatre bords (opaque au bord, transparente vers l'intérieur) ;
    - vignettage : dégradé radial sombre, plus marqué dans les coins. */
-const BORDS = { flou: 2, centreNet: 0.655, bordFlou: 0.75, vignette: 0.22 }; // zone floue divisée par 4 au total (≈ 72 px sur les côtés au lieu de ≈ 280), vignettage allégé
+const BORDS = { flou: 2, bande: 36, vignette: 0.22 }; // bande floue d'épaisseur constante (36 px) le long des 4 bords — plus d'ellipse qui mordait dans les coins
 let cPieceFloue = null;
 let cFlouEcran = null;
 let cMasqueFlou = null;
@@ -637,14 +637,33 @@ function degradeRadial(c, stops) {
 	ctx.fillRect(0, 0, c.width, c.width);
 	ctx.restore();
 }
+/** Masque en bande : opaque au bord de l'écran, transparent à « e » pixels du bord, sur les 4 côtés */
+function bandeBords(c, e) {
+	const ctx = c.getContext('2d');
+	const w = c.width;
+	const h = c.height;
+	const cotes = [
+		[0, 0, 0, e, 0, 0, w, e], // haut
+		[0, h, 0, h - e, 0, h - e, w, e], // bas
+		[0, 0, e, 0, 0, 0, e, h], // gauche
+		[w, 0, w - e, 0, w - e, 0, e, h], // droite
+	];
+	cotes.forEach(([x0, y0, x1, y1, rx, ry, rl, rh]) => {
+		const g = ctx.createLinearGradient(x0, y0, x1, y1);
+		g.addColorStop(0, 'rgba(0,0,0,1)');
+		g.addColorStop(1, 'rgba(0,0,0,0)');
+		ctx.fillStyle = g;
+		ctx.fillRect(rx, ry, rl, rh);
+	});
+}
 function masqueFlouEtVignette(ox, oy, echelle) {
 	if (!cMasqueFlou) {
 		cPieceFloue = canevas(BW, BH);
 		cFlouEcran = canevas(BW, BH);
 		cMasqueFlou = canevas(BW, BH);
-		degradeRadial(cMasqueFlou, [[0, 'rgba(0,0,0,0)'], [BORDS.centreNet, 'rgba(0,0,0,0)'], [BORDS.bordFlou, 'rgba(0,0,0,1)'], [1, 'rgba(0,0,0,1)']]);
+		bandeBords(cMasqueFlou, (BORDS.bande * BW) / L);
 		cVignette = canevas(BW, BH);
-		degradeRadial(cVignette, [[0, 'rgba(12,16,22,0)'], [0.915, 'rgba(12,16,22,0)'], [0.955, 'rgba(12,16,22,' + BORDS.vignette * 0.45 + ')'], [1, 'rgba(12,16,22,' + BORDS.vignette + ')']]);
+		degradeRadial(cVignette, [[0, 'rgba(12,16,22,0)'], [0.958, 'rgba(12,16,22,0)'], [0.979, 'rgba(12,16,22,' + BORDS.vignette * 0.45 + ')'], [1, 'rgba(12,16,22,' + BORDS.vignette + ')']]);
 	}
 	if (derniereCopieFloue !== dernierRenduBureau) {
 		const c = cPieceFloue.getContext('2d');
