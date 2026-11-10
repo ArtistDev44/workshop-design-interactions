@@ -36,7 +36,11 @@ const reduireAnimations = window.matchMedia && window.matchMedia('(prefers-reduc
 // ——— État d'affichage ———
 let ecran = 'accueil'; // 'accueil' | 'jeu'
 let choixAccueil = 0; // index dans optionsAccueil()
-let indexDossier = 0;
+let phase = 'decision'; // 'conflit' | 'contradiction' | 'decision' | 'narration' | 'fin'
+let sourceChoisie = null; // 'a' | 'b' quand le dossier contient une contradiction (Q9)
+let dernierResultat = null;
+let debutNarration = 0;
+const DUREE_NARRATION = 6000;
 let arriveeDossier = 0; // millis() d'arrivée du dossier (glissement, Q10)
 let debutCompteur = 0;
 let boutons = []; // zones cliquables recalculées à chaque image
@@ -145,8 +149,8 @@ function lancerPartie() {
 	if (!o || o.desactive) return;
 	const p = o.type === 'direct' ? Jeu.chargerDirect() : Jeu.chargerSemaine(o.lundi);
 	p.then(() => {
+		Jeu.nouvellePartie();
 		ecran = 'jeu';
-		indexDossier = 0;
 		nouveauDossier();
 	});
 }
@@ -154,6 +158,24 @@ function lancerPartie() {
 function nouveauDossier() {
 	arriveeDossier = millis();
 	debutCompteur = millis();
+	sourceChoisie = null;
+	if (Jeu.terminee) phase = 'fin';
+	else if (Jeu.conflit()) phase = 'conflit';
+	else if (Jeu.dossierCourant().contradiction) phase = 'contradiction';
+	else phase = 'decision';
+}
+
+/* Décision du joueur (ou compteur à 0 → 'temps', Q25) */
+function decider(action) {
+	if (phase !== 'decision' && !(action === 'temps' && phase === 'contradiction')) return;
+	dernierResultat = Jeu.decider(action, sourceChoisie);
+	if (!dernierResultat) return;
+	phase = 'narration';
+	debutNarration = millis();
+}
+
+function continuer() {
+	if (phase === 'narration') nouveauDossier();
 }
 
 // =====================================================================
@@ -165,7 +187,7 @@ const LISTE = { x: 840, y: 110, l: 340, h: 910 };
 const DROITE = { x: 1230, y: 40, l: 650, h: 1000 };
 
 function dossierCourant() {
-	return Jeu.etat.dossiers[indexDossier % Math.max(1, Jeu.etat.dossiers.length)] || null;
+	return Jeu.dossierCourant ? Jeu.dossierCourant() : null;
 }
 
 function dessinerJeu() {
@@ -195,9 +217,12 @@ function dessinerJeu() {
 	dessinerLignesEtat(CARTE, d);
 	dessinerListeLignes(LISTE, d);
 
-	// Panneau droit : jauges, compteur, dossier, actions
+	// Panneau droit : jauges, puis selon la phase : conflit, dossier (avec contradiction) ou narration
 	dessinerJauges();
-	dessinerDossier(d, meteo);
+	if (phase === 'narration') dessinerNarration();
+	else if (phase === 'fin') dessinerFinProvisoire();
+	else if (phase === 'conflit') dessinerConflit();
+	else dessinerDossier(d, meteo);
 }
 
 function enteteMode() {
@@ -360,7 +385,7 @@ function dessinerListeLignes(zone, dActuel) {
 	(Jeu.etat.dossiers || []).forEach((d, i) => {
 		(d.lignes || []).forEach((n) => {
 			const prev = parLigne.get(n) || { nom: n, alerte: false, retard: null };
-			prev.alerte = prev.alerte || d.type !== 'ligne en difficulté' || i === indexDossier;
+			prev.alerte = prev.alerte || d.type !== 'ligne en difficulté' || i === Jeu.index;
 			if (d.retard !== null && (prev.retard === null || d.retard > prev.retard)) prev.retard = d.retard;
 			parLigne.set(n, prev);
 		});
@@ -423,7 +448,7 @@ function dessinerListeLignes(zone, dActuel) {
 function dessinerJauges() {
 	const z = { x: DROITE.x, y: DROITE.y, l: DROITE.l, h: 110 };
 	panneau(z.x, z.y, z.l, z.h);
-	const jauges = Jeu.jauges || { fluidite: 50, satisfaction: 50, reputation: 50 }; // départ 50 (Q40) ; logique au prompt 17
+	const jauges = Jeu.jauges || { fluidite: 50, satisfaction: 50, reputation: 50 }; // départ 50 (Q40)
 	const defs = [
 		['Fluidité', jauges.fluidite],
 		['Satisfaction', jauges.satisfaction],
@@ -443,7 +468,11 @@ function dessinerJauges() {
 		text(Math.round(v), x + lb, z.y + 18);
 		fill('#E8E2D6');
 		rect(x, z.y + 56, lb, 22, 4);
-		fill(v < 20 ? C.rouge : v < 40 ? C.orange : C.vert);
+		// Jauge < 20 : clignotement discret (Q46), fixe si animations réduites
+		const critique = v < 20;
+		const visible = !critique || reduireAnimations || Math.floor(millis() / 700) % 2 === 0;
+		fill(critique ? C.rouge : v < 40 ? C.orange : C.vert);
+		if (!visible) fill('#D9A39E');
 		rect(x, z.y + 56, (lb * constrain(v, 0, 100)) / 100, 22, 4);
 	});
 }
@@ -478,10 +507,16 @@ function dessinerDossier(d, meteo) {
 	textAlign(RIGHT, TOP);
 	fill(C.gris);
 	text(Math.ceil((reste * duree) / 1000) + ' s', x + base.l - 24, base.y + 42);
+	// Compteur à 0 : « ne rien faire » avec les seules conséquences naturelles du dossier (Q25)
+	if (reste === 0 && t === 1 && (phase === 'decision' || phase === 'contradiction')) {
+		phase = 'decision';
+		decider('temps');
+		return;
+	}
 
 	// En-tête du dossier
 	textAlign(LEFT, TOP);
-	text('DOSSIER ' + (indexDossier + 1) + ' / ' + Jeu.etat.dossiers.length + ' · ' + d.type.toUpperCase(), x + 32, base.y + 42);
+	text('DOSSIER ' + (Jeu.index + 1) + ' / ' + Jeu.paquet.length + ' · ' + d.type.toUpperCase() + (d.affluence ? ' · AFFLUENCE' : ''), x + 32, base.y + 42);
 
 	// Priorité : ligne, retard, raison
 	const ligne = d.lignes && d.lignes.length ? 'Ligne ' + d.lignes.join(', ') : 'Ligne non précisée';
@@ -502,17 +537,17 @@ function dessinerDossier(d, meteo) {
 	fill(C.texte);
 	textFont(POLICE_TEXTE);
 	textSize(26);
-	text('Raison : ' + d.nature, x + 32, base.y + 212, base.l - 64, 60);
+	text('Raison : ' + d.nature, x + 32, base.y + 212, base.l - (d.contradiction ? 300 : 64), 60);
 
 	// Badge « contradiction » si deux sources se contredisent (Q9) — calculé au prompt 17
 	if (d.contradiction) {
 		fill(C.orange);
-		rect(x + base.l - 230, base.y + 88, 198, 40, 20);
+		rect(x + base.l - 230, base.y + 232, 198, 36, 18);
 		fill(C.panneau);
 		textFont(POLICE_DONNEES);
 		textSize(18);
 		textAlign(CENTER, CENTER);
-		text('contradiction', x + base.l - 131, base.y + 108);
+		text('contradiction', x + base.l - 131, base.y + 250);
 		textAlign(LEFT, TOP);
 	}
 
@@ -537,25 +572,166 @@ function dessinerDossier(d, meteo) {
 		text('Météo : ' + fmt(meteo.temp_min) + '–' + fmt(meteo.temp_max) + ' °C · pluie ' + fmt(meteo.pluie_mm) + ' mm · rafales ' + fmt(meteo.rafales_max) + ' km/h', x + 32, base.y + 506);
 	}
 
-	// Actions : 3 actions + « ne rien faire » (Q5) — effets branchés au prompt 17
-	const actions = [
-		['1', 'Dévier la ligne'],
-		['2', 'Retenir en terminus'],
-		['3', 'Bus de renfort'],
-		['0', 'Ne rien faire'],
-	];
 	const ab = (base.l - 64 - 16) / 2;
-	actions.forEach(([touche, nom], i) => {
+	if (phase === 'contradiction') {
+		// Contradiction (Q9, Q31) : choisir d'abord la source à croire
+		const c = d.contradiction;
+		fill(C.orange);
+		textFont(POLICE_TEXTE);
+		textStyle(BOLD);
+		textSize(22);
+		text(c.question, x + 32, base.y + base.h - 250, base.l - 64, 40);
+		textStyle(NORMAL);
+		[
+			['A', c.a.libelle, 'a'],
+			['B', c.b.libelle, 'b'],
+		].forEach(([t, lib, cle], i) => {
+			const by = base.y + base.h - 200 + i * 88;
+			bouton(x + 32, by, base.l - 64, 72, t + '  ' + lib, () => choisirSource(cle), false, true);
+		});
+		return;
+	}
+	// Actions : 3 actions + « ne rien faire » (Q5)
+	const actions = [
+		['1', 'Dévier la ligne', 'devier'],
+		['2', 'Retenir en terminus', 'retenir'],
+		['3', 'Bus de renfort', 'renfort'],
+		['0', 'Ne rien faire', 'rien'],
+	];
+	if (sourceChoisie && d.contradiction) {
+		textFont(POLICE_DONNEES);
+		textSize(16);
+		fill(C.gris);
+		text('Source retenue : ' + d.contradiction[sourceChoisie].libelle, x + 32, base.y + base.h - 236, base.l - 64, 30);
+	}
+	actions.forEach(([touche, nom, cle], i) => {
 		const bx = x + 32 + (i % 2) * (ab + 16);
 		const by = base.y + base.h - 200 + Math.floor(i / 2) * 88;
-		bouton(bx, by, ab, 72, touche + '  ' + nom, () => dossierSuivant(), false, i === 3);
+		bouton(bx, by, ab, 72, touche + '  ' + nom, () => decider(cle), false, i === 3);
 	});
 }
 
-function dossierSuivant() {
-	if (!Jeu.etat.dossiers.length) return;
-	indexDossier = (indexDossier + 1) % Jeu.etat.dossiers.length;
-	nouveauDossier();
+function choisirSource(cle) {
+	if (phase !== 'contradiction') return;
+	sourceChoisie = cle;
+	phase = 'decision';
+}
+
+// ——— Conflit de deux lignes (Q27) : choix binaire explicite ———
+function dessinerConflit() {
+	const z = { x: DROITE.x, y: DROITE.y + 130, l: DROITE.l, h: DROITE.h - 130 };
+	panneau(z.x, z.y, z.l, z.h, C.orange);
+	const c = Jeu.conflit();
+	textAlign(LEFT, TOP);
+	noStroke();
+	fill(C.orange);
+	textFont(POLICE_DONNEES);
+	textSize(18);
+	text('CONFLIT · ' + dateLongue(c.a.date), z.x + 32, z.y + 32);
+	fill(C.texte);
+	textFont(POLICE_TEXTE);
+	textStyle(BOLD);
+	textSize(40);
+	text('Quelle ligne traiter en priorité ?', z.x + 32, z.y + 70, z.l - 64, 110);
+	textStyle(NORMAL);
+	[
+		['A', c.a, 'a'],
+		['B', c.b, 'b'],
+	].forEach(([t, dd, cle], i) => {
+		const by = z.y + 220 + i * 190;
+		bouton(z.x + 32, by, z.l - 64, 160, '', () => choisirPriorite(cle), false, true);
+		fill(C.accent);
+		textAlign(LEFT, TOP);
+		textFont(POLICE_TEXTE);
+		textStyle(BOLD);
+		textSize(32);
+		text(t + '  Ligne ' + dd.lignes.join(', ') + (dd.retard !== null ? '  · +' + dd.retard + ' min' : ''), z.x + 60, by + 26);
+		textStyle(NORMAL);
+		textSize(20);
+		fill(C.texte);
+		text(dd.texte_source, z.x + 60, by + 80, z.l - 120, 70);
+	});
+}
+
+function choisirPriorite(cle) {
+	if (phase !== 'conflit') return;
+	Jeu.choisirPriorite(cle);
+	phase = Jeu.dossierCourant().contradiction ? 'contradiction' : 'decision';
+	debutCompteur = millis();
+}
+
+// ——— Narration entre deux décisions (06-narration, Q17) ———
+function dessinerNarration() {
+	const z = { x: DROITE.x, y: DROITE.y + 130, l: DROITE.l, h: DROITE.h - 130 };
+	const r = dernierResultat;
+	const couleurTon = { neutre: C.accent, tendu: C.orange, critique: C.rouge }[r.narration.ton];
+	panneau(z.x, z.y, z.l, z.h, couleurTon);
+	textAlign(LEFT, TOP);
+	noStroke();
+	fill(couleurTon);
+	textFont(POLICE_DONNEES);
+	textSize(18);
+	text('JOURNAL DE LA SALLE · ton ' + r.narration.ton, z.x + 32, z.y + 32);
+	fill(C.texte);
+	textFont(POLICE_TEXTE);
+	textStyle(BOLD);
+	textSize(34);
+	text(r.narration.titre, z.x + 32, z.y + 70, z.l - 64, 100);
+	textStyle(NORMAL);
+	textSize(26);
+	text(r.narration.texte, z.x + 32, z.y + 190, z.l - 64, 260);
+
+	// Détail des effets : base + 1d6 et contexte (lisible pour la soutenance)
+	textFont(POLICE_DONNEES);
+	textSize(18);
+	fill(C.gris);
+	const noms = ['Fluidité', 'Satisfaction', 'Réputation'];
+	r.deltas.forEach((v, i) => {
+		const de = r.des[i] ? '  (dé : ' + r.des[i] + ')' : '';
+		fill(v > 0 ? C.vert : v < 0 ? C.rouge : C.gris);
+		text(noms[i].padEnd(13, ' ') + (v > 0 ? '+' : '') + v + de, z.x + 32, z.y + 470 + i * 30);
+	});
+	const ctx = [r.contexte.meteo && 'météo défavorable', r.contexte.pointe && 'heure de pointe', r.contexte.affluence && 'affluence'].filter(Boolean);
+	fill(C.gris);
+	if (ctx.length) text('Contexte : ' + ctx.join(', ') + ' (effet renforcé)', z.x + 32, z.y + 570);
+
+	// Suite automatique, ou Entrée / clic
+	const t = constrain((millis() - debutNarration) / DUREE_NARRATION, 0, 1);
+	fill('#E8E2D6');
+	rect(z.x + 32, z.y + z.h - 140, z.l - 64, 6, 3);
+	fill(couleurTon);
+	rect(z.x + 32, z.y + z.h - 140, (z.l - 64) * t, 6, 3);
+	bouton(z.x + 32, z.y + z.h - 112, z.l - 64, 72, Jeu.terminee ? 'Voir le bilan  (Entrée)' : 'Dossier suivant  (Entrée)', continuer);
+	if (t >= 1) continuer();
+}
+
+// ——— Fin provisoire (l'écran de fin complet arrive au prompt 19) ———
+function dessinerFinProvisoire() {
+	const z = { x: DROITE.x, y: DROITE.y + 130, l: DROITE.l, h: DROITE.h - 130 };
+	panneau(z.x, z.y, z.l, z.h, C.accent);
+	textAlign(LEFT, TOP);
+	noStroke();
+	fill(C.texte);
+	textFont(POLICE_TEXTE);
+	textStyle(BOLD);
+	textSize(40);
+	text('Semaine terminée', z.x + 32, z.y + 40);
+	textStyle(NORMAL);
+	textFont(POLICE_DONNEES);
+	textSize(26);
+	text('Score combiné : ' + Jeu.score() + ' / 300', z.x + 32, z.y + 110);
+	text('Dossiers traités : ' + Jeu.historique.filter((h) => h.action).length + ' / ' + Jeu.paquet.length, z.x + 32, z.y + 150);
+	bouton(z.x + 32, z.y + z.h - 200, z.l - 64, 72, 'Rejouer la même semaine', rejouer);
+	bouton(z.x + 32, z.y + z.h - 112, z.l - 64, 72, 'Changer de semaine', () => (ecran = 'accueil'), false, true);
+}
+
+function rejouer() {
+	const e = Jeu.etat;
+	const p = e.mode === 'semaine' ? Jeu.chargerSemaine(e.semaine.lundi) : e.mode === 'direct' ? Jeu.chargerDirect() : Jeu.chargerHorsLigne();
+	p.then(() => {
+		Jeu.nouvellePartie();
+		nouveauDossier();
+	});
 }
 
 // =====================================================================
@@ -605,6 +781,7 @@ function bouton(x, y, l, h, label, action, desactive, secondaire) {
 	textFont(POLICE_TEXTE);
 	textStyle(BOLD);
 	textSize(Math.min(30, h * 0.36));
+	while (textSize() > 14 && textWidth(label) > l - 32) textSize(textSize() - 1); // le libellé tient dans le bouton
 	textAlign(CENTER, CENTER);
 	text(label, x + l / 2, y + h / 2);
 	textStyle(NORMAL);
@@ -644,7 +821,16 @@ function keyPressed() {
 		if (keyCode === UP_ARROW) choixAccueil = (choixAccueil + n - 1) % n;
 		if (keyCode === DOWN_ARROW) choixAccueil = (choixAccueil + 1) % n;
 		if (keyCode === ENTER || keyCode === RETURN) lancerPartie();
-	} else if (['1', '2', '3', '0', ' '].includes(key)) {
-		dossierSuivant();
+	} else if (phase === 'decision') {
+		const actions = { 1: 'devier', 2: 'retenir', 3: 'renfort', 0: 'rien', ' ': 'rien' };
+		if (actions[key]) decider(actions[key]);
+	} else if (phase === 'contradiction') {
+		if (key === 'a' || key === 'A') choisirSource('a');
+		if (key === 'b' || key === 'B') choisirSource('b');
+	} else if (phase === 'conflit') {
+		if (key === 'a' || key === 'A') choisirPriorite('a');
+		if (key === 'b' || key === 'B') choisirPriorite('b');
+	} else if (phase === 'narration' && (keyCode === ENTER || keyCode === RETURN)) {
+		continuer();
 	}
 }
