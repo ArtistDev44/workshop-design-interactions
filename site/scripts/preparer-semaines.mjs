@@ -14,7 +14,7 @@
 // Lancé à la main, jamais au build.
 import { writeFile, mkdir } from 'node:fs/promises';
 
-const JEU = new URL('../public/oeuvres/pxe-nte001-g01-w01/data/', import.meta.url);
+const JEU = new URL('../public/data/', import.meta.url);
 const SEMAINES = new URL('semaines/', JEU);
 const OD = 'https://data.nantesmetropole.fr/api/explore/v2.1/catalog/datasets';
 const GTFS = '244400404_transports_commun_naolib_nantes_metropole_gtfs';

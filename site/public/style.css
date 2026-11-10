@@ -1,0 +1,22 @@
+/* Nantes en régulation — le canevas 1920×1080 est mis à l'échelle de la fenêtre (ratio 16:9 conservé). */
+html,
+body {
+	margin: 0;
+	height: 100%;
+	background: #f5efe3;
+	color: #1c2733;
+	font-family: Inter, system-ui, sans-serif;
+}
+#scene {
+	width: 100vw;
+	height: 100vh;
+	display: grid;
+	place-items: center;
+	overflow: hidden;
+}
+#scene canvas {
+	touch-action: manipulation; /* touch basique (Q32) : pas de zoom au double tap */
+	width: min(100vw, calc(100vh * 16 / 9)) !important;
+	height: auto !important;
+	display: block;
+}
