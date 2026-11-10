@@ -162,6 +162,7 @@ function draw() {
 		majCurseur();
 		return;
 	}
+	verifierMecaniques(); // prompt 47 : inspection surprise (avant l'horloge, qui s'arrête alors)
 	avancerTemps(); // horloge simulée, sieste, arrivée des incidents, fin de journée (immersion.js)
 	if (Jeu.equipes) Jeu.majEquipes(millis()); // équipes envoyées depuis la carte (prompt 22)
 	boutons = [];
@@ -189,6 +190,7 @@ function draw() {
 		boutons = [];
 		dessinerReveil();
 	}
+	dessinerOffreDemission(); // prompt 47 : les trois jauges sous 20 → « Rendre son badge »
 	if (fenetre) {
 		boutons = []; // seule la fenêtre ouverte est cliquable
 		dessinerFenetre();
@@ -1441,7 +1443,7 @@ function dateLongue(iso) {
 // Entrées : souris, touch, clavier (raccourcis complets, 08-raccourcis)
 // =====================================================================
 function mousePressed() {
-	if (Sauvegarde.dialogueOuvert) return; // prompt 33 : clics destinés à la boîte d'import HTML
+	if (Sauvegarde.dialogueOuvert || CARNET.ouvert) return; // prompt 33 : clics destinés à la boîte d'import HTML
 	Confort.Son.demarrer();
 	interaction();
 	for (let i = boutons.length - 1; i >= 0; i--) {
@@ -1460,7 +1462,7 @@ function basculerSon() {
 
 function keyPressed() {
 	// Prompt 33 : boîte d'import ouverte (champ texte, fichier) → le clavier lui appartient
-	if (Sauvegarde.dialogueOuvert) return;
+	if (Sauvegarde.dialogueOuvert || CARNET.ouvert) return;
 	if (CINE) return toucheCinematique(), false; // prompt 41
 	if (TRANSITION_JOUR && (keyCode === ENTER || keyCode === RETURN || key === ' ' || keyCode === ESCAPE)) return passerTransitionJour(), false; // prompt 43
 	Confort.Son.demarrer(); // l'audio ne peut démarrer qu'après un geste du joueur
@@ -1481,6 +1483,8 @@ function keyPressed() {
 	if (tutoriel && !(key === 'l' || key === 'L')) return toucheTutoriel(), false;
 	// Langue (prompt 24) : L bascule partout, sans toucher à la partie
 	if (key === 'l' || key === 'L') return Langue.suivante(), false;
+	// Prompt 47 : inspection, démission, palmarès ; J = journal de bord, D = rendre son badge
+	if (toucheMecaniques()) return false;
 	// Fenêtres ouvertes : elles captent le clavier
 	if (fenetre) {
 		if (keyCode === ESCAPE || (fenetre === 'aide' && (key === 'h' || key === 'H' || key === '?'))) return fermer(), false;
@@ -1620,7 +1624,7 @@ function mouseMoved() {
 
 // Touch basique (Q32) : un appui = un clic sur les boutons
 function touchStarted() {
-	if (Sauvegarde.dialogueOuvert) return;
+	if (Sauvegarde.dialogueOuvert || CARNET.ouvert) return;
 	sourisDansCanevas = false; // au doigt, pas de caméra (la position du dernier appui resterait « collée »)
 	Confort.Son.demarrer();
 	mousePressed();
@@ -1655,6 +1659,9 @@ function dessinerFenetre() {
 	if (fenetre === 'telephone') return fenetreTelephone(); // prompt 42 : le téléphone en main a son propre voile
 	voile();
 	if (fenetre === 'rapport') return fenetreRapport(); // prompt 41
+	if (fenetre === 'inspection') return fenetreInspection(); // prompt 47
+	if (fenetre === 'demission') return fenetreDemission(); // prompt 47
+	if (fenetre === 'palmares') return fenetrePalmares(); // prompt 47
 	if (fenetre === 'aide') return fenetreAide();
 	if (fenetre === 'reset') return fenetreReset();
 	if (fenetre === 'parametres') return fenetreParametres();

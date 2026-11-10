@@ -186,7 +186,7 @@ function avancerTemps() {
 	const maintenant = millis();
 	const dt = derniereImage ? Math.min(250, maintenant - derniereImage) : 0;
 	derniereImage = maintenant;
-	if (ecran !== 'jeu' || !Jeu.horloge || phase === 'fin' || phase === 'mail' || smsActif || enPause || tutoriel || TRANSITION_JOUR) return; // prompt 34 / 43 : tutoriel et transition suspendent le temps
+	if (ecran !== 'jeu' || !Jeu.horloge || phase === 'fin' || phase === 'mail' || smsActif || enPause || tutoriel || TRANSITION_JOUR || mecaniquesSuspendentTemps()) return; // prompt 34 / 43 : tutoriel et transition suspendent le temps
 	const vitesse = IMMERSION.minutesParSeconde * (tempsCompresse() ? IMMERSION.compression : 1);
 	Jeu.horloge.minutes += (dt / 1000) * vitesse;
 
@@ -260,7 +260,10 @@ function journeeSuivante() {
 function allerFin() {
 	phase = 'fin';
 	Sauvegarde.auto(false); // prompt 33 : partie finie → sa sauvegarde est effacée (le meilleur bilan reste)
-	bilanFin = Confort.Bilans.enregistrer(Confort.Bilans.cle(Jeu.etat), Jeu.score(), Jeu.jauges); // Q19
+	const cle = Confort.Bilans.cle(Jeu.etat);
+	const g = Jeu.profilPartie(); // prompt 47 : profil de gestion gardé au palmarès
+	// Une démission n'entre pas au palmarès (prompt 47)
+	bilanFin = Jeu.demission ? { meilleur: Confort.Bilans.meilleur(cle), record: false } : Confort.Bilans.enregistrer(cle, Jeu.score(), Jeu.jauges, { profil: g ? g.id : null }); // Q19
 	Confort.Son.bip('fin');
 	finDeSemaine(); // prompt 41 : rapport papier sur la table, ou cinématique après la semaine 3
 }
@@ -512,11 +515,12 @@ const ENTREES_PAUSE = [
 	{ cle: 'menu.reprendre', icone: 'lecture', action: () => fermer() },
 	{ cle: 'accueil.parametres', icone: 'reglages', action: () => (fenetre = 'parametres') },
 	{ cle: 'accueil.aide', icone: 'aide', action: () => (fenetre = 'aide') },
+	{ cle: 'menu.carnet', icone: 'carnet', action: () => (fermer(), ouvrirCarnet()) }, // prompt 47 : journal de bord (J)
 	{ cle: 'menu.menuPrincipal', icone: 'menu', action: () => quitterPartie() },
 ];
 function fenetreMenu() {
 	const l = 700;
-	const h = 640;
+	const h = 200 + ENTREES_PAUSE.length * 112;
 	const x = (L - l) / 2;
 	const y = (H - h) / 2;
 	noStroke();

@@ -246,6 +246,10 @@
 		Jeu.objectifsResultats = [];
 		Jeu.modificateur = null;
 		Jeu.paliersBudget = {};
+		Jeu.carnet = ''; // prompt 47 : journal de bord (notes libres du joueur)
+		Jeu.inspection = null; // prompt 47 : inspection surprise de la semaine
+		Jeu.agendaPrevenus = {}; // prompt 47 : jours où le patron a déjà prévenu d'un afflux
+		Jeu.demission = false; // prompt 47 : fin « démission »
 		Jeu.terminee = Jeu.paquet.length === 0;
 		Jeu.preparerJournees();
 		return Jeu.paquet;
@@ -293,6 +297,9 @@
 			objectifsResultats: Jeu.objectifsResultats,
 			modificateur: m ? Object.assign({}, m, { debut: m.debut === null ? null : m.debut - maintenant, fin: m.fin === null ? null : m.fin - maintenant }) : null,
 			paliersBudget: Object.assign({}, Jeu.paliersBudget),
+			carnet: Jeu.carnet || '',
+			inspection: Jeu.inspection,
+			agendaPrevenus: Object.assign({}, Jeu.agendaPrevenus),
 			terminee: Jeu.terminee,
 		};
 	};
@@ -310,7 +317,9 @@
 		Jeu.jauges = { fluidite: s.jauges.fluidite, reputation: s.jauges.reputation, budget: s.jauges.budget };
 		Jeu.initialiserAlea(s.graine, s.tirages);
 		['historique', 'evenementsJournee', 'messagesPatron', 'commentaires', 'objectifsResultats'].forEach((k) => (Jeu[k] = s[k] || []));
-		['nonLus', 'alertesJauges', 'malus', 'paliersBudget'].forEach((k) => (Jeu[k] = s[k] || {}));
+		['nonLus', 'alertesJauges', 'malus', 'paliersBudget', 'agendaPrevenus'].forEach((k) => (Jeu[k] = s[k] || {}));
+		Jeu.carnet = typeof s.carnet === 'string' ? s.carnet.slice(0, Jeu.CARNET_MAX) : ''; // prompt 47
+		Jeu.inspection = s.inspection || null;
 		Jeu.plaintes = (s.plaintes || [])
 			.map((p) => Object.assign({}, p, { def: Jeu.MESSAGES.plaintes.find((x) => x.id === p.id) }))
 			.filter((p) => p.def); // une plainte retirée de messages.json depuis la sauvegarde est ignorée
@@ -500,6 +509,7 @@
 		Jeu.paquet.forEach((d) => (parType[d.type] = (parType[d.type] || 0) + 1));
 		return {
 			type,
+			demission: !!Jeu.demission, // prompt 47
 			titre: FINS[type].titre,
 			texte: FINS[type].texte,
 			score: Jeu.score(),
@@ -567,6 +577,7 @@
 		if (jours[0] && Jeu.messagesPatron) {
 			Jeu.debutJourneeTactique();
 			Jeu.messagePatron(consigneDuJour());
+			Jeu.prevenirAgenda(); // prompt 47
 		}
 	};
 
@@ -585,6 +596,7 @@
 		if (Jeu.jourCourant()) {
 			Jeu.debutJourneeTactique();
 			Jeu.messagePatron(consigneDuJour());
+			Jeu.prevenirAgenda(); // prompt 47
 		}
 		Jeu.horloge.minutes = Jeu.debutJournee();
 		return Jeu.jourCourant();
@@ -711,6 +723,8 @@
 		const obj = (Jeu.objectifsResultats || []).find((o) => o.jourIndex === Jeu.jourIndex);
 		if (obj) lignes.push(T('mail.objectif', { libelle: obj.libelle, resultat: T(obj.atteint ? 'mail.atteint' : 'mail.rate', { effet: obj.effet }) }));
 		lignes.push(T('mail.jauges', { f: Jeu.jauges.fluidite, r: Jeu.jauges.reputation, b: Jeu.jauges.budget }));
+		const style = Jeu.profilGestion(duJour.map((e) => e.cleAction)); // prompt 47 : épilogue personnalisé
+		if (style) lignes.push(T('mail.style', { profil: T('profil.' + style.id), n: style.n, total: style.total, action: T('profilAction.' + style.id) }));
 		return {
 			de: T('mail.de'),
 			objet: T(parfaite ? 'mail.objetMerci' : 'mail.objetRevoir', { date }),
@@ -1103,6 +1117,97 @@
 			objectifs: atteints + '/' + (Jeu.objectifsResultats || []).length,
 		};
 	};
+
+	// =====================================================================
+	// Prompt 47 — profils de gestion, inspection surprise, agenda anticipé, démission
+	// Uniquement à partir des décisions réelles de la partie et des données réelles de la semaine.
+	// =====================================================================
+	Jeu.CARNET_MAX = 2000; // caractères du journal de bord
+
+	/** Profil de gestion d'après les actions jouées (clés : renfort, devier, retenir, rien, temps) ; null si aucune */
+	const PROFILS = { renfort: 'pompier', devier: 'stratege', retenir: 'discret', rien: 'spectateur', temps: 'spectateur' };
+	Jeu.profilGestion = function (actions) {
+		const n = {};
+		(actions || []).forEach((a) => {
+			const p = PROFILS[a];
+			if (p) n[p] = (n[p] || 0) + 1;
+		});
+		const total = Object.values(n).reduce((s, v) => s + v, 0);
+		if (!total) return null;
+		const ordre = ['pompier', 'stratege', 'discret', 'spectateur']; // égalité : l'ordre des actions à l'écran
+		const id = ordre.slice().sort((a, b) => (n[b] || 0) - (n[a] || 0) || ordre.indexOf(a) - ordre.indexOf(b))[0];
+		return { id, n: n[id], total };
+	};
+	Jeu.profilPartie = () => Jeu.profilGestion((Jeu.historique || []).filter((h) => h.action).map((h) => h.action));
+
+	/** Jauge que la décision a le plus servie (deltas réels) ; null si aucun effet positif */
+	function jaugeServie(e) {
+		const [k, k2] = NOMS_JAUGES.slice().sort((a, b) => e.deltas[b] - e.deltas[a]);
+		return e.deltas[k] > 0 && e.deltas[k] > e.deltas[k2] ? k : null; // réponse unique : pas d'égalité en tête
+	}
+	/** Hachage stable (ne consomme pas le générateur de la partie : la suite des dés reste identique) */
+	function hacher(texte) {
+		let h = 2166136261;
+		for (let i = 0; i < texte.length; i++) h = Math.imul(h ^ texte.charCodeAt(i), 16777619);
+		return h >>> 0;
+	}
+	/** Jour de l'inspection : le 3e jour joué (ou le dernier si la semaine est plus courte), une fois par semaine */
+	Jeu.jourInspection = () => Math.min(2, Math.max(0, (Jeu.jours || []).length - 1));
+	/** Prépare l'inspection si c'est le jour : une décision réelle passée, avec au moins un effet positif */
+	Jeu.preparerInspection = function () {
+		if (Jeu.inspection || !Jeu.jours || Jeu.jourIndex !== Jeu.jourInspection() || Jeu.jourIndex === 0) return null;
+		const candidates = (Jeu.evenementsJournee || []).filter((e) => e.cleAction && e.cleAction !== 'temps' && e.cleAction !== 'rien' && jaugeServie(e));
+		if (!candidates.length) return null;
+		const e = candidates[hacher(String(Jeu.graine) + '|' + Jeu.jourIndex) % candidates.length];
+		// Textes gardés en données brutes (ligne, nature réelle, clé d'action) : la sauvegarde reste lisible dans les deux langues
+		Jeu.inspection = { jour: e.jour, heure: e.heure, ligne: e.ligne, nature: e.ligne ? null : String(e.externeCourt), cle: e.cleAction, bonne: jaugeServie(e), reponse: null };
+		return Jeu.inspection;
+	};
+	/** Réponse du joueur (fluidite, reputation ou budget) : réputation +3 si juste, −2 sinon */
+	Jeu.repondreInspection = function (jauge) {
+		const i = Jeu.inspection;
+		if (!i || i.reponse) return null;
+		i.reponse = jauge;
+		i.juste = jauge === i.bonne;
+		i.effet = i.juste ? 3 : -2;
+		Jeu.appliquerDeltas({ reputation: i.effet });
+		return i;
+	};
+
+	/** Agenda anticipé : événements réels du jour qui attirent du public (concert, sport, spectacle…) */
+	const MOTIF_AFFLUENCE = /concert|musique|sport|match|spectacle|th[ée][âa]tre|cirque|danse|festival|humour/i;
+	Jeu.evenementsAffluence = function (date) {
+		const sources = [];
+		const e = Jeu.etat || {};
+		if (e.semaine && e.semaine.evenements) sources.push(...e.semaine.evenements);
+		(Jeu.paquet || []).filter((d) => d.type === 'événement').forEach((d) => sources.push(d));
+		const vus = new Set();
+		return sources
+			.map((x) => {
+				// Types de l'agenda : on ignore les fiches « fourre-tout » (plus de 3 types cochés, ex. tous)
+				const types = String(x.nature || '').split(',').map((s) => s.trim());
+				const type = types.length <= 3 ? types.find((s) => MOTIF_AFFLUENCE.test(s)) : null;
+				return type ? Object.assign({}, x, { typeAffluence: type }) : null;
+			})
+			.filter((x) => {
+				if (!x || x.date !== date || vus.has(x.texte_source || x.nature)) return false;
+				vus.add(x.texte_source || x.nature);
+				return true;
+			});
+	};
+	Jeu.prevenirAgenda = function () {
+		const j = Jeu.jourCourant();
+		if (!j || !Jeu.messagesPatron || (Jeu.agendaPrevenus || {})[j.date]) return null;
+		const ev = Jeu.evenementsAffluence(j.date)[0];
+		if (!ev) return null;
+		Jeu.agendaPrevenus[j.date] = true;
+		const [titre, lieu] = String(ev.texte_source || ev.nature).split(' — ');
+		Jeu.messagePatron(T('patron.agenda', { titre, lieu: lieu ? ', ' + lieu : '', type: ev.typeAffluence }));
+		return ev;
+	};
+
+	/** Démission possible quand les trois jauges sont sous le seuil critique (Q46) */
+	Jeu.peutDemissionner = () => !Jeu.terminee && !!Jeu.jauges && NOMS_JAUGES.every((k) => Jeu.jauges[k] < REGLAGES.seuilCritique);
 
 	global.Jeu = Jeu;
 })(typeof window !== 'undefined' ? window : globalThis);

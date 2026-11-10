@@ -124,3 +124,8 @@ body {
 .sv-toast[hidden] {
 	display: none;
 }
+/* Prompt 47 : journal de bord (même boîte que l'import) */
+.cb-compte {
+	font-size: 14px;
+	color: rgba(255, 255, 255, 0.75);
+}

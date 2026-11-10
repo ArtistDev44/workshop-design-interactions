@@ -86,7 +86,7 @@ jamais l'inverse.
 | 44 | `44-jeu-musiques-immersion-sonore.md` | Jeu, étape 31 : choix de la musique (morceaux pixel originaux) et immersion sonore en 7 points (salle vivante, radio, alertes par source, compte à rebours, clics d'action, jauges audibles, météo, signatures de fin) | ✅ main |
 | 45 | `45-jeu-meteo-progressive-seo.md` | Jeu, étape 32 : transitions météo progressives (jour/nuit, pluie) et SEO (description, OG image, favicon, canonique, carte Twitter) | ✅ main |
 | 46 | `46-livrables-documentation.md` | Livrables J3 (manifest, captation, version archivée), cartel corrigé, pages /cartel/ et /making-of/, guide contributeur | ✅ |
-| 47 | `47-jeu-mecaniques-narration.md` | Jeu, étape 33 : inspection surprise, palmarès et profils, journal de bord, fin « démission », épilogue personnalisé, agenda anticipé | ◻ prévu |
+| 47 | `47-jeu-mecaniques-narration.md` | Jeu, étape 33 : inspection surprise, palmarès et profils, journal de bord, fin « démission », épilogue personnalisé, agenda anticipé | ✅ |
 | 48 | `48-jeu-accessibilite-technique.md` | Jeu, étape 34 : daltonisme, taille du texte, lecture facile, tests automatisés, démo automatique, PWA hors ligne, courbes des jauges | ◻ prévu |
 
 ### Statut des prompts (vérifié le 10/11/2026 dans `site/public/`)
