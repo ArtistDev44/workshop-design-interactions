@@ -16,3 +16,10 @@
 ## Persistance
 - Réglages et **meilleur bilan par semaine** conservés en `localStorage`
   (jamais de secret) pour comparer les parties (Q19).
+- **Progression d'une partie** (prompt 33) : sauvegarde automatique par semaine dans
+  `localStorage`, clé `pxe-nte001-partie-<semaine>` (`<semaine>` = lundi, `fallback`
+  ou `direct`). Reprise avec « Continuer la partie » (C) à l'accueil. Section
+  **Progression** des Paramètres : Exporter (5, fichier JSON), Copier (6, presse-papiers),
+  Importer (7, fichier ou texte collé, validation stricte). Les autres clés (réglages,
+  meilleurs bilans, langue, lampe) ne sont jamais touchées. Détails :
+  `27-sauvegarde-progression.md`.

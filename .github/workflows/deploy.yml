@@ -1,8 +1,11 @@
 # Déploiement du site de l'édition (prompt 13).
-# Le site Astro est dans site/ et vit à la racine du domaine déployé
-# (Cloudflare Pages : https://workshop-design-interactions.pages.dev/) :
-# aucun préfixe de base, on publie dist/ tel quel — sinon tous les liens
-# internes résolvent vers une 404.
+# Le site Astro est dans site/ et vit à la racine du domaine (base: '/').
+# URL canonique : https://workshop-design-interactions.pages.dev/ (Cloudflare Pages).
+# ATTENTION (audit prompt 33, 10/11/2026) : ce workflow publie sur GitHub Pages
+# (upload-pages-artifact / deploy-pages), pas sur Cloudflare Pages. L'adresse
+# GitHub Pages renvoie une 404 : la publication Cloudflare passe par un autre
+# mécanisme, non documenté dans le dépôt ([À COMPLÉTER] : intégration Git
+# Cloudflare ou dépôt manuel ?). Workflow conservé tel quel en attendant.
 name: Déployer le site
 
 on:

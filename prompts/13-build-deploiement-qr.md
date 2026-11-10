@@ -1,5 +1,7 @@
 # Prompt 13 — Build, déploiement GitHub Pages, README et QR code
 
+> **Note historique (prompt 33, 10/11/2026).** Ce prompt a été exécuté tel quel ; il cite l'ancienne cible GitHub Pages (`https://artistdev44.github.io/workshop-design-interactions/…`), qui renvoie aujourd'hui une 404. L'URL canonique du projet est désormais **https://workshop-design-interactions.pages.dev/** (Cloudflare Pages, racine du domaine, `base: '/'`). Le texte ci-dessous n'est pas réécrit : il documente l'historique.
+
 ## Objectif
 Finaliser le site : build propre, déploiement sur GitHub Pages (URL de l'édition),
 README complet au format du livret, et QR codes pointant vers le site en ligne.

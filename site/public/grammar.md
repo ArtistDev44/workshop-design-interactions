@@ -10,7 +10,7 @@ rapport à la semaine (95e percentile, Q39) devient un dossier à trancher.
 ## Invariants
 - Seuil de retard : 10 minutes
 - 3 actions + « ne rien faire » (Q5–Q7)
-- 3 jauges : fluidité, satisfaction, réputation — départ 50 (Q40)
+- 3 jauges — départ 50 (Q40) : fluidité, réputation, budget depuis le prompt 22 (le trio d'origine était fluidité, satisfaction, réputation ; voir `game.js`)
 - Aucun événement inventé
 
 ## Variables
@@ -20,4 +20,7 @@ rapport à la semaine (95e percentile, Q39) devient un dossier à trancher.
 - Tirage 1d6 ajouté aux effets de base (Q57)
 
 ## Mapping en une phrase
-[À COMPLÉTER par le groupe — voir jeu/00-concept.md]
+« Le flux GTFS-RT Naolib fournit le retard réel des lignes et Open-Meteo la météo de
+la semaine choisie : le seuil de 10 min et les alertes météo génèrent les
+dossiers, et chaque action du joueur module les trois jauges selon le contexte. »
+(phrase verrouillée de `jeu/00-concept.md` ; le groupe peut la reformuler)

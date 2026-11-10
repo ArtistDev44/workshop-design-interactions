@@ -6,7 +6,8 @@ Lire ce fichier plutôt que le livret complet. N'ouvrir `contexte/` que si un pr
 - Atelier ESD Nantes, B3 Design, 9, 10 & 12 nov. 2026. Chaîne à tenir : **source → grammaire → système → œuvre**.
 - Langue de travail : français.
 - Site Astro statique dans **`site/`** (commandes `npm` dans `site/`). Seule dépendance : `astro`.
-- Site servi à la racine du domaine (Cloudflare Pages : `workshop-design-interactions.pages.dev`, `base: '/'`) — tout lien interne passe par `lien()` de `site/src/lib/liens.ts` (menu : `NAVIGATION`).
+- URL canonique unique : `https://workshop-design-interactions.pages.dev/` (Cloudflare Pages, racine du domaine, `base: '/'`). Le jeu est `site/public/index.html` (chemins relatifs `./`) ; l'ancienne adresse GitHub Pages est historique (404).
+- `npm run build` puis `npm test` (smoke test `site/scripts/smoke.mjs`) avant chaque push ; statut des prompts dans `prompts/README.md`.
 - Jeu p5.js « Nantes en régulation » : décisions verrouillées dans `jeu/`, prompts 14–19.
 - Design : `design-system/DESIGN.md` (couleurs, échelle), sans police Picon ni identité Nantes Métropole.
 - Données : API Open Data Nantes Métropole côté navigateur uniquement, instantanés réels dans `site/public/data/fallback/` (voir `contexte/audit-api-open-data-nantes.md`).

@@ -66,6 +66,7 @@ Règles communes : aucune clé requise, licence Ouverte / ODbL, CORS ouvert (`Ac
 |---|---|---|---|---|
 | Open-Meteo | `https://api.open-meteo.com/v1/forecast` + `https://archive-api.open-meteo.com/v1/archive` (Nantes 47.2184, -1.5536) | Température, vent, précipitations — prévision et **archive** (rejouer une semaine passée) | horaire | Alertes météo (seuils), effets contextuels sur les jauges, météo du panneau gauche |
 | transport.data.gouv.fr (PAN) | [Réseau Naolib](https://transport.data.gouv.fr/datasets/reseau-de-transports-collectifs-naolib) | Miroir des flux GTFS, NeTEx, SIRI, SIRI lite, GTFS-RT, GBFS | continu | Redondance/validation des flux Naolib |
+| Hub'Eau — Hydrométrie v2 (eaufrance / Vigicrues) | `https://hubeau.eaufrance.fr/api/v2/hydrometrie/observations_tr?code_entite=M800001010&grandeur_hydro=H&size=1&sort=desc` — station M800001010 « La Loire à Nantes - Pont Anne de Bretagne » (sans clé, CORS ouvert ; la v1 renvoie 403) | Hauteur d'eau temps réel `resultat_obs` en mm (→ m) | ~5 min ; lue dans `setup()` puis toutes les 10 min | Prompt 34 : hauteur du bandeau de Loire dans la baie vitrée. Repli : médiane figée 4,14 m (3 970 relevés du 11/10 au 10/11/2026, min 0,76 m, max 6,83 m) dans `data/loire.json` / `data/loire.js` |
 | Patrimoine arboré (référence livret) | `244400404_patrimoine-arbore-nantes-metropole` via Explore API | 124 583 arbres (genre, espèce, hauteur, position) | statique | Source documentaire du corpus (agrégats via `group_by`, jamais tout charger) |
 
 ## 7. Fallback hors ligne (pas une API)

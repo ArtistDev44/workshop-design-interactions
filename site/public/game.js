@@ -228,7 +228,7 @@
 	/* Démarre une partie sur l'état chargé (semaine, direct ou hors ligne). */
 	Jeu.nouvellePartie = function () {
 		const e = Jeu.etat;
-		Jeu.alea = mulberry32(e.seed || graineDe(e.semaine ? e.semaine.lundi : e.horodatage || 'direct'));
+		Jeu.initialiserAlea(e.seed || graineDe(e.semaine ? e.semaine.lundi : e.horodatage || 'direct'), 0);
 		Jeu.jauges = { fluidite: 50, reputation: 50, budget: 50 }; // Q40 (prompt 22 : trio fluidité / réputation / budget)
 		Jeu.paquet = construirePaquet(e);
 		e.dossiers = Jeu.paquet; // l'affichage (carte, liste) lit le paquet de la partie
@@ -248,6 +248,76 @@
 		Jeu.terminee = Jeu.paquet.length === 0;
 		Jeu.preparerJournees();
 		return Jeu.paquet;
+	};
+
+	/** Prompt 33 : générateur à graine + nombre de tirages déjà faits (pour reprendre une partie à l'identique) */
+	Jeu.initialiserAlea = function (graine, tirages) {
+		const brut = mulberry32(graine);
+		for (let i = 0; i < (tirages || 0); i++) brut();
+		Jeu.graine = graine;
+		Jeu.tirages = tirages || 0;
+		Jeu.alea = () => (Jeu.tirages++, brut());
+	};
+
+	// =====================================================================
+	// Prompt 33 — instantané de la partie (lecture seule) et restauration.
+	// Les textes différés (Texte, Liste) sont encodés par sauvegarde.js ; ici, seulement la structure.
+	// Les horodatages en millis() (modificateur, équipes) sont stockés en durées restantes.
+	// =====================================================================
+	Jeu.instantane = function (maintenant) {
+		if (!Jeu.paquet) return null;
+		const idx = (d) => Jeu.paquet.indexOf(d);
+		const m = Jeu.modificateur;
+		return {
+			mode: Jeu.etat.mode,
+			semaine: Jeu.etat.mode === 'semaine' && Jeu.etat.semaine ? Jeu.etat.semaine.lundi : Jeu.etat.mode === 'direct' ? 'direct' : 'fallback',
+			horodatage: Jeu.etat.horodatage || null,
+			graine: Jeu.graine,
+			tirages: Jeu.tirages,
+			jauges: Object.assign({}, Jeu.jauges),
+			index: Jeu.index,
+			paquet: Jeu.paquet,
+			jours: (Jeu.jours || []).map((j) => ({ date: j.date, debut: j.debut, fin: j.fin, dossiers: j.dossiers.map(idx) })),
+			jourIndex: Jeu.jourIndex,
+			horloge: Object.assign({}, Jeu.horloge),
+			historique: Jeu.historique,
+			evenementsJournee: Jeu.evenementsJournee,
+			messagesPatron: Jeu.messagesPatron,
+			commentaires: Jeu.commentaires,
+			plaintes: (Jeu.plaintes || []).map((p) => Object.assign({}, p, { def: undefined })),
+			equipes: (Jeu.equipes || []).map((q) => Object.assign({}, q, { depart: q.depart - maintenant, arrivee: q.arrivee - maintenant })),
+			nonLus: Object.assign({}, Jeu.nonLus),
+			alertesJauges: Object.assign({}, Jeu.alertesJauges),
+			malus: Object.assign({}, Jeu.malus),
+			objectifsResultats: Jeu.objectifsResultats,
+			modificateur: m ? Object.assign({}, m, { debut: m.debut === null ? null : m.debut - maintenant, fin: m.fin === null ? null : m.fin - maintenant }) : null,
+			paliersBudget: Object.assign({}, Jeu.paliersBudget),
+			terminee: Jeu.terminee,
+		};
+	};
+
+	/** Restaure un instantané (déjà décodé) sur l'état chargé de la même semaine ; renvoie true si tout est cohérent */
+	Jeu.restaurerInstantane = function (s, maintenant) {
+		Jeu.nouvellePartie(); // remet tout à zéro, puis on écrase avec l'instantané
+		Jeu.paquet = s.paquet;
+		Jeu.etat.dossiers = Jeu.paquet;
+		if (s.horodatage) Jeu.etat.horodatage = s.horodatage;
+		Jeu.jours = s.jours.map((j) => ({ date: j.date, debut: j.debut, fin: j.fin, dossiers: j.dossiers.map((i) => Jeu.paquet[i]).filter(Boolean) }));
+		Jeu.jourIndex = s.jourIndex;
+		Jeu.horloge = { minutes: s.horloge.minutes };
+		Jeu.index = s.index;
+		Jeu.jauges = { fluidite: s.jauges.fluidite, reputation: s.jauges.reputation, budget: s.jauges.budget };
+		Jeu.initialiserAlea(s.graine, s.tirages);
+		['historique', 'evenementsJournee', 'messagesPatron', 'commentaires', 'objectifsResultats'].forEach((k) => (Jeu[k] = s[k] || []));
+		['nonLus', 'alertesJauges', 'malus', 'paliersBudget'].forEach((k) => (Jeu[k] = s[k] || {}));
+		Jeu.plaintes = (s.plaintes || [])
+			.map((p) => Object.assign({}, p, { def: Jeu.MESSAGES.plaintes.find((x) => x.id === p.id) }))
+			.filter((p) => p.def); // une plainte retirée de messages.json depuis la sauvegarde est ignorée
+		Jeu.equipes = (s.equipes || []).map((q) => Object.assign({}, q, { depart: q.depart + maintenant, arrivee: q.arrivee + maintenant }));
+		const m = s.modificateur;
+		Jeu.modificateur = m ? Object.assign({}, m, { debut: m.debut === null ? null : m.debut + maintenant, fin: m.fin === null ? null : m.fin + maintenant }) : null;
+		Jeu.terminee = !!s.terminee;
+		return Jeu.index >= 0 && Jeu.index <= Jeu.paquet.length && !!Jeu.jours.length;
 	};
 
 	Jeu.dossierCourant = () => (Jeu.paquet || [])[Jeu.index] || null;

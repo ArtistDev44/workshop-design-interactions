@@ -9,6 +9,8 @@ Notes libres du projet : une page prête pour le wiki, les liens des API utilis�
 
 Bienvenue sur le wiki du dépôt `workshop-design-interactions`.
 
+En ligne : https://workshop-design-interactions.pages.dev/ (jeu « Nantes en régulation » servi à la racine).
+
 **Édition** : PXE · NTE001 · ESD Nantes · B3 Design — 9, 10 & 12 novembre 2026.
 Intervenant : Kamel Ghabte. Groupes de 2 à 3 étudiants.
 
@@ -23,7 +25,7 @@ supplémentaire. Un mapping justifié avant une API.
 
 - `todo.md` — protocole des 3 jours, jalons, checklist de robustesse et barème.
 - `contexte/` — livret étudiant, framework PATRIMOINE.EXE, règles de travail.
-- `prompts/` — 12 prompts numérotés pour créer le site Astro.js de l'édition.
+- `prompts/` — 35 prompts numérotés (01 à 34, deux prompts 33) pour créer le site Astro.js et le jeu p5.js ; statut ✅ / ◻ dans `prompts/README.md`.
 - `journal.md` — journal des pushes (une ligne par push, la plus récente en tête).
 - `notes.md` — cette page wiki, les liens des API et les pistes d'animation.
 
@@ -45,7 +47,9 @@ Le site Astro.js de l'édition lui-même ne fait **aucun appel réseau** (rendu 
 | Open Data Nantes Métropole — API Explore v2.1 | [data.nantesmetropole.fr/api/explore/v2.1](https://data.nantesmetropole.fr/api/explore/v2.1/) | Dataset « patrimoine arboré » : [244400404_patrimoine-arbore-nantes-metropole](https://data.nantesmetropole.fr/api/explore/v2.1/catalog/datasets/244400404_patrimoine-arbore-nantes-metropole/records?limit=50) | Non |
 | p5.js (CDN jsDelivr) | [cdn.jsdelivr.net/npm/p5@1.11.11/lib/p5.min.js](https://cdn.jsdelivr.net/npm/p5@1.11.11/lib/p5.min.js) · [référence officielle](https://p5js.org/reference/) | Bibliothèque de creative coding des sketches | Non |
 | Nantes Patrimonia | Site de la Ville de Nantes (Direction du patrimoine et de l'archéologie) | Source institutionnelle de contextualisation (pas d'API, source documentaire) | Non |
-| GitHub Pages | `https://<owner>.github.io/<repo>/patrimoine-exe/nantes/001/` | Hébergement statique du site de l'édition + QR code du cartel | Non |
+| Cloudflare Pages | [workshop-design-interactions.pages.dev](https://workshop-design-interactions.pages.dev/) (URL canonique, racine du domaine) | Hébergement statique du site de l'édition (jeu à la racine) + QR code du cartel | Non |
+
+Historique : jusqu'au prompt 13, le site visait GitHub Pages (`https://<owner>.github.io/<repo>/patrimoine-exe/nantes/001/`) ; cette adresse renvoie une 404 (vérifié le 10/11/2026) et n'est plus l'URL de référence.
 
 Règle du livret : ne jamais dépendre du réseau pour l'évaluation finale — conserver un échantillon JSON local ou des valeurs de secours.
 

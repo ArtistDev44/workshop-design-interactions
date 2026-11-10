@@ -1,0 +1,12 @@
+{
+ "source": "Hub'Eau — API Hydrométrie v2 (eaufrance, Vigicrues), observations temps réel, grandeur H",
+ "url": "https://hubeau.eaufrance.fr/api/v2/hydrometrie/observations_tr?code_entite=M800001010&grandeur_hydro=H&size=1&sort=desc",
+ "station": "M800001010",
+ "libelle": "La Loire à Nantes - Pont Anne de Bretagne",
+ "periode": { "du": "2026-10-11T16:20:00Z", "au": "2026-11-10T15:00:00Z", "releves": 3970 },
+ "mediane_m": 4.1385,
+ "min_m": 0.755,
+ "max_m": 6.832,
+ "extraitLe": "2026-11-10",
+ "note": "Hauteur médiane figée utilisée si l'API est injoignable (hors ligne compris). Min/max de la même période : bornes du mapping hauteur → bandeau d'eau."
+}

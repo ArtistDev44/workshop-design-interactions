@@ -29,9 +29,9 @@ Suivi rapide du protocole. Le détail de chaque journée est dans les phases ci-
 - [ ] Choisir une seule source patrimoniale principale dans le corpus
 - [ ] Réserver l'identifiant d'œuvre : PXE-NTE001-G{groupe}-W{numéro}
 - [ ] Nommer le dossier de rendu : PXE_NTE001_G{nn}_NOM-PROJET
-- [ ] Créer la structure du livret : index.html, sketch.js, style.css, data/fallback.json, assets/, source-sheet, grammar
+- [x] Créer la structure du livret : index.html, sketch.js, style.css, data/fallback.json, assets/, source-sheet, grammar — `site/public/`
 - [ ] Choisir une piste créative parmi les 25 du livret (ex. Weather Patterns, City DNA, From Hand to Algorithm) ou en proposer une
-- [ ] Écrire la phrase-problématique en une phrase
+- [x] Écrire la phrase-problématique en une phrase — `jeu/00-concept.md`
 
 ## Phase 1 — J1, lundi 9 nov : observer / décoder
 
@@ -40,7 +40,7 @@ Suivi rapide du protocole. Le détail de chaque journée est dans les phases ci-
 - [ ] Noter ce qu'on ne sait pas : ne pas inventer d'histoire pour justifier une forme
 - [ ] Remplir la fiche-source V1 : titre / lieu / type / contexte / URL ou référence / date d'accès / droits ou licence / relevés / 3 propriétés observables / 1 propriété volontairement écartée
 - [ ] Décomposer la source en 3 micro-grammaires : axes, modules, symétries, répétitions ; séparer invariants et variables
-- [ ] Formuler la règle en une phrase : « une unité est répétée tous les X pixels et tourne de Y selon Z »
+- [x] Formuler la règle en une phrase : « une unité est répétée tous les X pixels et tourne de Y selon Z » — règle structurante de `site/public/grammar.md`
 - [ ] Micro-prototype : une règle forte + une variation, 2 captures, repérer la variable qui change réellement la perception
 
 Fin J1 attendue : fiche-source / grammaire visuelle / sketch minimal / phrase-problématique / piste créative / capture.
@@ -53,10 +53,10 @@ Fin J1 attendue : fiche-source / grammaire visuelle / sketch minimal / phrase-pr
 - [ ] Rendre au moins 3 paramètres réellement opérants (V1 fonctionnelle)
 - [ ] Tester en 1920×1080, pixelDensity(1), éviter de recréer de gros tableaux dans draw()
 - [ ] N'ajouter data / API / interaction que si le mapping est justifiable en une phrase ; sinon assumer un projet génératif
-- [ ] Intégrer data ou interaction avec fallback local dans data/fallback.json (V2)
+- [x] Intégrer data ou interaction avec fallback local dans data/fallback.json (V2) — 6 cas dans `site/public/data/fallback.json`
 - [ ] Test croisé silencieux par un autre groupe (30 à 60 s, 3 observations notées)
 - [ ] Corriger une faiblesse perceptuelle ou technique (V3), documenter l'itération
-- [ ] Démarrer le README avec les sections du livret
+- [x] Démarrer le README avec les sections du livret — `site/README.md`
 
 Fin J2 attendue : prototype V3 / mapping / fallback / test croisé / décision d'itération / README en cours.
 
@@ -72,7 +72,7 @@ Aucun travail obligatoire. Sauvegarde et relecture des notes possibles, rien de 
 - [ ] 13:00 Documentation : README complet (Auteurs, Source patrimoniale, Concept, Grammaire/règles, Stack, Data/interaction, Lancer le projet, Fallback/limites, Contributions, AI usage, Sources/droits)
 - [ ] Rédiger le cartel : 80 à 120 mots + source patrimoniale + système, au format du livret
 - [ ] Produire manifest.json (modèle du livret) et finaliser source-sheet et grammar
-- [ ] Générer un QR code pointant vers le site web de l'œuvre (page en ligne de l'édition ou GitHub Pages du dépôt)
+- [x] Générer un QR code pointant vers le site web de l'œuvre (page en ligne de l'édition ou GitHub Pages du dépôt) — ⚠ PNG du prompt 13 générés vers l'ancienne adresse GitHub Pages (404) : à régénérer, voir ci-dessous
 - [ ] Intégrer le QR code au cartel / à l'affichage et tester le scan en conditions réelles
 - [ ] 14:00 Installation + captation : hero.jpg, detail-01.jpg, process.jpg, demo.mp4 (20 à 30 s), thumb.jpg
 - [ ] 15:00 Micro-exposition + soutenance
@@ -85,14 +85,14 @@ jauges, UI, narration, fallback, raccourcis, paramètres, accessibilité).
 
 - [ ] Lire `jeu/00-concept.md` et valider la phrase-problématique
 - [ ] Fiche-source V1 : données Tanway/Lila Nantes Métropole + Open-Meteo (archive semaine choisie)
-- [ ] Sketch minimal p5.js : salle de contrôle à deux panneaux (carte/liste des lignes à gauche, dossier à droite)
-- [ ] Boucle incident → 3 actions + « ne rien faire » → jauges contextuelles → narration
+- [x] Sketch minimal p5.js : salle de contrôle à deux panneaux (carte/liste des lignes à gauche, dossier à droite)
+- [x] Boucle incident → 3 actions + « ne rien faire » → jauges contextuelles → narration — `game.js`
 - [ ] Mapping API : retard ≥ 10 min = dossier ; alertes météo Open-Meteo = dossiers
 - [ ] 15 décisions par partie, semaine réelle sélectionnée au lancement, aucun événement inventé
-- [ ] Compteur de temps par décision ; à 0, « ne rien faire » appliqué
+- [x] Compteur de temps par décision ; à 0, « ne rien faire » appliqué
 - [ ] 3 jauges (fluidité, satisfaction, réputation) + fins multiples selon le bilan
-- [ ] `data/fallback.json` : 6 cas figés, mode hors ligne jouable
-- [ ] Raccourcis clavier complets (`jeu/08-raccourcis.md`), reset `R`, test 1920×1080
+- [x] `data/fallback.json` : 6 cas figés, mode hors ligne jouable
+- [x] Raccourcis clavier complets (`jeu/08-raccourcis.md`), reset `R`, test 1920×1080 — raccourcis et reset dans le code ; test 1920×1080 à refaire au preflight
 - [ ] Accessibilité : `prefers-reduced-motion`, contraste, jouable sans souris et sans audio
 
 ## Contrôles qualité
@@ -100,8 +100,8 @@ jauges, UI, narration, fallback, raccourcis, paramètres, accessibilité).
 ### Obligatoires du livret
 
 - [ ] Source patrimoniale identifiable et documentée
-- [ ] Grammaire explicite : au moins une règle structurante clairement formulée
-- [ ] Prototype fonctionnel lançable dans un navigateur
+- [x] Grammaire explicite : au moins une règle structurante clairement formulée — `site/public/grammar.md`
+- [x] Prototype fonctionnel lançable dans un navigateur — `site/public/index.html`
 - [ ] Au moins 3 paramètres réellement opérants
 - [ ] Test par un autre groupe + au moins une itération documentée
 - [ ] Documentation complète permettant de comprendre et relancer le projet
@@ -110,9 +110,9 @@ jauges, UI, narration, fallback, raccourcis, paramètres, accessibilité).
 
 - [ ] Le projet se relance après un refresh
 - [ ] Le projet affiche quelque chose sans API
-- [ ] Les assets utilisent des chemins relatifs
-- [ ] Aucune clé privée n'est dans le code
-- [ ] Un reset est disponible
+- [x] Les assets utilisent des chemins relatifs — `./` dans `index.html`, vérifié par `npm test`
+- [x] Aucune clé privée n'est dans le code — vérifié par `npm test` (motifs de secret)
+- [x] Un reset est disponible — fenêtre « Recommencer » (`sketch.js`)
 - [ ] Le plein écran 1920×1080 est testé
 - [ ] La console ne produit pas d'erreur continue
 - [ ] La version finale est sauvegardée dans un dossier distinct
@@ -176,6 +176,30 @@ Note finale /20 = (points projet /70 + points individuels /30) ÷ 5. Exemple du 
 6. Quelle itération a réellement amélioré le projet ?
 7. Que changeriez-vous avec une semaine supplémentaire ?
 8. Quelle partie serait publiable telle quelle, et laquelle demanderait une vérification de droits ?
+
+## Reste à faire avant le rendu J3 (audit du prompt 33, 10/11/2026)
+
+Vérifié par `ls` / `grep` dans le dépôt : seuls les éléments existants sont cochés plus haut.
+
+### Livrables manquants
+- [ ] `manifest.json` au modèle du livret (absent du dépôt)
+- [ ] Cartel 80–120 mots : texte présent dans `site/src/content/oeuvres/pxe-nte001-g01-w01.json` (validé au build, affiché sur `/cartel/`), à relire par le groupe — il cite encore la « satisfaction des usagers », remplacée par le budget au prompt 22
+- [ ] Captures : `hero.jpg`, `detail-01.jpg`, `process.jpg`, `demo.mp4` (20–30 s), `thumb.jpg` (aucune dans le dépôt)
+- [ ] Régénérer `site/public/assets/qr-edition.png` et `qr-pxe-nte001-g01-w01.png` vers l'URL canonique https://workshop-design-interactions.pages.dev/ (commandes dans `site/README.md`), puis tester le scan en conditions réelles
+- [ ] Checklist de robustesse complète au preflight (refresh, sans API, 1920×1080, console)
+- [ ] Version finale sauvegardée dans un dossier distinct (`PXE_NTE001_G{nn}_NOM-PROJET`, absent)
+
+### `[À COMPLÉTER]` qui attendent une saisie humaine du groupe
+- [ ] `site/README.md` : Auteurs (noms et rôles), Contributions (nominatives), AI usage (ce qui a été relu, réécrit, testé)
+- [ ] `site/src/content/oeuvres/pxe-nte001-g01-w01.json` : `auteurs`, `groupe` (et confirmer le numéro G01 de l'identifiant)
+- [ ] `site/public/source-sheet.md` : Contexte, 3 propriétés observables, 1 propriété volontairement écartée
+- [ ] `LICENSE` : choisir la licence du code (recommandation : **MIT**) et nommer les titulaires des droits
+- [ ] Déploiement : documenter comment Cloudflare Pages publie le site (intégration Git ou dépôt manuel) ; `.github/workflows/deploy.yml` publie sur GitHub Pages (404) — le garder, le corriger ou le supprimer
+
+### Branches à arbitrer
+- [ ] Fusionner (sur demande) la chaîne empilée `jeu/prompt-26-sortie-pc` → … → `jeu/prompt-33-sauvegarde-progression` → `vibe/prompt-33-audit-coherence-4c094b-application`
+- [ ] Trancher entre le prompt 30 de la chaîne (`confort.js`) et la variante non intégrée `origin/jeu/prompt-30-bandes-sonores` (`audio.js`)
+- [ ] Prompt 34 (`prompts/34-jeu-fenetre-loire-tutoriel.md`) : prévu, non implémenté
 
 ## Jalons de la semaine
 

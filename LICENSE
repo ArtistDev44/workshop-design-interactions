@@ -1,0 +1,30 @@
+LICENCE DU CODE — PATRIMOINE.EXE · NTE001 · « Nantes en régulation »
+=====================================================================
+
+Choix de licence du code : [À COMPLÉTER]
+
+Aucun choix de licence n'est documenté dans le dépôt à la date du 10/11/2026.
+Ce choix revient au groupe (auteur·ices du code) : il n'est pas imposé ici.
+Recommandation notée dans todo.md : licence MIT (courte, permissive, compatible
+avec la réutilisation pédagogique). Une fois le choix fait, remplacer ce fichier
+par le texte intégral de la licence retenue, avec l'année et les noms des
+titulaires des droits ([À COMPLÉTER]).
+
+Tant que ce choix n'est pas fait, aucune licence n'est accordée sur le code :
+tous droits réservés à leurs auteur·ices.
+
+Périmètre : le code et la documentation du dépôt (site/, jeu/, prompts/, scripts).
+Ne sont PAS couverts par ce fichier :
+
+- site/public/lib/p5.min.js — bibliothèque p5.js, sous sa propre licence
+  (LGPL-2.1, voir https://p5js.org) ;
+- les données, qui gardent leur licence d'origine :
+  * Open Data Nantes Métropole (GTFS / GTFS-RT Naolib, agenda, jeux du
+    prompt 11) — Licence Ouverte (Etalab), ou ODbL selon le jeu
+    (champ « licence » de site/src/lib/datasets.js) ;
+  * Open-Meteo — Creative Commons Attribution 4.0 International (CC BY 4.0),
+    attribution obligatoire (https://open-meteo.com/en/licence) ;
+- les textes du livret et du framework PATRIMOINE.EXE (contexte/), propriété
+  de leurs auteurs (ESD Nantes, 2026) ;
+- design-system/ : couleurs et échelle relevées sur metropole.nantes.fr à titre
+  de référence ; ce projet n'est pas un site officiel de Nantes Métropole.
