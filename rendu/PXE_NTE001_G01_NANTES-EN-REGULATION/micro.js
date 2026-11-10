@@ -54,7 +54,9 @@ function keyReleased() {
 function mouseReleased() {
 	if (MICRO.ouvert && MICRO.par === 'clic') arreterMicro();
 }
-function touchEnded() {
+function touchEnded(e) {
+	if (horsCanevas(e)) return; // prompt 60
+	if (MOBILE.actif) return (PORTRAIT.actif ? portraitFin(e) : toucherFin()), false; // prompt 60 : tap, appui long, swipe ; 60b : portrait
 	mouseReleased();
 }
 /** Objet « micro du poste » : appui maintenu */

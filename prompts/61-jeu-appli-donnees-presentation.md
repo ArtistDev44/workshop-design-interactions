@@ -47,4 +47,4 @@ Deux chantiers indépendants. Règles Q1–Q61 inchangées : `game.js` non touch
 - `npm run build`, `npm test` ; essai réel : icône « Données » (clic + clavier), ouverture plein écran,
   contenu direct vs semaine passée, liens cliquables, repli hors ligne, fermeture ; page `/presentation/`
   générée, navigation clavier, liens internes 0 cassé, FR. Aucune erreur console. Documenter dans
-  `jeu/51-…`. Fusion `main` sur demande.
+  `jeu/55-…` (numéro libre suivant). Fusion `main` sur demande.

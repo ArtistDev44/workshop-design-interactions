@@ -96,7 +96,7 @@ for (const f of sources) {
 // 4. Build (facultatif)
 const dist = join(racine, 'dist');
 if (existsSync(dist)) {
-	for (const page of ['index.html', 'cartel/index.html', 'making-of/index.html', 'manifest.json', 'captures/hero.jpg', 'captures/demo.mp4']) {
+	for (const page of ['index.html', 'cartel/index.html', 'making-of/index.html', 'presentation/index.html', 'manifest.json', 'captures/hero.jpg', 'captures/demo.mp4']) {
 		if (existsSync(join(dist, page))) ok();
 		else echec(`dist/${page} absent : relancer npm run build`);
 	}
