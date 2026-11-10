@@ -236,7 +236,7 @@ function arriveeIncident() {
 		setTimeout(() => Confort.Son.bip('alerte'), 360);
 		return;
 	}
-	nouveauDossier(); // présente le dossier (conflit / contradiction / décision) et lance le compteur
+	entrerSelection(); // prompt 68 : un signalement sur la carte ; le compteur démarre quand le joueur le prend
 }
 
 function seReveiller() {
@@ -244,7 +244,7 @@ function seReveiller() {
 	enSieste = false;
 	reveil = null;
 	interaction();
-	nouveauDossier();
+	entrerSelection(); // prompt 68
 }
 
 function rateReveil() {
@@ -292,7 +292,7 @@ function incidentImportant() {
 	return !!d && ((d.retard !== null && d.retard !== undefined && d.retard >= IMMERSION.retardImportant) || phase === 'conflit');
 }
 function incidentActif() {
-	return ecran === 'jeu' && ['decision', 'contradiction', 'conflit', 'reveil'].includes(phase);
+	return ecran === 'jeu' && ['decision', 'contradiction', 'conflit', 'reveil', 'selection'].includes(phase); // prompt 68 : + signalement en attente
 }
 /** Opacité de la pulsation (0..1) : 1,5 pulsation/s, fixe si animations réduites */
 function pulsationRouge() {

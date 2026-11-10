@@ -64,7 +64,7 @@ Auteurs : [À COMPLÉTER]
 # L'œuvre
 
 - Une pièce en pixel art, vue depuis la chaise : baie sur la ville, la Loire, la grue Titan
-- Un PC avec son système, **RégulOS** : appli Régulation, patron, carte, community, journal, indicateurs, **données**
+- Un PC avec son système, **RégulOS** : **carte** (appli de jeu : incidents, file, équipes limitées), patron, community, journal, indicateurs, **données**
 - Une journée de travail : on la termine à **l'horloge**, le **sablier** fait passer le temps, le **café** fait monter l'adrénaline
 - Le soir, un mail ; en fin de semaine, un **rapport papier** et le bilan du patron
 

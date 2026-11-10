@@ -166,6 +166,7 @@ function draw() {
 		return;
 	}
 	verifierMecaniques(); // prompt 47 : inspection surprise (avant l'horloge, qui s'arrête alors)
+	majSelection(); // prompt 68 : un signalement trop longtemps en file expire
 	avancerTemps(); // horloge simulée, sieste, arrivée des incidents, fin de journée (immersion.js)
 	if (Jeu.equipes) Jeu.majEquipes(millis()); // équipes envoyées depuis la carte (prompt 22)
 	boutons = [];
@@ -234,7 +235,7 @@ let curseurMain = false;
 /** Prompt 43 : bandeau d'état en bas de l'écran du jeu — ce qu'il faut faire maintenant */
 function bandeauEtat() {
 	if (ecran !== 'jeu') return;
-	const cle = { attente: 'attente', reveil: 'attente', decision: 'decision', contradiction: 'contradiction', conflit: 'conflit', narration: 'narration', mail: 'mail', fin: 'fin' }[phase];
+	const cle = { attente: 'attente', reveil: 'attente', selection: 'selection', decision: 'decision', contradiction: 'contradiction', conflit: 'conflit', narration: 'narration', mail: 'mail', fin: 'fin' }[phase];
 	if (!cle) return;
 	const txt = phase === 'attente' && Jeu.journeeFinie && Jeu.journeeFinie() ? t('etat.finJournee', { fin: Jeu.formaterHeure(Jeu.finJournee()) }) : t('etat.' + cle, { x: IMMERSION.compression }); // prompt 51
 	const urgent = ['decision', 'contradiction', 'conflit'].includes(phase);
@@ -306,6 +307,7 @@ function decider(action) {
 	const mesures = { dureeMs: Math.max(0, millis() - arriveeDossier), sources: typeof enqueteDossier === 'function' ? Object.keys(enqueteDossier().revele).length : 0 };
 	dernierResultat = Jeu.decider(action, sourceChoisie);
 	if (!dernierResultat) return;
+	traceDecision(dernierResultat); // prompt 68 : repère vert ou orange qui s'efface sur la carte
 	if (action !== 'temps') Object.assign(dernierResultat, mesures);
 	else dernierResultat.sources = mesures.sources;
 	const dj = dernierResultat.deltas.map((v, i) => t('jaugeTitre.' + ['fluidite', 'reputation', 'budget'][i]) + ' ' + (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v)).join(', ');
@@ -455,12 +457,14 @@ function dessinerJeu() {
 
 	dessinerDecor(CARTE, meteo, 1, true);
 	dessinerLignesEtat(CARTE, d);
+	dessinerBandeauEquipes(); // prompt 68
 	commandesCarte(); // zoom de la carte
 	dessinerListeLignes(LISTE, d);
 
-	// Panneau droit : jauges, puis selon la phase : conflit, dossier (avec contradiction) ou narration
+	// Panneau droit : jauges, puis selon la phase : signalement en file (prompt 68), conflit, dossier ou narration
 	dessinerJauges();
-	if (phase === 'narration') dessinerNarration();
+	if (phase === 'selection') dessinerSelection();
+	else if (phase === 'narration') dessinerNarration();
 	else if (phase === 'conflit') dessinerConflit();
 	else dessinerDossier(d, meteo);
 }
@@ -484,6 +488,7 @@ function dessinerJeuAttente() {
 	text(enteteMode(), GAUCHE.x + 260, GAUCHE.y + 30);
 	dessinerDecor(CARTE, meteo, 1, true);
 	dessinerLignesEtat(CARTE, null);
+	dessinerBandeauEquipes(); // prompt 68
 	commandesCarte(); // zoom de la carte
 	dessinerListeLignes(LISTE, null);
 	dessinerJauges();
@@ -721,6 +726,17 @@ function dessinerLignesEtat(zone, d) {
 		}
 		l.traces.forEach(tracer);
 	}
+	// Prompt 68 : ligne mise en surbrillance depuis la légende, puis repères (incident, file, équipes, traces)
+	if (SELECTION.surbrillance) {
+		const ls = Jeu.lignes.lignes.find((l) => l.nom === SELECTION.surbrillance);
+		if (ls) {
+			stroke('#ffffff');
+			strokeWeight(7);
+			ls.traces.forEach(tracer);
+		}
+	}
+	noStroke();
+	dessinerReperesCarte();
 	drawingContext.restore();
 	pop();
 }
@@ -752,8 +768,12 @@ function dessinerListeLignes(zone, dActuel) {
 	fill(C.texte);
 	text(t('lignes.titre'), zone.x + 18, zone.y + 16);
 	textStyle(NORMAL);
+	// Prompt 68 : légende repliable ; un clic sur une ligne la met en surbrillance sur la carte
+	bouton(zone.x + zone.l - 74, zone.y + 10, 56, 36, SELECTION.legendeRepliee ? '▸' : '▾', () => (SELECTION.legendeRepliee = !SELECTION.legendeRepliee), false, true);
+	textAlign(LEFT, TOP); // bouton() laisse un alignement centré
 	let y = zone.y + 58;
-	if (!items.length) {
+	if (SELECTION.legendeRepliee) items.length = 0;
+	if (!items.length && !SELECTION.legendeRepliee) {
 		textSize(18);
 		textLeading(26);
 		fill(C.gris);
@@ -776,6 +796,15 @@ function dessinerListeLignes(zone, dActuel) {
 		textSize(18);
 		fill(actif ? C.rouge : C.gris);
 		text(actif ? t('lignes.actif') : it.retard !== null ? '+' + it.retard + ' min' : t('lignes.perturbation'), zone.x + 140, y + 12);
+		if (SELECTION.surbrillance === it.nom) {
+			noFill();
+			stroke('#ffffff');
+			strokeWeight(2);
+			rect(zone.x + 10, y, zone.l - 20, 44);
+			noStroke();
+		}
+		const nom = it.nom;
+		boutons.push({ x: zone.x + 10, y, l: zone.l - 20, h: 44, action: () => (SELECTION.surbrillance = SELECTION.surbrillance === nom ? null : nom) });
 		y += 52;
 	}
 	// Bandeau tactique (prompt 23) : objectif du jour et modificateur actif
@@ -906,7 +935,7 @@ function dessinerDossier(d, meteo) {
 
 	// En-tête du dossier
 	textAlign(LEFT, TOP);
-	text(t('dossier.entete', { n: Jeu.index + 1, total: Jeu.paquet.length, type: tSi('type.' + d.type, d.type).toUpperCase(), affluence: '' }), x + 32, base.y + 42); // prompt 50 : l'affluence se découvre dans l'agenda
+	text(t('dossier.entete', { n: Jeu.index + 1, total: Jeu.paquet.length, type: tSi('type.' + d.type, d.type).toUpperCase(), affluence: '' }), x + 32, base.y + 42); // prompt 50 : l'affluence se découvre dans l'agenda (gravité : panneau de sélection et file, prompt 68)
 
 	// Prompt 50 : signalement vague, faits révélés source par source (enquete.js)
 	dessinerEnquete(d, x, base);
@@ -1449,7 +1478,6 @@ function keyPressed() {
 			return false;
 		}
 		if (keyCode === ENTER || keyCode === RETURN || (key === ' ' && !PC.fenetre)) ouvrirIconeOS(PC.selection);
-		if (PC.fenetre === 'carte' && ['1', '2', '3', '4'].includes(key)) envoyerEquipeCarte(Object.keys(Jeu.EQUIPES)[Number(key) - 1]);
 		if (phase === 'mail' && PC.fenetre === null && (keyCode === ENTER || keyCode === RETURN)) return false;
 		return false;
 	}
@@ -1469,6 +1497,10 @@ function keyPressed() {
 	}
 	if (ecran === 'accueil') {
 		if (keyCode === ENTER || keyCode === RETURN) ouvrirMenuPrincipal(); // prompt 35 : plus d'accueil dans le PC
+	} else if (toucheEquipes()) {
+		// prompt 68 : Maj + 1/2/3/4 envoie une équipe sur l'incident
+	} else if (phase === 'selection' && (keyCode === ENTER || keyCode === RETURN || key === ' ')) {
+		selectionnerIncident(); // prompt 68 : prendre le signalement, le compteur démarre
 	} else if ((phase === 'decision' || phase === 'contradiction') && toucheEnquete()) {
 		// prompt 50 : 5 à 8 consultent une source
 	} else if (phase === 'decision') {

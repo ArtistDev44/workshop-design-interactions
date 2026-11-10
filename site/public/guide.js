@@ -54,11 +54,11 @@ function cibleReelle(nom) {
 }
 
 // ——— Étapes ———
-const PHASES_DOSSIER = ['decision', 'contradiction', 'conflit'];
+const PHASES_DOSSIER = ['decision', 'contradiction', 'conflit']; // prompt 68 : la sélection d'un signalement précède le dossier
 const ETAPES_GUIDE = [
 	{ id: 'installer', cible: () => 'ecranPC', fait: () => vue === 'poste' },
-	{ id: 'jauges', cible: () => (vue === 'poste' && PC.etat === 'appli' ? 'jauges' : vue === 'poste' ? 'iconeRegulation' : 'ecranPC'), fait: () => PHASES_DOSSIER.includes(phase) },
-	{ id: 'actions', cible: () => (vue === 'poste' && PC.etat === 'appli' ? 'actions' : vue === 'poste' ? 'iconeRegulation' : 'ecranPC'), fait: () => (Jeu.historique || []).length > 0 || phase === 'narration' },
+	{ id: 'jauges', cible: () => (vue === 'poste' && PC.etat === 'appli' ? 'jauges' : vue === 'poste' ? 'iconeCarte' : 'ecranPC'), fait: () => PHASES_DOSSIER.includes(phase) },
+	{ id: 'actions', cible: () => (vue === 'poste' && PC.etat === 'appli' ? 'actions' : vue === 'poste' ? 'iconeCarte' : 'ecranPC'), fait: () => (Jeu.historique || []).length > 0 || phase === 'narration' },
 	{ id: 'apps', cible: () => (vue !== 'poste' ? 'ecranPC' : PC.etat === 'appli' ? 'fermerAppli' : 'iconesOS'), fait: () => PC.etat === 'os' && (!!PC.fenetre || PC.flottant) },
 	{ id: 'quitter', cible: () => 'quitterPC', fait: () => vue === 'bureau' },
 	{ id: 'livre', cible: () => 'livreCommande', fait: () => !!tutoriel || fenetre === 'livre-stress' || (typeof PIECE !== 'undefined' && !!PIECE.message) },
@@ -84,7 +84,7 @@ function annoncerEtapeGuide() {
 function texteEtapeGuide(e) {
 	const c = e.cible();
 	if (c === 'ecranPC' && e.id !== 'installer' && e.id !== 'apps') return t('guide.retourPC');
-	if (c === 'iconeRegulation') return t('guide.ouvrirRegulation');
+	if (c === 'iconeCarte') return t('guide.ouvrirCarte');
 	if (e.id === 'apps') return t(c === 'fermerAppli' ? 'guide.apps.fermer' : c === 'ecranPC' ? 'guide.retourPC' : 'guide.apps.ouvrir');
 	return t('guide.' + e.id);
 }
