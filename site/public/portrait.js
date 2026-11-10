@@ -95,6 +95,12 @@ function composerPortrait() {
 		ctx.restore();
 	});
 	PORTRAIT.boutons.forEach((b) => dessinerBoutonPortrait(b));
+	// Sieste : les paupières couvrent aussi tout le portrait (boutons compris), sauf pendant l'alarme de réveil
+	if (typeof SOMMEIL !== 'undefined' && SOMMEIL.k > 0.001 && phase !== 'reveil' && !fenetre) {
+		paupieres(ctx, SOMMEIL.k, PL, PH);
+		if (SOMMEIL.k > 0.5) PORTRAIT.boutons = [];
+		return;
+	}
 	if (scene === 'appli' && PORTRAIT.defilMax > 0) {
 		// Ascenseur discret : où l'on est dans la colonne
 		const h = ((zone.bas - zone.haut) * (zone.bas - zone.haut)) / (zone.bas - zone.haut + PORTRAIT.defilMax);

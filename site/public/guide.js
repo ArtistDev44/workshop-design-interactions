@@ -144,7 +144,7 @@ function dessinerGuide() {
 	if (MENU.actif || ecran !== 'jeu') return;
 	const e = ETAPES_GUIDE[GUIDE.etape];
 	if (e.fait()) return etapeGuideSuivante(); // validée dès que le joueur a fait l'action, même sous une fenêtre
-	if (fenetre || smsActif || tutoriel || clignement || phase === 'mail') return; // prompt 66 : le mail du soir se lit sans bulle
+	if (fenetre || smsActif || tutoriel || clignement || phase === 'mail' || SOMMEIL.k > 0.001) return; // sieste : yeux fermés, pas de bulle // prompt 66 : le mail du soir se lit sans bulle
 	const c = cibleReelle(e.cible());
 	const texte = t('guide.etape', { n: GUIDE.etape + 1, total: ETAPES_GUIDE.length }) + ' · ' + texteEtapeGuide(e);
 	if (!c) return bulleGuide(texte, L / 2, H - 260, true);

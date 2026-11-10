@@ -617,16 +617,96 @@ function dessinerReveil() {
 
 // ——— Personnage qui somnole au bureau (§ 4), en pixel art ———
 function dessinerPersonnageSieste(g) {
-	// Vue à la première personne : les paupières s'alourdissent (bandes sombres en haut et en bas), « Z » au centre
-	if (!enSieste) return;
-	const respir = reduireAnimations ? 0 : Math.round((Math.sin(millis() / 900) + 1) * 4);
-	const h = 74 + respir;
-	px(g, '#120c0a', 0, 0, BW, h);
-	px(g, '#120c0a', 0, BH - h, BW, h);
-	px(g, '#3a2a22', 0, h - 3, BW, 3);
-	px(g, '#3a2a22', 0, BH - h, BW, 3);
-	const t = reduireAnimations ? 2 : Math.floor(millis() / 600) % 3;
-	for (let k = 0; k <= t; k++) textePixel(g, 'Z', BW / 2 + 40 + k * 7, 60 - k * 9, '#f7f1e1');
+	// Les paupières ne sont plus dessinées dans la pièce : voir dessinerSommeil (surcouche plein écran)
+}
+
+// ——— Sieste : paupières en surcouche plein écran, au-dessus de tout le contenu ———
+// Fermeture (1,8 s) : les paupières tombent, le joueur lutte (elles se relèvent un peu), puis se ferment
+// entièrement — plus rien du bureau, du PC ni de l'interface n'est visible. Ouverture (1 s) : les yeux
+// s'entrouvrent, un clignement, puis s'ouvrent. Animations réduites : fondu au noir (0,4 s), sans mouvement.
+const SOMMEIL = { k: 0, de: 0, vers: 0, debut: 0 };
+const DUREE_FERMETURE_SIESTE = 1800;
+const DUREE_OUVERTURE_SIESTE = 1000;
+const DUREE_FONDU_SIESTE = 400;
+const lisse = (a, b, u) => a + (b - a) * (u * u * (3 - 2 * u));
+/** Profil de fermeture f(u), 0 → 1 : chute, sursaut, fermeture */
+function profilFermeture(u) {
+	if (u < 0.3) return lisse(0, 0.55, u / 0.3);
+	if (u < 0.45) return lisse(0.55, 0.38, (u - 0.3) / 0.15);
+	return lisse(0.38, 1, (u - 0.45) / 0.55);
+}
+/** Profil d'ouverture g(u), 1 → 0 : entrouverture, clignement, ouverture */
+function profilOuverture(u) {
+	if (u < 0.35) return lisse(1, 0.45, u / 0.35);
+	if (u < 0.5) return lisse(0.45, 0.8, (u - 0.35) / 0.15);
+	return lisse(0.8, 0, (u - 0.5) / 0.5);
+}
+function majSommeil() {
+	const cible = ecran === 'jeu' && enSieste ? 1 : 0;
+	const m = millis();
+	if (cible !== SOMMEIL.vers) {
+		SOMMEIL.de = SOMMEIL.k; // une animation interrompue repart de l'état courant
+		SOMMEIL.vers = cible;
+		SOMMEIL.debut = m;
+	}
+	const duree = reduireAnimations ? DUREE_FONDU_SIESTE : cible ? DUREE_FERMETURE_SIESTE : DUREE_OUVERTURE_SIESTE;
+	const u = constrain((m - SOMMEIL.debut) / duree, 0, 1);
+	if (reduireAnimations) SOMMEIL.k = SOMMEIL.de + (cible - SOMMEIL.de) * u;
+	else if (cible) SOMMEIL.k = SOMMEIL.de + (1 - SOMMEIL.de) * profilFermeture(u);
+	else SOMMEIL.k = SOMMEIL.de * profilOuverture(u);
+	if (u >= 1) SOMMEIL.k = cible;
+	return SOMMEIL.k;
+}
+/** Hauteur (px) de la paupière en x, pour un niveau k : bord bombé, pas de 8 px ; k = 1 couvre tout */
+function hauteurPaupiere(x, k, hauteur, largeur) {
+	const d = (x - largeur / 2) / (largeur / 2);
+	const coins = 0.32 * hauteur * Math.sin(Math.PI * k) * d * d; // en amande : les coins se ferment avant le centre
+	const h = k * (hauteur / 2 + 16) + coins;
+	return Math.min(hauteur / 2 + 16, Math.ceil(h / 8) * 8);
+}
+/** Dessine les paupières sur un contexte 2D (canevas principal ou portrait) */
+function paupieres(ctx, k, largeur, hauteur) {
+	if (k <= 0.001) return;
+	if (reduireAnimations) {
+		ctx.fillStyle = 'rgba(10,8,7,' + Math.min(1, k).toFixed(3) + ')';
+		ctx.fillRect(0, 0, largeur, hauteur);
+		return;
+	}
+	const pas = 32;
+	for (let x = 0; x < largeur; x += pas) {
+		const h = hauteurPaupiere(x + pas / 2, k, hauteur, largeur);
+		ctx.fillStyle = '#120c0a';
+		ctx.fillRect(x, 0, pas, h);
+		ctx.fillRect(x, hauteur - h, pas, h);
+		if (h < hauteur / 2) {
+			ctx.fillStyle = '#3a2a22'; // bord de paupière
+			ctx.fillRect(x, h - 8, pas, 8);
+			ctx.fillRect(x, hauteur - h, pas, 8);
+			ctx.fillStyle = '#0a0605'; // cils
+			ctx.fillRect(x + 6, h, 4, 8);
+			ctx.fillRect(x + 20, h, 4, 6);
+			ctx.fillRect(x + 6, hauteur - h - 6, 4, 6);
+		}
+	}
+}
+/** Surcouche de sieste sur le canevas principal (appelée dans draw, au-dessus du contenu) */
+function dessinerSommeil() {
+	const k = majSommeil();
+	if (k <= 0.001) return;
+	paupieres(drawingContext, k, L, H);
+	if (k > 0.5 && phase !== 'reveil') boutons = []; // yeux fermés : rien de caché n'est cliquable
+	if (k >= 0.999) {
+		// Yeux fermés : « Z » qui montent doucement, et une ligne pour comprendre ce qui se passe
+		const n = reduireAnimations ? 3 : 1 + (Math.floor(millis() / 600) % 3);
+		noStroke();
+		for (let i = 0; i < n; i++) dsTitre('Z', L / 2 + 30 + i * 46, H / 2 - 40 - i * 52, 40 + i * 12, '#f7f1e1', 'center');
+		textAlign(CENTER, TOP);
+		textFont(POLICE_TEXTE);
+		textSize(22);
+		fill('rgba(255,255,255,0.75)');
+		text(t('surv.sieste'), L / 2, H / 2 + 70);
+		textAlign(LEFT, TOP);
+	}
 }
 
 // ——— Livres posés sur le plateau (§ 7) : placeholder pixel art (dos + titre) ———
