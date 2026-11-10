@@ -15,6 +15,7 @@ body {
 	overflow: hidden;
 }
 #scene canvas {
+	touch-action: manipulation; /* touch basique (Q32) : pas de zoom au double tap */
 	width: min(100vw, calc(100vh * 16 / 9)) !important;
 	height: auto !important;
 	display: block;

@@ -31,7 +31,23 @@ function policeInstallee(candidats, generique) {
 const POLICE_TEXTE = policeInstallee(['Inter', 'Helvetica Neue', 'Segoe UI', 'Roboto', 'Arial'], 'monospace');
 const POLICE_DONNEES = policeInstallee(['IBM Plex Mono', 'Menlo', 'Consolas', 'DejaVu Sans Mono', 'Courier New'], 'serif');
 
-const reduireAnimations = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const reduireAnimationsSysteme = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+let reduireAnimations = reduireAnimationsSysteme;
+const GRIS_NORMAL = '#6B7280';
+
+/* Applique les réglages enregistrés (écran Paramètres) */
+function appliquerReglages() {
+	const R = Confort.Reglages;
+	reduireAnimations = reduireAnimationsSysteme || R.reduireAnimations;
+	C.gris = R.contrasteRenforce ? '#374151' : GRIS_NORMAL; // gris secondaire plus foncé : contraste renforcé
+}
+
+// ——— Confort (prompt 18) : fenêtres, pause, meilleur bilan ———
+let fenetre = null; // null | 'aide' | 'reset' | 'parametres'
+let enPause = false;
+let debutPause = 0;
+let bilanFin = null; // { meilleur, record, ancien } calculé à la fin de partie
+let alerteTempsJouee = false;
 
 // ——— État d'affichage ———
 let ecran = 'accueil'; // 'accueil' | 'jeu'
@@ -53,7 +69,9 @@ function setup() {
 	pixelDensity(1);
 	randomSeed(Jeu.fallback ? Jeu.fallback.seed : 1001);
 	for (let i = 0; i < 140; i++) gouttes.push({ x: random(), y: random(), v: random(0.6, 1.2) });
-	Jeu.verifierConnexion(); // indicateur « mode hors ligne » + météo du jour pour le décor de l'accueil
+	appliquerReglages();
+	if (Confort.Reglages.horsLigneForce) Jeu.enLigne = false; // mode hors ligne forcé (Paramètres)
+	else Jeu.verifierConnexion(); // indicateur « mode hors ligne » + météo du jour pour le décor de l'accueil
 }
 
 // ——— Options de l'accueil : les 3 semaines réelles (Q14) + le mode « aujourd'hui » (prompt 14) ———
@@ -63,16 +81,21 @@ function optionsAccueil() {
 		lundi: s.lundi,
 		titre: 'Semaine du ' + dateLongue(s.lundi) + ' au ' + dateLongue(s.dimanche),
 		detail: s.niveau + ' · compteur ' + s.compteur_s + ' s',
-		info: s.dossiers + ' dossier(s) d’archive · ' + s.evenements + ' événement(s) agenda',
+		info: s.dossiers + ' dossier(s) d’archive · ' + s.evenements + ' événement(s) agenda' + texteMeilleur(s.lundi),
 	}));
 	opts.push({
 		type: 'direct',
 		titre: 'Aujourd’hui, en temps réel',
 		detail: Jeu.enLigne === false ? 'indisponible hors ligne' : 'flux GTFS-RT Naolib',
-		info: 'Retards réels ≥ 10 min mesurés maintenant',
+		info: 'Retards réels ≥ 10 min mesurés maintenant' + texteMeilleur('direct'),
 		desactive: Jeu.enLigne === false,
 	});
 	return opts;
+}
+
+function texteMeilleur(cle) {
+	const m = Confort.Bilans.meilleur(cle);
+	return m ? ' · meilleur bilan : ' + m.score + ' / 300' : '';
 }
 
 function draw() {
@@ -80,6 +103,11 @@ function draw() {
 	background(C.fond);
 	if (ecran === 'accueil') dessinerAccueil();
 	else dessinerJeu();
+	if (enPause) dessinerPause();
+	if (fenetre) {
+		boutons = []; // seule la fenêtre ouverte est cliquable
+		dessinerFenetre();
+	}
 }
 
 // =====================================================================
@@ -132,25 +160,29 @@ function dessinerAccueil() {
 	// Bouton Jouer
 	const bl = 320;
 	bouton((L - bl) / 2, y + 24, bl, 76, 'Jouer', lancerPartie, opts[choixAccueil] && opts[choixAccueil].desactive);
+	bouton((L - bl) / 2 - 260, y + 34, 220, 56, 'Paramètres', () => ouvrir('parametres'), false, true);
+	bouton((L + bl) / 2 + 40, y + 34, 220, 56, 'Aide (H)', () => ouvrir('aide'), false, true);
 
 	// Indicateur « mode hors ligne » (Q34) : discret, gris, monospace
 	textFont(POLICE_DONNEES);
 	textSize(20);
 	textAlign(CENTER, BOTTOM);
 	fill(C.gris);
-	const statut = Jeu.enLigne === null ? 'vérification de la connexion…' : Jeu.enLigne ? '' : 'mode hors ligne — semaines enregistrées disponibles';
+	const statut = Jeu.enLigne === null ? 'vérification de la connexion…' : Jeu.enLigne ? '' : Confort.Reglages.horsLigneForce ? 'mode hors ligne (forcé dans les paramètres)' : 'mode hors ligne — semaines enregistrées disponibles';
 	text(statut, L / 2, H - 70);
 	textSize(16);
-	text('↑ ↓ choisir · Entrée jouer — sources : Open Data Nantes Métropole, Open-Meteo', L / 2, H - 36);
+	text('↑ ↓ choisir · Entrée jouer · H aide · M son — sources : Open Data Nantes Métropole, Open-Meteo', L / 2, H - 36);
 }
 
 function lancerPartie() {
 	const o = optionsAccueil()[choixAccueil];
 	if (!o || o.desactive) return;
 	const p = o.type === 'direct' ? Jeu.chargerDirect() : Jeu.chargerSemaine(o.lundi);
+	Confort.Son.bip('choix');
 	p.then(() => {
 		Jeu.nouvellePartie();
 		ecran = 'jeu';
+		enPause = false;
 		nouveauDossier();
 	});
 }
@@ -159,8 +191,15 @@ function nouveauDossier() {
 	arriveeDossier = millis();
 	debutCompteur = millis();
 	sourceChoisie = null;
-	if (Jeu.terminee) phase = 'fin';
-	else if (Jeu.conflit()) phase = 'conflit';
+	alerteTempsJouee = false;
+	if (Jeu.terminee) {
+		phase = 'fin';
+		bilanFin = Confort.Bilans.enregistrer(Confort.Bilans.cle(Jeu.etat), Jeu.score(), Jeu.jauges); // Q19
+		Confort.Son.bip('fin');
+		return;
+	}
+	Confort.Son.bip('dossier');
+	if (Jeu.conflit()) phase = 'conflit';
 	else if (Jeu.dossierCourant().contradiction) phase = 'contradiction';
 	else phase = 'decision';
 }
@@ -170,12 +209,41 @@ function decider(action) {
 	if (phase !== 'decision' && !(action === 'temps' && phase === 'contradiction')) return;
 	dernierResultat = Jeu.decider(action, sourceChoisie);
 	if (!dernierResultat) return;
+	Confort.Son.bip(action === 'temps' ? 'alerte' : 'action');
 	phase = 'narration';
 	debutNarration = millis();
 }
 
 function continuer() {
-	if (phase === 'narration') nouveauDossier();
+	if (phase === 'narration' && !enPause) nouveauDossier();
+}
+
+// ——— Pause (Q13) : uniquement entre deux dossiers, c'est-à-dire pendant la narration ———
+function basculerPause() {
+	if (phase !== 'narration') return; // jamais pendant un compteur actif
+	if (enPause) {
+		debutNarration += millis() - debutPause; // le temps de pause ne compte pas
+		enPause = false;
+	} else {
+		enPause = true;
+		debutPause = millis();
+	}
+	Confort.Son.bip('choix');
+}
+
+function ouvrir(nom) {
+	fenetre = nom;
+	Confort.Son.bip('choix');
+}
+function fermer() {
+	fenetre = null;
+}
+
+// ——— Recommencer la semaine (R, avec confirmation, Q38) ———
+function confirmerReset() {
+	fenetre = null;
+	enPause = false;
+	rejouer();
 }
 
 // =====================================================================
@@ -208,9 +276,28 @@ function dessinerJeu() {
 	textSize(20);
 	fill(C.gris);
 	text(enteteMode(), GAUCHE.x + 260, GAUCHE.y + 30);
+	// Barre d'outils (souris / touch) — équivalents des touches H, M, R
+	const bx = GAUCHE.x + GAUCHE.l - 24;
+	const outils = [
+		['Recommencer (R)', () => ouvrir('reset')],
+		['Son (M) : ' + (Confort.Reglages.son ? 'oui' : 'non'), basculerSon],
+		['Aide (H)', () => ouvrir('aide')],
+	];
+	let ox = bx;
+	textFont(POLICE_TEXTE);
+	outils.forEach(([lib, act]) => {
+		textSize(16);
+		const w = Math.max(120, textWidth(lib) + 36);
+		ox -= w;
+		bouton(ox, GAUCHE.y + 18, w, 44, lib, act, false, true);
+		ox -= 10;
+	});
 	if (Jeu.etat.horsLigne) {
+		textFont(POLICE_DONNEES);
+		textSize(18);
+		fill(C.gris);
 		textAlign(RIGHT, TOP);
-		text('mode hors ligne', GAUCHE.x + GAUCHE.l - 24, GAUCHE.y + 30);
+		text('mode hors ligne', ox - 10, GAUCHE.y + 30);
 	}
 
 	dessinerDecor(CARTE, meteo, 1, true);
@@ -507,6 +594,10 @@ function dessinerDossier(d, meteo) {
 	textAlign(RIGHT, TOP);
 	fill(C.gris);
 	text(Math.ceil((reste * duree) / 1000) + ' s', x + base.l - 24, base.y + 42);
+	if (reste * duree < 5000 && reste > 0 && !alerteTempsJouee && (phase === 'decision' || phase === 'contradiction')) {
+		alerteTempsJouee = true;
+		Confort.Son.bip('alerte'); // plus que 5 secondes
+	}
 	// Compteur à 0 : « ne rien faire » avec les seules conséquences naturelles du dossier (Q25)
 	if (reste === 0 && t === 1 && (phase === 'decision' || phase === 'contradiction')) {
 		phase = 'decision';
@@ -701,8 +792,10 @@ function dessinerNarration() {
 	rect(z.x + 32, z.y + z.h - 140, z.l - 64, 6, 3);
 	fill(couleurTon);
 	rect(z.x + 32, z.y + z.h - 140, (z.l - 64) * t, 6, 3);
-	bouton(z.x + 32, z.y + z.h - 112, z.l - 64, 72, Jeu.terminee ? 'Voir le bilan  (Entrée)' : 'Dossier suivant  (Entrée)', continuer);
-	if (t >= 1) continuer();
+	const lb = (z.l - 64 - 16) * 0.68;
+	bouton(z.x + 32, z.y + z.h - 112, lb, 72, Jeu.terminee ? 'Voir le bilan  (Entrée)' : 'Dossier suivant  (Entrée)', continuer);
+	bouton(z.x + 48 + lb, z.y + z.h - 112, z.l - 64 - 16 - lb, 72, enPause ? 'Reprendre (P)' : 'Pause (P)', basculerPause, false, true);
+	if (t >= 1 && !enPause && !fenetre) continuer();
 }
 
 // ——— Fin provisoire (l'écran de fin complet arrive au prompt 19) ———
@@ -721,6 +814,10 @@ function dessinerFinProvisoire() {
 	textSize(26);
 	text('Score combiné : ' + Jeu.score() + ' / 300', z.x + 32, z.y + 110);
 	text('Dossiers traités : ' + Jeu.historique.filter((h) => h.action).length + ' / ' + Jeu.paquet.length, z.x + 32, z.y + 150);
+	if (bilanFin && bilanFin.meilleur) {
+		fill(bilanFin.record ? C.vert : C.gris);
+		text(bilanFin.record ? 'Nouveau meilleur bilan pour cette semaine !' : 'Meilleur bilan : ' + bilanFin.meilleur.score + ' / 300 (' + bilanFin.meilleur.le + ')', z.x + 32, z.y + 200, z.l - 64, 70);
+	}
 	bouton(z.x + 32, z.y + z.h - 200, z.l - 64, 72, 'Rejouer la même semaine', rejouer);
 	bouton(z.x + 32, z.y + z.h - 112, z.l - 64, 72, 'Changer de semaine', () => (ecran = 'accueil'), false, true);
 }
@@ -803,9 +900,10 @@ function dateLongue(iso) {
 }
 
 // =====================================================================
-// Entrées (raccourcis complets au prompt 18)
+// Entrées : souris, touch, clavier (raccourcis complets, 08-raccourcis)
 // =====================================================================
 function mousePressed() {
+	Confort.Son.demarrer();
 	for (let i = boutons.length - 1; i >= 0; i--) {
 		const b = boutons[i];
 		if (mouseX >= b.x && mouseX <= b.x + b.l && mouseY >= b.y && mouseY <= b.y + b.h) {
@@ -815,7 +913,33 @@ function mousePressed() {
 	}
 }
 
+function basculerSon() {
+	Confort.Reglages.basculer('son');
+}
+
 function keyPressed() {
+	Confort.Son.demarrer(); // l'audio ne peut démarrer qu'après un geste du joueur
+	// Fenêtres ouvertes : elles captent le clavier
+	if (fenetre) {
+		if (keyCode === ESCAPE || (fenetre === 'aide' && (key === 'h' || key === 'H' || key === '?'))) return fermer();
+		if (fenetre === 'reset') {
+			if (keyCode === ENTER || keyCode === RETURN || key === 'o' || key === 'O') confirmerReset();
+			if (key === 'n' || key === 'N') fermer();
+		}
+		if (fenetre === 'parametres') {
+			const cles = { 1: 'son', 2: 'horsLigneForce', 3: 'reduireAnimations', 4: 'contrasteRenforce' };
+			if (cles[key]) basculerReglage(cles[key]);
+			if (keyCode === ENTER || keyCode === RETURN) fermer();
+		}
+		return false;
+	}
+	// Touches valables partout
+	if (key === 'h' || key === 'H' || key === '?') return ouvrir('aide'), false;
+	if (key === 'm' || key === 'M') return basculerSon(), false;
+	if (ecran === 'jeu') {
+		if (key === 'r' || key === 'R') return ouvrir('reset'), false;
+		if (key === 'p' || key === 'P') return basculerPause(), false;
+	}
 	if (ecran === 'accueil') {
 		const n = optionsAccueil().length;
 		if (keyCode === UP_ARROW) choixAccueil = (choixAccueil + n - 1) % n;
@@ -832,5 +956,179 @@ function keyPressed() {
 		if (key === 'b' || key === 'B') choisirPriorite('b');
 	} else if (phase === 'narration' && (keyCode === ENTER || keyCode === RETURN)) {
 		continuer();
+	} else if (phase === 'fin') {
+		if (keyCode === ENTER || keyCode === RETURN) rejouer();
+		if (keyCode === ESCAPE || keyCode === BACKSPACE) ecran = 'accueil';
 	}
+	if (key === ' ' || keyCode === UP_ARROW || keyCode === DOWN_ARROW) return false; // pas de défilement de la page
+}
+
+// Touch basique (Q32) : un appui = un clic sur les boutons
+function touchStarted() {
+	Confort.Son.demarrer();
+	mousePressed();
+	return false;
+}
+
+// =====================================================================
+// Fenêtres : aide, confirmation de reset, paramètres ; voile de pause
+// =====================================================================
+function voile() {
+	noStroke();
+	fill(28, 39, 51, 150);
+	rect(0, 0, L, H);
+}
+
+function dessinerPause() {
+	voile();
+	const l = 640;
+	const h = 240;
+	panneau((L - l) / 2, (H - h) / 2, l, h, C.accent);
+	textAlign(CENTER, CENTER);
+	fill(C.texte);
+	textFont(POLICE_TEXTE);
+	textStyle(BOLD);
+	textSize(48);
+	text('Pause', L / 2, H / 2 - 50);
+	textStyle(NORMAL);
+	bouton((L - 360) / 2, H / 2 + 10, 360, 72, 'Reprendre (P)', basculerPause);
+}
+
+function dessinerFenetre() {
+	voile();
+	if (fenetre === 'aide') return fenetreAide();
+	if (fenetre === 'reset') return fenetreReset();
+	if (fenetre === 'parametres') return fenetreParametres();
+}
+
+function fenetreAide() {
+	const l = 1240;
+	const h = 860;
+	const x = (L - l) / 2;
+	const y = (H - h) / 2;
+	panneau(x, y, l, h, C.accent);
+	textAlign(LEFT, TOP);
+	noStroke();
+	fill(C.accent);
+	textFont(POLICE_TEXTE);
+	textStyle(BOLD);
+	textSize(40);
+	text('Aide — Nantes en régulation', x + 48, y + 36);
+	textStyle(NORMAL);
+	// Raccourcis (08-raccourcis)
+	const raccourcis = [
+		['1 / 2 / 3', 'Dévier la ligne / Retenir en terminus / Bus de renfort'],
+		['0 ou Espace', 'Ne rien faire'],
+		['A / B', 'Choisir une source (contradiction) ou une ligne (conflit)'],
+		['Entrée', 'Valider, dossier suivant, rejouer'],
+		['P', 'Pause — seulement entre deux dossiers'],
+		['R', 'Recommencer la semaine (avec confirmation)'],
+		['M', 'Couper / réactiver le son'],
+		['H ou ?', 'Afficher / fermer cette aide · Échap : fermer'],
+		['↑ ↓', 'Choisir une semaine à l’accueil'],
+	];
+	textSize(22);
+	fill(C.texte);
+	text('Raccourcis', x + 48, y + 110);
+	raccourcis.forEach(([k, d], i) => {
+		textFont(POLICE_DONNEES);
+		textSize(20);
+		fill(C.accent);
+		text(k, x + 48, y + 150 + i * 38);
+		textFont(POLICE_TEXTE);
+		fill(C.texte);
+		text(d, x + 230, y + 150 + i * 38);
+	});
+	// Règles (00-concept, 03-actions, 04-jauges)
+	const rx = x + 760;
+	textSize(22);
+	fill(C.texte);
+	text('Règles', rx, y + 110);
+	textSize(19);
+	text(
+		'Chaque dossier vient de données réelles : retard ≥ 10 min (temps réel), perturbation datée (archives), alerte météo ou affluence (agenda).\n\n' +
+			'Choisissez une action avant la fin du compteur. À 0, rien n’est décidé : seules les conséquences naturelles du dossier s’appliquent.\n\n' +
+			'Chaque action modifie 3 jauges (départ 50) : fluidité, satisfaction, réputation. Effet de base + 1 dé à 6 faces, renforcé par la météo, l’heure de pointe ou l’affluence.\n\n' +
+			'Fin de semaine : score = somme des 3 jauges (0–300).',
+		rx,
+		y + 150,
+		l - (rx - x) - 48,
+		560,
+	);
+	bouton(x + l - 288, y + h - 104, 240, 64, 'Fermer (Échap)', fermer);
+}
+
+function fenetreReset() {
+	const l = 760;
+	const h = 300;
+	const x = (L - l) / 2;
+	const y = (H - h) / 2;
+	panneau(x, y, l, h, C.orange);
+	textAlign(CENTER, TOP);
+	noStroke();
+	fill(C.texte);
+	textFont(POLICE_TEXTE);
+	textStyle(BOLD);
+	textSize(40);
+	text('Recommencer la semaine ?', L / 2, y + 48);
+	textStyle(NORMAL);
+	textSize(22);
+	fill(C.gris);
+	text('Les jauges repartent à 50 ; la partie en cours est perdue.', L / 2, y + 110);
+	bouton(x + 48, y + h - 112, (l - 112) / 2, 72, 'Oui, recommencer (Entrée)', confirmerReset);
+	bouton(x + 64 + (l - 112) / 2, y + h - 112, (l - 112) / 2, 72, 'Non (Échap)', fermer, false, true);
+}
+
+function basculerReglage(nom) {
+	Confort.Reglages.basculer(nom);
+	appliquerReglages();
+	if (nom === 'horsLigneForce') {
+		if (Confort.Reglages.horsLigneForce) Jeu.enLigne = false;
+		else {
+			Jeu.enLigne = null;
+			Jeu.verifierConnexion();
+		}
+	}
+}
+
+function fenetreParametres() {
+	const l = 1000;
+	const h = 600;
+	const x = (L - l) / 2;
+	const y = (H - h) / 2;
+	panneau(x, y, l, h, C.accent);
+	textAlign(LEFT, TOP);
+	noStroke();
+	fill(C.accent);
+	textFont(POLICE_TEXTE);
+	textStyle(BOLD);
+	textSize(40);
+	text('Paramètres', x + 48, y + 36);
+	textStyle(NORMAL);
+	const R = Confort.Reglages;
+	const lignes = [
+		['1', 'Son (ambiance + bips)', 'son'],
+		['2', 'Forcer le mode hors ligne', 'horsLigneForce'],
+		['3', 'Réduire les animations', 'reduireAnimations'],
+		['4', 'Contraste renforcé', 'contrasteRenforce'],
+	];
+	lignes.forEach(([k, lib, nom], i) => {
+		const ly = y + 120 + i * 96;
+		textFont(POLICE_TEXTE);
+		textSize(26);
+		fill(C.texte);
+		textAlign(LEFT, CENTER);
+		text(lib, x + 48, ly + 36);
+		textFont(POLICE_DONNEES);
+		textSize(18);
+		fill(C.gris);
+		text('touche ' + k, x + 560, ly + 36);
+		bouton(x + l - 248, ly + 6, 200, 60, R[nom] ? 'oui' : 'non', () => basculerReglage(nom), false, !R[nom]);
+	});
+	textAlign(LEFT, TOP);
+	textFont(POLICE_DONNEES);
+	textSize(16);
+	fill(C.gris);
+	text('Réglages mémorisés sur cet appareil (localStorage). Les animations sont aussi réduites si le système le demande.', x + 48, y + h - 150, l - 360, 60);
+	bouton(x + l - 288, y + h - 104, 240, 64, 'Retour (Entrée)', fermer);
 }
