@@ -44,6 +44,9 @@ Jeu.elementDebloque = function (nom) {
 	return true;
 };
 
+/** Semaine 1 assouplie (prise de poste) : les bonus d'objectif du jour valent ×1,5 */
+Jeu.facteurBonusObjectif = () => (chapitreCourant() === 1 ? 1.5 : 1);
+
 /** Lance le chapitre n (1, 2 ou 3) : nouvelle partie sur la semaine correspondante */
 function lancerChapitre(n) {
 	const lundi = semainesHistoire()[n - 1];

@@ -1017,7 +1017,8 @@
 		const atteint = Jeu.jauges[o.jauge] >= o.seuil;
 		let effet;
 		if (atteint) {
-			const bonus = o.jauge === 'budget' ? { reputation: 5 } : { budget: 10 };
+			const f = Jeu.facteurBonusObjectif ? Jeu.facteurBonusObjectif() : 1; // semaine 1 du mode histoire : bonus ×1,5 (histoire.js)
+			const bonus = o.jauge === 'budget' ? { reputation: Math.round(5 * f) } : { budget: Math.round(10 * f) };
 			Jeu.appliquerDeltas(bonus);
 			effet = T('obj.bonus', { liste: Liste(Object.keys(bonus).map((k) => T('delta', { jauge: LIBELLES_JAUGES[k], v: '+' + bonus[k] })), ', ') });
 		} else {
