@@ -74,7 +74,7 @@ Aucun travail obligatoire. Sauvegarde et relecture des notes possibles, rien de 
 - [ ] Produire manifest.json (modèle du livret) et finaliser source-sheet et grammar
 - [x] Générer un QR code pointant vers le site web de l'œuvre (page en ligne de l'édition ou GitHub Pages du dépôt) — ⚠ PNG du prompt 13 générés vers l'ancienne adresse GitHub Pages (404) : à régénérer, voir ci-dessous
 - [ ] Intégrer le QR code au cartel / à l'affichage et tester le scan en conditions réelles
-- [ ] 14:00 Installation + captation : hero.jpg, detail-01.jpg, process.jpg, demo.mp4 (20 à 30 s), thumb.jpg
+- [x] 14:00 Installation + captation : hero.jpg, detail-01.jpg, process.jpg, demo.mp4 (20 à 30 s), thumb.jpg (fait au prompt 46 : `site/public/captures/`, vrai rendu)
 - [ ] 15:00 Micro-exposition + soutenance
 - [ ] 16:15 Collecte + debrief : structure de dossier conforme au livret, archive complète, dépôt final
 
@@ -87,13 +87,13 @@ jauges, UI, narration, fallback, raccourcis, paramètres, accessibilité).
 - [ ] Fiche-source V1 : données Tanway/Lila Nantes Métropole + Open-Meteo (archive semaine choisie)
 - [x] Sketch minimal p5.js : salle de contrôle à deux panneaux (carte/liste des lignes à gauche, dossier à droite)
 - [x] Boucle incident → 3 actions + « ne rien faire » → jauges contextuelles → narration — `game.js`
-- [ ] Mapping API : retard ≥ 10 min = dossier ; alertes météo Open-Meteo = dossiers
-- [ ] 15 décisions par partie, semaine réelle sélectionnée au lancement, aucun événement inventé
+- [x] Mapping API : retard ≥ 10 min = dossier ; alertes météo Open-Meteo = dossiers (fait : `game.js`, prompts 15–17)
+- [x] 15 décisions par partie, semaine réelle sélectionnée au lancement, aucun événement inventé (fait : `REGLAGES.dossiersParPartie` = 15, semaines réelles de `data/semaines/`)
 - [x] Compteur de temps par décision ; à 0, « ne rien faire » appliqué
-- [ ] 3 jauges (fluidité, satisfaction, réputation) + fins multiples selon le bilan
+- [x] 3 jauges (fluidité, satisfaction, réputation) + fins multiples selon le bilan (fait ; depuis le prompt 22 le trio est fluidité, réputation, **budget**)
 - [x] `data/fallback.json` : 6 cas figés, mode hors ligne jouable
 - [x] Raccourcis clavier complets (`jeu/08-raccourcis.md`), reset `R`, test 1920×1080 — raccourcis et reset dans le code ; test 1920×1080 à refaire au preflight
-- [ ] Accessibilité : `prefers-reduced-motion`, contraste, jouable sans souris et sans audio
+- [x] Accessibilité : `prefers-reduced-motion`, contraste, jouable sans souris et sans audio (fait : prompts 18, 48, 53 ; `prefers-reduced-motion`, contraste ≥ 4,5:1, clavier complet, jouable sans son)
 
 ## Contrôles qualité
 
@@ -108,21 +108,21 @@ jauges, UI, narration, fallback, raccourcis, paramètres, accessibilité).
 
 ### Checklist de robustesse (avant l'exposition)
 
-- [ ] Le projet se relance après un refresh
-- [ ] Le projet affiche quelque chose sans API
+- [x] Le projet se relance après un refresh (vérifié : sauvegarde automatique et reprise, prompt 33)
+- [x] Le projet affiche quelque chose sans API (vérifié : instantanés `data/fallback.js`, mode hors ligne)
 - [x] Les assets utilisent des chemins relatifs — `./` dans `index.html`, vérifié par `npm test`
 - [x] Aucune clé privée n'est dans le code — vérifié par `npm test` (motifs de secret)
 - [x] Un reset est disponible — fenêtre « Recommencer » (`sketch.js`)
-- [ ] Le plein écran 1920×1080 est testé
-- [ ] La console ne produit pas d'erreur continue
-- [ ] La version finale est sauvegardée dans un dossier distinct
+- [x] Le plein écran 1920×1080 est testé (vérifié aux prompts 46–57 dans Chromium 1920×1080)
+- [x] La console ne produit pas d'erreur continue (vérifié : aucune erreur console dans les essais automatisés des prompts 46–57)
+- [x] La version finale est sauvegardée dans un dossier distinct (fait : `rendu/PXE_NTE001_G01_NANTES-EN-REGULATION/`, prompt 46)
 
 ### Accessibilité
 
 - [ ] Contraste suffisant pour les informations de médiation
-- [ ] Pas de flashs rapides ni d'effets stroboscopiques
-- [ ] Alternative clavier / touch si l'interaction principale exclut certains gestes
-- [ ] Version fonctionnelle sans audio si le son n'est pas nécessaire
+- [x] Pas de flashs rapides ni d'effets stroboscopiques (vérifié : pulsations ≤ 1,5/s, pas de flash, prompts 52–53)
+- [x] Alternative clavier / touch si l'interaction principale exclut certains gestes (fait : tout au clavier, touch basique)
+- [x] Version fonctionnelle sans audio si le son n'est pas nécessaire (fait : son coupé par M, le jeu reste complet)
 - [ ] Le visiteur peut essayer et comprendre sans longue explication orale
 
 ### Les 7 invariants du standard
@@ -197,9 +197,9 @@ Vérifié par `ls` / `grep` dans le dépôt : seuls les éléments existants son
 - [ ] Déploiement : documenter comment Cloudflare Pages publie le site (intégration Git ou dépôt manuel) ; `.github/workflows/deploy.yml` publie sur GitHub Pages (404) — le garder, le corriger ou le supprimer
 
 ### Branches à arbitrer
-- [ ] Fusionner (sur demande) la chaîne empilée `jeu/prompt-26-sortie-pc` → … → `jeu/prompt-33-sauvegarde-progression` → `vibe/prompt-33-audit-coherence-4c094b-application`
+- [x] Fusionner (sur demande) la chaîne empilée `jeu/prompt-26-sortie-pc` → … → `jeu/prompt-33-sauvegarde-progression` → `vibe/prompt-33-audit-coherence-4c094b-application` (fait : chaîne fusionnée dans `main`, vérifié au prompt 58)
 - [ ] Trancher entre le prompt 30 de la chaîne (`confort.js`) et la variante non intégrée `origin/jeu/prompt-30-bandes-sonores` (`audio.js`)
-- [ ] Prompt 34 (`prompts/34-jeu-fenetre-loire-tutoriel.md`) : prévu, non implémenté
+- [x] Prompt 34 (`prompts/34-jeu-fenetre-loire-tutoriel.md`) : prévu, non implémenté (fait : prompt 34 implémenté et fusionné)
 
 ## Jalons de la semaine
 
