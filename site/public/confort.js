@@ -426,7 +426,7 @@
 	Son.tic = function (urgence) {
 		if (!pret()) return;
 		const u = Math.max(0, Math.min(1, urgence || 0));
-		ton(900 + u * 700, Son.ctx.currentTime, 0.03, 0.03 + u * 0.05, 'square');
+		ton(900 + u * 700, Son.ctx.currentTime, 0.03, 0.03 + u * 0.1, 'square'); // prompt 53 : plus fort quand l'échéance approche
 	};
 	/** 4. Clic de console propre à chaque action */
 	Son.clicAction = function (action) {

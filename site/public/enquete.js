@@ -75,8 +75,9 @@ function dessinerEnquete(d, x, base) {
 	textFont(POLICE_TEXTE);
 	textStyle(BOLD);
 	const titre = e.revele.carte && d.lignes && d.lignes.length ? t('dossier.ligne', { lignes: d.lignes.join(', ') }) : t('enq.signalement.' + d.type);
-	ajusterTaille(titre, l, 38, 24);
+	ajusterTaille(titre, l - 200, 38, 22); // place laissée au tampon « SIGNALEMENT » (prompt 53)
 	text(titre, x + 32, base.y + 78);
+	if (!e.revele.carte || !(d.lignes && d.lignes.length)) dessinerTamponSignalement(x + base.l - 116, base.y + 90);
 	textStyle(NORMAL);
 	textFont(POLICE_DONNEES);
 	textSize(17);
