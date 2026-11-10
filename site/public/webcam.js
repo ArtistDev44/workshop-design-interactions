@@ -1,10 +1,10 @@
-/* Nantes en régulation — prompt 57 : webcam du poste, détection de présence, sieste.
- * Activation : clic sur la webcam posée sur l'écran, ou option « Webcam » (Paramètres → Accessibilité).
- * getUserMedia({ video }) n'est appelé qu'à ce geste. Les images sont réduites à 48 × 27 dans un canevas
- * hors écran, jamais affichées, enregistrées ni envoyées : on n'en lit que deux valeurs, la luminance de la
- * zone centrale et la différence avec l'image précédente (mouvement). Mouvement faible pendant 8 s (ou caméra
- * masquée / noire) → joueur « parti » → la sieste du prompt 20 se déclenche (même état, mêmes règles).
- * Refus ou absence : repli silencieux (sieste sur inactivité seule), « Webcam indisponible ».
+/* Nantes en régulation — webcam du poste (prompt 57, revu aux prompts 64 et 67).
+ * Activation : clic sur la webcam posée sur l'écran, ou option « Webcam » (Paramètres → Accessibilité) ;
+ * getUserMedia({ video }) n'est appelé qu'à ce geste. Les images sont réduites à 48 × 27 dans un canevas hors
+ * écran, jamais affichées, enregistrées ni envoyées. On en lit : le mouvement (part des pixels qui changent
+ * nettement en ~1,2 s) et la part de pixels couleur peau.
+ * Prompt 67 : une MAIN montrée devant la caméra lance la sieste, la montrer de nouveau l'interrompt. L'absence
+ * devant la caméra ne déclenche plus rien. Refus ou absence de caméra : repli silencieux.
  */
 const CAM = {
 	active: false, // flux en cours
@@ -21,11 +21,7 @@ const CAM = {
 };
 const CAM_L = 48;
 const CAM_H = 27;
-const CAM_ABSENCE_MS = 8000;
 const CAM_SEUIL_PIXEL = 20; // prompt 64 : un pixel « change » s'il varie de plus de 20 niveaux (le bruit du capteur reste en dessous)
-const CAM_SEUIL_MOUVEMENT = 0.6; // % de l'image qui change en ~1,2 s : en dessous, scène figée (personne)
-const CAM_SEUIL_LUMINANCE = 18; // zone centrale presque noire : caméra masquée
-const CAM_SEUIL_GESTE = 25; // % de l'image qui change : geste ample (main levée), bien au-dessus d'une présence calme
 const webcamAutorisee = () => Confort.Reglages.webcam === true;
 
 async function activerWebcam() {
@@ -118,18 +114,7 @@ function analyserImage() {
 	CAM.historique.push(gris);
 	if (CAM.historique.length > 3) CAM.historique.shift();
 	CAM.precedente = gris;
-	// Prompt 63 : pendant le réveil, un grand mouvement (lever la main devant la caméra) vaut « Se réveiller »
-	if (phase === 'reveil' && CAM.mouvement > CAM_SEUIL_GESTE && typeof seReveiller === 'function') {
-		seReveiller();
-		annoncer(t('webcam.geste'));
-	}
-	const absent = CAM.mouvement < CAM_SEUIL_MOUVEMENT || CAM.luminance < CAM_SEUIL_LUMINANCE;
-	if (!absent) CAM.absentDepuis = 0;
-	else if (!CAM.absentDepuis) CAM.absentDepuis = millis();
-}
-/** Le joueur est-il parti (absence continue ≥ 8 s) ? Lu par avancerTemps (immersion.js) */
-function joueurParti() {
-	return CAM.active && CAM.absentDepuis > 0 && millis() - CAM.absentDepuis >= CAM_ABSENCE_MS;
+	detecterMain(px); // prompt 67 : une main devant la caméra lance ou interrompt la sieste
 }
 
 // ——— Dessin : webcam sur le haut de l'écran, LED rouge quand elle filme ———
@@ -139,7 +124,8 @@ function dessinerWebcamPoste(g) {
 	boite(g, x, y, 12, 5, '#22262b', '#3a3f46', '#15181b');
 	px(g, '#0b0d10', x + 5, y + 1, 3, 3); // objectif
 	px(g, '#5b8fd6', x + 6, y + 2, 1, 1); // reflet
-	px(g, CAM.active ? '#ff3b30' : '#3a2020', x + 10, y + 2, 1, 1); // LED : allumée tant que la webcam est active
+	const mainVue = CAM.active && millis() - MAIN.vue < 1000; // prompt 67 : témoin vert quand une main est reconnue
+	px(g, mainVue ? '#00e070' : CAM.active ? '#ff3b30' : '#3a2020', x + 10, y + 2, 1, 1); // LED : allumée tant que la webcam est active
 }
 /** Indicateur « CAM » dans la barre des tâches de RégulOS (après les icônes) */
 function indicateurWebcamBarre(x, y) {
@@ -159,3 +145,58 @@ function indicateurWebcamBarre(x, y) {
 		{ once: true },
 	),
 );
+
+// ——— Prompt 67 : reconnaître une main (couleur peau, localement) pour lancer ou interrompre la sieste ———
+// Pixels « peau » repérés en YCbCr (Cb 77–127, Cr 133–173, seuils classiques). Le visage, à distance normale,
+// occupe une part stable de l'image (niveau de base, suivi lentement) ; une main levée près de la caméra fait
+// bondir cette part et bouge : main reconnue. Anti-rebond : 2 s, et il faut retirer la main avant de recommencer.
+const MAIN = { base: null, armee: true, derniere: 0, vue: 0, peau: 0 };
+const MAIN_SAUT = 15; // points de % de peau au-dessus du niveau de base
+const MAIN_MIN = 25; // % de l'image au minimum
+const MAIN_MOUVEMENT = 8; // % de l'image qui bouge (la main arrive)
+function partPeau(px) {
+	let n = 0;
+	const total = px.length / 4;
+	for (let i = 0; i < px.length; i += 4) {
+		const r = px[i];
+		const g = px[i + 1];
+		const b = px[i + 2];
+		const cb = 128 - 0.168736 * r - 0.331264 * g + 0.5 * b;
+		const cr = 128 + 0.5 * r - 0.418688 * g - 0.081312 * b;
+		if (cb >= 77 && cb <= 127 && cr >= 133 && cr <= 173) n++;
+	}
+	return (n * 100) / total;
+}
+function detecterMain(px) {
+	const f = partPeau(px);
+	MAIN.peau = f;
+	if (MAIN.base === null) MAIN.base = f;
+	const main = f >= MAIN_MIN && f - MAIN.base >= MAIN_SAUT;
+	if (!main) {
+		MAIN.base += (f - MAIN.base) * 0.08; // le niveau de base suit lentement la scène (visage, lumière)
+		if (f - MAIN.base < MAIN_SAUT / 2) MAIN.armee = true; // main retirée : prêt pour le geste suivant
+		return;
+	}
+	if (!MAIN.armee || CAM.mouvement < MAIN_MOUVEMENT || millis() - MAIN.derniere < 2000) return;
+	MAIN.armee = false;
+	MAIN.derniere = millis();
+	MAIN.vue = millis();
+	basculerSiesteMain();
+}
+/** Main reconnue : endormi → réveil ; éveillé → sieste */
+function basculerSiesteMain() {
+	if (ecran !== 'jeu' || !Jeu.horloge || MENU.actif || fenetre || smsActif || phase === 'fin' || phase === 'mail') return;
+	if (enSieste) {
+		if (phase === 'reveil' && typeof seReveiller === 'function') seReveiller();
+		else {
+			enSieste = false;
+			interaction();
+		}
+		annoncer(t('webcam.main.reveil'));
+	} else {
+		enSieste = true;
+		debutSieste = millis();
+		if (vue === 'poste') seLever();
+		annoncer(t('webcam.main.sieste'));
+	}
+}

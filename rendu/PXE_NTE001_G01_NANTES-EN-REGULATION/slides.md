@@ -75,7 +75,7 @@ Auteurs : [À COMPLÉTER]
 - **Clavier** : tout le jeu (1, 2, 3, 0 pour décider ; 5 à 8 pour enquêter ; R ralenti ; J journal de bord ; H aide ; L langue)
 - **Souris** et **toucher** : téléphone en paysage ou en portrait (mise en page dédiée), gestes (tap, appui long, glisser)
 - **Micro** (M maintenue) : après le café, souffler calme le cœur et ralentit le compteur
-- **Webcam** (désactivée par défaut) : présence détectée en local — partir déclenche la sieste, lever la main réveille ; aucune image enregistrée ni envoyée
+- **Webcam** (désactivée par défaut) : une main montrée lance la sieste, la remontrer l'interrompt (reconnaissance locale) ; aucune image enregistrée ni envoyée
 
 ---
 

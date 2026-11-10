@@ -211,8 +211,8 @@ function avancerTemps() {
 
 	if (phase === 'attente') {
 		// Sieste après 20 s sans incident ni interaction (§ 4)
-		// Prompt 57 : la sieste vient aussi quand la webcam ne voit plus le joueur (8 s d'absence)
-		if (!enSieste && (maintenant - inactifDepuis > IMMERSION.siesteApresMs || joueurParti())) {
+		// Prompt 67 : la webcam ne déclenche plus la sieste par absence (c'est la main qui la lance ou l'interrompt)
+		if (!enSieste && maintenant - inactifDepuis > IMMERSION.siesteApresMs) {
 			enSieste = true;
 			debutSieste = maintenant;
 			if (vue === 'poste') seLever(); // on se cale dans le fauteuil : retour à la vue bureau
@@ -220,13 +220,6 @@ function avancerTemps() {
 		const prochain = Jeu.prochainDuJour();
 		if (prochain && Jeu.horloge.minutes >= prochain.minute) arriveeIncident();
 		else if (!prochain && Jeu.horloge.minutes >= Jeu.finJournee()) finJourneeAtteinte(); // prompt 51 : l'horloge s'arrête, le joueur clique dessus pour partir (journee.js)
-	} else if (['decision', 'contradiction', 'conflit'].includes(phase) && !enSieste && joueurParti()) {
-		// Prompt 64 : la webcam ne voit plus le joueur pendant un dossier → il s'endort tout de suite ; le compteur
-		// continue sans lui (compteur à 0 = conséquences naturelles, Q25) ; un geste à son retour le réveille
-		enSieste = true;
-		debutSieste = maintenant;
-		if (vue === 'poste') seLever();
-		annoncer(t('webcam.absent'));
 	} else if (phase === 'reveil' && reveil && maintenant > reveil.limite) {
 		rateReveil();
 	}
