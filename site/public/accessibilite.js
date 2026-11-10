@@ -41,6 +41,7 @@ function appliquerAccessibilite() {
 // ——— Taille du texte : seuls les petits textes (< 24 px) grandissent, jusqu'à 24 px au plus ; les titres et
 // grands textes gardent leur taille, pour que les mises en page denses (appli, rapport) ne se chevauchent pas ———
 let ECHELLE_TEXTE = 1;
+const TAILLE_MIN_PC = 18;
 let tailleOrigine = null;
 let interligneOrigine = null;
 function installerEchelleTexte() {
@@ -51,7 +52,10 @@ function installerEchelleTexte() {
 	window.textSize = function (s) {
 		if (s === undefined) return demandee === null ? tailleOrigine() : demandee;
 		demandee = s;
-		return tailleOrigine(s < 24 ? Math.min(s * ECHELLE_TEXTE, 24) : s);
+		let v = s < 24 ? Math.min(s * ECHELLE_TEXTE, 24) : s;
+		// Prompt 49 : sur l'écran du PC (affiché à 90 %), aucun texte sous 18 px (≈ 16 px à l'écran)
+		if (typeof espaceDessin !== 'undefined' && espaceDessin === 'pc') v = Math.max(v, typeof transformAppli !== 'undefined' && transformAppli ? 20 : TAILLE_MIN_PC); // prompt 50 : 20 px dans l'appli, réduite à 91 % en fenêtre
+		return tailleOrigine(v);
 	};
 	window.textLeading = function (s) {
 		if (s === undefined) return interligneOrigine();

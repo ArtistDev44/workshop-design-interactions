@@ -103,6 +103,68 @@ function dessinerOS() {
 	});
 	// Fenêtre d'application ouverte (prompt 22)
 	if (PC.fenetre) dessinerFenetreApp();
+	dessinerBarreTaches();
+}
+
+/** Fond d'écran seul (derrière l'appli Régulation en fenêtre, prompt 50) */
+function dessinerFondOS() {
+	drawingContext.imageSmoothingEnabled = false;
+	image(fondOS(), 0, 0, L, H);
+	drawingContext.imageSmoothingEnabled = true;
+}
+
+// ——— Prompt 50 : l'appli Régulation n'est plus en plein écran — fenêtre au-dessus de la barre des tâches ———
+// Elle garde ses coordonnées 1920×1080 : on la dessine réduite (même proportion) et centrée, souris, boutons et
+// cibles du guide étant convertis.
+const FENETRE_APPLI = { k: (H - BARRE_OS - 12) / H, x: 0, y: 6 };
+FENETRE_APPLI.x = (L - L * FENETRE_APPLI.k) / 2;
+let transformAppli = null;
+let sourisAvantAppli = null;
+function entrerFenetreAppli() {
+	const A = FENETRE_APPLI;
+	noStroke();
+	fill(0, 0, 0, 120);
+	rect(A.x + 8, A.y + 10, L * A.k, H * A.k); // ombre de la fenêtre
+	sourisAvantAppli = { x: mouseX, y: mouseY };
+	window.mouseX = (mouseX - A.x) / A.k;
+	window.mouseY = (mouseY - A.y) / A.k;
+	push();
+	translate(A.x, A.y);
+	scale(A.k);
+	drawingContext.save();
+	drawingContext.beginPath();
+	drawingContext.rect(0, 0, L, H);
+	drawingContext.clip();
+	transformAppli = A;
+	return boutons.length;
+}
+function sortirFenetreAppli(n0) {
+	const A = FENETRE_APPLI;
+	drawingContext.restore();
+	pop();
+	transformAppli = null;
+	window.mouseX = sourisAvantAppli.x;
+	window.mouseY = sourisAvantAppli.y;
+	for (let i = n0; i < boutons.length; i++) {
+		const b = boutons[i];
+		boutons[i] = Object.assign({}, b, { x: A.x + b.x * A.k, y: A.y + b.y * A.k, l: b.l * A.k, h: b.h * A.k });
+	}
+	noFill();
+	stroke(DS.blanc15);
+	strokeWeight(2);
+	rect(A.x - 1, A.y - 1, L * A.k + 2, H * A.k + 2);
+	noStroke();
+}
+/** Souris (hors draw) dans les coordonnées de l'appli Régulation */
+function sourisAppli() {
+	const m = sourisEcranPC();
+	if (PC.etat !== 'appli') return m;
+	const A = FENETRE_APPLI;
+	return { x: (m.x - A.x) / A.k, y: (m.y - A.y) / A.k };
+}
+
+/** Barre des tâches de RégulOS (prompt 36), visible aussi sous l'appli Régulation (prompt 50) */
+function dessinerBarreTaches() {
 	// Barre des tâches (prompt 36 : agrandie, 84 px, icônes 72 px)
 	const tb = H - BARRE_OS;
 	noStroke();
@@ -260,6 +322,7 @@ function ouvrirIconeOS(i) {
 	if (cle === 'regulation') return ouvrirAppli();
 	if (cle === 'indicateurs') return basculerIndicateurs(); // prompt 36 : app flottante
 	if (PC.etat === 'appli') PC.etat = 'os';
+	if (cle === 'carte' && typeof revelerSource === 'function') revelerSource('carte', false); // prompt 50
 	PC.fenetre = PC.fenetre === cle ? null : cle; // re-cliquer l'icône active referme l'app
 	PC.message = '';
 	if (PC.fenetre && Jeu.nonLus && Jeu.nonLus[cle] !== undefined) Jeu.nonLus[cle] = 0;

@@ -59,3 +59,6 @@ dossier à trancher sous pression. »*
 | 41 | `41-meteo-progressive-seo.md` | Prompt 45 : météo de la baie en fondu (jour/nuit, pluie), et SEO : description, canonique, Open Graph, carte Twitter, image OG du vrai rendu, nouveau favicon, manifeste, JSON-LD |
 | 42 | `42-mecaniques-narration.md` | Prompt 47 : inspection surprise, palmarès et profils de gestion, journal de bord, fin « démission », épilogue du mail, agenda anticipé |
 | 43 | `43-accessibilite-technique.md` | Prompt 48 : daltonisme, taille du texte, lecture facile, reprise sur un autre appareil, démo automatique, service worker hors ligne, courbes des jauges, `test-jeu.mjs` |
+| 44 | `44-lofi-lisibilite-meteo.md` | Prompt 49 : lofi CC0 par défaut et bruitages en retrait, textes du PC ≥ 18 px, carte sans météo, climat selon le mode (direct : API ; semaine : archives) |
+| 45 | `45-enquete-sources.md` | Prompt 50 : signalement vague, faits révélés par carte, info trafic, météo, agenda (5 à 8, −4 s) ou par la pièce ; plus de conseil ni de flèches ; appli Régulation en fenêtre, barre des tâches visible |
+| 46 | `46-horloge-sablier-lumiere.md` | Prompt 51 : finir sa journée à l'horloge (alerte, départ anticipé, blâme du patron le lendemain), sablier, lumière de la pièce (lampe, stores, heure, halo de l'écran), ombres portées |

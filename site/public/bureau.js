@@ -191,13 +191,13 @@ const COUCHES_PIECE = [
 		nom: 'voile',
 		k: 1,
 		dessin: (g) => {
-			dessinerAmbianceLampe(g);
+			dessinerEclairage(g); // prompt 51 : lampe, stores et heure assombrissent vraiment la pièce ; halo de l'écran
 			if (typeof dessinerPersonnageSieste === 'function') dessinerPersonnageSieste(g);
 		},
 	},
 ];
 /** Coefficient de plan des objets cliquables : leurs zones suivent leur plan */
-const COEF_OBJETS = { rapport: 1.25, commande: 1.25, stress: 1.25, tasse: 1.25, telephone: 1.25, plante: 1.1, dossiers: 1.1, lampe: 0.7, fenetre: 0.7 };
+const COEF_OBJETS = { rapport: 1.25, commande: 1.25, stress: 1.25, tasse: 1.25, telephone: 1.25, plante: 1.1, dossiers: 1.1, lampe: 0.7, fenetre: 0.7, horloge: 0.7, sablier: 1.1 }; // prompt 51 : horloge (mur), sablier (fond du plateau)
 
 function dessinerPieceBureau() {
 	COUCHES_PIECE.forEach((c) => {
@@ -487,14 +487,7 @@ function dessinerStore(g) {
 	px(g, '#8d949b', 0, BAIE_BAS - 3, lb, 2); // barre de charge
 }
 
-/** Prompt 29 : lampe éteinte → la pièce s'assombrit légèrement (l'écran du PC, dessiné après, n'est pas touché) */
-function dessinerAmbianceLampe(g) {
-	if (typeof PIECE === 'undefined' || PIECE.lampe) return;
-	g.fill(18, 22, 40, 34); // prompt 32 : sur les murs blancs, toute la pièce s'assombrit un peu
-	g.rect(0, 0, BW, BH);
-	g.fill(18, 22, 40, 18);
-	g.rect(MUR_DROIT_X, 9, BW - MUR_DROIT_X, BAIE_BAS - 9);
-}
+/* Prompt 29 → 51 : l'assombrissement (lampe, stores, heure) est géré par dessinerEclairage (journee.js) */
 
 function dessinerMurBas(g) {
 	px(g, '#d3d6d9', 0, BAIE_BAS, BW, 3); // appui de baie clair (prompt 32)
@@ -561,7 +554,7 @@ function trapeze(g, cx, y0, h, demi0, demi1, couleur, bord, arrondi, yBas) {
 function dessinerSourisPerspective(g, cx, y0) {
 	const pied = y0 + 17;
 	const d = (y) => cx + decalVersEcran(cx, pied, y);
-	ombreTramee(g, Math.round(d(pied)) - 8, y0 + 18, 17, 2, 90);
+	ombreObjet(g, Math.round(d(pied)) - 9, y0 + 18, 17); // prompt 51 : ombre selon la lumière
 	trapeze(g, cx, y0, 18, 4.5, 7.5, '#2c3036', P.contour, 3);
 	px(g, '#4a5058', d(y0 + 2) - 3, y0 + 2, 6, 1); // reflet
 	for (let y = y0 + 1; y < y0 + 7; y++) px(g, '#16181b', d(y), y, 1, 1); // séparation des boutons (suit l'inclinaison)
@@ -577,7 +570,7 @@ function dessinerTelephonePerspective(g, cx, y0) {
 	const vibre = allume && cycle < 450 && Math.floor(millis() / 60) % 2 ? 1 : 0;
 	const x = cx + vibre;
 	const d = (y) => x + decalVersEcran(cx, pied, y);
-	ombreTramee(g, Math.round(d(pied)) - 10, y0 + 27, 21, 2, 90);
+	ombreObjet(g, Math.round(d(pied)) - 11, y0 + 27, 21); // prompt 51 : ombre selon la lumière
 	trapeze(g, x, y0, 27, 7, 9, '#0a0b0c', P.contour, 1, pied); // coque fine
 	trapeze(g, x, y0 + 2, 23, 6, 8, allume ? '#2a8aa0' : '#1d5f6e', null, 0, pied); // écran bord à bord
 	for (let y = 0; y < 23; y += 2) px(g, allume ? '#5fb4c6' : '#2a7a8c', d(y0 + 3 + y) - 4 - y * 0.12, y0 + 3 + y, 3, 1); // reflet
@@ -594,6 +587,7 @@ function dessinerTelephonePerspective(g, cx, y0) {
 
 /* Tasse de thé : thé ambré, sachet dont l'étiquette se balance doucement, volutes de vapeur qui montent. */
 function dessinerTasseThe(g) {
+	ombreObjet(g, 120, 206, 19); // prompt 51
 	boite(g, 120, 188, 14, 18, '#f7f1e1', '#ffffff', '#d8cfb6');
 	px(g, P.contour, 134, 192, 4, 1); // anse
 	px(g, P.contour, 137, 192, 1, 8);
@@ -629,10 +623,13 @@ function dessinerObjetsDuFond(g) {
 	}
 	ombreTramee(g, 176, 222, 128, 3, 90);
 	// Pile de dossiers (droite, au fond)
+	ombreObjet(g, 391, 175, 42); // prompt 51
 	for (let i = 0; i < 4; i++) boite(g, 392 + (i % 2), 172 - i * 3, 40, 2, i % 2 ? '#dfe7ef' : '#ffffff', '#ffffff', '#9aa8b6'); // chemises claires (prompt 32)
 	px(g, P.rouge, 418, 163, 8, 1);
 	// Petite plante grasse (gauche, au fond)
+	ombreObjet(g, 70, 174, 15); // prompt 51
 	boite(g, 70, 164, 14, 10, '#e8e9ea', '#ffffff', '#c3c7cb');
+	dessinerSablier(g); // prompt 51 : sablier entre le pied de l'écran et la souris
 	feuillage(g, 77, 158, 6);
 }
 function dessinerObjetsProches(g) {
@@ -946,7 +943,9 @@ function composerVue() {
 		? t('bureau.incident')
 		: phase === 'mail'
 			? t('bureau.mail')
-			: t('bureau.installer');
+			: ecran === 'jeu' && phase === 'attente' && Jeu.journeeFinie && Jeu.journeeFinie()
+				? t('bureau.finJournee') // prompt 51
+				: t('bureau.installer');
 	textFont(POLICE_DONNEES);
 	textSize(22);
 	const lm = textWidth(msg) + 40;
