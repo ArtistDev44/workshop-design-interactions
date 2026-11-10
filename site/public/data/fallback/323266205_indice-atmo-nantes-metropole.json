@@ -1,0 +1,18 @@
+{
+ "fetchedAt": "2026-11-10T08:03:34.248Z",
+ "source": "https://data.nantesmetropole.fr/api/explore/v2.1/catalog/datasets/323266205_indice-atmo-nantes-metropole/records?select=date_ech%2Clib_qual%2Ccoul_qual%2Ccode_qual&limit=2&where=lib_zone+%3D+%27Nantes%27&order_by=date_ech+desc",
+ "results": [
+  {
+   "date_ech": "2026-11-11",
+   "lib_qual": "moyen",
+   "coul_qual": "#50ccaa",
+   "code_qual": 2
+  },
+  {
+   "date_ech": "2026-11-10",
+   "lib_qual": "bon",
+   "coul_qual": "#50f0e6",
+   "code_qual": 1
+  }
+ ]
+}

@@ -1,0 +1,26 @@
+{
+ "fetchedAt": "2026-11-10T08:03:34.105Z",
+ "source": "https://data.nantesmetropole.fr/api/explore/v2.1/catalog/datasets/244400404_fluidite-axes-routiers-nantes-metropole/records?select=etat_trafic%2Ccount%28*%29+as+n&limit=10&group_by=etat_trafic&order_by=n+desc",
+ "results": [
+  {
+   "etat_trafic": "Fluide",
+   "n": 657
+  },
+  {
+   "etat_trafic": "Indéterminé",
+   "n": 145
+  },
+  {
+   "etat_trafic": "Dense",
+   "n": 33
+  },
+  {
+   "etat_trafic": "Bloqué",
+   "n": 32
+  },
+  {
+   "etat_trafic": "Saturé",
+   "n": 22
+  }
+ ]
+}
