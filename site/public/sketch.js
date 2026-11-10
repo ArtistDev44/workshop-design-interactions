@@ -237,6 +237,7 @@ function nouveauDossier() {
 	sourceChoisie = null;
 	alerteTempsJouee = false;
 	if (!Jeu.dossierCourant()) return apresDecision();
+	if (Jeu.declencherPlainte) Jeu.declencherPlainte(Jeu.index); // prompt 28 : plainte liée au dossier réel (app Community)
 	Confort.Son.bip('dossier');
 	if (Jeu.conflit()) phase = 'conflit';
 	else if (Jeu.dossierCourant().contradiction) phase = 'contradiction';
@@ -952,7 +953,15 @@ function dessinerFin() {
 	textSize(20);
 	fill(C.texte);
 	text(t('fin.traites', { n: b.traites, total: b.total, sans: b.sansDecision ? t('fin.sansDecision', { n: b.sansDecision }) : '' }), g.x + 48, g.y + 680);
-	if (b.mauvaisesSources) text(t('fin.mauvaisesSources', { n: b.mauvaisesSources }), g.x + 48, g.y + 712);
+	// Prompt 28 : plaintes traitées x/y, sur la même ligne que les mauvaises sources s'il y en a
+	const bp = Jeu.bilanPlaintes ? Jeu.bilanPlaintes() : { total: 0 };
+	const lp = bp.total ? t('fin.plaintes', { x: bp.traitees, y: bp.total, b: bp.bonnes }) : '';
+	const l712 = [b.mauvaisesSources ? t('fin.mauvaisesSources', { n: b.mauvaisesSources }) : '', lp].filter(Boolean).join(' · ');
+	if (l712) {
+		textSize(b.mauvaisesSources && lp ? 16 : 20);
+		text(l712, g.x + 48, g.y + 712, g.l - 96, 40);
+		textSize(20);
+	}
 	if (bilanFin && bilanFin.meilleur) {
 		fill(bilanFin.record ? C.vert : C.gris);
 		text(
@@ -1188,6 +1197,18 @@ function keyPressed() {
 		if (PC.etat !== 'os') {
 			if (keyCode === TAB) basculerFocusQuitter(!focusQuitter);
 			return false;
+		}
+		// Prompt 28 : plainte en attente dans l'app Community — Tab parcourt les réponses, Entrée / 1-2-3 répond
+		const plainte = PC.fenetre === 'community' && Jeu.plaintesEnAttente && ecran === 'jeu' ? Jeu.plaintesEnAttente()[0] : null;
+		if (plainte && !focusQuitter) {
+			const n = plainte.def.reponses.length;
+			if (keyCode === TAB) {
+				focusReponse = (focusReponse + (keyIsDown(SHIFT) ? n - 1 : 1)) % n;
+				annoncer(Jeu.texteMessage(plainte.def.reponses[focusReponse].texte, plainte.vars));
+				return false;
+			}
+			if (keyCode === ENTER || keyCode === RETURN || key === ' ') return repondrePlainte(focusReponse), false;
+			if (Number(key) >= 1 && Number(key) <= n) return repondrePlainte(Number(key) - 1), false;
 		}
 		if (keyCode === TAB) {
 			// Prompt 26 : le cycle Tab passe par les icônes puis par le bouton « Quitter le PC »

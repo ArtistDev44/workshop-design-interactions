@@ -1,0 +1,548 @@
+{
+ "_lisezMoi": "Plaintes des Nantais (prompt 28). Fichier brut modifiable à la main : ajouter une plainte = ajouter une entrée dans « plaintes », sans toucher au code. Après modification, lancer « npm run messages » dans site/ pour régénérer messages.js (double clic hors ligne) ; servi par un serveur, le jeu relit directement ce JSON. condition : type (« ligne en difficulté », « perturbation », « événement », « alerte météo » ou « * »), retard_min (minutes), ligne (nom exact), nature_contient (texte), pointe (true = 7–9 h ou 17–19 h), meteo (« pluie » = au moins 1 mm ce jour-là). Variables remplies par le dossier réel joué : {ligne}, {retard}, {nature} (les dossiers d’archive et d’agenda n’ont souvent pas de ligne : préférer {nature}). Une plainte dont une variable n'existe pas pour le dossier n'est pas proposée. effets : points ajoutés aux jauges fluidite, reputation, budget (bornés à ±15, puis jauges bornées 0–100). bonne : true pour la réponse de bon sens (au moins une par plainte).",
+ "version": 1,
+ "plaintes": [
+  {
+   "id": "retard_10",
+   "auteur": "@usager_44",
+   "condition": {
+    "type": "ligne en difficulté",
+    "retard_min": 10
+   },
+   "texte": {
+    "fr": "Ligne {ligne} : {retard} minutes de retard et aucune info à l’arrêt. On fait comment ?",
+    "en": "Line {ligne}: {retard} minutes late and no information at the stop. What are we supposed to do?"
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Désolés pour l’attente : le retard sur la ligne {ligne} est connu, la régulation est en cours. Suivez l’info trafic en temps réel.",
+      "en": "Sorry for the wait: the delay on line {ligne} is known and being handled. Follow the live traffic updates."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 4,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Le réseau fonctionne normalement.",
+      "en": "The network is running normally."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -5,
+      "budget": 0
+     },
+     "bonne": false
+    }
+   ]
+  },
+  {
+   "id": "retard_20",
+   "auteur": "@nantaise_du_tram",
+   "condition": {
+    "type": "ligne en difficulté",
+    "retard_min": 20
+   },
+   "texte": {
+    "fr": "{retard} minutes sur la {ligne}, c’est plus un retard, c’est une excursion. Vous faites quelque chose ?",
+    "en": "{retard} minutes on line {ligne} isn’t a delay anymore, it’s a day trip. Are you doing anything?"
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Oui : on renforce la ligne {ligne} et on vous tient informés de l’arrivée du prochain véhicule.",
+      "en": "Yes: we are adding vehicles on line {ligne} and will keep you posted on the next arrival."
+     },
+     "effets": {
+      "fluidite": 2,
+      "reputation": 5,
+      "budget": -2
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Pensez à partir plus tôt.",
+      "en": "Try leaving earlier."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -6,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "texte": {
+      "fr": "Nous transmettons au service concerné.",
+      "en": "We have passed this on to the relevant team."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 1,
+      "budget": 0
+     },
+     "bonne": false
+    }
+   ]
+  },
+  {
+   "id": "retard_pointe",
+   "auteur": "@velo_et_bus",
+   "condition": {
+    "type": "ligne en difficulté",
+    "retard_min": 10,
+    "pointe": true
+   },
+   "texte": {
+    "fr": "En pleine heure de pointe, {retard} min de retard sur la {ligne}. Le quai déborde.",
+    "en": "Right in rush hour, {retard} min late on line {ligne}. The platform is overflowing."
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Merci du signalement : la ligne {ligne} est prioritaire, des agents orientent les voyageurs sur le quai.",
+      "en": "Thanks for reporting: line {ligne} is our priority and staff are guiding passengers on the platform."
+     },
+     "effets": {
+      "fluidite": 2,
+      "reputation": 4,
+      "budget": -1
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "L’heure de pointe, c’est toujours comme ça.",
+      "en": "Rush hour is always like this."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -5,
+      "budget": 0
+     },
+     "bonne": false
+    }
+   ]
+  },
+  {
+   "id": "correspondance",
+   "auteur": "@chantenay_matin",
+   "condition": {
+    "type": "ligne en difficulté",
+    "retard_min": 10
+   },
+   "texte": {
+    "fr": "À cause des {retard} min de retard sur la {ligne}, j’ai raté ma correspondance.",
+    "en": "Because line {ligne} was {retard} min late, I missed my connection."
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Toutes nos excuses. Le calculateur d’itinéraire en temps réel peut vous proposer une alternative depuis votre arrêt.",
+      "en": "Our apologies. The real-time journey planner can suggest an alternative from your stop."
+     },
+     "effets": {
+      "fluidite": 1,
+      "reputation": 3,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Les correspondances ne sont pas garanties.",
+      "en": "Connections are not guaranteed."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -4,
+      "budget": 0
+     },
+     "bonne": false
+    }
+   ]
+  },
+  {
+   "id": "manifestation",
+   "auteur": "@quai_de_la_fosse",
+   "condition": {
+    "type": "perturbation",
+    "nature_contient": "manifestation"
+   },
+   "texte": {
+    "fr": "Manifestation aujourd’hui en centre-ville : mon bus passe ou pas ? Il y a une déviation ?",
+    "en": "There’s a demonstration in the city centre today: is my bus running? Is there a diversion?"
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Les lignes concernées sont déviées le temps de la manifestation. Les arrêts provisoires sont affichés en station et dans l’info trafic.",
+      "en": "The affected lines are diverted during the demonstration. Temporary stops are posted at the stations and in the traffic updates."
+     },
+     "effets": {
+      "fluidite": 2,
+      "reputation": 4,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Ce n’est pas de notre ressort.",
+      "en": "That’s not our responsibility."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -5,
+      "budget": 0
+     },
+     "bonne": false
+    }
+   ]
+  },
+  {
+   "id": "mouvement_social",
+   "auteur": "@ile_de_nantes",
+   "condition": {
+    "type": "perturbation",
+    "nature_contient": "mouvement social"
+   },
+   "texte": {
+    "fr": "Mouvement social annoncé : je ne sais pas si mon tram roule demain matin.",
+    "en": "Strike action announced: I don’t know if my tram will run tomorrow morning."
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Le service prévu ligne par ligne est publié dans l’info trafic et mis à jour tout au long de la journée.",
+      "en": "The planned service, line by line, is published in the traffic updates and refreshed throughout the day."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 4,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Venez voir à l’arrêt.",
+      "en": "Just come and check at the stop."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -4,
+      "budget": 0
+     },
+     "bonne": false
+    }
+   ]
+  },
+  {
+   "id": "perturbation",
+   "auteur": "@usager_44",
+   "condition": {
+    "type": "perturbation"
+   },
+   "texte": {
+    "fr": "Perturbation ({nature}) : personne ne nous a prévenus.",
+    "en": "Disruption ({nature}): nobody warned us."
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Vous avez raison, l’information aurait dû passer plus tôt. Le détail de la perturbation est maintenant en ligne.",
+      "en": "You’re right, the information should have gone out sooner. The disruption details are now online."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 4,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "C’était annoncé.",
+      "en": "It was announced."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -3,
+      "budget": 0
+     },
+     "bonne": false
+    }
+   ]
+  },
+  {
+   "id": "affluence",
+   "auteur": "@nantaise_du_tram",
+   "condition": {
+    "type": "événement"
+   },
+   "texte": {
+    "fr": "Avec « {nature} », les trams sont bondés. On ne peut même plus monter.",
+    "en": "With “{nature}” on, the trams are packed. We can’t even get on."
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Merci : on ajoute des passages sur les lignes qui desservent l’événement.",
+      "en": "Thank you: we are adding extra runs on the lines serving the event."
+     },
+     "effets": {
+      "fluidite": 3,
+      "reputation": 4,
+      "budget": -3
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Attendez le suivant.",
+      "en": "Wait for the next one."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -4,
+      "budget": 0
+     },
+     "bonne": false
+    }
+   ]
+  },
+  {
+   "id": "affluence_proprete",
+   "auteur": "@chantenay_matin",
+   "condition": {
+    "type": "événement"
+   },
+   "texte": {
+    "fr": "Après « {nature} », la rame était pleine de déchets.",
+    "en": "After “{nature}”, the carriage was full of litter."
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Merci du signalement : une équipe de nettoyage passe au terminus.",
+      "en": "Thanks for letting us know: a cleaning crew is heading to the terminus."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 3,
+      "budget": -2
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Ce sont les voyageurs qui salissent.",
+      "en": "It’s the passengers who make the mess."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -4,
+      "budget": 0
+     },
+     "bonne": false
+    }
+   ]
+  },
+  {
+   "id": "affluence_pluie",
+   "auteur": "@velo_et_bus",
+   "condition": {
+    "type": "événement",
+    "meteo": "pluie"
+   },
+   "texte": {
+    "fr": "Sous la pluie, tout le monde prend le bus pour « {nature} ». Ça déborde.",
+    "en": "In the rain, everyone is taking the bus to “{nature}”. It’s overflowing."
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Avec la pluie, on renforce les lignes qui desservent l’événement pour absorber l’affluence.",
+      "en": "Because of the rain, we are reinforcing the lines serving the event to handle the crowds."
+     },
+     "effets": {
+      "fluidite": 3,
+      "reputation": 4,
+      "budget": -3
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Prenez un parapluie.",
+      "en": "Bring an umbrella."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -5,
+      "budget": 0
+     },
+     "bonne": false
+    }
+   ]
+  },
+  {
+   "id": "affluence_pointe",
+   "auteur": "@ile_de_nantes",
+   "condition": {
+    "type": "événement",
+    "pointe": true
+   },
+   "texte": {
+    "fr": "« {nature} » en pleine heure de pointe : le tram de 18 h est infernal.",
+    "en": "“{nature}” right in rush hour: the 6 pm tram is hell."
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "On renforce la fréquence en fin de journée pendant l’événement. Merci de votre patience.",
+      "en": "We are increasing frequency in the evening during the event. Thank you for your patience."
+     },
+     "effets": {
+      "fluidite": 2,
+      "reputation": 4,
+      "budget": -2
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Évitez les heures de pointe.",
+      "en": "Avoid rush hour."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -4,
+      "budget": 0
+     },
+     "bonne": false
+    }
+   ]
+  },
+  {
+   "id": "vent",
+   "auteur": "@ile_de_nantes",
+   "condition": {
+    "type": "alerte météo",
+    "nature_contient": "vent"
+   },
+   "texte": {
+    "fr": "Alerte {nature} : les bus roulent quand même ? Je dois traverser les ponts.",
+    "en": "Weather alert ({nature}): are the buses still running? I need to cross the bridges."
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Oui, avec une vitesse réduite par prudence. Prévoyez quelques minutes de plus.",
+      "en": "Yes, at reduced speed for safety. Allow a few extra minutes."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 4,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "On verra bien.",
+      "en": "We’ll see."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -4,
+      "budget": 0
+     },
+     "bonne": false
+    }
+   ]
+  },
+  {
+   "id": "temperature",
+   "auteur": "@quai_de_la_fosse",
+   "condition": {
+    "type": "alerte météo",
+    "nature_contient": "température"
+   },
+   "texte": {
+    "fr": "Alerte {nature} et on attend dehors sans abri. Le prochain passe quand ?",
+    "en": "Weather alert ({nature}) and we’re waiting outside with no shelter. When is the next one?"
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Les horaires en temps réel sont à jour : attendez à l’abri le plus proche, on surveille la ponctualité.",
+      "en": "Real-time times are up to date: wait in the nearest shelter, we are watching punctuality."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 3,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "La météo ne dépend pas de nous.",
+      "en": "The weather isn’t up to us."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -3,
+      "budget": 0
+     },
+     "bonne": false
+    }
+   ]
+  },
+  {
+   "id": "pluie_abri",
+   "auteur": "@usager_44",
+   "condition": {
+    "type": "*",
+    "meteo": "pluie"
+   },
+   "texte": {
+    "fr": "Il pleut et mon arrêt n’a pas d’abri. Trempé·e en attendant le bus.",
+    "en": "It’s raining and my stop has no shelter. Soaked while waiting for the bus."
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Désolés. Votre signalement sur l’abri est transmis ; les horaires en temps réel vous évitent d’attendre trop tôt.",
+      "en": "Sorry. Your note about the shelter has been passed on; real-time times help you avoid waiting too early."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 3,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Ce n’est que de la pluie.",
+      "en": "It’s only rain."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -4,
+      "budget": 0
+     },
+     "bonne": false
+    }
+   ]
+  }
+ ]
+}
