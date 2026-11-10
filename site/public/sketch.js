@@ -80,7 +80,8 @@ function setup() {
 	c.elt.addEventListener('mouseleave', () => (sourisDansCanevas = false)); // prompt 25 : la caméra se recentre
 	pixelDensity(1);
 	randomSeed(Jeu.fallback ? Jeu.fallback.seed : 1001);
-	for (let i = 0; i < 140; i++) gouttes.push({ x: random(), y: random(), v: random(0.6, 1.2) });
+	majModeMobile(); // prompt 60 : téléphone ou ordinateur
+	for (let i = 0; i < (MOBILE.actif ? 70 : 140); i++) gouttes.push({ x: random(), y: random(), v: random(0.6, 1.2) }); // mobile : moitié moins de particules
 	setupBureau();
 	demarrerLoire(); // prompt 34 : hauteur de la Loire (Hub'Eau) dans setup() + setInterval, jamais dans draw()
 	appliquerReglages();
@@ -1500,8 +1501,10 @@ function mouseMoved() {
 }
 
 // Touch basique (Q32) : un appui = un clic sur les boutons
-function touchStarted() {
+function touchStarted(e) {
+	if (horsCanevas(e)) return; // prompt 60 : un bouton HTML (avis portrait, boîtes) garde son comportement normal
 	if (Sauvegarde.dialogueOuvert || CARNET.ouvert) return;
+	if (MOBILE.actif) return toucherDebut(), false; // prompt 60 : sur téléphone, le clic part au relâchement (swipe, appui long)
 	sourisDansCanevas = false; // au doigt, pas de caméra (la position du dernier appui resterait « collée »)
 	Confort.Son.demarrer();
 	mousePressed();
