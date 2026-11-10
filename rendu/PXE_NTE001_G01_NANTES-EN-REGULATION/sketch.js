@@ -87,6 +87,7 @@ function setup() {
 	appliquerReglages();
 	if (Confort.Reglages.horsLigneForce) Jeu.enLigne = false; // mode hors ligne forcé (Paramètres)
 	else Jeu.verifierConnexion(); // indicateur « mode hors ligne » + météo du jour pour le décor de l'accueil
+	actionDepuisUrl(); // prompt 65 : raccourcis de la webapp installée (?action=nouvelle | reprendre)
 }
 
 // ——— Options de l'accueil : les 3 semaines réelles (Q14) + le mode « aujourd'hui » (prompt 14) ———

@@ -54,3 +54,6 @@ node scripts/preparer-semaines.mjs --semaines 2025-09-22,…   # écrit data/sem
 Les prompts `prompts/NN-*.md` décrivent chaque étape. En ajouter un = un nouveau fichier
 numéroté et une ligne dans le tableau de `prompts/README.md` (`◻ prévu`, puis `✅` une fois fait).
 La page `/making-of/` du site est générée depuis ce tableau au build.
+
+## Service worker (hors ligne)
+La liste des fichiers mis en cache dans `site/public/sw.js` est **générée** à chaque `npm run build` (ou `npm run sw`) par `scripts/generer-sw.mjs` : ajouter un fichier dans `public/` suffit, ne pas éditer la liste à la main.

@@ -164,3 +164,25 @@ body.portrait #scene canvas.p5Canvas {
 	height: auto;
 	touch-action: none;
 }
+
+/* Prompt 65 : bandeau « Nouvelle version disponible » (HTML, au-dessus du jeu, sans flash) */
+#nouvelle-version {
+	position: fixed;
+	left: 50%;
+	bottom: 16px;
+	transform: translateX(-50%);
+	z-index: 25;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+	align-items: center;
+	max-width: calc(100vw - 32px);
+	padding: 12px 16px;
+	background: #0d0c0c;
+	color: #ffffff;
+	border: 2px solid rgba(255, 255, 255, 0.6);
+	font: 16px 'JetBrains Mono', ui-monospace, monospace;
+}
+#nouvelle-version .sv-bouton {
+	min-height: 44px;
+}
