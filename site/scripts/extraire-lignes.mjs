@@ -2,8 +2,8 @@
 // Usage (dans site/) : node scripts/extraire-lignes.mjs
 // L'archive GTFS (~20 Mo zippée, ~440 Mo décompressée) est trop lourde pour le navigateur :
 // ce script la télécharge une fois, garde un tracé simplifié par ligne et écrit
-//   public/oeuvres/pxe-nte001-g01-w01/data/lignes.json  (source)
-//   public/oeuvres/pxe-nte001-g01-w01/data/lignes.js    (même contenu, pour l'ouverture par double clic)
+//   public/data/lignes.json  (source)
+//   public/data/lignes.js    (même contenu, pour l'ouverture par double clic)
 // Nécessite la commande `unzip` (présente sur macOS et Linux). Lancé à la main, jamais au build.
 import { spawn } from 'node:child_process';
 import { createInterface } from 'node:readline';
@@ -11,7 +11,7 @@ import { writeFile, rm, mkdtemp } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-const JEU = new URL('../public/oeuvres/pxe-nte001-g01-w01/data/', import.meta.url);
+const JEU = new URL('../public/data/', import.meta.url);
 const DATASET = '244400404_transports_commun_naolib_nantes_metropole_gtfs';
 const API = `https://data.nantesmetropole.fr/api/explore/v2.1/catalog/datasets/${DATASET}`;
 const TOLERANCE = 0.00012; // ≈ 10 m : simplification Douglas-Peucker
