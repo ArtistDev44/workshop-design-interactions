@@ -4,6 +4,7 @@ Règle : chaque push sur la branche main ajoute une entrée dans le tableau, la 
 
 | Date | Commit | Fichiers | Résumé |
 |---|---|---|---|
+| 2026-11-10 | ce commit (branche vibe/prompt-33-sauvegarde-353819) | prompts/33-jeu-sauvegarde-progression-import-export.md, prompts/README.md, README.md, journal.md | Ajout du prompt 33 (étape 20 du jeu) : sauvegarde automatique de la progression par semaine en localStorage (clé pxe-nte001-partie-<semaine>), reprise via « Continuer la partie » à l'accueil, et export/import JSON de la progression dans l'écran Paramètres avec validation stricte (JSON.parse en try/catch, version, semaine connue, jauges 0-100), textes i18n FR+EN via t(), 100 % hors ligne ; entrée ajoutée à la liste de prompts/README.md et compte des prompts mis à jour dans README.md |
 | 2026-11-10 | ce commit | journal.md | Fusion dans main de jeu/prompt-23-profondeur-tactique (conseils, modificateurs, objectifs, malus, budget, profil de fin) |
 | 2026-11-10 | ce commit (branche jeu/prompt-23-profondeur-tactique, non fusionnée) | site/public/ (game.js, sketch.js, os.js, bureau.js, immersion.js), jeu/17-profondeur-tactique.md, jeu/README.md, journal.md | Prompt 23 : conseil contextuel, modificateurs (erreur système, météo aggravée, heure de pointe, panne messagerie), objectifs de journée, table des malus, paliers de budget, profil de la semaine |
 | 2026-11-10 | ce commit | journal.md | Fusion dans main de jeu/prompt-22-bureau-apps (apps du PC, jauges fluidité / réputation / budget) |

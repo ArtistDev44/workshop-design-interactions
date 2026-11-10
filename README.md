@@ -54,7 +54,7 @@ Un mapping justifié avant une API. Une œuvre exposable avant une démonstratio
 |---|---|
 | [`site/`](site/) | Site Astro statique de l'édition + jeu p5.js servi à la racine (`public/index.html`) |
 | [`jeu/`](jeu/) | Spec du jeu « Nantes en régulation », fichier par fichier (concept, boucle, API, actions, jauges, UI, fallback, raccourcis…) |
-| [`prompts/`](prompts/) | 32 prompts numérotés pour construire le site et le jeu pas à pas, dans l'ordre |
+| [`prompts/`](prompts/) | 33 prompts numérotés pour construire le site et le jeu pas à pas, dans l'ordre |
 | [`contexte/`](contexte/) | Livret étudiant, framework international PATRIMOINE.EXE, règles de travail, audit des API Open Data Nantes Métropole |
 | [`design-system/`](design-system/) | Référentiel visuel (`DESIGN.md`, tokens) extrait de metropole.nantes.fr |
 | [`todo.md`](todo.md) | Protocole des 3 jours, jalons, checklist de robustesse et barème |
