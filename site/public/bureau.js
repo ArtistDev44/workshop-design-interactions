@@ -138,6 +138,7 @@ const GLYPHES = {
 	R: '110101110101101', E: '111100110100111', G: '111100101101111', U: '101101101101111', L: '100100100100111',
 	A: '010101111101101', T: '111010010010010', I: '111010010010111', O: '111101101101111', N: '101111111111101',
 	S: '111100111001111', C: '111100100100111', D: '110101101101110', P: '111101111100100', Z: '111001010100111',
+	M: '101111111101101', // prompt 34 (livre « COMMANDE »)
 	' ': '000000000000000', 0: '111101101101111', 1: '010110010010111', 2: '111001111100111', 3: '111001111001111',
 	4: '101101111001001', 5: '111100111001111', 6: '111100111101111', 7: '111001001001001', 8: '111101111101111', 9: '111101111001111',
 };
@@ -209,73 +210,22 @@ function dessinerVueNantes(g) {
 		px(g, nuit ? '#0f1626' : '#8b96a3', i * 24, 118 - t, 24, t + 4);
 		if (nuit) for (let k = 0; k < 3; k++) px(g, '#e8c46a', i * 24 + 4 + k * 6, 122 - t + k * 5, 2, 2);
 	});
-	// La Loire et ses quais
-	px(g, nuit ? '#1b2a44' : '#5f8fb0', 0, 128, BW, 10);
-	for (let x = 0; x < BW; x += 9) px(g, nuit ? '#2e4264' : '#8fb6cf', x + ((x * 7) % 5), 131 + (x % 3) * 2, 5, 1);
-	px(g, '#a49c8b', 0, 138, BW, 12);
-	px(g, '#8a8273', 0, 138, BW, 1);
-	dessinerChateauDesDucs(g, 20, 128, nuit);
-	dessinerGrueTitan(g, 360, 126, nuit);
-	// Arbres des quais
-	[[180, 136, 9], [196, 138, 7], [328, 136, 8], [470, 134, 9]].forEach(([cx, cy, r]) => {
-		px(g, P.boisSombre, cx - 1, cy + r - 3, 3, 6);
-		feuillage(g, cx, cy, r);
-	});
+	// Prompt 34 : grue au pied de la ville (même ligne d'horizon, même teinte que les immeubles),
+	// plus de château, de quai, de route ni d'arbres : la baie donne directement sur la Loire.
+	dessinerGrueTitan(g, 330, HORIZON_VILLE, nuit);
+	dessinerLoire(g, nuit, pluie, haut, bas);
 	if (pluie) {
 		g.fill('#cfd8e0');
 		for (let i = 0; i < 70; i++) g.rect((i * 37) % BW, 10 + ((i * 23 + Math.floor(millis() / 50)) % (BAIE_BAS - 14)), 1, 3);
 	}
 }
 
-/* Château des ducs de Bretagne (dessin simplifié et original) : courtine crénelée en tuffeau clair,
-   grosses tours rondes à mâchicoulis, grand logis aux toits d'ardoise à lucarnes, douves au pied. */
-function dessinerChateauDesDucs(g, x, base, nuit) {
-	const pierre = nuit ? '#8f8a7e' : '#e9e1cf';
-	const pierreOmbre = nuit ? '#6d695f' : '#c9bfa8';
-	const ardoise = nuit ? '#2a3140' : '#4a5566';
-	const ardoiseClair = nuit ? '#3a4356' : '#64718a';
-	// Douves
-	px(g, nuit ? '#1b2a44' : '#4d7f73', x - 6, base - 2, 156, 4);
-	// Grand logis (au fond) : façade + haut toit d'ardoise à lucarnes
-	px(g, P.contour, x + 34, base - 44, 74, 44);
-	px(g, pierre, x + 35, base - 43, 72, 43);
-	for (let i = 0; i < 4; i++) {
-		px(g, '#3f4b5a', x + 42 + i * 17, base - 34, 5, 8);
-		px(g, '#3f4b5a', x + 42 + i * 17, base - 20, 5, 8);
-	}
-	for (let r = 0; r < 18; r++) px(g, r % 4 === 0 ? ardoiseClair : ardoise, x + 34 + r, base - 44 - r, 74 - 2 * r, 1); // toit
-	for (let i = 0; i < 3; i++) {
-		px(g, P.contour, x + 48 + i * 18, base - 56, 8, 10);
-		px(g, pierre, x + 49 + i * 18, base - 55, 6, 9);
-		px(g, ardoise, x + 49 + i * 18, base - 59, 6, 4);
-	}
-	// Courtine crénelée devant
-	px(g, P.contour, x - 1, base - 25, 150, 25);
-	px(g, pierre, x, base - 24, 148, 24);
-	px(g, pierreOmbre, x, base - 6, 148, 6);
-	for (let k = 0; k < 148; k += 6) px(g, P.contour, x + k + 3, base - 28, 3, 4), px(g, pierre, x + k, base - 28, 3, 4);
-	for (let j = 0; j < 3; j++) for (let k = (j % 2) * 5; k < 148; k += 10) px(g, pierreOmbre, x + k, base - 20 + j * 5, 6, 1); // assises
-	// Tours rondes (gauche, centre-gauche, droite) avec mâchicoulis
-	[[x + 6, 16, 44], [x + 120, 15, 40], [x + 146, 13, 36]].forEach(([tx, r, h]) => {
-		px(g, P.contour, tx - r - 1, base - h, 2 * r + 2, h);
-		px(g, pierre, tx - r, base - h + 1, 2 * r, h - 1);
-		px(g, pierreOmbre, tx + Math.floor(r / 3), base - h + 1, r - Math.floor(r / 3), h - 1); // ombre du fût
-		px(g, P.contour, tx - r - 2, base - h - 2, 2 * r + 4, 4);
-		px(g, pierre, tx - r - 1, base - h - 1, 2 * r + 2, 2);
-		for (let k = -r; k < r; k += 4) px(g, P.contour, tx + k, base - h + 2, 2, 2); // mâchicoulis
-		for (let k = -r; k < r; k += 5) px(g, pierre, tx + k, base - h - 5, 3, 3); // créneaux
-		px(g, '#3f4b5a', tx - 1, base - h + 12, 2, 4); // archère
-	});
-	// Pont d'entrée
-	px(g, P.contour, x + 62, base - 12, 16, 12);
-	px(g, '#5a4632', x + 63, base - 11, 14, 11);
-	px(g, '#b9b2a2', x + 58, base - 2, 24, 3);
-}
-
-/* Grue Titan jaune (île de Nantes) : tour en treillis et longue flèche horizontale. */
+/* Grue Titan (île de Nantes) : tour en treillis et longue flèche horizontale.
+   Prompt 34 : posée sur la ligne d'horizon des immeubles et de leur couleur (elle se fond dans la ville). */
+const HORIZON_VILLE = 122; // bas des immeubles lointains
 function dessinerGrueTitan(g, x, base, nuit) {
-	const jaune = nuit ? '#9c8634' : '#f2c230';
-	const jauneOmbre = nuit ? '#6f5f25' : '#c79a1c';
+	const jaune = nuit ? '#0f1626' : '#8b96a3';
+	const jauneOmbre = nuit ? '#1a2336' : '#7a8592';
 	px(g, P.contour, x + 30, base - 76, 12, 76);
 	px(g, jaune, x + 31, base - 75, 10, 75);
 	for (let y = base - 72; y < base; y += 8) {
@@ -287,9 +237,75 @@ function dessinerGrueTitan(g, x, base, nuit) {
 	for (let k = -18; k < 90; k += 6) px(g, jauneOmbre, x + k, base - 83, 1, 6);
 	px(g, P.contour, x + 26, base - 96, 20, 12); // cabine / contrepoids
 	px(g, jaune, x + 27, base - 95, 18, 10);
-	px(g, '#3f4b5a', x + 30, base - 92, 6, 4);
+	px(g, nuit ? '#e8c46a' : '#5f6a78', x + 30, base - 92, 6, 4); // vitre de la cabine (allumée la nuit)
 	px(g, P.contour, x + 82, base - 76, 1, 30); // câble
 	px(g, '#3c4450', x + 79, base - 46, 7, 4); // crochet
+}
+
+// ——— Prompt 34 : la Loire, dont la hauteur suit la hauteur d'eau réelle (Hub'Eau, station M800001010) ———
+// Lecture dans setup() puis toutes les 10 min (jamais dans draw) ; repli : médiane figée de data/loire.js.
+const LOIRE_REPLI = window.PXE_LOIRE || { mediane_m: 4.1385, min_m: 0.755, max_m: 6.832 };
+const LOIRE = {
+	hauteur: LOIRE_REPLI.mediane_m, // m, dernière valeur connue (cible)
+	affichee: LOIRE_REPLI.mediane_m, // m, valeur lissée dessinée
+	source: 'repli', // 'api' | 'repli'
+	date: null,
+	url: 'https://hubeau.eaufrance.fr/api/v2/hydrometrie/observations_tr?code_entite=M800001010&grandeur_hydro=H&size=1&sort=desc&fields=date_obs,resultat_obs',
+};
+function chargerLoire() {
+	if (Confort.Reglages.horsLigneForce || typeof fetch !== 'function') return;
+	const ctrl = typeof AbortController === 'function' ? new AbortController() : null;
+	const minuterie = setTimeout(() => ctrl && ctrl.abort(), 6000);
+	fetch(LOIRE.url, ctrl ? { signal: ctrl.signal } : {})
+		.then((r) => (r.ok ? r.json() : null))
+		.then((d) => {
+			const o = d && d.data && d.data[0];
+			const h = o ? Number(o.resultat_obs) / 1000 : NaN; // mm → m
+			if (Number.isFinite(h) && h > -2 && h < 15) {
+				LOIRE.hauteur = h;
+				LOIRE.source = 'api';
+				LOIRE.date = o.date_obs;
+			}
+		})
+		.catch(() => {}) // hors ligne : on garde la dernière valeur (ou la médiane figée)
+		.finally(() => clearTimeout(minuterie));
+}
+function demarrerLoire() {
+	chargerLoire();
+	setInterval(chargerLoire, 10 * 60 * 1000);
+}
+/** Haut de l'eau (y pixel art) : hauteur réelle bornée [min, max] de la période → 8 à 26 px de fleuve */
+function niveauLoire() {
+	LOIRE.affichee += (LOIRE.hauteur - LOIRE.affichee) * (reduireAnimations ? 1 : 0.08);
+	const k = constrain((LOIRE.affichee - LOIRE_REPLI.min_m) / (LOIRE_REPLI.max_m - LOIRE_REPLI.min_m), 0, 1);
+	return Math.round(BAIE_BAS - (8 + k * 18));
+}
+function dessinerLoire(g, nuit, pluie, ciel, cielBas) {
+	const yEau = niveauLoire();
+	// Rive d'en face : mur de quai sombre entre la ville et l'eau (sa partie visible dit le niveau du fleuve)
+	px(g, nuit ? '#141b2b' : '#6f7884', 0, HORIZON_VILLE, BW, yEau - HORIZON_VILLE);
+	for (let x = 0; x < BW; x += 16) px(g, nuit ? '#1b2436' : '#7d8692', x, HORIZON_VILLE + 1, 8, 1);
+	// L'eau : bande pleine largeur, reflet du ciel en haut, plus sombre vers la baie
+	const eau = nuit ? '#1b2a44' : pluie ? '#5d7180' : '#4f7f9f';
+	const eauSombre = nuit ? '#121d33' : pluie ? '#4a5c69' : '#3f6c8a';
+	px(g, eau, 0, yEau, BW, BAIE_BAS - yEau);
+	px(g, eauSombre, 0, Math.round((yEau + BAIE_BAS) / 2), BW, BAIE_BAS - Math.round((yEau + BAIE_BAS) / 2));
+	px(g, nuit ? '#2e4264' : cielBas, 0, yEau, BW, 1); // reflet du ciel à la surface
+	// Écume et vaguelettes qui dérivent doucement (figées si animations réduites)
+	const decal = reduireAnimations ? 0 : Math.floor(millis() / 220);
+	for (let r = 0; r < 4; r++) {
+		const y = yEau + 3 + r * Math.max(2, Math.floor((BAIE_BAS - yEau - 4) / 4));
+		if (y >= BAIE_BAS - 1) break;
+		for (let x = -12; x < BW; x += 22) px(g, nuit ? '#2e4264' : '#9cc3da', x + ((decal * (r % 2 ? 1 : -1) + r * 7) % 22 + 22) % 22, y, 6 - (r % 2) * 2, 1);
+	}
+	// Une péniche qui descend le fleuve (silhouette), pour lire « fleuve navigable »
+	const xp = reduireAnimations ? 250 : ((Math.floor(millis() / 160) % (BW + 80)) - 60);
+	const yp = yEau + 2;
+	px(g, nuit ? '#0b111d' : '#2f3a46', xp, yp, 52, 3); // coque
+	px(g, nuit ? '#0b111d' : '#2f3a46', xp + 2, yp + 3, 48, 1);
+	px(g, nuit ? '#0b111d' : '#3c4652', xp + 38, yp - 5, 10, 5); // timonerie
+	px(g, nuit ? '#e8c46a' : '#9fb3c4', xp + 40, yp - 4, 3, 2);
+	px(g, nuit ? '#1b2a44' : '#6a8aa1', xp - 6, yp + 4, 64, 1); // sillage
 }
 
 function dessinerMontantsBaie(g) {
@@ -400,6 +416,36 @@ function dessinerPC(g) {
 	px(g, PC.etat === 'eteint' ? '#7d1a15' : '#3fb950', e.x + e.l / 2 - 1, e.y + e.h + 2, 2, 1); // voyant
 }
 
+/* Prompt 34 : souris et téléphone en perspective, comme le clavier — chaque ligne s'élargit vers l'avant
+   (bord arrière étroit, bord avant large), avec une ombre tramée sur le plateau. */
+function trapeze(g, cx, y0, h, demi0, demi1, couleur, bord, arrondi) {
+	for (let y = 0; y < h; y++) {
+		const t = y / Math.max(1, h - 1);
+		let demi = demi0 + (demi1 - demi0) * t;
+		if (arrondi && (y < arrondi || y >= h - arrondi)) demi -= arrondi - Math.min(y, h - 1 - y); // coins arrondis
+		px(g, bord && (y === 0 || y === h - 1) ? bord : couleur, cx - demi, y0 + y, demi * 2, 1);
+		if (bord) {
+			px(g, bord, cx - demi, y0 + y, 1, 1);
+			px(g, bord, cx + demi - 1, y0 + y, 1, 1);
+		}
+	}
+}
+function dessinerSourisPerspective(g, cx, y0) {
+	ombreTramee(g, cx - 8, y0 + 18, 17, 2, 90);
+	trapeze(g, cx, y0, 18, 4.5, 7.5, '#2c3036', P.contour, 3);
+	px(g, '#4a5058', cx - 3, y0 + 2, 6, 1); // reflet
+	px(g, '#16181b', cx, y0 + 1, 1, 6); // séparation des boutons
+	px(g, '#6b7280', cx - 1, y0 + 3, 2, 2); // molette
+}
+function dessinerTelephonePerspective(g, cx, y0) {
+	ombreTramee(g, cx - 10, y0 + 27, 21, 2, 90);
+	trapeze(g, cx, y0, 27, 7, 9, '#0a0b0c', P.contour, 1); // coque fine, coins arrondis
+	trapeze(g, cx, y0 + 2, 23, 6, 8, '#1d5f6e', null, 0); // écran bord à bord
+	for (let y = 0; y < 23; y += 2) px(g, '#2a7a8c', cx - 4 - y * 0.12, y0 + 3 + y, 3, 1); // reflet diagonal
+	px(g, '#0a0b0c', cx - 1, y0 + 3, 2, 1); // point caméra (pas de bouton physique)
+	px(g, '#5f9eb0', cx - 3, y0 + 23, 6 + 0.5, 1); // barre d'accueil gestuelle
+}
+
 function dessinerObjetsBureau(g) {
 	// Clavier (perspective), souris, tasse, lampe, téléphone, horloge de bureau, dossiers, petite plante
 	for (let y = 196; y < 222; y++) {
@@ -409,8 +455,7 @@ function dessinerObjetsBureau(g) {
 		if (y > 198 && y < 219 && (y - 199) % 5 < 3) for (let k = -demi + 4; k < demi - 6; k += 7 + t * 2) px(g, '#4a5058', 240 + k, y, 5 + t * 2, 1);
 	}
 	ombreTramee(g, 176, 222, 128, 3, 90);
-	boite(g, 330, 206, 13, 18, '#2c3036', '#4a5058', '#1a1d21'); // souris
-	px(g, '#4a5058', 336, 207, 1, 5);
+	dessinerSourisPerspective(g, 336, 204);
 	// Tasse (gauche)
 	boite(g, 120, 188, 14, 18, '#f7f1e1', '#ffffff', '#d8cfb6');
 	px(g, P.contour, 134, 192, 4, 1);
@@ -423,9 +468,7 @@ function dessinerObjetsBureau(g) {
 		for (let k = 0; k < 3; k++) g.rect(124 + k * 3 + ((t + k) % 2), 180 - k * 3 - (t % 3), 1, 3);
 	}
 	// Prompt 31 : la lampe d'architecte devient une applique murale (dessinerMurDroit), l'horloge passe au mur
-	// Smartphone posé (droite)
-	boite(g, 368, 196, 14, 24, '#16181b', '#2c3036', '#0a0b0c');
-	px(g, '#1d5f6e', 370, 199, 10, 16);
+	dessinerTelephonePerspective(g, 376, 194); // prompt 34 : smartphone récent, en perspective
 	// Pile de dossiers (droite, au fond)
 	for (let i = 0; i < 4; i++) boite(g, 392 + (i % 2), 172 - i * 3, 40, 2, i % 2 ? '#dfe7ef' : '#ffffff', '#ffffff', '#9aa8b6'); // chemises claires (prompt 32)
 	px(g, P.rouge, 418, 163, 8, 1);

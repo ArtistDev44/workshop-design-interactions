@@ -40,7 +40,7 @@ let derniereImage = 0;
 // Objets cliquables du bureau (coordonnées pixel art, voir bureau.js)
 const OBJETS_BUREAU = [
 	{ nom: 'ecran', label: T('objet.ecran') },
-	{ nom: 'tuto', label: T('objet.tuto'), x: 58, y: 190, l: 50, h: 9 },
+	{ nom: 'commande', label: T('objet.commande'), x: 58, y: 190, l: 50, h: 9 }, // prompt 34 : remplace le livre « tuto »
 	{ nom: 'stress', label: T('objet.stress'), x: 62, y: 180, l: 44, h: 9 },
 	{ nom: 'porte', label: T('objet.porte'), infobulle: T('bureau.porte'), x: 28, y: 40, l: 20, h: 118 }, // prompt 26 (prompt 31 : décalée dans le cadrage)
 	// Prompt 29 : objets de la pièce (micro-interactions, sans effet sur les jauges ni pause)
@@ -140,7 +140,7 @@ function avancerTemps() {
 	const maintenant = millis();
 	const dt = derniereImage ? Math.min(250, maintenant - derniereImage) : 0;
 	derniereImage = maintenant;
-	if (ecran !== 'jeu' || !Jeu.horloge || phase === 'fin' || phase === 'mail' || smsActif || enPause) return;
+	if (ecran !== 'jeu' || !Jeu.horloge || phase === 'fin' || phase === 'mail' || smsActif || enPause || tutoriel) return; // prompt 34 : le tutoriel suspend le temps
 	const vitesse = IMMERSION.minutesParSeconde * (tempsCompresse() ? IMMERSION.compression : 1);
 	Jeu.horloge.minutes += (dt / 1000) * vitesse;
 
@@ -330,6 +330,113 @@ function terminerIntro() {
 	introVue = true;
 	demarrerJournee();
 	vue = 'bureau'; // on arrive au bureau : l'ouverture est à 6h
+	if (!tutorielVu()) lancerTutoriel(); // prompt 34 : à la première partie, juste après les SMS
+}
+
+// =====================================================================
+// Prompt 34 — vrai tutoriel guidé (5 étapes), superposé à l'écran ; le temps du jeu est suspendu.
+// Relancé depuis le livre « commande » et l'aide (T). « Tutoriel vu » persiste dans localStorage.
+// =====================================================================
+const CLE_TUTORIEL = 'pxe-nte001-tutoriel-vu';
+const ETAPES_TUTORIEL = 5;
+let tutoriel = null; // { etape, focus: 'suivant' | 'passer' }
+function tutorielVu() {
+	try {
+		return localStorage.getItem(CLE_TUTORIEL) === 'oui';
+	} catch (e) {
+		return false;
+	}
+}
+function lancerTutoriel() {
+	fenetre = null;
+	tutoriel = { etape: 0, focus: 'suivant' };
+	annoncerEtapeTutoriel();
+}
+function annoncerEtapeTutoriel() {
+	const n = tutoriel.etape + 1;
+	annoncer(t('tuto.etape', { n, total: ETAPES_TUTORIEL }) + ' — ' + t('tuto.' + n + '.titre') + '. ' + t('tuto.' + n + '.texte'));
+}
+function fermerTutoriel() {
+	tutoriel = null;
+	try {
+		localStorage.setItem(CLE_TUTORIEL, 'oui');
+	} catch (e) {}
+	interaction();
+}
+function etapeSuivante() {
+	if (!tutoriel) return;
+	if (tutoriel.etape >= ETAPES_TUTORIEL - 1) return fermerTutoriel();
+	tutoriel.etape++;
+	tutoriel.focus = 'suivant';
+	Confort.Son.bip('choix');
+	annoncerEtapeTutoriel();
+}
+function etapePrecedente() {
+	if (!tutoriel || tutoriel.etape === 0) return;
+	tutoriel.etape--;
+	annoncerEtapeTutoriel();
+}
+function dessinerTutoriel() {
+	if (!tutoriel) return;
+	boutons = []; // seul le tutoriel est cliquable
+	voile();
+	const n = tutoriel.etape + 1;
+	const l = 1100;
+	const h = 560;
+	const x = (L - l) / 2;
+	const y = (H - h) / 2;
+	panneau(x, y, l, h, C.accent);
+	noStroke();
+	textAlign(LEFT, TOP);
+	textFont(POLICE_DONNEES);
+	textSize(20);
+	fill(C.gris);
+	text(t('tuto.etape', { n, total: ETAPES_TUTORIEL }), x + 56, y + 40);
+	// Pastilles de progression (statiques)
+	for (let i = 0; i < ETAPES_TUTORIEL; i++) {
+		fill(i <= tutoriel.etape ? C.accent : '#D6D0C4');
+		rect(x + l - 56 - (ETAPES_TUTORIEL - i) * 30, y + 46, 20, 8, 4);
+	}
+	fill(C.accent);
+	textFont(POLICE_TEXTE);
+	textStyle(BOLD);
+	textSize(40);
+	text(t('tuto.' + n + '.titre'), x + 56, y + 78);
+	textStyle(NORMAL);
+	fill(C.texte);
+	textSize(24);
+	textLeading(36);
+	text(t('tuto.' + n + '.texte'), x + 56, y + 150, l - 112, h - 280);
+	const lb = 300;
+	const derniere = n === ETAPES_TUTORIEL;
+	bouton(x + l - 56 - lb, y + h - 108, lb, 68, t(derniere ? 'tuto.terminer' : 'tuto.suivant'), etapeSuivante);
+	bouton(x + 56, y + h - 108, 260, 68, t('tuto.passer'), fermerTutoriel, false, true);
+	if (tutoriel.etape > 0) bouton(x + 56 + 280, y + h - 108, 260, 68, t('tuto.precedent'), etapePrecedente, false, true);
+	// Focus clavier visible (Tab)
+	const f = tutoriel.focus === 'suivant' ? { x: x + l - 56 - lb, l: lb } : tutoriel.focus === 'precedent' ? { x: x + 336, l: 260 } : { x: x + 56, l: 260 };
+	noFill();
+	stroke('#1c2733');
+	strokeWeight(4);
+	rect(f.x - 8, y + h - 116, f.l + 16, 84, 14);
+	noStroke();
+}
+/** Clavier du tutoriel : Entrée = bouton focalisé, → suivant, ← précédent, Tab = focus, Échap = passer */
+function toucheTutoriel() {
+	if (!tutoriel) return false;
+	const ordre = tutoriel.etape > 0 ? ['suivant', 'passer', 'precedent'] : ['suivant', 'passer'];
+	if (keyCode === TAB) {
+		const i = ordre.indexOf(tutoriel.focus);
+		tutoriel.focus = ordre[(i + (keyIsDown(SHIFT) ? ordre.length - 1 : 1)) % ordre.length];
+		annoncer(t('tuto.' + tutoriel.focus));
+	} else if (keyCode === ESCAPE) fermerTutoriel();
+	else if (keyCode === RIGHT_ARROW) etapeSuivante();
+	else if (keyCode === LEFT_ARROW) etapePrecedente();
+	else if (keyCode === ENTER || keyCode === RETURN || key === ' ') {
+		if (tutoriel.focus === 'passer') fermerTutoriel();
+		else if (tutoriel.focus === 'precedent') etapePrecedente();
+		else etapeSuivante();
+	}
+	return true;
 }
 
 function dessinerSMS() {
@@ -493,8 +600,10 @@ function dessinerPersonnageSieste(g) {
 function dessinerLivres(g) {
 	const t = OBJETS_BUREAU[1];
 	const s = OBJETS_BUREAU[2];
-	boite(g, t.x, t.y, t.l, t.h, '#2e6fb5', '#5a95d6', '#1d4f86');
-	textePixel(g, 'TUTO', t.x + 17, t.y + 2, '#f7f1e1');
+	// Prompt 34 : livre « commande » (couverture marine, liseré doré, titre en capitales pixel)
+	boite(g, t.x, t.y, t.l, t.h, '#1c2f52', '#34507f', '#121f38');
+	px(g, '#d9b45a', t.x + 2, t.y + 1, 1, t.h - 2);
+	textePixel(g, 'COMMANDE', t.x + 10, t.y + 2, '#fff8e6');
 	boite(g, s.x, s.y, s.l, s.h, '#3f7a43', '#5f9e4f', '#2f5d3a');
 	textePixel(g, 'STRESS', s.x + 10, s.y + 2, '#f7f1e1');
 }
@@ -502,7 +611,7 @@ function dessinerLivres(g) {
 function ouvrirObjetBureau(nom) {
 	interaction();
 	if (nom === 'ecran') return sAsseoir();
-	if (nom === 'tuto') return ouvrir('aide'); // reprend l'écran d'aide H
+	if (nom === 'commande') return lancerTutoriel(); // prompt 34 : le livre « commande » ouvre le tutoriel
 	if (nom === 'stress') return ouvrir('livre-stress');
 	if (nom === 'porte') return ouvrir('menu'); // prompt 26 : même action qu'Échap au bureau
 	if (OBJETS_BUREAU.some((o) => o.nom === nom && o.piece)) return interagirPiece(nom); // prompt 29

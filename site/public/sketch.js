@@ -74,6 +74,7 @@ function setup() {
 	randomSeed(Jeu.fallback ? Jeu.fallback.seed : 1001);
 	for (let i = 0; i < 140; i++) gouttes.push({ x: random(), y: random(), v: random(0.6, 1.2) });
 	setupBureau();
+	demarrerLoire(); // prompt 34 : hauteur de la Loire (Hub'Eau) dans setup() + setInterval, jamais dans draw()
 	appliquerReglages();
 	if (Confort.Reglages.horsLigneForce) Jeu.enLigne = false; // mode hors ligne forcé (Paramètres)
 	else Jeu.verifierConnexion(); // indicateur « mode hors ligne » + météo du jour pour le décor de l'accueil
@@ -164,6 +165,7 @@ function draw() {
 		boutons = [];
 		dessinerSMS();
 	}
+	dessinerTutoriel(); // prompt 34 : par-dessus l'écran et les fenêtres
 	dessinerClignement(); // prompt 21 § 2 : par-dessus tout, purement visuel (n'intercepte aucune entrée)
 	// Prompt 29 : curseur « main » au survol de toute zone cliquable (objets de la pièce compris)
 	const surZone = boutons.some((b) => mouseX >= b.x && mouseX <= b.x + b.l && mouseY >= b.y && mouseY <= b.y + b.h);
@@ -287,6 +289,7 @@ function lancerNouvellePartie() {
 		Jeu.nouvellePartie();
 		demarrerJournee(); // journée 1, 6h00, en attente du premier incident
 		if (!introVue) lancerIntroSMS(); // § 2 : une seule fois, pas sur « Rejouer »
+		else if (!tutorielVu()) lancerTutoriel(); // prompt 34 : première partie sans SMS
 	});
 }
 
@@ -1277,11 +1280,14 @@ function keyPressed() {
 		if (key === ' ' || keyCode === ENTER || keyCode === RETURN) seReveiller();
 		return false;
 	}
+	// Prompt 34 : le tutoriel capte le clavier (L reste disponible pour changer de langue)
+	if (tutoriel && !(key === 'l' || key === 'L')) return toucheTutoriel(), false;
 	// Langue (prompt 24) : L bascule partout, sans toucher à la partie
 	if (key === 'l' || key === 'L') return Langue.suivante(), false;
 	// Fenêtres ouvertes : elles captent le clavier
 	if (fenetre) {
 		if (keyCode === ESCAPE || (fenetre === 'aide' && (key === 'h' || key === 'H' || key === '?'))) return fermer(), false;
+		if (fenetre === 'aide' && (key === 't' || key === 'T')) return lancerTutoriel(), false; // prompt 34
 		if (fenetre === 'menu' && (keyCode === ENTER || keyCode === RETURN)) return fermer(), false;
 		if (fenetre === 'reset') {
 			if (keyCode === ENTER || keyCode === RETURN || key === 'o' || key === 'O') confirmerReset();
@@ -1511,6 +1517,7 @@ function fenetreAide() {
 		});
 	}
 	bouton(x + l - 288, y + h - 104, 240, 64, t('commun.fermer'), fermer);
+	bouton(x + l - 288 - 300, y + h - 104, 280, 64, t('tuto.relancer'), lancerTutoriel, false, true); // prompt 34
 }
 
 function fenetreReset() {

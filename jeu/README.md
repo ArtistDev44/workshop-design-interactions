@@ -43,3 +43,4 @@ dossier à trancher sous pression. »*
 | 25 | `25-bureau-cadrage-chaise.md` | Prompt 31 : cadrage « sur la chaise » (recadrage centré, accoudoirs retirés), horloge murale à l'heure du jeu, applique murale à la place de la lampe d'architecte |
 | 26 | `26-bureau-style-epure.md` | Prompt 32 : pièce blanche et épurée (plafond, menuiseries, plateau, porte), bois réduit à un chant, vignettage neutre, contour de survol double lisible sur blanc |
 | 27 | `27-sauvegarde-progression.md` | Prompt 33 : sauvegarde automatique par semaine (`pxe-nte001-partie-<semaine>`), « Continuer la partie », reprise exacte (graine + tirages), export/import JSON validé dans les Paramètres |
+| 28 | `28-fenetre-loire-tutoriel.md` | Prompt 34 : baie sur la Loire (hauteur réelle Hub'Eau, repli médiane), grue aux couleurs de la ville, plus de château ni de quai, souris et téléphone en perspective, livre « Commande » et tutoriel en 5 étapes |

@@ -73,7 +73,7 @@ jamais l'inverse.
 | 32 | `32-jeu-bureau-style-epure.md` | Jeu, étape 19 : direction moderne et épurée de la pièce — murs blancs, moins de bois, beaucoup de blanc (écran du jeu inchangé) | ✅ branche |
 | 33 | `33-jeu-sauvegarde-progression-import-export.md` | Jeu, étape 20 : sauvegarde auto de la progression en `localStorage` (reprise « Continuer la partie ») + export/import JSON de la progression dans les Paramètres, validation stricte | ✅ branche (`sauvegarde.js`) |
 | 33 | `33-audit-coherence-leviers.md` | Méta-prompt (hors jeu) : audit de cohérence du dépôt et leviers d'amélioration — URL canonique unique, `[À COMPLÉTER]`, statut des prompts 24–32, livrables J3, smoke test, coquille Astro, LICENSE | ✅ ce prompt (branche `vibe/prompt-33-audit-coherence-4c094b-application`) |
-| 34 | `34-jeu-fenetre-loire-tutoriel.md` | Jeu, étape 21 : fond de la baie vitrée corrigé (plus de trottoir/route/arbres ni de château, grue au niveau des bâtiments et de leur couleur), Loire à la place avec hauteur réelle via API (fallback local), souris et téléphone en perspective (téléphone récent), livre « tuto » remplacé par « commande », vrai tutoriel guidé | ◻ prévu |
+| 34 | `34-jeu-fenetre-loire-tutoriel.md` | Jeu, étape 21 : fond de la baie vitrée corrigé (plus de trottoir/route/arbres ni de château, grue au niveau des bâtiments et de leur couleur), Loire à la place avec hauteur réelle via API (fallback local), souris et téléphone en perspective (téléphone récent), livre « tuto » remplacé par « commande », vrai tutoriel guidé | ✅ branche |
 
 ### Statut des prompts (vérifié le 10/11/2026 dans `site/public/`)
 
@@ -101,13 +101,13 @@ Preuves dans le code (grep, branche du prompt 33) :
 | 31 | `bureau.js` (`CADRAGE`, horloge murale) |
 | 32 | `bureau.js` / `immersion.js` (palette blanche) |
 | 33 (sauvegarde) | `sauvegarde.js` |
-| 34 | ◻ : livre « Tutoriel » toujours présent (`i18n.js`), pas de hauteur de Loire via API |
+| 34 | `bureau.js` (`dessinerLoire`, `LOIRE`, Hub'Eau), `data/loire.js`, `immersion.js` (livre `commande`, `lancerTutoriel`) |
 
 Chaîne des branches non fusionnées (chacune empilée sur la précédente) :
 `jeu/prompt-26-sortie-pc` → `jeu/prompt-27-loading-screen` → `jeu/prompt-28-dialogues-nantais`
 → `jeu/prompt-29-interactions-hors-ecran` → `jeu/prompt-30-bandes-sonores-ambiances` →
 `jeu/prompt-31-bureau-cadrage` → `jeu/prompt-32-bureau-style-epure` →
-`jeu/prompt-33-sauvegarde-progression` → `vibe/prompt-33-audit-coherence-4c094b-application`.
+`jeu/prompt-33-sauvegarde-progression` → `vibe/prompt-33-audit-coherence-4c094b-application` → `jeu/prompt-34-fenetre-loire-tutoriel`.
 
 Variante non intégrée : `origin/jeu/prompt-30-bandes-sonores` (collaborateur, basée sur `main`,
 fichier `site/public/audio.js`) est une autre implémentation du prompt 30, **non fusionnée** et
