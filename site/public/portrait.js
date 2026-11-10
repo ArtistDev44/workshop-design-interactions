@@ -133,18 +133,21 @@ function regionsAppli() {
 }
 /** Bureau : tous les objets de la pièce en grosses cibles (2 colonnes), plus « S'installer au PC » */
 function boutonsBureau() {
-	const objets = [{ nom: 'ecran', label: t('portrait.installer'), action: sAsseoir }].concat(
+	let objets = [{ nom: 'ecran', label: t('portrait.installer'), action: sAsseoir }].concat(
 		OBJETS_BUREAU.slice(1)
 			.filter((o) => !o.visible || o.visible())
 			.map((o) => ({ nom: o.nom, label: String(o.label), action: () => ouvrirObjetBureau(o.nom) })),
 	);
+	// Prompt 69 : le soir, la sortie devient la grande cible principale (← Sortie)
+	if (typeof sortieVisible === 'function' && sortieVisible()) objets = [{ nom: 'sortie', label: '← ' + t('soir.sortie'), action: quitterBureau }].concat(objets.filter((o) => o.nom !== 'sortie'));
 	const y0 = 150 + (H * PL) / L + 24;
 	const lb = (PL - 60) / 2;
+	const hp = objets[0].nom === 'sortie' ? 124 : 96; // prompt 69 : la sortie ≥ 44 px CSS sur un téléphone de 412 px
 	objets.forEach((o, i) => {
 		const premier = i === 0;
 		const col = premier ? 0 : (i - 1) % 2;
 		const ligne = premier ? 0 : 1 + Math.floor((i - 1) / 2);
-		PORTRAIT.boutons.push({ x: premier ? 20 : 20 + col * (lb + 20), y: y0 + ligne * 110, l: premier ? PL - 40 : lb, h: 96, texte: o.label, action: o.action, primaire: premier });
+		PORTRAIT.boutons.push({ x: premier ? 20 : 20 + col * (lb + 20), y: premier ? y0 : y0 + hp + 14 + (ligne - 1) * 110, l: premier ? PL - 40 : lb, h: premier ? hp : 96, texte: o.label, action: o.action, primaire: premier });
 	});
 }
 function dessinerBoutonPortrait(b) {

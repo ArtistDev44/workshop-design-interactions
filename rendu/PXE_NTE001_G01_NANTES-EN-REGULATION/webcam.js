@@ -185,7 +185,7 @@ function detecterMain(px) {
 }
 /** Main reconnue : endormi → réveil ; éveillé → sieste */
 function basculerSiesteMain() {
-	if (ecran !== 'jeu' || !Jeu.horloge || MENU.actif || fenetre || smsActif || phase === 'fin' || phase === 'mail') return;
+	if (ecran !== 'jeu' || !Jeu.horloge || MENU.actif || fenetre || smsActif || phase === 'fin' || phase === 'mail' || phase === 'soir') return; // prompt 69 : pas de sieste le soir
 	if (enSieste) {
 		if (phase === 'reveil' && typeof seReveiller === 'function') seReveiller();
 		else {

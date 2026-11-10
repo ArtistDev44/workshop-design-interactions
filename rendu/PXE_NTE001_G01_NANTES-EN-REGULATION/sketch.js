@@ -139,7 +139,7 @@ function majAmbianceSonore() {
 	dernierContexteSonore = millis();
 	const m = typeof meteoFenetre === 'function' ? meteoFenetre() : Jeu.meteoActuelle;
 	const h = heureAffichee().h;
-	Confort.Son.ambiances.regler({ pluie: !!(m && m.pluie_mm >= 1), vent: !!(m && m.rafales_max >= 50), chaleur: !!(m && m.temp_max >= 30), nuit: h < 7 || h >= 20, actif: PC.etat !== 'eteint' || ecran === 'jeu' }); // prompt 44 § 6 : + vent, chaleur
+	Confort.Son.ambiances.regler({ pluie: !!(m && m.pluie_mm >= 1), vent: !!(m && m.rafales_max >= 50), chaleur: !!(m && m.temp_max >= 30), nuit: h < 7 || h >= 20 || phase === 'soir', actif: PC.etat !== 'eteint' || ecran === 'jeu' }); // prompt 44 § 6 : + vent, chaleur
 }
 
 function draw() {
@@ -167,6 +167,7 @@ function draw() {
 	}
 	verifierMecaniques(); // prompt 47 : inspection surprise (avant l'horloge, qui s'arrête alors)
 	majSelection(); // prompt 68 : un signalement trop longtemps en file expire
+	majSoir(); // prompt 69 : crépuscule accéléré, sortie du bureau
 	avancerTemps(); // horloge simulée, sieste, arrivée des incidents, fin de journée (immersion.js)
 	if (Jeu.equipes) Jeu.majEquipes(millis()); // équipes envoyées depuis la carte (prompt 22)
 	boutons = [];
@@ -215,6 +216,7 @@ function draw() {
 	}
 	dessinerGuide(); // prompt 37 : flèches « Prendre en main »
 	dessinerTutoriel(); // prompt 34 : par-dessus l'écran et les fenêtres
+	dessinerNoirSoir(); // prompt 69 : fondu et écran noir de la sortie
 	dessinerTransitionJour(); // prompt 43 : écran noir entre les journées, au-dessus de tout
 	dessinerClignement(); // prompt 21 § 2 : par-dessus tout, purement visuel (n'intercepte aucune entrée)
 	majCurseur();
@@ -235,7 +237,7 @@ let curseurMain = false;
 /** Prompt 43 : bandeau d'état en bas de l'écran du jeu — ce qu'il faut faire maintenant */
 function bandeauEtat() {
 	if (ecran !== 'jeu') return;
-	const cle = { attente: 'attente', reveil: 'attente', selection: 'selection', decision: 'decision', contradiction: 'contradiction', conflit: 'conflit', narration: 'narration', mail: 'mail', fin: 'fin' }[phase];
+	const cle = { attente: 'attente', reveil: 'attente', selection: 'selection', decision: 'decision', contradiction: 'contradiction', conflit: 'conflit', narration: 'narration', mail: 'mail', soir: 'soir', fin: 'fin' }[phase];
 	if (!cle) return;
 	const txt = phase === 'attente' && Jeu.journeeFinie && Jeu.journeeFinie() ? t('etat.finJournee', { fin: Jeu.formaterHeure(Jeu.finJournee()) }) : t('etat.' + cle, { x: IMMERSION.compression }); // prompt 51
 	const urgent = ['decision', 'contradiction', 'conflit'].includes(phase);
@@ -414,7 +416,7 @@ function indicateurSauvegarde() {
 
 function dessinerJeu() {
 	if (phase === 'fin') return RAPPORT ? dessinerEcranRapportImprime() : dessinerFin(); // prompt 41
-	if (phase === 'attente' || phase === 'reveil' || phase === 'mail') return dessinerJeuAttente();
+	if (phase === 'attente' || phase === 'reveil' || phase === 'mail' || phase === 'soir') return dessinerJeuAttente(); // prompt 69 : le soir, l'appli reste consultable
 	const d = dossierCourant();
 	const meteo = d ? Jeu.meteoDuJour(d.date) : null;
 
@@ -1426,6 +1428,7 @@ function keyPressed() {
 	}
 	// Prompt 35 : menu principal (écran titre / choix de la semaine)
 	if (MENU.actif) return toucheMenu(), false;
+	if (toucheSoir()) return false; // prompt 69 : Entrée / S → sortie du bureau
 	// Au bureau (§ 1, § 7) : Échap = menu ; Tab = objets (écran, livres) ; Entrée = ouvrir / s'installer
 	if (vue !== 'poste') {
 		if (vue !== 'bureau') return false;
@@ -1486,7 +1489,7 @@ function keyPressed() {
 	// Prompt 26 : Tab place le focus sur « Quitter le PC » (et l'en retire), Entrée l'active
 	if (keyCode === TAB) return basculerFocusQuitter(!focusQuitter), false;
 	if (focusQuitter && (keyCode === ENTER || keyCode === RETURN || key === ' ')) return quitterPC(), false;
-	if (phase === 'mail' && (keyCode === ENTER || keyCode === RETURN)) return journeeSuivante(), false;
+	if (phase === 'mail' && (keyCode === ENTER || keyCode === RETURN)) return rangerPoste(), false; // prompt 69 : on range le poste, la nuit tombe
 	// Touches valables partout
 	if (key === 'h' || key === 'H' || key === '?') return ouvrir('aide'), false;
 	if (key === 'm' || key === 'M') return toucheMEnfoncee(), false; // prompt 54 : brève = son, maintenue = micro

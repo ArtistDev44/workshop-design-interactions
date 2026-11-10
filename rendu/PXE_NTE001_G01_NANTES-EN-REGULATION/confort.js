@@ -530,6 +530,15 @@
 			Musique.prochaine = c.currentTime + 0.1;
 			Musique.minuterie = setInterval(Musique.programmer, 100);
 		},
+		/** Prompt 69 : le soir, la musique baisse (pas d'humeur « soirée » parmi les morceaux) */
+		facteur: 1,
+		attenuer: function (f) {
+			Musique.facteur = f;
+			const a = Musique.audio;
+			const p = piste();
+			if (a && Musique.minuterie === 'fichier' && p && p.volume) a.volume = p.volume * f;
+			if (Musique.bus && Son.ctx) Musique.bus.gain.setTargetAtTime(Math.max(0.0001, Musique.volume * f), Son.ctx.currentTime, 0.33);
+		},
 		/** Morceau CC0 : élément audio en boucle (OGG, ou MP3 si le navigateur ne lit pas l'OGG), fondu d'entrée 2 s */
 		audio: null,
 		demarrerFichier: function (p) {
@@ -543,7 +552,7 @@
 			let k = 0;
 			Musique.minuterie = setInterval(() => {
 				k = Math.min(1, k + 0.05);
-				if (Musique.audio === a) a.volume = p.volume * k;
+				if (Musique.audio === a) a.volume = p.volume * k * Musique.facteur;
 				if (k >= 1) {
 					clearInterval(Musique.minuterie);
 					Musique.minuterie = 'fichier'; // marqueur « en cours de lecture »

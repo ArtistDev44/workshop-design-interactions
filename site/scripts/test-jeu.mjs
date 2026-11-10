@@ -285,6 +285,71 @@ verifier(eq.pert === true ? eq.gain === eq.eff : eq.gain === Math.round(eq.eff /
 verifier(eq.snapPhase, 'équipes : la sauvegarde ne garde pas le cycle');
 verifier(eq.policeAvant === 1 && eq.policeMatin === 2, `équipes : effectifs non remis à zéro le matin (${eq.policeAvant} → ${eq.policeMatin})`);
 
+// Prompt 69 : fin de journée — phase « soir », nuit à 21 h, sortie → lendemain 6 h (ou bilan le dernier jour)
+{
+	const cs = contexte('fr');
+	vm.runInContext(
+		`var phase = 'attente', ecran = 'jeu', vue = 'poste', fenetre = null, enPause = false, enSieste = true, reveil = null, reduireAnimations = false;
+		var MENU = { actif: false }, PC = { fenetre: 'journal' }, SABLIER = { actif: true }, CAMERA = { x: 0, y: 0 }, METEO_VISU = { nuit: 1 }, focusBureau = -1, OBJETS_BUREAU = [];
+		var L = 1920, H = 1080, __t = 0, __leve = 0, __fin = 0, __annonces = [], __saves = 0;
+		var millis = () => __t, constrain = (v, a, b) => Math.max(a, Math.min(b, v));
+		var seLever = () => { __leve++; vue = 'bureau'; }, annoncer = (x) => __annonces.push(String(x)), interaction = () => {};
+		var Confort = { Son: { bip: () => {}, musique: { attenuer: () => {} } } }, Sauvegarde = { auto: () => __saves++ };
+		var dateLongue = (d) => d, localStorage = { getItem: () => null, setItem: () => {} };
+		var allerFin = () => { phase = 'fin'; __fin++; };
+		var journeeSuivante = () => { if (Jeu.terminee || !Jeu.jours[Jeu.jourIndex + 1]) return allerFin(); Jeu.journeeSuivante(); phase = 'attente'; };`,
+		cs,
+	);
+	vm.runInContext(readFileSync(join(pub, 'soir.js'), 'utf8'), cs, { filename: 'soir.js' });
+	const r = vm.runInContext(
+		`(() => {
+		Jeu.chargerSemaine(Jeu.semainesProposees()[0].lundi);
+		Jeu.nouvellePartie();
+		const res = {};
+		// journée 1 jouée jusqu'au soir (décisions « renfort »)
+		while (Jeu.prochainDuJour()) Jeu.decider('renfort');
+		Jeu.finDeJourneeTactique();
+		Jeu.horloge.minutes = Jeu.finJournee();
+		phase = 'mail';
+		const jauges = JSON.stringify(Jeu.jauges);
+		rangerPoste();
+		res.soir = phase === 'soir' && __leve === 1 && vue === 'bureau' && !enSieste && !SABLIER.actif && PC.fenetre === null && __saves === 1;
+		__t = 2000; majSoir(); res.mi = Jeu.horloge.minutes > Jeu.finJournee() && Jeu.horloge.minutes < 21 * 60 && !sortieVisible();
+		__t = 4100; majSoir(); res.h21 = Jeu.horloge.minutes === 21 * 60 && sortieVisible() && __annonces.some((a) => a.includes('sortie est à gauche'));
+		res.nuit = nuitSoir() === 1;
+		res.reglesIntactes = JSON.stringify(Jeu.jauges) === jauges; // le soir ne touche à aucune jauge
+		const jour = Jeu.jourIndex;
+		quitterBureau();
+		res.pan = cameraSoir() === 0; // début du pan
+		__t += 400; res.panMi = cameraSoir() > 0;
+		__t += 3000; majSoir();
+		res.lendemain = phase === 'attente' && Jeu.jourIndex === jour + 1 && Jeu.horloge.minutes === Jeu.debutJournee() && CAMERA.x === 0;
+		// départ anticipé le jour 2 : malus inchangé, puis le soir
+		Jeu.partirAvantLaFin('10:00');
+		phase = 'mail'; rangerPoste(); res.departSoir = phase === 'soir';
+		__t += 4100; majSoir(); quitterBureau(); __t += 5000; majSoir();
+		res.departMalus = phase === 'attente' && !!Jeu.blame && Jeu.blame.malus === -8; // malus inchangé, le lendemain
+		// reprise d'une sauvegarde faite le soir : nuit installée, flèche visible
+		phase = 'soir'; __t += 10; reprendreSoir(); majSoir(); res.reprise = sortieVisible();
+		// dernier jour : la sortie mène au bilan
+		phase = 'soir'; SOIR.sortie = 0;
+		while (Jeu.jours[Jeu.jourIndex + 1]) Jeu.journeeSuivante();
+		res.texteFin = texteNoirSoir().titre;
+		reprendreSoir(); majSoir(); quitterBureau(); __t += 5000; majSoir();
+		res.bilan = phase === 'fin' && __fin === 1;
+		return res;
+	})()`,
+		cs,
+	);
+	for (const [k, v] of Object.entries(r)) if (k !== 'texteFin') verifier(v === true, `soir (prompt 69) : ${k} = ${v}`);
+	verifier(r.texteFin === 'Fin de la semaine', `soir : texte du dernier soir « ${r.texteFin} »`);
+	const imm = readFileSync(join(pub, 'immersion.js'), 'utf8');
+	const garde = (imm.match(/function avancerTemps\(\)[\s\S]*?\n\tif \(([^\n]*)\) return;/) || [])[1] || '';
+	verifier(garde.includes("phase === 'soir'"), 'soir : le temps (incidents, sieste, sablier) ne doit pas avancer pendant le soir');
+	verifier(/phase === 'soir'\) return; \/\/ prompt 69/.test(readFileSync(join(pub, 'webcam.js'), 'utf8')), 'soir : la main devant la webcam ne doit pas lancer de sieste le soir');
+	verifier(/ui\.phase === 'soir'/.test(readFileSync(join(pub, 'sauvegarde.js'), 'utf8')), 'soir : la sauvegarde doit reprendre la phase soir');
+}
+
 // Traductions : toute clé française existe en anglais
 const manquantes = vm.runInContext('Object.keys(TRADUCTIONS.fr).filter((k) => TRADUCTIONS.en[k] === undefined)', fr);
 verifier(manquantes.length === 0, `clés sans traduction anglaise : ${manquantes.slice(0, 8).join(', ')}`);
