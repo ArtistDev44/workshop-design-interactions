@@ -9,9 +9,11 @@ interface Props {
 	/** Titre de la page ; absent = page d'accueil. */
 	title?: string;
 	description?: string;
+	/** Page en pleine largeur (accueil brutaliste) : main sort de la largeur max. */
+	pleineLargeur?: boolean;
 }
 
-const { title, description = "Site de l'édition PATRIMOINE.EXE / Nantes 001 — ESD Nantes, B3 Design, 2026." } =
+const { title, description = "Site de l'édition PATRIMOINE.EXE / Nantes 001 — ESD Nantes, B3 Design, 2026.", pleineLargeur = false } =
 	Astro.props;
 const nomSite = 'PATRIMOINE.EXE · NTE001';
 const titreComplet = title ? `${title} — ${nomSite}` : nomSite;
@@ -31,7 +33,7 @@ const titreComplet = title ? `${title} — ${nomSite}` : nomSite;
 	<body>
 		<a class="evitement" href="#contenu">Aller au contenu</a>
 		<Header />
-		<main id="contenu" tabindex="-1">
+		<main id="contenu" tabindex="-1" class={pleineLargeur ? 'pleine-largeur' : undefined}>
 			<slot />
 		</main>
 		<Footer />

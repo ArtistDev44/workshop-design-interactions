@@ -74,6 +74,12 @@ main {
 	padding: var(--e-5) var(--e-3);
 }
 
+/* Page pleine largeur (accueil) : la grille bento touche les bords du viewport */
+main.pleine-largeur {
+	max-width: none;
+	padding: var(--e-2);
+}
+
 h1,
 h2,
 h3 {
@@ -183,4 +189,5 @@ main:focus {
 /* Point de rupture principal — DESIGN.md › breakpoints (720px) */
 @media (min-width: 720px) {
 	main { padding: var(--e-6) var(--e-4); }
+	main.pleine-largeur { padding: var(--e-3); }
 }
