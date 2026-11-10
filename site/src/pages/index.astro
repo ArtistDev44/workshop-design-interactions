@@ -1,12 +1,13 @@
 ---
 import { lien } from '../lib/liens';
-// Page d'accueil de l'édition NTE001 (prompt 05).
+// Page d'accueil de l'édition NTE001 (prompt 05), refondue en style brutaliste.
 // Textes issus du framework PATRIMOINE.EXE et de todo.md : aucun contenu inventé.
 import Layout from '../layouts/Layout.astro';
 import edition from '../data/edition.json';
 import { getOeuvres, lienJouable, slugDe } from '../lib/oeuvres';
 
 const jouables = (await getOeuvres()).filter((o) => lienJouable(o));
+const jeu = jouables[0] ?? null;
 const urlEnLigne = new URL(lien(), Astro.site).href;
 
 const compteurs = [
@@ -26,25 +27,50 @@ const principes = [
 ];
 
 const appels = [
-	{ href: 'oeuvres/', titre: 'Œuvres', texte: 'La galerie des œuvres de l’édition.' },
-	{ href: 'catalogue/', titre: 'Catalogue', texte: 'L’archive complète, œuvre par œuvre.' },
-	{ href: 'methode/', titre: 'Méthode', texte: 'Le protocole PATRIMOINE.EXE en 10 étapes.' },
+	{ href: 'jeu/', titre: 'LE JEU', texte: 'Nantes en régulation, jouable maintenant.' },
+	{ href: 'oeuvres/', titre: 'ŒUVRES', texte: 'La galerie des œuvres de l’édition.' },
+	{ href: 'catalogue/', titre: 'CATALOGUE', texte: 'L’archive complète, œuvre par œuvre.' },
+	{ href: 'methode/', titre: 'MÉTHODE', texte: 'Le protocole PATRIMOINE.EXE en 10 étapes.' },
 ];
 ---
 
 <Layout>
-	<section class="edition" aria-labelledby="titre-edition">
-		<p class="edition__surtitre mono">
+	<section class="hero" aria-labelledby="titre-edition">
+		<p class="hero__surtitre mono">
 			{edition.edition} · {edition.host} · {edition.type}
 		</p>
 		<h1 id="titre-edition">
 			<span>PATRIMOINE.EXE</span>
-			<span class="edition__ville">{edition.city.toUpperCase()} {edition.numero}</span>
+			<span class="hero__ville">{edition.city.toUpperCase()} {edition.numero}</span>
 		</h1>
-		<p class="edition__infos">
+		<p class="hero__infos">
 			Édition pilote · {edition.programme} · 9, 10 &amp; 12 novembre {edition.year}
 		</p>
 	</section>
+
+	{
+		jeu && (
+			<section class="jeu-banner" aria-labelledby="titre-jeu">
+				<p class="jeu-banner__etiquette mono">LE JEU DE L'ÉDITION · {jeu.data.id}</p>
+				<h2 id="titre-jeu">{jeu.data.titre.toUpperCase()}</h2>
+				<p class="jeu-banner__texte">
+					Salle de contrôle des transports nantais : rejouez une semaine réelle du réseau Naolib,
+					dossier par dossier. Aucun événement inventé.
+				</p>
+				<p class="jeu-banner__actions">
+					<a class="btn btn--primaire" href={lienJouable(jeu)}>
+						JOUER →
+					</a>
+					<a class="btn" href={lien('jeu/')}>
+						LA PAGE DU JEU →
+					</a>
+					<a class="btn" href={lien(slugDe(jeu))}>
+						LIRE LE CARTEL →
+					</a>
+				</p>
+			</section>
+		)
+	}
 
 	<section class="manifeste" aria-labelledby="titre-manifeste">
 		<h2 id="titre-manifeste" class="visuellement-cache">Manifeste</h2>
@@ -77,38 +103,14 @@ const appels = [
 		</ul>
 	</section>
 
-	{
-		jouables.length > 0 && (
-			<section class="jouer" aria-labelledby="titre-jouer">
-				<h2 id="titre-jouer">Jouer maintenant</h2>
-				<ul class="jouer__liste">
-					{jouables.map((o) => (
-						<li class="jouer__item">
-							<div>
-								<p class="jouer__id mono">{o.data.id}</p>
-								<p class="jouer__titre">{o.data.titre}</p>
-								<p class="jouer__texte">
-									{o.data.stack.split(',')[0]} · <a href={lien(slugDe(o))}>lire le cartel</a>
-								</p>
-							</div>
-							<a class="jouer__bouton" href={lienJouable(o)}>
-								Jouer<span class="visuellement-cache"> à « {o.data.titre} »</span> →
-							</a>
-						</li>
-					))}
-				</ul>
-			</section>
-		)
-	}
-
 	<section class="chaine" aria-labelledby="titre-chaine">
-		<h2 id="titre-chaine">La chaîne à tenir</h2>
+		<h2 id="titre-chaine">LA CHAÎNE À TENIR</h2>
 		<ol class="chaine__liste">
 			{
 				chaine.map((c, i) => (
 					<li>
 						<span class="chaine__num mono">0{i + 1}</span>
-						<span class="chaine__etape">{c}</span>
+						<span class="chaine__etape">{c.toUpperCase()}</span>
 					</li>
 				))
 			}
@@ -130,7 +132,7 @@ const appels = [
 	</nav>
 
 	<section class="qr-edition" aria-labelledby="titre-qr">
-		<h2 id="titre-qr">Le site en ligne</h2>
+		<h2 id="titre-qr">LE SITE EN LIGNE</h2>
 		<img
 			src={lien(`assets/qr-edition.png`)}
 			alt="QR code vers le site en ligne de l’édition PATRIMOINE.EXE / Nantes 001"
@@ -142,34 +144,101 @@ const appels = [
 </Layout>
 
 <style>
+	/* Brutalisme : bords noirs pleins, ombres dures sans flou, angles droits,
+	   capitales. Contraste conservé ≥ 4,5:1 (noir/blanc, blanc sur --c-primaire 5,9:1). */
 	section {
 		margin-bottom: var(--e-6);
 	}
 
-	/* En-tête éditorial */
-	.edition__surtitre {
+	h1, h2 {
+		text-transform: uppercase;
+		letter-spacing: 0.01em;
+	}
+
+	/* Héros */
+	.hero {
+		border: 6px solid var(--c-texte);
+		box-shadow: 12px 12px 0 var(--c-texte);
+		padding: var(--e-5);
+		margin-bottom: var(--e-6);
+	}
+	.hero__surtitre {
 		font-size: var(--t-petit);
-		color: var(--c-texte-doux);
+		text-transform: uppercase;
 		margin-bottom: var(--e-2);
 	}
-	.edition h1 {
+	.hero h1 {
 		font-size: var(--t-xxl);
-		line-height: 0.95;
+		line-height: 0.9;
 		display: flex;
 		flex-direction: column;
 		margin-bottom: var(--e-3);
 	}
-	.edition__ville {
-		color: var(--c-primaire);
+	.hero__ville {
+		background: var(--c-primaire);
+		color: var(--c-fond);
+		align-self: flex-start;
+		padding: 0 var(--e-3);
 	}
-	.edition__infos {
+	.hero__infos {
 		font-size: var(--t-s);
+		font-weight: 600;
+		margin: 0;
+	}
+
+	/* Bannière du jeu */
+	.jeu-banner {
+		border: 6px solid var(--c-texte);
+		background: var(--c-primaire);
+		color: var(--c-fond);
+		box-shadow: 12px 12px 0 var(--c-texte);
+		padding: var(--e-5);
+	}
+	.jeu-banner__etiquette {
+		font-size: var(--t-petit);
+		text-transform: uppercase;
+		margin-bottom: var(--e-2);
+	}
+	.jeu-banner h2 {
+		font-size: var(--t-xxl);
+		line-height: 0.95;
+		margin-bottom: var(--e-3);
+	}
+	.jeu-banner__texte {
+		font-size: var(--t-s);
+		max-width: 60ch;
+	}
+	.jeu-banner__actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--e-3);
+		margin: 0;
+	}
+	.btn {
+		display: inline-block;
+		padding: var(--e-3) var(--e-5);
+		border: 4px solid var(--c-texte);
+		background: var(--c-fond);
+		color: var(--c-texte);
+		text-decoration: none;
+		font-weight: 700;
+		font-size: var(--t-s);
+		text-transform: uppercase;
+		box-shadow: 6px 6px 0 var(--c-texte);
+	}
+	.btn:hover {
+		transform: translate(2px, 2px);
+		box-shadow: 4px 4px 0 var(--c-texte);
+	}
+	.btn--primaire {
+		background: var(--c-texte);
+		color: var(--c-fond);
 	}
 
 	/* Manifeste */
 	.manifeste {
-		border-left: 6px solid var(--c-tertiaire);
-		padding-left: var(--e-4);
+		border: 4px solid var(--c-texte);
+		padding: var(--e-4);
 	}
 	blockquote {
 		margin: 0 0 var(--e-3);
@@ -177,18 +246,23 @@ const appels = [
 	blockquote p {
 		font-family: var(--f-titre);
 		font-size: var(--t-m);
-		line-height: 1.2;
+		font-weight: 600;
+		line-height: 1.15;
+		text-transform: uppercase;
 		max-width: 40ch;
 		margin: 0;
 	}
 	.manifeste__en p {
 		font-size: var(--t-s);
-		color: var(--c-texte-doux);
+		text-transform: none;
 		font-style: italic;
+		font-weight: 400;
+		color: var(--c-texte-doux);
 	}
 	.manifeste__source {
 		font-size: var(--t-petit);
-		color: var(--c-texte-doux);
+		font-family: var(--f-mono);
+		margin: 0;
 	}
 
 	/* Compteurs */
@@ -198,11 +272,12 @@ const appels = [
 		padding: 0;
 		display: grid;
 		grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-		gap: var(--e-3);
+		gap: var(--e-4);
 	}
 	.compteurs li {
-		border-top: 4px solid var(--c-primaire);
-		padding-top: var(--e-2);
+		border: 4px solid var(--c-texte);
+		padding: var(--e-3);
+		box-shadow: 8px 8px 0 var(--c-texte);
 		display: flex;
 		flex-direction: column;
 	}
@@ -214,109 +289,97 @@ const appels = [
 	}
 	.compteurs__label {
 		font-size: var(--t-petit);
-		color: var(--c-texte-doux);
-	}
-
-	/* Jouer maintenant */
-	.jouer__liste {
-		list-style: none;
-		margin: 0;
-		padding: 0;
-		display: grid;
-		gap: var(--e-3);
-	}
-	.jouer__item {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		justify-content: space-between;
-		gap: var(--e-3);
-		padding: var(--e-4);
-		background: var(--c-fond-alt);
-		border-left: 6px solid var(--c-primaire);
-		border-radius: var(--r-md);
-	}
-	.jouer__item p {
-		margin: 0;
-	}
-	.jouer__id,
-	.jouer__texte {
-		font-size: var(--t-petit);
-		color: var(--c-texte-doux);
-	}
-	.jouer__titre {
-		font-family: var(--f-titre);
-		font-size: var(--t-l);
-		font-weight: 600;
-		line-height: 1.1;
-	}
-	.jouer__bouton {
-		padding: var(--e-3) var(--e-5);
-		background: var(--c-primaire);
-		color: var(--c-fond);
-		border-radius: var(--r-md);
-		text-decoration: none;
-		font-weight: 600;
-		font-size: var(--t-s);
-	}
-	.jouer__bouton:hover {
-		background: var(--c-texte);
-		color: var(--c-fond);
+		text-transform: uppercase;
 	}
 
 	/* Chaîne source → grammaire → système → œuvre */
+	.chaine h2 {
+		border-bottom: 6px solid var(--c-texte);
+		padding-bottom: var(--e-2);
+	}
 	.chaine__liste {
 		list-style: none;
-		margin: 0;
+		margin: 0 0 var(--e-4);
 		padding: 0;
 		display: grid;
-		gap: var(--e-3);
-		counter-reset: none;
+		gap: var(--e-4);
 	}
 	.chaine__liste li {
-		position: relative;
+		border: 4px solid var(--c-texte);
+		padding: var(--e-3);
 		display: flex;
 		flex-direction: column;
 		gap: var(--e-1);
-		padding: var(--e-3);
-		background: var(--c-fond-alt);
-		border-radius: var(--r-md);
+		box-shadow: 8px 8px 0 var(--c-texte);
 	}
 	.chaine__num {
 		font-size: var(--t-petit);
-		color: var(--c-texte-doux);
 	}
 	.chaine__etape {
 		font-family: var(--f-titre);
 		font-size: var(--t-m);
-		font-weight: 600;
+		font-weight: 700;
 		color: var(--c-primaire);
-	}
-	.principes {
-		margin: var(--e-4) 0 0;
-		padding-left: var(--e-4);
-		font-size: var(--t-petit);
 	}
 	@media (min-width: 720px) {
 		.chaine__liste {
 			grid-template-columns: repeat(4, 1fr);
 		}
-		/* Flèches entre les étapes, décoratives (non lues) */
-		.chaine__liste li:not(:last-child)::after {
-			content: '→';
-			position: absolute;
-			right: calc(var(--e-3) * -1);
-			top: 50%;
-			transform: translate(50%, -50%);
-			font-size: var(--t-m);
-			color: var(--c-tertiaire);
-			z-index: 1;
-		}
+	}
+	.principes {
+		margin: 0;
+		padding: var(--e-3);
+		border: 4px solid var(--c-texte);
+		font-size: var(--t-petit);
+		list-style: none;
+	}
+	.principes li {
+		padding: var(--e-1) 0;
+		border-bottom: 2px solid var(--c-filet);
+	}
+	.principes li:last-child {
+		border-bottom: none;
+	}
+	.principes li::before {
+		content: '■ ';
+		color: var(--c-primaire);
+	}
+
+	/* Appels */
+	.appels {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+		gap: var(--e-4);
+	}
+	.appel {
+		display: flex;
+		flex-direction: column;
+		gap: var(--e-1);
+		padding: var(--e-4);
+		border: 4px solid var(--c-texte);
+		box-shadow: 8px 8px 0 var(--c-texte);
+		text-decoration: none;
+		color: var(--c-texte);
+	}
+	.appel:hover {
+		background: var(--c-primaire);
+		color: var(--c-fond);
+		transform: translate(2px, 2px);
+		box-shadow: 6px 6px 0 var(--c-texte);
+	}
+	.appel__titre {
+		font-family: var(--f-titre);
+		font-size: var(--t-l);
+		font-weight: 700;
+	}
+	.appel__texte {
+		font-size: var(--t-petit);
 	}
 
 	/* QR code de l'édition */
 	.qr-edition {
-		margin-top: var(--e-6);
+		border: 4px solid var(--c-texte);
+		padding: var(--e-4);
 		display: grid;
 		justify-items: start;
 		gap: var(--e-2);
@@ -325,39 +388,12 @@ const appels = [
 		font-size: var(--t-m);
 		margin: 0;
 	}
+	.qr-edition img {
+		border: 3px solid var(--c-texte);
+	}
 	.qr-edition p {
 		font-size: var(--t-petit);
 		overflow-wrap: anywhere;
 		margin: 0;
-	}
-
-	/* Appels */
-	.appels {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-		gap: var(--e-3);
-	}
-	.appel {
-		display: flex;
-		flex-direction: column;
-		gap: var(--e-1);
-		padding: var(--e-4);
-		border: 2px solid var(--c-texte);
-		border-radius: var(--r-lg);
-		text-decoration: none;
-		color: var(--c-texte);
-		transition: background-color var(--transition), color var(--transition);
-	}
-	.appel:hover {
-		background: var(--c-primaire);
-		color: var(--c-fond);
-	}
-	.appel__titre {
-		font-family: var(--f-titre);
-		font-size: var(--t-m);
-		font-weight: 600;
-	}
-	.appel__texte {
-		font-size: var(--t-petit);
 	}
 </style>

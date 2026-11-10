@@ -1,7 +1,7 @@
 // Construction unique des liens internes du site.
-// Toutes les pages et ressources passent par `lien()` : le préfixe de base
-// (/workshop-design-interactions/patrimoine-exe/nantes/001/) et la barre oblique finale
-// sont gérés ici, à un seul endroit.
+// Toutes les pages et ressources passent par `lien()` : le site est servi à la racine
+// du domaine (base '/'), les liens sont donc absolus depuis la racine (/oeuvres/) et la
+// barre oblique finale est gérée ici, à un seul endroit.
 
 /** Préfixe de base du site, toujours terminé par « / ». */
 export const BASE = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL : `${import.meta.env.BASE_URL}/`;
@@ -21,6 +21,7 @@ export function lien(chemin = ''): string {
 /** Pages du menu principal (Header) — une seule liste pour tout le site. */
 export const NAVIGATION = [
 	{ chemin: '', label: 'Accueil' },
+	{ chemin: 'jeu', label: 'Jeu' },
 	{ chemin: 'oeuvres', label: 'Œuvres' },
 	{ chemin: 'catalogue', label: 'Catalogue' },
 	{ chemin: 'statistiques', label: 'Statistiques' },
