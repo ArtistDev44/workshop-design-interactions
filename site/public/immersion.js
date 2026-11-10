@@ -47,8 +47,8 @@ let derniereImage = 0;
 // Objets cliquables du bureau (coordonnées pixel art, voir bureau.js)
 const OBJETS_BUREAU = [
 	{ nom: 'ecran', label: 'Écran du PC' },
-	{ nom: 'tuto', label: 'Livre « Tutoriel »', x: 140, y: 139, l: 36, h: 7 },
-	{ nom: 'stress', label: 'Livre « Bien gérer son stress »', x: 142, y: 131, l: 32, h: 7 },
+	{ nom: 'tuto', label: 'Livre « Tutoriel »', x: 58, y: 190, l: 50, h: 9 },
+	{ nom: 'stress', label: 'Livre « Bien gérer son stress »', x: 62, y: 180, l: 44, h: 9 },
 ];
 
 function interaction() {
@@ -218,52 +218,37 @@ function dessinerAttente() {
 // ——— Mail de fin de journée (§ 6), affiché dans l'écran du PC ———
 let mailCalcule = null;
 function dessinerMail() {
+	// Messagerie du PC — Pixel Design System (fond noir, angles droits, titres pixel, bouton primaire rouge)
 	if (!mailCalcule || mailCalcule.jour !== Jeu.jourIndex) mailCalcule = Object.assign(Jeu.mailDuJour(), { jour: Jeu.jourIndex });
 	const m = mailCalcule;
 	const x = 140;
 	const y = 90;
 	const l = L - 280;
 	const h = H - 180;
-	voile();
-	panneau(x, y, l, h, m.positif ? C.vert : C.rouge);
-	// Barre de la messagerie
 	noStroke();
-	fill(C.accent);
-	rect(x, y, l, 64, 12, 12, 0, 0);
-	fill(C.panneau);
-	textFont(POLICE_TEXTE);
-	textStyle(BOLD);
-	textSize(24);
-	textAlign(LEFT, CENTER);
-	text('Messagerie de la salle · 1 nouveau message', x + 32, y + 32);
-	textStyle(NORMAL);
-	textAlign(LEFT, TOP);
-	textFont(POLICE_DONNEES);
-	textSize(20);
-	fill(C.gris);
-	text('De : ' + m.de, x + 48, y + 96);
-	text('À : régulateur · poste 3', x + 48, y + 126);
-	fill(C.texte);
-	textFont(POLICE_TEXTE);
-	textStyle(BOLD);
-	textSize(32);
-	text(m.objet, x + 48, y + 168, l - 96, 50);
-	textStyle(NORMAL);
-	textSize(23);
-	let ty = y + 240;
-	m.lignes.forEach((ligne, i) => {
+	fill(13, 12, 12, 200);
+	rect(0, 0, L, H);
+	dsPanneau(x, y, l, h, 'MESSAGERIE', m.positif ? 'rgba(0,251,116,0.12)' : 'rgba(212,3,28,0.25)');
+	dsBadge(x + l - 120, y + 30, '1 nouveau', m.positif ? 'succes' : 'erreur');
+	dsTexte('De : ' + m.de, x + 32, y + 84, 20, DS.blanc50, 'left');
+	dsTexte('À : régulateur · poste 3', x + 32, y + 114, 20, DS.blanc50, 'left');
+	dsTitre(m.objet.toUpperCase(), x + 32, y + 156, 28, DS.blanc, 'left');
+	let ty = y + 220;
+	m.lignes.forEach((ligne) => {
 		const estFait = /^\d{2}:\d{2} – /.test(ligne);
-		fill(!estFait ? C.texte : ligne.includes('(bon choix !)') ? C.vert : C.rouge);
-		textFont(estFait ? POLICE_DONNEES : POLICE_TEXTE);
-		textSize(estFait ? 20 : 23);
-		text((estFait ? '• ' : '') + ligne, x + 48, ty, l - 96, 80);
-		ty += textWidth(ligne) > l - 120 ? 62 : 38;
+		const ok = ligne.includes('(bon choix !)');
+		if (estFait) {
+			noStroke();
+			fill(ok ? DS.succes : DS.primaire);
+			rect(x + 32, ty + 4, 6, 22);
+		}
+		dsTexte(ligne, x + (estFait ? 50 : 32), ty, estFait ? 19 : 21, estFait ? (ok ? DS.succesClair : DS.erreurClair) : DS.blanc, 'left', l - 100);
+		textFont(DS.policeTexte);
+		textSize(estFait ? 19 : 21);
+		ty += textWidth(ligne) > l - 110 ? 60 : 36;
 	});
-	fill(C.gris);
-	textFont(POLICE_TEXTE);
-	textSize(20);
-	text('— La direction', x + 48, Math.min(ty + 10, y + h - 150));
-	bouton(x + l - 400, y + h - 104, 352, 72, m.dernier ? 'Bilan de la semaine (Entrée)' : 'Journée suivante (Entrée)', journeeSuivante);
+	dsTexte('— La direction', x + 32, Math.min(ty + 10, y + h - 150), 20, DS.blanc50, 'left');
+	dsBouton(x + l - 420, y + h - 96, 388, 64, m.dernier ? 'Bilan de la semaine (Entrée)' : 'Journée suivante (Entrée)', journeeSuivante, 'primaire');
 }
 
 // ——— Intro SMS (§ 2) ———
@@ -430,29 +415,16 @@ function dessinerReveil() {
 
 // ——— Personnage qui somnole au bureau (§ 4), en pixel art ———
 function dessinerPersonnageSieste(g) {
-	// Vu de dos, avachi dans le fauteuil, mains derrière la tête ; « Z » qui montent (bureau.js : fauteuil en 212..268)
+	// Vue à la première personne : les paupières s'alourdissent (bandes sombres en haut et en bas), « Z » au centre
 	if (!enSieste) return;
-	const bob = reduireAnimations ? 0 : Math.round(Math.sin(millis() / 700));
-	const cx = 241;
-	const y = 160 + bob;
-	// Épaules / dos du pull au-dessus du dossier
-	px(g, P.contour, cx - 20, y + 14, 40, 6);
-	px(g, P.tissuClair, cx - 19, y + 15, 38, 5);
-	// Bras repliés, coudes écartés
-	px(g, P.contour, cx - 26, y - 2, 10, 18);
-	px(g, P.tissuClair, cx - 25, y - 1, 8, 16);
-	px(g, P.contour, cx + 16, y - 2, 10, 18);
-	px(g, P.tissuClair, cx + 17, y - 1, 8, 16);
-	// Tête (cheveux, vue de dos) et mains croisées derrière
-	disque(g, cx, y + 2, 10, P.contour);
-	disque(g, cx, y + 2, 9, '#4a2f1d');
-	disque(g, cx - 3, y - 1, 4, '#62412a');
-	px(g, '#e0a87a', cx - 10, y + 4, 20, 4); // mains
-	px(g, P.contour, cx - 10, y + 8, 20, 1);
-	px(g, '#e0a87a', cx - 11, y + 2, 2, 4); // oreilles
-	px(g, '#e0a87a', cx + 9, y + 2, 2, 4);
+	const respir = reduireAnimations ? 0 : Math.round((Math.sin(millis() / 900) + 1) * 4);
+	const h = 74 + respir;
+	px(g, '#120c0a', 0, 0, BW, h);
+	px(g, '#120c0a', 0, BH - h, BW, h);
+	px(g, '#3a2a22', 0, h - 3, BW, 3);
+	px(g, '#3a2a22', 0, BH - h, BW, 3);
 	const t = reduireAnimations ? 2 : Math.floor(millis() / 600) % 3;
-	for (let k = 0; k <= t; k++) textePixel(g, 'Z', cx + 14 + k * 6, y - 16 - k * 8, '#f7f1e1');
+	for (let k = 0; k <= t; k++) textePixel(g, 'Z', BW / 2 + 40 + k * 7, 60 - k * 9, '#f7f1e1');
 }
 
 // ——— Livres posés sur le plateau (§ 7) : placeholder pixel art (dos + titre) ———
@@ -460,9 +432,9 @@ function dessinerLivres(g) {
 	const t = OBJETS_BUREAU[1];
 	const s = OBJETS_BUREAU[2];
 	boite(g, t.x, t.y, t.l, t.h, '#2e6fb5', '#5a95d6', '#1d4f86');
-	textePixel(g, 'TUTO', t.x + 10, t.y + 1, '#f7f1e1');
+	textePixel(g, 'TUTO', t.x + 17, t.y + 2, '#f7f1e1');
 	boite(g, s.x, s.y, s.l, s.h, '#3f7a43', '#5f9e4f', '#2f5d3a');
-	textePixel(g, 'STRESS', s.x + 4, s.y + 1, '#f7f1e1');
+	textePixel(g, 'STRESS', s.x + 10, s.y + 2, '#f7f1e1');
 }
 
 function ouvrirObjetBureau(nom) {
