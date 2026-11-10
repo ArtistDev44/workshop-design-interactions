@@ -101,6 +101,7 @@ function texteMeilleur(cle) {
 
 function draw() {
 	avancerTemps(); // horloge simulée, sieste, arrivée des incidents, fin de journée (immersion.js)
+	if (Jeu.equipes) Jeu.majEquipes(millis()); // équipes envoyées depuis la carte (prompt 22)
 	boutons = [];
 	// 1. Contenu de l'écran du PC, en 1920×1080 : l'appli de régulation, ou le système (démarrage, bureau)
 	sourisVersEcran();
@@ -578,11 +579,11 @@ function dessinerListeLignes(zone, dActuel) {
 function dessinerJauges() {
 	const z = { x: DROITE.x, y: DROITE.y, l: DROITE.l, h: 110 };
 	panneau(z.x, z.y, z.l, z.h);
-	const jauges = Jeu.jauges || { fluidite: 50, satisfaction: 50, reputation: 50 }; // départ 50 (Q40)
+	const jauges = Jeu.jauges || { fluidite: 50, reputation: 50, budget: 50 }; // départ 50 (Q40)
 	const defs = [
 		['Fluidité', jauges.fluidite],
-		['Satisfaction', jauges.satisfaction],
 		['Réputation', jauges.reputation],
+		['Budget', jauges.budget],
 	];
 	const lb = (z.l - 48 - 2 * 20) / 3;
 	defs.forEach(([nom, v], i) => {
@@ -819,7 +820,7 @@ function dessinerNarration() {
 	textFont(POLICE_DONNEES);
 	textSize(18);
 	fill(C.gris);
-	const noms = ['Fluidité', 'Satisfaction', 'Réputation'];
+	const noms = ['Fluidité', 'Réputation', 'Budget'];
 	r.deltas.forEach((v, i) => {
 		const de = r.des[i] ? '  (dé : ' + r.des[i] + ')' : '';
 		fill(v > 0 ? C.vert : v < 0 ? C.rouge : C.gris);
@@ -880,8 +881,8 @@ function dessinerFin() {
 	// Jauges finales
 	const noms = [
 		['Fluidité du réseau', b.jauges.fluidite],
-		['Satisfaction usagers', b.jauges.satisfaction],
 		['Réputation de la salle', b.jauges.reputation],
+		['Budget', b.jauges.budget],
 	];
 	noms.forEach(([n, v], i) => {
 		const y = g.y + 440 + i * 76;
@@ -967,7 +968,7 @@ function dessinerFin() {
 		textFont(POLICE_DONNEES);
 		textSize(18);
 		fill(C.gris);
-		const ds = ['fluidité', 'satisfaction', 'réputation'].map((n, i) => n + ' ' + (k.deltas[i] > 0 ? '+' : '') + k.deltas[i]).join(' · ');
+		const ds = ['fluidité', 'réputation', 'budget'].map((n, i) => n + ' ' + (k.deltas[i] > 0 ? '+' : '') + k.deltas[i]).join(' · ');
 		text(k.action + ' → ' + ds, d.x + 72, y + 58, d.l - 140, 50);
 		y += 126;
 	});
@@ -1120,10 +1121,14 @@ function keyPressed() {
 		if (key === 'h' || key === 'H' || key === '?') ouvrir('aide');
 		return false;
 	}
-	// Au poste, système du PC (démarrage / bureau) : Entrée ouvre l'appli, Échap fait se lever
+	// Au poste, système du PC (bureau RégulOS) : Tab = icônes, Entrée = ouvrir, Échap = fermer l'app puis se lever
 	if (PC.etat !== 'appli') {
-		if (keyCode === ESCAPE) seLever();
-		if ((keyCode === ENTER || keyCode === RETURN || key === ' ') && PC.etat === 'os') ouvrirAppli();
+		if (keyCode === ESCAPE) PC.fenetre ? fermerFenetreApp() : seLever();
+		if (PC.etat !== 'os') return false;
+		if (keyCode === TAB) PC.selection = (PC.selection + (keyIsDown(SHIFT) ? ICONES_OS.length - 1 : 1)) % ICONES_OS.length;
+		if (keyCode === ENTER || keyCode === RETURN || (key === ' ' && !PC.fenetre)) ouvrirIconeOS(PC.selection);
+		if (PC.fenetre === 'carte' && ['1', '2', '3', '4'].includes(key)) envoyerEquipeCarte(Object.keys(Jeu.EQUIPES)[Number(key) - 1]);
+		if (phase === 'mail' && PC.fenetre === null && (keyCode === ENTER || keyCode === RETURN)) return false;
 		return false;
 	}
 	// Au poste : Échap fait se lever (sauf à l'écran de fin)
@@ -1246,7 +1251,7 @@ function fenetreAide() {
 	text(
 		'Chaque dossier vient de données réelles : retard ≥ 10 min (temps réel), perturbation datée (archives), alerte météo ou affluence (agenda).\n\n' +
 			'Choisissez une action avant la fin du compteur. À 0, rien n’est décidé : seules les conséquences naturelles du dossier s’appliquent.\n\n' +
-			'Chaque action modifie 3 jauges (départ 50) : fluidité, satisfaction, réputation. Effet de base + 1 dé à 6 faces, renforcé par la météo, l’heure de pointe ou l’affluence.\n\n' +
+			'Chaque action modifie 3 jauges (départ 50) : fluidité, réputation, budget. Effet de base + 1 dé à 6 faces, renforcé par la météo, l’heure de pointe ou l’affluence.\n\n' +
 			'Fin de semaine : score = somme des 3 jauges (0–300).',
 		rx,
 		y + 150,

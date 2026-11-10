@@ -139,11 +139,12 @@
 	/* RÉGLAGES (interprétations à valider par le groupe — tout est ici, rien n'est caché ailleurs) */
 	const REGLAGES = {
 		dossiersParPartie: 15, // Q15 / 01-boucle : ~15 décisions
-		// Table des effets (Q57–Q60), dans l'ordre fluidité, satisfaction, réputation
+		// Table des effets (Q57–Q60), prompt 22 : ordre fluidité, réputation, BUDGET (la satisfaction devient le budget).
+		// Seules les valeurs sont réajustées pour le nouveau trio ; les décisions Q57–Q61 sont inchangées.
 		effets: {
-			devier: { nom: 'Dévier la ligne', base: [-10, 5, 0], communique: true },
-			retenir: { nom: 'Retenir en terminus', base: [-7, -12, null] }, // réputation : +8 si retard > 20 min sinon +4 (Q58)
-			renfort: { nom: 'Bus de renfort', base: [12, 8, -3] },
+			devier: { nom: 'Dévier la ligne', base: [-6, 6, -3], communique: true }, // détour : un peu de fluidité perdue, usagers informés, petit coût
+			retenir: { nom: 'Retenir en terminus', base: [-7, null, 2] }, // réputation : +8 si retard > 20 min sinon +4 (Q58) ; économise du budget
+			renfort: { nom: 'Bus de renfort', base: [12, 4, -12] }, // efficace mais cher : le budget n'est plus gratuit
 			rien: { nom: 'Ne rien faire' }, // −2 à −8 sur une jauge tirée au hasard (Q60)
 		},
 		// « base + 1d6 » (Q61) : le dé augmente l'AMPLITUDE de l'effet (même signe), d6 − 1 ∈ [0, 5] ;
@@ -156,15 +157,17 @@
 			'ligne en difficulté': (d) => [-Math.min(15, Math.max(4, Math.round(d.retard / 5))), 0, 0],
 			perturbation: () => [-5, 0, 0],
 			'alerte météo': () => [-4, 0, 0],
-			événement: () => [0, -4, 0],
+			événement: () => [0, -4, 0], // affluence non gérée : la réputation en pâtit
 		},
 		// Contradiction de sources (Q9, Q31) : mauvaise source = malus réputation + conséquence réelle
 		malusMauvaiseSource: -6,
 		seuilCritique: 20, // Q46
 	};
 	Jeu.REGLAGES = REGLAGES;
-	const NOMS_JAUGES = ['fluidite', 'satisfaction', 'reputation'];
-	const LIBELLES_JAUGES = { fluidite: 'fluidité', satisfaction: 'satisfaction', reputation: 'réputation' };
+	const NOMS_JAUGES = ['fluidite', 'reputation', 'budget'];
+	const LIBELLES_JAUGES = { fluidite: 'fluidité', reputation: 'réputation', budget: 'budget' };
+	Jeu.NOMS_JAUGES = NOMS_JAUGES;
+	Jeu.LIBELLES_JAUGES = LIBELLES_JAUGES;
 
 	/* Générateur pseudo-aléatoire à graine fixe (Q35) : même semaine = mêmes dés. */
 	function mulberry32(a) {
@@ -226,12 +229,17 @@
 	Jeu.nouvellePartie = function () {
 		const e = Jeu.etat;
 		Jeu.alea = mulberry32(e.seed || graineDe(e.semaine ? e.semaine.lundi : e.horodatage || 'direct'));
-		Jeu.jauges = { fluidite: 50, satisfaction: 50, reputation: 50 }; // Q40
+		Jeu.jauges = { fluidite: 50, reputation: 50, budget: 50 }; // Q40 (prompt 22 : trio fluidité / réputation / budget)
 		Jeu.paquet = construirePaquet(e);
 		e.dossiers = Jeu.paquet; // l'affichage (carte, liste) lit le paquet de la partie
 		Jeu.index = 0;
 		Jeu.historique = [];
 		Jeu.evenementsJournee = []; // prompt 21 § 3.1 : journal des dossiers traités
+		Jeu.messagesPatron = []; // prompt 22 : app « Messages du patron »
+		Jeu.commentaires = []; // prompt 22 : app « Community manager »
+		Jeu.equipes = []; // prompt 22 : équipes envoyées depuis la carte
+		Jeu.nonLus = { patron: 0, community: 0 };
+		Jeu.alertesJauges = {};
 		Jeu.terminee = Jeu.paquet.length === 0;
 		Jeu.preparerJournees();
 		return Jeu.paquet;
@@ -297,12 +305,12 @@
 		} else {
 			const eff = REGLAGES.effets[action];
 			const base = eff.base.slice();
-			if (action === 'retenir') base[2] = d.retard !== null && d.retard > 20 ? 8 : 4; // Q58
+			if (action === 'retenir') base[1] = d.retard !== null && d.retard > 20 ? 8 : 4; // Q58 (réputation)
 			deltas = base.map((b, i) => {
 				if (!b) return 0;
 				des[i] = Jeu.de6();
 				let v = Math.sign(b) * (Math.abs(b) + des[i] - 1); // base + 1d6 en amplitude (Q61)
-				if ((i === 0 && ctx.meteo) || (i === 1 && ctx.pointe) || (i === 2 && ctx.affluence)) v *= REGLAGES.coefContexte;
+				if ((i === 0 && ctx.meteo) || (i === 1 && (ctx.pointe || ctx.affluence))) v *= REGLAGES.coefContexte; // météo → fluidité ; pointe, affluence → réputation
 				return borner(Math.round(v));
 			});
 		}
@@ -313,7 +321,7 @@
 			mauvaiseSource = true;
 			const reel = (REGLAGES.naturel[d.type] || (() => [-4, 0, 0]))(d);
 			deltas = deltas.map((v, i) => borner(v + reel[i]));
-			deltas[2] = borner(deltas[2] + REGLAGES.malusMauvaiseSource);
+			deltas[1] = borner(deltas[1] + REGLAGES.malusMauvaiseSource); // malus de réputation (Q31)
 		}
 
 		NOMS_JAUGES.forEach((k, i) => (Jeu.jauges[k] = Math.max(0, Math.min(100, Jeu.jauges[k] + deltas[i]))));
@@ -339,7 +347,7 @@
 
 	/* Ton adaptatif selon les jauges (Q17) : neutre / tendu / critique. */
 	Jeu.ton = function () {
-		const min = Math.min(Jeu.jauges.fluidite, Jeu.jauges.satisfaction, Jeu.jauges.reputation);
+		const min = Math.min(Jeu.jauges.fluidite, Jeu.jauges.reputation, Jeu.jauges.budget);
 		return min < REGLAGES.seuilCritique ? 'critique' : min < 40 ? 'tendu' : 'neutre';
 	};
 
@@ -387,7 +395,7 @@
 			titre: 'Semaine correcte, avec des zones d’ombre',
 			texte:
 				'Le réseau a fonctionné, mais pas sans à-coups. Plusieurs décisions ont tenu, d’autres ont coûté ' +
-				'en fluidité, en satisfaction ou en réputation : le bilan est nuancé.',
+				'en fluidité, en réputation ou en budget : le bilan est nuancé.',
 		},
 		mauvaise: {
 			titre: 'La direction réprimande la salle de contrôle',
@@ -452,7 +460,7 @@
 	// =====================================================================
 	const DEBUT_JOURNEE = 6 * 60; // 6h00
 	const FIN_JOURNEE = 20 * 60; // 20h00
-	const NOMS_JAUGES_LONGS = { fluidite: 'la fluidité du réseau', satisfaction: 'la satisfaction usagers', reputation: 'la réputation de la salle' };
+	const NOMS_JAUGES_LONGS = { fluidite: 'la fluidité du réseau', reputation: 'la réputation de la salle', budget: 'le budget' };
 
 	/**
 	 * Découpe le paquet en journées (une par date réelle) et fixe l'heure d'arrivée de chaque dossier
@@ -489,6 +497,7 @@
 		Jeu.jours = jours;
 		Jeu.jourIndex = 0;
 		Jeu.horloge = { minutes: jours[0] ? jours[0].debut || DEBUT_JOURNEE : DEBUT_JOURNEE };
+		if (jours[0] && Jeu.messagesPatron) Jeu.messagePatron(consigneDuJour());
 	};
 
 	Jeu.jourCourant = () => (Jeu.jours || [])[Jeu.jourIndex] || null;
@@ -502,6 +511,8 @@
 	};
 	Jeu.journeeSuivante = function () {
 		Jeu.jourIndex++;
+		Jeu.alertesJauges = {};
+		if (Jeu.jourCourant()) Jeu.messagePatron(consigneDuJour());
 		Jeu.horloge.minutes = Jeu.debutJournee();
 		return Jeu.jourCourant();
 	};
@@ -511,7 +522,7 @@
 	};
 
 	/** Jauge touchée par un dossier (pour le malus de sieste) */
-	Jeu.jaugeConcernee = (d) => (d.type === 'événement' ? 'satisfaction' : 'fluidite');
+	Jeu.jaugeConcernee = (d) => (d.type === 'événement' ? 'reputation' : 'fluidite');
 
 	/** Sieste ratée (prompt 20 § 4) : −5 sur la jauge concernée, en plus des conséquences naturelles. */
 	Jeu.malusSieste = function (resultat) {
@@ -532,11 +543,11 @@
 		if (action === 'rien') return [-5 / 3, -5 / 3, -5 / 3]; // −2 à −8 sur une jauge au hasard : −5 en moyenne
 		const eff = REGLAGES.effets[action];
 		const base = eff.base.slice();
-		if (action === 'retenir') base[2] = d.retard !== null && d.retard !== undefined && d.retard > 20 ? 8 : 4;
+		if (action === 'retenir') base[1] = d.retard !== null && d.retard !== undefined && d.retard > 20 ? 8 : 4;
 		return base.map((b, i) => {
 			if (!b) return 0;
 			let v = Math.sign(b) * (Math.abs(b) + 2.5); // dé moyen : d6 − 1 = 2,5
-			if ((i === 0 && ctx.meteo) || (i === 1 && ctx.pointe) || (i === 2 && ctx.affluence)) v *= REGLAGES.coefContexte;
+			if ((i === 0 && ctx.meteo) || (i === 1 && (ctx.pointe || ctx.affluence))) v *= REGLAGES.coefContexte; // météo → fluidité ; pointe, affluence → réputation
 			return borner(v);
 		});
 	}
@@ -571,6 +582,7 @@
 			resultat: r,
 		};
 		Jeu.evenementsJournee.push(entree);
+		Jeu.reagirApps(entree);
 		return entree;
 	};
 
@@ -613,7 +625,7 @@
 			lignes.push('Journal de la journée du ' + date + ' :');
 			duJour.forEach((e) => lignes.push(Jeu.ligneMail(e)));
 		}
-		lignes.push('Jauges en fin de journée : fluidité ' + Jeu.jauges.fluidite + ', satisfaction ' + Jeu.jauges.satisfaction + ', réputation ' + Jeu.jauges.reputation + '.');
+		lignes.push('Jauges en fin de journée : fluidité ' + Jeu.jauges.fluidite + ', réputation ' + Jeu.jauges.reputation + ', budget ' + Jeu.jauges.budget + '.');
 		return {
 			de: 'Direction de la régulation',
 			objet: (parfaite ? 'Merci pour cette journée — ' : 'Points à revoir — ') + date,
@@ -621,6 +633,109 @@
 			lignes,
 			dernier: Jeu.jourIndex >= (Jeu.jours || []).length - 1,
 		};
+	};
+
+	// =====================================================================
+	// Prompt 22 — applications du PC : patron, community manager, journal, équipes
+	// Aucun fait inventé : tout texte reprend les données réelles des dossiers joués et des jauges.
+	// =====================================================================
+	const hhmm = (min) => String(Math.floor(min / 60) % 24).padStart(2, '0') + ':' + String(Math.floor(min) % 60).padStart(2, '0');
+	const maintenantSim = () => hhmm(Jeu.horloge ? Jeu.horloge.minutes : 0);
+
+	/** Applique des deltas aux jauges avec la même règle de bornes 0–100 que Jeu.decider */
+	Jeu.appliquerDeltas = function (d) {
+		Object.keys(d).forEach((k) => (Jeu.jauges[k] = Math.max(0, Math.min(100, Jeu.jauges[k] + d[k]))));
+		Jeu.verifierAlertesPatron();
+	};
+
+	function consigneDuJour() {
+		const j = Jeu.jourCourant();
+		const n = j ? j.dossiers.length : 0;
+		return 'Bonjour. ' + n + ' dossier(s) sont attendus aujourd’hui (' + (j ? j.date.split('-').reverse().join('/') : '') + '). Fluidité, réputation, budget : tu connais la règle.';
+	}
+
+	Jeu.messagePatron = function (texte) {
+		Jeu.messagesPatron.push({ heure: maintenantSim(), texte });
+		Jeu.nonLus.patron++;
+	};
+
+	/** Alerte du patron quand une jauge passe sous 20 (Q46) — une fois par jauge et par jour */
+	Jeu.verifierAlertesPatron = function () {
+		if (!Jeu.messagesPatron) return;
+		NOMS_JAUGES.forEach((k) => {
+			if (Jeu.jauges[k] < REGLAGES.seuilCritique && !Jeu.alertesJauges[k]) {
+				Jeu.alertesJauges[k] = true;
+				Jeu.messagePatron('Alerte : ' + LIBELLES_JAUGES[k] + ' à ' + Jeu.jauges[k] + '/100. Redresse ça tout de suite.');
+			}
+		});
+	};
+
+	// Commentaires nantais : modèles courts remplis avec les données réelles du dossier (pseudonymes fictifs)
+	const PSEUDOS = ['@usager_44', '@nantaise_du_tram', '@velo_et_bus', '@ile_de_nantes', '@quai_de_la_fosse', '@chantenay_matin'];
+	const COMMENTAIRES = {
+		bon: ['{sujet} : c’était réglé en {heure}, merci la régul 👍', 'Bien vu pour {sujet}, on a à peine senti le problème.', '{sujet} : info claire et solution rapide. Bravo.'],
+		mauvais: ['{sujet}{retard} et personne pour gérer ? Sérieux…', 'Encore {sujet}{retard}. Vous dormez à la régul ?', '{sujet} : zéro info, zéro solution. Bof.'],
+		equipe: ['{equipe} sur place pour {sujet}, ça fait plaisir de voir réagir.'],
+	};
+	const DELTA_REPUTATION = { bon: 2, mauvais: -3, equipe: 1 };
+
+	Jeu.commenter = function (sorte, sujet, retard, equipe) {
+		const modeles = COMMENTAIRES[sorte];
+		const n = Jeu.commentaires.length;
+		const texte = modeles[n % modeles.length]
+			.replace('{sujet}', sujet)
+			.replace('{retard}', retard !== null && retard !== undefined ? ' (+' + retard + ' min)' : '')
+			.replace('{heure}', maintenantSim())
+			.replace('{equipe}', equipe || '');
+		const delta = DELTA_REPUTATION[sorte];
+		Jeu.commentaires.push({ heure: maintenantSim(), auteur: PSEUDOS[n % PSEUDOS.length], texte, delta });
+		Jeu.nonLus.community++;
+		Jeu.appliquerDeltas({ reputation: delta }); // chaque commentaire fait évoluer la réputation
+	};
+
+	/** Après chaque dossier traité : un commentaire nantais et, si c'est raté, une réaction du patron */
+	Jeu.reagirApps = function (e) {
+		const sujet = e.ligne ? 'Ligne ' + e.ligne : String(e.externe).split(' (')[0];
+		const ev = Jeu.evaluer(e);
+		Jeu.commenter(ev === 'bon choix !' ? 'bon' : 'mauvais', sujet, e.retard);
+		if (ev === 'raté') Jeu.messagePatron(sujet + ' : « ' + e.action + ' », vraiment ? Il fallait « ' + e.meilleureAction + ' ».');
+		if (ev === 'trop tard') Jeu.messagePatron(sujet + ' : personne n’a réagi. Ça ne doit pas se reproduire.');
+		Jeu.verifierAlertesPatron();
+	};
+
+	// Équipes envoyées depuis la carte (façon centre d'appels) : coût en budget, effets à l'arrivée
+	const EQUIPES = {
+		ambulance: { nom: 'Ambulance', cout: 15, effets: { reputation: 8 } },
+		police: { nom: 'Police', cout: 10, effets: { reputation: 5, fluidite: 3 } },
+		techniciens: { nom: 'Techniciens', cout: 12, effets: { fluidite: 10 } },
+		pompiers: { nom: 'Pompiers', cout: 15, effets: { reputation: 6, fluidite: 6 } },
+	};
+	Jeu.EQUIPES = EQUIPES;
+	Jeu.DELAI_EQUIPE_MS = 20000; // arrivée 20 s (réelles) après l'envoi
+
+	Jeu.equipePour = (index) => Jeu.equipes.find((q) => q.index === index) || null;
+
+	/** Envoi d'une équipe sur le dossier d'index donné ; renvoie { ok, message } */
+	Jeu.envoyerEquipe = function (index, cle, maintenant) {
+		const q = EQUIPES[cle];
+		const d = Jeu.paquet[index];
+		if (!q || !d) return { ok: false, message: 'Incident introuvable.' };
+		if (Jeu.equipePour(index)) return { ok: false, message: 'Équipe déjà envoyée sur cet incident.' };
+		if (Jeu.jauges.budget < q.cout) return { ok: false, message: 'Budget insuffisant : ' + q.nom + ' coûte ' + q.cout + ', il reste ' + Jeu.jauges.budget + '.' };
+		Jeu.appliquerDeltas({ budget: -q.cout });
+		Jeu.equipes.push({ index, cle, nom: q.nom, cout: q.cout, depart: maintenant, arrivee: maintenant + Jeu.DELAI_EQUIPE_MS, heure: maintenantSim(), arrivee_sim: null, jour: d.date, sujet: d.lignes && d.lignes.length ? 'Ligne ' + d.lignes.join(', ') : d.nature });
+		return { ok: true, message: q.nom + ' en route (−' + q.cout + ' budget).' };
+	};
+
+	/** À appeler à chaque image : applique les effets des équipes arrivées */
+	Jeu.majEquipes = function (maintenant) {
+		(Jeu.equipes || []).forEach((q) => {
+			if (q.arrivee_sim === null && maintenant >= q.arrivee) {
+				q.arrivee_sim = maintenantSim();
+				Jeu.appliquerDeltas(EQUIPES[q.cle].effets);
+				Jeu.commenter('equipe', q.sujet, null, q.nom);
+			}
+		});
 	};
 
 	global.Jeu = Jeu;

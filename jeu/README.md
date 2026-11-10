@@ -31,3 +31,4 @@ dossier à trancher sous pression. »*
 | 13 | `13-immersion.md` | Immersion : SMS, journées, horloge ×10, sieste, alertes rouges, mail, livres |
 | 14 | `14-immersion-visuelle.md` | PC centré, vignettage, clignement d'œil, mail enrichi et évalué |
 | 15 | `15-bureau-moderne-design-system.md` | Bureau moderne en vue depuis la chaise, vue sur le Château des ducs, Pixel Design System sur le PC |
+| 16 | `16-bureau-apps.md` | Prompt 22 : apps du PC (patron, carte et équipes, community, journal), jauges fluidité / réputation / budget |
