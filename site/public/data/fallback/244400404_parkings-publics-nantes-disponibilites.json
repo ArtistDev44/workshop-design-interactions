@@ -1,0 +1,156 @@
+{
+ "fetchedAt": "2026-11-10T08:03:33.903Z",
+ "source": "https://data.nantesmetropole.fr/api/explore/v2.1/catalog/datasets/244400404_parkings-publics-nantes-disponibilites/records?select=grp_nom%2Cgrp_disponible%2Cgrp_exploitation%2Cgrp_horodatage&limit=40&where=grp_exploitation+%3E+0&order_by=grp_nom",
+ "results": [
+  {
+   "grp_nom": "ARISTIDE BRIAND",
+   "grp_disponible": 187,
+   "grp_exploitation": 303,
+   "grp_horodatage": "2026-11-10T07:59:41+00:00"
+  },
+  {
+   "grp_nom": "BACO 1",
+   "grp_disponible": 72,
+   "grp_exploitation": 92,
+   "grp_horodatage": "2026-11-10T07:59:41+00:00"
+  },
+  {
+   "grp_nom": "BACO 2",
+   "grp_disponible": 68,
+   "grp_exploitation": 118,
+   "grp_horodatage": "2026-11-10T07:59:41+00:00"
+  },
+  {
+   "grp_nom": "BELLAMY",
+   "grp_disponible": 64,
+   "grp_exploitation": 76,
+   "grp_horodatage": "2026-11-10T07:59:41+00:00"
+  },
+  {
+   "grp_nom": "CATHEDRALE",
+   "grp_disponible": 52,
+   "grp_exploitation": 258,
+   "grp_horodatage": "2026-11-10T07:59:41+00:00"
+  },
+  {
+   "grp_nom": "CHU",
+   "grp_disponible": 87,
+   "grp_exploitation": 135,
+   "grp_horodatage": "2026-11-10T07:59:41+00:00"
+  },
+  {
+   "grp_nom": "CHU 2",
+   "grp_disponible": 13,
+   "grp_exploitation": 61,
+   "grp_horodatage": "2026-11-10T07:59:41+00:00"
+  },
+  {
+   "grp_nom": "CITE INT DES CONGRES",
+   "grp_disponible": 372,
+   "grp_exploitation": 439,
+   "grp_horodatage": "2026-11-10T07:59:41+00:00"
+  },
+  {
+   "grp_nom": "COMMERCE",
+   "grp_disponible": 301,
+   "grp_exploitation": 406,
+   "grp_horodatage": "2026-11-10T07:59:41+00:00"
+  },
+  {
+   "grp_nom": "DECRE - BOUFFAY",
+   "grp_disponible": 267,
+   "grp_exploitation": 394,
+   "grp_horodatage": "2026-11-10T07:59:41+00:00"
+  },
+  {
+   "grp_nom": "DESCARTES",
+   "grp_disponible": 147,
+   "grp_exploitation": 251,
+   "grp_horodatage": "2026-11-10T07:59:41+00:00"
+  },
+  {
+   "grp_nom": "FEYDEAU",
+   "grp_disponible": 341,
+   "grp_exploitation": 490,
+   "grp_horodatage": "2026-11-10T07:59:41+00:00"
+  },
+  {
+   "grp_nom": "FONDERIES",
+   "grp_disponible": 100,
+   "grp_exploitation": 130,
+   "grp_horodatage": "2026-11-10T07:59:41+00:00"
+  },
+  {
+   "grp_nom": "GARE NORD",
+   "grp_disponible": 305,
+   "grp_exploitation": 540,
+   "grp_horodatage": "2026-11-10T07:59:41+00:00"
+  },
+  {
+   "grp_nom": "GARE SUD 1",
+   "grp_disponible": 51,
+   "grp_exploitation": 380,
+   "grp_horodatage": "2026-11-10T07:59:41+00:00"
+  },
+  {
+   "grp_nom": "GARE SUD 2",
+   "grp_disponible": 427,
+   "grp_exploitation": 457,
+   "grp_horodatage": "2026-11-10T07:59:41+00:00"
+  },
+  {
+   "grp_nom": "GARE SUD 3",
+   "grp_disponible": 122,
+   "grp_exploitation": 379,
+   "grp_horodatage": "2026-11-10T07:59:41+00:00"
+  },
+  {
+   "grp_nom": "GARE SUD 4",
+   "grp_disponible": 302,
+   "grp_exploitation": 330,
+   "grp_horodatage": "2026-11-10T07:59:41+00:00"
+  },
+  {
+   "grp_nom": "GLORIETTE 2",
+   "grp_disponible": 59,
+   "grp_exploitation": 87,
+   "grp_horodatage": "2026-11-10T07:59:41+00:00"
+  },
+  {
+   "grp_nom": "GRASLIN",
+   "grp_disponible": 259,
+   "grp_exploitation": 455,
+   "grp_horodatage": "2026-11-10T07:59:41+00:00"
+  },
+  {
+   "grp_nom": "HOTEL DIEU",
+   "grp_disponible": 28,
+   "grp_exploitation": 100,
+   "grp_horodatage": "2026-11-10T07:59:41+00:00"
+  },
+  {
+   "grp_nom": "LES MACHINES",
+   "grp_disponible": 371,
+   "grp_exploitation": 397,
+   "grp_horodatage": "2026-11-10T07:59:41+00:00"
+  },
+  {
+   "grp_nom": "MEDIATHEQUE",
+   "grp_disponible": 235,
+   "grp_exploitation": 398,
+   "grp_horodatage": "2026-11-10T07:59:41+00:00"
+  },
+  {
+   "grp_nom": "TALENSAC",
+   "grp_disponible": 202,
+   "grp_exploitation": 320,
+   "grp_horodatage": "2026-11-10T07:59:41+00:00"
+  },
+  {
+   "grp_nom": "TOUR BRETAGNE",
+   "grp_disponible": 440,
+   "grp_exploitation": 643,
+   "grp_horodatage": "2026-11-10T07:59:41+00:00"
+  }
+ ]
+}

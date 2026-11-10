@@ -1,0 +1,96 @@
+{
+ "fetchedAt": "2026-11-10T08:03:34.712Z",
+ "source": "https://data.nantesmetropole.fr/api/explore/v2.1/catalog/datasets/323266205_alerte-pollens-nantes/records?select=name%2Cgroup%2Clib_etat%2Cstate&limit=20&order_by=state+desc%2C+name",
+ "results": [
+  {
+   "name": "Armoise",
+   "group": "Herbacée",
+   "lib_etat": "émission terminée",
+   "state": 2
+  },
+  {
+   "name": "Aulne",
+   "group": "Arbre",
+   "lib_etat": "émission terminée",
+   "state": 2
+  },
+  {
+   "name": "Bouleau",
+   "group": "Arbre",
+   "lib_etat": "émission terminée",
+   "state": 2
+  },
+  {
+   "name": "Chêne",
+   "group": "Arbre",
+   "lib_etat": "émission terminée",
+   "state": 2
+  },
+  {
+   "name": "Dactyle",
+   "group": "Graminée",
+   "lib_etat": "émission terminée",
+   "state": 2
+  },
+  {
+   "name": "Fléole",
+   "group": "Graminée",
+   "lib_etat": "émission terminée",
+   "state": 2
+  },
+  {
+   "name": "Flouve",
+   "group": "Graminée",
+   "lib_etat": "émission terminée",
+   "state": 2
+  },
+  {
+   "name": "Frêne",
+   "group": "Arbre",
+   "lib_etat": "émission terminée",
+   "state": 2
+  },
+  {
+   "name": "Fromental",
+   "group": "Graminée",
+   "lib_etat": "émission terminée",
+   "state": 2
+  },
+  {
+   "name": "Houlque",
+   "group": "Graminée",
+   "lib_etat": "émission terminée",
+   "state": 2
+  },
+  {
+   "name": "Noisetier",
+   "group": "Arbre",
+   "lib_etat": "émission terminée",
+   "state": 2
+  },
+  {
+   "name": "Plantain",
+   "group": "Herbacée",
+   "lib_etat": "émission terminée",
+   "state": 2
+  },
+  {
+   "name": "Ray-grass",
+   "group": "Graminée",
+   "lib_etat": "émission terminée",
+   "state": 2
+  },
+  {
+   "name": "Saule",
+   "group": "Arbre",
+   "lib_etat": "émission terminée",
+   "state": 2
+  },
+  {
+   "name": "Vulpin",
+   "group": "Graminée",
+   "lib_etat": "émission terminée",
+   "state": 2
+  }
+ ]
+}

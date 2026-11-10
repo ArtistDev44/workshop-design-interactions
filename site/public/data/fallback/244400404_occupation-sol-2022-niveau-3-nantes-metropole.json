@@ -1,0 +1,46 @@
+{
+ "fetchedAt": "2026-11-10T08:03:35.031Z",
+ "source": "https://data.nantesmetropole.fr/api/explore/v2.1/catalog/datasets/244400404_occupation-sol-2022-niveau-3-nantes-metropole/records?select=l_niveau%2Csum%28surface%29+as+m2&limit=10&group_by=l_niveau&order_by=m2+desc",
+ "results": [
+  {
+   "l_niveau": "Prairies naturelles",
+   "m2": 126929605.67696965
+  },
+  {
+   "l_niveau": "Habitat pavillonnaire",
+   "m2": 96619097.96769878
+  },
+  {
+   "l_niveau": "Bois et forêts",
+   "m2": 55883526.42695672
+  },
+  {
+   "l_niveau": "Cultures annuelles et terres labourées",
+   "m2": 46352517.29941816
+  },
+  {
+   "l_niveau": "Zones d’activités",
+   "m2": 29806803.87584228
+  },
+  {
+   "l_niveau": "Rivières et cours d’eau divers (canaux, etc.)",
+   "m2": 19480468.98632627
+  },
+  {
+   "l_niveau": "Grands services urbains : eau, assainissement, électricité, écoles, santé",
+   "m2": 17700501.67746614
+  },
+  {
+   "l_niveau": "Hameau rural",
+   "m2": 13557283.29413765
+  },
+  {
+   "l_niveau": "Marais, marécages, tourbières",
+   "m2": 13097558.50388342
+  },
+  {
+   "l_niveau": "Emprises routières",
+   "m2": 12696510.377931578
+  }
+ ]
+}

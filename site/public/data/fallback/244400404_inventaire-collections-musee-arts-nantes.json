@@ -1,0 +1,30 @@
+{
+ "fetchedAt": "2026-11-10T08:03:34.954Z",
+ "source": "https://data.nantesmetropole.fr/api/explore/v2.1/catalog/datasets/244400404_inventaire-collections-musee-arts-nantes/records?select=domaine%2Ccount%28*%29+as+n&limit=10&where=domaine+is+not+null&group_by=domaine&order_by=n+desc",
+ "results": [
+  {
+   "domaine": "Dessin",
+   "n": 3649
+  },
+  {
+   "domaine": "Estampe",
+   "n": 1929
+  },
+  {
+   "domaine": "Peinture",
+   "n": 1370
+  },
+  {
+   "domaine": "Sculpture",
+   "n": 282
+  },
+  {
+   "domaine": "Photographie",
+   "n": 2
+  },
+  {
+   "domaine": "Publication, livre, imprimé",
+   "n": 2
+  }
+ ]
+}
