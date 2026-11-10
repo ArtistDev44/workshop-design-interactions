@@ -39,3 +39,13 @@ Les décisions Q1–Q61 ne changent pas.
 ## Vérifications
 - `npm run build` et `npm test` OK.
 - Test automatisé (semaine 2), sans erreur console : transition « JOUR 1 — SEMAINE 2 », puis téléphone du patron, puis poste. Écran du PC à 1728×972, compression ×30. Captures de l'attente et d'un dossier (bandeau, effets, seuils).
+
+## Carte de l'appli Régulation : sans décor météo, avec zoom (10/11/2026)
+- Le soleil, les nuages, la pluie et les traînées de vent ne sont plus dessinés sur la carte de l'appli. Il ne reste que l'eau, les lignes et la légende météo chiffrée. Le décor météo reste sur les fonds d'ambiance (`dessinerPictosMeteo`).
+- **Zoom** (`CARTE_VUE`, ×1 à ×6) :
+  - molette au-dessus de la carte, centrée sur le curseur ; ailleurs au poste, la molette fait toujours se lever (prompt 26) ;
+  - boutons **+ / − / ⟲** en haut à droite de la carte ;
+  - touches **+** et **−** ;
+  - une fois zoomé, on **glisse** pour se déplacer, sans jamais sortir de la carte ; l'indication « zoom ×n · glisser pour se déplacer » s'affiche.
+- Les lignes, les états (retard, incident) et l'eau suivent le zoom, puisqu'ils passent par la même projection.
+- Test : 4 crans de molette → ×2,07, glisser → décalage (93, 67), deux fois − → ×1,06, molette hors de la carte → bureau. Aucune erreur console.

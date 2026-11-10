@@ -1,0 +1,29 @@
+{
+	"framework": "PATRIMOINE.EXE",
+	"edition": "NTE001",
+	"city": "Nantes",
+	"host": "ESD Nantes",
+	"dates": ["2026-11-09", "2026-11-10", "2026-11-12"],
+	"id": "PXE-NTE001-G01-W01",
+	"project_title": "Nantes en régulation",
+	"url": "https://workshop-design-interactions.pages.dev/",
+	"authors": ["[À COMPLÉTER]"],
+	"heritage_source": {
+		"title": "Réseau de transports collectifs Naolib — offre, perturbations et temps réel (Open Data Nantes Métropole)",
+		"url": "https://data.nantesmetropole.fr/explore/dataset/244400404_transports_commun_naolib_nantes_metropole_gtfs/",
+		"rights": "Licence Ouverte (Nantes Métropole)"
+	},
+	"mode": ["interactive", "data"],
+	"stack": ["p5.js", "Web Audio API", "Astro (site statique)"],
+	"data_sources": [
+		{ "name": "Naolib GTFS (offre et changelog daté)", "provider": "Open Data Nantes Métropole", "id": "244400404_transports_commun_naolib_nantes_metropole_gtfs", "rights": "Licence Ouverte" },
+		{ "name": "Naolib GTFS-RT (temps réel)", "provider": "Open Data Nantes Métropole", "id": "244400404_reseau-transports-collectifs-naolib", "rights": "Licence Ouverte" },
+		{ "name": "Agenda des événements", "provider": "Open Data Nantes Métropole", "id": "244400404_agenda-evenements-nantes-metropole_v2", "rights": "Licence Ouverte" },
+		{ "name": "Météo (prévision et archive ERA5)", "provider": "Open-Meteo", "url": "https://open-meteo.com/", "rights": "CC BY 4.0" },
+		{ "name": "Hauteur de la Loire à Nantes (station M800001010)", "provider": "Hub'Eau — Hydrométrie (eaufrance)", "url": "https://hubeau.eaufrance.fr/", "rights": "[À COMPLÉTER] (licence Hub'Eau à vérifier)" },
+		{ "name": "Musiques (Komiku)", "provider": "Wikimedia Commons", "url": "https://commons.wikimedia.org/", "rights": "CC0 1.0" }
+	],
+	"ai_usage": "Code, documentation et prompts réalisés avec un assistant IA (commits marqués Co-Authored-By: Claude), à partir de prompts écrits par le groupe (dossier prompts/). Relecture et part humaine : [À COMPLÉTER].",
+	"license": "[À COMPLÉTER] (voir LICENSE)",
+	"version": "1.0"
+}

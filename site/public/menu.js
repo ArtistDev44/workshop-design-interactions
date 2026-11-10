@@ -48,6 +48,7 @@ function entreesMenu() {
 			action: () => continuerPartie(),
 		});
 	}
+	e.push({ cle: 'palmares', icone: 'trophee', action: () => ouvrir('palmares') }); // prompt 47
 	e.push({ cle: 'parametres', icone: 'reglages', action: () => ouvrir('parametres') });
 	e.push({ cle: 'aide', icone: 'aide', action: () => ouvrir('aide') });
 	e.push({ cle: 'tutoriel', icone: 'livre', action: () => lancerTutoriel() });
@@ -133,6 +134,19 @@ function iconeMenu(type, x, y, c) {
 		line(14, 28, 44, 28);
 		line(14, 28, 26, 16);
 		line(14, 28, 26, 40);
+	} else if (type === 'trophee') {
+		rect(16, 8, 24, 20);
+		line(28, 28, 28, 40);
+		line(16, 44, 40, 44);
+		line(16, 14, 8, 14);
+		line(8, 14, 10, 22);
+		line(40, 14, 48, 14);
+		line(48, 14, 46, 22);
+	} else if (type === 'carnet') {
+		rect(12, 8, 32, 40);
+		line(20, 20, 36, 20);
+		line(20, 28, 36, 28);
+		line(20, 36, 30, 36);
 	} else if (type === 'menu') {
 		line(12, 16, 44, 16);
 		line(12, 28, 44, 28);
@@ -207,7 +221,7 @@ function dessinerMenuPrincipal() {
 	if (MENU.choix >= e.length) MENU.choix = 0;
 	e.forEach((it, i) => {
 		const h = it.sous ? 104 : 84;
-		const y = 380 + i * 116;
+		const y = e.length > 5 ? 370 + i * 106 : 380 + i * 116; // prompt 47 : 6 entrées avec le palmarès
 		carteMenu(x0, y, 620, h, t('mp.' + it.cle), it.sous, it.action, i === MENU.choix, it.icone);
 	});
 	selecteurLangue(L - 80, 56);

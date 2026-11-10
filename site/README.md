@@ -141,3 +141,9 @@ Les décisions de jeu (Q1–Q61, `jeu/`) et les prompts ont été rédigés en a
 - Code : voir `LICENSE` à la racine (choix de licence [À COMPLÉTER] par le groupe).
 - Textes : framework PATRIMOINE.EXE et livret étudiant Nantes 001 (ESD Nantes, 2026).
 - Design : couleurs et échelle inspirées des tokens extraits de metropole.nantes.fr ; ce site n'est pas un site officiel de Nantes Métropole.
+
+## Livrables J3 (prompt 46)
+- Pages : le jeu (`/`), les cartels avec captation et QR codes (`/cartel/`), la chaîne des prompts générée depuis `prompts/README.md` (`/making-of/`).
+- `public/manifest.json` (modèle du livret), `public/captures/` (hero, detail-01, process, thumb, demo.mp4 de 27 s, issus du vrai rendu).
+- Version figée : `rendu/PXE_NTE001_G01_NANTES-EN-REGULATION/` (à la racine du dépôt).
+- Ajouter une semaine, un message ou une traduction : `CONTRIBUTING.md` (racine).

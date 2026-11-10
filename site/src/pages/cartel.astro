@@ -40,6 +40,11 @@ const titre = 'Cartels — PATRIMOINE.EXE · NTE001';
 			dl { display: grid; grid-template-columns: max-content 1fr; gap: .25rem 1rem; }
 			dt { font-weight: 600; }
 			dd { margin: 0; overflow-wrap: anywhere; }
+			figure { margin: 1rem 0; }
+			figure img, video { display: block; width: 100%; height: auto; border: 1px solid var(--trait); }
+			figcaption { font-size: .9375rem; color: var(--trait); margin-top: .25rem; }
+			.qr { display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-start; }
+			.qr figure { width: 10rem; margin: 0; }
 			@media (max-width: 30rem) { dl { grid-template-columns: 1fr; } dd { margin-bottom: .5rem; } }
 		</style>
 	</head>
@@ -61,7 +66,34 @@ const titre = 'Cartels — PATRIMOINE.EXE · NTE001';
 						<dt>Règle</dt><dd>{o.grammaire.regle}</dd>
 						<dt>Système</dt><dd>{o.stack}</dd>
 						<dt>Hors ligne</dt><dd>{o.fallback}</dd>
+						<dt>Manifest</dt><dd><a href="/manifest.json">manifest.json</a> (modèle du livret, annexe C)</dd>
+						<dt>Making-of</dt><dd><a href="/making-of/">La chaîne des prompts</a></dd>
 					</dl>
+					{o.id === 'PXE-NTE001-G01-W01' && (
+						<section aria-labelledby="captation">
+							<h3 id="captation">Captation (vrai rendu du jeu, 1920 × 1080)</h3>
+							<figure>
+								<img src="/captures/hero.jpg" width="1920" height="1080" loading="lazy" alt="La pièce de régulation en pixel art : le poste de travail affiche la carte du réseau Naolib, la Loire et la grue en fond, l'horloge à 8 h 35." />
+								<figcaption>hero.jpg — la salle de contrôle, avant de s'installer au poste.</figcaption>
+							</figure>
+							<figure>
+								<img src="/captures/detail-01.jpg" width="1920" height="1080" loading="lazy" alt="L'application Régulation : carte du réseau, jauges fluidité, réputation et budget, et un dossier tiré de l'agenda de Nantes Métropole avec quatre actions." />
+								<figcaption>detail-01.jpg — un dossier réel à trancher dans l'application Régulation.</figcaption>
+							</figure>
+							<figure>
+								<img src="/captures/process.jpg" width="1920" height="1080" loading="lazy" alt="Le rapport hebdomadaire papier posé sur la table : score, jauges et décisions clés de la semaine 1." />
+								<figcaption>process.jpg — le rapport papier de fin de semaine (mode histoire).</figcaption>
+							</figure>
+							<figure>
+								<video src="/captures/demo.mp4" controls muted playsinline preload="none" poster="/captures/thumb.jpg" width="1280" height="720"></video>
+								<figcaption>demo.mp4 — 27 s d'une vraie partie, sans son (enregistrement automatisé).</figcaption>
+							</figure>
+							<div class="qr">
+								<figure><img src="/assets/qr-edition.png" width="164" height="164" alt="QR code vers le jeu : workshop-design-interactions.pages.dev" /><figcaption>Le jeu</figcaption></figure>
+								<figure><img src="/assets/qr-pxe-nte001-g01-w01.png" width="164" height="164" alt="QR code vers cette page de cartels" /><figcaption>Ce cartel</figcaption></figure>
+							</div>
+						</section>
+					)}
 				</article>
 			))}
 		</main>

@@ -29,7 +29,7 @@
 	};
 
 	// ——— Réglages (écran Paramètres, 11-direction-artistique) ———
-	const DEFAUTS = { son: true, horsLigneForce: false, reduireAnimations: false, contrasteRenforce: false, musique: 'origine' }; // prompt 44 : choix de la musique
+	const DEFAUTS = { son: true, horsLigneForce: false, reduireAnimations: false, contrasteRenforce: false, musique: 'chillin', daltonisme: 'normal', tailleTexte: 100, lectureFacile: false }; // prompt 48 : accessibilité // prompt 44 : choix de la musique (par défaut : un morceau CC0)
 	const Reglages = Object.assign({}, DEFAUTS, lire(CLE_REGLAGES, {}));
 	Reglages.basculer = function (nom) {
 		Reglages[nom] = !Reglages[nom];
@@ -52,12 +52,12 @@
 		cle: (etat) => (etat.mode === 'semaine' ? etat.semaine.lundi : etat.mode), // 'direct' | 'hors ligne'
 		meilleur: (cle) => lire(CLE_BILANS, {})[cle] || null,
 		/** Enregistre le bilan s'il bat le précédent ; renvoie { meilleur, record } */
-		enregistrer: function (cle, score, jauges) {
+		enregistrer: function (cle, score, jauges, extra) {
 			const tous = lire(CLE_BILANS, {});
 			const ancien = tous[cle] || null;
 			const record = !ancien || score > ancien.score;
 			if (record) {
-				tous[cle] = { score: score, jauges: Object.assign({}, jauges), le: new Date().toISOString().slice(0, 10) };
+				tous[cle] = Object.assign({ score: score, jauges: Object.assign({}, jauges), le: new Date().toISOString().slice(0, 10) }, extra || {}); // prompt 47 : profil
 				ecrire(CLE_BILANS, tous);
 			}
 			return { meilleur: tous[cle] || ancien, record: record, ancien: ancien };
@@ -470,6 +470,11 @@
 	   générés en WebAudio : aucun fichier, jouables hors ligne. Chaque piste = tempo, 4 accords, motif d'arpège,
 	   ondes, filtre et éventuelle percussion 8 bits (grosse caisse sinus, charleston en bruit). */
 	const PISTES = {
+		// Vrais morceaux libres de droits, CC0 (Komiku, via Wikimedia Commons) : voir audio/CREDITS.md
+		chillin: { fichier: 'audio/chillin-poupi', volume: 0.3 },
+		horizon: { fichier: 'audio/travel-to-the-horizon', volume: 0.26 },
+		coquillage: { fichier: 'audio/night-in-a-seashell', volume: 0.3 },
+		// Morceaux composés en code (prompt 44)
 		origine: { bpm: 72, accords: ACCORDS, motif: MOTIF, onde: 'triangle', basse: 'sine', filtre: 1400, gain: 0.5, percu: false },
 		pixel: {
 			bpm: 112,
@@ -500,6 +505,7 @@
 		croche: 60 / 72 / 2,
 		demarrer: function () {
 			if (Musique.minuterie || !Son.ctx || !Reglages.son) return;
+			if (piste().fichier) return Musique.demarrerFichier(piste());
 			const c = Son.ctx;
 			Musique.bus = c.createGain();
 			Musique.bus.gain.setValueAtTime(0.0001, c.currentTime);
@@ -513,8 +519,36 @@
 			Musique.prochaine = c.currentTime + 0.1;
 			Musique.minuterie = setInterval(Musique.programmer, 100);
 		},
+		/** Morceau CC0 : élément audio en boucle (OGG, ou MP3 si le navigateur ne lit pas l'OGG), fondu d'entrée 2 s */
+		audio: null,
+		demarrerFichier: function (p) {
+			const a = new Audio();
+			const ogg = a.canPlayType('audio/ogg; codecs="vorbis"');
+			a.src = p.fichier + (ogg ? '.ogg' : '.mp3');
+			a.loop = true;
+			a.volume = 0;
+			a.play().catch(() => {}); // lecture refusée (autoplay) : le prochain geste relancera Son.demarrer
+			Musique.audio = a;
+			let k = 0;
+			Musique.minuterie = setInterval(() => {
+				k = Math.min(1, k + 0.05);
+				if (Musique.audio === a) a.volume = p.volume * k;
+				if (k >= 1) {
+					clearInterval(Musique.minuterie);
+					Musique.minuterie = 'fichier'; // marqueur « en cours de lecture »
+				}
+			}, 100);
+		},
 		arreter: function () {
-			if (Musique.minuterie) clearInterval(Musique.minuterie);
+			if (Musique.audio) {
+				const a = Musique.audio;
+				Musique.audio = null;
+				const pas = setInterval(() => {
+					a.volume = Math.max(0, a.volume - 0.05);
+					if (a.volume <= 0) (clearInterval(pas), a.pause());
+				}, 30);
+			}
+			if (Musique.minuterie && Musique.minuterie !== 'fichier') clearInterval(Musique.minuterie);
 			Musique.minuterie = null;
 			if (Musique.bus && Son.ctx) {
 				const b = Musique.bus;

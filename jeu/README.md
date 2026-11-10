@@ -57,3 +57,5 @@ dossier à trancher sous pression. »*
 | 39 | `39-vue-pc-ux-temps-transitions.md` | Prompt 43 : écran du PC à 90 % au poste, indicateurs redondants retirés, bandeau d'état, effets des actions et seuils visibles, temps ×30, écran noir « JOUR n — SEMAINE n » |
 | 40 | `40-musiques-immersion-sonore.md` | Prompt 44 : 4 morceaux chiptune originaux au choix (Paramètres, touche 8) et 7 pistes d'immersion sonore (radio, alertes par source, tic-tac, clics, jauges, vent / canicule, signatures de fin) |
 | 41 | `41-meteo-progressive-seo.md` | Prompt 45 : météo de la baie en fondu (jour/nuit, pluie), et SEO : description, canonique, Open Graph, carte Twitter, image OG du vrai rendu, nouveau favicon, manifeste, JSON-LD |
+| 42 | `42-mecaniques-narration.md` | Prompt 47 : inspection surprise, palmarès et profils de gestion, journal de bord, fin « démission », épilogue du mail, agenda anticipé |
+| 43 | `43-accessibilite-technique.md` | Prompt 48 : daltonisme, taille du texte, lecture facile, reprise sur un autre appareil, démo automatique, service worker hors ligne, courbes des jauges, `test-jeu.mjs` |

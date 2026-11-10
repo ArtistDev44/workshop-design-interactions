@@ -1,0 +1,22 @@
+{
+ "fetchedAt": "2026-11-10T08:03:35.122Z",
+ "source": "https://data.nantesmetropole.fr/api/explore/v2.1/catalog/datasets/244400404_parcs-jardins-nantes/records?select=code_postal%2Ccount%28*%29+as+n&limit=10&group_by=code_postal&order_by=n+desc",
+ "results": [
+  {
+   "code_postal": "44300",
+   "n": 45
+  },
+  {
+   "code_postal": "44000",
+   "n": 37
+  },
+  {
+   "code_postal": "44100",
+   "n": 35
+  },
+  {
+   "code_postal": "44200",
+   "n": 18
+  }
+ ]
+}

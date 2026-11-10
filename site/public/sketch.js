@@ -47,6 +47,7 @@ function appliquerReglages() {
 	const R = Confort.Reglages;
 	reduireAnimations = reduireAnimationsSysteme || R.reduireAnimations;
 	C.gris = R.contrasteRenforce ? 'rgba(255,255,255,0.85)' : GRIS_NORMAL; // contraste renforcé : texte secondaire plus clair
+	appliquerAccessibilite(); // prompt 48 : palette daltonisme, taille du texte
 }
 
 // ——— Confort (prompt 18) : fenêtres, pause, meilleur bilan ———
@@ -153,7 +154,7 @@ function draw() {
 	if (MENU.actif && ecran === 'jeu') fermerMenuPrincipal();
 	if (MENU.actif) {
 		boutons = [];
-		dessinerMenuPrincipal();
+		if (!dessinerDemo()) dessinerMenuPrincipal(); // prompt 48 : démo automatique après 40 s sans action
 		if (fenetre) {
 			boutons = [];
 			dessinerFenetre();
@@ -162,6 +163,7 @@ function draw() {
 		majCurseur();
 		return;
 	}
+	verifierMecaniques(); // prompt 47 : inspection surprise (avant l'horloge, qui s'arrête alors)
 	avancerTemps(); // horloge simulée, sieste, arrivée des incidents, fin de journée (immersion.js)
 	if (Jeu.equipes) Jeu.majEquipes(millis()); // équipes envoyées depuis la carte (prompt 22)
 	boutons = [];
@@ -189,6 +191,7 @@ function draw() {
 		boutons = [];
 		dessinerReveil();
 	}
+	dessinerOffreDemission(); // prompt 47 : les trois jauges sous 20 → « Rendre son badge »
 	if (fenetre) {
 		boutons = []; // seule la fenêtre ouverte est cliquable
 		dessinerFenetre();
@@ -534,6 +537,7 @@ function dessinerJeu() {
 
 	dessinerDecor(CARTE, meteo, 1, true);
 	dessinerLignesEtat(CARTE, d);
+	commandesCarte(); // zoom de la carte
 	dessinerListeLignes(LISTE, d);
 
 	// Panneau droit : jauges, puis selon la phase : conflit, dossier (avec contradiction) ou narration
@@ -562,6 +566,7 @@ function dessinerJeuAttente() {
 	text(enteteMode(), GAUCHE.x + 260, GAUCHE.y + 30);
 	dessinerDecor(CARTE, meteo, 1, true);
 	dessinerLignesEtat(CARTE, null);
+	commandesCarte(); // zoom de la carte
 	dessinerListeLignes(LISTE, null);
 	dessinerJauges();
 	dessinerAttente();
@@ -579,8 +584,76 @@ function enteteMode() {
 }
 
 // ——— Décor en couches : eau (1), relief léger des quais (2), météo du jour (Q8, Q30) ———
+// ——— Carte de l'appli Régulation : zoom (molette centrée sur le curseur, + / −, ⟲) et déplacement (glisser) ———
+const CARTE_VUE = { k: 1, px: 0, py: 0, prise: null };
+const ZOOM_MAX = 6;
+function zoomerProjection(p, zone) {
+	const v = CARTE_VUE;
+	const zx = zone.x + zone.l / 2;
+	const zy = zone.y + zone.h / 2;
+	return { x: (lon) => zx + (p.x(lon) - zx) * v.k + v.px, y: (lat) => zy + (p.y(lat) - zy) * v.k + v.py };
+}
+function bornerCarte() {
+	const v = CARTE_VUE;
+	const mx = ((v.k - 1) * CARTE.l) / 2;
+	const my = ((v.k - 1) * CARTE.h) / 2;
+	v.px = constrain(v.px, -mx, mx);
+	v.py = constrain(v.py, -my, my);
+	if (v.k <= 1) (v.px = 0), (v.py = 0);
+}
+/** Zoom autour du point (mx, my) de l'écran du PC — par défaut le centre de la carte */
+function zoomerCarte(facteur, mx, my) {
+	const v = CARTE_VUE;
+	const zx = CARTE.x + CARTE.l / 2;
+	const zy = CARTE.y + CARTE.h / 2;
+	const ax = mx === undefined ? zx : mx;
+	const ay = my === undefined ? zy : my;
+	const k2 = constrain(v.k * facteur, 1, ZOOM_MAX);
+	v.px = ax - zx - ((ax - zx - v.px) * k2) / v.k;
+	v.py = ay - zy - ((ay - zy - v.py) * k2) / v.k;
+	v.k = k2;
+	bornerCarte();
+}
+function reinitialiserCarte() {
+	CARTE_VUE.k = 1;
+	CARTE_VUE.px = 0;
+	CARTE_VUE.py = 0;
+}
+const carteVisible = () => vue === 'poste' && PC.etat === 'appli' && ecran === 'jeu' && phase !== 'fin' && !fenetre && !smsActif;
+/** Molette au-dessus de la carte : zoom (renvoie true si l'événement est consommé) */
+function zoomCarteMolette(delta) {
+	if (!carteVisible()) return false;
+	const m = sourisEcranPC();
+	if (m.x < CARTE.x || m.x > CARTE.x + CARTE.l || m.y < CARTE.y || m.y > CARTE.y + CARTE.h) return false;
+	zoomerCarte(delta < 0 ? 1.2 : 1 / 1.2, m.x, m.y);
+	return true;
+}
+/** Commandes du zoom (dans la carte) + glisser pour se déplacer ; appelé dans le contexte de l'écran du PC */
+function commandesCarte() {
+	const v = CARTE_VUE;
+	if (v.prise) {
+		if (mouseIsPressed) {
+			v.px = v.prise.px + (mouseX - v.prise.x);
+			v.py = v.prise.py + (mouseY - v.prise.y);
+			bornerCarte();
+		} else v.prise = null;
+	}
+	if (v.k > 1) boutons.push({ x: CARTE.x, y: CARTE.y, l: CARTE.l, h: CARTE.h, action: () => (v.prise = { x: sourisEcranPC().x, y: sourisEcranPC().y, px: v.px, py: v.py }) });
+	const bx = CARTE.x + CARTE.l - 64;
+	[['+', () => zoomerCarte(1.4)], ['−', () => zoomerCarte(1 / 1.4)], ['⟲', reinitialiserCarte]].forEach(([lib, act], i) => bouton(bx, CARTE.y + 16 + i * 56, 48, 48, lib, act, false, true));
+	if (v.k > 1) {
+		noStroke();
+		textFont(POLICE_DONNEES);
+		textSize(15);
+		fill(C.gris);
+		textAlign(RIGHT, TOP);
+		text(t('carte.zoom', { k: v.k.toFixed(1).replace('.', Langue.actuelle === 'fr' ? ',' : '.') }), bx - 10, CARTE.y + 20);
+	}
+}
+
 function dessinerDecor(zone, meteo, opacite, avecCadre, sansLegende) {
 	projection = projeter(zone);
+	if (avecCadre && zone === CARTE) projection = zoomerProjection(projection, zone); // carte de l'appli : zoom
 	push();
 	drawingContext.save();
 	drawingContext.beginPath();
@@ -621,18 +694,34 @@ function dessinerDecor(zone, meteo, opacite, avecCadre, sansLegende) {
 			l.traces.forEach(tracer);
 		}
 	}
-	dessinerMeteo(zone, meteo, opacite, sansLegende);
+	dessinerMeteo(zone, meteo, opacite, sansLegende, avecCadre); // carte de l'appli : légende seule, sans soleil ni nuages
 	drawingContext.restore();
 	pop();
 }
 
-function dessinerMeteo(zone, m, opacite, sansLegende) {
+function dessinerMeteo(zone, m, opacite, sansLegende, sansPictos) {
 	if (!m) return;
 	const pluie = m.pluie_mm || 0;
 	const vent = m.rafales_max || 0;
 	const chaud = m.temp_max >= 25;
 	const froid = m.temp_min <= 0;
 	noStroke();
+	if (!sansPictos) dessinerPictosMeteo(zone, m, opacite, pluie, vent, chaud);
+	// Légende météo (données chiffrées en monospace, sur panneau) — jamais sur un décor d'ambiance (fin)
+	if (sansLegende) return;
+	const txt = t('meteo.jour', { min: fmt(m.temp_min), max: fmt(m.temp_max), pluie: fmt(m.pluie_mm), rafales: fmt(m.rafales_max), gel: froid ? t('meteo.gel') : '' });
+	textFont(POLICE_DONNEES);
+	textSize(17);
+	const tl = textWidth(txt) + 24;
+	noStroke();
+	fill(C.panneau);
+	rect(zone.x + 12, zone.y + zone.h - 44, tl, 32, 6);
+	fill(C.texte);
+	textAlign(LEFT, CENTER);
+	text(txt, zone.x + 24, zone.y + zone.h - 28);
+}
+/** Soleil, nuages, pluie et vent dessinés (fonds d'ambiance : accueil, fin) — plus sur la carte de l'appli */
+function dessinerPictosMeteo(zone, m, opacite, pluie, vent, chaud) {
 	// Soleil (journée sèche) ou nuages (pluie)
 	if (pluie < 1) {
 		fill(chaud ? 'rgba(232,163,23,0.85)' : 'rgba(232,184,64,0.7)');
@@ -671,18 +760,6 @@ function dessinerMeteo(zone, m, opacite, sansLegende) {
 			bezier(zone.x + 30, y, zone.x + 120, y - 12, zone.x + 200, y + 12, zone.x + 300, y);
 		}
 	}
-	// Légende météo (données chiffrées en monospace, sur panneau) — jamais sur un décor d'ambiance (fin)
-	if (sansLegende) return;
-	const txt = t('meteo.jour', { min: fmt(m.temp_min), max: fmt(m.temp_max), pluie: fmt(m.pluie_mm), rafales: fmt(m.rafales_max), gel: froid ? t('meteo.gel') : '' });
-	textFont(POLICE_DONNEES);
-	textSize(17);
-	const tl = textWidth(txt) + 24;
-	noStroke();
-	fill(C.panneau);
-	rect(zone.x + 12, zone.y + zone.h - 44, tl, 32, 6);
-	fill(C.texte);
-	textAlign(LEFT, CENTER);
-	text(txt, zone.x + 24, zone.y + zone.h - 28);
 }
 
 // ——— Carte : état des lignes (Q29) — vert à l'heure, orange retard, rouge clignotant incident actif ———
@@ -860,11 +937,11 @@ function dessinerDossier(d, meteo) {
 	}
 
 	// Compteur : barre horizontale qui se vide (Q6) — durée selon la semaine (Q16, Q55)
-	const duree = ((Jeu.etat.semaine && Jeu.etat.semaine.difficulte && Jeu.etat.semaine.difficulte.compteur_s) || 30) * 1000 * facteurDuree;
+	const duree = ((Jeu.etat.semaine && Jeu.etat.semaine.difficulte && Jeu.etat.semaine.difficulte.compteur_s) || 30) * 1000 * facteurDuree * facteurLecture(); // prompt 48 : lecture facile ×1,5
 	const reste = constrain(1 - (millis() - debutCompteur) / duree, 0, 1);
 	// Prompt 44 § 3 : tic-tac sous les 10 dernières secondes, qui s'accélère (1 s → 0,5 s → 0,25 s)
 	const resteMs = reste * duree;
-	if (resteMs > 0 && resteMs < 10000 && (phase === 'decision' || phase === 'contradiction' || phase === 'conflit')) {
+	if (!Confort.Reglages.lectureFacile && resteMs > 0 && resteMs < 10000 && (phase === 'decision' || phase === 'contradiction' || phase === 'conflit')) {
 		const pas = resteMs < 4000 ? 250 : resteMs < 7000 ? 500 : 1000;
 		if (millis() - dernierTic >= pas) {
 			dernierTic = millis();
@@ -1367,7 +1444,8 @@ function dateLongue(iso) {
 // Entrées : souris, touch, clavier (raccourcis complets, 08-raccourcis)
 // =====================================================================
 function mousePressed() {
-	if (Sauvegarde.dialogueOuvert) return; // prompt 33 : clics destinés à la boîte d'import HTML
+	if (Sauvegarde.dialogueOuvert || CARNET.ouvert) return; // prompt 33 : clics destinés à la boîte d'import HTML
+	if (arreterDemo()) return; // prompt 48
 	Confort.Son.demarrer();
 	interaction();
 	for (let i = boutons.length - 1; i >= 0; i--) {
@@ -1386,7 +1464,8 @@ function basculerSon() {
 
 function keyPressed() {
 	// Prompt 33 : boîte d'import ouverte (champ texte, fichier) → le clavier lui appartient
-	if (Sauvegarde.dialogueOuvert) return;
+	if (Sauvegarde.dialogueOuvert || CARNET.ouvert) return;
+	if (arreterDemo()) return false; // prompt 48 : une touche arrête la démo automatique
 	if (CINE) return toucheCinematique(), false; // prompt 41
 	if (TRANSITION_JOUR && (keyCode === ENTER || keyCode === RETURN || key === ' ' || keyCode === ESCAPE)) return passerTransitionJour(), false; // prompt 43
 	Confort.Son.demarrer(); // l'audio ne peut démarrer qu'après un geste du joueur
@@ -1407,6 +1486,8 @@ function keyPressed() {
 	if (tutoriel && !(key === 'l' || key === 'L')) return toucheTutoriel(), false;
 	// Langue (prompt 24) : L bascule partout, sans toucher à la partie
 	if (key === 'l' || key === 'L') return Langue.suivante(), false;
+	// Prompt 47 : inspection, démission, palmarès ; J = journal de bord, D = rendre son badge
+	if (toucheMecaniques() || toucheAccessibilite()) return false; // prompts 47 et 48
 	// Fenêtres ouvertes : elles captent le clavier
 	if (fenetre) {
 		if (keyCode === ESCAPE || (fenetre === 'aide' && (key === 'h' || key === 'H' || key === '?'))) return fermer(), false;
@@ -1434,6 +1515,7 @@ function keyPressed() {
 			const cles = { 1: 'son', 2: 'horsLigneForce', 3: 'reduireAnimations', 4: 'contrasteRenforce' };
 			if (cles[key]) basculerReglage(cles[key]);
 			if (key === '8') musiqueSuivante(); // prompt 44
+			if (key === '9') return ouvrirAccessibilite(), false; // prompt 48
 			if (key === '5') Sauvegarde.exporter(); // prompt 33
 			if (key === '6') Sauvegarde.copier();
 			if (key === '7') return Sauvegarde.ouvrirImport(), false;
@@ -1458,6 +1540,9 @@ function keyPressed() {
 		if (key === 'h' || key === 'H' || key === '?') ouvrir('aide');
 		return false;
 	}
+	// Zoom de la carte : + et − (au poste, dans l'appli)
+	if ((key === '+' || key === '=') && carteVisible()) return zoomerCarte(1.4), false;
+	if ((key === '-' || key === '_') && carteVisible()) return zoomerCarte(1 / 1.4), false;
 	// Prompt 36 : I ouvre / ferme l'app flottante « Indicateurs » (au poste)
 	if (key === 'i' || key === 'I') return basculerIndicateurs(), false;
 	// Au poste, système du PC (bureau RégulOS) : Tab = icônes, Entrée = ouvrir, Échap = fermer l'app puis se lever
@@ -1532,6 +1617,7 @@ function keyPressed() {
 // Prompt 26 : au poste, la molette fait quitter le PC (anti-rebond dans bureau.js) ; ailleurs, scroll normal
 function mouseWheel(event) {
 	interaction();
+	if (zoomCarteMolette(event.delta)) return false; // molette au-dessus de la carte : zoom (avant la sortie du PC)
 	if (scrollSortiePC(event.delta)) return false;
 }
 
@@ -1542,7 +1628,7 @@ function mouseMoved() {
 
 // Touch basique (Q32) : un appui = un clic sur les boutons
 function touchStarted() {
-	if (Sauvegarde.dialogueOuvert) return;
+	if (Sauvegarde.dialogueOuvert || CARNET.ouvert) return;
 	sourisDansCanevas = false; // au doigt, pas de caméra (la position du dernier appui resterait « collée »)
 	Confort.Son.demarrer();
 	mousePressed();
@@ -1577,6 +1663,10 @@ function dessinerFenetre() {
 	if (fenetre === 'telephone') return fenetreTelephone(); // prompt 42 : le téléphone en main a son propre voile
 	voile();
 	if (fenetre === 'rapport') return fenetreRapport(); // prompt 41
+	if (fenetre === 'inspection') return fenetreInspection(); // prompt 47
+	if (fenetre === 'demission') return fenetreDemission(); // prompt 47
+	if (fenetre === 'palmares') return fenetrePalmares(); // prompt 47
+	if (fenetre === 'accessibilite') return fenetreAccessibilite(); // prompt 48
 	if (fenetre === 'aide') return fenetreAide();
 	if (fenetre === 'reset') return fenetreReset();
 	if (fenetre === 'parametres') return fenetreParametres();
@@ -1684,7 +1774,7 @@ function fenetreReset() {
 /** Prompt 44 : morceau suivant (mémorisé), joué tout de suite si le son est actif */
 function musiqueSuivante() {
 	const liste = Confort.Son.musique.pistes();
-	const i = liste.indexOf(Confort.Reglages.musique || 'origine');
+	const i = liste.indexOf(Confort.Reglages.musique || 'chillin');
 	const suivante = liste[(i + 1) % liste.length];
 	Confort.Son.demarrer();
 	Confort.Son.musique.changer(suivante);
@@ -1705,7 +1795,7 @@ function basculerReglage(nom) {
 
 function fenetreParametres() {
 	const l = 1000;
-	const h = 956; // prompt 33 : + section « Progression » ; prompt 44 : + « Musique »
+	const h = 1052; // prompt 33 : + section « Progression » ; prompt 44 : + « Musique » ; prompt 48 : + « Accessibilité »
 	const x = (L - l) / 2;
 	const y = (H - h) / 2;
 	panneau(x, y, l, h, C.accent);
@@ -1765,7 +1855,12 @@ function fenetreParametres() {
 	textSize(18);
 	fill(C.gris);
 	text(t('param.touche', { k: '8' }), x + 560, ym + 36);
-	bouton(x + l - 48 - 280, ym + 8, 280, 56, '♪ ' + t('musique.' + (Confort.Reglages.musique || 'origine')), musiqueSuivante, false, true);
+	bouton(x + l - 48 - 280, ym + 8, 280, 56, '♪ ' + t('musique.' + (Confort.Reglages.musique || 'chillin')), musiqueSuivante, false, true);
+	textFont(POLICE_DONNEES);
+	textSize(14);
+	fill(C.gris);
+	textAlign(LEFT, TOP);
+	text(t('param.musiqueCredits'), x + 48, ym + 70, 640, 24); // crédits des morceaux CC0
 	// Prompt 33 : Progression — exporter (fichier), copier (presse-papiers), importer (fichier ou texte collé)
 	const yp = y + 120 + 6 * 96;
 	textFont(POLICE_TEXTE);
@@ -1777,6 +1872,18 @@ function fenetreParametres() {
 	bouton(x + l - 48 - 3 * lbp - 32, yp + 8, lbp, 56, t('parametres.exporter'), () => Sauvegarde.exporter(), false, true);
 	bouton(x + l - 48 - 2 * lbp - 16, yp + 8, lbp, 56, t('parametres.copier'), () => Sauvegarde.copier(), false, true);
 	bouton(x + l - 48 - lbp, yp + 8, lbp, 56, t('parametres.importer'), () => Sauvegarde.ouvrirImport(), false, true);
+	// Prompt 48 : accessibilité (daltonisme, taille du texte, lecture facile) et reprise sur un autre appareil
+	const ya = yp + 96;
+	textFont(POLICE_TEXTE);
+	textSize(26);
+	fill(C.texte);
+	textAlign(LEFT, CENTER);
+	text(t('acc.titre'), x + 48, ya + 36);
+	textFont(POLICE_DONNEES);
+	textSize(18);
+	fill(C.gris);
+	text(t('param.touche', { k: '9' }), x + 560, ya + 36);
+	bouton(x + l - 48 - 280, ya + 8, 280, 56, t('acc.ouvrir'), ouvrirAccessibilite, false, true);
 	textAlign(LEFT, TOP);
 	bouton(x + l - 288, y + h - 104, 240, 64, t('param.retour'), fermer);
 }

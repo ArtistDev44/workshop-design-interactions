@@ -1,0 +1,271 @@
+{
+ "lundi": "2026-10-12",
+ "dimanche": "2026-10-18",
+ "preparee_le": "2026-11-10T08:32:35.841Z",
+ "dossiers": [
+  {
+   "date": "2026-10-12",
+   "type": "perturbation",
+   "nature": "manifestation",
+   "lignes": [],
+   "retard": null,
+   "source": "Changelog du GTFS Naolib (Open Data Nantes Métropole, Licence Ouverte)",
+   "texte_source": "Manifestation 13/10"
+  },
+  {
+   "date": "2026-10-15",
+   "type": "perturbation",
+   "nature": "mouvement social",
+   "lignes": [],
+   "retard": null,
+   "source": "Changelog du GTFS Naolib (Open Data Nantes Métropole, Licence Ouverte)",
+   "texte_source": "Mouvement de grève chez STAO"
+  },
+  {
+   "date": "2026-10-16",
+   "type": "perturbation",
+   "nature": "manifestation",
+   "lignes": [],
+   "retard": null,
+   "source": "Changelog du GTFS Naolib (Open Data Nantes Métropole, Licence Ouverte)",
+   "texte_source": "Manifestation + Service Garanti le 17/10"
+  }
+ ],
+ "evenements": [
+  {
+   "date": "2026-10-12",
+   "type": "événement",
+   "nature": "Exposition",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Exposition Le Muséum au fil du temps — Place de la Monnaie, Nantes"
+  },
+  {
+   "date": "2026-10-12",
+   "type": "événement",
+   "nature": "Exposition",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Le livre d’artiste concours et exposition – Musée de l'imprimerie — Musée-atelier de l'imprimerie de Nantes, Nantes"
+  },
+  {
+   "date": "2026-10-12",
+   "type": "événement",
+   "nature": "Stage - Atelier - Activité à partager",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Ateliers parents-enfants — Les Cabanes des Loulous, Couëron"
+  },
+  {
+   "date": "2026-10-12",
+   "type": "événement",
+   "nature": "Cirque - Magie - Marionnettes, Concert - Musique, Conférence - Débat - Réunion publique, Contes - Lecture - Poésie, Danse - Performance - Bal, Défilé - Parade - Arts de la rue, Evènement sportif, Exposition, Fête - Festival, Jeux - Jeux vidéo, Marché - Vide-greniers - Brocante, Projection, Rencontre - Forum, Salon, Stage - Atelier - Activité à partager, Théâtre - Humour, Visite - Balade",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Raconte moi une histoire — Manou Partages, Nantes"
+  },
+  {
+   "date": "2026-10-12",
+   "type": "événement",
+   "nature": "Exposition",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Exposition « 200 photographies pour 200 ans d'histoire » — Archives Départementales de Loire-Atlantique, Nantes"
+  },
+  {
+   "date": "2026-10-13",
+   "type": "événement",
+   "nature": "Marché - Vide-greniers - Brocante",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Epicerie solidaire \"Le Comptoir d'Halvêque\" — salle des 4 carrés, Nantes"
+  },
+  {
+   "date": "2026-10-13",
+   "type": "événement",
+   "nature": "Cirque - Magie - Marionnettes, Concert - Musique, Conférence - Débat - Réunion publique, Contes - Lecture - Poésie, Danse - Performance - Bal, Défilé - Parade - Arts de la rue, Evènement sportif, Exposition, Fête - Festival, Jeux - Jeux vidéo, Marché - Vide-greniers - Brocante, Projection, Rencontre - Forum, Salon, Stage - Atelier - Activité à partager, Théâtre - Humour, Visite - Balade",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Atelier peinture, intuitive et créatives — Manou Partages, Nantes"
+  },
+  {
+   "date": "2026-10-13",
+   "type": "événement",
+   "nature": "Stage - Atelier - Activité à partager",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Jardinage au jardin partagé Paysages Nourriciers du Breil — Parc Georges Méliès, Nantes"
+  },
+  {
+   "date": "2026-10-14",
+   "type": "événement",
+   "nature": "Rencontre - Forum",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Pause-café — RIG Malville, Nantes"
+  },
+  {
+   "date": "2026-10-14",
+   "type": "événement",
+   "nature": "Stage - Atelier - Activité à partager",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Programme de sensibilisation aux discriminations · Magma'Nantes #10 — Open Lande, Nantes"
+  },
+  {
+   "date": "2026-10-14",
+   "type": "événement",
+   "nature": "Conférence - Débat - Réunion publique, Exposition",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Exposition « Architecture (s) et grands ensembles » — École nationale supérieure d’architecture - ensa, Nantes"
+  },
+  {
+   "date": "2026-10-14",
+   "type": "événement",
+   "nature": "Contes - Lecture - Poésie",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Contes & comptines — Centre socioculturel des Bourderies, Nantes"
+  },
+  {
+   "date": "2026-10-15",
+   "type": "événement",
+   "nature": "Stage - Atelier - Activité à partager",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Atelier couture et arts du fil — Centre socioculturel des Bourderies, Nantes"
+  },
+  {
+   "date": "2026-10-15",
+   "type": "événement",
+   "nature": "Stage - Atelier - Activité à partager",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Parcours de 8 séances numériques seniors — Espace seniors Barberie, Nantes"
+  },
+  {
+   "date": "2026-10-15",
+   "type": "événement",
+   "nature": "Théâtre - Humour",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Comédie familiale - \"Les parents viennent de Mars, les enfants du McDo/Chez Papa\" — Théâtre de Jeanne, Nantes"
+  },
+  {
+   "date": "2026-10-15",
+   "type": "événement",
+   "nature": "Rencontre - Forum",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Point d'Information Nantes Solidaire — Maison de santé Nantes nord, Nantes"
+  },
+  {
+   "date": "2026-10-16",
+   "type": "événement",
+   "nature": "Stage - Atelier - Activité à partager",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Repair café numérique - Atelier de réparation d'ordinateurs — Maison de quartier des Haubans, Nantes"
+  },
+  {
+   "date": "2026-10-17",
+   "type": "événement",
+   "nature": "Théâtre - Humour",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Jeanne et Marguerite — Théâtre de la rue de belleville, Nantes"
+  },
+  {
+   "date": "2026-10-17",
+   "type": "événement",
+   "nature": "Visite - Balade",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Visite guidée – Nantes et son château — Château des Ducs de Bretagne - Musée d'Histoire de Nantes, Nantes"
+  },
+  {
+   "date": "2026-10-18",
+   "type": "événement",
+   "nature": "Exposition, Visite - Balade",
+   "lignes": [],
+   "retard": null,
+   "source": "Agenda des événements de Nantes Métropole (Open Data, Licence Ouverte)",
+   "texte_source": "Visite à deux voix : archéologie et santé — Chronographe (Le), Rezé"
+  }
+ ],
+ "meteo": [
+  {
+   "date": "2026-10-12",
+   "temp_min": 13.1,
+   "temp_max": 19.2,
+   "pluie_mm": 7.4,
+   "rafales_max": 31
+  },
+  {
+   "date": "2026-10-13",
+   "temp_min": 15.4,
+   "temp_max": 21.5,
+   "pluie_mm": 1.2,
+   "rafales_max": 38.2
+  },
+  {
+   "date": "2026-10-14",
+   "temp_min": 12.2,
+   "temp_max": 20.8,
+   "pluie_mm": 0,
+   "rafales_max": 20.2
+  },
+  {
+   "date": "2026-10-15",
+   "temp_min": 13.9,
+   "temp_max": 24.3,
+   "pluie_mm": 0,
+   "rafales_max": 22.3
+  },
+  {
+   "date": "2026-10-16",
+   "temp_min": 12,
+   "temp_max": 20,
+   "pluie_mm": 1.8,
+   "rafales_max": 41
+  },
+  {
+   "date": "2026-10-17",
+   "temp_min": 8.9,
+   "temp_max": 15.6,
+   "pluie_mm": 0,
+   "rafales_max": 47.2
+  },
+  {
+   "date": "2026-10-18",
+   "temp_min": 7.9,
+   "temp_max": 14.5,
+   "pluie_mm": 2,
+   "rafales_max": 34.9
+  }
+ ],
+ "difficulte": {
+  "niveau": "difficile",
+  "compteur_s": 15
+ }
+}

@@ -182,12 +182,12 @@ Note finale /20 = (points projet /70 + points individuels /30) ÷ 5. Exemple du 
 Vérifié par `ls` / `grep` dans le dépôt : seuls les éléments existants sont cochés plus haut.
 
 ### Livrables manquants
-- [ ] `manifest.json` au modèle du livret (absent du dépôt)
-- [ ] Cartel 80–120 mots : texte présent dans `site/src/content/oeuvres/pxe-nte001-g01-w01.json` (validé au build, affiché sur `/cartel/`), à relire par le groupe — il cite encore la « satisfaction des usagers », remplacée par le budget au prompt 22
-- [ ] Captures : `hero.jpg`, `detail-01.jpg`, `process.jpg`, `demo.mp4` (20–30 s), `thumb.jpg` (aucune dans le dépôt)
-- [ ] Régénérer `site/public/assets/qr-edition.png` et `qr-pxe-nte001-g01-w01.png` vers l'URL canonique https://workshop-design-interactions.pages.dev/ (commandes dans `site/README.md`), puis tester le scan en conditions réelles
+- [x] `manifest.json` au modèle du livret : `site/public/manifest.json` (prompt 46 ; `authors`, `license` et la licence Hub'Eau restent `[À COMPLÉTER]`)
+- [ ] Cartel 80–120 mots : texte présent dans `site/src/content/oeuvres/pxe-nte001-g01-w01.json` (validé au build, affiché sur `/cartel/`) ; « satisfaction des usagers » remplacée par « budget » (prompt 46) — relecture finale par le groupe
+- [x] Captures : `site/public/captures/` — `hero.jpg`, `detail-01.jpg`, `process.jpg`, `thumb.jpg`, `demo.mp4` (27 s), issues du vrai rendu (prompt 46)
+- [ ] QR codes `site/public/assets/qr-*.png` : vérifiés identiques à ceux générés vers l'URL canonique (prompt 46) — reste à tester le scan en conditions réelles
 - [ ] Checklist de robustesse complète au preflight (refresh, sans API, 1920×1080, console)
-- [ ] Version finale sauvegardée dans un dossier distinct (`PXE_NTE001_G{nn}_NOM-PROJET`, absent)
+- [x] Version finale sauvegardée : `rendu/PXE_NTE001_G01_NANTES-EN-REGULATION/` (lancée hors ligne par `file://`, sans erreur ; prompt 46)
 
 ### `[À COMPLÉTER]` qui attendent une saisie humaine du groupe
 - [ ] `site/README.md` : Auteurs (noms et rôles), Contributions (nominatives), AI usage (ce qui a été relu, réécrit, testé)

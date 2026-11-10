@@ -1,0 +1,96 @@
+---
+// Making-of (prompt 46) : la chaîne des prompts, générée au build depuis prompts/README.md.
+// Rien n'est saisi ici : numéro, fichier, objectif et statut viennent du tableau du dépôt.
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+
+const md = readFileSync(resolve(process.cwd(), '../prompts/README.md'), 'utf8') // npm run build se lance dans site/;
+const depot = 'https://github.com/ArtistDev44/workshop-design-interactions/blob/main/prompts/';
+const prompts = md
+	.split('\n')
+	.map((l) => l.split('|').map((c) => c.trim()))
+	.filter((c) => c.length === 6 && /^\d{2}$/.test(c[1]) && /\.md`$/.test(c[2]))
+	.map((c) => ({ n: c[1], fichier: c[2].replace(/`/g, ''), objectif: c[3], statut: c[4] }));
+// Étape de la chaîne source → grammaire → système → œuvre, déduite du numéro (voir prompts/README.md)
+const etape = (n, f) => {
+	const k = Number(n);
+	if (k <= 13) return 'source';
+	if (k <= 19) return 'grammaire';
+	if (k === 33 || k === 46 || !/jeu/.test(f)) return 'œuvre';
+	return 'système';
+};
+const etapes = [
+	{ id: 'source', titre: 'Source', texte: 'Le site de travail, les données ouvertes de Nantes Métropole et leur audit.' },
+	{ id: 'grammaire', titre: 'Grammaire', texte: 'Les décisions verrouillées du jeu : boucle, actions, jauges, règles.' },
+	{ id: 'système', titre: 'Système', texte: 'Les itérations du jeu p5.js, une étape vérifiable par prompt.' },
+	{ id: 'œuvre', titre: 'Œuvre', texte: 'Le rendu : audit, livrables, cartel et documentation.' },
+];
+// Mise en forme minimale du Markdown des cellules : `code` et **gras**
+const echapper = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const enLigne = (s) => echapper(s).replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+const titre = 'Making-of — Nantes en régulation · PATRIMOINE.EXE NTE001';
+const description = `Les ${prompts.length} prompts qui ont construit l'œuvre, dans l'ordre : source → grammaire → système → œuvre.`;
+---
+<!doctype html>
+<html lang="fr">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>{titre}</title>
+		<meta name="description" content={description} />
+		<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+		<link rel="icon" href="/favicon.ico" sizes="48x48" />
+		<link rel="canonical" href="https://workshop-design-interactions.pages.dev/making-of/" />
+		<meta name="theme-color" content="#0d0c0c" />
+		<meta property="og:type" content="article" />
+		<meta property="og:title" content={titre} />
+		<meta property="og:description" content={description} />
+		<meta property="og:url" content="https://workshop-design-interactions.pages.dev/making-of/" />
+		<meta property="og:image" content="https://workshop-design-interactions.pages.dev/og-image.jpg" />
+		<style>
+			:root { color-scheme: light; --texte: #000000; --fond: #ffffff; --lien: #005ae1; --trait: #5c5c5c; }
+			* { box-sizing: border-box; }
+			body { margin: 0; background: var(--fond); color: var(--texte); font: 1.0625rem/1.55 system-ui, sans-serif; }
+			main { max-width: 52rem; margin: 0 auto; padding: 2rem 1rem 4rem; }
+			a { color: var(--lien); }
+			a:focus-visible { outline: 3px solid var(--texte); outline-offset: 2px; }
+			h1 { font-size: 1.75rem; line-height: 1.2; }
+			h2 { font-size: 1.375rem; border-top: 2px solid var(--texte); padding-top: 1rem; margin-top: 2.5rem; }
+			nav ol { display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; padding: 0; list-style: none; }
+			ol.prompts { padding: 0; list-style: none; }
+			ol.prompts li { display: grid; grid-template-columns: 3rem 1fr; gap: .25rem 1rem; padding: .75rem 0; border-bottom: 1px solid #d6d6d6; }
+			.n { font-family: ui-monospace, monospace; font-weight: 700; }
+			.statut { font-size: .9375rem; color: var(--trait); }
+			code { font-size: .9em; overflow-wrap: anywhere; }
+			@media (max-width: 30rem) { ol.prompts li { grid-template-columns: 1fr; } }
+		</style>
+	</head>
+	<body>
+		<main>
+			<p><a href="/">← Jouer à « Nantes en régulation »</a> · <a href="/cartel/">Cartel</a></p>
+			<h1>Making-of : la chaîne des prompts</h1>
+			<p>{description} Chaque prompt est une étape vérifiable, exécutée avec un assistant IA puis contrôlée (build, smoke test, essai du jeu). Liste générée au build depuis <code>prompts/README.md</code>.</p>
+			<nav aria-label="Étapes de la chaîne">
+				<ol>{etapes.map((e) => <li><a href={'#' + e.id}>{e.titre}</a> ({prompts.filter((p) => etape(p.n, p.fichier) === e.id).length})</li>)}</ol>
+			</nav>
+			{etapes.map((e) => (
+				<section aria-labelledby={e.id}>
+					<h2 id={e.id}>{e.titre}</h2>
+					<p>{e.texte}</p>
+					<ol class="prompts">
+						{prompts.filter((p) => etape(p.n, p.fichier) === e.id).map((p) => (
+							<li>
+								<span class="n">{p.n}</span>
+								<div>
+									<a href={depot + p.fichier}><code>{p.fichier}</code></a>
+									<div set:html={enLigne(p.objectif)} />
+									<div class="statut" set:html={'Statut : ' + enLigne(p.statut)} />
+								</div>
+							</li>
+						))}
+					</ol>
+				</section>
+			))}
+		</main>
+	</body>
+</html>
