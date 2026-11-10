@@ -77,3 +77,4 @@ dossier à trancher sous pression. »*
 | 59 | `59-webapp-installable.md` | Prompt 65 : webapp installable — manifest complet (maskable, captures, raccourcis), précache généré de tout le site, réseau d'abord pour les pages, bandeau de nouvelle version, bouton d'installation |
 | 61 | `61-main-webcam-sieste.md` | Prompt 67 : une main montrée à la webcam lance ou interrompt la sieste (couleur peau + mouvement, local) ; l'absence ne déclenche plus la sieste |
 | 62 | `62-carte-appli-principale.md` | Prompt 68 : la Carte remplace l'appli Régulation (phase sélection sans chrono, file, gravité, onglets Enquête / Historique / Équipes), équipes limitées (effectifs, cycle, pertinence, demi-effet hors sujet) |
+| 63 | `63-revue-game-design.md` | Prompt 66 : revue game design — correctif de la file de la Carte entre deux semaines, guide en 7 étapes dont la bulle ne masque plus le dossier, aide et tutoriel complets, rapport lisible |

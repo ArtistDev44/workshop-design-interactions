@@ -137,3 +137,43 @@ scripts Node ; essais humains en salle à prévoir pour le micro, la webcam et l
 - Scan réel des QR codes ; essais micro et webcam avec de vrais périphériques (seuils en salle).
 - Variante du prompt 30 du collaborateur non fusionnée : à arbitrer.
 - Licences à vérifier à la source : Hub'Eau, Loyalty Freak Music (Commons : « review needed »).
+
+## Revue game design du 10/11/2026 (prompt 66)
+
+Méthode : parties jouées dans Chromium (1920 × 1080, animations réduites), FR et EN, comme un nouveau joueur
+(stockage vidé, menu → Nouvelle partie → SMS → guide), puis les 3 semaines du mode histoire jouées en entier
+avec trois styles : ne rien faire (semaine 1), renfort systématique (semaine 2), au hasard (semaine 3).
+Mobile portrait (412 × 915, tactile) vérifié sur la Carte. Captures de travail hors dépôt.
+Règles Q1–Q61 et `game.js` inchangés (`git diff` vide, `test-jeu.mjs` vert).
+
+| Semaine | Style | Score | Dossiers décidés |
+|---|---|---|---|
+| 1 (facile) | ne rien faire | 106 / 300 | 0 / 15 |
+| 2 (normale) | renfort systématique | 192 / 300 | 15 / 15 |
+| 3 (difficile) | au hasard | 151 / 300 (FR), 143 / 300 (EN) | 15 / 15 |
+
+### Frictions trouvées et corrections
+
+| Gravité | Axe | Friction | Correction (commit) |
+|---|---|---|---|
+| Bloquant | 2. Boucle | Après deux semaines jouées dans la même session, tous les signalements de la semaine suivante expiraient dès leur arrivée (file de la Carte, prompt 68, jamais remise à zéro) | Arrivées remises à zéro à chaque nouveau paquet (45bef1b) |
+| Confus | 1. Onboarding | Le guide ne disait pas qu'il faut **prendre** le signalement (Entrée) ; sa bulle masquait le bouton « Prendre le dossier » | Étape « Prendre le signalement » (guide en 7 étapes) (e2074ac) |
+| Confus | 1. Onboarding / 3. UI | La bulle « consultez les sources (5 à 8) » masquait les sources 5 à 7, puis la bulle suivante masquait le texte des conséquences | Bulle placée à gauche des cibles de la colonne de droite, flèche horizontale (e2074ac) |
+| Confus | 6. Aide | Aide : règles de base perdues au prompt 68 (jauges, seuils, compteur, dé, score) ; texte coupé ; raccourcis 5–8, Maj+1–4, R ralenti absents ; libellés réduits sous 18 px | Aide réorganisée (1720 × 1040), règles complètes, 16 raccourcis lisibles, malus sous les raccourcis (e2074ac) |
+| Confus | 1. Onboarding | Tutoriel muet sur la Carte, la prise du signalement, les équipes, le ralenti et le sablier | Pages 2, 3, 4 réécrites (e2074ac) |
+| Mineur | 7. Journée | Bulle du guide par-dessus le mail du soir | Pas de bulle pendant le mail (e2074ac) |
+| Mineur | 8. Bilan | Rapport : décisions clés coupées (« Bus de… ») | Qualité en tête, texte sur deux lignes (d2baca4) |
+| Mineur | 3. UI | « Journée suivante (Entrée) › » débordait du bouton | Libellé des boutons DS ajusté à la largeur (≥ 18 px) (d2baca4) |
+| Mineur | 1. Onboarding | Pied du livre « Commande » tronqué | Texte raccourci (e2074ac) |
+
+### Points vérifiés sans friction
+- Accueil, choix du mode (histoire recommandé, temps réel verrouillé), SMS d'intro (Entrée), premier signalement en ~2 s réelles.
+- Bandeau d'état en bas de l'appli (À VOUS, CONSÉQUENCES, SURVEILLANCE…) : explique chaque phase.
+- Narration : deltas et dés affichés, contexte (« affluence : effet renforcé ») — on comprend pourquoi les jauges bougent.
+- Mail du soir (journal de la journée, « il fallait : … »), mail de fin de semaine, rapport (tampon, courbes, défis, profil).
+- Mobile portrait : jauges, Carte, panneau de sélection et dossier lisibles, cibles ≥ 44 px.
+
+### Reste ouvert
+- Sur mobile, les mentions clavier « (Entrée) », « (R) » restent affichées sur les boutons tactiles.
+- Le rapport papier garde des textes de 15–16 px (hors PC) : à agrandir si on change sa mise en page.
+- Pas de test automatique de `carte.js` (le test du jeu ne charge que `game.js`) : le correctif est vérifié en navigateur.
