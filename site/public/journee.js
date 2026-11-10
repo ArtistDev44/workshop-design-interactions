@@ -179,14 +179,17 @@ function dessinerSablier(g) {
 		px(g, verre, s.x + Math.floor(s.l / 2) - demi, y, demi * 2 + 1, 1);
 	}
 	// Sable : il coule quand le sablier tourne ; sinon il repose en bas
-	const coule = s.actif && !reduireAnimations;
-	const p = coule ? ((millis() - s.retourne) / 4000) % 1 : 1;
+	// Prompt 53 : sous 10 s de compteur, le sablier s'emballe (le sable tombe de plus en plus vite)
+	const urg = typeof urgenceCompteur === 'function' ? urgenceCompteur() : 0;
+	const coule = (s.actif || urg > 0) && !reduireAnimations;
+	const periode = urg > 0 ? 1600 - urg * 1200 : 4000;
+	const p = coule ? ((millis() - (urg > 0 ? 0 : s.retourne)) / periode) % 1 : 1;
 	const sable = '#e2b25a';
 	const haut = Math.round((1 - p) * 5);
 	const bas = Math.round(p * 5);
 	for (let k = 0; k < haut; k++) px(g, sable, s.x + Math.floor(s.l / 2) - 2 + Math.floor(k / 3), mi - 2 - k, 5 - Math.floor(k / 2), 1);
 	for (let k = 0; k < bas; k++) px(g, sable, s.x + 2 + Math.floor(k / 3), s.y + s.h - 3 - k, s.l - 4 - Math.floor(k / 2) * 2, 1);
-	if (coule && Math.floor(millis() / 120) % 2) px(g, sable, s.x + Math.floor(s.l / 2), mi - 1, 1, 4); // filet de sable
+	if (coule && Math.floor(millis() / (urg > 0 ? 60 : 120)) % 2) px(g, sable, s.x + Math.floor(s.l / 2), mi - 1, 1, 4); // filet de sable
 	else if (s.actif) px(g, sable, s.x + Math.floor(s.l / 2), mi, 1, 3);
 }
 

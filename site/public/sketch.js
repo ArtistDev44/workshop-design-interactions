@@ -392,6 +392,7 @@ function nouveauDossier() {
 	if (Jeu.conflit()) phase = 'conflit';
 	else if (Jeu.dossierCourant().contradiction) phase = 'contradiction';
 	else phase = 'decision';
+	annoncer(t('annonce.signalement', { quoi: t('enq.signalement.' + dInc.type) })); // prompt 53 : arrivée annoncée (aria-live)
 }
 
 /* Décision du joueur (ou compteur à 0 → 'temps', Q25) */
@@ -400,7 +401,8 @@ function decider(action) {
 	if (Jeu.actionBloquee && action === Jeu.actionBloquee()) return; // erreur système : action indisponible
 	dernierResultat = Jeu.decider(action, sourceChoisie);
 	if (!dernierResultat) return;
-	annoncer(t('annonce.decision', { titre: dernierResultat.narration.titre, texte: dernierResultat.narration.texte }));
+	const dj = dernierResultat.deltas.map((v, i) => t('jaugeTitre.' + ['fluidite', 'reputation', 'budget'][i]) + ' ' + (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v)).join(', ');
+	annoncer(t('annonce.decision', { titre: dernierResultat.narration.titre, texte: dernierResultat.narration.texte }) + ' ' + dj + '.'); // prompt 53 : variations annoncées
 	Confort.Son.clicAction(action); // prompt 44 § 4 : un clic de console par action
 	Confort.Son.jauges(dernierResultat.deltas); // § 5 : chute brutale ou remontée nette, audibles
 	phase = 'narration';
@@ -783,7 +785,6 @@ function etatsLignes(dActuel) {
 function dessinerLignesEtat(zone, d) {
 	if (!Jeu.lignes) return;
 	const etats = etatsLignes(d);
-	const clignote = reduireAnimations ? true : Math.floor(millis() / 500) % 2 === 0;
 	push();
 	drawingContext.save();
 	drawingContext.beginPath();
@@ -796,8 +797,12 @@ function dessinerLignesEtat(zone, d) {
 	for (const l of liste) {
 		const e = etats.get(l.nom);
 		if (e === 'incident') {
-			stroke(C.rouge);
-			strokeWeight(clignote ? 8 : 4);
+			// Prompt 53 : la ligne du dossier pulse doucement (épaisseur et opacité), sans clignotement sec
+			const p = pulsationDouce(1.2);
+			const c = color(C.rouge);
+			c.setAlpha(255 * (0.6 + 0.4 * p));
+			stroke(c);
+			strokeWeight(4 + 5 * p);
 		} else if (e === 'retard') {
 			stroke(C.orange);
 			strokeWeight(5);
@@ -905,13 +910,14 @@ function dessinerJauges() {
 	panneau(z.x, z.y, z.l, z.h);
 	cibleGuide('jauges', z.x, z.y, z.l, z.h); // prompt 37
 	const jauges = Jeu.jauges || { fluidite: 50, reputation: 50, budget: 50 }; // départ 50 (Q40)
+	const aff = jaugesAffichees(); // prompt 53 : barres qui glissent vers leur nouvelle valeur
 	const defs = [
-		[t('jaugeTitre.fluidite'), jauges.fluidite],
-		[t('jaugeTitre.reputation'), jauges.reputation],
-		[t('jaugeTitre.budget'), jauges.budget],
+		[t('jaugeTitre.fluidite'), jauges.fluidite, 'fluidite'],
+		[t('jaugeTitre.reputation'), jauges.reputation, 'reputation'],
+		[t('jaugeTitre.budget'), jauges.budget, 'budget'],
 	];
 	const lb = (z.l - 48 - 2 * 20) / 3;
-	defs.forEach(([nom, v], i) => {
+	defs.forEach(([nom, v, cle], i) => {
 		const x = z.x + 24 + i * (lb + 20);
 		textAlign(LEFT, TOP);
 		noStroke();
@@ -924,22 +930,24 @@ function dessinerJauges() {
 		text(Math.round(v), x + lb, z.y + 18);
 		fill(C.piste);
 		rect(x, z.y + 56, lb, 22, 4);
-		// Jauge < 20 : clignotement discret (Q46), fixe si animations réduites
-		const critique = v < 20;
-		const visible = !critique || reduireAnimations || Math.floor(millis() / 700) % 2 === 0;
-		fill(critique ? C.rougeFonce : v < 40 ? C.orange : C.vert);
-		if (!visible) fill('rgba(255,197,194,0.45)');
-		rect(x, z.y + 56, (lb * constrain(v, 0, 100)) / 100, 22, 4);
+		// Jauge < 20 (Q46) : pulsation douce en opacité (prompt 53), fixe si animations réduites
+		const va = aff[cle];
+		const critique = va < 20;
+		const c = color(critique ? C.rougeFonce : va < 40 ? C.orange : C.vert);
+		if (critique) c.setAlpha(255 * opaciteCritique());
+		fill(c);
+		rect(x, z.y + 56, (lb * constrain(va, 0, 100)) / 100, 22, 4);
 		// Prompt 43 : repères des seuils réels (20 critique, 40 orange) sur chaque jauge
 		fill(255, 255, 255, 170);
 		[20, 40].forEach((s) => rect(x + (lb * s) / 100 - 1, z.y + 52, 2, 30));
+		dessinerDeltasJauge(cle, x, z.y + 56, lb); // prompt 53 : delta réel qui flotte puis s'efface
 	});
 }
 
 // ——— Dossier courant : ligne + retard + raison en priorité (Q5), glissement depuis la droite (Q10) ———
 function dessinerDossier(d, meteo) {
 	const base = { x: DROITE.x, y: DROITE.y + 130, l: DROITE.l, h: DROITE.h - 130 };
-	const tA = reduireAnimations ? 1 : constrain((millis() - arriveeDossier) / 450, 0, 1);
+	const tA = reduireAnimations ? 1 : constrain((millis() - arriveeDossier) / 300, 0, 1); // prompt 53 : 300 ms, ease out
 	const decal = (1 - easeOut(tA)) * (L - base.x);
 	const x = base.x + decal;
 	panneau(x, base.y, base.l, base.h);
@@ -968,7 +976,7 @@ function dessinerDossier(d, meteo) {
 	noStroke();
 	fill(C.piste);
 	rect(x + 24, base.y + 22, base.l - 48, 14, 7);
-	fill(reste < 0.25 ? C.rougeFonce : C.primaire); // prompt 39 : compteur aux couleurs du DS
+	fill(couleurCompteur(resteMs)); // prompt 53 : sous 10 s, rouge qui pulse doucement
 	rect(x + 24, base.y + 22, (base.l - 48) * reste, 14, 7);
 	textFont(POLICE_DONNEES);
 	textSize(16);
