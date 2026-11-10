@@ -244,7 +244,8 @@ const Sauvegarde = (function () {
 			alerteTempsJouee = false;
 			dernierResultat = null;
 			const enCompteur = PHASES_COMPTEUR.includes(ui.phase) && Jeu.dossierCourant() && !Jeu.terminee;
-			phase = enCompteur ? ui.phase : ui.phase === 'mail' ? 'mail' : Jeu.terminee ? 'fin' : 'attente';
+			phase = enCompteur ? ui.phase : ui.phase === 'mail' ? 'mail' : ui.phase === 'soir' && !Jeu.terminee ? 'soir' : Jeu.terminee ? 'fin' : 'attente';
+			if (phase === 'soir' && typeof reprendreSoir === 'function') reprendreSoir(); // prompt 69 : la nuit est tombée, la flèche attend
 			if (phase === 'fin') allerFin();
 			facteurDuree = Jeu.modificateurActif && Jeu.modificateurActif(maintenant) === 'heure_pointe' ? 0.8 : 1;
 			arriveeDossier = debutCompteur = maintenant - (enCompteur ? Math.max(0, Number(ui.ecoule) || 0) : 0);

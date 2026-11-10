@@ -15,6 +15,7 @@ function clicHorloge() {
 	interaction();
 	if (ecran !== 'jeu' || !Jeu.horloge || !Jeu.jourCourant || !Jeu.jourCourant()) return messagePiece('horloge', t('horloge.libre', { heure: texteHeure() }));
 	if (phase === 'mail') return messagePiece('horloge', t('horloge.mail'));
+	if (phase === 'soir') return messagePiece('horloge', t('soir.annonce')); // prompt 69
 	if (phase === 'fin') return;
 	if (Jeu.journeeFinie() && phase === 'attente') return terminerJournee();
 	ouvrir('partir');
@@ -205,7 +206,8 @@ const ECLAIRAGE = { v: null, t: 0 };
 function lumiereCible() {
 	const nuit = METEO_VISU.nuit === null ? facteurNuit() : METEO_VISU.nuit;
 	const jour = (1 - nuit) * (PIECE.store ? 0.35 : 1);
-	return constrain(0.12 + jour * 0.8 + (PIECE.lampe ? 0.45 : 0), 0, 1);
+	const ville = phase === 'soir' ? 0.3 : 0.12; // prompt 69 : le soir, plafonnier éteint, la ville éclaire la pièce (lisible)
+	return constrain(ville + jour * 0.8 + (PIECE.lampe ? 0.45 : 0), 0, 1);
 }
 function lumierePiece() {
 	const cible = lumiereCible();
@@ -223,15 +225,16 @@ function dessinerEclairage(g) {
 		g.fill(5, 7, 16, Math.round(nuit * 215)); // voile bleu nuit profond (les murs blancs ne doivent pas paraître brumeux)
 		g.rect(0, 0, BW, BH);
 	}
+	const veille = phase === 'soir' ? 0.35 : 1; // prompt 69 : PC en veille, faible halo
 	if (nuit > 0.15) {
 		// Halo de l'écran sur le plateau et le clavier : anneaux successifs (pixel art, pas de dégradé lisse)
 		const cx = ECRAN_PC.x + ECRAN_PC.l / 2;
 		const cy = ECRAN_PC.y + ECRAN_PC.h + 18;
 		for (let r = 5; r >= 1; r--) {
-			g.fill(150, 190, 255, Math.round((nuit - 0.15) * 26));
+			g.fill(150, 190, 255, Math.round((nuit - 0.15) * 26 * veille));
 			g.ellipse(cx, cy, ECRAN_PC.l * (0.5 + r * 0.22), 34 + r * 16);
 		}
-		g.fill(170, 205, 255, Math.round((nuit - 0.15) * 40));
+		g.fill(170, 205, 255, Math.round((nuit - 0.15) * 40 * veille));
 		g.rect(ECRAN_PC.x - 4, ECRAN_PC.y - 4, ECRAN_PC.l + 8, ECRAN_PC.h + 8); // lueur autour de l'écran
 	}
 	if (PIECE.lampe && nuit > 0.1) {

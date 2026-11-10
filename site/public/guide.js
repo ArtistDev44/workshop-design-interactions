@@ -136,6 +136,7 @@ function flecheGuide(px, py, versBas) {
 	noStroke();
 }
 function dessinerGuide() {
+	if (phase === 'soir' && ecran === 'jeu' && !MENU.actif) return dessinerGuideSoir(); // prompt 69 : étape « Quitter le bureau », le premier soir
 	if (!GUIDE.actif) {
 		if (GUIDE.fin && millis() - GUIDE.fin < 4000) bulleGuide(t('guide.fin'), L / 2, 120, false);
 		return;

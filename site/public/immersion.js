@@ -54,6 +54,7 @@ const OBJETS_BUREAU = [
 	{ nom: 'sablier', label: T('objet.sablier'), infobulle: T('objet.sablier.survol'), x: 302, y: 169, l: 14, h: 22 }, // prompt 51 : faire passer le temps
 	{ nom: 'webcam', label: T('objet.webcam'), infobulle: T('objet.webcam.survol'), x: 234, y: 39, l: 13, h: 8 }, // prompt 57 : webcam posée sur l'écran
 	{ nom: 'micro', label: T('objet.micro'), infobulle: T('objet.micro.survol'), x: 150, y: 170, l: 12, h: 24 }, // prompt 54 : micro du poste (appui maintenu)
+	{ nom: 'sortie', label: T('soir.sortie'), infobulle: T('soir.infobulle'), x: 41, y: 92, l: 34, h: 56, visible: () => typeof sortieVisible === 'function' && sortieVisible() }, // prompt 69 : flèche du soir (soir.js)
 ];
 
 // ——— Prompt 29 : interactions hors écran, dans la pièce ———
@@ -204,7 +205,7 @@ function avancerTemps() {
 	const maintenant = millis();
 	const dt = derniereImage ? Math.min(250, maintenant - derniereImage) : 0;
 	derniereImage = maintenant;
-	if (ecran !== 'jeu' || !Jeu.horloge || phase === 'fin' || phase === 'mail' || smsActif || enPause || tutoriel || TRANSITION_JOUR || mecaniquesSuspendentTemps()) return; // prompt 34 / 43 : tutoriel et transition suspendent le temps
+	if (ecran !== 'jeu' || !Jeu.horloge || phase === 'fin' || phase === 'mail' || phase === 'soir' || smsActif || enPause || tutoriel || TRANSITION_JOUR || mecaniquesSuspendentTemps()) return; // prompt 34 / 43 : tutoriel et transition suspendent le temps
 	const vitesse = IMMERSION.minutesParSeconde * (tempsCompresse() ? IMMERSION.compression : 1) * facteurSablier(); // prompt 51 : sablier
 	Jeu.horloge.minutes += (dt / 1000) * vitesse;
 	if (Jeu.majSuivis && Jeu.majSuivis()) Confort.Son.bip('choix'); // prompt 63 : une réaction arrive sur Community
@@ -379,7 +380,7 @@ function dessinerMail() {
 		ty += textWidth(ligne) > l - 110 ? 60 : 36;
 	});
 	dsTexte(t('mailf.signature'), x + 32, Math.min(ty + 10, y + h - 150), 20, DS.blanc50, 'left');
-	dsBouton(x + l - 420, y + h - 96, 388, 64, t(m.dernier ? 'mailf.bilan' : 'mailf.suivante'), journeeSuivante, 'primaire');
+	dsBouton(x + l - 420, y + h - 96, 388, 64, t('soir.ranger'), rangerPoste, 'primaire'); // prompt 69 : la sortie du bureau mène au lendemain (ou au bilan)
 }
 
 // ——— Intro SMS (§ 2) ———
@@ -719,6 +720,7 @@ function pageQuiTourne(livre, debut, sens) {
 function ouvrirObjetBureau(nom) {
 	interaction();
 	if (nom === 'ecran') return sAsseoir();
+	if (nom === 'sortie') return quitterBureau(); // prompt 69
 	if (nom === 'rapport') return ouvrirRapport(); // prompt 41
 	if (nom === 'telephone') return ouvrirTelephone(); // prompt 38 : notifications de l'Agenda Nantes Métropole
 	if (nom === 'commande') return lancerTutoriel(); // prompt 34 : le livre « commande » ouvre le tutoriel

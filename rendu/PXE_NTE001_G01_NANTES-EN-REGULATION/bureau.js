@@ -232,6 +232,10 @@ function melange(a, b, k) {
 	return lerpColor(color(a), color(b), k).toString('#rrggbb');
 }
 function facteurNuit() {
+	if (phase === 'soir' && typeof nuitSoir === 'function') return Math.max(facteurNuitHeure(), nuitSoir()); // prompt 69 (aussi en temps réel)
+	return facteurNuitHeure();
+}
+function facteurNuitHeure() {
 	const hA = heureAffichee();
 	const h = hA.h + hA.m / 60;
 	if (h < 6 || h >= 21) return 1;
@@ -287,6 +291,14 @@ function dessinerVueNantes(g) {
 	});
 	dessinerGrueTitan(g, 344, HORIZON_VILLE, nuit);
 	dessinerLoire(g, nuit, pluie, haut, bas);
+	if (nuit > 0.3) {
+		// Prompt 69 : lampadaires du quai, allumés la nuit (la pluie passe dans leur lumière)
+		for (let x = 18; x < BW; x += 58) {
+			px(g, '#0b111d', x, HORIZON_VILLE - 9, 1, 9);
+			px(g, melange('#3a4250', '#ffd98a', nuit), x - 1, HORIZON_VILLE - 10, 3, 1);
+			px(g, 'rgba(255,217,138,' + (0.18 * nuit).toFixed(2) + ')', x - 4, HORIZON_VILLE - 9, 9, 9);
+		}
+	}
 	if (pluie > 0.02) dessinerPluie(g, m, nuit > 0.5, pluie);
 }
 
@@ -356,6 +368,7 @@ function dessinerGrueTitan(g, x, base, nuit) {
 	px(g, bord, x + 16, base - 49, 13, 8); // cabine / contrepoids
 	px(g, fond, x + 17, base - 48, 11, 6);
 	px(g, melange('#5f6a78', '#e8c46a', nuit), x + 19, base - 47, 4, 3); // vitre (allumée la nuit)
+	if (nuit > 0.4) px(g, '#ff4a3d', x + 22, base - 51, 2, 2); // prompt 69 : feu rouge en haut de la grue
 	px(g, bord, x + 47, base - 37, 1, 14); // câble
 	px(g, bord, x + 45, base - 23, 5, 3); // crochet
 }
@@ -697,6 +710,12 @@ function directionFleches() {
 
 /** Met à jour la caméra (appelé une fois par image, avant la composition). */
 function majCamera() {
+	const cs = typeof cameraSoir === 'function' ? cameraSoir() : null; // prompt 69 : pan vers le couloir de sortie
+	if (cs !== null) {
+		CAMERA.x = cs;
+		CAMERA.y = 0;
+		return;
+	}
 	let cx = 0;
 	let cy = 0;
 	if (vue === 'bureau' && !reduireAnimations && !fenetre && !smsActif) {
@@ -904,6 +923,11 @@ function composerVue() {
 	noStroke();
 	fill(255, 255, 255, 14); // reflet sur la vitre
 	quad(r.x, r.y, r.x + r.l * 0.3, r.y, r.x + r.l * 0.12, r.y + r.h, r.x, r.y + r.h);
+	if (phase === 'soir' && vue === 'bureau') {
+		fill(4, 6, 12, 215); // prompt 69 : PC en veille
+		rect(r.x, r.y, r.l, r.h);
+	}
+	if (typeof dessinerCouloirSoir === 'function') dessinerCouloirSoir(); // prompt 69 : couloir révélé par le pan
 	if (incidentImportant()) bordureRouge(r.x, r.y, r.l, r.h, auPoste ? 4 : 2); // fin, à l'intérieur de l'écran du PC (plus immersif)
 
 	if (vue === 'zoom-avant' || vue === 'zoom-arriere') {
@@ -927,6 +951,7 @@ function composerVue() {
 	}
 	boutons.push({ x: r.x - 5 * PIX, y: r.y - 5 * PIX, l: r.l + 10 * PIX, h: r.h + 11 * PIX, action: sAsseoir });
 	cibleGuide('ecranPC', r.x, r.y, r.l, r.h); // prompt 37
+	if (typeof dessinerFlecheSortie === 'function') dessinerFlecheSortie(); // prompt 69
 	zonesObjetsBureau();
 	if (ecran === 'jeu' && phase !== 'fin') {
 		const hA = heureAffichee();
@@ -943,11 +968,14 @@ function composerVue() {
 	}
 	const msg = incidentActif()
 		? t('bureau.incident')
+		: phase === 'soir'
+			? t(sortieVisible() ? 'soir.annonce' : 'soir.tombe') // prompt 69
 		: phase === 'mail'
 			? t('bureau.mail')
 			: ecran === 'jeu' && phase === 'attente' && Jeu.journeeFinie && Jeu.journeeFinie()
 				? t('bureau.finJournee') // prompt 51
 				: t(typeof MOBILE !== 'undefined' && MOBILE.actif ? 'bureau.installerMobile' : 'bureau.installer'); // prompt 60 : consigne tactile
+	if (phase === 'soir' && SOIR.sortie) return; // prompt 69 : pendant la sortie, pas de consigne
 	textFont(POLICE_DONNEES);
 	textSize(22);
 	const lm = textWidth(msg) + 40;
