@@ -79,7 +79,7 @@ jamais l'inverse.
 | 37 | `37-jeu-mode-prendre-en-main.md` | Jeu, étape 24 : option « Prendre en main » à la première partie, flèches guidées vers ce qu'il est possible de faire | ✅ main |
 | 38 | `38-jeu-transition-scroll-telephone-pluie.md` | Jeu, étape 25 : molette vers le haut pour s'installer au PC, notifications d'événements réels (Agenda Nantes Métropole) au clic sur le téléphone, pluie aléatoire et réaliste | ✅ main |
 | 39 | `39-jeu-interface-pixel-design-system.md` | Jeu, étape 26 : toute l'interface au Pixel Design System (fond #0D0C0C, primaire #D4031C, arrondi 0, JetBrains Mono / Bitsy Pixels) | ✅ main |
-| 40 | `40-jeu-parallaxe-fausse-3d.md` | Jeu, étape 27 : parallaxe multicouche — chaque plan de la pièce se décale à sa propre échelle avec la caméra (fausse 3D) | ◻ prévu |
+| 40 | `40-jeu-parallaxe-fausse-3d.md` | Jeu, étape 27 : parallaxe multicouche — chaque plan de la pièce se décale à sa propre échelle avec la caméra (fausse 3D) | ✅ main |
 
 ### Statut des prompts (vérifié le 10/11/2026 dans `site/public/`)
 

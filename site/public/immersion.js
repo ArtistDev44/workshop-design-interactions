@@ -720,7 +720,7 @@ function ouvrirObjetBureau(nom) {
 function zonesObjetsBureau() {
 	objetSurvol = null;
 	OBJETS_BUREAU.slice(1).forEach((o, i) => {
-		const r = versEcranBureau(o.x, o.y, o.l, o.h); // prompt 25 : suit le dézoom et la caméra
+		const r = versEcranBureau(o.x, o.y, o.l, o.h, COEF_OBJETS[o.nom]); // prompt 25/40 : suit la caméra et le plan de l'objet
 		if (o.nom === 'commande') cibleGuide('livreCommande', r.x, r.y, r.l, r.h); // prompt 37
 		boutons.push({ x: r.x, y: r.y, l: r.l, h: r.h, action: () => ouvrirObjetBureau(o.nom) });
 		const survol = mouseX >= r.x && mouseX <= r.x + r.l && mouseY >= r.y && mouseY <= r.y + r.h;
@@ -735,7 +735,7 @@ function zonesObjetsBureau() {
 	// Prompt 29 : réaction de l'objet (5 s), au-dessus de l'objet, sans pause ni effet sur les jauges
 	if (PIECE.message && millis() < PIECE.message.jusqua) {
 		const o = OBJETS_BUREAU.find((x) => x.nom === PIECE.message.objet);
-		const r = versEcranBureau(o.x, o.y, o.l, o.h);
+		const r = versEcranBureau(o.x, o.y, o.l, o.h, COEF_OBJETS[o.nom]);
 		bulleTexte(PIECE.message.texte, r.x + r.l / 2, r.y < 160 ? r.y + r.h + 20 : r.y - 20, r.y < 160);
 	}
 	if (focusBureau === 0) {
