@@ -1,0 +1,96 @@
+{
+ "fetchedAt": "2026-11-10T08:03:34.003Z",
+ "source": "https://data.nantesmetropole.fr/api/explore/v2.1/catalog/datasets/244400404_disponibilite-temps-reel-velos-libre-service-naolib-nantes-metropole/records?select=name%2Cavailable_bikes%2Cbike_stands%2Clast_update&limit=15&where=bike_stands+%3E+0&order_by=available_bikes+asc%2C+name",
+ "results": [
+  {
+   "name": "010- PICASSO",
+   "available_bikes": "0",
+   "bike_stands": 40,
+   "last_update": "2026-11-10T08:02:59+00:00"
+  },
+  {
+   "name": "013-BRETAGNE SUD",
+   "available_bikes": "0",
+   "bike_stands": 20,
+   "last_update": "2026-11-10T08:02:59+00:00"
+  },
+  {
+   "name": "076-RENÉ BOUHIER",
+   "available_bikes": "0",
+   "bike_stands": 15,
+   "last_update": "2026-11-10T08:02:59+00:00"
+  },
+  {
+   "name": "092-ROND POINT DE RENNES",
+   "available_bikes": "0",
+   "bike_stands": 14,
+   "last_update": "2026-11-10T08:02:59+00:00"
+  },
+  {
+   "name": "ALGER",
+   "available_bikes": "0",
+   "bike_stands": 15,
+   "last_update": "2026-11-10T08:02:59+00:00"
+  },
+  {
+   "name": "ATOUTSUD",
+   "available_bikes": "0",
+   "bike_stands": 25,
+   "last_update": "2026-11-10T08:02:59+00:00"
+  },
+  {
+   "name": "BACO",
+   "available_bikes": "0",
+   "bike_stands": 15,
+   "last_update": "2026-11-10T08:02:59+00:00"
+  },
+  {
+   "name": "BONNE GARDE",
+   "available_bikes": "0",
+   "bike_stands": 24,
+   "last_update": "2026-11-10T08:02:59+00:00"
+  },
+  {
+   "name": "BRUNELIÈRE",
+   "available_bikes": "0",
+   "bike_stands": 18,
+   "last_update": "2026-11-10T08:02:59+00:00"
+  },
+  {
+   "name": "CANCLAUX",
+   "available_bikes": "0",
+   "bike_stands": 15,
+   "last_update": "2026-11-10T08:02:59+00:00"
+  },
+  {
+   "name": "CHANZY",
+   "available_bikes": "0",
+   "bike_stands": 15,
+   "last_update": "2026-11-10T08:02:59+00:00"
+  },
+  {
+   "name": "CLOS TOREAU",
+   "available_bikes": "0",
+   "bike_stands": 21,
+   "last_update": "2026-11-10T08:02:59+00:00"
+  },
+  {
+   "name": "COURS SULLY",
+   "available_bikes": "0",
+   "bike_stands": 15,
+   "last_update": "2026-11-10T08:02:59+00:00"
+  },
+  {
+   "name": "ÉDOUARD NORMAND",
+   "available_bikes": "0",
+   "bike_stands": 15,
+   "last_update": "2026-11-10T08:02:59+00:00"
+  },
+  {
+   "name": "FACULTÉS",
+   "available_bikes": "0",
+   "bike_stands": 40,
+   "last_update": "2026-11-10T08:02:59+00:00"
+  }
+ ]
+}

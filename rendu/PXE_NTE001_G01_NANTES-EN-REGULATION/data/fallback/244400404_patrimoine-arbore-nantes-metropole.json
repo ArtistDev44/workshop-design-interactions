@@ -1,0 +1,46 @@
+{
+ "fetchedAt": "2026-11-10T08:03:34.842Z",
+ "source": "https://data.nantesmetropole.fr/api/explore/v2.1/catalog/datasets/244400404_patrimoine-arbore-nantes-metropole/records?select=lib_genre%2Ccount%28*%29+as+n&limit=10&where=lib_genre+is+not+null&group_by=lib_genre&order_by=n+desc",
+ "results": [
+  {
+   "lib_genre": "Quercus",
+   "n": 22344
+  },
+  {
+   "lib_genre": "Acer",
+   "n": 8382
+  },
+  {
+   "lib_genre": "Platanus",
+   "n": 8086
+  },
+  {
+   "lib_genre": "Fraxinus",
+   "n": 6603
+  },
+  {
+   "lib_genre": "Tilia",
+   "n": 5869
+  },
+  {
+   "lib_genre": "Prunus",
+   "n": 5478
+  },
+  {
+   "lib_genre": "Carpinus",
+   "n": 5012
+  },
+  {
+   "lib_genre": "Liquidambar",
+   "n": 4130
+  },
+  {
+   "lib_genre": "Pinus",
+   "n": 3619
+  },
+  {
+   "lib_genre": "Magnolia",
+   "n": 3412
+  }
+ ]
+}

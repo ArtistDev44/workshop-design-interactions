@@ -19,7 +19,7 @@
     "invariants": [
       "Seuil de retard : 10 minutes",
       "3 actions + « ne rien faire »",
-      "3 jauges : fluidité du réseau, satisfaction usagers, réputation de la salle de contrôle",
+      "3 jauges : fluidité du réseau, réputation de la salle de contrôle, budget",
       "Aucun événement inventé"
     ],
     "variables": [
@@ -49,7 +49,7 @@
   "datasets": [
     "244400404_reseau-transports-collectifs-naolib"
   ],
-  "cartel": "Nantes en régulation place le visiteur dans une salle de contrôle des transports en commun nantais. Il y rejoue une semaine réelle du réseau de tram et de bus : chaque incident tiré des données réelles, un retard d'au moins dix minutes ou une alerte météo, devient un dossier à trancher sous la pression d'un compteur. Trois actions sont possibles, ou bien ne rien faire. Chaque décision modifie trois jauges, la fluidité du réseau, la satisfaction des usagers et la réputation de la salle de contrôle, selon le contexte météo et l'heure. Aucun événement n'est inventé : tous les dossiers viennent des données réelles de la semaine.",
+  "cartel": "Nantes en régulation place le visiteur dans une salle de contrôle des transports en commun nantais. Il y rejoue une semaine réelle du réseau de tram et de bus : chaque incident tiré des données réelles, un retard d'au moins dix minutes ou une alerte météo, devient un dossier à trancher sous la pression d'un compteur. Trois actions sont possibles, ou bien ne rien faire. Chaque décision modifie trois jauges, la fluidité du réseau, la réputation de la salle de contrôle et le budget, selon le contexte météo et l'heure. Aucun événement n'est inventé : tous les dossiers viennent des données réelles de la semaine.",
   "assets": {},
   "lien_oeuvre": "index.html"
 }

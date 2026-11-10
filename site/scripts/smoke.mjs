@@ -6,7 +6,7 @@
 //     dans un bac à sable vm avec un objet window vide ;
 //  3. qu'aucun motif de secret (api_key, apikey, bearer, password) n'apparaît dans public/*.js
 //     et public/data/*.js (lib/p5.min.js exclu) ;
-//  4. si dist/ existe (après `npm run build`), que dist/index.html et dist/cartel/index.html existent.
+//  4. si dist/ existe (après `npm run build`), que les pages (jeu, /cartel/, /making-of/), le manifest et les captures existent.
 // Le contenu des données n'est jamais affiché : seulement des noms de fichiers et des compteurs.
 import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs';
 import { join, dirname, extname } from 'node:path';
@@ -87,7 +87,7 @@ for (const f of sources) {
 // 4. Build (facultatif)
 const dist = join(racine, 'dist');
 if (existsSync(dist)) {
-	for (const page of ['index.html', 'cartel/index.html']) {
+	for (const page of ['index.html', 'cartel/index.html', 'making-of/index.html', 'manifest.json', 'captures/hero.jpg', 'captures/demo.mp4']) {
 		if (existsSync(join(dist, page))) ok();
 		else echec(`dist/${page} absent : relancer npm run build`);
 	}
