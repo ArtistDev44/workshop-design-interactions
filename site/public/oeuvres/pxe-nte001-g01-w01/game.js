@@ -368,5 +368,79 @@
 		};
 	};
 
+	// =====================================================================
+	// Prompt 19 — fins (Q43, Q47–Q55) et bilan détaillé
+	// =====================================================================
+	const FINS = {
+		bonne: {
+			titre: 'La direction félicite la salle de contrôle',
+			texte:
+				'La semaine a été tenue. Face aux perturbations, les décisions ont préservé la fluidité du réseau, ' +
+				'les usagers ont été pris en compte et la salle de contrôle sort renforcée de ces sept jours.',
+		},
+		moyenne: {
+			titre: 'Semaine correcte, avec des zones d’ombre',
+			texte:
+				'Le réseau a fonctionné, mais pas sans à-coups. Plusieurs décisions ont tenu, d’autres ont coûté ' +
+				'en fluidité, en satisfaction ou en réputation : le bilan est nuancé.',
+		},
+		mauvaise: {
+			titre: 'La direction réprimande la salle de contrôle',
+			texte:
+				'La semaine a échappé à la salle de contrôle. Des incidents ont été mal gérés et les jauges en portent la ' +
+				'trace : la direction demande des comptes sur les décisions listées dans le bilan.',
+		},
+	};
+
+	/** Fin déterminée par le score combiné (Q43, Q48) : bonne ≥ 240, moyenne ≥ 150, mauvaise < 150. */
+	Jeu.typeFin = function (score) {
+		const s = score === undefined ? Jeu.score() : score;
+		return s >= 240 ? 'bonne' : s >= 150 ? 'moyenne' : 'mauvaise';
+	};
+
+	/**
+	 * Bilan détaillé (Q54) : texte générique de la fin + bilan chiffré avec les faits réels (Q52),
+	 * dossiers traités (Q18) et décisions clés (Q37).
+	 */
+	Jeu.bilan = function () {
+		const type = Jeu.typeFin();
+		const decisions = (Jeu.historique || []).filter((h) => h.action);
+		const total = (r) => r.deltas.reduce((s, v) => s + v, 0);
+		const tries = decisions.slice().sort((a, b) => total(b) - total(a));
+		const cles = [];
+		if (tries.length) cles.push(Object.assign({ qualite: 'meilleure' }, tries[0]));
+		if (tries.length > 1) cles.push(Object.assign({ qualite: 'pire' }, tries[tries.length - 1]));
+		decisions
+			.filter((d) => d.mauvaiseSource && !cles.includes(d))
+			.slice(0, 1)
+			.forEach((d) => cles.push(Object.assign({ qualite: 'mauvaise source' }, d)));
+		const retards = Jeu.paquet.filter((d) => d.retard !== null && d.retard !== undefined);
+		const pire = retards.sort((a, b) => b.retard - a.retard)[0] || null;
+		const parType = {};
+		Jeu.paquet.forEach((d) => (parType[d.type] = (parType[d.type] || 0) + 1));
+		return {
+			type,
+			titre: FINS[type].titre,
+			texte: FINS[type].texte,
+			score: Jeu.score(),
+			jauges: Object.assign({}, Jeu.jauges),
+			traites: decisions.filter((d) => d.action !== 'temps').length,
+			sansDecision: decisions.filter((d) => d.action === 'temps').length,
+			total: Jeu.paquet.length,
+			mauvaisesSources: decisions.filter((d) => d.mauvaiseSource).length,
+			decisionsCles: cles.map((d) => ({
+				qualite: d.qualite,
+				titre: d.narration.titre,
+				action: d.nomAction,
+				deltas: d.deltas,
+			})),
+			faits: {
+				periode: Jeu.etat.semaine ? Jeu.etat.semaine.lundi + ' → ' + Jeu.etat.semaine.dimanche : Jeu.etat.horodatage || '',
+				pireRetard: pire ? { ligne: (pire.lignes || []).join(', '), minutes: pire.retard } : null,
+				parType,
+			},
+		};
+	};
+
 	global.Jeu = Jeu;
 })(typeof window !== 'undefined' ? window : globalThis);

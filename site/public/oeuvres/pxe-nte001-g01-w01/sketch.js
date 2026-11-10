@@ -259,6 +259,7 @@ function dossierCourant() {
 }
 
 function dessinerJeu() {
+	if (phase === 'fin') return dessinerFin();
 	const d = dossierCourant();
 	const meteo = d ? Jeu.meteoDuJour(d.date) : null;
 
@@ -307,7 +308,6 @@ function dessinerJeu() {
 	// Panneau droit : jauges, puis selon la phase : conflit, dossier (avec contradiction) ou narration
 	dessinerJauges();
 	if (phase === 'narration') dessinerNarration();
-	else if (phase === 'fin') dessinerFinProvisoire();
 	else if (phase === 'conflit') dessinerConflit();
 	else dessinerDossier(d, meteo);
 }
@@ -320,7 +320,7 @@ function enteteMode() {
 }
 
 // ——— Décor en couches : eau (1), relief léger des quais (2), météo du jour (Q8, Q30) ———
-function dessinerDecor(zone, meteo, opacite, avecCadre) {
+function dessinerDecor(zone, meteo, opacite, avecCadre, sansLegende) {
 	projection = projeter(zone);
 	push();
 	drawingContext.save();
@@ -362,12 +362,12 @@ function dessinerDecor(zone, meteo, opacite, avecCadre) {
 			l.traces.forEach(tracer);
 		}
 	}
-	dessinerMeteo(zone, meteo, opacite);
+	dessinerMeteo(zone, meteo, opacite, sansLegende);
 	drawingContext.restore();
 	pop();
 }
 
-function dessinerMeteo(zone, m, opacite) {
+function dessinerMeteo(zone, m, opacite, sansLegende) {
 	if (!m) return;
 	const pluie = m.pluie_mm || 0;
 	const vent = m.rafales_max || 0;
@@ -412,7 +412,8 @@ function dessinerMeteo(zone, m, opacite) {
 			bezier(zone.x + 30, y, zone.x + 120, y - 12, zone.x + 200, y + 12, zone.x + 300, y);
 		}
 	}
-	// Légende météo (données chiffrées en monospace, sur panneau)
+	// Légende météo (données chiffrées en monospace, sur panneau) — jamais sur un décor d'ambiance (fin)
+	if (sansLegende) return;
 	const txt = 'météo du jour : ' + fmt(m.temp_min) + '–' + fmt(m.temp_max) + ' °C · pluie ' + fmt(m.pluie_mm) + ' mm · rafales ' + fmt(m.rafales_max) + ' km/h' + (froid ? ' · gel' : '');
 	textFont(POLICE_DONNEES);
 	textSize(17);
@@ -798,31 +799,149 @@ function dessinerNarration() {
 	if (t >= 1 && !enPause && !fenetre) continuer();
 }
 
-// ——— Fin provisoire (l'écran de fin complet arrive au prompt 19) ———
-function dessinerFinProvisoire() {
-	const z = { x: DROITE.x, y: DROITE.y + 130, l: DROITE.l, h: DROITE.h - 130 };
-	panneau(z.x, z.y, z.l, z.h, C.accent);
+// ——— Écran de fin (Q47–Q55) : 3 fins, bilan détaillé, décor selon la fin (Q53) ———
+// Le décor d'ambiance n'affiche aucune donnée : c'est une teinte, pas une météo réelle.
+const AMBIANCES = {
+	bonne: { fond: '#FBF5E4', meteo: { pluie_mm: 0, rafales_max: 0, temp_min: 18, temp_max: 26 }, titre: '#1E7A3C' },
+	moyenne: { fond: '#EDE7DA', meteo: { pluie_mm: 0.5, rafales_max: 10, temp_min: 10, temp_max: 15 }, titre: '#B45309' },
+	mauvaise: { fond: '#2B3440', meteo: { pluie_mm: 9, rafales_max: 60, temp_min: 6, temp_max: 9 }, titre: '#B3261E' },
+};
+let bilanCalcule = null;
+
+function dessinerFin() {
+	if (!bilanCalcule) bilanCalcule = Jeu.bilan();
+	const b = bilanCalcule;
+	const amb = AMBIANCES[b.type];
+	noStroke();
+	fill(amb.fond);
+	rect(0, 0, L, H);
+	dessinerDecor({ x: 0, y: 0, l: L, h: H }, amb.meteo, b.type === 'mauvaise' ? 0.45 : 0.6, false, true);
+
+	// Panneau gauche : la fin, le texte, les jauges
+	const g = { x: 80, y: 70, l: 860, h: 940 };
+	panneau(g.x, g.y, g.l, g.h, amb.titre);
 	textAlign(LEFT, TOP);
 	noStroke();
+	textFont(POLICE_DONNEES);
+	textSize(20);
+	fill(amb.titre);
+	text('FIN ' + b.type.toUpperCase() + ' · SCORE ' + b.score + ' / 300', g.x + 48, g.y + 44);
 	fill(C.texte);
 	textFont(POLICE_TEXTE);
 	textStyle(BOLD);
-	textSize(40);
-	text('Semaine terminée', z.x + 32, z.y + 40);
+	textSize(52);
+	text(b.titre, g.x + 48, g.y + 84, g.l - 96, 140);
 	textStyle(NORMAL);
-	textFont(POLICE_DONNEES);
 	textSize(26);
-	text('Score combiné : ' + Jeu.score() + ' / 300', z.x + 32, z.y + 110);
-	text('Dossiers traités : ' + Jeu.historique.filter((h) => h.action).length + ' / ' + Jeu.paquet.length, z.x + 32, z.y + 150);
+	text(b.texte, g.x + 48, g.y + 240, g.l - 96, 170);
+
+	// Jauges finales
+	const noms = [
+		['Fluidité du réseau', b.jauges.fluidite],
+		['Satisfaction usagers', b.jauges.satisfaction],
+		['Réputation de la salle', b.jauges.reputation],
+	];
+	noms.forEach(([n, v], i) => {
+		const y = g.y + 440 + i * 76;
+		textFont(POLICE_TEXTE);
+		textSize(22);
+		fill(C.texte);
+		textAlign(LEFT, TOP);
+		text(n, g.x + 48, y);
+		textFont(POLICE_DONNEES);
+		textAlign(RIGHT, TOP);
+		text(v + ' / 100', g.x + g.l - 48, y);
+		fill('#E8E2D6');
+		rect(g.x + 48, y + 34, g.l - 96, 18, 4);
+		fill(v < 20 ? C.rouge : v < 40 ? C.orange : C.vert);
+		rect(g.x + 48, y + 34, ((g.l - 96) * v) / 100, 18, 4);
+	});
+	textAlign(LEFT, TOP);
+	textFont(POLICE_DONNEES);
+	textSize(20);
+	fill(C.texte);
+	text('Dossiers traités : ' + b.traites + ' / ' + b.total + (b.sansDecision ? ' · ' + b.sansDecision + ' sans décision (temps écoulé)' : ''), g.x + 48, g.y + 680);
+	if (b.mauvaisesSources) text('Mauvaise source retenue : ' + b.mauvaisesSources + ' fois', g.x + 48, g.y + 712);
 	if (bilanFin && bilanFin.meilleur) {
 		fill(bilanFin.record ? C.vert : C.gris);
-		text(bilanFin.record ? 'Nouveau meilleur bilan pour cette semaine !' : 'Meilleur bilan : ' + bilanFin.meilleur.score + ' / 300 (' + bilanFin.meilleur.le + ')', z.x + 32, z.y + 200, z.l - 64, 70);
+		text(
+			bilanFin.record ? 'Nouveau meilleur bilan pour cette semaine !' : 'Meilleur bilan : ' + bilanFin.meilleur.score + ' / 300 (' + bilanFin.meilleur.le + ')',
+			g.x + 48,
+			g.y + 752,
+		);
 	}
-	bouton(z.x + 32, z.y + z.h - 200, z.l - 64, 72, 'Rejouer la même semaine', rejouer);
-	bouton(z.x + 32, z.y + z.h - 112, z.l - 64, 72, 'Changer de semaine', () => (ecran = 'accueil'), false, true);
+	const bl = (g.l - 96 - 20) / 2;
+	bouton(g.x + 48, g.y + g.h - 112, bl, 72, 'Rejouer (Entrée)', rejouer);
+	bouton(g.x + 68 + bl, g.y + g.h - 112, bl, 72, 'Changer de semaine (Échap)', retourAccueil, false, true);
+
+	// Panneau droit : bilan chiffré — faits réels de la semaine (Q52) et décisions clés (Q37)
+	const d = { x: 1000, y: 70, l: 840, h: 940 };
+	panneau(d.x, d.y, d.l, d.h);
+	textAlign(LEFT, TOP);
+	fill(C.accent);
+	textFont(POLICE_TEXTE);
+	textStyle(BOLD);
+	textSize(32);
+	text('Bilan chiffré', d.x + 48, d.y + 40);
+	textStyle(NORMAL);
+	textFont(POLICE_DONNEES);
+	textSize(20);
+	fill(C.texte);
+	let y = d.y + 100;
+	const f = b.faits;
+	text((Jeu.etat.mode === 'direct' ? 'Relevé temps réel : ' : 'Semaine : ') + f.periode, d.x + 48, y);
+	y += 36;
+	text(
+		'Dossiers : ' +
+			Object.entries(f.parType)
+				.map(([t, n]) => n + ' ' + (n > 1 ? { 'alerte météo': 'alertes météo', 'ligne en difficulté': 'lignes en difficulté' }[t] || t + 's' : t))
+				.join(' · '),
+		d.x + 48,
+		y,
+		d.l - 96,
+		60,
+	);
+	y += 70;
+	text(f.pireRetard ? 'Pire retard réel : +' + f.pireRetard.minutes + ' min (ligne ' + f.pireRetard.ligne + ')' : 'Pire retard : non renseigné par les archives', d.x + 48, y);
+	y += 60;
+	fill(C.accent);
+	textFont(POLICE_TEXTE);
+	textStyle(BOLD);
+	textSize(26);
+	text('Décisions clés', d.x + 48, y);
+	textStyle(NORMAL);
+	y += 46;
+	const couleurs = { meilleure: C.vert, pire: C.rouge, 'mauvaise source': C.orange };
+	b.decisionsCles.forEach((k) => {
+		fill(couleurs[k.qualite]);
+		rect(d.x + 48, y + 4, 8, 96, 3);
+		textFont(POLICE_DONNEES);
+		textSize(16);
+		text(k.qualite.toUpperCase(), d.x + 72, y);
+		fill(C.texte);
+		textFont(POLICE_TEXTE);
+		textSize(22);
+		text(k.titre, d.x + 72, y + 24, d.l - 140, 30);
+		textFont(POLICE_DONNEES);
+		textSize(18);
+		fill(C.gris);
+		const ds = ['fluidité', 'satisfaction', 'réputation'].map((n, i) => n + ' ' + (k.deltas[i] > 0 ? '+' : '') + k.deltas[i]).join(' · ');
+		text(k.action + ' → ' + ds, d.x + 72, y + 58, d.l - 140, 50);
+		y += 126;
+	});
+	textFont(POLICE_DONNEES);
+	textSize(15);
+	fill(C.gris);
+	text('Sources : Open Data Nantes Métropole (GTFS Naolib, agenda), Open-Meteo. Aucun événement inventé.', d.x + 48, d.y + d.h - 50, d.l - 96, 40);
+}
+
+function retourAccueil() {
+	bilanCalcule = null;
+	ecran = 'accueil';
 }
 
 function rejouer() {
+	bilanCalcule = null;
 	const e = Jeu.etat;
 	const p = e.mode === 'semaine' ? Jeu.chargerSemaine(e.semaine.lundi) : e.mode === 'direct' ? Jeu.chargerDirect() : Jeu.chargerHorsLigne();
 	p.then(() => {
@@ -958,7 +1077,7 @@ function keyPressed() {
 		continuer();
 	} else if (phase === 'fin') {
 		if (keyCode === ENTER || keyCode === RETURN) rejouer();
-		if (keyCode === ESCAPE || keyCode === BACKSPACE) ecran = 'accueil';
+		if (keyCode === ESCAPE || keyCode === BACKSPACE) retourAccueil();
 	}
 	if (key === ' ' || keyCode === UP_ARROW || keyCode === DOWN_ARROW) return false; // pas de défilement de la page
 }
