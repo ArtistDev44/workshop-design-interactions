@@ -97,7 +97,7 @@ jamais l'inverse.
 | 57 | `57-jeu-webcam-presence-sieste.md` | Jeu, étape 43 : webcam (objet du poste + option Paramètres) — détection de présence locale (luminance centrale + mouvement, images jamais affichées) ; 8 s sans présence → sieste (mêmes règles que l'inactivité 20 s, malus inchangé) ; LED « cam active » ; repli si webcam refusée (renuméroté 57 : le n° 55 est pris par `55-jeu-defis-ralenti.md`) | ◻ prévu |
 | 58 | `58-audit-achever-prompts-precedents.md` | Méta-prompt (hors jeu) : auditer un par un les prompts 01–57 à l'épreuve du code et des docs, terminer ceux qui sont ◻ ou partiels dans l'ordre croissant (priorité aux prompts du jeu 49–57), corriger les statuts ✅/◻ dans ce tableau, documenter dans `jeu/` et `journal.md` après chaque prompt achevé | ◻ prévu |
 | 55 | `55-jeu-defis-ralenti.md` | Jeu, étape 41 : défis de semaine réels (3 tirés par la graine, +5 sur la jauge concernée si tenus, bilan dans le mail et le rapport) et ralenti tactique (touche R, pause de 10 s du compteur, 1×/jour) | ✅ |
-| 56 | `56-jeu-rapport-semaine-deblocage.md` | Jeu, étape 42 : rapport de fin de semaine chiffré (dossiers, décisions, jauges, défis) + papier sur le bureau, mail du patron du dernier soir, déblocage de la semaine suivante en mode histoire, palmarès des semaines persisté | ◻ prévu |
+| 56 | `56-jeu-rapport-semaine-deblocage.md` | Jeu, étape 42 : rapport de fin de semaine chiffré (dossiers, décisions, jauges, défis) + papier sur le bureau, mail du patron du dernier soir, déblocage de la semaine suivante en mode histoire, palmarès des semaines persisté | ✅ |
 
 ### Statut des prompts (vérifié le 10/11/2026 dans `site/public/`)
 

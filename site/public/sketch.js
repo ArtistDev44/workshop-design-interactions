@@ -400,8 +400,12 @@ function nouveauDossier() {
 function decider(action) {
 	if (phase !== 'decision' && !(action === 'temps' && phase === 'contradiction')) return;
 	if (Jeu.actionBloquee && action === Jeu.actionBloquee()) return; // erreur système : action indisponible
+	// Prompt 56 : mesures de la décision (temps réel de décision, sources consultées) pour le rapport de semaine
+	const mesures = { dureeMs: Math.max(0, millis() - arriveeDossier), sources: typeof enqueteDossier === 'function' ? Object.keys(enqueteDossier().revele).length : 0 };
 	dernierResultat = Jeu.decider(action, sourceChoisie);
 	if (!dernierResultat) return;
+	if (action !== 'temps') Object.assign(dernierResultat, mesures);
+	else dernierResultat.sources = mesures.sources;
 	const dj = dernierResultat.deltas.map((v, i) => t('jaugeTitre.' + ['fluidite', 'reputation', 'budget'][i]) + ' ' + (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v)).join(', ');
 	annoncer(t('annonce.decision', { titre: dernierResultat.narration.titre, texte: dernierResultat.narration.texte }) + ' ' + dj + '.'); // prompt 53 : variations annoncées
 	Confort.Son.clicAction(action); // prompt 44 § 4 : un clic de console par action
@@ -1633,6 +1637,7 @@ function dessinerFenetre() {
 	if (fenetre === 'cafe') return fenetreCafe(); // prompt 52 : même animation, la tasse en main
 	voile();
 	if (fenetre === 'rapport') return fenetreRapport(); // prompt 41
+	if (fenetre === 'mailFin') return fenetreMailFin(); // prompt 56
 	if (fenetre === 'inspection') return fenetreInspection(); // prompt 47
 	if (fenetre === 'demission') return fenetreDemission(); // prompt 47
 	if (fenetre === 'palmares') return fenetrePalmares(); // prompt 47

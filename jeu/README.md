@@ -66,3 +66,4 @@ dossier à trancher sous pression. »*
 | 48 | `48-animations-feedback.md` | Prompt 53 : arrivée du dossier (300 ms, tampon « SIGNALEMENT », ligne qui pulse), jauges qui glissent avec deltas flottants, pulsation douce sous 20, urgence du compteur sous 10 s (barre rouge, sablier qui s'emballe, tic-tac plus fort) |
 | 49 | `49-micro-interaction-sonore.md` | Prompt 54 : push-to-talk (M maintenue, micro du poste), analyse amplitude / hauteur / souffle / pics, texture granulaire (densité, hauteur, fragmentation, turbulence), repli interne, réglage Micro |
 | 50 | `50-defis-ralenti.md` | Prompt 55 : trois défis de semaine tirés par la graine (bilan réel, +5 si tenu, une fois) et ralenti tactique (R, 10 s, une fois par jour) |
+| 51 | `51-rapport-semaine-deblocage.md` | Prompt 56 : mail du patron du dernier soir, rapport en deux pages (chiffres réels de la semaine), rapport avant la cinématique, autre semaine archivée, défis au palmarès |

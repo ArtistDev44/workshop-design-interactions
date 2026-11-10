@@ -272,7 +272,9 @@ function allerFin() {
 	const cle = Confort.Bilans.cle(Jeu.etat);
 	const g = Jeu.profilPartie(); // prompt 47 : profil de gestion gardé au palmarès
 	// Une démission n'entre pas au palmarès (prompt 47)
-	bilanFin = Jeu.demission ? { meilleur: Confort.Bilans.meilleur(cle), record: false } : Confort.Bilans.enregistrer(cle, Jeu.score(), Jeu.jauges, { profil: g ? g.id : null }); // Q19
+	if (!Jeu.demission && Jeu.appliquerDefis) Jeu.appliquerDefis(); // prompt 55/56 : semaine finie sans soirée (départ le dernier jour) → bonus quand même, une fois
+	const defisTenus = Jeu.defisAppliques ? Jeu.defisAppliques.filter((r) => r.tenu).length + '/' + Jeu.defisAppliques.length : null;
+	bilanFin = Jeu.demission ? { meilleur: Confort.Bilans.meilleur(cle), record: false } : Confort.Bilans.enregistrer(cle, Jeu.score(), Jeu.jauges, { profil: g ? g.id : null, defis: defisTenus }); // Q19 ; prompt 56 : défis tenus au palmarès
 	Confort.Son.bip('fin');
 	finDeSemaine(); // prompt 41 : rapport papier sur la table, ou cinématique après la semaine 3
 }
