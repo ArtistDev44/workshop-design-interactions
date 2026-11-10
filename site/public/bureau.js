@@ -179,9 +179,9 @@ function dessinerPieceBureau() {
 }
 
 function dessinerPlafondEtBaie(g) {
-	px(g, '#d9dcdf', 0, 0, BW, 8); // plafond
-	px(g, '#f4f6f7', 120, 2, 240, 3); // bandeau lumineux
-	px(g, '#9aa1a8', 0, 8, BW, 1);
+	px(g, '#eef0f1', 0, 0, BW, 8); // plafond blanc (prompt 32)
+	px(g, '#ffffff', 120, 2, 240, 3); // bandeau lumineux
+	px(g, '#c8cdd2', 0, 8, BW, 1);
 }
 
 function dessinerVueNantes(g) {
@@ -294,11 +294,13 @@ function dessinerGrueTitan(g, x, base, nuit) {
 
 function dessinerMontantsBaie(g) {
 	// Baie vitrée toute hauteur, montants fins en aluminium sombre
+	// Prompt 32 : menuiseries blanches (aluminium laqué), ombre grise d'un côté
 	for (let x = 0; x <= BW; x += 120) {
-		px(g, '#2a2f36', x - 2, 9, 4, BAIE_BAS - 9);
-		px(g, '#4a525c', x - 1, 9, 1, BAIE_BAS - 9);
+		px(g, '#eef0f1', x - 2, 9, 4, BAIE_BAS - 9);
+		px(g, '#b9bec4', x + 1, 9, 1, BAIE_BAS - 9);
 	}
-	px(g, '#2a2f36', 0, 9, BW, 2);
+	px(g, '#eef0f1', 0, 9, BW, 2);
+	px(g, '#b9bec4', 0, 11, BW, 1);
 	g.fill(255, 255, 255, 26); // reflets en diagonale
 	for (let k = 0; k < 4; k++) g.quad(30 + k * 120, 12, 46 + k * 120, 12, 6 + k * 120, BAIE_BAS, -10 + k * 120, BAIE_BAS);
 }
@@ -308,7 +310,7 @@ const MUR_DROIT_X = 420;
 const HORLOGE_MURALE = { x: 440, y: 44, r: 13 };
 function dessinerMurDroit(g) {
 	px(g, '#f4f5f6', MUR_DROIT_X, 9, BW - MUR_DROIT_X, BAIE_BAS - 9);
-	px(g, '#2a2f36', MUR_DROIT_X - 2, 9, 3, BAIE_BAS - 9); // dormant de la baie
+	px(g, '#b9bec4', MUR_DROIT_X - 2, 9, 3, BAIE_BAS - 9); // dormant de la baie (laqué clair, prompt 32)
 	px(g, '#dfe2e5', MUR_DROIT_X + 1, 9, 2, BAIE_BAS - 9); // ombre du dormant
 	// Horloge murale ronde : cadran blanc, contour sombre, aiguilles à l'heure du jeu
 	const h = HORLOGE_MURALE;
@@ -356,14 +358,16 @@ function dessinerStore(g) {
 /** Prompt 29 : lampe éteinte → la pièce s'assombrit légèrement (l'écran du PC, dessiné après, n'est pas touché) */
 function dessinerAmbianceLampe(g) {
 	if (typeof PIECE === 'undefined' || PIECE.lampe) return;
-	g.fill(18, 22, 40, 38);
-	g.rect(0, PLATEAU_Y - 20, BW, BH - PLATEAU_Y + 20);
+	g.fill(18, 22, 40, 34); // prompt 32 : sur les murs blancs, toute la pièce s'assombrit un peu
+	g.rect(0, 0, BW, BH);
+	g.fill(18, 22, 40, 18);
+	g.rect(MUR_DROIT_X, 9, BW - MUR_DROIT_X, BAIE_BAS - 9);
 }
 
 function dessinerMurBas(g) {
-	px(g, '#2a2f36', 0, BAIE_BAS, BW, 3);
-	px(g, '#e8e9ea', 0, BAIE_BAS + 3, BW, PLATEAU_Y - BAIE_BAS - 3);
-	px(g, '#d3d6d9', 0, PLATEAU_Y - 4, BW, 4);
+	px(g, '#d3d6d9', 0, BAIE_BAS, BW, 3); // appui de baie clair (prompt 32)
+	px(g, '#f6f7f8', 0, BAIE_BAS + 3, BW, PLATEAU_Y - BAIE_BAS - 3);
+	px(g, '#e3e6e9', 0, PLATEAU_Y - 4, BW, 4);
 }
 
 function dessinerPlateau(g) {
@@ -371,15 +375,16 @@ function dessinerPlateau(g) {
 	for (let y = PLATEAU_Y; y < BH; y++) {
 		const t = (y - PLATEAU_Y) / (BH - PLATEAU_Y);
 		const demi = 210 + t * 70;
-		px(g, '#d8b489', 240 - demi, y, demi * 2, 1);
+		// Prompt 32 : plateau stratifié blanc cassé, reflets très légers (le bois ne reste qu'en chant arrière)
+		px(g, '#f1ede6', 240 - demi, y, demi * 2, 1);
 		for (let i = -6; i <= 6; i++) {
 			const gx = 240 + i * (demi / 6.5);
-			if (bruit(i, y) > 0.55) px(g, '#c49d70', gx, y, 1 + Math.round(t * 2), 1); // veinage fuyant
+			if (bruit(i, y) > 0.7) px(g, '#e6e0d6', gx, y, 1 + Math.round(t * 2), 1);
 		}
 	}
-	px(g, P.contour, 30, PLATEAU_Y - 1, 420, 1);
-	px(g, '#ecd2ae', 30, PLATEAU_Y, 420, 1);
-	px(g, '#c49d70', 0, PLATEAU_Y, 30, 1);
+	px(g, '#9aa1a8', 30, PLATEAU_Y - 1, 420, 1);
+	px(g, '#d8b489', 30, PLATEAU_Y, 420, 2); // chant en chêne clair : le seul détail bois
+	px(g, '#e6e0d6', 0, PLATEAU_Y, 30, 1);
 }
 
 function dessinerPC(g) {
@@ -422,7 +427,7 @@ function dessinerObjetsBureau(g) {
 	boite(g, 368, 196, 14, 24, '#16181b', '#2c3036', '#0a0b0c');
 	px(g, '#1d5f6e', 370, 199, 10, 16);
 	// Pile de dossiers (droite, au fond)
-	for (let i = 0; i < 4; i++) boite(g, 392 + (i % 2), 172 - i * 3, 40, 2, i % 2 ? P.chemise : '#e2b862', '#f0cd7f', P.chemiseSombre);
+	for (let i = 0; i < 4; i++) boite(g, 392 + (i % 2), 172 - i * 3, 40, 2, i % 2 ? '#dfe7ef' : '#ffffff', '#ffffff', '#9aa8b6'); // chemises claires (prompt 32)
 	px(g, P.rouge, 418, 163, 8, 1);
 	// Petite plante grasse (gauche, au fond)
 	boite(g, 70, 164, 14, 10, '#e8e9ea', '#ffffff', '#c3c7cb');
@@ -456,7 +461,7 @@ function dessinerVignettage(gCible) {
 				}
 				const p = paliers.find((pl) => d >= pl.de);
 				if ((x + y * 2) % p.pas !== 0 || (y % p.pas !== 0 && p.pas > 2)) continue;
-				g.fill(43, 29, 24, p.alpha);
+				g.fill(28, 32, 40, Math.round(p.alpha * 0.8)); // prompt 32 : vignettage neutre (gris bleuté), plus léger sur le blanc
 				g.rect(x, y, 1, 1);
 			}
 	}
@@ -480,6 +485,18 @@ function origineBureau() {
 	// Cadre de la pièce sur le canevas (dézoom + caméra) et taille d'un pixel art (u) dans ce cadre
 	return { x: (L * (1 - DEZOOM)) / 2 + CAMERA.x, y: (H * (1 - DEZOOM)) / 2 + CAMERA.y, k: DEZOOM, u: (L * DEZOOM) / CADRAGE.l };
 }
+/** Prompt 32 : contour de survol / focus double — trait sombre #1c2733 (15:1 sur les murs blancs) doublé de jaune */
+function contourSurvol(x, y, l, h) {
+	noFill();
+	stroke('#1c2733');
+	strokeWeight(PIX + 4);
+	rect(x, y, l, h);
+	stroke('#f2c94c');
+	strokeWeight(PIX);
+	rect(x, y, l, h);
+	noStroke();
+}
+
 /** Rectangle en coordonnées pixel art (480×270) → pixels du canevas, en vue bureau (cadrage + dézoom + caméra). */
 function versEcranBureau(x, y, l, h) {
 	const o = origineBureau();
@@ -660,11 +677,7 @@ function composerVue() {
 	// Au bureau : survol de l'écran, objets, horloge numérique, invitation
 	survolEcran = mouseX >= r.x && mouseX <= r.x + r.l && mouseY >= r.y && mouseY <= r.y + r.h;
 	if (survolEcran || focusBureau === 0) {
-		noFill();
-		stroke('#f2c94c');
-		strokeWeight(PIX);
-		rect(r.x - 7 * PIX, r.y - 7 * PIX, r.l + 14 * PIX, r.h + 15 * PIX);
-		noStroke();
+		contourSurvol(r.x - 7 * PIX, r.y - 7 * PIX, r.l + 14 * PIX, r.h + 15 * PIX);
 	}
 	boutons.push({ x: r.x - 5 * PIX, y: r.y - 5 * PIX, l: r.l + 10 * PIX, h: r.h + 11 * PIX, action: sAsseoir });
 	zonesObjetsBureau();
@@ -758,9 +771,9 @@ function dessinerPorte(g) {
 		const haut = o.y + Math.round(d * 0.6);
 		const bas = o.y + o.h - Math.round(d * 0.3);
 		px(g, P.contour, x, haut - 1, 1, bas - haut + 2);
-		if (x > o.x && x < o.x + o.l - 1) px(g, d < 3 ? '#8d949b' : '#5f6a78', x, haut, 1, bas - haut);
+		if (x > o.x && x < o.x + o.l - 1) px(g, d < 3 ? '#c8cdd2' : '#f7f8f9', x, haut, 1, bas - haut); // porte blanche (prompt 32)
 	}
-	px(g, '#3c4450', o.x + 4, o.y + 10, 1, o.h - 22); // joint vertical (ouvrant)
+	px(g, '#b9bec4', o.x + 4, o.y + 10, 1, o.h - 22); // joint vertical (ouvrant)
 	px(g, P.contour, o.x + o.l - 6, o.y + Math.round(o.h * 0.5), 4, 3); // poignée
 	px(g, '#c8cdd2', o.x + o.l - 6, o.y + Math.round(o.h * 0.5), 3, 1);
 	// Pictogramme « sortie » : flèche verte au-dessus de la porte

@@ -41,3 +41,4 @@ dossier à trancher sous pression. »*
 | 23 | `23-interactions-hors-ecran.md` | Prompt 29 : objets de la pièce en vue bureau (lampe persistée, store de la fenêtre avec vraie météo et heure, plante, tasse, dossiers), sans pause ni effet sur les jauges |
 | 24 | `24-bandes-sonores.md` | Prompt 30 : ambiances WebAudio contextuelles (pluie réelle, ville/tram le jour, nuit calme) et signaux (incident, compteur à 0, mail, clics au poste) |
 | 25 | `25-bureau-cadrage-chaise.md` | Prompt 31 : cadrage « sur la chaise » (recadrage centré, accoudoirs retirés), horloge murale à l'heure du jeu, applique murale à la place de la lampe d'architecte |
+| 26 | `26-bureau-style-epure.md` | Prompt 32 : pièce blanche et épurée (plafond, menuiseries, plateau, porte), bois réduit à un chant, vignettage neutre, contour de survol double lisible sur blanc |
