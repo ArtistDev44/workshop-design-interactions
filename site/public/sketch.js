@@ -136,7 +136,7 @@ function majAmbianceSonore() {
 	dernierContexteSonore = millis();
 	const m = typeof meteoFenetre === 'function' ? meteoFenetre() : Jeu.meteoActuelle;
 	const h = heureAffichee().h;
-	Confort.Son.ambiances.regler({ pluie: !!(m && m.pluie_mm >= 1), nuit: h < 7 || h >= 20, actif: PC.etat !== 'eteint' || ecran === 'jeu' });
+	Confort.Son.ambiances.regler({ pluie: !!(m && m.pluie_mm >= 1), vent: !!(m && m.rafales_max >= 50), chaleur: !!(m && m.temp_max >= 30), nuit: h < 7 || h >= 20, actif: PC.etat !== 'eteint' || ecran === 'jeu' }); // prompt 44 § 6 : + vent, chaleur
 }
 
 function draw() {
@@ -174,6 +174,7 @@ function draw() {
 		if (ecran === 'accueil') dessinerAppliSansPartie(); // prompt 35 : l'accueil est sorti du PC (menu principal)
 		else {
 			dessinerJeu();
+			bandeauEtat(); // prompt 43
 			indicateurSauvegarde(); // prompt 33
 		}
 		if (enPause) dessinerPause();
@@ -198,6 +199,7 @@ function draw() {
 	}
 	dessinerGuide(); // prompt 37 : flèches « Prendre en main »
 	dessinerTutoriel(); // prompt 34 : par-dessus l'écran et les fenêtres
+	dessinerTransitionJour(); // prompt 43 : écran noir entre les journées, au-dessus de tout
 	dessinerClignement(); // prompt 21 § 2 : par-dessus tout, purement visuel (n'intercepte aucune entrée)
 	majCurseur();
 }
@@ -306,6 +308,33 @@ function dessinerAccueil() {
 	text(t('accueil.pied'), L / 2, H - 36);
 }
 
+/** Prompt 43 : « F ▼  R ▲  B ▼ » d'après les signes de base des effets (réputation de « retenir » : +4 / +8, Q58) */
+function effetsResumes(cle) {
+	if (cle === 'rien') return t('effets.rien');
+	const base = Jeu.REGLAGES.effets[cle].base;
+	const fl = (v) => (v === null || v > 0 ? '▲' : v < 0 ? '▼' : '=');
+	return t('effets.resume', { f: fl(base[0]), r: fl(base[1]), b: fl(base[2]) });
+}
+
+/** Prompt 43 : bandeau d'état en bas de l'écran du jeu — ce qu'il faut faire maintenant */
+function bandeauEtat() {
+	if (ecran !== 'jeu') return;
+	const cle = { attente: 'attente', reveil: 'attente', decision: 'decision', contradiction: 'contradiction', conflit: 'conflit', narration: 'narration', mail: 'mail', fin: 'fin' }[phase];
+	if (!cle) return;
+	const txt = t('etat.' + cle, { x: IMMERSION.compression });
+	const urgent = ['decision', 'contradiction', 'conflit'].includes(phase);
+	noStroke();
+	fill(urgent ? C.primaire : 'rgba(255,255,255,0.08)');
+	rect(GAUCHE.x, H - 38, 1500, 32);
+	fill('#ffffff');
+	textFont(POLICE_TEXTE);
+	textStyle(BOLD);
+	ajusterTaille(txt, 1470, 18);
+	textAlign(LEFT, CENTER);
+	text(txt, GAUCHE.x + 14, H - 22);
+	textStyle(NORMAL);
+}
+
 function lancerPartie() {
 	const o = optionsAccueil()[choixAccueil];
 	if (!o || o.desactive) return;
@@ -331,6 +360,7 @@ function lancerNouvellePartie() {
 	});
 }
 
+let dernierTic = 0; // prompt 44
 let facteurDuree = 1; // prompt 23 : heure de pointe → compteur ×0,8
 function nouveauDossier() {
 	if (Jeu.demarrerModificateur) Jeu.demarrerModificateur(millis());
@@ -341,7 +371,12 @@ function nouveauDossier() {
 	alerteTempsJouee = false;
 	if (!Jeu.dossierCourant()) return apresDecision();
 	if (Jeu.declencherPlainte) Jeu.declencherPlainte(Jeu.index); // prompt 28 : plainte liée au dossier réel (app Community)
-	Confort.Son.bip('incident'); // prompt 30 : signal d'arrivée d'incident (timbre distinct)
+	// Prompt 44 § 2 : signal propre à la source (GTFS-RT, Open-Meteo, archives, agenda), plus fort s'il reste beaucoup d'incidents
+	const dInc = Jeu.dossierCourant();
+	const jInc = Jeu.jourCourant();
+	const restants = jInc ? jInc.dossiers.filter((x) => Jeu.paquet.indexOf(x) >= Jeu.index).length : 1;
+	Confort.Son.alerteDossier(dInc.type, restants);
+	if (dInc.lignes && dInc.lignes.length) setTimeout(() => Confort.Son.radio(dInc.lignes.join(''), 1), 700); // § 1 : annonce radio liée à la ligne
 	if (Jeu.conflit()) phase = 'conflit';
 	else if (Jeu.dossierCourant().contradiction) phase = 'contradiction';
 	else phase = 'decision';
@@ -354,7 +389,8 @@ function decider(action) {
 	dernierResultat = Jeu.decider(action, sourceChoisie);
 	if (!dernierResultat) return;
 	annoncer(t('annonce.decision', { titre: dernierResultat.narration.titre, texte: dernierResultat.narration.texte }));
-	Confort.Son.bip(action === 'temps' ? 'alerte' : 'action');
+	Confort.Son.clicAction(action); // prompt 44 § 4 : un clic de console par action
+	Confort.Son.jauges(dernierResultat.deltas); // § 5 : chute brutale ou remontée nette, audibles
 	phase = 'narration';
 	debutNarration = millis();
 	Sauvegarde.auto(false); // prompt 33 : après chaque décision (l'annonce de la décision n'est pas écrasée)
@@ -477,7 +513,6 @@ function dessinerJeu() {
 	const bx = GAUCHE.x + GAUCHE.l - 24;
 	const outils = [
 		[t('jeu.recommencer'), () => ouvrir('reset')],
-		[t('jeu.son', { etat: t(Confort.Reglages.son ? 'commun.oui' : 'commun.non') }), basculerSon],
 		[t('accueil.aide'), () => ouvrir('aide')],
 	];
 	let ox = bx;
@@ -801,6 +836,9 @@ function dessinerJauges() {
 		fill(critique ? C.rougeFonce : v < 40 ? C.orange : C.vert);
 		if (!visible) fill('rgba(255,197,194,0.45)');
 		rect(x, z.y + 56, (lb * constrain(v, 0, 100)) / 100, 22, 4);
+		// Prompt 43 : repères des seuils réels (20 critique, 40 orange) sur chaque jauge
+		fill(255, 255, 255, 170);
+		[20, 40].forEach((s) => rect(x + (lb * s) / 100 - 1, z.y + 52, 2, 30));
 	});
 }
 
@@ -824,6 +862,15 @@ function dessinerDossier(d, meteo) {
 	// Compteur : barre horizontale qui se vide (Q6) — durée selon la semaine (Q16, Q55)
 	const duree = ((Jeu.etat.semaine && Jeu.etat.semaine.difficulte && Jeu.etat.semaine.difficulte.compteur_s) || 30) * 1000 * facteurDuree;
 	const reste = constrain(1 - (millis() - debutCompteur) / duree, 0, 1);
+	// Prompt 44 § 3 : tic-tac sous les 10 dernières secondes, qui s'accélère (1 s → 0,5 s → 0,25 s)
+	const resteMs = reste * duree;
+	if (resteMs > 0 && resteMs < 10000 && (phase === 'decision' || phase === 'contradiction' || phase === 'conflit')) {
+		const pas = resteMs < 4000 ? 250 : resteMs < 7000 ? 500 : 1000;
+		if (millis() - dernierTic >= pas) {
+			dernierTic = millis();
+			Confort.Son.tic(1 - resteMs / 10000);
+		}
+	}
 	noStroke();
 	fill(C.piste);
 	rect(x + 24, base.y + 22, base.l - 48, 14, 7);
@@ -900,9 +947,7 @@ function dessinerDossier(d, meteo) {
 	textSize(16);
 	fill(C.gris);
 	text(t('dossier.source', { source: d.source }), x + 32, base.y + 452, base.l - 64, 50);
-	if (meteo) {
-		text(t('dossier.meteo', { min: fmt(meteo.temp_min), max: fmt(meteo.temp_max), pluie: fmt(meteo.pluie_mm), rafales: fmt(meteo.rafales_max) }), x + 32, base.y + 506);
-	}
+	// Prompt 43 : la météo du jour est déjà affichée sous la carte → plus répétée ici
 
 	const ab = (base.l - 64 - 16) / 2;
 	if (phase === 'contradiction') {
@@ -947,6 +992,14 @@ function dessinerDossier(d, meteo) {
 		const bx = x + 32 + (i % 2) * (ab + 16);
 		const by = base.y + base.h - 200 + Math.floor(i / 2) * 88;
 		bouton(bx, by, ab, 72, touche + '  ' + nom + (cle === bloquee ? t('dossier.indispo') : ''), () => decider(cle), cle === bloquee, i === 3);
+		// Prompt 43 : effets habituels de l'action sur les trois jauges (signes de la table réelle REGLAGES.effets)
+		noStroke();
+		fill(255, 255, 255, 215);
+		textFont(POLICE_DONNEES);
+		textStyle(NORMAL);
+		ajusterTaille(effetsResumes(cle), ab - 20, 13, 10);
+		textAlign(CENTER, BOTTOM);
+		text(effetsResumes(cle), bx + ab / 2, by + 69);
 	});
 	cibleGuide('actions', x + 32, base.y + base.h - 200, base.l - 64, 160); // prompt 37
 }
@@ -1335,6 +1388,7 @@ function keyPressed() {
 	// Prompt 33 : boîte d'import ouverte (champ texte, fichier) → le clavier lui appartient
 	if (Sauvegarde.dialogueOuvert) return;
 	if (CINE) return toucheCinematique(), false; // prompt 41
+	if (TRANSITION_JOUR && (keyCode === ENTER || keyCode === RETURN || key === ' ' || keyCode === ESCAPE)) return passerTransitionJour(), false; // prompt 43
 	Confort.Son.demarrer(); // l'audio ne peut démarrer qu'après un geste du joueur
 	interaction();
 	// Intro SMS (§ 2) : clic / Entrée pour avancer
@@ -1379,6 +1433,7 @@ function keyPressed() {
 		if (fenetre === 'parametres') {
 			const cles = { 1: 'son', 2: 'horsLigneForce', 3: 'reduireAnimations', 4: 'contrasteRenforce' };
 			if (cles[key]) basculerReglage(cles[key]);
+			if (key === '8') musiqueSuivante(); // prompt 44
 			if (key === '5') Sauvegarde.exporter(); // prompt 33
 			if (key === '6') Sauvegarde.copier();
 			if (key === '7') return Sauvegarde.ouvrirImport(), false;
@@ -1626,6 +1681,16 @@ function fenetreReset() {
 	bouton(x + 64 + (l - 112) / 2, y + h - 112, (l - 112) / 2, 72, t('reset.non'), fermer, false, true);
 }
 
+/** Prompt 44 : morceau suivant (mémorisé), joué tout de suite si le son est actif */
+function musiqueSuivante() {
+	const liste = Confort.Son.musique.pistes();
+	const i = liste.indexOf(Confort.Reglages.musique || 'origine');
+	const suivante = liste[(i + 1) % liste.length];
+	Confort.Son.demarrer();
+	Confort.Son.musique.changer(suivante);
+	annoncer(t('param.musique') + ' : ' + t('musique.' + suivante));
+}
+
 function basculerReglage(nom) {
 	Confort.Reglages.basculer(nom);
 	appliquerReglages();
@@ -1640,7 +1705,7 @@ function basculerReglage(nom) {
 
 function fenetreParametres() {
 	const l = 1000;
-	const h = 860; // prompt 33 : + section « Progression »
+	const h = 956; // prompt 33 : + section « Progression » ; prompt 44 : + « Musique »
 	const x = (L - l) / 2;
 	const y = (H - h) / 2;
 	panneau(x, y, l, h, C.accent);
@@ -1689,8 +1754,20 @@ function fenetreParametres() {
 	text(t('param.touche', { k: 'L' }), x + 560, y + 120 + 4 * 96 + 36);
 	textAlign(LEFT, TOP);
 	selecteurLangue(x + l - 48, y + 120 + 4 * 96 + 10);
+	// Prompt 44 : choix de la musique (morceaux originaux, chiptune), touche 8
+	const ym = y + 120 + 5 * 96;
+	textFont(POLICE_TEXTE);
+	textSize(26);
+	fill(C.texte);
+	textAlign(LEFT, CENTER);
+	text(t('param.musique'), x + 48, ym + 36);
+	textFont(POLICE_DONNEES);
+	textSize(18);
+	fill(C.gris);
+	text(t('param.touche', { k: '8' }), x + 560, ym + 36);
+	bouton(x + l - 48 - 280, ym + 8, 280, 56, '♪ ' + t('musique.' + (Confort.Reglages.musique || 'origine')), musiqueSuivante, false, true);
 	// Prompt 33 : Progression — exporter (fichier), copier (presse-papiers), importer (fichier ou texte collé)
-	const yp = y + 120 + 5 * 96;
+	const yp = y + 120 + 6 * 96;
 	textFont(POLICE_TEXTE);
 	textSize(26);
 	fill(C.texte);

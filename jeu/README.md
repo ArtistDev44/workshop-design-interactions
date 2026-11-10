@@ -54,3 +54,6 @@ dossier à trancher sous pression. »*
 | 36 | `36-tests-difficulte.md` | Trois tests de difficulté (4 profils simulés × 3 semaines) et rééquilibrage des valeurs des actions : bonne fin de nouveau atteignable |
 | 37 | `37-mode-histoire.md` | Prompt 41 : mode histoire (facile → normale → difficile) et temps réel à débloquer, un élément de jeu de plus par semaine, rapport papier sur la table, 3 cinématiques de fin |
 | 38 | `38-telephone-en-main.md` | Prompt 42 : le téléphone pris en main (animation réutilisable) pour l'intro, les conversations du patron et les notifications |
+| 39 | `39-vue-pc-ux-temps-transitions.md` | Prompt 43 : écran du PC à 90 % au poste, indicateurs redondants retirés, bandeau d'état, effets des actions et seuils visibles, temps ×30, écran noir « JOUR n — SEMAINE n » |
+| 40 | `40-musiques-immersion-sonore.md` | Prompt 44 : 4 morceaux chiptune originaux au choix (Paramètres, touche 8) et 7 pistes d'immersion sonore (radio, alertes par source, tic-tac, clics, jauges, vent / canicule, signatures de fin) |
+| 41 | `41-meteo-progressive-seo.md` | Prompt 45 : météo de la baie en fondu (jour/nuit, pluie), et SEO : description, canonique, Open Graph, carte Twitter, image OG du vrai rendu, nouveau favicon, manifeste, JSON-LD |

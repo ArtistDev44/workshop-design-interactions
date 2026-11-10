@@ -13,7 +13,8 @@ const BH = H / PIX; // 270
 const LARGEUR_ECRAN_PC = 168; // vue depuis la chaise : grand écran face au joueur
 const ECRAN_PC = { x: (BW - LARGEUR_ECRAN_PC) / 2, y: 46, l: LARGEUR_ECRAN_PC, h: 94 };
 // Vue « au poste » : le moniteur occupe ce rectangle (pixels écran), la pièce reste visible autour
-const ECRAN_POSTE = { x: (L - 1240) / 2, y: 96, l: 1240, h: 698 };
+// Prompt 43 : au poste, l'écran du PC occupe 90 % du canevas (10 % de « non-écran »), surtout moins d'espace dessous
+const ECRAN_POSTE = { x: (L - 1728) / 2, y: 40, l: 1728, h: 972 };
 
 let vue = 'bureau'; // 'bureau' | 'zoom-avant' | 'poste' | 'zoom-arriere'
 let debutZoom = 0;
@@ -219,36 +220,72 @@ function dessinerPlafondEtBaie(g) {
 	px(g, '#c8cdd2', 0, 8, BW, 1);
 }
 
-function dessinerVueNantes(g) {
-	const heure = heureAffichee().h;
-	const nuit = heure < 7 || heure >= 20;
-	const m = Jeu.meteoActuelle;
-	const pluie = m && m.pluie_mm >= 1;
-	const haut = nuit ? '#141d33' : pluie ? '#7f8c99' : '#79b4de';
-	const bas = nuit ? '#2b3757' : pluie ? '#a9b3bb' : '#c6e4f3';
-	for (let y = 9; y < BAIE_BAS; y++) px(g, y < 70 ? haut : y < 110 ? lerpColor(color(haut), color(bas), (y - 70) / 40).toString('#rrggbb') : bas, 0, y, BW, 1);
-	if (!nuit && !pluie) {
-		disque(g, 410, 34, 10, '#f6d76b');
-		disque(g, 408, 32, 5, '#fbeaa4');
+/* Prompt 45 : la météo vue par la baie change PROGRESSIVEMENT. Deux facteurs lissés (0 → 1) :
+   nuit (suivant l'heure simulée, avec aube 6 h–7 h 30 et crépuscule 19 h 30–21 h) et pluie (≥ 1 mm le jour joué).
+   Ils convergent en quelques secondes (constante de temps 2,5 s) ; animations réduites : changement direct. */
+const METEO_VISU = { nuit: null, pluie: null, t: 0 };
+function melange(a, b, k) {
+	if (k <= 0) return a;
+	if (k >= 1) return b;
+	return lerpColor(color(a), color(b), k).toString('#rrggbb');
+}
+function facteurNuit() {
+	const hA = heureAffichee();
+	const h = hA.h + hA.m / 60;
+	if (h < 6 || h >= 21) return 1;
+	if (h < 7.5) return 1 - (h - 6) / 1.5; // aube
+	if (h >= 19.5) return (h - 19.5) / 1.5; // crépuscule
+	return 0;
+}
+function majMeteoVisuelle(nuitCible, pluieCible) {
+	const V = METEO_VISU;
+	const maintenant = millis();
+	if (V.nuit === null || reduireAnimations) {
+		V.nuit = nuitCible;
+		V.pluie = pluieCible;
+	} else {
+		const k = 1 - Math.exp(-Math.min(500, maintenant - V.t) / 2500);
+		V.nuit += (nuitCible - V.nuit) * k;
+		V.pluie += (pluieCible - V.pluie) * k;
 	}
-	if (nuit) disque(g, 410, 30, 7, '#efe8cf');
-	for (let n = 0; n < (pluie ? 5 : 3); n++) {
+	V.t = maintenant;
+}
+function dessinerVueNantes(g) {
+	const m = typeof meteoFenetre === 'function' ? meteoFenetre() : Jeu.meteoActuelle; // météo du jour joué (comme la fenêtre)
+	majMeteoVisuelle(facteurNuit(), m && m.pluie_mm >= 1 ? 1 : 0);
+	const nuit = METEO_VISU.nuit;
+	const pluie = METEO_VISU.pluie;
+	const haut = melange(melange('#79b4de', '#7f8c99', pluie), '#141d33', nuit);
+	const bas = melange(melange('#c6e4f3', '#a9b3bb', pluie), '#2b3757', nuit);
+	for (let y = 9; y < BAIE_BAS; y++) px(g, y < 70 ? haut : y < 110 ? melange(haut, bas, (y - 70) / 40) : bas, 0, y, BW, 1);
+	// Soleil (s'efface avec la nuit et la pluie) et lune (apparaît avec la nuit)
+	const soleil = (1 - nuit) * (1 - pluie);
+	if (soleil > 0.02) {
+		disque(g, 410, 34, 10, melange(haut, '#f6d76b', soleil));
+		disque(g, 408, 32, 5, melange(haut, '#fbeaa4', soleil));
+	}
+	if (nuit > 0.02) disque(g, 410, 30, 7, melange(haut, '#efe8cf', nuit));
+	// Nuages : trois toujours, deux de plus qui apparaissent avec la pluie
+	for (let n = 0; n < 5; n++) {
+		const k = n < 3 ? 1 : pluie;
+		if (k < 0.05) continue;
 		const nx = 30 + n * 90;
 		const ny = 26 + (n % 2) * 12;
-		disque(g, nx, ny, 6, pluie ? '#9aa4ad' : '#f4f8fb');
-		disque(g, nx + 9, ny - 3, 8, pluie ? '#aeb7bf' : '#ffffff');
-		disque(g, nx + 18, ny, 5, pluie ? '#9aa4ad' : '#f4f8fb');
+		const c1 = melange(haut, melange('#f4f8fb', '#9aa4ad', pluie), k);
+		const c2 = melange(haut, melange('#ffffff', '#aeb7bf', pluie), k);
+		disque(g, nx, ny, 6, c1);
+		disque(g, nx + 9, ny - 3, 8, c2);
+		disque(g, nx + 18, ny, 5, c1);
 	}
-	// Ville lointaine
+	// Ville lointaine, lumières qui s'allument progressivement
+	const immeuble = melange('#8b96a3', '#0f1626', nuit);
 	[18, 26, 14, 30, 22, 34, 16, 28, 20, 36, 24, 18, 30, 22, 26, 16, 32, 20, 24, 28].forEach((t, i) => {
-		px(g, nuit ? '#0f1626' : '#8b96a3', i * 24, 118 - t, 24, t + 4);
-		if (nuit) for (let k = 0; k < 3; k++) px(g, '#e8c46a', i * 24 + 4 + k * 6, 122 - t + k * 5, 2, 2);
+		px(g, immeuble, i * 24, 118 - t, 24, t + 4);
+		if (nuit > 0.05) for (let k = 0; k < 3; k++) px(g, melange(immeuble, '#e8c46a', nuit), i * 24 + 4 + k * 6, 122 - t + k * 5, 2, 2);
 	});
-	// Prompt 34 : grue au pied de la ville (même ligne d'horizon, même teinte que les immeubles),
-	// plus de château, de quai, de route ni d'arbres : la baie donne directement sur la Loire.
 	dessinerGrueTitan(g, 344, HORIZON_VILLE, nuit);
 	dessinerLoire(g, nuit, pluie, haut, bas);
-	if (pluie) dessinerPluie(g, m, nuit);
+	if (pluie > 0.02) dessinerPluie(g, m, nuit > 0.5, pluie);
 }
 
 /* Prompt 38 : pluie aléatoire et réaliste. Gouttes tirées une fois (graine fixe, pas de motif répété) :
@@ -264,14 +301,14 @@ function aleaPluie(graine) {
 		return a / 4294967296;
 	};
 }
-function dessinerPluie(g, m, nuit) {
+function dessinerPluie(g, m, nuit, intensite) {
 	if (!GOUTTES) {
 		const r = aleaPluie(44000);
 		GOUTTES = Array.from({ length: 220 }, () => ({ x: r() * (BW + 60) - 30, p: r(), v: 0.55 + r() * 0.9, l: 2 + Math.floor(r() * 5), a: 50 + Math.floor(r() * 110), proche: r() < 0.18 }));
 		GOUTTES_VITRE = Array.from({ length: 26 }, () => ({ x: Math.floor(r() * MUR_DROIT_X), y0: 12 + r() * (BAIE_BAS - 30), v: 0.002 + r() * 0.006, p: r(), l: 1 + Math.floor(r() * 3) }));
 	}
 	const mm = (m && m.pluie_mm) || 1;
-	const densite = constrain(0.25 + mm / 10, 0.25, 1) * (reduireAnimations ? 0.5 : 1);
+	const densite = constrain(0.25 + mm / 10, 0.25, 1) * (reduireAnimations ? 0.5 : 1) * (intensite === undefined ? 1 : intensite); // prompt 45 : la pluie arrive et s'en va progressivement
 	const n = Math.round(GOUTTES.length * densite);
 	const pente = constrain(((m && m.rafales_max) || 0) / 90, 0, 0.6); // vent → gouttes inclinées
 	const tps = reduireAnimations ? 0 : millis() / 1000;
@@ -305,9 +342,9 @@ const HORIZON_VILLE = 122; // bas des immeubles lointains
 function dessinerGrueTitan(g, x, base, nuit) {
 	// Correctif : grue à l'échelle des immeubles lointains (≈ 40 px de haut, comme les plus hauts) et
 	// silhouette pleine, opaque, un ton plus sombre que la ville — plus de treillis « transparent » sur le ciel.
-	const fond = nuit ? '#0b111d' : '#6f7a87';
-	const trait = nuit ? '#1a2336' : '#5b6572';
-	const bord = nuit ? '#05080f' : '#4a535e';
+	const fond = melange('#6f7a87', '#0b111d', nuit);
+	const trait = melange('#5b6572', '#1a2336', nuit);
+	const bord = melange('#4a535e', '#05080f', nuit);
 	px(g, bord, x + 19, base - 37, 8, 37); // tour
 	px(g, fond, x + 20, base - 36, 6, 36);
 	for (let y = base - 34; y < base; y += 5) for (let k = 0; k < 5; k++) px(g, trait, x + 20 + k, y + k, 1, 1); // croisillons, sur fond plein
@@ -316,7 +353,7 @@ function dessinerGrueTitan(g, x, base, nuit) {
 	for (let k = -4; k < 52; k += 4) px(g, trait, x + k, base - 41, 1, 3);
 	px(g, bord, x + 16, base - 49, 13, 8); // cabine / contrepoids
 	px(g, fond, x + 17, base - 48, 11, 6);
-	px(g, nuit ? '#e8c46a' : '#5f6a78', x + 19, base - 47, 4, 3); // vitre (allumée la nuit)
+	px(g, melange('#5f6a78', '#e8c46a', nuit), x + 19, base - 47, 4, 3); // vitre (allumée la nuit)
 	px(g, bord, x + 47, base - 37, 1, 14); // câble
 	px(g, bord, x + 45, base - 23, 5, 3); // crochet
 }
@@ -362,29 +399,29 @@ function niveauLoire() {
 function dessinerLoire(g, nuit, pluie, ciel, cielBas) {
 	const yEau = niveauLoire();
 	// Rive d'en face : mur de quai sombre entre la ville et l'eau (sa partie visible dit le niveau du fleuve)
-	px(g, nuit ? '#141b2b' : '#6f7884', 0, HORIZON_VILLE, BW, yEau - HORIZON_VILLE);
-	for (let x = 0; x < BW; x += 16) px(g, nuit ? '#1b2436' : '#7d8692', x, HORIZON_VILLE + 1, 8, 1);
+	px(g, melange('#6f7884', '#141b2b', nuit), 0, HORIZON_VILLE, BW, yEau - HORIZON_VILLE);
+	for (let x = 0; x < BW; x += 16) px(g, melange('#7d8692', '#1b2436', nuit), x, HORIZON_VILLE + 1, 8, 1);
 	// L'eau : bande pleine largeur, reflet du ciel en haut, plus sombre vers la baie
-	const eau = nuit ? '#1b2a44' : pluie ? '#5d7180' : '#4f7f9f';
-	const eauSombre = nuit ? '#121d33' : pluie ? '#4a5c69' : '#3f6c8a';
+	const eau = melange(melange('#4f7f9f', '#5d7180', pluie), '#1b2a44', nuit);
+	const eauSombre = melange(melange('#3f6c8a', '#4a5c69', pluie), '#121d33', nuit);
 	px(g, eau, 0, yEau, BW, BAIE_BAS - yEau);
 	px(g, eauSombre, 0, Math.round((yEau + BAIE_BAS) / 2), BW, BAIE_BAS - Math.round((yEau + BAIE_BAS) / 2));
-	px(g, nuit ? '#2e4264' : cielBas, 0, yEau, BW, 1); // reflet du ciel à la surface
+	px(g, melange(cielBas, '#2e4264', nuit), 0, yEau, BW, 1); // reflet du ciel à la surface
 	// Écume et vaguelettes qui dérivent doucement (figées si animations réduites)
 	const decal = reduireAnimations ? 0 : Math.floor(millis() / 220);
 	for (let r = 0; r < 4; r++) {
 		const y = yEau + 3 + r * Math.max(2, Math.floor((BAIE_BAS - yEau - 4) / 4));
 		if (y >= BAIE_BAS - 1) break;
-		for (let x = -12; x < BW; x += 22) px(g, nuit ? '#2e4264' : '#9cc3da', x + ((decal * (r % 2 ? 1 : -1) + r * 7) % 22 + 22) % 22, y, 6 - (r % 2) * 2, 1);
+		for (let x = -12; x < BW; x += 22) px(g, melange('#9cc3da', '#2e4264', nuit), x + ((decal * (r % 2 ? 1 : -1) + r * 7) % 22 + 22) % 22, y, 6 - (r % 2) * 2, 1);
 	}
 	// Une péniche qui descend le fleuve (silhouette), pour lire « fleuve navigable »
 	const xp = reduireAnimations ? 250 : ((Math.floor(millis() / 160) % (BW + 80)) - 60);
 	const yp = yEau + 2;
-	px(g, nuit ? '#0b111d' : '#2f3a46', xp, yp, 52, 3); // coque
-	px(g, nuit ? '#0b111d' : '#2f3a46', xp + 2, yp + 3, 48, 1);
-	px(g, nuit ? '#0b111d' : '#3c4652', xp + 38, yp - 5, 10, 5); // timonerie
-	px(g, nuit ? '#e8c46a' : '#9fb3c4', xp + 40, yp - 4, 3, 2);
-	px(g, nuit ? '#1b2a44' : '#6a8aa1', xp - 6, yp + 4, 64, 1); // sillage
+	px(g, melange('#2f3a46', '#0b111d', nuit), xp, yp, 52, 3); // coque
+	px(g, melange('#2f3a46', '#0b111d', nuit), xp + 2, yp + 3, 48, 1);
+	px(g, melange('#3c4652', '#0b111d', nuit), xp + 38, yp - 5, 10, 5); // timonerie
+	px(g, melange('#9fb3c4', '#e8c46a', nuit), xp + 40, yp - 4, 3, 2);
+	px(g, melange('#6a8aa1', '#1b2a44', nuit), xp - 6, yp + 4, 64, 1); // sillage
 }
 
 function dessinerMontantsBaie(g) {
@@ -924,10 +961,10 @@ function composerVue() {
 let focusQuitter = false; // focus clavier sur le bouton « Quitter le PC » (Tab au poste)
 let dernierScrollSortie = 0;
 let cumulScroll = 0;
-const BOUTON_QUITTER = { l: 340, h: 56, marge: 40 };
+const BOUTON_QUITTER = { l: 340, h: 50, marge: 40 };
 
 function rectBoutonQuitter() {
-	return { x: L - BOUTON_QUITTER.l - BOUTON_QUITTER.marge, y: H - BOUTON_QUITTER.h - 22, l: BOUTON_QUITTER.l, h: BOUTON_QUITTER.h };
+	return { x: L - BOUTON_QUITTER.l - BOUTON_QUITTER.marge, y: H - BOUTON_QUITTER.h - 10, l: BOUTON_QUITTER.l, h: BOUTON_QUITTER.h }; // sous l'écran (prompt 43)
 }
 /** Bouton visible au poste, sous le moniteur à droite (dans la pièce, hors de l'écran du PC). */
 function dessinerBoutonQuitterPC() {
