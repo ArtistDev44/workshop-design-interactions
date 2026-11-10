@@ -35,3 +35,6 @@
 - Chromium (faux micro et fausse caméra) : voix simulée → info trafic révélée ; réponse à une plainte →
   2 réactions programmées, 1 livrée vite ; enquête : 4 volets et journées ; souffle pendant le boost → boost
   avancé de 2 s ; grand mouvement pendant le réveil → réveillé. Aucune erreur console.
+
+## Mise à jour (prompt 64)
+- « Radio des chauffeurs » retirée au prompt 64 (demande du groupe) ; détection de présence webcam refaite (voir `jeu/58`).

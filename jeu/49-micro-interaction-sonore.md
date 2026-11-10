@@ -38,3 +38,6 @@ jamais touchés (`test-jeu.mjs` vert). Le livret autorise le micro comme périph
   désactivé → M maintenue n'ouvre rien. Aucune erreur console.
 - Non vérifiable en automatique : l'écoute réelle de la voix, du souffle et du bruit (à tester par le groupe
   avec un vrai micro).
+
+## Mise à jour (prompt 64)
+- Texture granulaire retirée au prompt 64 (demande du groupe) : le micro ne sert plus qu'au souffle pendant le boost du café (voir `jeu/58`).

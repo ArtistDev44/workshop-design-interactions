@@ -127,6 +127,8 @@ function interagirPiece(nom) {
 
 function interaction() {
 	inactifDepuis = millis();
+	// Prompt 64 : endormi pendant un dossier (absence vue par la webcam), un vrai geste réveille le joueur
+	if (enSieste && ['decision', 'contradiction', 'conflit', 'narration'].includes(phase)) enSieste = false;
 }
 
 // ——— Journées et horloge simulée (§ 3) ———
@@ -218,6 +220,13 @@ function avancerTemps() {
 		const prochain = Jeu.prochainDuJour();
 		if (prochain && Jeu.horloge.minutes >= prochain.minute) arriveeIncident();
 		else if (!prochain && Jeu.horloge.minutes >= Jeu.finJournee()) finJourneeAtteinte(); // prompt 51 : l'horloge s'arrête, le joueur clique dessus pour partir (journee.js)
+	} else if (['decision', 'contradiction', 'conflit'].includes(phase) && !enSieste && joueurParti()) {
+		// Prompt 64 : la webcam ne voit plus le joueur pendant un dossier → il s'endort tout de suite ; le compteur
+		// continue sans lui (compteur à 0 = conséquences naturelles, Q25) ; un geste à son retour le réveille
+		enSieste = true;
+		debutSieste = maintenant;
+		if (vue === 'poste') seLever();
+		annoncer(t('webcam.absent'));
 	} else if (phase === 'reveil' && reveil && maintenant > reveil.limite) {
 		rateReveil();
 	}
