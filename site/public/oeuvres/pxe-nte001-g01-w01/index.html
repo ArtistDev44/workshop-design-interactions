@@ -7,6 +7,8 @@
 		<link rel="stylesheet" href="./style.css" />
 	</head>
 	<body>
+		<!-- Retour vers la page de l'œuvre sur le site (cartel). Masqué si le jeu est ouvert seul, hors du site. -->
+		<a class="retour-site" href="../../pxe-nte001-g01-w01/" data-retour-site>← Retour au site</a>
 		<main id="scene" aria-label="Nantes en régulation — salle de contrôle des transports nantais">
 			<noscript>Ce jeu nécessite JavaScript.</noscript>
 		</main>
@@ -19,5 +21,9 @@
 		<script src="./gtfsrt.js"></script>
 		<script src="./game.js"></script>
 		<script src="./sketch.js"></script>
+		<script>
+			// Ouvert par double clic (file://) : pas de site autour, on masque le lien
+			if (location.protocol === 'file:') document.querySelector('[data-retour-site]').hidden = true;
+		</script>
 	</body>
 </html>
