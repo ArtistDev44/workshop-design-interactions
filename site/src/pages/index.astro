@@ -3,8 +3,10 @@
 // Textes issus du framework PATRIMOINE.EXE et de todo.md : aucun contenu inventé.
 import Layout from '../layouts/Layout.astro';
 import edition from '../data/edition.json';
+import { getOeuvres, lienJouable, slugDe } from '../lib/oeuvres';
 
 const base = import.meta.env.BASE_URL;
+const jouables = (await getOeuvres()).filter((o) => lienJouable(o));
 const urlEnLigne = new URL(base, Astro.site).href;
 
 const compteurs = [
@@ -74,6 +76,30 @@ const appels = [
 			}
 		</ul>
 	</section>
+
+	{
+		jouables.length > 0 && (
+			<section class="jouer" aria-labelledby="titre-jouer">
+				<h2 id="titre-jouer">Jouer maintenant</h2>
+				<ul class="jouer__liste">
+					{jouables.map((o) => (
+						<li class="jouer__item">
+							<div>
+								<p class="jouer__id mono">{o.data.id}</p>
+								<p class="jouer__titre">{o.data.titre}</p>
+								<p class="jouer__texte">
+									{o.data.stack.split(',')[0]} · <a href={`${base}${slugDe(o)}/`}>lire le cartel</a>
+								</p>
+							</div>
+							<a class="jouer__bouton" href={lienJouable(o)}>
+								Jouer<span class="visuellement-cache"> à « {o.data.titre} »</span> →
+							</a>
+						</li>
+					))}
+				</ul>
+			</section>
+		)
+	}
 
 	<section class="chaine" aria-labelledby="titre-chaine">
 		<h2 id="titre-chaine">La chaîne à tenir</h2>
@@ -189,6 +215,53 @@ const appels = [
 	.compteurs__label {
 		font-size: var(--t-petit);
 		color: var(--c-texte-doux);
+	}
+
+	/* Jouer maintenant */
+	.jouer__liste {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: grid;
+		gap: var(--e-3);
+	}
+	.jouer__item {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--e-3);
+		padding: var(--e-4);
+		background: var(--c-fond-alt);
+		border-left: 6px solid var(--c-primaire);
+		border-radius: var(--r-md);
+	}
+	.jouer__item p {
+		margin: 0;
+	}
+	.jouer__id,
+	.jouer__texte {
+		font-size: var(--t-petit);
+		color: var(--c-texte-doux);
+	}
+	.jouer__titre {
+		font-family: var(--f-titre);
+		font-size: var(--t-l);
+		font-weight: 600;
+		line-height: 1.1;
+	}
+	.jouer__bouton {
+		padding: var(--e-3) var(--e-5);
+		background: var(--c-primaire);
+		color: var(--c-fond);
+		border-radius: var(--r-md);
+		text-decoration: none;
+		font-weight: 600;
+		font-size: var(--t-s);
+	}
+	.jouer__bouton:hover {
+		background: var(--c-texte);
+		color: var(--c-fond);
 	}
 
 	/* Chaîne source → grammaire → système → œuvre */

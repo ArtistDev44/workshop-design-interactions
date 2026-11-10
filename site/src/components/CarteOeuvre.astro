@@ -1,6 +1,6 @@
 ---
 // Carte d'une œuvre dans la galerie (prompt 07).
-import { slugDe, libelleStatut, type Oeuvre } from '../lib/oeuvres';
+import { slugDe, libelleStatut, lienJouable, type Oeuvre } from '../lib/oeuvres';
 
 interface Props {
 	oeuvre: Oeuvre;
@@ -11,6 +11,7 @@ const { data } = oeuvre;
 const base = import.meta.env.BASE_URL;
 const slug = slugDe(oeuvre);
 const lien = `${base}${slug}/`;
+const jouable = lienJouable(oeuvre);
 const miniature = data.assets.thumb ? `${base}oeuvres/${slug}/${data.assets.thumb}` : null;
 ---
 
@@ -32,11 +33,35 @@ const miniature = data.assets.thumb ? `${base}oeuvres/${slug}/${data.assets.thum
 			<span class="carte__statut">{libelleStatut(data.statut)}</span>
 		</div>
 	</a>
+	{
+		jouable && (
+			<a href={jouable} class="carte__jouer">
+				Jouer<span class="visuellement-cache"> à « {data.titre} »</span> →
+			</a>
+		)
+	}
 </li>
 
 <style>
 	.carte {
 		list-style: none;
+		display: flex;
+		flex-direction: column;
+		gap: var(--e-2);
+	}
+	.carte__jouer {
+		display: block;
+		text-align: center;
+		padding: var(--e-2) var(--e-3);
+		background: var(--c-primaire);
+		color: var(--c-fond);
+		border-radius: var(--r-md);
+		text-decoration: none;
+		font-weight: 600;
+	}
+	.carte__jouer:hover {
+		background: var(--c-texte);
+		color: var(--c-fond);
 	}
 	.carte__lien {
 		display: flex;

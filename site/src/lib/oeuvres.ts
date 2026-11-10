@@ -18,3 +18,9 @@ export function slugDe(oeuvre: Oeuvre): string {
 export function libelleStatut(statut: Oeuvre['data']['statut']): string {
 	return statut === 'COLLECTION' ? 'PATRIMOINE.EXE COLLECTION' : statut;
 }
+
+/** Adresse de l'œuvre jouable (champ `lien_oeuvre` du registre), ou null si elle n'est pas encore en ligne. */
+export function lienJouable(oeuvre: Oeuvre): string | null {
+	const l = oeuvre.data.lien_oeuvre;
+	return l ? `${import.meta.env.BASE_URL}${l.replace(/^\//, '')}` : null;
+}
