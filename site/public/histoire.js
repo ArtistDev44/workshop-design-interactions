@@ -534,13 +534,14 @@ function fenetreRapportChiffres() {
 		[t('stats.sources'), s.sources],
 		[t('stats.ralentis'), s.ralentis],
 		[t('stats.objectifs'), s.objectifs],
+		[t('stats.equipes'), s.equipes ? s.equipes.total + ' · ' + t('stats.pertinentes', { n: s.equipes.pertinentes }) + ' · ' + t('stats.refus', { n: s.equipes.refus }) : '—'], // prompt 68
 	];
 	textFont(POLICE_DONNEES);
 	textSize(19);
 	lignes.forEach(([lib, v], i) => {
-		const ly = y + 150 + i * 38;
+		const ly = y + 150 + i * 34;
 		fill(i % 2 ? '#efe8d6' : '#f6f1e3');
-		rect(x + 48, ly - 6, 440, 36);
+		rect(x + 48, ly - 5, 440, 32);
 		fill(i >= 3 && i <= 6 ? gris : encre);
 		textAlign(LEFT, TOP);
 		text((i >= 3 && i <= 6 ? '   ' : '') + lib, x + 60, ly);

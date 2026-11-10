@@ -243,6 +243,48 @@ verifier(sv.nbs.every((n) => n >= 0 && n <= 3), `réactions : plus de 3 pour une
 verifier(sv.livres + sv.avant === sv.total && sv.encore === 0, `réactions : ${sv.avant} + ${sv.livres} livrées sur ${sv.total}, ${sv.encore} en double`);
 verifier(sv.comm.length === sv.total && sv.comm.every((x) => x && !x.includes('[À COMPLÉTER]') && !x.includes('« »')), 'réactions : texte manquant ou vide');
 
+// Prompt 68 : gravité, pertinence, équipes limitées (effectif, cycle, refus, remise à zéro, effet hors sujet, sauvegarde)
+const eq = vm.runInContext(
+	`(() => {
+	const g = [Jeu.gravite({ retard: 25 }), Jeu.gravite({ type: 'alerte météo' }), Jeu.gravite({ retard: 12 }), Jeu.gravite({ type: 'événement' }), Jeu.gravite({ type: 'perturbation', retard: null })];
+	const p = [Jeu.equipesPertinentes({ type: 'ligne en difficulté' }), Jeu.equipesPertinentes({ type: 'perturbation' }), Jeu.equipesPertinentes({ type: 'événement' }), Jeu.equipesPertinentes({ type: 'alerte météo' }), Jeu.equipesPertinentes({ type: 'perturbation', texte_source: 'Accident de bus' })];
+	Jeu.chargerSemaine('2026-10-12'); Jeu.nouvellePartie(); Jeu.jauges.budget = 100;
+	Jeu.elementDebloque = () => true;
+	const t0 = 1000000;
+	const d0 = Jeu.paquet[0];
+	const a = Jeu.envoyerEquipe(0, 'ambulance', t0); // 1 ambulance par jour
+	const deja = Jeu.envoyerEquipe(0, 'ambulance', t0);
+	const dispoApres = Jeu.equipesDisponibles('ambulance', t0);
+	Jeu.index = 1;
+	const refus = Jeu.envoyerEquipe(1, 'ambulance', t0 + 1000);
+	const libreAvant = Jeu.equipesDisponibles('ambulance', t0 + 20000 + 50000 + 9000);
+	const libreApres = Jeu.equipesDisponibles('ambulance', t0 + 20000 + 50000 + 10001);
+	// Effet hors sujet : moitié
+	const amb = Jeu.equipes[0];
+	const rep0 = Jeu.jauges.reputation;
+	Jeu.majEquipes(t0 + 20001);
+	const gain = Jeu.jauges.reputation - rep0 - 1; // − commentaire « équipe » (+1)
+	// Sauvegarde / reprise : le cycle continue
+	const snap = JSON.parse(JSON.stringify(Jeu.instantane(t0 + 30000)));
+	// Remise à zéro le matin
+	const t1 = t0 + 2000;
+	Jeu.envoyerEquipe(1, 'police', t1); Jeu.envoyerEquipe(1, 'techniciens', t1);
+	const policeAvant = Jeu.equipesDisponibles('police', t1);
+	Jeu.journeeSuivante();
+	const policeMatin = Jeu.equipesDisponibles('police', t1 + 1);
+	return { g, p, a: a.ok, deja: deja.ok, dispoApres, refus: refus.ok === false && refus.refus === true && Jeu.refusEquipes, libreAvant, libreApres, pert: amb.pertinente, gain, eff: Jeu.EQUIPES.ambulance.effets.reputation, snapPhase: snap.equipes[0].libre > 0, policeAvant, policeMatin, d0type: d0.type };
+	})()`,
+	fr,
+);
+verifier(JSON.stringify(eq.g) === JSON.stringify(['elevee', 'elevee', 'moyenne', 'moyenne', 'faible']), `gravité : ${eq.g}`);
+verifier(JSON.stringify(eq.p) === JSON.stringify([['techniciens'], ['police', 'techniciens'], ['police'], ['techniciens', 'pompiers'], ['police', 'ambulance', 'techniciens']]), `pertinence : ${JSON.stringify(eq.p)}`);
+verifier(eq.a && !eq.deja && eq.dispoApres === 0, `équipes : envoi ${eq.a}, doublon ${eq.deja}, restant ${eq.dispoApres}`);
+verifier(eq.refus === 1, `équipes : refus faute d'effectif non compté (${eq.refus})`);
+verifier(eq.libreAvant === 0 && eq.libreApres === 1, `équipes : retour après route + intervention + retour (${eq.libreAvant} → ${eq.libreApres})`);
+verifier(eq.pert === true ? eq.gain === eq.eff : eq.gain === Math.round(eq.eff / 2), `équipes : effet ${eq.gain} (pertinente : ${eq.pert}, plein : ${eq.eff})`);
+verifier(eq.snapPhase, 'équipes : la sauvegarde ne garde pas le cycle');
+verifier(eq.policeAvant === 1 && eq.policeMatin === 2, `équipes : effectifs non remis à zéro le matin (${eq.policeAvant} → ${eq.policeMatin})`);
+
 // Traductions : toute clé française existe en anglais
 const manquantes = vm.runInContext('Object.keys(TRADUCTIONS.fr).filter((k) => TRADUCTIONS.en[k] === undefined)', fr);
 verifier(manquantes.length === 0, `clés sans traduction anglaise : ${manquantes.slice(0, 8).join(', ')}`);

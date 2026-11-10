@@ -97,7 +97,7 @@ function dessinerOS() {
 		rect(x + g.l / 2 - tl / 2, y + 138, tl, 36);
 		dsTexte(ic.nom, x + g.l / 2, y + 142, 22, DS.blanc, 'center');
 		boutons.push({ x, y, l: g.l, h: g.h, action: () => ouvrirIconeOS(i) });
-		if (i === 0) cibleGuide('iconeRegulation', x, y, g.l, g.h); // prompt 37
+		if (i === 0) cibleGuide('iconeCarte', x, y, g.l, g.h); // prompt 37 ; prompt 68 : la Carte est la première icône
 		if (i === 1) cibleGuide('iconesOS', x, y, g.l * 2 + g.ecart, g.h * 3 + g.ecart * 2); // patron, carte, community, journal, indicateurs
 		const b = ic.cle === 'indicateurs' ? (PC.flottant ? '●' : '') : badgeIcone(ic.cle);
 		if (b) dsBadge(x + g.l - 34, y + 20, b, ic.cle === 'indicateurs' ? 'succes' : 'erreur');
@@ -180,7 +180,7 @@ function dessinerBarreTaches() {
 		const i = ICONES_OS.indexOf(ic);
 		const k = ICONES_OS.filter((x) => x.cle !== 'corbeille').indexOf(ic);
 		const x = 164 + k * 84;
-		const actif = (ic.cle === 'regulation' && PC.etat === 'appli') || PC.fenetre === ic.cle || (ic.cle === 'indicateurs' && PC.flottant);
+		const actif = (ic.cle === 'carte' && PC.etat === 'appli') || PC.fenetre === ic.cle || (ic.cle === 'indicateurs' && PC.flottant);
 		fill(actif ? DS.blanc15 : DS.blanc05);
 		rect(x, tb + 8, 76, BARRE_OS - 16);
 		if (actif) {
@@ -241,26 +241,6 @@ function dessinerDemarrage() {
 	if (tB >= DUREE_DEMARRAGE) PC.etat = 'os';
 }
 
-function iconeRegulation(x, y, s) {
-	s = s || 1;
-	push();
-	translate(x, y);
-	scale(s);
-	noStroke();
-	fill('#0e3b46');
-	rect(0, 0, 80, 80, 12);
-	fill('#f5efe3');
-	rect(6, 6, 68, 68, 8);
-	stroke('#1e7a3c');
-	strokeWeight(6);
-	line(14, 54, 66, 26);
-	stroke('#b3261e');
-	line(20, 20, 58, 64);
-	noStroke();
-	fill('#0e3b46');
-	circle(40, 40, 16);
-	pop();
-}
 function iconeCorbeille(x, y, s) {
 	push();
 	translate(x, y);
@@ -309,9 +289,8 @@ function dessinerFermerAppli() {
 // Le temps ne s'arrête pas pendant la lecture d'une app (comme les livres du prompt 20).
 // =====================================================================
 const ICONES_OS = [
-	{ cle: 'regulation', nom: T('app.regulation'), dessin: (x, y, s) => iconeRegulation(x, y, s || 1) },
+	{ cle: 'carte', nom: T('app.carte'), dessin: (x, y, s) => iconePixel(x, y, s, 'carte') }, // prompt 68 : la Carte est l'écran de jeu (l'appli Régulation n'existe plus)
 	{ cle: 'patron', nom: T('app.patron'), dessin: (x, y, s) => iconePixel(x, y, s, 'enveloppe') },
-	{ cle: 'carte', nom: T('app.carte'), dessin: (x, y, s) => iconePixel(x, y, s, 'carte') },
 	{ cle: 'community', nom: T('app.community'), dessin: (x, y, s) => iconePixel(x, y, s, 'bulle') },
 	{ cle: 'journal', nom: T('app.journal'), dessin: (x, y, s) => iconePixel(x, y, s, 'livre') },
 	{ cle: 'indicateurs', nom: T('app.indicateurs'), dessin: (x, y, s) => iconeIndicateurs(x, y, s || 1) }, // prompt 36
@@ -321,7 +300,7 @@ const ICONES_OS = [
 function ouvrirIconeOS(i) {
 	PC.selection = i;
 	const cle = ICONES_OS[i].cle;
-	if (cle === 'regulation') return ouvrirAppli();
+	if (cle === 'carte') return ouvrirAppli(); // prompt 68 : la Carte ouvre l'écran de jeu
 	if (cle === 'indicateurs') return basculerIndicateurs(); // prompt 36 : app flottante
 	if (cle === 'donnees') return ouvrirDonnees(); // prompt 61 : appli plein écran
 	if (PC.etat === 'appli') PC.etat = 'os';
@@ -335,9 +314,8 @@ function fermerFenetreApp() {
 	PC.fenetre = null;
 }
 function badgeIcone(cle) {
-	if (cle === 'regulation') return typeof incidentActif === 'function' && (incidentActif() || phase === 'mail') ? '!' : '';
+	if (cle === 'carte') return typeof incidentActif === 'function' && (incidentActif() || phase === 'mail') ? '!' : ''; // prompt 68
 	if (!Jeu.nonLus) return '';
-	if (cle === 'carte') return typeof incidentActif === 'function' && incidentActif() && !Jeu.equipePour(Jeu.index) ? '1' : '';
 	return Jeu.nonLus[cle] ? String(Jeu.nonLus[cle]) : '';
 }
 
@@ -391,7 +369,7 @@ function iconePixel(x, y, s, type) {
 }
 
 const FENETRE_APP = { x: 470, y: 40, l: 1410, h: 900 }; // prompt 36 : décalée pour les icônes agrandies
-const TITRES_APPS = { patron: T('app.titre.patron'), carte: T('app.titre.carte'), community: T('app.titre.community'), journal: T('app.titre.journal'), corbeille: T('app.titre.corbeille') };
+const TITRES_APPS = { patron: T('app.titre.patron'), community: T('app.titre.community'), journal: T('app.titre.journal'), corbeille: T('app.titre.corbeille') };
 
 function dessinerFenetreApp() {
 	const f = FENETRE_APP;
@@ -418,7 +396,6 @@ function dessinerFenetreApp() {
 	else if (PC.fenetre === 'patron') appPatron(zone);
 	else if (PC.fenetre === 'community') appCommunity(zone);
 	else if (PC.fenetre === 'journal') appJournal(zone);
-	else if (PC.fenetre === 'carte') appCarte(zone);
 	dsBouton(f.x + f.l - 260, f.y + f.h - 80, 236, 56, t('commun.fermer'), fermerFenetreApp, 'contour');
 }
 
@@ -625,7 +602,7 @@ function enqueteJournal(z, e, j) {
 			if (sv.length) lignes.push(t('journal.suivis', { recues: sv.filter((x) => x.livre).length, total: sv.length }));
 		} else lignes.push(t('journal.aucunePlainte'));
 		const eq = (Jeu.equipes || []).filter((q) => q.index === idx);
-		lignes.push(eq.length ? t('journal.equipes', { liste: eq.map((q) => q.nom + (q.inutile ? ' (' + t('journal.inutile') + ')' : '')).join(', ') }) : t('journal.aucuneEquipe'));
+		lignes.push(eq.length ? t('journal.equipes', { liste: eq.map((q) => q.nom + ' (' + (q.inutile ? t('journal.inutile') : t(q.pertinente === false ? 'journal.horsSujet' : 'journal.pertinente') + (q.finIntervention ? ', ' + t('journal.duree', { s: Math.round((q.finIntervention - q.arrivee) / 1000) }) : '')) + ')').join(', ') }) : t('journal.aucuneEquipe')); // prompt 68 : pertinence et durée
 	}
 	lignes.forEach((l) => {
 		dsTexte(l, z.x, y, 21, DS.blanc, 'left', z.l);
@@ -653,99 +630,6 @@ function centreLigne(nom) {
 	return c;
 }
 
-function appCarte(z) {
-	const carte = { x: z.x, y: z.y, l: 900, h: z.h };
-	noStroke();
-	fill('#121a22');
-	rect(carte.x, carte.y, carte.l, carte.h);
-	const pr = projeter(carte);
-	if (Jeu.lignes) {
-		noStroke();
-		fill(56, 96, 255, 90); // eau (info du design system, atténuée)
-		Jeu.lignes.eau.forEach((a) => {
-			beginShape();
-			a.forEach((p) => vertex(pr.x(p[0]), pr.y(p[1])));
-			endShape(CLOSE);
-		});
-		noFill();
-		stroke(255, 255, 255, 38);
-		strokeWeight(1.5);
-		Jeu.lignes.lignes.forEach((l) =>
-			l.traces.forEach((t) => {
-				beginShape();
-				t.forEach((p) => vertex(pr.x(p[0]), pr.y(p[1])));
-				endShape();
-			}),
-		);
-		noStroke();
-	}
-	// Incident actif (un seul à la fois) et équipes en route
-	const actif = typeof incidentActif === 'function' && incidentActif() ? Jeu.dossierCourant() : null;
-	const pos = (d) => {
-		const c = d && d.lignes && d.lignes.length ? centreLigne(d.lignes[0]) : null;
-		return c ? { x: pr.x(c[0]), y: pr.y(c[1]), libre: false } : { x: carte.x + carte.l / 2, y: carte.y + carte.h / 2, libre: true };
-	};
-	(Jeu.equipes || []).forEach((q) => {
-		const p = pos(Jeu.paquet[q.index]);
-		fill(q.arrivee_sim ? DS.succes : DS.info);
-		rect(p.x + 14, p.y - 8, 16, 16);
-		const reste = Math.max(0, Math.ceil((q.arrivee - millis()) / 1000));
-		if (!q.arrivee_sim) dsTexte(q.nom + ' · ' + reste + ' s', p.x + 34, p.y - 10, 16, DS.infoClair, 'left');
-	});
-	const panneauX = carte.x + carte.l + 24;
-	const panneauL = z.l - carte.l - 24;
-	if (actif) {
-		const p = pos(actif);
-		const k = typeof pulsationRouge === 'function' ? pulsationRouge() : 1;
-		fill(212, 3, 28, 255 * k);
-		rect(p.x - 10, p.y - 10, 20, 20);
-		noFill();
-		stroke(DS.primaire);
-		strokeWeight(2);
-		rect(p.x - 18, p.y - 18, 36, 36);
-		noStroke();
-		dsTexte(p.libre ? t('carte.lieuInconnu') : t('dossier.ligne', { lignes: actif.lignes.join(', ') }), p.x + 24, p.y + 14, 16, DS.blanc, 'left');
-		// Panneau latéral : incident + équipes
-		dsTitre(t('carte.incident'), panneauX, z.y, 24, DS.blanc, 'left');
-		dsTexte((actif.lignes && actif.lignes.length ? t('dossier.ligne', { lignes: actif.lignes.join(', ') }) + ' · ' : '') + actif.nature + (actif.retard !== null && actif.retard !== undefined ? ' · +' + actif.retard + ' min' : ''), panneauX, z.y + 44, 19, DS.blanc75, 'left', panneauL);
-		dsTexte(t('carte.budget', { b: Jeu.jauges.budget }), panneauX, z.y + 104, 19, DS.alerte, 'left');
-		const dejaEnvoyee = Jeu.equipePour(Jeu.index);
-		Object.keys(Jeu.EQUIPES).forEach((cle, i) => {
-			const q = Jeu.EQUIPES[cle];
-			const effets = Object.keys(q.effets).map((k2) => Jeu.LIBELLES_JAUGES[k2] + ' +' + q.effets[k2]).join(', ');
-			const verrou = q.palier && Jeu.jauges.budget < q.palier;
-			const desactive = !!dejaEnvoyee || Jeu.jauges.budget < q.cout || verrou;
-			dsBouton(panneauX, z.y + 150 + i * 92, panneauL, 64, i + 1 + ' · ' + q.nom + ' (−' + q.cout + ')' + (verrou ? t('carte.palier', { p: q.palier }) : ''), () => envoyerEquipeCarte(cle), i === 0 ? 'primaire' : 'secondaire', desactive);
-			dsTexte(effets, panneauX, z.y + 218 + i * 92, 15, DS.blanc50, 'left');
-		});
-		if (dejaEnvoyee) dsTexte(t('carte.deja', { nom: dejaEnvoyee.nom }), panneauX, z.y + 530, 18, DS.infoClair, 'left', panneauL);
-	} else {
-		dsTitre(t('carte.aucun'), panneauX, z.y, 24, DS.blanc, 'left');
-		dsTexte(t('carte.explication'), panneauX, z.y + 44, 19, DS.blanc50, 'left', panneauL);
-		// Dernier incident résolu : y envoyer une équipe est possible, mais inutile (malus, prompt 23 § 4)
-		const dernier = Jeu.index > 0 ? Jeu.paquet[Jeu.index - 1] : null;
-		if (dernier && !Jeu.equipePour(Jeu.index - 1)) {
-			dsTexte(t('carte.dernier', { quoi: dernier.lignes && dernier.lignes.length ? t('carte.ligneMin', { lignes: dernier.lignes.join(', ') }) : dernier.nature }), panneauX, z.y + 130, 18, DS.blanc75, 'left', panneauL);
-			Object.keys(Jeu.EQUIPES).forEach((cle, i) => {
-				const q = Jeu.EQUIPES[cle];
-				dsBouton(panneauX, z.y + 190 + i * 76, panneauL, 56, i + 1 + ' · ' + q.nom + ' (−' + q.cout + ')', () => envoyerEquipeCarte(cle, Jeu.index - 1), 'contour', Jeu.jauges.budget < q.cout || (q.palier && Jeu.jauges.budget < q.palier));
-			});
-		}
-	}
-	if (PC.message) dsTexte(PC.message, panneauX, z.y + z.h - 60, 18, PC.messageOk ? DS.succesClair : DS.erreurClair, 'left', panneauL);
-}
-
-function envoyerEquipeCarte(cle, index) {
-	const actif = typeof incidentActif === 'function' && incidentActif();
-	if (index === undefined) {
-		if (!actif) return;
-		index = Jeu.index;
-	}
-	const r = Jeu.envoyerEquipe(index, cle, millis());
-	PC.message = r.message;
-	PC.messageOk = r.ok;
-	Confort.Son.bip(r.ok ? 'action' : 'alerte');
-}
 
 // =====================================================================
 // Prompt 36 — Corbeille (plaintes traitées) et app flottante « Indicateurs »

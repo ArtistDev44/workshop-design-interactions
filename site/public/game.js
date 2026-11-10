@@ -241,6 +241,7 @@
 		Jeu.commentaires = []; // prompt 22 : app « Community manager »
 		Jeu.plaintes = []; // prompt 28 : plaintes des Nantais (data/messages.json)
 		Jeu.equipes = []; // prompt 22 : équipes envoyées depuis la carte
+		Jeu.refusEquipes = 0; // prompt 68 : envois refusés faute d'effectif
 		Jeu.nonLus = { patron: 0, community: 0 };
 		Jeu.alertesJauges = {};
 		Jeu.malus = {};
@@ -296,13 +297,14 @@
 			messagesPatron: Jeu.messagesPatron,
 			commentaires: Jeu.commentaires,
 			plaintes: (Jeu.plaintes || []).map((p) => Object.assign({}, p, { def: undefined })),
-			equipes: (Jeu.equipes || []).map((q) => Object.assign({}, q, { depart: q.depart - maintenant, arrivee: q.arrivee - maintenant })),
+			equipes: (Jeu.equipes || []).map((q) => Object.assign({}, q, { depart: q.depart - maintenant, arrivee: q.arrivee - maintenant, finIntervention: (q.finIntervention || q.arrivee) - maintenant, libre: (q.libre || q.arrivee) - maintenant })), // prompt 68 : cycle complet
 			nonLus: Object.assign({}, Jeu.nonLus),
 			alertesJauges: Object.assign({}, Jeu.alertesJauges),
 			malus: Object.assign({}, Jeu.malus),
 			objectifsResultats: Jeu.objectifsResultats,
 			modificateur: m ? Object.assign({}, m, { debut: m.debut === null ? null : m.debut - maintenant, fin: m.fin === null ? null : m.fin - maintenant }) : null,
 			paliersBudget: Object.assign({}, Jeu.paliersBudget),
+			refusEquipes: Jeu.refusEquipes || 0,
 			carnet: Jeu.carnet || '',
 			inspection: Jeu.inspection,
 			agendaPrevenus: Object.assign({}, Jeu.agendaPrevenus),
@@ -339,7 +341,8 @@
 		Jeu.plaintes = (s.plaintes || [])
 			.map((p) => Object.assign({}, p, { def: Jeu.MESSAGES.plaintes.find((x) => x.id === p.id) }))
 			.filter((p) => p.def); // une plainte retirée de messages.json depuis la sauvegarde est ignorée
-		Jeu.equipes = (s.equipes || []).map((q) => Object.assign({}, q, { depart: q.depart + maintenant, arrivee: q.arrivee + maintenant }));
+		Jeu.equipes = (s.equipes || []).map((q) => Object.assign({}, q, { depart: q.depart + maintenant, arrivee: q.arrivee + maintenant, finIntervention: (q.finIntervention === undefined ? q.arrivee : q.finIntervention) + maintenant, libre: (q.libre === undefined ? q.arrivee : q.libre) + maintenant }));
+		Jeu.refusEquipes = s.refusEquipes || 0;
 		const m = s.modificateur && s.modificateur.id !== 'erreur_systeme' ? s.modificateur : null; // ancienne sauvegarde : l'erreur système n'existe plus
 		Jeu.modificateur = m ? Object.assign({}, m, { debut: m.debut === null ? null : m.debut + maintenant, fin: m.fin === null ? null : m.fin + maintenant }) : null;
 		Jeu.terminee = !!s.terminee;
@@ -598,6 +601,7 @@
 			Jeu.debutJourneeTactique();
 			Jeu.messagePatron(consigneDuJour());
 			Jeu.messagePatron(T('patron.defis', { liste: Jeu.defis.map((id) => T('defi.' + id)).join(' · ') })); // prompt 55 : annoncés le premier matin
+			Jeu.annoncerEffectifs(); // prompt 68
 			Jeu.prevenirAgenda(); // prompt 47
 		}
 	};
@@ -617,6 +621,7 @@
 		if (Jeu.jourCourant()) {
 			Jeu.debutJourneeTactique();
 			Jeu.messagePatron(consigneDuJour());
+			Jeu.annoncerEffectifs(); // prompt 68 : équipes du jour (rentrées de la veille)
 			Jeu.prevenirAgenda(); // prompt 47
 			Jeu.appliquerBlame(); // prompt 51 : départ anticipé la veille
 		}
@@ -1000,36 +1005,98 @@
 
 	Jeu.equipePour = (index) => Jeu.equipes.find((q) => q.index === index) || null;
 
-	/** Envoi d'une équipe sur le dossier d'index donné ; renvoie { ok, message } */
+	// Prompt 68 — équipes d'intervention LIMITÉES. Effectif par jour, cycle disponible → en route (20 s) → sur place
+	// (durée d'intervention) → retour (10 s) → disponible. Effectifs remis à zéro chaque matin. Valeurs verrouillées.
+	REGLAGES.equipes = {
+		police: { effectif: 2, duree: 40000 },
+		ambulance: { effectif: 1, duree: 50000 },
+		techniciens: { effectif: 2, duree: 60000 },
+		pompiers: { effectif: 1, duree: 60000 },
+	};
+	Jeu.RETOUR_EQUIPE_MS = 10000;
+	Jeu.TYPES_EQUIPES = ['police', 'ambulance', 'techniciens', 'pompiers']; // ordre des raccourcis Maj + 1/2/3/4
+	const engagees = (cle, maintenant) => (Jeu.equipes || []).filter((q) => q.cle === cle && !q.inutile && q.jourIndex === Jeu.jourIndex && maintenant < q.libre);
+	Jeu.equipesDisponibles = (cle, maintenant) => Math.max(0, REGLAGES.equipes[cle].effectif - engagees(cle, maintenant).length);
+	/** Secondes avant le retour de la première équipe engagée de ce type (0 si une est libre) */
+	Jeu.retourEquipe = (cle, maintenant) => {
+		const e = engagees(cle, maintenant);
+		return e.length < REGLAGES.equipes[cle].effectif ? 0 : Math.ceil((Math.min(...e.map((q) => q.libre)) - maintenant) / 1000);
+	};
+	/** Phase d'une équipe engagée : 'route' | 'place' | 'retour' | 'libre' */
+	Jeu.phaseEquipe = (q, maintenant) => (q.inutile || maintenant >= q.libre ? 'libre' : maintenant < q.arrivee ? 'route' : maintenant < q.finIntervention ? 'place' : 'retour');
+
+	/** Pertinence calculée sur les champs réels du dossier, sans tirage (table du prompt 68 § 4.3) */
+	const MOTS_SECOURS = /accident|malaise|bless|chute/i;
+	Jeu.equipesPertinentes = function (d) {
+		const p = new Set();
+		if (!d) return [];
+		if (d.type === 'ligne en difficulté') p.add('techniciens');
+		if (d.type === 'perturbation') ['techniciens', 'police'].forEach((x) => p.add(x));
+		if (d.type === 'événement') p.add('police');
+		if (d.type === 'alerte météo') ['pompiers', 'techniciens'].forEach((x) => p.add(x));
+		if (MOTS_SECOURS.test(String(d.texte_source || '') + ' ' + String(d.nature || ''))) ['ambulance', 'police'].forEach((x) => p.add(x));
+		return Jeu.TYPES_EQUIPES.filter((x) => p.has(x));
+	};
+	/** Gravité calculée (affichée avec sa règle dans l'aide) : élevée, moyenne ou faible */
+	Jeu.gravite = function (d) {
+		if (!d) return 'faible';
+		if ((d.retard !== null && d.retard !== undefined && d.retard >= 20) || d.type === 'alerte météo') return 'elevee';
+		if ((d.retard !== null && d.retard !== undefined && d.retard >= 10) || d.type === 'événement' || d.affluence) return 'moyenne';
+		return 'faible';
+	};
+
+	/** Envoi d'une équipe sur le dossier d'index donné ; renvoie { ok, message, refus } */
 	Jeu.envoyerEquipe = function (index, cle, maintenant) {
 		if (!Jeu.elementDebloque('equipes')) return { ok: false, message: T('histoire.verrou.equipes') }; // prompt 41 : semaine 2
 		const q = EQUIPES[cle];
 		const d = Jeu.paquet[index];
 		if (!q || !d) return { ok: false, message: T('equipe.introuvable') };
-		if (Jeu.equipePour(index)) return { ok: false, message: T('equipe.deja') };
+		if ((Jeu.equipes || []).some((x) => x.index === index && x.cle === cle)) return { ok: false, message: T('equipe.deja') }; // une par type et par incident
+		if (index >= Jeu.index && !Jeu.equipesDisponibles(cle, maintenant)) {
+			Jeu.refusEquipes = (Jeu.refusEquipes || 0) + 1;
+			return { ok: false, refus: true, message: T('equipe.aucune', { nom: q.nom, s: Jeu.retourEquipe(cle, maintenant) }) };
+		}
 		if (Jeu.jauges.budget < q.cout) return { ok: false, message: T('equipe.budget', { budget: Jeu.jauges.budget, cout: q.cout, nom: q.nom }) };
 		if (q.palier && Jeu.jauges.budget < q.palier) return { ok: false, message: T('equipe.palier', { nom: q.nom, palier: q.palier, budget: Jeu.jauges.budget }) };
 		Jeu.appliquerDeltas({ budget: -q.cout });
+		const sujet = d.lignes && d.lignes.length ? T('sujet.ligne', { ligne: d.lignes.join(', ') }) : d.nature;
 		if (index < Jeu.index) {
 			// Équipe inutile (prompt 23 § 4) : l'incident est déjà résolu — coût perdu, réputation −3
 			Jeu.compterMalus('equipe_inutile');
 			Jeu.appliquerDeltas({ reputation: -3 });
-			Jeu.equipes.push({ index, cle, nom: q.nom, cout: q.cout, depart: maintenant, arrivee: maintenant, heure: maintenantSim(), arrivee_sim: maintenantSim(), inutile: true, jour: d.date, sujet: d.lignes && d.lignes.length ? T('sujet.ligne', { ligne: d.lignes.join(', ') }) : d.nature });
+			Jeu.equipes.push({ index, cle, nom: q.nom, cout: q.cout, depart: maintenant, arrivee: maintenant, finIntervention: maintenant, libre: maintenant, heure: maintenantSim(), arrivee_sim: maintenantSim(), inutile: true, jour: d.date, jourIndex: Jeu.jourIndex, sujet });
 			return { ok: false, message: T('equipe.inutile', { cout: q.cout }) };
 		}
-		Jeu.equipes.push({ index, cle, nom: q.nom, cout: q.cout, depart: maintenant, arrivee: maintenant + Jeu.DELAI_EQUIPE_MS, heure: maintenantSim(), arrivee_sim: null, jour: d.date, sujet: d.lignes && d.lignes.length ? T('sujet.ligne', { ligne: d.lignes.join(', ') }) : d.nature });
-		return { ok: true, message: T('equipe.enRoute', { nom: q.nom, cout: q.cout }) };
+		const pertinente = Jeu.equipesPertinentes(d).includes(cle);
+		const arrivee = maintenant + Jeu.DELAI_EQUIPE_MS;
+		const finIntervention = arrivee + REGLAGES.equipes[cle].duree;
+		Jeu.equipes.push({ index, cle, nom: q.nom, cout: q.cout, depart: maintenant, arrivee, finIntervention, libre: finIntervention + Jeu.RETOUR_EQUIPE_MS, heure: maintenantSim(), arrivee_sim: null, jour: d.date, jourIndex: Jeu.jourIndex, pertinente, sujet });
+		return { ok: true, message: T(pertinente ? 'equipe.enRoute' : 'equipe.enRouteHorsSujet', { nom: q.nom, cout: q.cout }) };
 	};
 
-	/** À appeler à chaque image : applique les effets des équipes arrivées */
+	/** À appeler à chaque image : applique les effets des équipes arrivées (moitié si l'équipe n'est pas pertinente) */
 	Jeu.majEquipes = function (maintenant) {
 		(Jeu.equipes || []).forEach((q) => {
 			if (q.arrivee_sim === null && !q.inutile && maintenant >= q.arrivee) {
 				q.arrivee_sim = maintenantSim();
-				Jeu.appliquerDeltas(EQUIPES[q.cle].effets);
+				const effets = {};
+				Object.entries(EQUIPES[q.cle].effets).forEach(([k, v]) => (effets[k] = q.pertinente === false ? Math.round(v / 2) : v));
+				Jeu.appliquerDeltas(effets);
 				Jeu.commenter('equipe', q.sujet, null, q.nom);
 			}
 		});
+	};
+	/** Message du patron au début de chaque journée : effectifs réels (remis à zéro chaque matin) */
+	Jeu.annoncerEffectifs = function () {
+		if (!Jeu.elementDebloque('equipes') || !Jeu.messagesPatron) return;
+		Jeu.messagePatron(T('patron.effectifs', { liste: Jeu.TYPES_EQUIPES.map((k) => EQUIPES[k].nom + ' ' + REGLAGES.equipes[k].effectif).join(', ') }));
+	};
+	/** Bilan des équipes de la semaine : envois par type, part pertinente, refus faute d'effectif */
+	Jeu.bilanEquipes = function () {
+		const utiles = (Jeu.equipes || []).filter((q) => !q.inutile);
+		const parType = {};
+		Jeu.TYPES_EQUIPES.forEach((k) => (parType[k] = utiles.filter((q) => q.cle === k).length));
+		return { parType, total: utiles.length, pertinentes: utiles.filter((q) => q.pertinente !== false).length, refus: Jeu.refusEquipes || 0, inutiles: (Jeu.equipes || []).filter((q) => q.inutile).length };
 	};
 
 	// =====================================================================
@@ -1383,6 +1450,7 @@
 			tempsMoyen: durees.length ? Math.round(durees.reduce((s, h) => s + h.dureeMs, 0) / durees.length / 100) / 10 : null, // secondes, 1 décimale
 			sources: dec.reduce((s, h) => s + (h.sources || 0), 0),
 			ralentis: (Jeu.ralenti && Jeu.ralenti.utilises) || 0,
+			equipes: Jeu.bilanEquipes(), // prompt 68
 			objectifs: (Jeu.objectifsResultats || []).filter((o) => o.atteint).length + '/' + (Jeu.objectifsResultats || []).length,
 			jauges: Object.assign({}, Jeu.jauges),
 			score: Jeu.score(),
