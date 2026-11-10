@@ -1,5 +1,7 @@
 # Prompt 02 — Configurer Astro en rendu statique pour GitHub Pages
 
+> **Note historique (prompt 33, 10/11/2026).** Ce prompt a été exécuté tel quel ; il cite l'ancienne cible GitHub Pages (`https://artistdev44.github.io/workshop-design-interactions/…`), qui renvoie aujourd'hui une 404. L'URL canonique du projet est désormais **https://workshop-design-interactions.pages.dev/** (Cloudflare Pages, racine du domaine, `base: '/'`). Le texte ci-dessous n'est pas réécrit : il documente l'historique.
+
 ## Objectif
 Préparer le projet Astro (dossier `site/` du dépôt) pour un **site 100 % statique**
 déployable sur GitHub Pages, avec l'URL de l'édition conforme au framework.

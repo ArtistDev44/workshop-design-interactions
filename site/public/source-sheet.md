@@ -1,6 +1,6 @@
 # Fiche-source V1 — Nantes en régulation (PXE-NTE001-G01-W01)
 
-Format du livret (fiche-source V1). Les champs d'analyse restent au groupe : `[À COMPLÉTER]`.
+Format du livret (fiche-source V1). Les champs d'analyse (contexte, propriétés observables / écartée) attendent la saisie du groupe : `[À COMPLÉTER]` (listés dans `todo.md`).
 
 | Champ | Contenu |
 |---|---|
@@ -10,7 +10,7 @@ Format du livret (fiche-source V1). Les champs d'analyse restent au groupe : `[�
 | Contexte | [À COMPLÉTER] |
 | URL / référence | Open Data Nantes Métropole : `244400404_transports_commun_naolib_nantes_metropole_gtfs` (GTFS + changelog daté), `244400404_reseau-transports-collectifs-naolib` (flux GTFS-RT), `244400404_agenda-evenements-nantes-metropole_v2` ; Open-Meteo archive (ERA5) |
 | Date d'accès | 2026-11-10 |
-| Droits / licence | Licence Ouverte (Nantes Métropole) ; Open-Meteo : [À COMPLÉTER — vérifier la licence CC BY 4.0 des données] |
+| Droits / licence | Licence Ouverte (Nantes Métropole) ; Open-Meteo : CC BY 4.0 (Attribution 4.0 International), vérifié sur https://open-meteo.com/en/licence le 2026-11-10 — attribution requise avec lien près des données affichées (le jeu cite « Open-Meteo » à l'accueil et au bilan) |
 | Relevés | Tracés de 96 lignes (data/lignes.json), 3 semaines d'archives (data/semaines/), flux GTFS-RT décodé (mode « aujourd'hui ») |
 | 3 propriétés observables | [À COMPLÉTER] |
 | 1 propriété volontairement écartée | [À COMPLÉTER] |

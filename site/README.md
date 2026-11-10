@@ -2,11 +2,13 @@
 
 Site statique (Astro) de l'édition Nantes 001 — ESD Nantes, B3 Design, 9, 10 & 12 novembre 2026.
 
-**En ligne :** https://artistdev44.github.io/workshop-design-interactions/patrimoine-exe/nantes/001/
+**En ligne (URL canonique) :** https://workshop-design-interactions.pages.dev/ — le jeu « Nantes en régulation » est servi à la racine ; cartel de l'œuvre : https://workshop-design-interactions.pages.dev/cartel/
+
+> Historique : l'ancienne adresse GitHub Pages (`https://artistdev44.github.io/workshop-design-interactions/patrimoine-exe/nantes/001/`) renvoie une 404 (vérifié le 10/11/2026). Elle n'apparaît plus que dans les prompts 02, 08 et 13 (note historique en tête de chacun) et dans les anciennes lignes de `journal.md`.
 
 ## Auteurs
 
-[À COMPLÉTER : noms et rôles des membres du groupe]
+[À COMPLÉTER : noms et rôles des membres du groupe — saisie humaine attendue, voir `todo.md`]
 
 ## Édition
 
@@ -15,25 +17,29 @@ Direction de l'édition : Kamel Ghabte.
 
 ## Concept
 
-Le site est la vitrine publique de l'édition et son registre machine-readable : pages, galerie,
-cartels, statistiques et catalogue sont générés à partir des mêmes métadonnées
-(`src/data/edition.json` et `src/content/oeuvres/*.json`). Il rend lisible la chaîne
-**source → grammaire → système → œuvre**.
+Le site **est** l'œuvre : le jeu p5.js « Nantes en régulation » (`public/index.html`) est servi
+à la racine. Les pages Astro de la vitrine (galerie, statistiques, méthode, `/donnees/`…) ont été
+retirées le 10/11/2026 quand le jeu est passé à la racine (voir `journal.md`). Il reste le
+registre machine-readable `src/content/oeuvres/*.json`, validé au build, d'où est générée la seule
+page Astro : **`/cartel/`**. Le tout rend lisible la chaîne **source → grammaire → système → œuvre**.
 
 ## Stack
 
 - [Astro](https://astro.build) 7, rendu **100 % statique** (seule dépendance : `astro`).
 - CSS maison d'après `design-system/DESIGN.md` (sans police externe), JavaScript natif.
 - Validation du registre par schéma (`astro/zod`) : une fiche d'œuvre incomplète bloque le build.
-- Déploiement : GitHub Actions → GitHub Pages (`.github/workflows/deploy.yml`).
+- Déploiement : URL canonique sur Cloudflare Pages. ⚠ Incohérence connue : `.github/workflows/deploy.yml` utilise les actions **GitHub Pages** (`upload-pages-artifact`, `deploy-pages`), dont l'adresse renvoie une 404 ; la façon dont Cloudflare Pages construit le site n'est pas documentée dans le dépôt ([À COMPLÉTER], voir `todo.md`).
+- Smoke test sans dépendance : `npm test` (`scripts/smoke.mjs`).
 
 ## Données
 
-- **Registre local** : `src/data/edition.json` (édition) et `src/content/oeuvres/` (une fiche JSON par œuvre).
-- **API Open Data Nantes Métropole** (page `/donnees/`), appelées **dans le navigateur uniquement**,
-  jamais au build : 5 jeux temps réel (parkings, vélos Naolib, fluidité, indice ATMO, pollens) et
-  4 jeux patrimoniaux (patrimoine arboré, collections du Musée d'arts, occupation du sol, parcs),
-  listés dans `src/lib/datasets.js` avec leur phrase de mapping. Accès unique : `src/lib/nantes-api.js`.
+- **Registre local** : `src/content/oeuvres/` (une fiche JSON par œuvre, schéma `src/content.config.ts`).
+- **Jeu** : `public/data/` — semaines d'archives (`semaines/*.json`, `semaines.js`), tracés des lignes
+  (`lignes.json`, `lignes.js`), 6 cas hors ligne (`fallback.json`, `fallback.js`), dialogues
+  (`messages.json` → `messages.js`, régénéré par `prebuild`). En mode « aujourd'hui », le jeu interroge
+  dans le navigateur le flux GTFS-RT Naolib et Open-Meteo (`game.js`, `gtfsrt.js`).
+- **Jeux Open Data du prompt 11** : listés dans `src/lib/datasets.js` (utilisé seulement par
+  `scripts/snapshot.mjs` depuis le retrait de la page `/donnees/`).
 - **Instantanés de secours** : `public/data/fallback/*.json`, vraies données horodatées, régénérées par :
 
   ```sh
@@ -49,11 +55,16 @@ npm install
 npm run dev       # développement
 npm run build     # construit site/dist/
 npm run preview   # sert la version construite
+npm test          # smoke test (scripts, données, motifs de secret, dist)
 ```
 
-Le site s'ouvre à `http://localhost:4321/workshop-design-interactions/patrimoine-exe/nantes/001/`.
+Le site s'ouvre à `http://localhost:4321/` (jeu) ; le cartel à `http://localhost:4321/cartel/`. Hors ligne, sans rien installer : double clic sur `public/index.html`.
 
 ## Robustesse
+
+> Historique : ces contrôles du prompt 12 portaient sur les 10 pages Astro de la vitrine, retirées depuis.
+> Ils ne valent plus pour le jeu : la checklist du jeu est dans `jeu/10-accessibilite-robustesse.md`
+> et `todo.md` (à repasser au preflight J3).
 
 Contrôles du prompt 12 (livret, sections 13 et 14), effectués le 10/11/2026 sur les 10 pages
 (accueil, œuvres, page œuvre, catalogue, statistiques, méthode, corpus, données, crédits, 404).
@@ -85,36 +96,48 @@ Wi-Fi coupé sur la machine d'exposition.
 
 ## Fallback / limites
 
-- Sans réseau ou si l'API est en panne : `/donnees/` affiche les instantanés locaux avec leur date ; toutes les autres pages sont statiques et ne dépendent d'aucun réseau.
-- Quota de l'API : 10 000 requêtes par jour ; le site en consomme environ 830 par jour pour un écran allumé en continu (rafraîchissement 5 min à 6 h selon le jeu, pause quand l'onglet est caché).
-- Les instantanés vieillissent : relancer `node scripts/snapshot.mjs` avant l'exposition.
-- Le site s'ouvre via `npm run preview` ou en ligne ; ouvrir `dist/index.html` depuis le Finder ne fonctionne pas (chemins préfixés par la base).
+- Sans réseau ou si une API est en panne : le jeu bascule sur une semaine enregistrée (`data/fallback.json`) avec l'indicateur « mode hors ligne » ; `/cartel/` est statique.
+- Les instantanés `public/data/fallback/` vieillissent : relancer `node scripts/snapshot.mjs` avant l'exposition si on les utilise.
+- Le jeu utilise des chemins relatifs (`./`) : `public/index.html` et `dist/index.html` s'ouvrent aussi par double clic.
 
 ## Déploiement et QR codes
 
-- Chaque push sur `main` qui touche `site/` construit et publie le site (onglet **Actions** du dépôt). Prérequis : **Settings → Pages → Source : GitHub Actions**.
-- Le workflow place le site sous `patrimoine-exe/nantes/001/`, copie la page 404 à la racine et redirige la racine du dépôt vers l'édition.
+- URL canonique : https://workshop-design-interactions.pages.dev/ (Cloudflare Pages, racine du domaine, `base: '/'`).
+- Le workflow `.github/workflows/deploy.yml` construit `site/` à chaque push sur `main` et publie sur **GitHub Pages** — adresse en 404, donc sans effet visible ; le mécanisme de publication Cloudflare est [À COMPLÉTER] (voir `todo.md`).
 - QR codes dans `public/assets/` : `qr-edition.png` (accueil, crédits) et `qr-{slug}.png` (page de chaque œuvre). Pour en régénérer un :
 
   ```sh
-  npx --yes qrcode@1.5.4 -o public/assets/qr-edition.png -w 600 -m 2 "https://artistdev44.github.io/workshop-design-interactions/patrimoine-exe/nantes/001/"
+  npx --yes qrcode@1.5.4 -o public/assets/qr-edition.png -w 600 -m 2 "https://workshop-design-interactions.pages.dev/"
+  npx --yes qrcode@1.5.4 -o public/assets/qr-pxe-nte001-g01-w01.png -w 600 -m 2 "https://workshop-design-interactions.pages.dev/cartel/"
   ```
 
-  À tester avec un téléphone en conditions réelles avant l'exposition.
+  ⚠ Les PNG actuels datent du prompt 13 (10/11/2026) et ont été générés avec l'ancienne adresse GitHub Pages (404) : **à régénérer** avec ces commandes, puis à tester avec un téléphone en conditions réelles avant l'exposition.
+
+## Coquille Astro (choix du prompt 33)
+
+Le build produisait « 0 page(s) built » : seule restait la collection `oeuvres`. Option retenue,
+la moins risquée : **conserver le registre et en générer une page**, `src/pages/cartel.astro` → `/cartel/`
+(cartel, source, droits, règle, fallback de chaque œuvre, lus dans `src/content/oeuvres/`). Aucune
+dépendance, aucun JavaScript client, le jeu `public/index.html` n'est pas touché, et le schéma
+`content.config.ts` continue de bloquer le build si une fiche est incomplète. Supprimer la collection
+aurait effacé la seule source machine-readable du cartel et de l'identifiant `PXE-NTE001-G01-W01`.
 
 ## Contributions
 
-[À COMPLÉTER : contributions nominatives et précises de chaque membre — pas de passager invisible]
+[À COMPLÉTER : contributions nominatives et précises de chaque membre — pas de passager invisible ; saisie humaine attendue. Les commits par compte se listent avec `git shortlog -sn --all`.]
 
 ## AI usage
 
-Le site a été construit avec un assistant IA (Claude, Anthropic) à partir des prompts numérotés de `prompts/` :
-structure Astro, composants, page de données, contrôles d'accessibilité, QR codes et ce README.
-Les textes de méthode, de corpus et le manifeste sont repris du framework et du livret, sans contenu généré.
+Constat observable dans le dépôt (10/11/2026) : le site et le jeu ont été produits en grande partie par
+des assistants IA exécutant les prompts numérotés de `prompts/` (site Astro, jeu p5.js, docs `jeu/`,
+smoke test, ce README). L'historique git en garde la trace : des commits portent la mention
+`Co-Authored-By: Claude` (Anthropic) et d'autres sont signés par un compte d'agent (« Vibe Nuage Agent »).
+Les décisions de jeu (Q1–Q61, `jeu/`) et les prompts ont été rédigés en amont ; les données sont réelles.
 [À COMPLÉTER par l'équipe : ce qui a été relu, réécrit et testé par vous.]
 
 ## Sources / droits
 
-- Données : Open Data Nantes Métropole et Air Pays de la Loire — Licence Ouverte ou ODbL selon le jeu (indiqué sur chaque carte de `/donnees/`).
+- Données : Open Data Nantes Métropole (Naolib GTFS / GTFS-RT, agenda) — Licence Ouverte ; Open-Meteo — CC BY 4.0 (vérifié le 10/11/2026, attribution requise) ; jeux du prompt 11 (dont Air Pays de la Loire) — Licence Ouverte ou ODbL selon le jeu (champ `licence` de `src/lib/datasets.js`).
+- Code : voir `LICENSE` à la racine (choix de licence [À COMPLÉTER] par le groupe).
 - Textes : framework PATRIMOINE.EXE et livret étudiant Nantes 001 (ESD Nantes, 2026).
 - Design : couleurs et échelle inspirées des tokens extraits de metropole.nantes.fr ; ce site n'est pas un site officiel de Nantes Métropole.

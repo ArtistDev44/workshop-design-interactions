@@ -37,43 +37,85 @@ jamais l'inverse.
 
 ## Liste des prompts
 
-| N° | Fichier | Objectif |
-|---|---|---|
-| 01 | `01-initialiser-projet-astro-base.md` | Générer le projet Astro depuis le thème Basics (preview.astro.new/basics/) |
-| 02 | `02-configurer-astro-statique.md` | Config statique + base GitHub Pages (`/workshop-design-interactions/patrimoine-exe/nantes/001/`) |
-| 03 | `03-structure-dossiers-toolkit.md` | Arborescence conforme au toolkit PATRIMOINE.EXE |
-| 04 | `04-layout-design-system.md` | Layout commun + design system (`design-system/DESIGN.md`) |
-| 05 | `05-page-accueil-edition.md` | Page d'accueil NTE001 (manifeste, compteurs, édition) |
-| 06 | `06-modele-donnees-registre.md` | Registre machine-readable + schéma des œuvres |
-| 07 | `07-galerie-oeuvres.md` | Galerie des œuvres générée depuis le registre |
-| 08 | `08-cartel-ouvre-par-slug.md` | Page œuvre + cartel au format du livret |
-| 09 | `09-statistiques-catalogue.md` | Statistiques et catalogue générés depuis les métadonnées |
-| 10 | `10-methode-ressources-credits.md` | Pages protocole, corpus Nantes, crédits/brand |
-| 11 | `11-donnees-vivantes-nantes.md` | Page « Nantes en direct » : données vivantes depuis les API recommandées par l'audit (`contexte/audit-api-open-data-nantes.md`), cache, rafraîchissement temporisé, instantanés réels en secours |
-| 12 | `12-accessibilite-robustesse.md` | Contrôles accessibilité + checklist de robustesse (y compris hors ligne) |
-| 13 | `13-build-deploiement-qr.md` | Build, déploiement GitHub Pages (Actions), README, QR codes |
-| 14 | `14-jeu-salle-de-controle-p5.md` | Jeu « Nantes en régulation » — chapeau : objectif, emplacement, données réelles (œuvre p5.js décrite dans `jeu/`) |
-| 15 | `15-jeu-fondation-donnees.md` | Jeu, étape 2/6 : structure du livret, p5.js local, semaines enregistrées, `lignes.json`, `fallback.json` |
-| 16 | `16-jeu-ecrans-salle-de-controle.md` | Jeu, étape 3/6 : écran d'accueil + salle de contrôle 1920×1080 |
-| 17 | `17-jeu-boucle-effets-jauges.md` | Jeu, étape 4/6 : boucle de jeu, 3 actions + « ne rien faire », table des effets base + 1d6, jauges |
-| 18 | `18-jeu-controles-confort.md` | Jeu, étape 5/6 : raccourcis clavier, son, pause, reset, aide, meilleur bilan `localStorage` |
-| 19 | `19-jeu-fins-robustesse.md` | Jeu, étape 6/6 : 3 fins + bilan détaillé, accessibilité, vérifications finales |
-| 20 | `20-jeu-immersion-mode-ordinateur.md` | Jeu, étape 7 : couche d'immersion — intro SMS, horloge simulée avec compression du temps, sieste « Se réveiller », bordures rouges d'alerte, mail de fin de journée, livres ressources au bureau |
-| 21 | `21-jeu-immersion-visuelle-mail.md` | Jeu, étape 8 : finitions visuelles — vignettage de flou et centrage du PC dans la vue bureau, clignement d'œil sur les transitions bureau ↔ écran, mail de fin de journée enrichi (événements externes + évaluation des décisions) |
-| 22 | `22-jeu-bureau-apps-gestion-nantes.md` | Jeu, étape 9 : bureau du PC applicatif — messages du patron, carte de gestion des problèmes nantais (envoi d'équipes façon 911 operator), community manager, journal ; jauges Fluidité / Réputation / Budget |
-| 23 | `23-jeu-profondeur-tactique-malus-budget.md` | Jeu, étape 10 : profondeur tactique — conseils contextuels, modificateurs (erreur système), objectifs resserrés, malus, dialogues liés au budget, fins personnalisées |
-| 24 | `24-jeu-multi-langue.md` | Jeu, étape 11 : jeu multi-langue — dictionnaire i18n externalisé (FR + EN, extensible), sélecteur de langue (accueil, paramètres, `?lang=`), persistance `localStorage`, `lang` dynamique, accessibilité des textes |
-| 25 | `25-jeu-vue-3d-environnement-pc.md` | Jeu, étape 12 : vue 3D / environnement PC — léger dézoom (fond visible autour de l'écran du PC), caméra fausse 3D façon FNAF (souris hors cadre / flèches directionnelles, mouvement subtil, recentrage au centre) |
-| 26 | `26-jeu-sortie-mode-pc.md` | Jeu, étape 13 : sortie du mode PC — bouton « Quitter le PC » au poste, scroll au poste, porte d'entrée/sortie cliquable au bureau (Échap conservé) |
-| 27 | `27-jeu-loading-screen.md` | Jeu, étape 14 : écran de chargement statique (fond bleu + logo, anti-flash clair→sombre) + musique de fond générée en WebAudio dès le menu |
-| 28 | `28-jeu-dialogues-nantais-messages-json.md` | Jeu, étape 15 : dialogues des Nantais (plaintes cohérentes + bonnes réponses possibles) stockés dans un `data/messages.json` brut modifiable, contenu généré depuis ce fichier, rien de figé dans le code |
-| 29 | `29-jeu-interactions-hors-ecran.md` | Jeu, étape 16 : interactions hors écran, dans la pièce autour du PC (lampe, fenêtre/rideau, autres objets cliquables en vue bureau) |
-| 30 | `30-jeu-bandes-sonores-ambiance.md` | Jeu, étape 17 : bandes sonores au-delà des voix de trame — ambiances contextuelles (pluie, ville, nuit) et alertes sonores, 100 % WebAudio généré par le code |
-| 31 | `31-jeu-bureau-cadrage-chaise.md` | Jeu, étape 18 : cadrage du bureau « sur la chaise » (vue centrée, chaise non visible), horloge déplacée du rideau vers le mur, lampadaire revu, arbres OK |
-| 32 | `32-jeu-bureau-style-epure.md` | Jeu, étape 19 : direction moderne et épurée de la pièce — murs blancs, moins de bois, beaucoup de blanc (écran du jeu inchangé) |
-| 33 | `33-jeu-sauvegarde-progression-import-export.md` | Jeu, étape 20 : sauvegarde auto de la progression en `localStorage` (reprise « Continuer la partie ») + export/import JSON de la progression dans les Paramètres, validation stricte |
-| 33 | `33-audit-coherence-leviers.md` | Méta-prompt (hors jeu) : audit de cohérence du dépôt et leviers d'amélioration — URL canonique unique, `[À COMPLÉTER]`, statut des prompts 24–32, livrables J3, smoke test, coquille Astro, LICENSE |
-| 34 | `34-jeu-fenetre-loire-tutoriel.md` | Jeu, étape 21 : fond de la baie vitrée corrigé (plus de trottoir/route/arbres ni de château, grue au niveau des bâtiments et de leur couleur), Loire à la place avec hauteur réelle via API (fallback local), souris et téléphone en perspective (téléphone récent), livre « tuto » remplacé par « commande », vrai tutoriel guidé |
+| N° | Fichier | Objectif | Statut |
+|---|---|---|---|
+| 01 | `01-initialiser-projet-astro-base.md` | Générer le projet Astro depuis le thème Basics (preview.astro.new/basics/) | ✅ (base `site/`) |
+| 02 | `02-configurer-astro-statique.md` | Config statique + base GitHub Pages (historique ; URL canonique actuelle : https://workshop-design-interactions.pages.dev/, `base: '/'`) | ✅ (config revue : Cloudflare, `base: '/'`) |
+| 03 | `03-structure-dossiers-toolkit.md` | Arborescence conforme au toolkit PATRIMOINE.EXE | 🗄 exécuté, pages retirées |
+| 04 | `04-layout-design-system.md` | Layout commun + design system (`design-system/DESIGN.md`) | 🗄 exécuté, pages retirées |
+| 05 | `05-page-accueil-edition.md` | Page d'accueil NTE001 (manifeste, compteurs, édition) | 🗄 exécuté, pages retirées |
+| 06 | `06-modele-donnees-registre.md` | Registre machine-readable + schéma des œuvres | ✅ (registre `src/content/`) |
+| 07 | `07-galerie-oeuvres.md` | Galerie des œuvres générée depuis le registre | 🗄 exécuté, pages retirées |
+| 08 | `08-cartel-ouvre-par-slug.md` | Page œuvre + cartel au format du livret | 🗄 exécuté, pages retirées |
+| 09 | `09-statistiques-catalogue.md` | Statistiques et catalogue générés depuis les métadonnées | 🗄 exécuté, pages retirées |
+| 10 | `10-methode-ressources-credits.md` | Pages protocole, corpus Nantes, crédits/brand | 🗄 exécuté, pages retirées |
+| 11 | `11-donnees-vivantes-nantes.md` | Page « Nantes en direct » : données vivantes depuis les API recommandées par l'audit (`contexte/audit-api-open-data-nantes.md`), cache, rafraîchissement temporisé, instantanés réels en secours | ✅ (`src/lib/datasets.js`, `scripts/snapshot.mjs`, `public/data/fallback/` ; page `/donnees/` retirée) |
+| 12 | `12-accessibilite-robustesse.md` | Contrôles accessibilité + checklist de robustesse (y compris hors ligne) | 🗄 exécuté, pages retirées |
+| 13 | `13-build-deploiement-qr.md` | Build, déploiement GitHub Pages (Actions, historique — voir note en tête du prompt), README, QR codes | ✅ (workflow + QR ; QR à régénérer vers l'URL canonique, cf. note) |
+| 14 | `14-jeu-salle-de-controle-p5.md` | Jeu « Nantes en régulation » — chapeau : objectif, emplacement, données réelles (œuvre p5.js décrite dans `jeu/`) | ✅ main |
+| 15 | `15-jeu-fondation-donnees.md` | Jeu, étape 2/6 : structure du livret, p5.js local, semaines enregistrées, `lignes.json`, `fallback.json` | ✅ main |
+| 16 | `16-jeu-ecrans-salle-de-controle.md` | Jeu, étape 3/6 : écran d'accueil + salle de contrôle 1920×1080 | ✅ main |
+| 17 | `17-jeu-boucle-effets-jauges.md` | Jeu, étape 4/6 : boucle de jeu, 3 actions + « ne rien faire », table des effets base + 1d6, jauges | ✅ main |
+| 18 | `18-jeu-controles-confort.md` | Jeu, étape 5/6 : raccourcis clavier, son, pause, reset, aide, meilleur bilan `localStorage` | ✅ main |
+| 19 | `19-jeu-fins-robustesse.md` | Jeu, étape 6/6 : 3 fins + bilan détaillé, accessibilité, vérifications finales | ✅ main |
+| 20 | `20-jeu-immersion-mode-ordinateur.md` | Jeu, étape 7 : couche d'immersion — intro SMS, horloge simulée avec compression du temps, sieste « Se réveiller », bordures rouges d'alerte, mail de fin de journée, livres ressources au bureau | ✅ main |
+| 21 | `21-jeu-immersion-visuelle-mail.md` | Jeu, étape 8 : finitions visuelles — vignettage de flou et centrage du PC dans la vue bureau, clignement d'œil sur les transitions bureau ↔ écran, mail de fin de journée enrichi (événements externes + évaluation des décisions) | ✅ main |
+| 22 | `22-jeu-bureau-apps-gestion-nantes.md` | Jeu, étape 9 : bureau du PC applicatif — messages du patron, carte de gestion des problèmes nantais (envoi d'équipes façon 911 operator), community manager, journal ; jauges Fluidité / Réputation / Budget | ✅ main |
+| 23 | `23-jeu-profondeur-tactique-malus-budget.md` | Jeu, étape 10 : profondeur tactique — conseils contextuels, modificateurs (erreur système), objectifs resserrés, malus, dialogues liés au budget, fins personnalisées | ✅ main |
+| 24 | `24-jeu-multi-langue.md` | Jeu, étape 11 : jeu multi-langue — dictionnaire i18n externalisé (FR + EN, extensible), sélecteur de langue (accueil, paramètres, `?lang=`), persistance `localStorage`, `lang` dynamique, accessibilité des textes | ✅ main |
+| 25 | `25-jeu-vue-3d-environnement-pc.md` | Jeu, étape 12 : vue 3D / environnement PC — léger dézoom (fond visible autour de l'écran du PC), caméra fausse 3D façon FNAF (souris hors cadre / flèches directionnelles, mouvement subtil, recentrage au centre) | ✅ main (PR #24) |
+| 26 | `26-jeu-sortie-mode-pc.md` | Jeu, étape 13 : sortie du mode PC — bouton « Quitter le PC » au poste, scroll au poste, porte d'entrée/sortie cliquable au bureau (Échap conservé) | ✅ branche |
+| 27 | `27-jeu-loading-screen.md` | Jeu, étape 14 : écran de chargement statique (fond bleu + logo, anti-flash clair→sombre) + musique de fond générée en WebAudio dès le menu | ✅ branche |
+| 28 | `28-jeu-dialogues-nantais-messages-json.md` | Jeu, étape 15 : dialogues des Nantais (plaintes cohérentes + bonnes réponses possibles) stockés dans un `data/messages.json` brut modifiable, contenu généré depuis ce fichier, rien de figé dans le code | ✅ branche |
+| 29 | `29-jeu-interactions-hors-ecran.md` | Jeu, étape 16 : interactions hors écran, dans la pièce autour du PC (lampe, fenêtre/rideau, autres objets cliquables en vue bureau) | ✅ branche |
+| 30 | `30-jeu-bandes-sonores-ambiance.md` | Jeu, étape 17 : bandes sonores au-delà des voix de trame — ambiances contextuelles (pluie, ville, nuit) et alertes sonores, 100 % WebAudio généré par le code | ✅ branche |
+| 31 | `31-jeu-bureau-cadrage-chaise.md` | Jeu, étape 18 : cadrage du bureau « sur la chaise » (vue centrée, chaise non visible), horloge déplacée du rideau vers le mur, lampadaire revu, arbres OK | ✅ branche |
+| 32 | `32-jeu-bureau-style-epure.md` | Jeu, étape 19 : direction moderne et épurée de la pièce — murs blancs, moins de bois, beaucoup de blanc (écran du jeu inchangé) | ✅ branche |
+| 33 | `33-jeu-sauvegarde-progression-import-export.md` | Jeu, étape 20 : sauvegarde auto de la progression en `localStorage` (reprise « Continuer la partie ») + export/import JSON de la progression dans les Paramètres, validation stricte | ✅ branche (`sauvegarde.js`) |
+| 33 | `33-audit-coherence-leviers.md` | Méta-prompt (hors jeu) : audit de cohérence du dépôt et leviers d'amélioration — URL canonique unique, `[À COMPLÉTER]`, statut des prompts 24–32, livrables J3, smoke test, coquille Astro, LICENSE | ✅ ce prompt (branche `vibe/prompt-33-audit-coherence-4c094b-application`) |
+| 34 | `34-jeu-fenetre-loire-tutoriel.md` | Jeu, étape 21 : fond de la baie vitrée corrigé (plus de trottoir/route/arbres ni de château, grue au niveau des bâtiments et de leur couleur), Loire à la place avec hauteur réelle via API (fallback local), souris et téléphone en perspective (téléphone récent), livre « tuto » remplacé par « commande », vrai tutoriel guidé | ◻ prévu |
+
+### Statut des prompts (vérifié le 10/11/2026 dans `site/public/`)
+
+Légende : **✅ main** = implémenté et fusionné dans `main` ; **✅ branche** = implémenté sur la
+chaîne de branches empilées, **pas encore fusionnée** dans `main` ; **◻ prévu** = rien dans le
+code ; **🗄 exécuté, pages retirées** = prompt du site Astro exécuté le 9/11, dont les pages ont
+été supprimées quand le jeu est passé à la racine (voir `journal.md`). Seule page Astro restante :
+`/cartel/` (prompt 33, section 6).
+
+Preuves dans le code (grep, branche du prompt 33) :
+
+| Prompt | Fichiers / symboles vérifiés |
+|---|---|
+| 14–19 | `index.html`, `sketch.js`, `game.js`, `confort.js`, `data/fallback.json`, `data/semaines/*.json`, `data/lignes.json`, `lib/p5.min.js` |
+| 20–21 | `immersion.js` (sieste, mail de fin de journée) |
+| 22 | `os.js` (apps du bureau), `game.js` (`messagesPatron`, jauge `budget`) |
+| 23 | `game.js` / `os.js` (`modificateurActif`, objectifs, malus) |
+| 24 | `i18n.js` (FR + EN, `?lang=`) |
+| 25 | `bureau.js` (`CAMERA`, `DEZOOM`) |
+| 26 | `bureau.js` / `sketch.js` (« Quitter le PC », `mouseWheel`, porte) |
+| 27 | `index.html` (`#chargement`), `confort.js` (musique `AudioContext`) |
+| 28 | `data/messages.json`, `data/messages.js`, `scripts/generer-messages.mjs` |
+| 29 | `immersion.js` (objets `piece: true`) |
+| 30 | `confort.js` (`Confort.Son.ambiances`) |
+| 31 | `bureau.js` (`CADRAGE`, horloge murale) |
+| 32 | `bureau.js` / `immersion.js` (palette blanche) |
+| 33 (sauvegarde) | `sauvegarde.js` |
+| 34 | ◻ : livre « Tutoriel » toujours présent (`i18n.js`), pas de hauteur de Loire via API |
+
+Chaîne des branches non fusionnées (chacune empilée sur la précédente) :
+`jeu/prompt-26-sortie-pc` → `jeu/prompt-27-loading-screen` → `jeu/prompt-28-dialogues-nantais`
+→ `jeu/prompt-29-interactions-hors-ecran` → `jeu/prompt-30-bandes-sonores-ambiances` →
+`jeu/prompt-31-bureau-cadrage` → `jeu/prompt-32-bureau-style-epure` →
+`jeu/prompt-33-sauvegarde-progression` → `vibe/prompt-33-audit-coherence-4c094b-application`.
+
+Variante non intégrée : `origin/jeu/prompt-30-bandes-sonores` (collaborateur, basée sur `main`,
+fichier `site/public/audio.js`) est une autre implémentation du prompt 30, **non fusionnée** et
+non reprise dans la chaîne ci-dessus (qui implémente le prompt 30 dans `confort.js`). À arbitrer
+par le groupe avant toute fusion.
+
+Les docs de fonctionnalités des prompts 25 à 33 sont `jeu/19-…` à `jeu/27-…` : leurs numéros
+diffèrent de ceux demandés dans les prompts, déjà pris dans `jeu/` (choix voulu).
 
 Les prompts 14–19 (jeu p5.js) sont indépendants du site : ils peuvent être menés en
 parallèle dès le prompt 03, l'œuvre étant ensuite reliée au site par sa fiche du
