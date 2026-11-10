@@ -28,7 +28,7 @@
 	};
 
 	// ——— Réglages (écran Paramètres, 11-direction-artistique) ———
-	const DEFAUTS = { son: true, horsLigneForce: false, reduireAnimations: false, contrasteRenforce: false };
+	const DEFAUTS = { son: true, musique: true, horsLigneForce: false, reduireAnimations: false, contrasteRenforce: false };
 	const Reglages = Object.assign({}, DEFAUTS, lire(CLE_REGLAGES, {}));
 	Reglages.basculer = function (nom) {
 		Reglages[nom] = !Reglages[nom];

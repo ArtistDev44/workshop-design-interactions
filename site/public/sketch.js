@@ -103,6 +103,7 @@ function texteMeilleur(cle) {
 function draw() {
 	avancerTemps(); // horloge simulée, sieste, arrivée des incidents, fin de journée (immersion.js)
 	if (Jeu.equipes) Jeu.majEquipes(millis()); // équipes envoyées depuis la carte (prompt 22)
+	if (window.Audio8) Audio8.maj(contexteSonore()); // pluie, vent, ville, musique (audio.js)
 	boutons = [];
 	// 1. Contenu de l'écran du PC, en 1920×1080 : l'appli de régulation, ou le système (démarrage, bureau)
 	sourisVersEcran();
@@ -217,7 +218,7 @@ function nouveauDossier() {
 	sourceChoisie = null;
 	alerteTempsJouee = false;
 	if (!Jeu.dossierCourant()) return apresDecision();
-	Confort.Son.bip('dossier');
+	Confort.Son.bip('incident'); // alerte incident (audio.js)
 	if (Jeu.conflit()) phase = 'conflit';
 	else if (Jeu.dossierCourant().contradiction) phase = 'contradiction';
 	else phase = 'decision';
@@ -230,7 +231,7 @@ function decider(action) {
 	dernierResultat = Jeu.decider(action, sourceChoisie);
 	if (!dernierResultat) return;
 	annoncer(t('annonce.decision', { titre: dernierResultat.narration.titre, texte: dernierResultat.narration.texte }));
-	Confort.Son.bip(action === 'temps' ? 'alerte' : 'action');
+	Confort.Son.bip(action === 'temps' ? 'consequence' : 'action');
 	phase = 'narration';
 	debutNarration = millis();
 }
@@ -1104,6 +1105,7 @@ function dateLongue(iso) {
 // =====================================================================
 function mousePressed() {
 	Confort.Son.demarrer();
+	if (vue === 'poste') Confort.Son.bip('clic'); // clic discret au poste
 	interaction();
 	for (let i = boutons.length - 1; i >= 0; i--) {
 		const b = boutons[i];
@@ -1142,7 +1144,7 @@ function keyPressed() {
 			if (key === 'n' || key === 'N') fermer();
 		}
 		if (fenetre === 'parametres') {
-			const cles = { 1: 'son', 2: 'horsLigneForce', 3: 'reduireAnimations', 4: 'contrasteRenforce' };
+			const cles = { 1: 'son', 2: 'horsLigneForce', 3: 'reduireAnimations', 4: 'contrasteRenforce', 5: 'musique' };
 			if (cles[key]) basculerReglage(cles[key]);
 			if (keyCode === ENTER || keyCode === RETURN) fermer();
 		}
@@ -1348,7 +1350,7 @@ function basculerReglage(nom) {
 
 function fenetreParametres() {
 	const l = 1000;
-	const h = 720;
+	const h = 820;
 	const x = (L - l) / 2;
 	const y = (H - h) / 2;
 	panneau(x, y, l, h, C.accent);
@@ -1366,6 +1368,7 @@ function fenetreParametres() {
 		['2', t('param.horsLigne'), 'horsLigneForce'],
 		['3', t('param.animations'), 'reduireAnimations'],
 		['4', t('param.contraste'), 'contrasteRenforce'],
+		['5', t('param.musique'), 'musique'],
 	];
 	lignes.forEach(([k, lib, nom], i) => {
 		const ly = y + 120 + i * 96;
@@ -1390,13 +1393,13 @@ function fenetreParametres() {
 	textSize(26);
 	fill(C.texte);
 	textAlign(LEFT, CENTER);
-	text(t('langue.titre'), x + 48, y + 120 + 4 * 96 + 36);
+	text(t('langue.titre'), x + 48, y + 120 + 5 * 96 + 36);
 	textFont(POLICE_DONNEES);
 	textSize(18);
 	fill(C.gris);
-	text(t('param.touche', { k: 'L' }), x + 560, y + 120 + 4 * 96 + 36);
+	text(t('param.touche', { k: 'L' }), x + 560, y + 120 + 5 * 96 + 36);
 	textAlign(LEFT, TOP);
-	selecteurLangue(x + l - 48, y + 120 + 4 * 96 + 10);
+	selecteurLangue(x + l - 48, y + 120 + 5 * 96 + 10);
 	bouton(x + l - 288, y + h - 104, 240, 64, t('param.retour'), fermer);
 }
 

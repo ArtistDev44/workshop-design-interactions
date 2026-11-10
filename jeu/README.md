@@ -34,3 +34,4 @@ dossier à trancher sous pression. »*
 | 16 | `16-bureau-apps.md` | Prompt 22 : apps du PC (patron, carte et équipes, community, journal), jauges fluidité / réputation / budget |
 | 17 | `17-profondeur-tactique.md` | Prompt 23 : conseils, modificateurs de journée, objectifs, malus, paliers de budget, profil de fin |
 | 18 | `18-multi-langue.md` | Prompt 24 : jeu en français et en anglais, dictionnaire `i18n.js`, textes différés, sélecteur FR / EN, touche L, aria-live |
+| 19 | `19-bandes-sonores.md` | Prompt 30 + piste musicale : pluie et vent selon la météo réelle, ville et tram, nuit, musique originale à 4 humeurs, signaux d'événements, tout en WebAudio |

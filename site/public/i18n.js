@@ -373,6 +373,7 @@ const TRADUCTIONS = {
 		"bureau.erreur": "⚠ ERREUR SYSTÈME · action « {action} » HS",
 		"annonce.decision": "{titre}. {texte}",
 		"dossier.citation": "« {texte} »",
+		"param.musique": "Musique du jeu",
 	},
 	en: {
 		"charge.introuvable": "Week not found: offline reference week.",
@@ -740,6 +741,7 @@ const TRADUCTIONS = {
 		"bureau.erreur": "⚠ SYSTEM ERROR · action “{action}” down",
 		"annonce.decision": "{titre}. {texte}",
 		"dossier.citation": "“{texte}”",
+		"param.musique": "Game music",
 	},
 };
 

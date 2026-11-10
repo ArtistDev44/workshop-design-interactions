@@ -58,6 +58,24 @@ function demarrerJournee() {
 	interaction();
 }
 
+/** Météo montrée par la baie vitrée et entendue (pluie, vent) : celle du jour joué, sinon la météo réelle du moment */
+function meteoDecor() {
+	const j = ecran === 'jeu' && Jeu.jourCourant ? Jeu.jourCourant() : null;
+	return (j && Jeu.meteoDuJour(j.date)) || Jeu.meteoActuelle;
+}
+
+/** Contexte sonore (audio.js) : météo du décor, nuit, vue, pause et humeur de la musique */
+function contexteSonore() {
+	const h = heureAffichee().h;
+	return {
+		meteo: meteoDecor(),
+		nuit: h < 7 || h >= 20,
+		auPoste: vue === 'poste',
+		pause: !!enPause,
+		mode: ecran !== 'jeu' ? 'accueil' : phase === 'fin' ? 'fin' : incidentActif() ? 'tension' : 'jeu',
+	};
+}
+
 function heureAffichee() {
 	// Partie en cours : heure simulée ; sinon (et en mode « aujourd'hui ») : heure réelle
 	if (ecran === 'jeu' && Jeu.horloge && Jeu.etat.mode !== 'direct' && phase !== 'fin') {
@@ -93,7 +111,7 @@ function avancerTemps() {
 			if (Jeu.finDeJourneeTactique) Jeu.finDeJourneeTactique(); // prompt 23 : objectif du jour, budget épuisé
 			phase = 'mail'; // § 6 : fin de journée
 			enSieste = false;
-			Confort.Son.bip('dossier');
+			Confort.Son.bip('mail'); // notification du mail de fin de journée
 		}
 	} else if (phase === 'reveil' && reveil && maintenant > reveil.limite) {
 		rateReveil();

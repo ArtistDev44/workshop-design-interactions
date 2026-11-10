@@ -184,7 +184,7 @@ function dessinerPlafondEtBaie(g) {
 function dessinerVueNantes(g) {
 	const heure = heureAffichee().h;
 	const nuit = heure < 7 || heure >= 20;
-	const m = Jeu.meteoActuelle;
+	const m = meteoDecor(); // même météo que l'ambiance sonore (audio.js)
 	const pluie = m && m.pluie_mm >= 1;
 	const haut = nuit ? '#141d33' : pluie ? '#7f8c99' : '#79b4de';
 	const bas = nuit ? '#2b3757' : pluie ? '#a9b3bb' : '#c6e4f3';
