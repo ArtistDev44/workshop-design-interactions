@@ -694,7 +694,7 @@ function dessinerDecor(zone, meteo, opacite, avecCadre, sansLegende) {
 			l.traces.forEach(tracer);
 		}
 	}
-	dessinerMeteo(zone, meteo, opacite, sansLegende, avecCadre); // carte de l'appli : légende seule, sans soleil ni nuages
+	if (!avecCadre) dessinerMeteo(zone, meteo, opacite, sansLegende, false); // prompt 49 : plus aucune météo sur la carte de l'appli (ni pictos, ni ligne chiffrée)
 	drawingContext.restore();
 	pop();
 }
@@ -1774,7 +1774,7 @@ function fenetreReset() {
 /** Prompt 44 : morceau suivant (mémorisé), joué tout de suite si le son est actif */
 function musiqueSuivante() {
 	const liste = Confort.Son.musique.pistes();
-	const i = liste.indexOf(Confort.Reglages.musique || 'chillin');
+	const i = liste.indexOf(Confort.Reglages.musique || 'softly');
 	const suivante = liste[(i + 1) % liste.length];
 	Confort.Son.demarrer();
 	Confort.Son.musique.changer(suivante);
@@ -1855,7 +1855,7 @@ function fenetreParametres() {
 	textSize(18);
 	fill(C.gris);
 	text(t('param.touche', { k: '8' }), x + 560, ym + 36);
-	bouton(x + l - 48 - 280, ym + 8, 280, 56, '♪ ' + t('musique.' + (Confort.Reglages.musique || 'chillin')), musiqueSuivante, false, true);
+	bouton(x + l - 48 - 280, ym + 8, 280, 56, '♪ ' + t('musique.' + (Confort.Reglages.musique || 'softly')), musiqueSuivante, false, true);
 	textFont(POLICE_DONNEES);
 	textSize(14);
 	fill(C.gris);

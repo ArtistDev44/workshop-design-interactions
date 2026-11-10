@@ -66,12 +66,21 @@ const PIECE = {
 	message: null, // { texte, objet, jusqua }
 };
 
-/** Météo affichée par la fenêtre : jour joué (archives) → météo réelle du moment → instantané local */
+/** Météo affichée (fenêtre, pluie, ambiances) — prompt 49 : elle suit le mode de jeu.
+ * Partie en direct : API Open-Meteo chargée en direct. Semaine passée / hors ligne : données archivées du
+ * jour joué, jamais la météo d'aujourd'hui. Hors partie (menu) : météo du moment, sinon l'instantané local. */
 function meteoFenetre() {
-	const j = ecran === 'jeu' && Jeu.jourCourant ? Jeu.jourCourant() : null;
-	const m = (j && Jeu.meteoDuJour(j.date)) || Jeu.meteoActuelle || (Jeu.fallback && Jeu.fallback.meteo && Jeu.fallback.meteo[0]) || null;
-	return m;
+	const enPartie = ecran === 'jeu' && Jeu.etat && Jeu.etat.mode;
+	if (enPartie && Jeu.etat.mode !== 'direct') {
+		const j = Jeu.jourCourant ? Jeu.jourCourant() : null;
+		return j ? Jeu.meteoDuJour(j.date) : null;
+	}
+	return Jeu.meteoActuelle || (Jeu.fallback && Jeu.fallback.meteo && Jeu.fallback.meteo[0]) || null;
 }
+// En direct, la météo de l'API est rafraîchie toutes les 30 minutes (hors draw, jamais pendant une semaine passée)
+setInterval(() => {
+	if (ecran === 'jeu' && Jeu.etat && Jeu.etat.mode === 'direct' && !Confort.Reglages.horsLigneForce) Jeu.verifierConnexion();
+}, 30 * 60 * 1000);
 const nombreFr = (v) => (Langue.actuelle === 'fr' ? String(v).replace('.', ',') : String(v));
 
 function interagirPiece(nom) {
@@ -92,7 +101,9 @@ function interagirPiece(nom) {
 		const meteo = m
 			? t('piece.fenetre.meteo', { date: m.date ? m.date.split('-').reverse().join('/') : '', min: nombreFr(m.temp_min), max: nombreFr(m.temp_max), pluie: nombreFr(m.pluie_mm), vent: nombreFr(m.rafales_max) })
 			: t('piece.fenetre.inconnue');
-		texte = t(PIECE.store ? 'piece.fenetre.ferme' : 'piece.fenetre.ouvre') + ' ' + meteo + ' ' + t('piece.fenetre.heures', { reelle, jeu: heure });
+		// Prompt 49 : la source du climat suit le mode de jeu
+		const sourceMeteo = !m ? '' : ecran === 'jeu' && Jeu.etat.mode && Jeu.etat.mode !== 'direct' ? t('meteo.source.archive') : t('meteo.source.direct');
+		texte = t(PIECE.store ? 'piece.fenetre.ferme' : 'piece.fenetre.ouvre') + ' ' + (sourceMeteo ? meteo.replace(/\.$/, '') + sourceMeteo + '.' : meteo) + ' ' + t('piece.fenetre.heures', { reelle, jeu: heure });
 	} else if (nom === 'plante') {
 		const m = meteoFenetre();
 		texte = m && m.pluie_mm >= 1 ? t('piece.plante.pluie', { pluie: nombreFr(m.pluie_mm) }) : t('piece.plante.sec', { heure });

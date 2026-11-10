@@ -31,6 +31,9 @@ DS.policeTitreInstallee = policeInstallee(['Bitsy Pixels', '__aucune__'], 'serif
 // ——— Titres en pixels ———
 const cacheTitres = new Map();
 /** Titre au style pixel : `taille` = hauteur visuelle en px ; align 'left' | 'center' | 'right' */
+/** Prompt 49 : gros pixels (×4) pour les grands titres ; ×2 sous 40 px, sinon les petits titres (≈ 6 px avant
+ * agrandissement) devenaient illisibles */
+const facteurPixel = (taille) => (taille < 40 ? 2 : 4);
 function dsTitre(txt, x, y, taille, couleur, align) {
 	if (DS.policeTitreInstallee) {
 		textFont('Bitsy Pixels');
@@ -42,7 +45,8 @@ function dsTitre(txt, x, y, taille, couleur, align) {
 	const cle = txt + '|' + taille + '|' + couleur;
 	let c = cacheTitres.get(cle);
 	if (!c) {
-		const petit = Math.max(6, Math.round(taille / 4));
+		const f = facteurPixel(taille);
+		const petit = Math.max(8, Math.round(taille / f));
 		c = document.createElement('canvas');
 		const ctx = c.getContext('2d');
 		ctx.font = 'bold ' + petit + 'px "' + DS.policeTexte + '", monospace';
@@ -58,10 +62,11 @@ function dsTitre(txt, x, y, taille, couleur, align) {
 		ctx.putImageData(im, 0, 0);
 		cacheTitres.set(cle, c);
 	}
-	const l = c.width * 4;
+	const f = facteurPixel(taille);
+	const l = c.width * f;
 	const dx = align === 'center' ? x - l / 2 : align === 'right' ? x - l : x;
 	drawingContext.imageSmoothingEnabled = false;
-	drawingContext.drawImage(c, dx, y, l, c.height * 4);
+	drawingContext.drawImage(c, dx, y, l, c.height * f);
 	drawingContext.imageSmoothingEnabled = true;
 	return l;
 }

@@ -55,6 +55,7 @@
 
 	/** Mode « aujourd'hui en direct » : un seul appel GTFS-RT au lancement, repli hors ligne si échec. */
 	Jeu.chargerDirect = function () {
+		Jeu.verifierConnexion(); // prompt 49 : en direct, la météo est rechargée depuis l'API au lancement de la partie
 		if (!global.PXE_GTFSRT) return Jeu.chargerHorsLigne(T('charge.decodeur'));
 		return global.PXE_GTFSRT.charger(global.PXE_GTFSRT.FLUX.tripUpdates, DELAI_DIRECT_MS)
 			.then(function (flux) {
