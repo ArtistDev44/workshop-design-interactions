@@ -68,6 +68,7 @@ const DUREE_NARRATION = 6000;
 let arriveeDossier = 0; // millis() d'arrivée du dossier (glissement, Q10)
 let debutCompteur = 0;
 let boutons = []; // zones cliquables recalculées à chaque image
+let focusReponseAlerte = 0; // prompt 72 : réponse d'alerte focalisée au clavier (↑/↓, Entrée)
 let projection = null;
 let gouttes = [];
 
@@ -289,6 +290,7 @@ function nouveauDossier() {
 	debutCompteur = millis();
 	sourceChoisie = null;
 	alerteTempsJouee = false;
+	focusReponseAlerte = 0; // prompt 72
 	if (!Jeu.dossierCourant()) return apresDecision();
 	if (Jeu.declencherPlainte) Jeu.declencherPlainte(Jeu.index); // prompt 28 : plainte liée au dossier réel (app Community)
 	// Prompt 44 § 2 : signal propre à la source (GTFS-RT, Open-Meteo, archives, agenda), plus fort s'il reste beaucoup d'incidents
@@ -963,6 +965,34 @@ function dessinerDossier(d, meteo) {
 		});
 		return;
 	}
+	// Prompt 72 : une alerte (météo, secours, affluence) propose des réponses rédigées pour la
+	// situation réelle, à la place des simples « 1 / 2 / 3 / 0 » (les touches continuent de fonctionner)
+	const reponses = estAlerte(d) ? reponsesAlerte(d) : [];
+	if (reponses.length) {
+		if (sourceChoisie && d.contradiction) {
+			textFont(POLICE_DONNEES);
+			textSize(16);
+			fill(C.gris);
+			text(t('dossier.sourceRetenue', { libelle: d.contradiction[sourceChoisie].libelle }), x + 32, base.y + base.h - 260 - reponses.length * 88, base.l - 64, 30);
+		}
+		const bh = 76;
+		const y0 = base.y + base.h - 24 - reponses.length * (bh + 12);
+		reponses.forEach((r, i) => {
+			const by = y0 + i * (bh + 12);
+			const lib = t(r.cle, r.vars);
+			const focusRep = focusReponseAlerte === i;
+			bouton(x + 32, by, base.l - 64, bh, lib, () => activerReponseAlerte(r), false, r.vers.type === 'equipe');
+			if (focusRep) {
+				noFill();
+				stroke(C.accent);
+				strokeWeight(3);
+				rect(x + 32 - 6, by - 6, base.l - 64 + 12, bh + 12);
+				noStroke();
+			}
+		});
+		cibleGuide('actions', x + 32, y0, base.l - 64, reponses.length * (bh + 12)); // prompt 37
+		return;
+	}
 	// Actions : 3 actions + « ne rien faire » (Q5)
 	const actions = [
 		['1', t('action.devier'), 'devier'],
@@ -1509,6 +1539,17 @@ function keyPressed() {
 	} else if ((phase === 'decision' || phase === 'contradiction') && toucheEnquete()) {
 		// prompt 50 : 5 à 8 consultent une source
 	} else if (phase === 'decision') {
+		const reps = dossierCourant() && estAlerte(dossierCourant()) ? reponsesAlerte(dossierCourant()) : [];
+		if (reps.length && (keyCode === UP_ARROW || keyCode === DOWN_ARROW || keyCode === TAB)) {
+			// Prompt 72 : ↑/↓ ou Tab parcourt les réponses proposées, annoncé en aria-live
+			focusReponseAlerte = (focusReponseAlerte + (keyCode === UP_ARROW || (keyCode === TAB && keyIsDown(SHIFT)) ? reps.length - 1 : 1)) % reps.length;
+			annoncer(t(reps[focusReponseAlerte].cle, reps[focusReponseAlerte].vars));
+			return false;
+		}
+		if (reps.length && (keyCode === ENTER || keyCode === RETURN) && !keyIsDown(SHIFT)) {
+			activerReponseAlerte(reps[focusReponseAlerte]);
+			return false;
+		}
 		const actions = { 1: 'devier', 2: 'retenir', 3: 'renfort', 0: 'rien', ' ': 'rien' };
 		if (actions[key]) decider(actions[key]);
 	} else if (phase === 'contradiction') {

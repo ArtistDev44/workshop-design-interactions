@@ -25,7 +25,7 @@ function contexte(langue, stockage = new Map(), avecHistoire = false) {
 	ctx.window = ctx;
 	ctx.globalThis = ctx;
 	vm.createContext(ctx);
-	const fichiers = ['data/lignes.js', 'data/semaines.js', 'data/fallback.js', 'data/messages.js', 'i18n.js', 'game.js'];
+	const fichiers = ['data/lignes.js', 'data/semaines.js', 'data/fallback.js', 'data/messages.js', 'i18n.js', 'game.js', 'carte.js']; // prompt 72 : carte.js (réponses d'alerte) testé unitairement
 	if (avecHistoire) fichiers.push('confort.js', 'histoire.js'); // prompt 56 : progression et palmarès (localStorage)
 	for (const f of fichiers) {
 		vm.runInContext(readFileSync(join(pub, f), 'utf8'), ctx, { filename: f });
@@ -395,6 +395,62 @@ verifier(eq.policeAvant === 1 && eq.policeMatin === 2, `équipes : effectifs non
 	});
 	verifier(/pcDemarre\(\)/.test((readFileSync(join(pub, 'immersion.js'), 'utf8').match(/function tempsSuspendu\(\) \{\n\treturn [^\n]*;/) || [''])[0]), 'démarrage PC : le temps de jeu doit être suspendu pendant le démarrage (et « ×30 » masqué)');
 }
+
+// Prompt 72 : alertes → 2 à 4 réponses, chacune mappée vers une action ou une équipe existante, mélange reproductible
+const alertes = vm.runInContext(
+	`(() => {
+		const bilan = { alertes: 0, autres: 0, pluieDevie: false, rafalesPompiers: false, secoursAmbulance: false, affluencePolice: false, memeOrdre: true, typesVus: {} };
+		const teste = (d) => {
+			const reps = reponsesAlerte(d);
+			if (!estAlerte(d)) { if (reps.length) throw new Error('réponses proposées hors alerte'); bilan.autres++; return; }
+			bilan.alertes++;
+			bilan.typesVus[d.type] = true;
+			if (reps.length < 2 || reps.length > 4) throw new Error('alerte avec ' + reps.length + ' réponses');
+			reps.forEach((r) => {
+				if (!r.cle || !r.vers || !r.vers.cle) throw new Error('réponse sans mapping');
+				if (r.vers.type === 'action' && !['devier', 'retenir', 'renfort', 'rien'].includes(r.vers.cle)) throw new Error('action inconnue : ' + r.vers.cle);
+				if (r.vers.type === 'equipe' && !Jeu.EQUIPES[r.vers.cle]) throw new Error('équipe inconnue : ' + r.vers.cle);
+			});
+			// mélange reproductible (même graine → même ordre)
+			const ordre = reponsesAlerte(d).map((r) => r.cle).join('|');
+			if (reponsesAlerte(d).map((r) => r.cle).join('|') !== ordre) bilan.memeOrdre = false;
+			const m = Jeu.meteoDuJour(d.date) || {};
+			if (d.type === 'alerte météo' && (m.pluie_mm || 0) >= 10 && reps.some((r) => r.vers.cle === 'devier')) bilan.pluieDevie = true;
+			if (d.type === 'alerte météo' && (m.rafales_max || 0) >= 50 && reps.some((r) => r.vers.cle === 'pompiers')) bilan.rafalesPompiers = true;
+			if (/accident|malaise|bless|chute/i.test(String(d.texte_source || '')) && reps.some((r) => r.vers.cle === 'ambulance')) bilan.secoursAmbulance = true;
+			if ((d.type === 'événement' || d.affluence) && reps.some((r) => r.vers.cle === 'police')) bilan.affluencePolice = true;
+		};
+		Jeu.semainesProposees().forEach((s) => { Jeu.chargerSemaine(s.lundi); Jeu.nouvellePartie(); Jeu.paquet.forEach(teste); });
+		Jeu.chargerHorsLigne(); Jeu.nouvellePartie(); Jeu.paquet.forEach(teste);
+		// Dossiers synthétiques construits sur des champs réels (mapping pluie forte / rafales / secours / affluence)
+		Jeu.chargerSemaine('2026-09-14'); Jeu.nouvellePartie(); // 2026-09-15 : rafales 50,4 km/h réelles
+		const base = Jeu.paquet[0];
+		const synthetic = [
+			Object.assign({}, base, { type: 'alerte météo', date: '2026-09-15', texte_source: 'Rafales de vent' }),
+			Object.assign({}, base, { type: 'perturbation', texte_source: 'Accident sur la ligne, un usager a fait un malaise' }),
+			Object.assign({}, base, { type: 'événement', affluence: true, texte_source: 'Concert géant — Stade de la Beaujoire', nature: 'Concert' }),
+		];
+		const r1 = reponsesAlerte(synthetic[0]);
+		bilan.rafalesPompiers = bilan.rafalesPompiers || r1.some((r) => r.vers.cle === 'pompiers' && r.vars.rafales === 50);
+		const r2 = reponsesAlerte(synthetic[1]);
+		bilan.secoursAmbulance = bilan.secoursAmbulance || r2.some((r) => r.vers.cle === 'ambulance');
+		const r3 = reponsesAlerte(synthetic[2]);
+		bilan.affluencePolice = bilan.affluencePolice || r3.some((r) => r.vers.cle === 'police' && r.vars.evenement.includes('Concert géant'));
+		// Pluie forte : aucune semaine archivée n'atteint 10 mm → mapping testé avec la météo du jour forcée (champ réel du même format)
+		const m0 = Jeu.meteoDuJour;
+		Jeu.meteoDuJour = () => ({ date: base.date, pluie_mm: 12.5, rafales_max: 10, temp_min: 8, temp_max: 14 });
+		bilan.pluieDevie = reponsesAlerte(Object.assign({}, base, { type: 'alerte météo' })).some((r) => r.vers.cle === 'devier' && r.vars.pluie === 12.5);
+		Jeu.meteoDuJour = m0;
+		return bilan;
+	})()`,
+	fr,
+);
+verifier(alertes.alertes > 0, 'prompt 72 : aucune alerte trouvée dans les semaines archivées');
+verifier(alertes.memeOrdre, 'prompt 72 : le mélange des réponses n\u2019est pas reproductible');
+verifier(alertes.pluieDevie, 'prompt 72 : pluie forte sans réponse « dévier »');
+verifier(alertes.rafalesPompiers, 'prompt 72 : rafales fortes sans réponse « pompiers »');
+verifier(alertes.secoursAmbulance, 'prompt 72 : secours (malaise/accident) sans réponse « ambulanciers »');
+verifier(alertes.affluencePolice, 'prompt 72 : affluence sans réponse « police » avec le nom réel de l\u2019événement');
 
 // Traductions : toute clé française existe en anglais
 const manquantes = vm.runInContext('Object.keys(TRADUCTIONS.fr).filter((k) => TRADUCTIONS.en[k] === undefined)', fr);

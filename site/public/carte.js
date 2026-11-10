@@ -300,3 +300,77 @@ function dessinerBandeauEquipes() {
 		x += w + 6;
 	});
 }
+
+// =====================================================================
+// Prompt 72 — alertes (météo, accident/malaise, affluence) : 2 à 4 choix de
+// réponses rédigées pour la situation réelle, chacune mappée vers une action
+// existante (1/2/3/0) ou un envoi d'équipe existant (prompt 68). Aucun indice
+// de correction (prompts 50/66) ; game.js et Q1–Q61 inchangés.
+// =====================================================================
+const MOTS_ALERTE_SECOURS = /accident|malaise|bless|chute/i;
+/** Un incident est une « alerte » si : type alerte météo, secours dans la source, ou événement/affluence */
+function estAlerte(d) {
+	if (!d) return false;
+	if (d.type === 'alerte météo') return true;
+	if (MOTS_ALERTE_SECOURS.test(String(d.texte_source || '') + ' ' + String(d.nature || ''))) return true;
+	if (d.type === 'événement' || d.affluence) return true;
+	return false;
+}
+/** Hachage stable local (ne consomme pas le générateur de la partie) */
+function hacherAlerte(texte) {
+	let h = 2166136261;
+	for (let i = 0; i < texte.length; i++) h = Math.imul(h ^ texte.charCodeAt(i), 16777619);
+	return h >>> 0;
+}
+/**
+ *Réponses proposées pour un incident-alerte, construites UNIQUEMENT depuis les champs réels
+ * du dossier et la météo du jour : 2 à 4 réponses, ordre mélangé par la graine (reproductible).
+ * Chaque réponse : { cle (i18n), vars, vers: { type: 'action' | 'equipe', cle } }.
+ */
+function reponsesAlerte(d) {
+	if (!estAlerte(d)) return [];
+	const m = (typeof Jeu !== 'undefined' && Jeu.meteoDuJour && Jeu.meteoDuJour(d.date)) || {};
+	const pluie = Math.round((m.pluie_mm || 0) * 10) / 10;
+	const rafales = Math.round(m.rafales_max || 0);
+	const secours = MOTS_ALERTE_SECOURS.test(String(d.texte_source || '') + ' ' + String(d.nature || ''));
+	const evenement = d.type === 'événement' || d.affluence ? String(d.texte_source || d.nature || '').split(' — ')[0].trim() : '';
+	const ligne = (d.lignes && d.lignes.join(', ')) || '';
+	const liste = [];
+	if (d.type === 'alerte météo') {
+		if (rafales >= 50) {
+			liste.push({ cle: 'alerte.reponse.pompiers', vars: { rafales }, vers: { type: 'equipe', cle: 'pompiers' } });
+			liste.push({ cle: 'alerte.reponse.techniciens', vars: { rafales }, vers: { type: 'equipe', cle: 'techniciens' } });
+		}
+		if (pluie >= 10) liste.push({ cle: 'alerte.reponse.devierPluie', vars: { pluie, ligne }, vers: { type: 'action', cle: 'devier' } });
+		liste.push({ cle: 'alerte.reponse.retenir', vars: {}, vers: { type: 'action', cle: 'retenir' } });
+		liste.push({ cle: 'alerte.reponse.prevenir', vars: {}, vers: { type: 'action', cle: 'rien' } });
+	}
+	if (secours) {
+		liste.push({ cle: 'alerte.reponse.ambulance', vars: {}, vers: { type: 'equipe', cle: 'ambulance' } });
+		liste.push({ cle: 'alerte.reponse.policeSecours', vars: {}, vers: { type: 'equipe', cle: 'police' } });
+	}
+	if (d.type === 'événement' || d.affluence) {
+		if (evenement) liste.push({ cle: 'alerte.reponse.policeAffluence', vars: { evenement }, vers: { type: 'equipe', cle: 'police' } });
+		liste.push({ cle: 'alerte.reponse.renfortAffluence', vars: { ligne }, vers: { type: 'action', cle: 'renfort' } });
+	}
+	// 2 à 4 réponses : on complète avec des actions génériques valides si besoin
+	while (liste.length < 2) {
+		liste.push(liste.length === 0
+			? { cle: 'alerte.reponse.retenir', vars: {}, vers: { type: 'action', cle: 'retenir' } }
+			: { cle: 'alerte.reponse.prevenir', vars: {}, vers: { type: 'action', cle: 'rien' } });
+	}
+	const trop = liste.slice(0, 4);
+	// Mélange reproductible (graine de la partie + n° de dossier)
+	const idx = Jeu.paquet ? Jeu.paquet.indexOf(d) : 0;
+	const graine = Jeu.graine || 0;
+	return trop
+		.map((r, i) => ({ r, h: hacherAlerte(graine + '|' + idx + '|' + i + '|' + r.cle) }))
+		.sort((a, b) => a.h - b.h)
+		.map((x) => x.r);
+}
+/** Active une réponse proposée : action → décision normale ; équipe → envoi (le dossier reste ouvert) */
+function activerReponseAlerte(r) {
+	if (!r) return;
+	if (r.vers.type === 'equipe') return envoyerEquipeIncident(r.vers.cle);
+	decider(r.vers.cle);
+}
