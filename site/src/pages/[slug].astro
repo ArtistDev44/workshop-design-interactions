@@ -4,7 +4,7 @@ import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import Layout from '../layouts/Layout.astro';
 import Cartel from '../components/Cartel.astro';
-import { getOeuvres, slugDe, type Oeuvre } from '../lib/oeuvres';
+import { getOeuvres, slugDe, lienJouable, type Oeuvre } from '../lib/oeuvres';
 
 export async function getStaticPaths() {
 	const oeuvres = await getOeuvres();
@@ -33,12 +33,23 @@ const captations = [
 }));
 
 const qr = existe(`assets/qr-${slug}.png`) ? `${base}assets/qr-${slug}.png` : null;
-const lienOeuvre = data.lien_oeuvre ? `${base}${data.lien_oeuvre.replace(/^\//, '')}` : null;
+const lienOeuvre = lienJouable(oeuvre);
 const chaine = ['Source', 'Grammaire', 'Algorithme', 'Data / interaction', 'Œuvre'];
 ---
 
 <Layout title={data.titre} description={`${data.titre} — œuvre ${data.id} de l'édition PATRIMOINE.EXE / Nantes 001.`}>
 	<p class="retour"><a href={`${base}oeuvres/`}>← Toutes les œuvres</a></p>
+
+	{
+		lienOeuvre && (
+			<p class="lancer">
+				<a class="bouton" href={lienOeuvre}>
+					Jouer à « {data.titre} » →
+				</a>
+				<span class="lancer__note">Plein écran conseillé (1920×1080) · fonctionne aussi sans réseau</span>
+			</p>
+		)
+	}
 
 	<Cartel oeuvre={oeuvre} />
 
@@ -123,6 +134,14 @@ const chaine = ['Source', 'Grammaire', 'Algorithme', 'Data / interaction', 'Œuv
 	}
 	.lancer {
 		margin-bottom: var(--e-5);
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: var(--e-2) var(--e-3);
+	}
+	.lancer__note {
+		font-size: var(--t-petit);
+		color: var(--c-texte-doux);
 	}
 	.chaine {
 		list-style: none;
