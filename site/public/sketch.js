@@ -121,6 +121,7 @@ function draw() {
 		boutons = [];
 		dessinerSMS();
 	}
+	dessinerClignement(); // prompt 21 § 2 : par-dessus tout, purement visuel (n'intercepte aucune entrée)
 }
 
 // =====================================================================

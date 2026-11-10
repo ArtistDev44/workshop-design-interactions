@@ -252,8 +252,8 @@ function dessinerMail() {
 	textSize(23);
 	let ty = y + 240;
 	m.lignes.forEach((ligne, i) => {
-		const estFait = /^\d{1,2}h\d{2} — /.test(ligne);
-		fill(estFait ? C.rouge : C.texte);
+		const estFait = /^\d{2}:\d{2} – /.test(ligne);
+		fill(!estFait ? C.texte : ligne.includes('(bon choix !)') ? C.vert : C.rouge);
 		textFont(estFait ? POLICE_DONNEES : POLICE_TEXTE);
 		textSize(estFait ? 20 : 23);
 		text((estFait ? '• ' : '') + ligne, x + 48, ty, l - 96, 80);

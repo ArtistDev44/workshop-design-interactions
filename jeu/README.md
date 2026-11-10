@@ -29,3 +29,4 @@ dossier à trancher sous pression. »*
 | 11 | `11-direction-artistique.md` | Direction artistique verrouillée : palette, polices, low poly léger |
 | 12 | `12-bureau-pixel.md` | Bureau en pixel art : vue d'entrée, PC avec le jeu en direct, zoom au poste |
 | 13 | `13-immersion.md` | Immersion : SMS, journées, horloge ×10, sieste, alertes rouges, mail, livres |
+| 14 | `14-immersion-visuelle.md` | PC centré, vignettage, clignement d'œil, mail enrichi et évalué |
