@@ -67,6 +67,7 @@ function setup() {
 	Langue.detecter(); // prompt 24 : ?lang= → localStorage → navigateur → fr
 	const c = createCanvas(L, H);
 	c.parent('scene');
+	c.elt.addEventListener('mouseleave', () => (sourisDansCanevas = false)); // prompt 25 : la caméra se recentre
 	pixelDensity(1);
 	randomSeed(Jeu.fallback ? Jeu.fallback.seed : 1001);
 	for (let i = 0; i < 140; i++) gouttes.push({ x: random(), y: random(), v: random(0.6, 1.2) });
@@ -1204,8 +1205,14 @@ function keyPressed() {
 	if (key === ' ' || keyCode === UP_ARROW || keyCode === DOWN_ARROW) return false; // pas de défilement de la page
 }
 
+// Prompt 25 : la caméra du bureau ne suit la souris qu'une fois celle-ci réellement bougée sur le canevas
+function mouseMoved() {
+	sourisDansCanevas = mouseX >= 0 && mouseX <= L && mouseY >= 0 && mouseY <= H;
+}
+
 // Touch basique (Q32) : un appui = un clic sur les boutons
 function touchStarted() {
+	sourisDansCanevas = false; // au doigt, pas de caméra (la position du dernier appui resterait « collée »)
 	Confort.Son.demarrer();
 	mousePressed();
 	return false;
@@ -1269,6 +1276,7 @@ function fenetreAide() {
 		['M', t('aide.k.son')],
 		[t('aide.k.aideTouche'), t('aide.k.aide')],
 		['↑ ↓', t('aide.k.semaine')],
+		['← → ↑ ↓', t('aide.k.regarder')],
 		['L', t('aide.k.langue')],
 	];
 	textSize(22);
@@ -1278,10 +1286,10 @@ function fenetreAide() {
 		textFont(POLICE_DONNEES);
 		textSize(20);
 		fill(C.accent);
-		text(k, x + 48, y + 150 + i * 38);
+		text(k, x + 48, y + 150 + i * 34);
 		textFont(POLICE_TEXTE);
 		fill(C.texte);
-		text(d, x + 230, y + 150 + i * 38);
+		text(d, x + 230, y + 150 + i * 34);
 	});
 	// Règles (00-concept, 03-actions, 04-jauges)
 	const rx = x + 760;

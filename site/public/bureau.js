@@ -425,9 +425,88 @@ function dessinerVignettage(gCible) {
 	gCible.image(gVignette, 0, 0);
 }
 
+// ——— Prompt 25 : dézoom fixe de la vue bureau + caméra fausse 3D (façon FNAF, mouvement subtil) ———
+// La pièce est affichée à 88 % : ~6 % de marge de chaque côté à 1920×1080 (115 px), où l'on voit le
+// « fond » (la pièce elle-même, assombrie et plus lointaine). Quand la souris sort du cadre de l'écran
+// du PC (ou qu'une flèche est maintenue), la caméra regarde doucement de ce côté : la pièce glisse
+// d'au plus 12 px, le fond de 5 px (parallaxe = profondeur). Retour au centre : recentrage progressif.
+// Animations réduites, vue au poste, zooms, fenêtres ouvertes : caméra strictement centrée.
+const DEZOOM = 0.88;
+const CAMERA = { max: 12, maxFond: 5, lissage: 0.1, x: 0, y: 0 };
+let sourisDansCanevas = false; // pas de caméra tant que la souris n'a pas bougé sur le canevas (touch, chargement)
+
+function origineBureau() {
+	return { x: (L * (1 - DEZOOM)) / 2 + CAMERA.x, y: (H * (1 - DEZOOM)) / 2 + CAMERA.y, k: DEZOOM };
+}
+/** Rectangle en coordonnées pixel art (480×270) → pixels du canevas, en vue bureau (dézoom + caméra). */
+function versEcranBureau(x, y, l, h) {
+	const o = origineBureau();
+	const u = PIX * o.k;
+	return { x: o.x + x * u, y: o.y + y * u, l: (l || 0) * u, h: (h || 0) * u };
+}
+
+/** Flèches maintenues (←→↑↓) → direction, sauf si le focus est dans un champ ou un menu. */
+function directionFleches() {
+	const actif = document.activeElement;
+	if (actif && actif !== document.body && !(actif instanceof HTMLCanvasElement)) return null;
+	if (fenetre || smsActif || (phase === 'reveil' && reveil)) return null;
+	const dx = (keyIsDown(RIGHT_ARROW) ? 1 : 0) - (keyIsDown(LEFT_ARROW) ? 1 : 0);
+	const dy = (keyIsDown(DOWN_ARROW) ? 1 : 0) - (keyIsDown(UP_ARROW) ? 1 : 0);
+	return dx || dy ? { x: dx, y: dy } : null;
+}
+
+/** Met à jour la caméra (appelé une fois par image, avant la composition). */
+function majCamera() {
+	let cx = 0;
+	let cy = 0;
+	if (vue === 'bureau' && !reduireAnimations && !fenetre && !smsActif) {
+		const f = directionFleches();
+		if (f) {
+			cx = -f.x;
+			cy = -f.y;
+		} else if (sourisDansCanevas) {
+			const e = rectEcranPC();
+			const dedans = mouseX >= e.x && mouseX <= e.x + e.l && mouseY >= e.y && mouseY <= e.y + e.h;
+			if (!dedans) {
+				// On regarde vers la souris : la pièce glisse dans l'autre sens, proportionnellement à l'écart au centre
+				cx = -constrain((mouseX - L / 2) / (L / 2), -1, 1);
+				cy = -constrain((mouseY - H / 2) / (H / 2), -1, 1);
+			}
+		}
+	}
+	if (reduireAnimations) {
+		CAMERA.x = 0;
+		CAMERA.y = 0;
+		return;
+	}
+	const n = Math.hypot(cx, cy);
+	if (n > 1) (cx /= n), (cy /= n); // diagonale bornée elle aussi
+	const k = 1 - Math.pow(1 - CAMERA.lissage, Math.min(deltaTime || 16, 100) / 16.7); // easing indépendant du nombre d'images/s
+	CAMERA.x += (cx * CAMERA.max - CAMERA.x) * k;
+	CAMERA.y += (cy * CAMERA.max - CAMERA.y) * k;
+	if (Math.abs(CAMERA.x) < 0.05) CAMERA.x = 0;
+	if (Math.abs(CAMERA.y) < 0.05) CAMERA.y = 0;
+}
+
+/** Fond visible autour de la pièce dézoomée : la pièce elle-même, plus grande, assombrie, qui bouge moins. */
+function dessinerFondBureau(echelle) {
+	if (echelle >= 1) return;
+	const p = CAMERA.max ? CAMERA.maxFond / CAMERA.max : 0;
+	const s = 1.04;
+	image(gBureau, (L - L * s) / 2 + CAMERA.x * p, (H - H * s) / 2 + CAMERA.y * p, L * s, H * s);
+	noStroke();
+	fill(12, 16, 22, 196);
+	rect(0, 0, L, H);
+}
+
 // ——— Composition : pièce + écran du PC (bureau, zoom, poste) ———
-function rectEcranPC() {
+/** Écran du PC à l'échelle 1 (sans dézoom) : référence pour placer la pièce autour de n'importe quel rectangle d'écran */
+function rectEcranBase() {
 	return { x: ECRAN_PC.x * PIX, y: ECRAN_PC.y * PIX, l: ECRAN_PC.l * PIX, h: ECRAN_PC.h * PIX };
+}
+/** Écran du PC tel qu'il est vu en vue bureau (dézoom + caméra) */
+function rectEcranPC() {
+	return versEcranBureau(ECRAN_PC.x, ECRAN_PC.y, ECRAN_PC.l, ECRAN_PC.h);
 }
 
 /** Rectangle de l'écran à l'image courante (interpolé pendant le zoom) */
@@ -458,6 +537,7 @@ function sourisRestaurer() {
 
 /** Dessine la pièce et l'écran par-dessus le contenu (déjà dessiné en 1920×1080 sur le canevas). */
 function composerVue() {
+	majCamera();
 	const r = rectEcranCourant();
 	const auPoste = vue === 'poste';
 	// Capture du contenu de l'écran
@@ -474,16 +554,27 @@ function composerVue() {
 		dessinerPieceBureau();
 		dernierRenduBureau = millis();
 	}
-	// Pièce : à l'échelle 1 au bureau, agrandie autour du moniteur au poste (et pendant le zoom)
-	const e = rectEcranPC();
+	// Pièce : dézoomée au bureau (prompt 25), agrandie autour du moniteur au poste (et pendant le zoom)
+	const e = rectEcranBase();
 	const echelle = r.l / e.l;
 	clear();
 	background(P.contour);
 	drawingContext.imageSmoothingEnabled = false;
+	const ox = r.x - e.x * echelle;
+	const oy = r.y - e.y * echelle;
+	dessinerFondBureau(echelle);
+	if (echelle < 1) {
+		// Ombre portée de la pièce sur le fond : elle se détache comme un plan plus proche
+		noStroke();
+		fill(0, 0, 0, 90);
+		rect(ox + 6, oy + 10, L * echelle, H * echelle);
+		fill(P.contour);
+		rect(ox - PIX, oy - PIX, L * echelle + 2 * PIX, H * echelle + 2 * PIX);
+	}
 	const flou = (tempsCompresse() && vue === 'bureau') || auPoste;
 	if (flou && !reduireAnimations) drawingContext.filter = auPoste ? 'blur(2px) brightness(0.85)' : 'blur(1.5px)';
 	push();
-	translate(r.x - e.x * echelle, r.y - e.y * echelle);
+	translate(ox, oy);
 	scale(echelle);
 	image(gBureau, 0, 0, L, H);
 	pop();
@@ -529,10 +620,10 @@ function composerVue() {
 		noFill();
 		stroke('#f2c94c');
 		strokeWeight(PIX);
-		rect(r.x - 8 * PIX, r.y - 8 * PIX, r.l + 16 * PIX, r.h + 17 * PIX);
+		rect(r.x - 7 * PIX, r.y - 7 * PIX, r.l + 14 * PIX, r.h + 15 * PIX);
 		noStroke();
 	}
-	boutons.push({ x: r.x - 6 * PIX, y: r.y - 6 * PIX, l: r.l + 12 * PIX, h: r.h + 13 * PIX, action: sAsseoir });
+	boutons.push({ x: r.x - 5 * PIX, y: r.y - 5 * PIX, l: r.l + 10 * PIX, h: r.h + 11 * PIX, action: sAsseoir });
 	zonesObjetsBureau();
 	if (ecran === 'jeu' && phase !== 'fin') {
 		const hA = heureAffichee();
@@ -540,11 +631,12 @@ function composerVue() {
 		textSize(22);
 		const lib = String(hA.h).padStart(2, '0') + ':' + String(hA.m).padStart(2, '0') + (tempsCompresse() ? '  ▶▶ ×' + IMMERSION.compression : '');
 		const lh = textWidth(lib) + 24;
+		const ph = versEcranBureau(HORLOGE_X, 152);
 		fill(28, 39, 51, 220);
-		rect(HORLOGE_X * PIX - lh / 2, 152 * PIX, lh, 34, 6);
+		rect(ph.x - lh / 2, ph.y, lh, 34, 6);
 		fill('#FFFDF7');
 		textAlign(CENTER, CENTER);
-		text(lib, HORLOGE_X * PIX, 152 * PIX + 17);
+		text(lib, ph.x, ph.y + 17);
 	}
 	const msg = incidentActif()
 		? t('bureau.incident')
