@@ -158,6 +158,7 @@ function analyserMicro() {
 	m.souffle = lisse(m.souffle, rms > 0.02 && !hauteur ? Math.min(1, rms * 8) : 0, 0.3); // RMS continu sans hauteur
 	m.frag = lisse(m.frag, Math.min(1, Math.max(0, pic / Math.max(rms, 1e-4) - 3) / 5), 0.4); // pics (bruit, chocs)
 	m.densite = 3 + m.amp * 45;
+	usagesMicro(50); // prompt 63 : radio des chauffeurs, souffle anti-stress
 	for (let i = 0; i < MICRO.forme.length; i++) MICRO.forme[i] = bufTemps[i * 16];
 }
 /** Hauteur par autocorrélation (80–1000 Hz) ; 0 si le signal n'est pas assez périodique (souffle, bruit) */
@@ -277,4 +278,37 @@ function dessinerMicroPoste(g) {
 	boite(g, x, y, 7, 11, '#3a3f46', '#6a717a', '#22262b'); // capsule
 	for (let k = 1; k < 10; k += 2) px(g, '#1a1d21', x + 1, y + k, 5, 1); // grille
 	px(g, MICRO.ouvert ? '#ff3b30' : '#5a2a2a', x + 8, y + 20, 2, 1); // voyant
+}
+
+// ——— Prompt 63 : le micro sert au jeu (toujours facultatif, avec un équivalent) ———
+const RADIO = { voixMs: 0, dossier: -1, souffleMs: 0, annonceSouffle: 0 };
+const RADIO_VOIX_MS = 1500;
+/** Appelée à chaque analyse (toutes les 50 ms) pendant l'appui */
+function usagesMicro(dt) {
+	const m = MICRO.mesures;
+	if (MICRO.interne) return; // la source de repli ne compte pas comme une vraie voix
+	// 1. Radio des chauffeurs : une voix (hauteur détectée) 1,5 s pendant un dossier → info trafic révélée, sans coût
+	const enDossier = ecran === 'jeu' && (phase === 'decision' || phase === 'contradiction');
+	if (enDossier && m.hauteur > 0 && m.amp > 0.06) RADIO.voixMs += dt;
+	else RADIO.voixMs = Math.max(0, RADIO.voixMs - dt / 2);
+	if (enDossier && RADIO.voixMs >= RADIO_VOIX_MS && RADIO.dossier !== Jeu.index) {
+		RADIO.dossier = Jeu.index;
+		RADIO.voixMs = 0;
+		if (revelerSource('trafic', false)) {
+			Confort.Son.radio && Confort.Son.radio(((Jeu.dossierCourant() || {}).lignes || []).join(''), 1);
+			annoncer(t('micro.radio'));
+		}
+	}
+	// 3. Souffle (bruit continu sans hauteur) pendant le boost du café : le cœur redescend deux fois plus vite,
+	//    le compteur ralentit de moitié
+	const souffle = m.souffle > 0.35 && !m.hauteur;
+	if (souffle && typeof boostActif === 'function' && boostActif()) {
+		RADIO.souffleMs += dt;
+		CAFE.boost -= dt; // le boost s'épuise deux fois plus vite
+		if (enDossier) debutCompteur += dt / 2; // compteur à mi-vitesse
+		if (millis() - RADIO.annonceSouffle > 6000) {
+			RADIO.annonceSouffle = millis();
+			annoncer(t('micro.souffle'));
+		}
+	} else RADIO.souffleMs = 0;
 }

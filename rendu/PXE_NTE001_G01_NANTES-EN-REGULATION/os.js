@@ -537,7 +537,7 @@ function appCommunity(z) {
 			noFill();
 			rect(z.x + 1, y + 1, z.l - 2, 74);
 			noStroke();
-			dsTexte(c.auteur + ' · ' + c.heure, z.x + 16, y + 10, 18, DS.blanc50, 'left');
+			dsTexte((c.suivi ? '↳ ' + t('suivi.reponse') + ' · ' : '') + c.auteur + ' · ' + c.heure, z.x + 16, y + 10, 18, c.suivi ? DS.alerte : DS.blanc50, 'left'); // prompt 63 : réaction à une de vos réponses
 			dsTexte(c.texte, z.x + 16, y + 38, 20, DS.blanc, 'left', z.l - 160);
 			dsBadge(z.x + z.l - 60, y + 38, t('app.rep', { d: (c.delta > 0 ? '+' : '') + c.delta }), c.delta > 0 ? 'succes' : 'erreur');
 			y += 88;
@@ -545,12 +545,23 @@ function appCommunity(z) {
 	if (!Jeu.commentaires.length) dsTexte(t('app.aucunCommentaire'), z.x, y, 20, DS.blanc50, 'left');
 }
 
+// Prompt 63 : journal par journée, avec une enquête après coup sur chaque incident (données réelles uniquement)
+const JOURNAL = { jour: null, enquete: null, volet: 0 };
+const VOLETS_ENQUETE = ['passe', 'contexte', 'decision', 'suites'];
 function appJournal(z) {
-	const j = Jeu.jourCourant();
+	const jours = Jeu.jours || [];
+	if (JOURNAL.jour === null || JOURNAL.jour > Jeu.jourIndex) JOURNAL.jour = Jeu.jourIndex;
+	const j = jours[JOURNAL.jour];
+	const entrees = (Jeu.evenementsJournee || []).filter((e) => j && e.jour === j.date);
+	if (JOURNAL.enquete !== null && entrees[JOURNAL.enquete]) return enqueteJournal(z, entrees[JOURNAL.enquete], j);
+	JOURNAL.enquete = null;
 	let y = z.y;
 	dsTitre(t('app.journee', { date: j ? j.date.split('-').reverse().join('/') : '' }), z.x, y, 24, DS.blanc, 'left');
-	y += 50;
-	const lignes = (Jeu.evenementsJournee || []).filter((e) => j && e.jour === j.date).map((e) => ({ t: Jeu.ligneMail(e), ok: Jeu.evaluer(e) === 'bon' }));
+	// Navigation entre les journées déjà jouées
+	dsBouton(z.x + z.l - 400, y - 4, 190, 40, t('journal.veille'), () => ((JOURNAL.jour = Math.max(0, JOURNAL.jour - 1)), (JOURNAL.enquete = null)), 'contour', JOURNAL.jour <= 0);
+	dsBouton(z.x + z.l - 200, y - 4, 200, 40, t('journal.lendemain'), () => ((JOURNAL.jour = Math.min(Jeu.jourIndex, JOURNAL.jour + 1)), (JOURNAL.enquete = null)), 'contour', JOURNAL.jour >= Jeu.jourIndex);
+	y += 54;
+	const lignes = entrees.map((e, i) => ({ t: Jeu.ligneMail(e), ok: Jeu.evaluer(e) === 'bon', i }));
 	(Jeu.equipes || [])
 		.filter((q) => j && q.jour === j.date)
 		.forEach((q) => lignes.push({ t: T('app.equipeEnvoyee', { heure: q.heure, nom: q.nom, sujet: q.sujet, cout: q.cout, etat: q.arrivee_sim ? T('app.arrivee', { h: q.arrivee_sim }) : T('app.enRoute') }), ok: true, equipe: true }));
@@ -559,12 +570,71 @@ function appJournal(z) {
 		noStroke();
 		fill(l.equipe ? DS.info : l.ok ? DS.succes : DS.primaire);
 		rect(z.x, y + 4, 6, 22);
-		dsTexte(l.t, z.x + 18, y, 19, DS.blanc, 'left', z.l - 30);
+		const lt = z.l - 30 - (l.equipe ? 0 : 210);
+		dsTexte(l.t, z.x + 18, y, 19, DS.blanc, 'left', lt);
+		if (!l.equipe) dsBouton(z.x + z.l - 190, y - 4, 190, 38, t('journal.enqueter'), () => ((JOURNAL.enquete = l.i), (JOURNAL.volet = 0), annoncer(t('journal.enquete'))), 'contour');
 		textFont(DS.policeTexte);
 		textSize(19);
-		y += textWidth(l.t) > z.l - 40 ? 60 : 36;
+		y += textWidth(l.t) > lt - 10 ? 62 : 46;
 	});
 }
+function enqueteJournal(z, e, j) {
+	const r = e.resultat;
+	const d = r.dossier;
+	const idx = Jeu.paquet.indexOf(d);
+	let y = z.y;
+	dsBouton(z.x, y - 4, 280, 40, t('journal.retour'), () => (JOURNAL.enquete = null), 'contour');
+	dsTitre(t('journal.titreEnquete', { date: e.jour.split('-').reverse().join('/'), heure: e.heure || '—' }), z.x + 300, y, 24, DS.blanc, 'left');
+	y += 50;
+	dsTexte(String(e.externeCourt) + (e.ligne ? ' · ' + t('dossier.ligne', { lignes: e.ligne }) : ''), z.x, y, 20, DS.blanc75, 'left', z.l);
+	y += 40;
+	const lb = (z.l - 3 * 12) / 4;
+	VOLETS_ENQUETE.forEach((v, i) => dsBouton(z.x + i * (lb + 12), y, lb, 44, t('journal.volet.' + v), () => (JOURNAL.volet = i), JOURNAL.volet === i ? 'primaire' : 'contour'));
+	y += 64;
+	const lignes = [];
+	const v = VOLETS_ENQUETE[JOURNAL.volet];
+	if (v === 'passe') {
+		lignes.push(t('journal.type', { type: tSi('type.' + d.type, d.type) }));
+		lignes.push(t('journal.nature', { nature: d.nature }));
+		lignes.push(d.lignes && d.lignes.length ? t('dossier.ligne', { lignes: d.lignes.join(', ') }) : t('enq.carte.inconnue'));
+		lignes.push(d.retard !== null && d.retard !== undefined ? t('dossier.retard', { retard: d.retard }) : t('dossier.retardInconnu'));
+		lignes.push(t('dossier.citation', { texte: d.texte_source }));
+		lignes.push(t('journal.source', { source: d.source, date: dateLongue(d.date) + (d.heure ? ' · ' + d.heure : '') }));
+	} else if (v === 'contexte') {
+		const m = Jeu.meteoDuJour(d.date);
+		lignes.push(m ? t('journal.meteo', { min: nombreFr(m.temp_min), max: nombreFr(m.temp_max), pluie: nombreFr(m.pluie_mm), vent: nombreFr(m.rafales_max) }) : t('enq.meteo.inconnue'));
+		const ctx = r.contexte || {};
+		lignes.push(t(ctx.pointe ? 'journal.pointe.oui' : 'journal.pointe.non'));
+		if (ctx.meteo) lignes.push(t('journal.meteoAggravante'));
+		const ev = Jeu.evenementsAffluence ? Jeu.evenementsAffluence(d.date) : [];
+		lignes.push(ev.length ? t('journal.agenda', { n: ev.length, liste: ev.slice(0, 2).map((x) => '« ' + String(x.texte_source).split(' — ')[0] + ' »').join(', ') }) : t('enq.agenda.rien', { date: dateLongue(d.date) }));
+	} else if (v === 'decision') {
+		lignes.push(t('journal.action', { action: e.action ? String(e.action) : t('journal.aucuneAction') }));
+		lignes.push(t('journal.effets', { f: signe(e.deltas.fluidite), r: signe(e.deltas.reputation), b: signe(e.deltas.budget) }));
+		if (r.des && r.des.some((x) => x)) lignes.push(t('journal.des', { des: r.des.filter((x) => x).join(', ') }));
+		lignes.push(t('journal.evaluation', { eval: t('eval.' + Jeu.evaluer(e)) }));
+		lignes.push(t('journal.meilleure', { action: String(e.meilleureAction) }));
+		// Ce que chaque action aurait donné en moyenne dans ce contexte : c'est là que l'on apprend les effets (prompt 50)
+		lignes.push(t('journal.attendus', { liste: ['devier', 'retenir', 'renfort'].map((a) => t('action.' + a) + ' ' + signe(Math.round(e.attendus[a]))).join(' · ') }));
+	} else {
+		const p = (Jeu.plaintes || []).find((x) => x.index === idx);
+		if (p) {
+			lignes.push(t('journal.plainte', { auteur: p.auteur, texte: Jeu.texteMessage(p.def.texte, p.vars) }));
+			lignes.push(p.reponse === null ? t('journal.sansReponse') : t('journal.reponse', { texte: Jeu.texteMessage(p.def.reponses[p.reponse].texte, p.vars), qualite: t(p.bonne ? 'journal.bienRecue' : 'journal.malRecue') }));
+			const sv = p.suivis || [];
+			if (sv.length) lignes.push(t('journal.suivis', { recues: sv.filter((x) => x.livre).length, total: sv.length }));
+		} else lignes.push(t('journal.aucunePlainte'));
+		const eq = (Jeu.equipes || []).filter((q) => q.index === idx);
+		lignes.push(eq.length ? t('journal.equipes', { liste: eq.map((q) => q.nom + (q.inutile ? ' (' + t('journal.inutile') + ')' : '')).join(', ') }) : t('journal.aucuneEquipe'));
+	}
+	lignes.forEach((l) => {
+		dsTexte(l, z.x, y, 21, DS.blanc, 'left', z.l);
+		textFont(DS.policeTexte);
+		textSize(21);
+		y += Math.ceil((textWidth(String(l)) * 1.05) / z.l) * 30 + 14;
+	});
+}
+const signe = (v) => (v > 0 ? '+' + v : v < 0 ? '−' + Math.abs(v) : '0');
 
 // ——— Carte : position d'une ligne = centre réel de son tracé (data/lignes.json) ———
 const cacheCentres = new Map();

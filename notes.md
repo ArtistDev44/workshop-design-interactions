@@ -25,7 +25,7 @@ supplémentaire. Un mapping justifié avant une API.
 
 - `todo.md` — protocole des 3 jours, jalons, checklist de robustesse et barème.
 - `contexte/` — livret étudiant, framework PATRIMOINE.EXE, règles de travail.
-- `prompts/` — 63 prompts numérotés (01 à 62, deux prompts 33) pour créer le site Astro.js et le jeu p5.js ; statut ✅ / ◻ dans `prompts/README.md`.
+- `prompts/` — 64 prompts numérotés (01 à 63, deux prompts 33) pour créer le site Astro.js et le jeu p5.js ; statut ✅ / ◻ dans `prompts/README.md`.
 - `journal.md` — journal des pushes (une ligne par push, la plus récente en tête).
 - `notes.md` — cette page wiki, les liens des API et les pistes d'animation.
 

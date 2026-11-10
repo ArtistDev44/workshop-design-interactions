@@ -24,6 +24,7 @@ const CAM_H = 27;
 const CAM_ABSENCE_MS = 8000;
 const CAM_SEUIL_MOUVEMENT = 1.6; // différence moyenne (0–255) entre deux images : en dessous, scène figée
 const CAM_SEUIL_LUMINANCE = 18; // zone centrale presque noire : caméra masquée
+const CAM_SEUIL_GESTE = 22; // prompt 63 : différence moyenne d'un geste ample (main levée), bien au-dessus d'une présence calme
 const webcamAutorisee = () => Confort.Reglages.webcam === true;
 
 async function activerWebcam() {
@@ -108,6 +109,11 @@ function analyserImage() {
 	if (CAM.precedente) for (let i = 0; i < gris.length; i++) d += Math.abs(gris[i] - CAM.precedente[i]);
 	CAM.mouvement = CAM.precedente ? d / gris.length : 255;
 	CAM.precedente = gris;
+	// Prompt 63 : pendant le réveil, un grand mouvement (lever la main devant la caméra) vaut « Se réveiller »
+	if (phase === 'reveil' && CAM.mouvement > CAM_SEUIL_GESTE && typeof seReveiller === 'function') {
+		seReveiller();
+		annoncer(t('webcam.geste'));
+	}
 	const absent = CAM.mouvement < CAM_SEUIL_MOUVEMENT || CAM.luminance < CAM_SEUIL_LUMINANCE;
 	if (!absent) CAM.absentDepuis = 0;
 	else if (!CAM.absentDepuis) CAM.absentDepuis = millis();
