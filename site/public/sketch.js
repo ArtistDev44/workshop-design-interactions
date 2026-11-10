@@ -163,6 +163,7 @@ function draw() {
 		if (enPause) dessinerPause();
 		dessinerFermerAppli();
 	} else dessinerOS();
+	dessinerIndicateurs(); // prompt 36 : app flottante, au premier plan
 	sourisRestaurer();
 	// 2. La pièce et le moniteur autour (bureau, zoom, ou « au poste » avec la pièce visible)
 	composerVue();
@@ -1347,6 +1348,8 @@ function keyPressed() {
 		if (key === 'h' || key === 'H' || key === '?') ouvrir('aide');
 		return false;
 	}
+	// Prompt 36 : I ouvre / ferme l'app flottante « Indicateurs » (au poste)
+	if (key === 'i' || key === 'I') return basculerIndicateurs(), false;
 	// Au poste, système du PC (bureau RégulOS) : Tab = icônes, Entrée = ouvrir, Échap = fermer l'app puis se lever
 	if (PC.etat !== 'appli') {
 		if (keyCode === ESCAPE) PC.fenetre ? fermerFenetreApp() : seLever();
