@@ -200,6 +200,7 @@ function draw() {
 		dessinerReveil();
 	}
 	dessinerBoost(); // prompt 52 : cœur, pulsation rouge, lignes de vitesse, flou
+	dessinerMicro(); // prompt 54 : oscilloscope et mesures pendant l'appui
 	dessinerOffreDemission(); // prompt 47 : les trois jauges sous 20 → « Rendre son badge »
 	if (fenetre) {
 		boutons = []; // seule la fenêtre ouverte est cliquable
@@ -1499,7 +1500,7 @@ function keyPressed() {
 			return false;
 		}
 		if (keyCode === ENTER || keyCode === RETURN || key === ' ') ouvrirObjetBureau(focusBureau > 0 ? OBJETS_BUREAU[focusBureau].nom : 'ecran');
-		if (key === 'm' || key === 'M') basculerSon();
+		if (key === 'm' || key === 'M') toucheMEnfoncee(); // prompt 54 : brève = son, maintenue = micro
 		if (key === 'h' || key === 'H' || key === '?') ouvrir('aide');
 		return false;
 	}
@@ -1552,7 +1553,7 @@ function keyPressed() {
 	if (phase === 'mail' && (keyCode === ENTER || keyCode === RETURN)) return journeeSuivante(), false;
 	// Touches valables partout
 	if (key === 'h' || key === 'H' || key === '?') return ouvrir('aide'), false;
-	if (key === 'm' || key === 'M') return basculerSon(), false;
+	if (key === 'm' || key === 'M') return toucheMEnfoncee(), false; // prompt 54 : brève = son, maintenue = micro
 	if (ecran === 'jeu') {
 		if (key === 'r' || key === 'R') return ouvrir('reset'), false;
 		if (key === 'p' || key === 'P') return basculerPause(), false;
