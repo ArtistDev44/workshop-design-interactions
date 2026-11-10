@@ -5,8 +5,8 @@ Retours de rendu appliqués après le prompt 34. Les décisions Q1–Q61 et la b
 ## Vue bureau en plein écran (révision du prompt 25)
 - `SURCADRAGE = 1.05` remplace `DEZOOM = 0.88`. La pièce remplit tout l'écran, ses extrémités sont coupées (≈ 48 px à gauche et à droite, ≈ 27 px en haut et en bas), et la caméra fausse 3D (±12 px) ne montre jamais de bord.
 - `masqueFlouEtVignette(ox, oy, echelle)` traite les bords, de façon fixe à l'écran, en 480×270 puis agrandi avec lissage :
-  - une copie floutée de la pièce (`blur(2px)`), refaite seulement quand la pièce est redessinée, est découpée par un masque radial : nette jusqu'à 65,5 % du rayon, entièrement floue à partir de 75 % (zone floue divisée par 4 au total après deux retours de rendu : ≈ 72 px sur les côtés au lieu de ≈ 280) ;
-  - un vignettage radial `rgb(12,16,22)`, allégé après retour de rendu : transparent jusqu'à 91,5 % du rayon (extrême bord des coins), 0,10 à 95,5 %, 0,22 dans les coins (au lieu de 0,5 à partir de 80 %).
+  - une copie floutée de la pièce (`blur(2px)`), refaite seulement quand la pièce est redessinée, est découpée par un masque radial : nette jusqu'à 68 % du rayon, entièrement floue à partir de 72,8 % (zone floue divisée par 8 au total après trois retours de rendu : ≈ 36 px sur les côtés au lieu de ≈ 280) ;
+  - un vignettage radial `rgb(12,16,22)`, allégé après retour de rendu : transparent jusqu'à 95,8 % du rayon (pointe des coins), 0,10 à 97,9 %, 0,22 dans les coins (au lieu de 0,5 à partir de 80 %).
 - Sont retirés : le fond assombri autour de la pièce, son ombre portée, la découpe au cadre et le vignettage pixel art cuit dans l'image.
 - Pour rester dans le champ, le pan de mur de droite passe de x = 420 à 402, avec l'horloge (418) et l'applique (410). La zone de la fenêtre s'arrête à 398.
 
