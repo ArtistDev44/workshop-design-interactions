@@ -66,6 +66,7 @@ let RAPPORT = null; // { debut, bilan, chapitre, mode }
 function finDeSemaine() {
 	const ch = chapitreCourant();
 	const b = Jeu.bilan();
+	Confort.Son.signatureFin(b.type); // prompt 44 § 7 : signature sonore propre à la fin
 	if (ch) {
 		const p = progressionHistoire();
 		p.scores[ch] = b.score;
