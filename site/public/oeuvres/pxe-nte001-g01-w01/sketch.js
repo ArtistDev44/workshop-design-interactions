@@ -69,6 +69,7 @@ function setup() {
 	pixelDensity(1);
 	randomSeed(Jeu.fallback ? Jeu.fallback.seed : 1001);
 	for (let i = 0; i < 140; i++) gouttes.push({ x: random(), y: random(), v: random(0.6, 1.2) });
+	setupBureau();
 	appliquerReglages();
 	if (Confort.Reglages.horsLigneForce) Jeu.enLigne = false; // mode hors ligne forcé (Paramètres)
 	else Jeu.verifierConnexion(); // indicateur « mode hors ligne » + météo du jour pour le décor de l'accueil
@@ -108,6 +109,9 @@ function draw() {
 		boutons = []; // seule la fenêtre ouverte est cliquable
 		dessinerFenetre();
 	}
+	// Vue d'entrée : le bureau pixel art, avec le jeu en direct dans l'écran du PC
+	if (vue !== 'poste') dessinerVueBureau();
+	else if (!fenetre) dessinerCadrePoste();
 }
 
 // =====================================================================
@@ -1038,6 +1042,14 @@ function basculerSon() {
 
 function keyPressed() {
 	Confort.Son.demarrer(); // l'audio ne peut démarrer qu'après un geste du joueur
+	// Au bureau : Entrée / Espace pour s'installer au poste ; M (son) et H (aide) restent actifs
+	if (vue !== 'poste') {
+		if (vue === 'bureau' && (keyCode === ENTER || keyCode === RETURN || key === ' ')) sAsseoir();
+		if (key === 'm' || key === 'M') basculerSon();
+		return false;
+	}
+	// Au poste : Échap fait se lever (sauf si une fenêtre est ouverte ou à l'écran de fin)
+	if (keyCode === ESCAPE && !fenetre && !(ecran === 'jeu' && phase === 'fin')) return seLever(), false;
 	// Fenêtres ouvertes : elles captent le clavier
 	if (fenetre) {
 		if (keyCode === ESCAPE || (fenetre === 'aide' && (key === 'h' || key === 'H' || key === '?'))) return fermer();
