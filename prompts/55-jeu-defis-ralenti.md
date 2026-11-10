@@ -1,4 +1,4 @@
-# Prompt 54 — Jeu « Nantes en régulation », étape 40 : défis de semaine et ralenti tactique
+# Prompt 55 — Jeu « Nantes en régulation », étape 41 : défis de semaine et ralenti tactique
 
 Demande d'origine (10/11/2026) :
 
@@ -43,4 +43,4 @@ feedback (deltas flottants des jauges, urgence du compteur) sont traitées à pa
 - `npm run build`, `npm test` ; partie réelle Chromium 1920×1080 sans erreur console : défis
   annoncés le matin, R pendant un dossier (compteur figé 10 s), second R refusé, réinitialisé
   le jour suivant, bonus de défi dans le mail du soir et sur le rapport ; FR + EN ; clavier.
-  Documenter dans `jeu/48-…`. Fusion `main` sur demande.
+  Documenter dans `jeu/50-…`. Fusion `main` sur demande.

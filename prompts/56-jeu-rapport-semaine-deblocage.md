@@ -1,4 +1,4 @@
-# Prompt 55 — Jeu « Nantes en régulation », étape 41 : fin de semaine — rapport, bilan du patron, déblocage de la semaine suivante
+# Prompt 56 — Jeu « Nantes en régulation », étape 42 : fin de semaine — rapport, bilan du patron, déblocage de la semaine suivante
 
 Demande d'origine (10/11/2026) :
 
@@ -42,4 +42,4 @@ Demande d'origine (10/11/2026) :
   chapitre 1 du mode histoire, lire le rapport (papiers du bureau inclus), mail du patron, clic
   « Semaine suivante » → chapitre 2 débloqué et visible au menu, palmarès à jour ; rejouer la même
   semaine → pas de doublon ; FR + EN ; clavier seul ; animations réduites. Documenter dans
-  `jeu/50-…`. Fusion `main` sur demande.
+  `jeu/51-…`. Fusion `main` sur demande.
