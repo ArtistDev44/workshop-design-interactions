@@ -511,29 +511,37 @@ function dessinerSMS() {
 }
 
 // ——— Fenêtres du bureau : menu Échap (§ 1) et livre « stress » (§ 7) ———
+// Prompt 35 : menu Échap modernisé (même style que le menu principal)
+let choixPause = 0;
+const ENTREES_PAUSE = [
+	{ cle: 'menu.reprendre', icone: 'lecture', action: () => fermer() },
+	{ cle: 'accueil.parametres', icone: 'reglages', action: () => (fenetre = 'parametres') },
+	{ cle: 'accueil.aide', icone: 'aide', action: () => (fenetre = 'aide') },
+	{ cle: 'menu.menuPrincipal', icone: 'menu', action: () => quitterPartie() },
+];
 function fenetreMenu() {
-	const l = 640;
-	const h = 470;
+	const l = 700;
+	const h = 640;
 	const x = (L - l) / 2;
 	const y = (H - h) / 2;
-	panneau(x, y, l, h, C.accent);
-	textAlign(CENTER, TOP);
 	noStroke();
-	fill(C.accent);
+	fill(11, 27, 51, 240);
+	rect(x, y, l, h, 24);
+	textAlign(LEFT, TOP);
+	fill('#ffffff');
 	textFont(POLICE_TEXTE);
 	textStyle(BOLD);
-	textSize(40);
-	text(t('menu.titre'), L / 2, y + 36);
+	textSize(44);
+	text(t('menu.titre'), x + 48, y + 40);
 	textStyle(NORMAL);
-	textSize(18);
-	fill(C.gris);
-	text(t('menu.temps'), L / 2, y + 92);
-	bouton(x + 80, y + 140, l - 160, 72, t('menu.reprendre'), fermer);
-	bouton(x + 80, y + 230, l - 160, 72, t('accueil.parametres'), () => (fenetre = 'parametres'), false, true);
-	bouton(x + 80, y + 320, l - 160, 72, t('menu.quitter'), quitterPartie, false, true);
+	textSize(19);
+	fill('rgba(255,255,255,0.78)');
+	text(t('menu.temps'), x + 48, y + 104);
+	ENTREES_PAUSE.forEach((e, i) => carteMenu(x + 48, y + 160 + i * 112, l - 96, 88, t(e.cle), null, e.action, i === choixPause, e.icone));
 }
 
 function quitterPartie() {
+	if (ecran === 'jeu') Sauvegarde.auto(false); // prompt 35 : on retrouve la partie avec « Reprendre »
 	fenetre = null;
 	enSieste = false;
 	reveil = null;

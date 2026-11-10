@@ -135,6 +135,19 @@ function majAmbianceSonore() {
 function draw() {
 	if (!chargementMasque) masquerChargement();
 	majAmbianceSonore();
+	// Prompt 35 : menu principal plein écran avant le bureau ; il se ferme dès qu'une partie démarre ou reprend
+	if (MENU.actif && ecran === 'jeu') fermerMenuPrincipal();
+	if (MENU.actif) {
+		boutons = [];
+		dessinerMenuPrincipal();
+		if (fenetre) {
+			boutons = [];
+			dessinerFenetre();
+		}
+		dessinerTutoriel();
+		majCurseur();
+		return;
+	}
 	avancerTemps(); // horloge simulée, sieste, arrivée des incidents, fin de journée (immersion.js)
 	if (Jeu.equipes) Jeu.majEquipes(millis()); // équipes envoyées depuis la carte (prompt 22)
 	boutons = [];
@@ -142,7 +155,7 @@ function draw() {
 	sourisVersEcran();
 	background(C.fond);
 	if (PC.etat === 'appli') {
-		if (ecran === 'accueil') dessinerAccueil();
+		if (ecran === 'accueil') dessinerAppliSansPartie(); // prompt 35 : l'accueil est sorti du PC (menu principal)
 		else {
 			dessinerJeu();
 			indicateurSauvegarde(); // prompt 33
@@ -167,7 +180,10 @@ function draw() {
 	}
 	dessinerTutoriel(); // prompt 34 : par-dessus l'écran et les fenêtres
 	dessinerClignement(); // prompt 21 § 2 : par-dessus tout, purement visuel (n'intercepte aucune entrée)
-	// Prompt 29 : curseur « main » au survol de toute zone cliquable (objets de la pièce compris)
+	majCurseur();
+}
+/** Prompt 29 : curseur « main » au survol de toute zone cliquable (objets de la pièce compris) */
+function majCurseur() {
 	const surZone = boutons.some((b) => mouseX >= b.x && mouseX <= b.x + b.l && mouseY >= b.y && mouseY <= b.y + b.h);
 	if (surZone !== curseurMain) {
 		curseurMain = surZone;
@@ -1164,6 +1180,7 @@ function dessinerFin() {
 function retourAccueil() {
 	bilanCalcule = null;
 	ecran = 'accueil';
+	ouvrirMenuPrincipal(); // prompt 35 : retour à l'écran titre
 }
 
 function rejouer() {
@@ -1288,7 +1305,15 @@ function keyPressed() {
 	if (fenetre) {
 		if (keyCode === ESCAPE || (fenetre === 'aide' && (key === 'h' || key === 'H' || key === '?'))) return fermer(), false;
 		if (fenetre === 'aide' && (key === 't' || key === 'T')) return lancerTutoriel(), false; // prompt 34
-		if (fenetre === 'menu' && (keyCode === ENTER || keyCode === RETURN)) return fermer(), false;
+		if (fenetre === 'menu') {
+			// Prompt 35 : menu Échap modernisé — ↑ ↓ / Tab pour choisir, Entrée pour valider
+			const n = ENTREES_PAUSE.length;
+			if (keyCode === UP_ARROW || (keyCode === TAB && keyIsDown(SHIFT))) choixPause = (choixPause + n - 1) % n;
+			else if (keyCode === DOWN_ARROW || keyCode === TAB) choixPause = (choixPause + 1) % n;
+			else if (keyCode === ENTER || keyCode === RETURN) ENTREES_PAUSE[choixPause].action();
+			if (keyCode === UP_ARROW || keyCode === DOWN_ARROW || keyCode === TAB) annoncer(t(ENTREES_PAUSE[choixPause].cle));
+			return false;
+		}
 		if (fenetre === 'reset') {
 			if (keyCode === ENTER || keyCode === RETURN || key === 'o' || key === 'O') confirmerReset();
 			if (key === 'n' || key === 'N') fermer();
@@ -1307,6 +1332,8 @@ function keyPressed() {
 		}
 		return false;
 	}
+	// Prompt 35 : menu principal (écran titre / choix de la semaine)
+	if (MENU.actif) return toucheMenu(), false;
 	// Au bureau (§ 1, § 7) : Échap = menu ; Tab = objets (écran, livres) ; Entrée = ouvrir / s'installer
 	if (vue !== 'poste') {
 		if (vue !== 'bureau') return false;
@@ -1370,11 +1397,7 @@ function keyPressed() {
 		if (key === 'p' || key === 'P') return basculerPause(), false;
 	}
 	if (ecran === 'accueil') {
-		const n = optionsAccueil().length;
-		if (keyCode === UP_ARROW) choixAccueil = (choixAccueil + n - 1) % n;
-		if (keyCode === DOWN_ARROW) choixAccueil = (choixAccueil + 1) % n;
-		if ((key === 'c' || key === 'C') && Sauvegarde.lister().length) continuerPartie(); // prompt 33
-		if (keyCode === ENTER || keyCode === RETURN) lancerPartie();
+		if (keyCode === ENTER || keyCode === RETURN) ouvrirMenuPrincipal(); // prompt 35 : plus d'accueil dans le PC
 	} else if (phase === 'decision') {
 		const actions = { 1: 'devier', 2: 'retenir', 3: 'renfort', 0: 'rien', ' ': 'rien' };
 		if (actions[key]) decider(actions[key]);
