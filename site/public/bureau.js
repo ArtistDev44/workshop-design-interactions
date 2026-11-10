@@ -196,7 +196,7 @@ const COUCHES_PIECE = [
 	},
 ];
 /** Coefficient de plan des objets cliquables : leurs zones suivent leur plan */
-const COEF_OBJETS = { commande: 1.25, stress: 1.25, tasse: 1.25, telephone: 1.25, plante: 1.1, dossiers: 1.1, lampe: 0.7, fenetre: 0.7 };
+const COEF_OBJETS = { rapport: 1.25, commande: 1.25, stress: 1.25, tasse: 1.25, telephone: 1.25, plante: 1.1, dossiers: 1.1, lampe: 0.7, fenetre: 0.7 };
 
 function dessinerPieceBureau() {
 	COUCHES_PIECE.forEach((c) => {
@@ -603,6 +603,7 @@ function dessinerObjetsProches(g) {
 	dessinerTasseThe(g); // tasse de thé animée (sachet, vapeur)
 	dessinerTelephonePerspective(g, 376, 194); // prompt 34 : smartphone récent, en perspective
 	if (typeof dessinerLivres === 'function') dessinerLivres(g);
+	if (typeof dessinerFeuilleRapport === 'function') dessinerFeuilleRapport(g); // prompt 41
 }
 
 function dessinerLumiere(g) {

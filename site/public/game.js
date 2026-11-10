@@ -325,7 +325,11 @@
 	Jeu.score = () => NOMS_JAUGES.reduce((s, k) => s + Jeu.jauges[k], 0); // 0–300, poids égaux (Q44)
 
 	/* Conflit de deux lignes (Q27) : le dossier suivant a la même date et concerne d'autres lignes. */
+	/** Prompt 41 : éléments de jeu débloqués par chapitre du mode histoire (redéfini par histoire.js) */
+	Jeu.elementDebloque = () => true;
+
 	Jeu.conflit = function () {
+		if (!Jeu.elementDebloque('crise')) return null; // prompt 41 : conflits de lignes à partir de la semaine 3
 		const d = Jeu.dossierCourant();
 		const s = (Jeu.paquet || [])[Jeu.index + 1];
 		if (!d || !s || d.date !== s.date) return null;
@@ -908,6 +912,7 @@
 
 	/** Envoi d'une équipe sur le dossier d'index donné ; renvoie { ok, message } */
 	Jeu.envoyerEquipe = function (index, cle, maintenant) {
+		if (!Jeu.elementDebloque('equipes')) return { ok: false, message: T('histoire.verrou.equipes') }; // prompt 41 : semaine 2
 		const q = EQUIPES[cle];
 		const d = Jeu.paquet[index];
 		if (!q || !d) return { ok: false, message: T('equipe.introuvable') };
@@ -971,6 +976,7 @@
 
 	/** Armé en début de journée, démarre à l'arrivée du premier incident, dure duree_s secondes réelles */
 	Jeu.tirerModificateur = function () {
+		if (!Jeu.elementDebloque('crise')) return void (Jeu.modificateur = null); // prompt 41 : imprévus à partir de la semaine 3
 		const m = Jeu.forcerModificateur ? MODIFICATEURS.find((x) => x.id === Jeu.forcerModificateur) : MODIFICATEURS[Math.floor(Jeu.alea() * MODIFICATEURS.length)];
 		Jeu.modificateur = Object.assign({}, m, { debut: null, fin: null, actionBloquee: null }); // plus d'« erreur système » (retirée sur demande)
 	};

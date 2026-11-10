@@ -70,32 +70,20 @@ function ouvrirTelephone() {
 	TEL.ouverture = millis();
 	chargerNotifications(TEL.date);
 	ouvrir('telephone');
+	leverTelephone(); // prompt 42 : on saisit le téléphone
 	if (TEL.cache[TEL.date]) annoncer(t('tel.annonce', { n: TEL.cache[TEL.date].notifs.length }));
 }
 
-/** Vue téléphone (fenêtre) : smartphone agrandi, heure du jeu, pile de notifications réelles */
+/** Vue téléphone (prompt 38, rendue par l'animation « téléphone en main » du prompt 42) */
 function fenetreTelephone() {
-	const l = 560;
-	const h = 980;
-	const x = (L - l) / 2;
-	const y = (H - h) / 2;
-	noStroke();
-	fill(0, 0, 0, 90);
-	rect(x + 12, y + 16, l, h, 64);
-	fill('#0a0b0c');
-	rect(x, y, l, h, 64); // coque
-	const e = { x: x + 16, y: y + 16, l: l - 32, h: h - 32 };
-	const g = drawingContext.createLinearGradient(0, e.y, 0, e.y + e.h);
-	g.addColorStop(0, '#1d5f6e');
-	g.addColorStop(1, '#0b1b33');
-	drawingContext.fillStyle = g;
-	drawingContext.beginPath();
-	drawingContext.roundRect(e.x, e.y, e.l, e.h, 50);
-	drawingContext.fill();
-	fill('#0a0b0c');
-	circle(x + l / 2, e.y + 26, 18); // point caméra
+	dessinerTelephoneEnMain(contenuNotifications);
+}
+function contenuNotifications(e, pret) {
+	const x = e.x - 16;
+	const l = e.l + 32;
 	// Heure (du jeu) et date
 	const hA = heureAffichee();
+	noStroke();
 	textAlign(CENTER, TOP);
 	fill('#ffffff');
 	textFont(POLICE_TEXTE);
@@ -106,7 +94,6 @@ function fenetreTelephone() {
 	textSize(22);
 	fill('rgba(255,255,255,0.85)');
 	text(dateLongue(TEL.date), x + l / 2, e.y + 168);
-	// Notifications
 	const c = TEL.cache[TEL.date];
 	let ny = e.y + 230;
 	if (!c) {
@@ -117,7 +104,7 @@ function fenetreTelephone() {
 		text(t('tel.aucune'), x + 40, ny + 20, l - 80, 80);
 	} else
 		c.notifs.forEach((n, i) => {
-			const k = reduireAnimations ? 1 : easeOut(constrain((millis() - TEL.ouverture - i * 160) / 350, 0, 1));
+			const k = reduireAnimations ? 1 : easeOut(constrain((millis() - TEL.ouverture - 300 - i * 160) / 350, 0, 1));
 			if (k <= 0) return;
 			const nx = e.x + 16 + (1 - k) * 80;
 			const nh = 112;
@@ -125,7 +112,7 @@ function fenetreTelephone() {
 			fill(255, 255, 255, 235 * k);
 			rect(nx, ny, e.l - 32, nh, 20);
 			fill('#b3261e');
-			rect(nx + 16, ny + 16, 32, 32, 8); // icône de l'appli « Agenda »
+			rect(nx + 16, ny + 16, 32, 32, 8);
 			fill('#ffffff');
 			rect(nx + 22, ny + 22, 20, 4);
 			textAlign(LEFT, TOP);
@@ -144,13 +131,10 @@ function fenetreTelephone() {
 			text([n.type, n.lieu].filter(Boolean).join(' · '), nx + 16, ny + 82, e.l - 64, 22);
 			ny += nh + 12;
 		});
-	// Source + fermer
 	textAlign(CENTER, TOP);
 	textFont(POLICE_DONNEES);
 	textSize(14);
 	fill('rgba(255,255,255,0.8)');
 	if (c) text(t(c.source === 'api' ? 'tel.source.api' : 'tel.source.repli'), e.x + 24, e.y + e.h - 150, e.l - 48, 44);
-	bouton(x + l / 2 - 150, e.y + e.h - 96, 300, 64, t('commun.fermer'), fermer);
-	fill('rgba(255,255,255,0.6)');
-	rect(x + l / 2 - 70, e.y + e.h - 18, 140, 6, 3); // barre gestuelle
+	if (pret) bouton(e.x + e.l / 2 - 150, e.y + e.h - 96, 300, 64, t('commun.fermer'), fermer);
 }

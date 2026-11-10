@@ -142,6 +142,13 @@ function majAmbianceSonore() {
 function draw() {
 	if (!chargementMasque) masquerChargement();
 	majAmbianceSonore();
+	// Prompt 41 : cinématique de fin, plein écran
+	if (CINE) {
+		boutons = [];
+		dessinerCinematique();
+		majCurseur();
+		return;
+	}
 	// Prompt 35 : menu principal plein écran avant le bureau ; il se ferme dès qu'une partie démarre ou reprend
 	if (MENU.actif && ecran === 'jeu') fermerMenuPrincipal();
 	if (MENU.actif) {
@@ -313,10 +320,13 @@ function lancerNouvellePartie() {
 	fenetre = null;
 	const p = o.type === 'direct' ? Jeu.chargerDirect() : Jeu.chargerSemaine(o.lundi);
 	Confort.Son.bip('choix');
+	RAPPORT = null;
 	p.then(() => {
 		Jeu.nouvellePartie();
 		demarrerJournee(); // journée 1, 6h00, en attente du premier incident
+		const ch = chapitreCourant();
 		if (!introVue) lancerIntroSMS(); // § 2 : une seule fois, pas sur « Rejouer »
+		else if (ch) conversationChapitre(ch); // prompt 41 : le patron présente la semaine et son nouvel élément
 		else if (!tutorielVu() && !optionGuide()) lancerTutoriel(); // prompt 34 (pas si le guide « Prendre en main » est choisi)
 	});
 }
@@ -444,7 +454,7 @@ function indicateurSauvegarde() {
 }
 
 function dessinerJeu() {
-	if (phase === 'fin') return dessinerFin();
+	if (phase === 'fin') return RAPPORT ? dessinerEcranRapportImprime() : dessinerFin(); // prompt 41
 	if (phase === 'attente' || phase === 'reveil' || phase === 'mail') return dessinerJeuAttente();
 	const d = dossierCourant();
 	const meteo = d ? Jeu.meteoDuJour(d.date) : null;
@@ -1324,11 +1334,12 @@ function basculerSon() {
 function keyPressed() {
 	// Prompt 33 : boîte d'import ouverte (champ texte, fichier) → le clavier lui appartient
 	if (Sauvegarde.dialogueOuvert) return;
+	if (CINE) return toucheCinematique(), false; // prompt 41
 	Confort.Son.demarrer(); // l'audio ne peut démarrer qu'après un geste du joueur
 	interaction();
 	// Intro SMS (§ 2) : clic / Entrée pour avancer
 	if (smsActif) {
-		if (keyCode === ENTER || keyCode === RETURN || key === ' ') smsIndex === SMS.length - 1 ? terminerIntro() : smsSuivant();
+		if (keyCode === ENTER || keyCode === RETURN || key === ' ') avancerConversation(); // prompt 42
 		return false;
 	}
 	// Réveil (§ 4) : barre d'espace
@@ -1347,6 +1358,7 @@ function keyPressed() {
 		if (keyCode === ESCAPE || (fenetre === 'aide' && (key === 'h' || key === 'H' || key === '?'))) return fermer(), false;
 		if (fenetre === 'aide' && (key === 't' || key === 'T')) return lancerTutoriel(), false; // prompt 34
 		if (fenetre === 'telephone' && (keyCode === ENTER || keyCode === RETURN)) return fermer(), false; // prompt 38
+		if (fenetre === 'rapport' && (keyCode === ENTER || keyCode === RETURN)) return actionRapport(), false; // prompt 41
 		if (fenetre === 'menu') {
 			// Prompt 35 : menu Échap modernisé — ↑ ↓ / Tab pour choisir, Entrée pour valider
 			const n = ENTREES_PAUSE.length;
@@ -1381,7 +1393,9 @@ function keyPressed() {
 		if (vue !== 'bureau') return false;
 		if (keyCode === ESCAPE) return ouvrir('menu'), false;
 		if (keyCode === TAB) {
-			focusBureau = (focusBureau + (keyIsDown(SHIFT) ? OBJETS_BUREAU.length - 1 : 1)) % OBJETS_BUREAU.length;
+			const n = OBJETS_BUREAU.length;
+			do focusBureau = (focusBureau + (keyIsDown(SHIFT) ? n - 1 : 1)) % n;
+			while (OBJETS_BUREAU[focusBureau].visible && !OBJETS_BUREAU[focusBureau].visible()); // prompt 41 : objets invisibles sautés
 			return false;
 		}
 		if (keyCode === ENTER || keyCode === RETURN || key === ' ') ouvrirObjetBureau(focusBureau > 0 ? OBJETS_BUREAU[focusBureau].nom : 'ecran');
@@ -1505,7 +1519,9 @@ function dessinerPause() {
 }
 
 function dessinerFenetre() {
+	if (fenetre === 'telephone') return fenetreTelephone(); // prompt 42 : le téléphone en main a son propre voile
 	voile();
+	if (fenetre === 'rapport') return fenetreRapport(); // prompt 41
 	if (fenetre === 'aide') return fenetreAide();
 	if (fenetre === 'reset') return fenetreReset();
 	if (fenetre === 'parametres') return fenetreParametres();
