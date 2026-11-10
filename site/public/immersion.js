@@ -20,7 +20,7 @@ const SMS = [
 	{ de: 'moi', texte: 'Premier jour au travail, faut pas que je me loupe.' },
 	{ de: 'Camille · cheffe de salle', texte: 'Bienvenue à la régulation ! Ton poste : surveiller le réseau Naolib et traiter les incidents qui arrivent sur ton écran.' },
 	{ de: 'Camille · cheffe de salle', texte: 'Pour chaque dossier : dévier la ligne, retenir en terminus, envoyer un bus de renfort… ou ne rien faire. Le chrono tourne.' },
-	{ de: 'Camille · cheffe de salle', texte: 'Ton objectif : garder les trois jauges au vert — fluidité du réseau, satisfaction des usagers, réputation de la salle.' },
+	{ de: 'Camille · cheffe de salle', texte: 'Ton objectif : garder les trois jauges au vert — fluidité du réseau, réputation de la salle, budget de la régulation.' },
 	{ de: 'Camille · cheffe de salle', texte: 'Si l’écran du PC clignote en rouge, c’est urgent. Et pas de sieste au poste !' },
 	{ de: 'moi', texte: 'Ouverture à 6h, on y va.' },
 ];

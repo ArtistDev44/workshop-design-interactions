@@ -3,7 +3,7 @@
  * des années 2000 (dégradé, traînées de lumière, bulles floues), pixelisé ; aucun logo ni visuel de
  * marque existant n'est reproduit. Tout est dessiné par le code (contenu 1920×1080 de l'écran du PC).
  */
-const PC = { etat: 'eteint', debut: 0, selection: 0 }; // 'eteint' | 'demarrage' | 'os' | 'appli'
+const PC = { etat: 'eteint', debut: 0, selection: 0, fenetre: null, message: '' }; // etat : 'eteint' | 'demarrage' | 'os' | 'appli' ; fenetre : null | 'patron' | 'carte' | 'community' | 'journal'
 const DUREE_DEMARRAGE = 3400;
 let gFondOS = null;
 
@@ -68,14 +68,10 @@ function dessinerOS() {
 	drawingContext.imageSmoothingEnabled = false;
 	image(fondOS(), 0, 0, L, H);
 	drawingContext.imageSmoothingEnabled = true;
-	// Icônes du bureau : libellé monospace, sélection en carré blanc 15 % + bordure (angles droits)
-	const icones = [
-		{ nom: 'Régulation Nantes', dessin: iconeRegulation },
-		{ nom: 'Corbeille', dessin: iconeCorbeille },
-	];
-	icones.forEach((ic, i) => {
-		const x = 48;
-		const y = 48 + i * 196;
+	// Icônes du bureau (2 colonnes) : libellé monospace, sélection en carré blanc 15 % + bordure (angles droits)
+	ICONES_OS.forEach((ic, i) => {
+		const x = 48 + Math.floor(i / 3) * 196;
+		const y = 48 + (i % 3) * 196;
 		const sel = PC.selection === i;
 		const survol = mouseX >= x && mouseX <= x + 168 && mouseY >= y && mouseY <= y + 176;
 		noStroke();
@@ -88,17 +84,20 @@ function dessinerOS() {
 			rect(x + 1, y + 1, 166, 174);
 			noStroke();
 		}
-		ic.dessin(x + 44, y + 16);
+		ic.dessin(x + 44, y + 16, 1);
 		fill(DS.noir50);
 		textFont(DS.policeTexte);
 		textSize(18);
 		const tl = textWidth(ic.nom) + 12;
 		rect(x + 84 - tl / 2, y + 116, tl, 30);
 		dsTexte(ic.nom, x + 84, y + 120, 18, DS.blanc, 'center');
-		boutons.push({ x, y, l: 168, h: 176, action: i === 0 ? ouvrirAppli : () => (PC.selection = i) });
-		if (i === 0 && typeof incidentActif === 'function' && (incidentActif() || phase === 'mail')) dsBadge(x + 136, y + 18, '!', 'erreur');
+		boutons.push({ x, y, l: 168, h: 176, action: () => ouvrirIconeOS(i) });
+		const b = badgeIcone(ic.cle);
+		if (b) dsBadge(x + 140, y + 18, b, 'erreur');
 	});
-	// Barre des tâches : fond #0D0C0C, filet blanc 15 %, bouton « démarrer » rouge, appli épinglée, horloge
+	// Fenêtre d'application ouverte (prompt 22)
+	if (PC.fenetre) dessinerFenetreApp();
+	// Barre des tâches : fond #0D0C0C, filet blanc 15 %, bouton « démarrer » rouge, applis épinglées, horloge
 	noStroke();
 	fill(DS.fond);
 	rect(0, H - 64, L, 64);
@@ -107,12 +106,24 @@ function dessinerOS() {
 	fill(DS.primaire);
 	rect(8, H - 56, 120, 48);
 	dsTitre('REGUL', 68, H - 48, 28, DS.blanc, 'center');
-	fill(PC.etat === 'appli' ? DS.blanc15 : DS.blanc05);
-	rect(140, H - 56, 60, 48);
-	iconeRegulation(150, H - 52, 0.5);
+	ICONES_OS.slice(0, 5).forEach((ic, i) => {
+		const x = 140 + i * 68;
+		const actif = (ic.cle === 'regulation' && PC.etat === 'appli') || PC.fenetre === ic.cle;
+		fill(actif ? DS.blanc15 : DS.blanc05);
+		rect(x, H - 56, 60, 48);
+		if (actif) {
+			fill(DS.primaire);
+			rect(x, H - 10, 60, 2);
+		}
+		ic.dessin(x + 10, H - 52, 0.5);
+		boutons.push({ x, y: H - 56, l: 60, h: 48, action: () => ouvrirIconeOS(i) });
+		const b = badgeIcone(ic.cle);
+		if (b) dsBadge(x + 54, H - 54, b, 'erreur');
+	});
 	const hA = heureAffichee();
 	dsTexte(String(hA.h).padStart(2, '0') + ':' + String(hA.m).padStart(2, '0'), L - 24, H - 46, 24, DS.blanc, 'right');
-	dsTexte('Cliquez sur « Régulation Nantes » pour ouvrir l’application (Entrée)', 224, H - 44, 18, DS.blanc50, 'left');
+	if (Jeu.jauges && ecran === 'jeu') dsTexte('Budget ' + Jeu.jauges.budget + ' · Réputation ' + Jeu.jauges.reputation + ' · Fluidité ' + Jeu.jauges.fluidite, L - 120, H - 44, 18, DS.blanc75, 'right');
+	else dsTexte('Tab : icônes · Entrée : ouvrir · Échap : fermer / se lever', 500, H - 44, 18, DS.blanc50, 'left');
 }
 
 function dessinerDemarrage() {
@@ -211,4 +222,281 @@ function dessinerFermerAppli() {
 	line(x + 26, y + 8, x + 14, y + 20);
 	noStroke();
 	boutons.push({ x, y, l: 40, h: 28, action: fermerAppli });
+}
+
+// =====================================================================
+// Prompt 22 — applications du poste de travail (fenêtres RégulOS, Pixel Design System)
+// Le temps ne s'arrête pas pendant la lecture d'une app (comme les livres du prompt 20).
+// =====================================================================
+const ICONES_OS = [
+	{ cle: 'regulation', nom: 'Régulation', dessin: (x, y, s) => iconeRegulation(x, y, s || 1) },
+	{ cle: 'patron', nom: 'Patron', dessin: (x, y, s) => iconePixel(x, y, s, 'enveloppe') },
+	{ cle: 'carte', nom: 'Carte', dessin: (x, y, s) => iconePixel(x, y, s, 'carte') },
+	{ cle: 'community', nom: 'Community', dessin: (x, y, s) => iconePixel(x, y, s, 'bulle') },
+	{ cle: 'journal', nom: 'Journal', dessin: (x, y, s) => iconePixel(x, y, s, 'livre') },
+	{ cle: 'corbeille', nom: 'Corbeille', dessin: (x, y) => iconeCorbeille(x, y) },
+];
+
+function ouvrirIconeOS(i) {
+	PC.selection = i;
+	const cle = ICONES_OS[i].cle;
+	if (cle === 'regulation') return ouvrirAppli();
+	if (cle === 'corbeille') return;
+	if (PC.etat === 'appli') PC.etat = 'os';
+	PC.fenetre = PC.fenetre === cle ? null : cle; // re-cliquer l'icône active referme l'app
+	PC.message = '';
+	if (PC.fenetre && Jeu.nonLus && Jeu.nonLus[cle] !== undefined) Jeu.nonLus[cle] = 0;
+	Confort.Son.bip('choix');
+}
+function fermerFenetreApp() {
+	PC.fenetre = null;
+}
+function badgeIcone(cle) {
+	if (cle === 'regulation') return typeof incidentActif === 'function' && (incidentActif() || phase === 'mail') ? '!' : '';
+	if (!Jeu.nonLus) return '';
+	if (cle === 'carte') return typeof incidentActif === 'function' && incidentActif() && !Jeu.equipePour(Jeu.index) ? '1' : '';
+	return Jeu.nonLus[cle] ? String(Jeu.nonLus[cle]) : '';
+}
+
+/** Icônes 80×80 en pixels (rectangles, angles droits), dessinées par le code */
+function iconePixel(x, y, s, type) {
+	s = s || 1;
+	push();
+	translate(x, y);
+	scale(s);
+	noStroke();
+	fill(DS.fond);
+	rect(0, 0, 80, 80);
+	stroke(DS.blanc15);
+	strokeWeight(2);
+	noFill();
+	rect(1, 1, 78, 78);
+	noStroke();
+	if (type === 'enveloppe') {
+		fill(DS.blanc);
+		rect(12, 22, 56, 38);
+		fill(DS.primaire);
+		for (let k = 0; k < 7; k++) rect(16 + k * 4, 26 + k * 3, 4, 4), rect(60 - k * 4, 26 + k * 3, 4, 4);
+	} else if (type === 'carte') {
+		fill('#2b3a4a');
+		rect(10, 10, 60, 60);
+		fill(DS.info);
+		rect(10, 40, 60, 8); // la Loire
+		fill(DS.blanc50);
+		rect(36, 10, 4, 60);
+		rect(10, 24, 60, 3);
+		fill(DS.primaire);
+		rect(22, 28, 10, 10);
+		rect(50, 52, 8, 8);
+	} else if (type === 'bulle') {
+		fill(DS.blanc);
+		rect(10, 14, 60, 38);
+		rect(20, 52, 10, 10);
+		fill(DS.fond);
+		for (let k = 0; k < 3; k++) rect(20, 22 + k * 9, 40 - k * 10, 4);
+	} else if (type === 'livre') {
+		fill(DS.primaire);
+		rect(12, 14, 26, 52);
+		rect(42, 14, 26, 52);
+		fill(DS.blanc);
+		rect(16, 18, 18, 44);
+		rect(46, 18, 18, 44);
+		fill(DS.fond);
+		for (let k = 0; k < 4; k++) rect(18, 24 + k * 9, 14, 2), rect(48, 24 + k * 9, 14, 2);
+	}
+	pop();
+}
+
+const FENETRE_APP = { x: 440, y: 56, l: 1440, h: 900 };
+const TITRES_APPS = { patron: 'MESSAGES DU PATRON', carte: 'CARTE DES INCIDENTS', community: 'COMMUNITY MANAGER', journal: 'JOURNAL DE BORD' };
+
+function dessinerFenetreApp() {
+	const f = FENETRE_APP;
+	dsPanneau(f.x, f.y, f.l, f.h, TITRES_APPS[PC.fenetre]);
+	// Croix de fermeture (carré, angles droits)
+	const cx = f.x + f.l - 52;
+	const cy = f.y + 12;
+	const survol = mouseX >= cx && mouseX <= cx + 36 && mouseY >= cy && mouseY <= cy + 36;
+	noStroke();
+	fill(survol ? DS.primaire : DS.fond);
+	rect(cx, cy, 36, 36);
+	stroke(DS.blanc);
+	strokeWeight(3);
+	line(cx + 11, cy + 11, cx + 25, cy + 25);
+	line(cx + 25, cy + 11, cx + 11, cy + 25);
+	noStroke();
+	boutons.push({ x: cx, y: cy, l: 36, h: 36, action: fermerFenetreApp });
+	if (Jeu.nonLus && Jeu.nonLus[PC.fenetre] !== undefined) Jeu.nonLus[PC.fenetre] = 0; // lu
+	const zone = { x: f.x + 24, y: f.y + 76, l: f.l - 48, h: f.h - 170 };
+	if (!Jeu.paquet || ecran !== 'jeu') dsTexte('Aucune partie en cours : ouvrez « Régulation Nantes » et choisissez une semaine.', zone.x, zone.y, 22, DS.blanc75, 'left', zone.l);
+	else if (PC.fenetre === 'patron') appPatron(zone);
+	else if (PC.fenetre === 'community') appCommunity(zone);
+	else if (PC.fenetre === 'journal') appJournal(zone);
+	else if (PC.fenetre === 'carte') appCarte(zone);
+	dsBouton(f.x + f.l - 260, f.y + f.h - 80, 236, 56, 'Fermer (Échap)', fermerFenetreApp, 'contour');
+}
+
+function derniers(liste, n) {
+	return liste.slice(Math.max(0, liste.length - n));
+}
+
+function appPatron(z) {
+	// Fil de bulles façon SMS (même esprit que l'intro du prompt 20), aux couleurs du design system
+	let y = z.y;
+	derniers(Jeu.messagesPatron, 9).forEach((m) => {
+		textFont(DS.policeTexte);
+		textSize(20);
+		const lmax = z.l - 260;
+		const lignes = Math.ceil(textWidth(m.texte) / (lmax - 32)) || 1;
+		const h = 24 + lignes * 28;
+		noStroke();
+		fill(DS.blanc05);
+		rect(z.x, y, Math.min(lmax, textWidth(m.texte) + 32), h);
+		fill(DS.primaire);
+		rect(z.x, y, 4, h);
+		dsTexte(m.texte, z.x + 18, y + 12, 20, DS.blanc, 'left', lmax - 32);
+		dsTexte(m.heure, z.x + z.l - 10, y + 12, 18, DS.blanc50, 'right');
+		y += h + 12;
+	});
+	if (!Jeu.messagesPatron.length) dsTexte('Pas encore de message.', z.x, z.y, 20, DS.blanc50, 'left');
+}
+
+function appCommunity(z) {
+	let y = z.y;
+	dsTexte('Réputation actuelle : ' + Jeu.jauges.reputation + '/100 — chaque commentaire la fait évoluer.', z.x, y, 20, DS.blanc75, 'left');
+	y += 44;
+	derniers(Jeu.commentaires, 8)
+		.reverse()
+		.forEach((c) => {
+			noStroke();
+			fill(DS.blanc05);
+			rect(z.x, y, z.l, 76);
+			stroke(DS.blanc15);
+			strokeWeight(2);
+			noFill();
+			rect(z.x + 1, y + 1, z.l - 2, 74);
+			noStroke();
+			dsTexte(c.auteur + ' · ' + c.heure, z.x + 16, y + 10, 18, DS.blanc50, 'left');
+			dsTexte(c.texte, z.x + 16, y + 38, 20, DS.blanc, 'left', z.l - 160);
+			dsBadge(z.x + z.l - 60, y + 38, (c.delta > 0 ? '+' : '') + c.delta + ' rép.', c.delta > 0 ? 'succes' : 'erreur');
+			y += 88;
+		});
+	if (!Jeu.commentaires.length) dsTexte('Aucun commentaire pour l’instant.', z.x, y, 20, DS.blanc50, 'left');
+}
+
+function appJournal(z) {
+	const j = Jeu.jourCourant();
+	let y = z.y;
+	dsTitre('JOURNEE DU ' + (j ? j.date.split('-').reverse().join('/') : ''), z.x, y, 24, DS.blanc, 'left');
+	y += 50;
+	const lignes = (Jeu.evenementsJournee || []).filter((e) => j && e.jour === j.date).map((e) => ({ t: Jeu.ligneMail(e), ok: Jeu.evaluer(e) === 'bon choix !' }));
+	(Jeu.equipes || [])
+		.filter((q) => j && q.jour === j.date)
+		.forEach((q) => lignes.push({ t: q.heure + ' – ' + q.nom + ' envoyée : ' + q.sujet + ' (−' + q.cout + ' budget) → ' + (q.arrivee_sim ? 'arrivée à ' + q.arrivee_sim : 'en route'), ok: true, equipe: true }));
+	if (!lignes.length) dsTexte('Rien à signaler pour l’instant.', z.x, y, 20, DS.blanc50, 'left');
+	lignes.forEach((l) => {
+		noStroke();
+		fill(l.equipe ? DS.info : l.ok ? DS.succes : DS.primaire);
+		rect(z.x, y + 4, 6, 22);
+		dsTexte(l.t, z.x + 18, y, 19, DS.blanc, 'left', z.l - 30);
+		textFont(DS.policeTexte);
+		textSize(19);
+		y += textWidth(l.t) > z.l - 40 ? 60 : 36;
+	});
+}
+
+// ——— Carte : position d'une ligne = centre réel de son tracé (data/lignes.json) ———
+const cacheCentres = new Map();
+function centreLigne(nom) {
+	if (cacheCentres.has(nom)) return cacheCentres.get(nom);
+	const l = Jeu.lignes && Jeu.lignes.lignes.find((x) => x.nom === nom);
+	let c = null;
+	if (l) {
+		let sx = 0;
+		let sy = 0;
+		let n = 0;
+		l.traces.forEach((t) => t.forEach((p) => ((sx += p[0]), (sy += p[1]), n++)));
+		c = [sx / n, sy / n];
+	}
+	cacheCentres.set(nom, c);
+	return c;
+}
+
+function appCarte(z) {
+	const carte = { x: z.x, y: z.y, l: 900, h: z.h };
+	noStroke();
+	fill('#121a22');
+	rect(carte.x, carte.y, carte.l, carte.h);
+	const pr = projeter(carte);
+	if (Jeu.lignes) {
+		noStroke();
+		fill(56, 96, 255, 90); // eau (info du design system, atténuée)
+		Jeu.lignes.eau.forEach((a) => {
+			beginShape();
+			a.forEach((p) => vertex(pr.x(p[0]), pr.y(p[1])));
+			endShape(CLOSE);
+		});
+		noFill();
+		stroke(255, 255, 255, 38);
+		strokeWeight(1.5);
+		Jeu.lignes.lignes.forEach((l) =>
+			l.traces.forEach((t) => {
+				beginShape();
+				t.forEach((p) => vertex(pr.x(p[0]), pr.y(p[1])));
+				endShape();
+			}),
+		);
+		noStroke();
+	}
+	// Incident actif (un seul à la fois) et équipes en route
+	const actif = typeof incidentActif === 'function' && incidentActif() ? Jeu.dossierCourant() : null;
+	const pos = (d) => {
+		const c = d && d.lignes && d.lignes.length ? centreLigne(d.lignes[0]) : null;
+		return c ? { x: pr.x(c[0]), y: pr.y(c[1]), libre: false } : { x: carte.x + carte.l / 2, y: carte.y + carte.h / 2, libre: true };
+	};
+	(Jeu.equipes || []).forEach((q) => {
+		const p = pos(Jeu.paquet[q.index]);
+		fill(q.arrivee_sim ? DS.succes : DS.info);
+		rect(p.x + 14, p.y - 8, 16, 16);
+		const reste = Math.max(0, Math.ceil((q.arrivee - millis()) / 1000));
+		if (!q.arrivee_sim) dsTexte(q.nom + ' · ' + reste + ' s', p.x + 34, p.y - 10, 16, DS.infoClair, 'left');
+	});
+	const panneauX = carte.x + carte.l + 24;
+	const panneauL = z.l - carte.l - 24;
+	if (actif) {
+		const p = pos(actif);
+		const k = typeof pulsationRouge === 'function' ? pulsationRouge() : 1;
+		fill(212, 3, 28, 255 * k);
+		rect(p.x - 10, p.y - 10, 20, 20);
+		noFill();
+		stroke(DS.primaire);
+		strokeWeight(2);
+		rect(p.x - 18, p.y - 18, 36, 36);
+		noStroke();
+		dsTexte(p.libre ? 'Réseau (lieu non précisé par la source)' : 'Ligne ' + actif.lignes.join(', '), p.x + 24, p.y + 14, 16, DS.blanc, 'left');
+		// Panneau latéral : incident + équipes
+		dsTitre('INCIDENT', panneauX, z.y, 24, DS.blanc, 'left');
+		dsTexte((actif.lignes && actif.lignes.length ? 'Ligne ' + actif.lignes.join(', ') + ' · ' : '') + actif.nature + (actif.retard !== null && actif.retard !== undefined ? ' · +' + actif.retard + ' min' : ''), panneauX, z.y + 44, 19, DS.blanc75, 'left', panneauL);
+		dsTexte('Budget disponible : ' + Jeu.jauges.budget, panneauX, z.y + 104, 19, DS.alerte, 'left');
+		const dejaEnvoyee = Jeu.equipePour(Jeu.index);
+		Object.keys(Jeu.EQUIPES).forEach((cle, i) => {
+			const q = Jeu.EQUIPES[cle];
+			const effets = Object.keys(q.effets).map((k2) => Jeu.LIBELLES_JAUGES[k2] + ' +' + q.effets[k2]).join(', ');
+			const desactive = !!dejaEnvoyee || Jeu.jauges.budget < q.cout;
+			dsBouton(panneauX, z.y + 150 + i * 92, panneauL, 64, i + 1 + ' · ' + q.nom + ' (−' + q.cout + ')', () => envoyerEquipeCarte(cle), i === 0 ? 'primaire' : 'secondaire', desactive);
+			dsTexte(effets, panneauX, z.y + 218 + i * 92, 15, DS.blanc50, 'left');
+		});
+		if (dejaEnvoyee) dsTexte('Équipe déjà envoyée : ' + dejaEnvoyee.nom + '.', panneauX, z.y + 530, 18, DS.infoClair, 'left', panneauL);
+	} else {
+		dsTitre('AUCUN INCIDENT', panneauX, z.y, 24, DS.blanc, 'left');
+		dsTexte('Les incidents actifs de la partie apparaissent ici, à l’emplacement réel de leur ligne.', panneauX, z.y + 44, 19, DS.blanc50, 'left', panneauL);
+	}
+	if (PC.message) dsTexte(PC.message, panneauX, z.y + z.h - 60, 18, PC.message.startsWith('Budget') || PC.message.startsWith('Équipe déjà') ? DS.erreurClair : DS.succesClair, 'left', panneauL);
+}
+
+function envoyerEquipeCarte(cle) {
+	if (!(typeof incidentActif === 'function' && incidentActif())) return;
+	const r = Jeu.envoyerEquipe(Jeu.index, cle, millis());
+	PC.message = r.message;
+	Confort.Son.bip(r.ok ? 'action' : 'alerte');
 }
