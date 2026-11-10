@@ -38,4 +38,4 @@ paupières + « Se réveiller » ; réveil raté = −5 sur la jauge de l'incide
 - `npm run build`, `npm test` ; essai réel : webcam autorisée (rester devant → rien ; s'éloigner 8 s →
   sieste ; revenir → « Se réveiller » toujours requis), webcam refusée (repli, sieste sur inactivité
   seule), option Webcam désactivée, LED et annonces `aria-live`, aucune erreur console, aucune image
-  affichée. FR + EN ; clavier. Documenter dans `jeu/50-…`. Fusion `main` sur demande.
+  affichée. FR + EN ; clavier. Documenter dans `jeu/52-…`. Fusion `main` sur demande.

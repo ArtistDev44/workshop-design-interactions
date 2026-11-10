@@ -193,6 +193,7 @@ function dessinerBarreTaches() {
 	});
 	const hA = heureAffichee();
 	dsTexte(String(hA.h).padStart(2, '0') + ':' + String(hA.m).padStart(2, '0'), L - 24, tb + 24, 28, DS.blanc, 'right');
+	indicateurWebcamBarre(700, tb + 22); // prompt 57 : « CAM » + point rouge tant que la webcam est active
 	if (Jeu.jauges && ecran === 'jeu') dsTexte(t('os.jauges', { b: Jeu.jauges.budget, r: Jeu.jauges.reputation, f: Jeu.jauges.fluidite }), L - 130, tb + 28, 20, DS.blanc75, 'right');
 	else dsTexte(t('os.aideClavier'), 790, tb + 28, 18, DS.blanc50, 'left');
 }

@@ -52,6 +52,7 @@ const OBJETS_BUREAU = [
 	{ nom: 'fenetre', piece: true, label: T('piece.fenetre'), infobulle: T('piece.fenetre.survol'), x: 334, y: 14, l: 64, h: 96 }, // prompt 31 : la baie s'arrête au pan de mur
 	{ nom: 'horloge', label: T('objet.horloge'), infobulle: T('objet.horloge.survol'), x: 404, y: 30, l: 28, h: 29 }, // prompt 51 : finir sa journée
 	{ nom: 'sablier', label: T('objet.sablier'), infobulle: T('objet.sablier.survol'), x: 302, y: 169, l: 14, h: 22 }, // prompt 51 : faire passer le temps
+	{ nom: 'webcam', label: T('objet.webcam'), infobulle: T('objet.webcam.survol'), x: 234, y: 39, l: 13, h: 8 }, // prompt 57 : webcam posée sur l'écran
 	{ nom: 'micro', label: T('objet.micro'), infobulle: T('objet.micro.survol'), x: 150, y: 170, l: 12, h: 24 }, // prompt 54 : micro du poste (appui maintenu)
 ];
 
@@ -207,7 +208,8 @@ function avancerTemps() {
 
 	if (phase === 'attente') {
 		// Sieste après 20 s sans incident ni interaction (§ 4)
-		if (!enSieste && maintenant - inactifDepuis > IMMERSION.siesteApresMs) {
+		// Prompt 57 : la sieste vient aussi quand la webcam ne voit plus le joueur (8 s d'absence)
+		if (!enSieste && (maintenant - inactifDepuis > IMMERSION.siesteApresMs || joueurParti())) {
 			enSieste = true;
 			debutSieste = maintenant;
 			if (vue === 'poste') seLever(); // on se cale dans le fauteuil : retour à la vue bureau
@@ -726,6 +728,7 @@ function ouvrirObjetBureau(nom) {
 	if (nom === 'horloge') return clicHorloge(); // prompt 51
 	if (nom === 'tasse') return boireCafe(); // prompt 52 : le café en main, puis le boost
 	if (nom === 'micro') return clicMicro(); // prompt 54 : push-to-talk
+	if (nom === 'webcam') return clicWebcam(); // prompt 57 : présence
 	if (nom === 'sablier') return clicSablier(); // prompt 51
 	if (OBJETS_BUREAU.some((o) => o.nom === nom && o.piece)) return interagirPiece(nom); // prompt 29
 }
