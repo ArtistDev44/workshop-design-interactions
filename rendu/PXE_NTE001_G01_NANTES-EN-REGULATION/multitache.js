@@ -189,7 +189,7 @@ function majNotifications() {
 	}
 	Object.assign(V, nb);
 	// Fin d'intervention : passage « sur place » → « retour » observé pendant la partie
-	const m = millis();
+	const m = (typeof tempsEquipes === 'function' ? tempsEquipes() : millis()); // prompt 95
 	(Jeu.equipes || []).forEach((q) => {
 		if (q.inutile) return;
 		const ph = Jeu.phaseEquipe(q, m);

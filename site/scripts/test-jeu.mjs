@@ -1763,6 +1763,49 @@ for (const f of ['enquete.js', 'carte.js', 'journal.js']) verifier(!/\*\s*1\.05\
 	verifier(/debutGlisser\(\)/.test(readFileSync(join(pub, 'sketch.js'), 'utf8')) && /relacherGlisser\(\)/.test(readFileSync(join(pub, 'micro.js'), 'utf8')), 'glisser-déposer : appui et relâchement branchés');
 }
 
+// Prompt 95 : journées synchronisées et expliquées — une seule horloge (équipes en temps de jeu), titres de
+// transition justes, explication de la journée tirée des données, indicateur de sauvegarde en heure de jeu
+{
+	const c95 = contexte('fr');
+	vm.runInContext('var setInterval = () => 0, localeActive = () => "fr-FR";', c95);
+	vm.runInContext(readFileSync(join(pub, 'immersion.js'), 'utf8'), c95, { filename: 'immersion.js' });
+	const r95 = vm.runInContext(
+		`(() => {
+		const r = {};
+		Jeu.chargerSemaine('2026-09-14'); Jeu.nouvellePartie();
+		TRANSITION_JOUR = { jour: 1, semaine: 0, date: Jeu.jours[0].date };
+		r.archive = texteTransitionJour() === 'JOUR 1/' + Jeu.jours.length;
+		TRANSITION_JOUR.semaine = 2; r.histoire = texteTransitionJour() === 'JOUR 1/' + Jeu.jours.length + ' — SEMAINE 2';
+		const mode = Jeu.etat.mode; Jeu.etat.mode = 'direct'; r.direct = /TEMPS RÉEL/.test(texteTransitionJour()); Jeu.etat.mode = mode;
+		TRANSITION_JOUR.semaine = 0;
+		const l = lignesTransitionJour().join(' | ');
+		r.prevus = l.includes(Jeu.jours[0].dossiers.length + ' signalement');
+		r.service = l.includes('8h00') && l.includes('20h00') && /Quitter la journée/.test(l);
+		r.courte = Jeu.jours.length < 7 ? /aucun événement réel le dimanche 20 septembre/.test(l) : true;
+		TRANSITION_JOUR.jour = 2; r.courteUneFois = !/aucun événement réel/.test(lignesTransitionJour().join(' '));
+		// Équipes : 20 minutes de jeu (1 000 ms de l'horloge des équipes = 1 min de jeu au rythme normal)
+		Jeu.elementDebloque = () => true; Jeu.jauges.budget = 100;
+		const T0 = 500000;
+		const e = Jeu.envoyerEquipe(0, 'police', T0);
+		const q = Jeu.equipes[0];
+		Jeu.majEquipes(T0 + 19999); const avant = q.arrivee_sim === null;
+		Jeu.majEquipes(T0 + 20000); r.vingtMinutes = e.ok && avant && q.arrivee_sim !== null;
+		return r;
+	})()`,
+		c95,
+	);
+	for (const [k, v] of Object.entries(r95)) verifier(v === true, `journées (prompt 95) : ${k}`);
+	const im = readFileSync(join(pub, 'immersion.js'), 'utf8');
+	const corps = (im.match(/function avancerTemps\(\) \{[\s\S]*?\n\}/) || [''])[0];
+	verifier(corps.indexOf('if (tempsSuspendu()) return;') >= 0 && corps.indexOf('TEMPS_EQUIPES.ms +=') > corps.indexOf('if (tempsSuspendu()) return;') && /vitesse \/ IMMERSION\.minutesParSeconde/.test(corps), 'journées : l\'horloge des équipes doit s\'arrêter avec le temps de jeu et suivre le ×100');
+	verifier(!/majEquipes\(millis\(\)\)|envoyerEquipe\([^)]*millis\(\)\)/.test(['sketch.js', 'carte.js'].map((f) => readFileSync(join(pub, f), 'utf8')).join('\n')), 'journées : des équipes comptent encore en millis()');
+	verifier(/sauvegarde\.autoJeu/.test(readFileSync(join(pub, 'sauvegarde.js'), 'utf8')) && /recalerEquipes/.test(readFileSync(join(pub, 'sauvegarde.js'), 'utf8')), 'journées : indicateur de sauvegarde en heure de jeu, équipes recalées à la reprise');
+	const en95 = contexte('en');
+	for (const cle of ['temps.pause', 'temps.normal', 'temps.accelere', 'temps.explication', 'jour.reste', 'jour.resteAucun', 'jour.resteArrives', 'transition.jourArchive', 'transition.prevus', 'transition.service', 'transition.rythme', 'transition.finir', 'transition.courte', 'transition.passer', 'sauvegarde.autoJeu']) {
+		verifier(vm.runInContext(`t(${JSON.stringify(cle)})`, c95) !== '[À COMPLÉTER]' && vm.runInContext(`t(${JSON.stringify(cle)})`, en95) !== '[À COMPLÉTER]', `prompt 95 : clé ${cle} absente en FR ou EN`);
+	}
+}
+
 // Service worker : chaque script de index.html est dans la liste hors ligne de sw.js
 const html = readFileSync(join(pub, 'index.html'), 'utf8');
 const sw = readFileSync(join(pub, 'sw.js'), 'utf8');

@@ -188,7 +188,7 @@ function draw() {
 	majSoir(); // prompt 69 : crépuscule accéléré, sortie du bureau
 	majDemarrageJour(); // prompt 71 : démarrage du PC en début de journée (jours 1 à 3)
 	avancerTemps(); // horloge simulée, sieste, arrivée des incidents, fin de journée (immersion.js)
-	if (Jeu.equipes) Jeu.majEquipes(millis()); // équipes envoyées depuis les signalements (prompts 22, 68)
+	if (Jeu.equipes) Jeu.majEquipes((typeof tempsEquipes === 'function' ? tempsEquipes() : millis())); // prompt 95 : temps de jeu // équipes envoyées depuis les signalements (prompts 22, 68)
 	majRetardsEtCommunity(); // prompt 79 : retards qui s'aggravent, plaintes qui s'enveniment
 	boutons = [];
 	// 1. Contenu de l'écran du PC, en 1920×1080 : l'appli de régulation, ou le système (démarrage, bureau)
@@ -444,7 +444,19 @@ function dossierCourant() {
 }
 
 /** Prompt 33 : indicateur discret « Partie sauvegardée à hh:mm », en bas à droite de l'écran du jeu */
+/** Prompt 95 : « Aujourd'hui : reste n · prochain vers 14h30 », en bas de la file des signalements */
+function texteResteJournee() {
+	const j = Jeu.jourCourant ? Jeu.jourCourant() : null;
+	if (!j || !Jeu.horloge || ecran !== 'jeu') return '';
+	const n = Jeu.dossiersRestantsDuJour();
+	const venir = j.dossiers.filter((d) => Jeu.paquet.indexOf(d) >= Jeu.index && d.minute > Jeu.horloge.minutes).map((d) => d.minute);
+	if (!n) return t('jour.resteAucun', { fin: Jeu.formaterHeure(Jeu.finJournee()) });
+	return venir.length ? t('jour.reste', { n, heure: Jeu.formaterHeure(Math.min(...venir)) }) : t('jour.resteArrives', { n });
+}
 function indicateurSauvegarde() {
+	const r = texteResteJournee();
+	const messageFile = SELECTION.message && millis() - SELECTION.message.t < 5000; // le message de la file (bas) a la priorité
+	if (r && phase !== 'fin' && !messageFile) dessinerTexte(r, FILE_SIG.x + 16, FILE_SIG.y + FILE_SIG.h - 62, FILE_SIG.l - 32, { police: POLICE_DONNEES, taille: 18, couleur: C.texte, maxLignes: 1, interligne: 24 });
 	const s = Sauvegarde.texteIndicateur();
 	if (!s) return;
 	textFont(POLICE_DONNEES);

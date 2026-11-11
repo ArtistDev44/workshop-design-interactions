@@ -41,12 +41,12 @@ function dessinerBandeau() {
 	});
 	// Ligne 2 : objectif du jour, équipes disponibles, date et heure du jeu
 	const o = Jeu.objectifDuJour ? Jeu.objectifDuJour() : null;
-	const eq = Jeu.elementDebloque('equipes') ? Jeu.TYPES_EQUIPES.map((k) => String(Jeu.EQUIPES[k].nom) + ' ' + Jeu.equipesDisponibles(k, millis()) + '/' + Jeu.REGLAGES.equipes[k].effectif).join(' · ') : '';
+	const eq = Jeu.elementDebloque('equipes') ? Jeu.TYPES_EQUIPES.map((k) => String(Jeu.EQUIPES[k].nom) + ' ' + Jeu.equipesDisponibles(k, (typeof tempsEquipes === 'function' ? tempsEquipes() : millis())) + '/' + Jeu.REGLAGES.equipes[k].effectif).join(' · ') : '';
 	const h = heureAffichee();
 	const th = typeof Taches !== 'undefined' && Jeu.jourCourant() ? Taches.theme(Jeu.jourCourant().date) : null; // prompt 88 : thème du jour
 	const pj = typeof Taches !== 'undefined' && Jeu.jourCourant() ? Taches.prioritesDuJour(Jeu.jourCourant().date) : [];
 	const gr = pj.length ? t('bandeau.priorites', { liste: pj.map((p) => t('tache.prioCourt.' + p.id, p.vars)).join(' · ') }) : ''; // prompt 91 § 4 : priorités imposées (le grade reste dans Indicateurs)
-	const morceaux = [gr, th && th !== 'ordinaire' ? t('theme.' + th) : '', o ? t('bandeau.objectifCourt', { libelle: String(o.libelle), v: Math.round(Jeu.jauges[o.jauge]) }) : '', eq, String(h.h).padStart(2, '0') + ':' + String(h.m).padStart(2, '0') + (Jeu.etat.horsLigne ? ' · ' + t('jeu.horsLigne') : '')].filter(Boolean);
+	const morceaux = [gr, th && th !== 'ordinaire' ? t('theme.' + th) : '', o ? t('bandeau.objectifCourt', { libelle: String(o.libelle), v: Math.round(Jeu.jauges[o.jauge]) }) : '', eq, t('temps.' + vitesseTemps()) + ' ' + String(h.h).padStart(2, '0') + ':' + String(h.m).padStart(2, '0') + (Jeu.etat.horsLigne ? ' · ' + t('jeu.horsLigne') : '')].filter(Boolean); // prompt 95 : état de la vitesse du temps devant l'heure
 	textFont(POLICE_DONNEES);
 	textSize(16);
 	fill(C.gris);
@@ -56,15 +56,19 @@ function dessinerBandeau() {
 	// reste entière à droite, le début se termine par « … » en fin de mot, la ligne complète s'affiche au survol
 	const lbandeau = z.l - (crise ? 940 : 670); // prompt 94 : place du bouton « Quitter la journée »
 	const complet = morceaux.join('  ·  ');
-	if (textWidth(complet) <= lbandeau) text(complet, z.x + 16, z.y + 48);
-	else {
+	const heureBandeau = morceaux[morceaux.length - 1];
+	if (textWidth(complet) <= lbandeau) {
+		text(complet, z.x + 16, z.y + 48);
+		const xh = z.x + 16 + textWidth(complet) - textWidth(heureBandeau);
+		if (mouseX >= xh && mouseX <= xh + textWidth(heureBandeau) && mouseY >= z.y + 44 && mouseY <= z.y + 72) BANDEAU.survol = t('temps.explication'); // prompt 95
+	} else {
 		const heure = morceaux[morceaux.length - 1];
 		const lh = textWidth(heure);
 		textAlign(RIGHT, TOP);
 		text(heure, z.x + 16 + lbandeau, z.y + 48);
 		textAlign(LEFT, TOP);
 		dessinerTexte(morceaux.slice(0, -1).join('  ·  ') + '  ·', z.x + 16, z.y + 48 - 3, lbandeau - lh - 12, { police: POLICE_DONNEES, taille: 16, couleur: C.gris, maxLignes: 1, interligne: 22 });
-		if (mouseX >= z.x + 16 && mouseX <= z.x + 16 + lbandeau && mouseY >= z.y + 44 && mouseY <= z.y + 72) BANDEAU.survol = complet;
+		if (mouseX >= z.x + 16 && mouseX <= z.x + 16 + lbandeau && mouseY >= z.y + 44 && mouseY <= z.y + 72) BANDEAU.survol = mouseX >= z.x + 16 + lbandeau - lh ? t('temps.explication') : complet; // prompt 95 : l'heure explique la vitesse du temps
 	}
 	if (crise) {
 		const actif = Taches.criseActive();
@@ -309,7 +313,7 @@ function dessinerCartesReponses(d, x, y, l, h) {
 		fill(C.texte);
 		text(tend, cx + 14, cy + hc - 32);
 		if (r.equipe && Jeu.elementDebloque('equipes')) {
-			const dispo = Jeu.equipesDisponibles(r.equipe, millis());
+			const dispo = Jeu.equipesDisponibles(r.equipe, (typeof tempsEquipes === 'function' ? tempsEquipes() : millis()));
 			fill(dispo ? C.vert : C.orange);
 			textAlign(RIGHT, TOP);
 			text(t('rep.equipe', { nom: String(Jeu.EQUIPES[r.equipe].nom), n: dispo, maj: Jeu.TYPES_EQUIPES.indexOf(r.equipe) + 1 }), cx + lc - 14, cy + hc - 32);

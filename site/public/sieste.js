@@ -76,7 +76,7 @@ function reveiller() {
 		if (typeof notifier === 'function') notifier({ titre: t('sieste.bilanTitre'), extrait: t(m.cle, m.vars), icone: 'signalements', action: () => ouvrirSignalements() });
 	}
 	// Prompt 91 § 5 : la sieste n'est pas du temps perdu — les équipes en route sont arrivées, et le prochain signalement est annoncé
-	const maintenant = millis();
+	const maintenant = (typeof tempsEquipes === 'function' ? tempsEquipes() : millis()); // prompt 95 : temps de jeu
 	(Jeu.equipes || []).forEach((q) => {
 		if (!q.inutile && q.arrivee > maintenant) {
 			const decal = q.arrivee - maintenant;

@@ -14,6 +14,7 @@ const Sauvegarde = (function () {
 	const PHASES_COMPTEUR = ['decision', 'contradiction', 'conflit'];
 	let indisponibleSignale = false;
 	let derniere = null; // Date de la dernière sauvegarde automatique (indicateur)
+	let derniereJeu = null; // prompt 95 : { minutes, jour } du jeu au moment de la sauvegarde
 
 	// ——— Encodage des textes différés (Texte, ListeTextes) : ils restent traduisibles après reprise ———
 	function encoder(v, pile) {
@@ -79,12 +80,17 @@ const Sauvegarde = (function () {
 		return e.mode === 'semaine' && e.semaine ? e.semaine.lundi : e.mode === 'direct' ? 'direct' : 'fallback';
 	}
 
+	/** Prompt 95 : les horodatages des équipes suivent l'horloge de jeu (TEMPS_EQUIPES), pas millis() — décalage en ms */
+	function recalerEquipes(liste, decal) {
+		(liste || []).forEach((q) => ['depart', 'arrivee', 'finIntervention', 'libre'].forEach((k) => typeof q[k] === 'number' && (q[k] += decal)));
+	}
 	/** Objet de sauvegarde de la partie en cours (null si aucune partie à sauver) */
 	function construire() {
 		if (ecran !== 'jeu' || !Jeu.paquet || !Jeu.paquet.length) return null;
 		const maintenant = millis();
 		const s = Jeu.instantane(maintenant);
 		if (!s) return null;
+		recalerEquipes(s.equipes, maintenant - (typeof tempsEquipes === 'function' ? tempsEquipes() : maintenant)); // prompt 95 : délais des équipes en temps de jeu
 		const historique = s.historique;
 		const evenements = s.evenementsJournee;
 		s.historique = undefined;
@@ -119,11 +125,14 @@ const Sauvegarde = (function () {
 		const o = construire();
 		if (!o || !ecrireCle(cleSemaine(o.semaine), o)) return false;
 		derniere = new Date();
+		derniereJeu = Jeu.horloge && Jeu.jourCourant && Jeu.jourCourant() ? { minutes: Jeu.horloge.minutes, jour: Jeu.jourIndex + 1 } : null;
 		if (annonce) annoncer(texteIndicateur());
 		return true;
 	}
 	function texteIndicateur() {
 		if (!derniere) return '';
+		// Prompt 95 : l'heure et le jour du JEU (une seule horloge visible) ; l'heure réelle hors partie
+		if (derniereJeu) return t('sauvegarde.autoJeu', { heure: Jeu.formaterHeure(derniereJeu.minutes), j: derniereJeu.jour });
 		return t('sauvegarde.auto', { heure: String(derniere.getHours()).padStart(2, '0') + ':' + String(derniere.getMinutes()).padStart(2, '0') });
 	}
 
@@ -214,6 +223,7 @@ const Sauvegarde = (function () {
 			let ok = false;
 			try {
 				ok = Jeu.restaurerInstantane(s, maintenant);
+				if (ok) recalerEquipes(Jeu.equipes, (typeof tempsEquipes === 'function' ? tempsEquipes() : maintenant) - maintenant); // prompt 95
 			} catch (e) {
 				ok = false;
 			}
@@ -274,6 +284,7 @@ const Sauvegarde = (function () {
 				demarrageDuJour();
 			}
 			derniere = new Date(o.sauvegardeLe);
+			derniereJeu = null;
 			annoncer(t('sauvegarde.reprise', { semaine: libelleSemaine(o.semaine), n: o.etat.dossierIndex + 1, total: c.paquet.length }));
 			return true;
 		});
