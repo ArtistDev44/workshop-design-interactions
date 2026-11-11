@@ -213,6 +213,7 @@ function draw() {
 		boutons = []; // seule la fenêtre ouverte est cliquable
 		dessinerFenetre();
 	}
+	dessinerExplicationPoste(); // prompt 74 : première ouverture — qui est le joueur, ce que fait le poste
 	if (smsActif) {
 		boutons = [];
 		dessinerSMS();
@@ -273,6 +274,7 @@ function lancerNouvellePartie() {
 	RAPPORT = null;
 	p.then(() => {
 		Jeu.nouvellePartie();
+		derniereSerieAnnoncee = 0; // prompt 74
 		demarrerJournee(); // journée 1, 6h00, en attente du premier incident
 		const ch = chapitreCourant();
 		if (!introVue) lancerIntroSMS(); // § 2 : une seule fois, pas sur « Rejouer »
@@ -319,6 +321,7 @@ function decider(action) {
 	annoncer(t('annonce.decision', { titre: dernierResultat.narration.titre, texte: dernierResultat.narration.texte }) + ' ' + dj + '.'); // prompt 53 : variations annoncées
 	Confort.Son.clicAction(action); // prompt 44 § 4 : un clic de console par action
 	Confort.Son.jauges(dernierResultat.deltas); // § 5 : chute brutale ou remontée nette, audibles
+	feedbackSerie(); // prompt 74 : 2 bonnes évaluations d'affilée → félicitation du patron ; 2 « raté » → encouragement
 	phase = 'narration';
 	debutNarration = millis();
 	Sauvegarde.auto(false); // prompt 33 : après chaque décision (l'annonce de la décision n'est pas écrasée)
@@ -326,6 +329,60 @@ function decider(action) {
 
 function continuer() {
 	if (phase === 'narration' && !enPause) apresDecision(); // retour à la surveillance (immersion.js)
+}
+
+// ——— Prompt 74 : feedback de série (présentation seule, aucun effet sur les jauges) ———
+let derniereSerieAnnoncee = 0;
+function feedbackSerie() {
+	if (!Jeu.messagePatron) return;
+	const s = serieDecisions();
+	if (s.n >= 2 && s.n !== derniereSerieAnnoncee) {
+		derniereSerieAnnoncee = s.n;
+		if (s.type === 'bon') Jeu.messagePatron(T('serie.bravo', { n: s.n }));
+		else Jeu.messagePatron(T('serie.encourage', { n: s.n }));
+	}
+}
+
+// ——— Prompt 74 : première ouverture de l'écran de jeu — qui est le joueur, ce que fait le poste ———
+const CLE_EXPLIQUE_POSTE = 'pxe-nte001:poste-explique-';
+function explicationPosteActive() {
+	if (ecran !== 'jeu' || !Jeu.graine || MENU.actif || tutoriel || smsActif || fenetre) return false;
+	try {
+		return localStorage.getItem(CLE_EXPLIQUE_POSTE + Jeu.graine) !== 'oui';
+	} catch (e) {
+		return true;
+	}
+}
+function fermerExplicationPoste() {
+	try {
+		localStorage.setItem(CLE_EXPLIQUE_POSTE + (Jeu.graine || 0), 'oui');
+	} catch (e) {}
+	annoncer(t('poste.explique'));
+	Confort.Son.bip('choix');
+}
+function dessinerExplicationPoste() {
+	if (!explicationPosteActive()) return;
+	boutons = [];
+	voile();
+	const l = 1060;
+	const h = 560;
+	const x = (L - l) / 2;
+	const y = (H - h) / 2;
+	panneau(x, y, l, h, C.accent);
+	textAlign(LEFT, TOP);
+	noStroke();
+	fill(C.accent);
+	textFont(POLICE_TEXTE);
+	textStyle(BOLD);
+	textSize(34);
+	text(t('poste.titre'), x + 48, y + 36);
+	textStyle(NORMAL);
+	textFont(POLICE_DONNEES);
+	textSize(21);
+	textLeading(31);
+	fill(C.texte);
+	text(t('poste.explique'), x + 48, y + 96, l - 96, h - 200);
+	bouton(x + l - 48 - 300, y + h - 92, 300, 64, t('poste.compris'), fermerExplicationPoste);
 }
 
 // ——— Pause (Q13) : uniquement entre deux dossiers, c'est-à-dire pendant la narration ———
@@ -960,6 +1017,15 @@ function dessinerNarration() {
 	textStyle(NORMAL);
 	textSize(26);
 	text(r.narration.texte, z.x + 32, z.y + 190, z.l - 64, 260);
+	// Prompt 74 : court texte de liaison varié vers le dossier suivant (données réelles, graine)
+	const dSuivant = (Jeu.paquet || [])[Jeu.index];
+	const liaison = dSuivant ? texteLiaison(dSuivant) : '';
+	if (liaison) {
+		textFont(POLICE_DONNEES);
+		textSize(18);
+		fill(C.gris);
+		text(liaison, z.x + 32, z.y + 440, z.l - 64, 30);
+	}
 
 	// Détail des effets : base + 1d6 et contexte (lisible pour la soutenance)
 	textFont(POLICE_DONNEES);

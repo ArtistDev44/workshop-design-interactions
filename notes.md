@@ -177,3 +177,15 @@ Règles Q1–Q61 et `game.js` inchangés (`git diff` vide, `test-jeu.mjs` vert).
 - Sur mobile, les mentions clavier « (Entrée) », « (R) » restent affichées sur les boutons tactiles.
 - Le rapport papier garde des textes de 15–16 px (hors PC) : à agrandir si on change sa mise en page.
 - Pas de test automatique de `carte.js` (le test du jeu ne charge que `game.js`) : le correctif est vérifié en navigateur.
+
+## Prompt 74 — variété et compréhension du poste (11/11/2026)
+
+Joué : 3 semaines rejouées de bout en bout (FR puis EN) après le changement.
+
+Ce qui a changé pour le joueur :
+- **Première ouverture de l'écran de jeu** (une fois par partie, persisté par graine) : panneau « Bienvenue au poste de régulation » — qui est le joueur, ce que fait le poste, et les actions 1/2/3/0 expliquées en langage métier (FR + EN), sans dire laquelle est « bonne ».
+- **Textes de liaison variés** entre deux dossiers (hachage graine + n° de dossier, reproductible) : annonce météo réelle du jour, rappel d'un événement d'agenda réel en cours, ou message radio d'une ligne réelle.
+- **Feedback de série** : 2 bonnes évaluations d'affilée → félicitation du patron ; 2 « raté » → encouragement + rappel de l'aide. Aucun effet sur les jauges.
+- **Objectif du jour** rappelé en clair dans le panneau d'attente, avec **bilan de la veille** (chiffres réels du journal).
+
+Choix assumé : l'ordre d'arrivée des dossiers reste chronologique (heures réelles de la source) — le mélanger aurait modifié le paquet et donc les règles Q1–Q61 ; `game.js` est inchangé (test : l'ordre du paquet est identique avant/après les décisions).

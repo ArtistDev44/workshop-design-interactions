@@ -452,6 +452,33 @@ verifier(alertes.rafalesPompiers, 'prompt 72 : rafales fortes sans réponse « p
 verifier(alertes.secoursAmbulance, 'prompt 72 : secours (malaise/accident) sans réponse « ambulanciers »');
 verifier(alertes.affluencePolice, 'prompt 72 : affluence sans réponse « police » avec le nom réel de l\u2019événement');
 
+// Prompt 74 : textes de liaison reproductibles par graine et ancrés dans les données réelles ; série des évaluations
+const p74 = vm.runInContext(
+	`(() => {
+		Jeu.chargerSemaine('2026-09-14'); Jeu.nouvellePartie();
+		const out = { liaisons: [], meme: true, serie: null, avant: Jeu.paquet.map((d) => d.date + '|' + (d.heure || '') + '|' + d.type).join(';') };
+		Jeu.paquet.forEach((d) => {
+			const a = texteLiaison(d);
+			const b = texteLiaison(d);
+			if (a !== b) out.meme = false;
+			out.liaisons.push(a);
+		});
+		// la série suit les vraies évaluations du journal
+		Jeu.decider('renfort');
+		out.serie = serieDecisions();
+		// l'ordre d'arrivée (paquet) n'est PAS modifié : toujours chronologique sur les données réelles
+		Jeu.decider('rien');
+		out.apres = Jeu.paquet.map((d) => d.date + '|' + (d.heure || '') + '|' + d.type).join(';');
+		return out;
+	})()`,
+	fr,
+);
+verifier(p74.meme, 'prompt 74 : les textes de liaison ne sont pas reproductibles');
+verifier(p74.liaisons.every((l) => typeof l === 'string' && l.length > 0 && !l.includes('[À COMPLÉTER]')), 'prompt 74 : texte de liaison manquant');
+verifier(p74.liaisons.some((l) => l !== p74.liaisons[0]) || p74.liaisons.length < 2, 'prompt 74 : tous les textes de liaison sont identiques');
+verifier(p74.serie && p74.serie.n >= 1 && ['bon', 'rate'].includes(p74.serie.type), 'prompt 74 : la série des évaluations ne fonctionne pas');
+verifier(p74.avant === p74.apres, 'prompt 74 : game.js / l\u2019ordre du paquet a changé (doit rester inchangé)');
+
 // Traductions : toute clé française existe en anglais
 const manquantes = vm.runInContext('Object.keys(TRADUCTIONS.fr).filter((k) => TRADUCTIONS.en[k] === undefined)', fr);
 verifier(manquantes.length === 0, `clés sans traduction anglaise : ${manquantes.slice(0, 8).join(', ')}`);

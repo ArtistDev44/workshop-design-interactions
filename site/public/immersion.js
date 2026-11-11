@@ -345,6 +345,20 @@ function dessinerAttente() {
 	fill(C.gris);
 	const restants = Jeu.paquet.length - Jeu.index;
 	text(t('surv.restants', { n: restants, total: Jeu.paquet.length, j: Jeu.jourIndex + 1, jours: Jeu.jours.length }), z.x + 32, z.y + 380, z.l - 64, 80);
+	// Prompt 74 : objectif du jour rappelé en clair + bilan de la veille (1–2 lignes, chiffres réels)
+	const o = Jeu.objectifDuJour ? Jeu.objectifDuJour() : null;
+	if (o) {
+		textSize(20);
+		fill(C.accent);
+		text(t('poste.objectif', { libelle: o.libelle, v: Jeu.jauges[o.jauge], seuil: o.seuil }), z.x + 32, z.y + 462, z.l - 64, 30);
+	}
+	const veille = (Jeu.evenementsJournee || []).filter((e) => Jeu.jours && Jeu.jours[Jeu.jourIndex - 1] && e.jour === Jeu.jours[Jeu.jourIndex - 1].date);
+	if (veille.length) {
+		const bons = veille.filter((e) => Jeu.evaluer(e) === 'bon').length;
+		textSize(18);
+		fill(C.gris);
+		text(t('poste.bilanVeille', { date: Jeu.jours[Jeu.jourIndex - 1].date.split('-').reverse().join('/'), n: veille.length, bons }), z.x + 32, z.y + 496, z.l - 64, 26);
+	}
 	if (enSieste) {
 		fill(C.orange);
 		textSize(22);

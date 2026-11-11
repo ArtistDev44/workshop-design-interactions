@@ -374,3 +374,46 @@ function activerReponseAlerte(r) {
 	if (r.vers.type === 'equipe') return envoyerEquipeIncident(r.vers.cle);
 	decider(r.vers.cle);
 }
+
+// =====================================================================
+// Prompt 74 — casser la répétition (contenus et rythme, pas les règles) :
+// textes de liaison variés entre deux dossiers et feedback de série, tirés
+// de la graine de la partie (reproductibles) et des données réelles uniquement.
+// game.js et Q1–Q61 inchangés.
+// =====================================================================
+/** Court texte de liaison entre deux dossiers, varié par hachage (graine + n° de dossier) :
+ * annonce météo réelle du jour, rappel d'un événement d'agenda réel en cours, ou message radio (chauffeur). */
+function texteLiaison(d) {
+	if (!d || !Jeu.graine) return '';
+	const idx = Jeu.paquet ? Jeu.paquet.indexOf(d) : 0;
+	const h = hacherAlerte(String(Jeu.graine) + '|liaison|' + idx);
+	const m = (Jeu.meteoDuJour && Jeu.meteoDuJour(d.date)) || {};
+	const ev = Jeu.evenementsAffluence ? Jeu.evenementsAffluence(d.date)[0] : null;
+	const choix = h % 3;
+	if (choix === 0 && (m.pluie_mm >= 1 || m.rafales_max >= 40 || m.temp_max >= 28)) {
+		return t('liaison.meteo', { pluie: m.pluie_mm || 0, rafales: Math.round(m.rafales_max || 0), max: m.temp_max });
+	}
+	if (choix === 1 && ev) {
+		const titre = String(ev.texte_source || ev.nature).split(' — ')[0];
+		return t('liaison.agenda', { evenement: titre });
+	}
+	if (d.lignes && d.lignes.length) return t('liaison.radio', { ligne: d.lignes[0] });
+	if (choix === 0) return t('liaison.meteoClaire', { max: m.temp_max });
+	return t('liaison.rien', {});
+}
+/** Série en cours : nombre de « bon » ou de « raté » d'affilée (évaluations réelles du journal) */
+function serieDecisions() {
+	const evs = (Jeu.evenementsJournee || []).filter((e) => e.cleAction && e.cleAction !== 'temps');
+	let serie = 0;
+	let type = null;
+	for (let i = evs.length - 1; i >= 0; i--) {
+		const ev = Jeu.evaluer(evs[i]) === 'bon' ? 'bon' : Jeu.evaluer(evs[i]) === 'rate' || Jeu.evaluer(evs[i]) === 'aucun_detour' || Jeu.evaluer(evs[i]) === 'trop_tard' ? 'rate' : null;
+		if (!ev) continue;
+		if (type === null) {
+			type = ev;
+			serie = 1;
+		} else if (ev === type) serie++;
+		else break;
+	}
+	return { type, n: serie };
+}
