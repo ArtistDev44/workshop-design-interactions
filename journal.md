@@ -4,6 +4,7 @@ Règle : chaque push sur la branche main ajoute une entrée dans le tableau, la 
 
 | Date | Commit | Fichiers | Résumé |
 |---|---|---|---|
+| 2026-11-11 | ce commit (branche 84-jeu-rappel-a-lordre-licenciement-game-over) | site/public/ (gameover.js nouveau, game.js, journee.js, os.js, sketch.js, i18n.js, index.html, sw.js), site/scripts/test-jeu.mjs, jeu/77-rappel-licenciement-game-over.md, jeu/04-jauges-et-fins.md, jeu/README.md, prompts/README.md, rendu/, journal.md | Prompt 84 : sanction progressive sur les 3 jauges (REGLAGES.licenciement, hystérésis 140 / 110) — rappel à l'ordre mis en avant, dernier avertissement (immédiat ou le soir suivant, en tête du mail), licenciement le lendemain soir, sur rechute ou effondrement ; file pendant la panne de messagerie ; écran « LICENCIÉ » avec lettre du patron (faits réels), Rejouer / Changer / Journal ; pas de palmarès ; exception à Q47 documentée |
 | 2026-11-11 | ce commit | journal.md | Fusion dans main du prompt 88 (engouement et variété des tâches) |
 | 2026-11-11 | ce commit (branche prompts/88-engouement-variete) | prompts/88-jeu-engouement-variete-taches.md, prompts/README.md, journal.md | Nouveau prompt 88 : engouement et variété des tâches (tâches courtes variées, thèmes du jour, crise, progression, badges) |
 | 2026-11-11 | ce commit | journal.md | Fusion dans main du prompt 87 (décider sans chrono, réponses par type de problème) |

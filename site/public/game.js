@@ -172,6 +172,11 @@
 		aggravation: { minutesJeuParMinute: 2, plafond: 30, durable: 5, plafondDurable: 15 },
 		// Prompt 79 — Community : délai de réponse aux plaintes (temps réel) ; malus = celui d'un mauvais commentaire (prompt 22)
 		community: { delaiMs: 45000, rapideMs: 15000 },
+		// Prompt 84 — sanction progressive (exception à Q47 : fin anticipée « licenciement », jeu/04-jauges-et-fins.md).
+		// Mesure sur les 3 jauges réelles : vigilance (score < 120 ou deux jauges < 25), danger (score < 90 ou deux
+		// jauges < 20), effondrement (score < 45 ou une jauge à 0). Hystérésis : on ne sort de la vigilance qu'à
+		// score ≥ 140, du danger qu'à score ≥ 110.
+		licenciement: { vigilance: { score: 120, deux: 25 }, danger: { score: 90, deux: 20 }, effondrement: 45, sortieVigilance: 140, sortieDanger: 110 },
 	};
 	Jeu.REGLAGES = REGLAGES;
 	const NOMS_JAUGES = ['fluidite', 'reputation', 'budget'];
@@ -250,6 +255,7 @@
 		Jeu.plaintes = []; // prompt 28 : plaintes des Nantais (data/messages.json)
 		Jeu.equipes = []; // prompt 22 : équipes envoyées depuis la carte
 		Jeu.aggravationLignes = {}; // prompt 79
+		Jeu.statutPatron = nouveauStatut(); // prompt 84
 		Jeu.refusEquipes = 0; // prompt 68 : envois refusés faute d'effectif
 		Jeu.nonLus = { patron: 0, community: 0 };
 		Jeu.alertesJauges = {};
@@ -315,6 +321,7 @@
 			paliersBudget: Object.assign({}, Jeu.paliersBudget),
 			refusEquipes: Jeu.refusEquipes || 0,
 			aggravationLignes: Object.assign({}, Jeu.aggravationLignes), // prompt 79
+			statutPatron: JSON.parse(JSON.stringify(Jeu.statutPatron)), // prompt 84 : niveau, avertissements, dates, file
 			carnet: Jeu.carnet || '',
 			inspection: Jeu.inspection,
 			agendaPrevenus: Object.assign({}, Jeu.agendaPrevenus),
@@ -354,6 +361,7 @@
 		Jeu.equipes = (s.equipes || []).map((q) => Object.assign({}, q, { depart: q.depart + maintenant, arrivee: q.arrivee + maintenant, finIntervention: (q.finIntervention === undefined ? q.arrivee : q.finIntervention) + maintenant, libre: (q.libre === undefined ? q.arrivee : q.libre) + maintenant }));
 		Jeu.refusEquipes = s.refusEquipes || 0;
 		Jeu.aggravationLignes = Object.assign({}, s.aggravationLignes || {}); // prompt 79
+		Jeu.statutPatron = Object.assign(nouveauStatut(), s.statutPatron || {}); // prompt 84 (ancienne sauvegarde : statut neuf)
 		const m = s.modificateur && s.modificateur.id !== 'erreur_systeme' ? s.modificateur : null; // ancienne sauvegarde : l'erreur système n'existe plus
 		Jeu.modificateur = m ? Object.assign({}, m, { debut: m.debut === null ? null : m.debut + maintenant, fin: m.fin === null ? null : m.fin + maintenant }) : null;
 		Jeu.terminee = !!s.terminee;
@@ -478,6 +486,7 @@
 		resultat.jour = d.date;
 		resultat.jaugesApres = Object.assign({}, Jeu.jauges); // prompt 48 : courbes du rapport
 		const entree = Jeu.journaliser(resultat, ctx);
+		Jeu.majStatutPatron(); // prompt 84 : la décision a changé les jauges
 		// Prompt 79 : mauvaise réaction sur un retard → la ligne reste aggravée jusqu'au soir (malus : ceux qui existent déjà)
 		const ev = Jeu.evaluer(entree);
 		if (re !== null && (ev === 'rate' || ev === 'trop_tard') && d.lignes && d.lignes.length) {
@@ -782,6 +791,14 @@
 		const date = j ? j.date.split('-').reverse().join('/') : '';
 		const parfaite = duJour.length > 0 && duJour.every((e) => Jeu.evaluer(e) === 'bon' && !e.resultat.mauvaiseSource);
 		const lignes = [];
+		// Prompt 84 : un dernier avertissement donné aujourd'hui ouvre le mail, en rouge
+		const SP = Jeu.statutPatron;
+		if (SP && SP.avertissements >= 2 && SP.dernierJour === Jeu.jourIndex) {
+			const l = T('mail.dernier', { score: Jeu.score(), seuil: REGLAGES.licenciement.danger.score });
+			l.fait = true;
+			l.ok = false;
+			lignes.push(l);
+		} else if (SP && SP.avertissements >= 2 && Jeu.jourIndex >= (Jeu.jours || []).length - 1) lignes.push(T('mail.avertissementEnCours'));
 		if (parfaite) lignes.push(T('mail.parfait'));
 		else {
 			lignes.push(T('mail.journal', { date }));
@@ -824,6 +841,7 @@
 	Jeu.appliquerDeltas = function (d) {
 		Object.keys(d).forEach((k) => (Jeu.jauges[k] = Math.max(0, Math.min(100, Jeu.jauges[k] + d[k]))));
 		Jeu.verifierAlertesPatron();
+		Jeu.majStatutPatron(); // prompt 84
 		if (Jeu.verifierPaliersBudget) Jeu.verifierPaliersBudget();
 		if (Jeu.verifierConseilsPatron) Jeu.verifierConseilsPatron();
 	};
@@ -837,13 +855,145 @@
 		return T('patron.consigne', { n, date: j ? j.date.split('-').reverse().join('/') : '', objectif: o.libelle, budget: Jeu.jauges.budget, mod: m });
 	}
 
-	Jeu.messagePatron = function (texte) {
-		Jeu.messagesPatron.push({ heure: maintenantSim(), texte });
+	Jeu.messagePatron = function (texte, important) {
+		Jeu.messagesPatron.push({ heure: maintenantSim(), texte, important: !!important }); // prompt 84 : message mis en avant
 		if (typeof annoncer === 'function') annoncer(texte); // aria-live, langue active
 		Jeu.nonLus.patron++;
 	};
 
 	/** Alerte du patron quand une jauge passe sous 20 (Q46) — une fois par jauge et par jour */
+	// =====================================================================
+	// Prompt 84 — rappel à l'ordre, dernier avertissement, licenciement (game over)
+	// =====================================================================
+	const nouveauStatut = () => ({ niveau: 0, avertissements: 0, dates: [], rappelJour: null, dernierJour: null, dernierRecuJour: null, sortiDuDanger: false, enAttente: [], licencie: null });
+	Jeu.statutPatron = nouveauStatut();
+	/** Niveau mesuré sur les jauges réelles, sans hystérésis : 0 normal, 1 vigilance, 2 danger, 3 effondrement */
+	Jeu.niveauBrut = function (j) {
+		const R = REGLAGES.licenciement;
+		const v = NOMS_JAUGES.map((k) => j[k]);
+		const score = v.reduce((a, b) => a + b, 0);
+		const sous = (s) => v.filter((x) => x < s).length;
+		if (score < R.effondrement || v.some((x) => x <= 0)) return 3;
+		if (score < R.danger.score || sous(R.danger.deux) >= 2) return 2;
+		if (score < R.vigilance.score || sous(R.vigilance.deux) >= 2) return 1;
+		return 0;
+	};
+	const listeJauges = () => Liste(NOMS_JAUGES.map((k) => T('statut.jauge', { jauge: LIBELLES_JAUGES[k], v: Jeu.jauges[k] })), ', ');
+	const panneMessagerie = () => !!(Jeu.modificateurActif && Jeu.modificateurActif() === 'panne_messagerie');
+	/** Message de sanction : délivré tout de suite, ou mis en file pendant la panne de messagerie (prompt 23) */
+	function envoyerSanction(texte, sorte) {
+		const S = Jeu.statutPatron;
+		if (panneMessagerie()) return S.enAttente.push({ texte, sorte, jour: Jeu.jourIndex });
+		Jeu.messagePatron(texte, sorte !== 'leve');
+		if (sorte === 'dernier') S.dernierRecuJour = Jeu.jourIndex;
+	}
+	/** Fin de la panne : les messages en file arrivent (le dernier avertissement compte du jour de sa réception) */
+	Jeu.livrerSanctions = function () {
+		const S = Jeu.statutPatron;
+		if (!S.enAttente.length || panneMessagerie()) return 0;
+		const n = S.enAttente.length;
+		S.enAttente.splice(0).forEach((m) => {
+			Jeu.messagePatron(m.texte, m.sorte !== 'leve');
+			if (m.sorte === 'dernier') S.dernierRecuJour = Jeu.jourIndex;
+		});
+		return n;
+	};
+	function dernierAvertissement() {
+		const S = Jeu.statutPatron;
+		S.avertissements = 2;
+		S.dernierJour = Jeu.jourIndex;
+		S.dates.push(hhmm(Jeu.horloge ? Jeu.horloge.minutes : 0) + '|' + ((Jeu.jourCourant && Jeu.jourCourant()) || {}).date);
+		envoyerSanction(T('patron.dernier', { liste: listeJauges(), score: Jeu.score(), seuil: REGLAGES.licenciement.danger.score }), 'dernier');
+	}
+	/** Recalcul du statut à chaque changement de jauge (hystérésis, rappel, dernier avertissement, licenciement) */
+	Jeu.majStatutPatron = function () {
+		const S = Jeu.statutPatron;
+		if (!Jeu.jauges || !Jeu.messagesPatron || S.licencie || Jeu.terminee) return;
+		const R = REGLAGES.licenciement;
+		const brut = Jeu.niveauBrut(Jeu.jauges);
+		const score = Jeu.score();
+		if (brut === 3) {
+			S.licencie = { cause: 'effondrement', score, heure: maintenantSim(), date: ((Jeu.jourCourant && Jeu.jourCourant()) || {}).date };
+			return;
+		}
+		const avant = S.niveau;
+		let niv = avant;
+		if (brut > avant) niv = brut;
+		else if (avant === 2 && brut < 2 && score >= R.sortieDanger) niv = brut === 0 && score >= R.sortieVigilance ? 0 : 1;
+		else if (avant === 1 && brut === 0 && score >= R.sortieVigilance) niv = 0;
+		S.niveau = niv;
+		if (niv === avant) return;
+		if (niv === 2) {
+			// (c) danger atteint à nouveau après un dernier avertissement dont le joueur était sorti
+			if (S.avertissements >= 2 && S.sortiDuDanger) {
+				S.licencie = { cause: 'rechute', score, heure: maintenantSim(), date: ((Jeu.jourCourant && Jeu.jourCourant()) || {}).date };
+				return;
+			}
+			if (S.avertissements === 0) S.rappelJour = Jeu.jourIndex;
+			dernierAvertissement();
+			return;
+		}
+		if (avant === 2) S.sortiDuDanger = true;
+		if (niv === 1 && avant === 0 && S.avertissements === 0) {
+			// Rappel à l'ordre : vraies valeurs, jauge la plus basse, dernière décision ratée
+			S.avertissements = 1;
+			S.rappelJour = Jeu.jourIndex;
+			S.dates.push(hhmm(Jeu.horloge ? Jeu.horloge.minutes : 0) + '|' + ((Jeu.jourCourant && Jeu.jourCourant()) || {}).date);
+			const basse = NOMS_JAUGES.slice().sort((a, b) => Jeu.jauges[a] - Jeu.jauges[b])[0];
+			const rate = (Jeu.evenementsJournee || []).filter((e) => Jeu.evaluer(e) === 'rate' || Jeu.evaluer(e) === 'trop_tard').pop();
+			const detail = T('patron.rappelBasse', { jauge: LIBELLES_JAUGES[basse], v: Jeu.jauges[basse] });
+			const decision = rate ? T('patron.rappelDecision', { heure: rate.heure, sujet: rate.ligne ? T('sujet.ligne', { ligne: rate.ligne }) : rate.externeCourt, action: rate.action || T('action.temps') }) : '';
+			envoyerSanction(T('patron.rappel', { liste: listeJauges(), score, detail, decision }), 'rappel');
+		}
+		if (niv === 0 && avant >= 1) {
+			// Rattrapage : un avertissement effacé, surveillance levée
+			S.avertissements = Math.max(0, S.avertissements - 1);
+			envoyerSanction(T('patron.leve', { score }), 'leve');
+		}
+	};
+	/** Fin de journée (avant le mail) : dernier avertissement si la vigilance dure, licenciement (a) le lendemain soir */
+	Jeu.finJourneeStatut = function () {
+		const S = Jeu.statutPatron;
+		if (!Jeu.jauges || S.licencie) return S.licencie;
+		const dernierJour = !(Jeu.jours || [])[Jeu.jourIndex + 1];
+		if (S.avertissements >= 2 && S.dernierRecuJour !== null && S.dernierRecuJour < Jeu.jourIndex && Jeu.score() < REGLAGES.licenciement.danger.score) {
+			S.licencie = { cause: 'delai', score: Jeu.score(), heure: maintenantSim(), date: ((Jeu.jourCourant && Jeu.jourCourant()) || {}).date };
+			return S.licencie;
+		}
+		if (!dernierJour && S.niveau >= 1 && S.avertissements === 1 && S.rappelJour !== null && S.rappelJour < Jeu.jourIndex) dernierAvertissement();
+		return null;
+	};
+	/** Lettre de licenciement : uniquement des faits réels de la partie */
+	Jeu.lettreLicenciement = function () {
+		const S = Jeu.statutPatron;
+		const L0 = S.licencie || { cause: 'delai', score: Jeu.score(), heure: maintenantSim(), date: '' };
+		const pires = (Jeu.evenementsJournee || [])
+			.slice()
+			.sort((a, b) => somme(NOMS_JAUGES.map((k) => a.deltas[k])) - somme(NOMS_JAUGES.map((k) => b.deltas[k])))
+			.slice(0, 3)
+			.filter((e) => somme(NOMS_JAUGES.map((k) => e.deltas[k])) < 0)
+			.map((e) => T('gameover.decision', { jour: e.jour.split('-').reverse().join('/'), heure: e.heure, sujet: e.ligne ? T('sujet.ligne', { ligne: e.ligne }) : e.externeCourt, action: e.action || T('action.temps'), effet: Liste(NOMS_JAUGES.filter((k) => e.deltas[k]).map((k) => T('delta', { jauge: LIBELLES_JAUGES[k], v: (e.deltas[k] > 0 ? '+' : '') + e.deltas[k] })), ', ') }));
+		const malusFrequent = Object.keys(Jeu.malus || {}).sort((a, b) => Jeu.malus[b] - Jeu.malus[a])[0];
+		const m = malusFrequent ? Jeu.MALUS.find((x) => x.id === malusFrequent) : null;
+		const basse = NOMS_JAUGES.slice().sort((a, b) => Jeu.jauges[a] - Jeu.jauges[b])[0];
+		return {
+			cause: L0.cause,
+			quand: T('gameover.quand', { date: String(L0.date || '').split('-').reverse().join('/'), heure: L0.heure }),
+			jauges: listeJauges(),
+			score: Jeu.score(),
+			avertissements: T('gameover.avertissements', { n: S.avertissements, dates: S.dates.map((d) => d.split('|')[1].split('-').reverse().join('/') + ' ' + d.split('|')[0]).join(', ') || '—' }),
+			pires,
+			malus: m ? T('gameover.malus', { libelle: m.libelle, n: Jeu.malus[malusFrequent] }) : null,
+			conseil: T('gameover.conseil.' + basse, { v: Jeu.jauges[basse] }),
+		};
+	};
+	/** Combien de points de score pour sortir de la surveillance (conseil contextuel) */
+	Jeu.pointsPourSortir = () => {
+		const S = Jeu.statutPatron;
+		if (!S.niveau) return 0;
+		return Math.max(0, (S.niveau === 2 ? REGLAGES.licenciement.sortieDanger : REGLAGES.licenciement.sortieVigilance) - Jeu.score());
+	};
+
 	Jeu.verifierAlertesPatron = function () {
 		if (!Jeu.messagesPatron) return;
 		NOMS_JAUGES.forEach((k) => {
@@ -1185,6 +1335,7 @@
 	// Prompt 59 : plus affiché depuis le prompt 50 (le joueur enquête lui-même) ; conservé pour la doc jeu/17
 	Jeu.conseil = function (d) {
 		if (!d) return '';
+		if (Jeu.statutPatron && Jeu.statutPatron.niveau) return T('conseil.surveillance', { n: Jeu.pointsPourSortir() }); // prompt 84
 		const recents = (Jeu.evenementsJournee || []).slice(-3);
 		const repBaisse = recents.some((e) => e.deltas.reputation < 0) || (Jeu.commentaires || []).slice(-3).some((c) => c.delta < 0);
 		if (d.retard !== null && d.retard !== undefined && d.retard >= 18 && d.lignes && d.lignes.length && repBaisse)
@@ -1248,6 +1399,7 @@
 	/** Fin de journée : objectif (bonus ou malus) et malus « budget épuisé » — une seule fois par jour */
 	Jeu.finDeJourneeTactique = function () {
 		if ((Jeu.objectifsResultats || []).some((o) => o.jourIndex === Jeu.jourIndex)) return;
+		Jeu.finJourneeStatut(); // prompt 84 : dernier avertissement ou licenciement, avant le mail du soir
 		const o = Jeu.objectifDuJour();
 		const atteint = Jeu.jauges[o.jauge] >= o.seuil;
 		let effet;

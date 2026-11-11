@@ -484,10 +484,10 @@ function appPatron(z) {
 		const lignes = Math.ceil(textWidth(m.texte) / (lmax - 32)) || 1;
 		const h = 24 + lignes * 28;
 		noStroke();
-		fill(DS.blanc05);
+		fill(m.important ? 'rgba(212,3,28,0.22)' : DS.blanc05); // prompt 84 : rappel à l'ordre / avertissement mis en avant
 		rect(z.x, y, Math.min(lmax, textWidth(m.texte) + 32), h);
 		fill(DS.primaire);
-		rect(z.x, y, 4, h);
+		rect(z.x, y, m.important ? 8 : 4, h);
 		dsTexte(m.texte, z.x + 18, y + 12, 20, DS.blanc, 'left', lmax - 32);
 		dsTexte(m.heure, z.x + z.l - 10, y + 12, 18, DS.blanc50, 'right');
 		y += h + 12;
@@ -742,7 +742,7 @@ const INDIC = (() => {
 		const o = JSON.parse(localStorage.getItem(CLE_INDICATEURS) || 'null');
 		if (o && Number.isFinite(o.x) && Number.isFinite(o.y)) pos = o;
 	} catch (e) {}
-	return { l: 460, h: 392, pos, prise: null };
+	return { l: 460, h: 432, pos, prise: null }; // prompt 84 : + statut auprès du patron
 })();
 function basculerIndicateurs() {
 	PC.flottant = !PC.flottant;
@@ -830,4 +830,7 @@ function dessinerIndicateurs() {
 	if (o) dsTexte(t('indic.objectif', { libelle: o.libelle, ok: Jeu.jauges[o.jauge] >= o.seuil ? '✓' : '✗' }), x + 18, y + 284, 16, DS.blanc75, 'left', I.l - 36);
 	const b = Jeu.jauges.budget;
 	dsTexte(t(b < 20 ? 'indic.budgetBas' : b >= 70 ? 'indic.budgetHaut' : 'indic.budgetMoyen'), x + 18, y + 336, 16, DS.blanc50, 'left', I.l - 36);
+	// Prompt 84 : statut auprès du patron (niveau et avertissements)
+	const S = Jeu.statutPatron || { niveau: 0, avertissements: 0 };
+	dsTexte(t('indic.statut', { statut: t(['statut.normal', 'statut.surveillance', 'statut.dernier'][S.niveau] || 'statut.normal'), n: S.avertissements }), x + 18, y + 384, 16, S.niveau === 2 ? DS.erreurClair : S.niveau === 1 ? DS.alerte : DS.blanc75, 'left', I.l - 36);
 }

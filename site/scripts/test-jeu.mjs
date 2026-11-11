@@ -793,6 +793,62 @@ verifier(eq.policeAvant === 1 && eq.policeMatin === 2, `équipes : effectifs non
 	verifier(!/ouvrirPartage|fenetrePartage/.test(readFileSync(join(pub, 'immersion.js'), 'utf8')), 'menu : le partage reste sur l\'écran titre (pas dans le menu Échap)');
 }
 
+// Prompt 84 : rappel à l'ordre, dernier avertissement, licenciement (game over)
+{
+	const lic = vm.runInContext(
+		`(() => {
+		const r = {};
+		const regler = (f, rep, b) => { Jeu.jauges.fluidite = f; Jeu.jauges.reputation = rep; Jeu.jauges.budget = b; Jeu.majStatutPatron(); return Object.assign({}, Jeu.statutPatron, { enAttente: Jeu.statutPatron.enAttente.length }); };
+		const importants = () => Jeu.messagesPatron.filter((m) => m.important).length;
+		Jeu.chargerSemaine('2026-10-12'); Jeu.nouvellePartie(); Jeu.modificateur = null;
+		r.bien = regler(50, 50, 50).niveau;
+		r.vigil = regler(40, 40, 30); r.rappels = importants();
+		r.reste = regler(45, 45, 35).niveau; // 125 : on reste sous surveillance (hystérésis)
+		regler(40, 40, 30); r.rappelsUneFois = importants();
+		r.sortie = regler(50, 50, 41); // 141 : surveillance levée, avertissement effacé
+		r.leve = Jeu.messagesPatron.some((m) => /140|141/.test(String(m.texte)));
+		// Danger immédiat → dernier avertissement ; licenciement le lendemain soir si toujours sous 90
+		r.danger = regler(30, 30, 25);
+		r.memeJour = Jeu.finJourneeStatut();
+		Jeu.journeeSuivante();
+		r.lendemain = Jeu.finJourneeStatut();
+		// Effondrement : licenciement immédiat, sans avertissement
+		Jeu.chargerSemaine('2026-10-12'); Jeu.nouvellePartie(); Jeu.modificateur = null;
+		r.effondre = regler(0, 60, 60).licencie;
+		// Vigilance qui dure jusqu'au soir suivant → dernier avertissement en fin de journée
+		Jeu.chargerSemaine('2026-10-12'); Jeu.nouvellePartie(); Jeu.modificateur = null;
+		regler(40, 40, 30); Jeu.finJourneeStatut(); const j0 = Jeu.statutPatron.avertissements;
+		Jeu.journeeSuivante(); Jeu.finJourneeStatut(); r.vigilanceDure = [j0, Jeu.statutPatron.avertissements];
+		r.mail = Jeu.mailDuJour().lignes.map(String)[0];
+		// Panne de messagerie : avertissement compté tout de suite, message délivré à la fin de la panne
+		Jeu.chargerSemaine('2026-10-12'); Jeu.nouvellePartie();
+		Jeu.modificateur = { id: 'panne_messagerie', debut: Date.now(), fin: Date.now() + 1e7 };
+		const avant = Jeu.messagesPatron.length;
+		const p = regler(30, 30, 25);
+		r.panne = { avert: p.avertissements, file: p.enAttente, recus: Jeu.messagesPatron.length - avant, recuJour: p.dernierRecuJour };
+		Jeu.modificateur.fin = 0; Jeu.livrerSanctions();
+		r.apresPanne = { recus: Jeu.messagesPatron.length - avant, recuJour: Jeu.statutPatron.dernierRecuJour };
+		const snap = JSON.parse(JSON.stringify(Jeu.instantane(0)));
+		Jeu.chargerSemaine('2026-10-12'); Jeu.restaurerInstantane(snap, 0);
+		r.reprise = [Jeu.statutPatron.niveau, Jeu.statutPatron.avertissements, Jeu.statutPatron.dernierRecuJour];
+		r.lettre = JSON.parse(JSON.stringify(Jeu.lettreLicenciement()));
+		return JSON.parse(JSON.stringify(r));
+	})()`,
+		fr,
+	);
+	verifier(lic.bien === 0 && lic.vigil.niveau === 1 && lic.vigil.avertissements === 1 && lic.rappels === 1, `licenciement : vigilance et rappel (${JSON.stringify(lic.vigil)})`);
+	verifier(lic.reste === 1 && lic.rappelsUneFois === 1, `licenciement : hystérésis et rappel unique (${lic.reste}, ${lic.rappelsUneFois})`);
+	verifier(lic.sortie.niveau === 0 && lic.sortie.avertissements === 0 && lic.leve, `licenciement : rattrapage efface l'avertissement (${JSON.stringify(lic.sortie)})`);
+	verifier(lic.danger.niveau === 2 && lic.danger.avertissements === 2 && lic.memeJour === null && lic.lendemain && lic.lendemain.cause === 'delai', `licenciement : dernier avertissement immédiat, licencié le lendemain soir (${JSON.stringify(lic.lendemain)})`);
+	verifier(lic.effondre && lic.effondre.cause === 'effondrement', 'licenciement : effondrement → licenciement immédiat');
+	verifier(JSON.stringify(lic.vigilanceDure) === '[1,2]' && /AVERTISSEMENT/.test(lic.mail), `licenciement : vigilance qui dure → dernier avertissement le soir suivant, en tête du mail (${lic.vigilanceDure} / ${lic.mail})`);
+	verifier(lic.panne.avert === 2 && lic.panne.file === 1 && lic.panne.recus === 0 && lic.panne.recuJour === null && lic.apresPanne.recus === 1 && lic.apresPanne.recuJour !== null, `licenciement : file pendant la panne ${JSON.stringify(lic.panne)} → ${JSON.stringify(lic.apresPanne)}`);
+	verifier(lic.reprise[0] === 2 && lic.reprise[1] === 2 && lic.reprise[2] !== null, `licenciement : sauvegarde / reprise du statut (${lic.reprise})`);
+	verifier(/30/.test(lic.lettre.jauges) && lic.lettre.score === 85 && /2/.test(lic.lettre.avertissements), 'licenciement : la lettre cite les vraies valeurs');
+	const go = readFileSync(join(pub, 'gameover.js'), 'utf8');
+	verifier(/Sauvegarde\.effacer/.test(go) && !/allerFin\(|Bilans\.enregistrer|appliquerDefis/.test(go), 'licenciement : sauvegarde effacée, ni palmarès ni défis');
+}
+
 // Traductions : toute clé française existe en anglais
 const manquantes = vm.runInContext('Object.keys(TRADUCTIONS.fr).filter((k) => TRADUCTIONS.en[k] === undefined)', fr);
 verifier(manquantes.length === 0, `clés sans traduction anglaise : ${manquantes.slice(0, 8).join(', ')}`);

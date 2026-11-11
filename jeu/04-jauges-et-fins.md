@@ -34,3 +34,10 @@ combiné** (somme des 3 jauges, 0–300, poids égaux Q44) :
 Texte de fin (= bilan détaillé narratif, Q54) + valeurs finales des trois jauges +
 nombre de dossiers traités / 15 + **décisions clés** (Q37) + teinte du décor selon
 la fin (Q53) + boutons Rejouer / changer de semaine.
+
+> **Prompt 84 — exception à Q47 : fin anticipée « licenciement ».** Comme la démission (prompt 47), le
+> licenciement est une fin hors des trois fins de semaine (Q48 et Q55 inchangés). Mesure sur les trois jauges :
+> vigilance (score < 120 ou deux jauges < 25) → rappel à l'ordre ; danger (score < 90 ou deux jauges < 20) →
+> dernier avertissement ; toujours sous 90 le soir suivant, ou rechute en danger, → licenciement ; effondrement
+> (score < 45 ou une jauge à 0) → licenciement immédiat. Hystérésis : sortie de vigilance à 140, du danger à 110.
+> Pas de palmarès, sauvegarde effacée. Voir `jeu/77-rappel-licenciement-game-over.md`.

@@ -152,6 +152,13 @@ function draw() {
 		majCurseur();
 		return;
 	}
+	// Prompt 84 : licenciement — écran « game over » plein écran
+	if (GAMEOVER) {
+		boutons = [];
+		dessinerGameOver();
+		majCurseur();
+		return;
+	}
 	// Prompt 35 : menu principal plein écran avant le bureau ; il se ferme dès qu'une partie démarre ou reprend
 	if (MENU.actif && ecran === 'jeu') fermerMenuPrincipal();
 	if (MENU.actif) {
@@ -168,6 +175,7 @@ function draw() {
 	verifierMecaniques(); // prompt 47 : inspection surprise (avant l'horloge, qui s'arrête alors)
 	majMultitache(); // prompts 68 / 77 : arrivées, compteurs des signalements actifs, expirations en arrière-plan
 	majNotifications(); // prompt 77 : mails, commentaires, fins d'intervention
+	majLicenciement(); // prompt 84 : messages après la panne, licenciement hors décision
 	majRythme(); // prompt 74 : événements de rythme à heures fixes
 	majExplicationPoste(); // prompt 74 : explication du poste à la première ouverture de l'écran de jeu
 	majSoir(); // prompt 69 : crépuscule accéléré, sortie du bureau
@@ -263,6 +271,7 @@ function bandeauEtat() {
 	text(txt, GAUCHE.x + 14, H - 22);
 	textStyle(NORMAL);
 	dessinerSomnolence(); // prompt 78 : jauge de somnolence, cliquable (se reposer)
+	dessinerStatutPatron(); // prompt 84 : pastille « Sous surveillance » / « Dernier avertissement »
 }
 
 function lancerPartie() {
@@ -1383,6 +1392,7 @@ function keyPressed() {
 	if (Sauvegarde.dialogueOuvert || CARNET.ouvert) return;
 	if (arreterDemo()) return false; // prompt 48 : une touche arrête la démo automatique
 	if (CINE) return toucheCinematique(), false; // prompt 41
+	if (GAMEOVER) return toucheGameOver(), false; // prompt 84
 	if (TRANSITION_JOUR && (keyCode === ENTER || keyCode === RETURN || key === ' ' || keyCode === ESCAPE)) return passerTransitionJour(), false; // prompt 43
 	Confort.Son.demarrer(); // l'audio ne peut démarrer qu'après un geste du joueur
 	interaction();

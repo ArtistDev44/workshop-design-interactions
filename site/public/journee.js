@@ -30,6 +30,7 @@ function messagePiece(objet, texte) {
 /** Fin normale : objectif du jour, mail du soir (comme avant le prompt 51, mais au clic sur l'horloge) */
 function terminerJournee() {
 	if (Jeu.finDeJourneeTactique) Jeu.finDeJourneeTactique();
+	if (Jeu.statutPatron && Jeu.statutPatron.licencie) return lancerLicenciement(); // prompt 84 : avant le mail du soir
 	phase = 'mail';
 	enSieste = false;
 	JOURNEE.finAnnoncee = false;
