@@ -4,6 +4,9 @@
  */
 const TACHE = { courante: null, choix: [], groupe: 0, suite: null, file: [], introVues: null, resultat: null };
 const CLE_INTRO_TACHES = 'pxe-nte001-taches-intro';
+/** Portrait mobile : la fenêtre est réduite à ~1/3 ; les cibles passent à 136 px de canevas (≥ 44 px à l'écran) */
+const enPortrait = () => typeof MOBILE !== 'undefined' && MOBILE.portrait;
+const hb = (h) => (enPortrait() ? Math.max(h, 136) : h);
 
 function introTacheVue(type) {
 	if (!TACHE.introVues) {
@@ -32,6 +35,8 @@ function verifierTaches() {
 	if (TACHE.courante) return ouvrir('tache'), true; // tâche interrompue par une autre fenêtre : on la reprend
 	const b = Taches.briefing();
 	if (b) return ouvrirTache({ type: 'briefing', donnees: b }), true;
+	const a = Taches.arbitrage(); // option du groupe (lot F), une fois par semaine
+	if (a) return ouvrirTache(a), true;
 	const suivante = TACHE.file.shift();
 	if (suivante) return ouvrirTache(suivante), true;
 	return false;
@@ -85,11 +90,11 @@ function basculerChoix(i) {
 		annoncer(t('tache.info.bloc.' + b.id) + ' : ' + b.options[i]);
 		const vide = TACHE.choix.findIndex((c) => c === null);
 		if (vide >= 0) TACHE.groupe = vide; // case suivante à remplir
-	} else if (tache.type === 'evenement') {
+	} else if (tache.type === 'evenement' || tache.type === 'arbitrage') {
 		const o = tache.options[i];
 		if (!o) return;
 		TACHE.choix = [o];
-		annoncer(t('tache.prep.' + o, { nom: tache.nom, cout: Taches.R.prep.cout }));
+		annoncer(tache.type === 'arbitrage' ? t('tache.arbitrage.' + o) : t('tache.prep.' + o, { nom: tache.nom, cout: Taches.R.prep.cout }));
 	} else if (tache.type === 'rapport') {
 		const liste = TACHE.groupe === 0 ? tache.donnees.faits : tache.donnees.demandes;
 		const o = liste[i];
@@ -104,7 +109,7 @@ function validerTache(passer) {
 	const tache = TACHE.courante;
 	if (!tache) return;
 	if (TACHE.resultat || tache.type === 'recap') return fermerTache(); // écran de résultat ou récapitulatif : Entrée / Échap pour continuer
-	if (tache.type === 'info' || tache.type === 'evenement') {
+	if (tache.type === 'info' || tache.type === 'evenement' || tache.type === 'arbitrage') {
 		if (!passer && (tache.type === 'info' ? TACHE.choix.some((c) => c === null) : !TACHE.choix[0])) return annoncer(t('tache.' + tache.type + '.incomplet'));
 		const r = Taches.resoudre(tache, passer ? null : tache.type === 'info' ? TACHE.choix.slice() : TACHE.choix[0]);
 		if (passer || !r || r.ok === null) {
@@ -112,7 +117,7 @@ function validerTache(passer) {
 			return fermerTache();
 		}
 		TACHE.resultat = r;
-		const txt = tache.type === 'info' ? t(r.ok ? 'tache.info.juste' : 'tache.info.faux', { v: Math.abs(r.effets.reputation) }) : t('tache.prep.ok', { nom: tache.nom, cout: Taches.R.prep.cout });
+		const txt = tache.type === 'info' ? t(r.ok ? 'tache.info.juste' : 'tache.info.faux', { v: Math.abs(r.effets.reputation) }) : tache.type === 'arbitrage' ? t('tache.arbitrage.ok.' + TACHE.choix[0]) : t('tache.prep.ok', { nom: tache.nom, cout: Taches.R.prep.cout });
 		annoncer(txt);
 		Confort.Son.bip(r.ok === false ? 'alerte' : 'choix');
 		return;
@@ -140,6 +145,7 @@ function texteDemande(r) {
 
 // ——— Clavier ———
 function toucheTaches() {
+	if (toucheOptionsJeu()) return true;
 	if (!fenetre && vue === 'poste' && PC.etat === 'appli' && PC.fenetre === 'journal' && (key === 'k' || key === 'K')) return basculerCarnetSemaine(), true;
 	if (fenetre !== 'tache') return false;
 	const tache = TACHE.courante;
@@ -164,7 +170,7 @@ function fenetreTache() {
 	const tache = TACHE.courante;
 	if (!tache) return fermer();
 	const l = 1240;
-	const h = 820;
+	const h = enPortrait() ? H - 20 : 820;
 	const x = (L - l) / 2;
 	const y = (H - h) / 2;
 	panneau(x, y, l, h, C.accent);
@@ -194,16 +200,19 @@ function fenetreTache() {
 	else if (tache.type === 'info') yy = corpsInfo(tache, x + 56, yy, l - 112);
 	else if (tache.type === 'evenement') yy = corpsPreparation(tache, x + 56, yy, l - 112);
 	else if (tache.type === 'recap') yy = corpsRecap(tache.donnees, x + 56, yy, l - 112);
+	else if (tache.type === 'arbitrage') yy = corpsArbitrage(tache, x + 56, yy, l - 112);
 	else if (tache.type === 'rapport') yy = corpsRapport(tache.donnees, x + 56, yy, l - 112);
 	// Pied : consigne clavier + boutons
 	textFont(POLICE_DONNEES);
 	textSize(18);
 	textAlign(LEFT, TOP);
 	fill(C.gris);
-	text(t(TACHE.resultat || tache.type === 'recap' ? 'tache.consigne.resultat' : 'tache.consigne.' + tache.type), x + 56, y + h - 104, l - 112 - 560, 70);
-	if (TACHE.resultat || tache.type === 'recap') return bouton(x + l - 56 - 260, y + h - 104, 260, 68, t('tache.continuer'), fermerTache);
-	bouton(x + l - 56 - 260, y + h - 104, 260, 68, t('tache.valider'), () => validerTache(false));
-	bouton(x + l - 56 - 260 - 276, y + h - 104, 260, 68, t('tache.passer'), () => validerTache(true), false, true);
+	const hp = hb(68);
+	const yp = y + h - hp - 36;
+	if (!enPortrait()) text(t(TACHE.resultat || tache.type === 'recap' ? 'tache.consigne.resultat' : 'tache.consigne.' + tache.type), x + 56, yp, l - 112 - 560, 70);
+	if (TACHE.resultat || tache.type === 'recap') return bouton(x + l - 56 - 260, yp, 260, hp, t('tache.continuer'), fermerTache);
+	bouton(x + l - 56 - 260, yp, 260, hp, t('tache.valider'), () => validerTache(false));
+	bouton(x + l - 56 - 260 - 276, yp, 260, hp, t('tache.passer'), () => validerTache(true), false, true);
 }
 function ligneInfo(txt, x, y, l) {
 	textFont(POLICE_TEXTE);
@@ -222,11 +231,11 @@ function corpsBriefing(b, x, y, l) {
 	const lb = (l - 16) / 2;
 	b.options.forEach((o, i) => {
 		const bx = x + (i % 2) * (lb + 16);
-		const by = y + Math.floor(i / 2) * 92;
+		const by = y + Math.floor(i / 2) * (hb(76) + 16);
 		const pris = TACHE.choix.includes(o.id);
-		bouton(bx, by, lb, 76, i + 1 + '  ' + (pris ? '✓ ' : '') + t('tache.prio.' + o.id, o.vars), () => basculerChoix(i), false, !pris);
+		bouton(bx, by, lb, hb(76), i + 1 + '  ' + (pris ? '✓ ' : '') + t('tache.prio.' + o.id, o.vars), () => basculerChoix(i), false, !pris);
 	});
-	return y + 2 * 92;
+	return y + 2 * (hb(76) + 16);
 }
 function corpsRapport(rp, x, y, l) {
 	const groupe = (titre, liste, g, libelle) => {
@@ -238,11 +247,13 @@ function corpsRapport(rp, x, y, l) {
 		text(titre.toUpperCase() + (TACHE.groupe === g ? '  ◀' : ''), x, y);
 		textStyle(NORMAL);
 		y += 30;
+		const cols = enPortrait() ? 2 : 1;
+		const lc = (l - (cols - 1) * 12) / cols;
 		liste.forEach((o, i) => {
 			const pris = TACHE.choix[g] === o.id;
-			bouton(x, y, l, 56, i + 1 + '  ' + (pris ? '✓ ' : '') + libelle(o), () => ((TACHE.groupe = g), basculerChoix(i)), false, !pris);
-			y += 64;
+			bouton(x + (i % cols) * (lc + 12), y + Math.floor(i / cols) * (hb(56) + 8), lc, hb(56), i + 1 + '  ' + (pris ? '✓ ' : '') + court(libelle(o), cols > 1 ? 40 : 90), () => ((TACHE.groupe = g), basculerChoix(i)), false, !pris);
 		});
+		y += Math.ceil(liste.length / cols) * (hb(56) + 8);
 		y += 10;
 	};
 	groupe(t('tache.rapport.fait'), rp.faits, 0, (o) => o.texte);
@@ -303,9 +314,9 @@ function corpsInfo(tache, x, y, l) {
 		const lb = (l - 220 - 2 * 10) / 3;
 		b.options.forEach((o, i) => {
 			const pris = TACHE.choix[k] === i;
-			bouton(x + 220 + i * (lb + 10), y, lb, 52, (actif ? i + 1 + '  ' : '') + (pris ? '✓ ' : '') + court(o, 30), () => ((TACHE.groupe = k), basculerChoix(i)), false, !pris);
+			bouton(x + 220 + i * (lb + 10), y, lb, hb(52), (actif ? i + 1 + '  ' : '') + (pris ? '✓ ' : '') + court(o, 30), () => ((TACHE.groupe = k), basculerChoix(i)), false, !pris);
 		});
-		y += 64;
+		y += hb(52) + 12;
 	});
 	return y;
 }
@@ -313,8 +324,8 @@ function corpsPreparation(tache, x, y, l) {
 	y = ligneInfo(t('tache.prep.contexte', { nom: tache.nom, heure: tache.heure }), x, y, l) + 12;
 	tache.options.forEach((o, i) => {
 		const pris = TACHE.choix[0] === o;
-		bouton(x, y, l, 64, i + 1 + '  ' + (pris ? '✓ ' : '') + t('tache.prep.' + o, { nom: tache.nom, cout: Taches.R.prep.cout }), () => basculerChoix(i), false, !pris);
-		y += 76;
+		bouton(x, y, l, hb(64), i + 1 + '  ' + (pris ? '✓ ' : '') + t('tache.prep.' + o, { nom: tache.nom, cout: Taches.R.prep.cout }), () => basculerChoix(i), false, !pris);
+		y += hb(64) + 12;
 	});
 	return y;
 }
@@ -324,7 +335,7 @@ function corpsResultat(tache, r, x, y, l) {
 	textStyle(BOLD);
 	textSize(24);
 	fill(r.ok === false ? C.rouge : C.vert);
-	const titre = tache.type === 'info' ? t(r.ok ? 'tache.info.juste' : 'tache.info.faux', { v: Math.abs(r.effets.reputation) }) : t('tache.prep.ok', { nom: tache.nom, cout: Taches.R.prep.cout });
+	const titre = tache.type === 'info' ? t(r.ok ? 'tache.info.juste' : 'tache.info.faux', { v: Math.abs(r.effets.reputation) }) : tache.type === 'arbitrage' ? t('tache.arbitrage.ok.' + TACHE.choix[0]) : t('tache.prep.ok', { nom: tache.nom, cout: Taches.R.prep.cout });
 	text(titre, x, y, l, 70);
 	textStyle(NORMAL);
 	y += 84;
@@ -418,7 +429,8 @@ function corpsRecap(d, x, y, l) {
 	if (rc.monte) {
 		fill(C.accent);
 		textStyle(BOLD);
-		text(t('recap.monte', { grade: t('grade.' + g.i) }), x + 260, y + 50, l - 260, 30);
+		const opt = Jeu.taches && Jeu.taches.options && Jeu.taches.options.deblocages;
+		text(t('recap.monte', { grade: t('grade.' + g.i) }) + (opt ? ' ' + t('deblocage.grade.' + g.i) : ''), x + 260, y + 50, l - 260, 30);
 		textStyle(NORMAL);
 	}
 	y += 88;
@@ -470,4 +482,81 @@ function dessinerBadge(id, x, y, taille, obtenu) {
 	rect(x - 2, y - 2, taille + 4, taille + 4);
 	fill(obtenu ? C.accent : C.bord);
 	m.forEach((ligne, r) => [...ligne].forEach((c, k) => c === '#' && rect(x + k * p, y + r * p, Math.ceil(p), Math.ceil(p))));
+}
+function corpsArbitrage(tache, x, y, l) {
+	y = ligneInfo(t('tache.arbitrage.contexte', { budget: tache.budget }), x, y, l) + 12;
+	tache.options.forEach((o, i) => {
+		const pris = TACHE.choix[0] === o;
+		bouton(x, y, l, hb(64), i + 1 + '  ' + (pris ? '✓ ' : '') + t('tache.arbitrage.' + o), () => basculerChoix(i), false, !pris);
+		y += hb(64) + 12;
+	});
+	return y;
+}
+
+// ——— Lot F : options soumises au groupe (Paramètres → G), désactivées par défaut ———
+const OPTIONS_JEU = ['chaines', 'deblocages', 'arbitrage'];
+let confirmerRemiseCarriere = 0;
+function ouvrirOptionsJeu() {
+	confirmerRemiseCarriere = 0;
+	ouvrir('optionsJeu');
+	annoncer(t('optjeu.titre') + '. ' + t('optjeu.note'));
+}
+function basculerOptionJeu(nom) {
+	Confort.Reglages.basculer(nom);
+	annoncer(t('optjeu.' + nom) + ' : ' + t(Confort.Reglages[nom] ? 'commun.oui' : 'commun.non') + '. ' + t('optjeu.prochaine'));
+}
+function remettreCarriere() {
+	if (!confirmerRemiseCarriere || millis() - confirmerRemiseCarriere > 5000) {
+		confirmerRemiseCarriere = millis();
+		return annoncer(t('optjeu.confirmer'));
+	}
+	confirmerRemiseCarriere = 0;
+	Taches.reinitialiserCarriere();
+	annoncer(t('optjeu.remise'));
+	Confort.Son.bip('choix');
+}
+function fenetreOptionsJeu() {
+	const l = 1100;
+	const h = 700;
+	const x = (L - l) / 2;
+	const y = (H - h) / 2;
+	panneau(x, y, l, h, C.accent);
+	noStroke();
+	dsTitre(t('optjeu.titre').toUpperCase(), x + 48, y + 36, 36, C.texte, 'left');
+	const R = Confort.Reglages;
+	OPTIONS_JEU.forEach((nom, i) => {
+		const ly = y + 120 + i * 92;
+		textAlign(LEFT, TOP);
+		textFont(POLICE_TEXTE);
+		textSize(22);
+		fill(C.texte);
+		text(i + 1 + '  ' + t('optjeu.' + nom), x + 48, ly + 6, l - 400, 30);
+		textFont(POLICE_DONNEES);
+		textSize(16);
+		fill(C.gris);
+		text(t('optjeu.' + nom + '.detail'), x + 48, ly + 38, l - 400, 44);
+		bouton(x + l - 48 - 200, ly + 6, 200, Math.min(hb(60), 86), t(R[nom] ? 'commun.oui' : 'commun.non'), () => basculerOptionJeu(nom), false, !R[nom]);
+	});
+	const yr = y + 120 + 3 * 92;
+	textAlign(LEFT, TOP);
+	textFont(POLICE_TEXTE);
+	textSize(22);
+	fill(C.texte);
+	const g = Taches.grade();
+	text('4  ' + t('optjeu.carriere', { grade: t('grade.' + g.i), xp: g.xp }), x + 48, yr + 18, l - 460, 30);
+	bouton(x + l - 48 - 300, yr + 6, 300, 60, t(confirmerRemiseCarriere && millis() - confirmerRemiseCarriere < 5000 ? 'optjeu.confirmerBouton' : 'optjeu.remettre'), remettreCarriere, false, true);
+	textAlign(LEFT, TOP);
+	textFont(POLICE_DONNEES);
+	textSize(16);
+	fill(C.gris);
+	text(t('optjeu.note'), x + 48, y + h - 110, l - 400, 70);
+	bouton(x + l - 48 - 240, y + h - 100, 240, 64, t('param.retour'), () => ouvrir('parametres'));
+}
+function toucheOptionsJeu() {
+	if (fenetre !== 'optionsJeu') return false;
+	const i = ['1', '2', '3'].indexOf(key);
+	if (i >= 0) basculerOptionJeu(OPTIONS_JEU[i]);
+	else if (key === '4') remettreCarriere();
+	else if (keyCode === ESCAPE || keyCode === ENTER || keyCode === RETURN) ouvrir('parametres');
+	return true;
 }

@@ -1190,6 +1190,70 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 	verifier(r.reset, 'carrière : réinitialisation');
 }
 
+// Prompt 88 lot F : options du groupe désactivées par défaut ; chaînes étiquetées et plafonnées ; déblocages ; arbitrage
+{
+	const conf = readFileSync(join(pub, 'confort.js'), 'utf8');
+	verifier(/chaines: false, deblocages: false, arbitrage: false/.test(conf), 'options du groupe : désactivées par défaut (Confort.Reglages)');
+	const cf = contexte('fr');
+	const r = vm.runInContext(
+		`(() => {
+		const out = { sansOption: 0, chaines: [], erreurs: [], sauve: null, deblocage: null, arbitrage: null };
+		const pire = (d) => { const ks = Jeu.actionsPossibles(d); return ks.map((k) => [k, Jeu.effetsAttendus(k, d).reduce((a, b) => a + b, 0)]).sort((a, b) => a[1] - b[1])[0][0]; };
+		const jouer = (opts) => {
+			Jeu.chargerSemaine('2026-09-14'); Jeu.nouvellePartie(); Taches.nouvellePartie(opts);
+			let n = 0, garde = 0;
+			while (garde++ < 300) {
+				const d = Jeu.prochainDuJour();
+				if (!d) { if (!Jeu.jours[Jeu.jourIndex + 1]) break; Jeu.journeeSuivante(); Taches.matin(); continue; }
+				Jeu.horloge.minutes = Math.max(Jeu.horloge.minutes, d.minute);
+				const avant = Jeu.paquet.slice(0, Jeu.index + 1);
+				const res = Jeu.decider(pire(d));
+				Taches.apresDecision(res, Jeu.index - 1);
+				if (avant.some((x, i) => Jeu.paquet[i] !== x)) out.erreurs.push('index déplacés');
+				n = Jeu.paquet.filter((x) => x.consequence).length;
+			}
+			return n;
+		};
+		out.sansOption = jouer({});
+		jouer({ chaines: true });
+		const parJour = {};
+		Jeu.paquet.filter((x) => x.consequence).forEach((c) => {
+			parJour[c.date] = (parJour[c.date] || 0) + 1;
+			out.chaines.push({ date: c.date, src: c.source, texte: c.texte_source, minute: c.minute });
+			if (!/pas une donnée réelle/.test(c.source) || !/Conséquence de votre décision/.test(c.texte_source)) out.erreurs.push('chaîne non étiquetée');
+			if (c.minute > Jeu.finJournee() - Taches.R.chaine.marge) out.erreurs.push('chaîne trop tard');
+		});
+		if (Object.values(parJour).some((n) => n > 1)) out.erreurs.push('plus d\\'une chaîne par jour');
+		const snap = JSON.parse(JSON.stringify(Jeu.instantane(0)));
+		const total = Jeu.paquet.length;
+		Jeu.restaurerInstantane(snap, 0);
+		out.sauve = Jeu.paquet.length === total && Jeu.paquet.some((x) => x.consequence);
+		// Déblocages : grade 2 → +1 police, prévision à 1 h
+		Taches.reinitialiserCarriere(); Taches.carriere().xp = 500;
+		Jeu.chargerSemaine('2026-09-14'); Jeu.nouvellePartie(); Taches.nouvellePartie({ deblocages: true }); Taches.matin();
+		const d0 = Jeu.prochainDuJour(); Jeu.horloge.minutes = d0.minute - 30;
+		out.deblocage = { police: Jeu.bonusEffectifs.police, prevision: !!Taches.prevision() };
+		Taches.nouvellePartie({}); Taches.matin();
+		out.deblocage.sans = [Jeu.bonusEffectifs.police || 0, !!Taches.prevision()];
+		Taches.reinitialiserCarriere();
+		// Arbitrage : un jour tiré, ni le premier ni la crise ; « véhicules » rend 1 de budget sur un renfort
+		const e = Taches.nouvellePartie({ arbitrage: true });
+		out.arbitrage = { date: e.arbitrage && e.arbitrage.date, premier: Jeu.jours[0].date, crise: e.crise && e.crise.date };
+		e.arbitrage.choix = 'vehicules';
+		const d = Jeu.dossierCourant();
+		const renfort = Jeu.actionsPossibles(d).find((k) => Jeu.familleDe(k) === 'renfort');
+		if (renfort) { const res = Jeu.decider(renfort); const b = Jeu.jauges.budget; Taches.apresDecision(res, 0); out.arbitrage.rendu = Jeu.jauges.budget - b; }
+		return out;
+	})()`,
+		cf,
+	);
+	verifier(r.sansOption === 0, `chaînes : aucune sans l'option (${r.sansOption})`);
+	verifier(r.chaines.length >= 1 && r.erreurs.length === 0, `chaînes : ${r.chaines.length} créée(s), ${r.erreurs.slice(0, 3)}`);
+	verifier(r.sauve, 'chaînes : la conséquence est gardée par la sauvegarde');
+	verifier(r.deblocage.police === 1 && r.deblocage.prevision && r.deblocage.sans[0] === 0 && !r.deblocage.sans[1], `déblocages : ${JSON.stringify(r.deblocage)}`);
+	verifier(r.arbitrage.date && r.arbitrage.date !== r.arbitrage.premier && r.arbitrage.date !== r.arbitrage.crise && (r.arbitrage.rendu === undefined || r.arbitrage.rendu === 1), `arbitrage : ${JSON.stringify(r.arbitrage)}`);
+}
+
 // Service worker : chaque script de index.html est dans la liste hors ligne de sw.js
 const html = readFileSync(join(pub, 'index.html'), 'utf8');
 const sw = readFileSync(join(pub, 'sw.js'), 'utf8');

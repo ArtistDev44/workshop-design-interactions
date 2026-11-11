@@ -74,6 +74,7 @@ function dessinerBandeau() {
 
 // ——— Bloc 1 : une phrase sur les données réelles ———
 function phraseSituation(d) {
+	if (d.consequence) return t('chaine.phrase', { heure: d.consequence.heure, ligne: d.consequence.ligne, retard: Jeu.retardEffectif(d) }); // prompt 88 : conséquence de jeu, étiquetée
 	const cat = Jeu.categorie(d) || 'autre';
 	const ln = d.lignes && d.lignes.length ? Jeu.lignes && Jeu.lignes.lignes.find((x) => x.nom === d.lignes[0]) : null;
 	const ligne = d.lignes && d.lignes.length ? d.lignes.join(', ') + (ln && t('mode.' + ln.type) ? ' (' + t('mode.' + ln.type) + ')' : '') : null;
@@ -84,7 +85,7 @@ function phraseSituation(d) {
 	if (cat === 'meteo') {
 		if (d.type === 'alerte météo') return t('phrase.alerteMeteo', { nature: d.nature, valeur: d.valeur || t('carte.nonRenseigne'), heure: d.heure || t('carte.nonRenseigne') });
 		const m = Jeu.meteoDuJour(d.date) || {};
-		return t('phrase.meteoForte', { pluie: m.pluie_mm, vent: m.rafales_max, texte: d.texte_source });
+		return t('phrase.meteoForte', { pluie: nombreFr(m.pluie_mm), vent: nombreFr(m.rafales_max), texte: d.texte_source });
 	}
 	return t('phrase.autre', { texte: d.texte_source });
 }
@@ -94,8 +95,8 @@ function pucesImportance(d) {
 	const m = Jeu.meteoDuJour(d.date) || {};
 	const sit = Jeu.situation(d);
 	if (sit.includes('pointe')) p.push(t('puce.pointe'));
-	if ((m.pluie_mm || 0) >= 5) p.push(t('puce.pluie', { pluie: m.pluie_mm }));
-	else if ((m.rafales_max || 0) >= 50) p.push(t('puce.vent', { vent: m.rafales_max }));
+	if ((m.pluie_mm || 0) >= 5) p.push(t('puce.pluie', { pluie: nombreFr(m.pluie_mm) }));
+	else if ((m.rafales_max || 0) >= 50) p.push(t('puce.vent', { vent: nombreFr(m.rafales_max) }));
 	const re = Jeu.retardEffectif(d);
 	if (re !== null && d.retard !== null && re > d.retard) p.push(t('puce.aggrave', { reel: d.retard, effectif: re }));
 	const ev = Jeu.evenementsAffluence ? Jeu.evenementsAffluence(d.date) : [];
@@ -110,6 +111,7 @@ function pucesImportance(d) {
 // ——— Bloc 3 : certitudes et incertitudes dites clairement ———
 function savoirs(d) {
 	const out = [];
+	if (d.consequence) return [{ sur: true, txt: t('savoir.consequence', { heure: d.consequence.heure }) }, { sur: false, txt: t('savoir.sansDuree') }]; // prompt 88 : jamais présentée comme un fait réel
 	const src = /GTFS-RT|temps réel/i.test(String(d.source)) ? 'mesure' : /changelog/i.test(String(d.source)) ? 'changelog' : /agenda/i.test(String(d.source)) ? 'agenda' : /meteo|Open-Meteo/i.test(String(d.source)) ? 'meteo' : 'autre';
 	out.push({ sur: true, txt: t('savoir.source.' + src) });
 	if (d.contradiction) out.push({ sur: false, txt: t('savoir.contradiction') });
@@ -145,19 +147,23 @@ function dessinerPanneauSignalement(d, x, base) {
 		bouton(x + 32, y, 320, 44, t('plus.ouvrir'), basculerPlus, false, true);
 		textAlign(LEFT, TOP);
 		cibleGuide('sources', x + 32, y, 320, 44);
+		y += 56; // bas réel des blocs : le conseil et les cartes ne le chevauchent pas
 	}
 	// Conseil factuel (prompt 23), au-dessus des réponses ; il ne désigne jamais une réponse
-	const yr = base.y + base.h - 360;
+	let yr = base.y + base.h - 360;
 	const conseil = Jeu.conseil ? String(Jeu.conseil(d)) : '';
 	if (conseil) {
 		textFont(POLICE_DONNEES);
 		textSize(16);
 		fill(C.gris);
 		textLeading(22);
-		text(conseil, x + 32, yr - 62, l, 50); // deux lignes au plus
+		const yc = PLUS.ouvert ? yr - 62 : Math.max(yr - 62, y);
+		const hc = textWidth(conseil) > l ? 44 : 22;
+		text(conseil, x + 32, yc, l, 50); // deux lignes au plus
+		yr = Math.max(yr, yc + hc + 10);
 	}
 	if (phase === 'contradiction') return dessinerChoixSource(d, x + 32, yr, l);
-	dessinerCartesReponses(d, x + 32, yr, l, 340);
+	dessinerCartesReponses(d, x + 32, yr, l, Math.max(290, base.y + base.h - 16 - yr));
 }
 function bloc(titre, lignes, x, y, l, couleur) {
 	noStroke();

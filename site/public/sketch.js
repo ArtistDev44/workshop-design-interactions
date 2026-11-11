@@ -1120,6 +1120,7 @@ function keyPressed() {
 			if (cles[key]) basculerReglage(cles[key]);
 			if (key === '8') musiqueSuivante(); // prompt 44
 			if (key === '9') return ouvrirAccessibilite(), false; // prompt 48
+			if (key === 'g' || key === 'G') return ouvrirOptionsJeu(), false; // prompt 88
 			if (key === '5') Sauvegarde.exporter(); // prompt 33
 			if (key === '6') Sauvegarde.copier();
 			if (key === '7') return Sauvegarde.ouvrirImport(), false;
@@ -1300,6 +1301,7 @@ function dessinerFenetre() {
 	if (fenetre === 'mailFin') return fenetreMailFin(); // prompt 56
 	if (fenetre === 'inspection') return fenetreInspection(); // prompt 47
 	if (fenetre === 'tache') return fenetreTache(); // prompt 88
+	if (fenetre === 'optionsJeu') return fenetreOptionsJeu(); // prompt 88 (lot F)
 	if (fenetre === 'demission') return fenetreDemission(); // prompt 47
 	if (fenetre === 'palmares') return fenetrePalmares(); // prompt 47
 	if (fenetre === 'accessibilite') return fenetreAccessibilite(); // prompt 48
@@ -1476,7 +1478,7 @@ function fenetreParametres() {
 		['0', t('param.defiChrono'), 'defiChrono'], // prompt 87 : compteur, ralenti, expiration (prochaine partie)
 	];
 	lignes.forEach(([k, lib, nom], i) => {
-		const ly = y + 120 + i * 88;
+		const ly = y + 120 + i * 80;
 		textFont(POLICE_TEXTE);
 		ajusterTaille(lib, 490, 26);
 		fill(C.texte);
@@ -1498,15 +1500,15 @@ function fenetreParametres() {
 	textSize(26);
 	fill(C.texte);
 	textAlign(LEFT, CENTER);
-	text(t('langue.titre'), x + 48, y + 120 + 5 * 88 + 36);
+	text(t('langue.titre'), x + 48, y + 120 + 5 * 80 + 36);
 	textFont(POLICE_DONNEES);
 	textSize(18);
 	fill(C.gris);
-	text(t('param.touche', { k: 'L' }), x + 560, y + 120 + 5 * 88 + 36);
+	text(t('param.touche', { k: 'L' }), x + 560, y + 120 + 5 * 80 + 36);
 	textAlign(LEFT, TOP);
-	selecteurLangue(x + l - 48, y + 120 + 5 * 88 + 10);
+	selecteurLangue(x + l - 48, y + 120 + 5 * 80 + 10);
 	// Prompt 44 : choix de la musique (morceaux originaux, chiptune), touche 8
-	const ym = y + 120 + 6 * 88;
+	const ym = y + 120 + 6 * 80;
 	textFont(POLICE_TEXTE);
 	textSize(26);
 	fill(C.texte);
@@ -1523,7 +1525,7 @@ function fenetreParametres() {
 	textAlign(LEFT, TOP);
 	text(t('param.musiqueCredits'), x + 48, ym + 70, 640, 24); // crédits des morceaux CC0
 	// Prompt 33 : Progression — exporter (fichier), copier (presse-papiers), importer (fichier ou texte collé)
-	const yp = y + 120 + 7 * 88;
+	const yp = y + 120 + 7 * 80;
 	textFont(POLICE_TEXTE);
 	textSize(26);
 	fill(C.texte);
@@ -1534,7 +1536,7 @@ function fenetreParametres() {
 	bouton(x + l - 48 - 2 * lbp - 16, yp + 8, lbp, 56, t('parametres.copier'), () => Sauvegarde.copier(), false, true);
 	bouton(x + l - 48 - lbp, yp + 8, lbp, 56, t('parametres.importer'), () => Sauvegarde.ouvrirImport(), false, true);
 	// Prompt 48 : accessibilité (daltonisme, taille du texte, lecture facile) et reprise sur un autre appareil
-	const ya = yp + 88;
+	const ya = yp + 80;
 	textFont(POLICE_TEXTE);
 	textSize(26);
 	fill(C.texte);
@@ -1545,6 +1547,18 @@ function fenetreParametres() {
 	fill(C.gris);
 	text(t('param.touche', { k: '9' }), x + 560, ya + 36);
 	bouton(x + l - 48 - 280, ya + 8, 280, 56, t('acc.ouvrir'), ouvrirAccessibilite, false, true);
+	// Prompt 88 : options de jeu soumises au groupe (chaînes, déblocages, arbitrage) et remise à zéro de la progression
+	const yo = ya + 80;
+	textFont(POLICE_TEXTE);
+	textSize(26);
+	fill(C.texte);
+	textAlign(LEFT, CENTER);
+	text(t('optjeu.titre'), x + 48, yo + 36);
+	textFont(POLICE_DONNEES);
+	textSize(18);
+	fill(C.gris);
+	text(t('param.touche', { k: 'G' }), x + 560, yo + 36);
+	bouton(x + l - 48 - 280, yo + 8, 280, 56, t('optjeu.ouvrir'), ouvrirOptionsJeu, false, true);
 	textAlign(LEFT, TOP);
 	bouton(x + l - 288, y + h - 104, 240, 64, t('param.retour'), fermer);
 }

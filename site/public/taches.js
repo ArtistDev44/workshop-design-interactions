@@ -23,6 +23,10 @@ const Taches = (() => {
 		grades: [0, 150, 450, 900], // Stagiaire → Régulateur·rice → Régulateur·rice confirmé·e → Chef·fe de salle
 		badges: ['zero_non_traite', 'info_parfaite', 'semaine_budget', 'crise_maitrisee'],
 		infosPourBadge: 5,
+		// Lot F — options soumises au groupe (§ 7), désactivées par défaut
+		chaine: { delai: 120, marge: 30 }, // conséquence 2 h de jeu après la décision ratée, au plus tard 30 min avant la fin
+		deblocages: { police: 1, prevision: 2, ambulance: 3 }, // grade requis : +1 police/jour, prévision à 1 h, +1 ambulance/jour
+		previsionMin: 60,
 	};
 
 	function hacher(s) {
@@ -40,6 +44,7 @@ const Taches = (() => {
 			.sort((a, b) => a[1] - b[1])
 			.map((x) => x[0]);
 	}
+	const nombre = (v) => (typeof Langue !== 'undefined' && Langue.actuelle === 'fr' ? String(v).replace('.', ',') : String(v));
 	const nomEvenement = (e) => String((e && e.texte_source) || '').split(' — ')[0].trim();
 	const agenda = (date) => (Jeu.evenementsAffluence ? Jeu.evenementsAffluence(date) : []);
 
@@ -203,12 +208,18 @@ const Taches = (() => {
 	}
 
 	// ——— État ———
-	function nouvellePartie() {
-		Jeu.taches = { jours: {}, carnet: [], demande: null, xpPartie: 0, themes: {}, crise: null };
+	function nouvellePartie(options) {
+		const o = options || {};
+		Jeu.taches = { jours: {}, carnet: [], demande: null, xpPartie: 0, themes: {}, crise: null, options: { chaines: !!o.chaines, deblocages: !!o.deblocages, arbitrage: !!o.arbitrage }, arbitrage: null };
 		Jeu.taches.themes = calculerThemes();
 		const dc = Jeu.jours && Jeu.jours.length > 1 ? choisirJourCrise() : null;
 		if (dc) {
 			Jeu.taches.crise = { date: dc, regroupes: regrouperCrise(dc), resultat: null };
+		}
+		if (Jeu.taches.options.arbitrage && Jeu.jours && Jeu.jours.length > 2) {
+			// Arbitrage hebdomadaire : un jour tiré par la graine, ni le premier ni le jour de crise
+			const pool = Jeu.jours.slice(1).filter((j) => j.date !== dc);
+			if (pool.length) Jeu.taches.arbitrage = { date: pool[choix('arbitrage', pool.length)].date, choix: null };
 		}
 		return Jeu.taches;
 	}
@@ -242,7 +253,7 @@ const Taches = (() => {
 	function optionsBriefing(jr) {
 		const reel = [];
 		const m = (Jeu.meteoDuJour && Jeu.meteoDuJour(jr.date)) || null;
-		if (m && ((m.pluie_mm || 0) >= 5 || (m.rafales_max || 0) >= 50)) reel.push({ id: 'meteo', vars: { pluie: m.pluie_mm, vent: m.rafales_max } });
+		if (m && ((m.pluie_mm || 0) >= 5 || (m.rafales_max || 0) >= 50)) reel.push({ id: 'meteo', vars: { pluie: nombre(m.pluie_mm), vent: nombre(m.rafales_max) } });
 		const ev = agenda(jr.date);
 		if (ev.length) reel.push({ id: 'evenement', vars: { nom: nomEvenement(ev[0]) } });
 		const lignes = [...new Set(jr.dossiers.filter((d) => d.type === 'perturbation').flatMap((d) => d.lignes || []))];
@@ -349,6 +360,13 @@ const Taches = (() => {
 		const d = e.demande;
 		Jeu.bonusEffectifs = {};
 		Jeu.allegementObjectif = 0;
+		const ajouter = (k, v) => (Jeu.bonusEffectifs[k] = (Jeu.bonusEffectifs[k] || 0) + v);
+		if (e.options && e.options.deblocages) {
+			const g = grade().i;
+			if (g >= R.deblocages.police) ajouter('police', 1);
+			if (g >= R.deblocages.ambulance) ajouter('ambulance', 1);
+		}
+		if (e.arbitrage && e.arbitrage.choix === 'equipes' && e.arbitrage.jourChoix < (Jeu.jourIndex || 0)) ajouter('police', 1);
 		const jr = Jeu.jourCourant ? Jeu.jourCourant() : null;
 		const j = jr ? jour(jr.date) : null;
 		if (j && !j.themeAnnonce && Jeu.messagePatron) {
@@ -357,7 +375,7 @@ const Taches = (() => {
 			j.theme = theme(jr.date);
 			const m = (Jeu.meteoDuJour && Jeu.meteoDuJour(jr.date)) || {};
 			const ag = agenda(jr.date);
-			if (!(crise(jr.date) && j.theme === 'ordinaire')) Jeu.messagePatron(t('theme.patron.' + j.theme, { pluie: m.pluie_mm, vent: m.rafales_max, n: ag.length, nom: ag.length ? nomEvenement(ag[0]) : '', travaux: jr.dossiers.filter((x) => x.type === 'perturbation').length }), 'consigne', { theme: j.theme });
+			if (!(crise(jr.date) && j.theme === 'ordinaire')) Jeu.messagePatron(t('theme.patron.' + j.theme, { pluie: nombre(m.pluie_mm), vent: nombre(m.rafales_max), n: ag.length, nom: ag.length ? nomEvenement(ag[0]) : '', travaux: jr.dossiers.filter((x) => x.type === 'perturbation').length }), 'consigne', { theme: j.theme });
 			if (crise(jr.date)) {
 				j.crise = true;
 				Jeu.messagePatron(t('crise.annonce', { n: jr.dossiers.length }), 'alerte', { crise: true });
@@ -367,7 +385,7 @@ const Taches = (() => {
 		e.demande = null;
 		if (d.accordee) {
 			if (d.id === 'budget') Jeu.appliquerDeltas({ budget: R.demande.budget });
-			if (d.id === 'equipe') Jeu.bonusEffectifs = { police: R.demande.equipe };
+			if (d.id === 'equipe') ajouter('police', R.demande.equipe);
 			if (d.id === 'calme') Jeu.allegementObjectif = R.demande.calme;
 		}
 		if (Jeu.messagePatron) Jeu.messagePatron(t('tache.demande.' + (d.accordee ? 'accordee' : 'refusee') + '.' + d.id, Object.assign({ seuil: R.seuilAccord }, R.demande)), d.accordee ? 'info' : 'reproche', { demande: d.id, accordee: d.accordee });
@@ -441,6 +459,11 @@ const Taches = (() => {
 			if (prep.resultat === 'utile') Jeu.appliquerDeltas({ reputation: R.prep.bonus });
 			else Jeu.appliquerDeltas({ budget: R.prep.rembourse }); // budget perdu en partie seulement
 		}
+		const e0 = etat();
+		const arb = e0.arbitrage && e0.arbitrage.choix;
+		if (arb === 'vehicules' && Jeu.familleDe && Jeu.familleDe(r.action) === 'renfort') Jeu.appliquerDeltas({ budget: 1 }); // véhicules réservés : renfort moins cher
+		if (arb === 'communication' && (r.communique || ((Jeu.reponse && Jeu.reponse(r.dossier, r.action)) || {}).communique)) Jeu.appliquerDeltas({ reputation: 1 });
+		if (e0.options && e0.options.chaines) creerChaine(r, j);
 		const suite = suiteFinale(j.journal);
 		const doit = suite.type === 'signalement' && suite.n >= R.suiteMax - 1; // la tâche s'intercale avant d'atteindre le plafond
 		const p = tachePreparation(date, Jeu.paquet.indexOf(r.dossier));
@@ -453,6 +476,61 @@ const Taches = (() => {
 		if (doit || (sig === 'info' && premiere) || choix('info|' + n, 2) === 0) return tacheInfo(r, n); // tâche signature du thème en premier
 		return null;
 	}
+	// ——— Lot F : événements chaînés (option) — une conséquence de jeu, ÉTIQUETÉE comme telle, jamais un fait réel ———
+	/** Une décision « ratée » sur une ligne peut saturer cette ligne plus tard dans la journée (au plus 1 chaîne par jour).
+	 * Le dossier créé reprend la ligne et le retard effectif réels (prompt 79) ; sa source dit « conséquence de votre
+	 * décision de HH:MM ». Il est ajouté après les dossiers restants du jour (les index déjà présentés ne bougent pas). */
+	function creerChaine(r, j) {
+		const d = r.dossier;
+		if (j.chaine || d.consequence || !(d.lignes && d.lignes.length)) return null;
+		const e = (Jeu.evenementsJournee || []).find((x) => x.resultat === r);
+		if (!e || Jeu.evaluer(e) !== 'rate') return null;
+		const jr = (Jeu.jours || []).find((x) => x.date === d.date);
+		if (!jr) return null;
+		const fin = (jr.fin || (Jeu.finJournee ? Jeu.finJournee() : 1200)) - R.chaine.marge;
+		const quand = r.minuteSim !== null && r.minuteSim !== undefined ? r.minuteSim : Jeu.horloge ? Jeu.horloge.minutes : d.minute;
+		const restants = jr.dossiers.filter((x) => Jeu.paquet.indexOf(x) >= Jeu.index);
+		const minute = Math.max(quand + R.chaine.delai, ...restants.map((x) => x.minute));
+		if (minute > fin) return null; // trop tard dans la journée : pas de chaîne
+		const heure = Jeu.formaterHeure(quand);
+		const retard = Math.max(10, Jeu.retardEffectif(d) || 0);
+		const c = {
+			id: 'chaine-' + d.date + '-' + d.lignes[0],
+			type: 'ligne en difficulté',
+			date: d.date,
+			heure: null,
+			minute,
+			lignes: [d.lignes[0]],
+			retard,
+			nature: t('chaine.nature'),
+			texte_source: t('chaine.texte', { heure, ligne: d.lignes[0], retard }),
+			source: t('chaine.source', { heure }),
+			consequence: { heure, ligne: d.lignes[0], origine: Jeu.paquet.indexOf(d) },
+			contradiction: null,
+		};
+		const apres = restants.length ? Jeu.paquet.indexOf(restants[restants.length - 1]) + 1 : Jeu.index;
+		Jeu.paquet.splice(apres, 0, c);
+		jr.dossiers.push(c);
+		Jeu.etat.dossiers = Jeu.paquet;
+		j.chaine = { heure, ligne: d.lignes[0], minute };
+		return c;
+	}
+	// ——— Lot F : prévision à 1 h (déblocage, option) et arbitrage hebdomadaire du budget (option) ———
+	function prevision() {
+		const e = etat();
+		if (!(e.options && e.options.deblocages) || grade().i < R.deblocages.prevision || !Jeu.horloge) return null;
+		const d = Jeu.prochainDuJour ? Jeu.prochainDuJour() : null;
+		if (!d || d.minute <= Jeu.horloge.minutes || d.minute - Jeu.horloge.minutes > R.previsionMin) return null;
+		return { type: d.type, minute: d.minute, gravite: Jeu.gravite ? Jeu.gravite(d) : null };
+	}
+	/** Tâche d'arbitrage du jour (si l'option est active et que c'est le jour tiré) */
+	function arbitrage() {
+		const e = etat();
+		const jr = Jeu.jourCourant ? Jeu.jourCourant() : null;
+		if (!e.arbitrage || e.arbitrage.choix || !jr || e.arbitrage.date !== jr.date) return null;
+		return { type: 'arbitrage', date: jr.date, budget: Jeu.jauges.budget, options: ['vehicules', 'equipes', 'communication'] };
+	}
+
 	/** Bonne réponse d'une tâche (simulation, tests) */
 	function bonneReponse(tache) {
 		if (tache.type === 'info') return tache.blocs.map((b) => b.bonne);
@@ -481,6 +559,12 @@ const Taches = (() => {
 			j.info = (j.info || 0) + 1;
 			return { ok: juste, effets: { reputation: juste ? R.info.juste : R.info.faux }, textes, faux: tache.blocs.map((b, i) => reponse[i] !== b.bonne) };
 		}
+		if (tache.type === 'arbitrage') {
+			const textes = [t('tache.arbitrage.contexte', { budget: tache.budget })];
+			etat().arbitrage.choix = reponse || 'aucun';
+			etat().arbitrage.jourChoix = Jeu.jourIndex || 0;
+			return { ok: reponse ? true : null, textes };
+		}
 		if (tache.type === 'evenement') {
 			const textes = [t('tache.prep.contexte', { nom: tache.nom, heure: tache.heure })];
 			if (!reponse || reponse === 'rien') return { ok: null, textes };
@@ -500,6 +584,6 @@ const Taches = (() => {
 		return plainte;
 	}
 
-	return { R, carriere, reinitialiserCarriere, grade, gradeDe, xpJour, theme, crise, criseActive, calculerThemes, choisirJourCrise, SIGNATURE, hacher, choix, nouvellePartie, etat, jour, noter, suiteFinale, briefing, choisirPriorites, evaluerPriorite, rapport, validerRapport, matin, apresDecision, faitsDuJour, bonneReponse, resoudre, tacheInfo, tachePreparation };
+	return { R, prevision, arbitrage, creerChaine, carriere, reinitialiserCarriere, grade, gradeDe, xpJour, theme, crise, criseActive, calculerThemes, choisirJourCrise, SIGNATURE, hacher, choix, nouvellePartie, etat, jour, noter, suiteFinale, briefing, choisirPriorites, evaluerPriorite, rapport, validerRapport, matin, apresDecision, faitsDuJour, bonneReponse, resoudre, tacheInfo, tachePreparation };
 })();
 if (typeof window !== 'undefined') window.Taches = Taches;

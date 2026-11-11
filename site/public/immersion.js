@@ -905,7 +905,8 @@ function nouvellePartieRythme() {
 	Rythme.clamperDebut(); // prompt 76 : aucun dossier avant 8 h
 	Rythme.melangerArrivees();
 	if (typeof Taches !== 'undefined') {
-		Taches.nouvellePartie(); // prompt 88 : tâches de la partie (thèmes, crise)
+		const R = Confort.Reglages;
+		Taches.nouvellePartie({ chaines: R.chaines, deblocages: R.deblocages, arbitrage: R.arbitrage }); // prompt 88 : tâches de la partie (thèmes, crise, options du groupe)
 		Taches.matin(); // consigne du thème du premier jour
 	}
 	FIL.messages = [];
