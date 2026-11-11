@@ -61,7 +61,7 @@ Un mapping justifié avant une API. Une œuvre exposable avant une démonstratio
 | [`journal.md`](journal.md) | Journal des pushes — une ligne par push, la plus récente en tête |
 | [`notes.md`](notes.md) | Liens des API utilisées, pistes d'animation |
 | [`CLAUDE.md`](CLAUDE.md) | Règles courtes pour l'assistant IA |
-| [`LICENSE`](LICENSE) | Licence du code (choix du groupe [À COMPLÉTER]) et rappel des licences des données |
+| [`LICENSE`](LICENSE) | Licence du code (MIT, Mattéo Brevet & Guillaume Renoult) et rappel des licences des données |
 
 ## 🔧 Coulisses de l'atelier (étudiant·es)
 

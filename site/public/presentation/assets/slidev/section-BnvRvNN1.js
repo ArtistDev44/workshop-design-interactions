@@ -1,1 +1,0 @@
-import{I as e,v as t,z as n}from"../modules/shiki-C_MmXx-G.js";import{gt as r}from"../index-Dulp928Q.js";var i={},a={class:`slidev-layout section`};function o(r,i){return e(),t(`div`,a,[n(r.$slots,`default`)])}var s=r(i,[[`render`,o]]);export{s as t};

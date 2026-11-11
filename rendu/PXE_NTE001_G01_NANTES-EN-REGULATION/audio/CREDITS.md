@@ -14,7 +14,7 @@ nous la donnons quand même.
 | `lofi-work.ogg` / `.mp3` | Work (lo-fi) | Loyalty Freak Music | https://commons.wikimedia.org/wiki/File:Loyalty_Freak_Music_-_13_-_Work.ogg | ae13e092e39d7d1f90a3404d13ecd115af085264 |
 | `lofi-standing.ogg` / `.mp3` | Standing (lo-fi) | Loyalty Freak Music | https://commons.wikimedia.org/wiki/File:Loyalty_Freak_Music_-_11_-_Standing.ogg | 2e5271074ed4b0ac2638331331e4e4d679ad075a |
 
-- Loyalty Freak Music (prompt 49, importés le 10/11/2026) : licence CC0 indiquée sur Commons, catégorie « Lo-fi music from Free Music Archive » ; Commons signale encore « License review needed (audio) » sur ces pages : **[À COMPLÉTER] vérification humaine de la licence à la source (Free Music Archive)** avant une diffusion publique.
+- Loyalty Freak Music (prompt 49, importés le 10/11/2026) : licence **vérifiée à la source le 11/11/2026** sur Free Music Archive. Les pages des trois morceaux de l'album *MELODIES WITH A BEAT* (2018) indiquent « … is licensed under a CC0 1.0 Universal License » : https://freemusicarchive.org/music/Loyalty_Freak_Music/MELODIES_WITH_A_BEAT/Loyalty_Freak_Music_-_MELODIES_WITH_A_BEAT_-_06_Softly, `…_-_13_Work` et `…_-_11_Standing`. Commons affiche toujours « License review needed (audio) » : la revue de Commons n'est pas faite, mais la licence de la source ne la contredit pas.
 - Les fichiers `.ogg` sont les originaux (Vorbis, 44,1 kHz).
 - Les `.mp3` en sont des conversions à 128 kb/s (ffmpeg), destinées aux navigateurs qui ne lisent pas l'OGG.
 - Les autres musiques du jeu (« Salle de nuit », « Pixel Ville », « Bords de Loire », « Heure de pointe ») sont composées en code pour le projet (`confort.js`).

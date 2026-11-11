@@ -9,6 +9,7 @@
   - `grep -rn "À COMPLÉTER"` (hors `node_modules`, `dist` et `fallback`) ;
   - `diff -rq site/public rendu/…` ;
   - `ffprobe` sur la vidéo de démonstration.
+- **Mise à jour du 11/11/2026 (après-midi)** : les leviers 4 à 7 de la section 5 ont été appliqués. Les critères concernés sont rescorés et les manques levés sont barrés.
 - **Règle** : un point n'est attribué que s'il est prouvable dans le dépôt aujourd'hui. Ce qui dépend d'une saisie humaine, d'un test en salle ou de l'oral est compté comme manque.
 
 ---
@@ -56,7 +57,7 @@ Source : `contexte/PATRIMOINE.EXE - Nantes 001 — Cours étudiant B3 Design —
 
 ## 2. Projet commun — critère par critère (/70)
 
-### Recherche patrimoniale & provenance — 8 / 10
+### Recherche patrimoniale & provenance — 10 / 10
 
 **Preuves**
 
@@ -75,14 +76,14 @@ Source : `contexte/PATRIMOINE.EXE - Nantes 001 — Cours étudiant B3 Design —
 - `site/public/audio/CREDITS.md` : droits des médias.
 - `LICENSE` : licence MIT du code, avec un rappel des licences des données.
 
-**Manques / risques (−2)**
+**Manques / risques (−2, levés par les leviers 6 et 7)**
 
-- La **propriété volontairement écartée** n'est qu'une « proposition à valider par le groupe » dans `source-sheet.md` (ligne 16).
-- **Licence Hub'Eau** : `"rights": "[À COMPLÉTER] (licence Hub'Eau à vérifier)"` dans `manifest.json` (ligne 23).
-- **Musique Loyalty Freak** : Commons signale « License review needed » (`CREDITS.md`, ligne 17) ; la vérification humaine reste à faire.
-- **Dates d'accès incohérentes** : 2026-11-09 dans la fiche du cartel (`site/src/content/oeuvres/pxe-nte001-g01-w01.json`), 2026-11-10 dans `source-sheet.md`.
+- ~~La **propriété volontairement écartée** n'est qu'une « proposition à valider par le groupe » dans `source-sheet.md` (ligne 16).~~ Confirmée le 11/11/2026.
+- ~~**Licence Hub'Eau** : `"rights": "[À COMPLÉTER] (licence Hub'Eau à vérifier)"` dans `manifest.json` (ligne 23).~~ Licence Ouverte Etalab, d'après les CGU Hub'Eau (§ 5.1.3), vérifiée le 11/11/2026.
+- ~~**Musique Loyalty Freak** : Commons signale « License review needed » (`CREDITS.md`, ligne 17) ; la vérification humaine reste à faire.~~ CC0 1.0 vérifiée le 11/11/2026 sur les pages Free Music Archive des 3 morceaux. La revue de Commons reste en attente, mais la source ne la contredit pas.
+- ~~**Dates d'accès incohérentes** : 2026-11-09 dans la fiche du cartel (`site/src/content/oeuvres/pxe-nte001-g01-w01.json`), 2026-11-10 dans `source-sheet.md`.~~ Harmonisées sur le 2026-11-09, date du premier instantané versionné.
 
-### Grammaire & concept — 12 / 15
+### Grammaire & concept — 14 / 15
 
 **Preuves**
 
@@ -101,14 +102,15 @@ Source : `contexte/PATRIMOINE.EXE - Nantes 001 — Cours étudiant B3 Design —
   - Le patron, la communauté et le téléphone portent la pression morale.
 - Le moteur applique bien la table d'effets « base + 1d6 » (Q57–Q61) : `site/public/game.js`, autour des lignes 143 à 152.
 
-**Manques / risques (−3)**
+**Manques / risques (−3, dont −2 levés par le levier 5)**
 
-- **La documentation de la grammaire n'a pas suivi le prompt 87** (décision sans chrono).
+- ~~**La documentation de la grammaire n'a pas suivi le prompt 87** (décision sans chrono).~~ **Levé** : constat d'origine ci-dessous.
   - `grammar.md` garde « compteur 60 / 30 / 15 s, Q16, Q55 ».
   - La fiche du cartel garde le paramètre « Durée du compteur ».
   - `jeu/00-concept.md` garde « Pression du temps : oui, un compteur est actif » et le trio de jauges d'origine (« satisfaction usagers »).
   - Or `jeu/01-boucle-gameplay.md` (ligne 29) et `jeu/80-decision-sans-chrono.md` disent qu'il n'y a plus de compteur par défaut, et le budget remplace la satisfaction depuis le prompt 22.
   - Un jury qui lit la grammaire puis joue verra l'écart.
+  - **Corrigé le 11/11/2026** dans `grammar.md` (et `grammar.pdf`), la note d'exceptions de `jeu/00-concept.md`, ainsi que le paramètre et le texte du cartel.
 - **Couches ajoutées** entre les prompts 72 et 91 : community, messagerie, téléphone, journal, somnolence, priorités imposées.
   - La règle structurante reste vraie, mais elle est moins immédiatement lisible.
   - Il faut savoir dire laquelle est « la règle la plus importante » (question 2 de `todo.md`).
@@ -181,7 +183,7 @@ Source : `contexte/PATRIMOINE.EXE - Nantes 001 — Cours étudiant B3 Design —
 - Aucun **test joueur humain** n'est consigné pour les prompts 80 et 88 à 91 : `[À COMPLÉTER]` dans `jeu/82-engouement-variete.md`, `jeu/84-…`, `jeu/87-…` et `notes.md` (ligne 104). La hiérarchie et la temporalité ne sont donc validées que par l'auteur.
 - La **densité d'interface** (une dizaine d'applis, des notifications, le patron) peut nuire à la hiérarchie pour un visiteur de 30 secondes en exposition.
 
-### Processus, test & documentation — 6 / 10
+### Processus, test & documentation — 7 / 10
 
 **Preuves**
 
@@ -201,7 +203,7 @@ Source : `contexte/PATRIMOINE.EXE - Nantes 001 — Cours étudiant B3 Design —
 - **Test croisé silencieux** par un autre groupe (30 à 60 s, 3 observations) : non coché dans `todo.md` (ligne 57), aucune trace ailleurs.
 - **README incomplet** dans `site/README.md` et sa copie de `rendu/` : Auteurs (ligne 11), Contributions (ligne 127) et AI usage (ligne 136) sont encore `[À COMPLÉTER]`.
 - **Cartel** : `auteurs` et `groupe` sont `[À COMPLÉTER]` (`pxe-nte001-g01-w01.json`, `rendu/…/cartel.md`) ; la relecture finale par le groupe n'est pas cochée.
-- **Licence incohérente** : `LICENSE` choisit déjà MIT au nom de « Mattéo Brevet & Guillaume Renoult ». Pourtant le `README.md` racine (ligne 64), `site/README.md` (ligne 141) et `manifest.json` (`"license"`) disent encore « [À COMPLÉTER] ».
+- ~~**Licence incohérente** : `LICENSE` choisit déjà MIT au nom de « Mattéo Brevet & Guillaume Renoult ». Pourtant le `README.md` racine (ligne 64), `site/README.md` (ligne 141) et `manifest.json` (`"license"`) disent encore « [À COMPLÉTER] ».~~ Alignés le 11/11/2026. Les auteurs et le groupe du cartel sont aussi renseignés (levier 4).
 - **QR codes** : scan en conditions réelles non fait (`todo.md`).
 - **Déploiement** non documenté : `.github/workflows/deploy.yml` publie sur GitHub Pages, une adresse en 404, alors que le site canonique est sur Cloudflare Pages.
 
@@ -258,24 +260,24 @@ Le dépôt ne permet **pas** de différencier les membres. Aucun README ne fait 
 
 ## 4. Note calculée
 
-- **Projet commun : 54 / 70** (8 + 12 + 13 + 8 + 7 + 6).
-  - Rapporté seul sur 20 : 54 ÷ 70 × 20 = **15,4 / 20**.
-  - Contribution à la note finale : 54 ÷ 5 = **10,8 / 20**.
+- **Projet commun : 59 / 70** (10 + 14 + 13 + 8 + 7 + 7). Le 11/11 au matin, avant les leviers 4 à 7, il était de 54 / 70.
+  - Rapporté seul sur 20 : 59 ÷ 70 × 20 = **16,9 / 20**.
+  - Contribution à la note finale : 59 ÷ 5 = **11,8 / 20**.
 - **Individuel : 7 / 30** démontrable aujourd'hui (4 + 0 + 0 + 2 + 1). La plage réaliste va jusqu'à 30 / 30 en soutenance.
 - **Note finale estimée** : (X/70 + Y/30) ÷ 5.
 
 | Hypothèse | Projet /70 | Individuel /30 | Total /100 | Note /20 | Lecture (livret) |
 |---|---|---|---|---|---|
-| Projet seul (individuel à 0) | 54 | 0 | 54 | **10,8** | < 60 : insuffisant |
-| Démontrable aujourd'hui | 54 | 7 | 61 | **12,2** | 60–69 : fragile mais valide |
-| Soutenance maximale | 54 | 30 | 84 | **16,8** | 80–89 : très bon |
+| Projet seul (individuel à 0) | 59 | 0 | 59 | **11,8** | < 60 : insuffisant |
+| Démontrable aujourd'hui | 59 | 7 | 66 | **13,2** | 60–69 : fragile mais valide |
+| Soutenance maximale | 59 | 30 | 89 | **17,8** | 80–89 : très bon |
 
-**Fourchette : 12,2 à 16,8 / 20.**
+**Fourchette : 13,2 à 17,8 / 20.**
 
 **Lecture** :
 
-- Le projet commun (54/70, soit 77 % des points) se situe dans la zone **« Bon »** : le concept est lisible, le prototype fonctionnel et très testé, la documentation abondante.
-- Les points perdus viennent surtout des **saisies humaines manquantes** (auteurs, contributions, AI usage, licence, propriété écartée) et des **tests humains absents** (test croisé, tests joueurs, QR).
+- Le projet commun (59/70, soit 84 % des points) se situe désormais dans la zone **« Très bon »** : le concept est lisible et la grammaire à jour, le prototype fonctionnel et très testé, les sources et les droits vérifiés.
+- Les points perdus restants viennent surtout des **saisies humaines** encore manquantes (contributions et AI usage du README) et des **tests humains absents** (test croisé, tests joueurs, QR).
 - La partie individuelle, aujourd'hui quasi vide de preuves, décidera si la note finale tombe dans « fragile » ou « très bon ».
 
 ---
@@ -289,14 +291,14 @@ Les leviers sont triés par points potentiels rapportés à l'effort, de la sais
 | 1 | Remplir **Auteurs** et **Contributions** nominatives, en reliant chaque compte Git (ArtistDev44, matteobvt49-code, Skyfe, Vibe Nuage Agent) à une personne | Contribution traçable · Processus & doc | jusqu'à +6 individuel, +1 projet | `site/README.md` (lignes 11 et 127), puis recopie dans `rendu/…/README.md` |
 | 2 | Écrire la note **AI usage** (3 à 5 lignes : ce qui a été écrit par le groupe, relu, réécrit, testé) | Documentation personnelle & intégrité | +2 individuel | `site/README.md` (ligne 136) |
 | 3 | Remplir la **fiche individuelle** du livret pour chaque membre et préparer les **8 questions** de `todo.md` | Maîtrise · Oral | jusqu'à +13 individuel | `todo.md`, « Fiche individuelle » et « Questions de soutenance à préparer » |
-| 4 | **Aligner la licence** sur `LICENSE` (MIT déjà choisi) et renseigner `auteurs` / `groupe` du cartel | Processus & doc | +1 projet | `README.md` racine (ligne 64), `site/README.md` (ligne 141), `site/public/manifest.json` (`license`, `authors`), `pxe-nte001-g01-w01.json`, puis `rendu/` |
-| 5 | **Mettre à jour la grammaire** après le prompt 87 (plus de compteur par défaut ; budget à la place de la satisfaction) | Grammaire & concept | +2 projet | `site/public/grammar.md` (+ `grammar.pdf`), `jeu/00-concept.md` (note d'exception), paramètre « Durée du compteur » de `pxe-nte001-g01-w01.json` |
-| 6 | **Confirmer la propriété écartée** (alertes GTFS-RT) et harmoniser la date d'accès (09/11 ou 10/11) | Recherche & provenance | +1 projet | `site/public/source-sheet.md` (ligne 16), `pxe-nte001-g01-w01.json` (`date_acces`) |
-| 7 | **Vérifier les licences Hub'Eau et Loyalty Freak** à la source, ou retirer la musique en cas de doute | Recherche & provenance | +1 projet | `site/public/manifest.json` (ligne 23), `site/public/audio/CREDITS.md` (ligne 17) |
+| 4 | ✅ fait le 11/11 — **Aligner la licence** sur `LICENSE` (MIT déjà choisi) et renseigner `auteurs` / `groupe` du cartel | Processus & doc | +1 projet | `README.md` racine (ligne 64), `site/README.md` (ligne 141), `site/public/manifest.json` (`license`, `authors`), `pxe-nte001-g01-w01.json`, puis `rendu/` |
+| 5 | ✅ fait le 11/11 — **Mettre à jour la grammaire** après le prompt 87 (plus de compteur par défaut ; budget à la place de la satisfaction) | Grammaire & concept | +2 projet | `site/public/grammar.md` (+ `grammar.pdf`), `jeu/00-concept.md` (note d'exception), paramètre « Durée du compteur » de `pxe-nte001-g01-w01.json` |
+| 6 | ✅ fait le 11/11 — **Confirmer la propriété écartée** (alertes GTFS-RT) et harmoniser la date d'accès (09/11 ou 10/11) | Recherche & provenance | +1 projet | `site/public/source-sheet.md` (ligne 16), `pxe-nte001-g01-w01.json` (`date_acces`) |
+| 7 | ✅ fait le 11/11 — **Vérifier les licences Hub'Eau et Loyalty Freak** à la source, ou retirer la musique en cas de doute | Recherche & provenance | +1 projet | `site/public/manifest.json` (ligne 23), `site/public/audio/CREDITS.md` (ligne 17) |
 | 8 | **Test croisé silencieux** (30 à 60 s, un autre groupe, 3 observations notées) et une itération qui en découle | Processus · Design & expérience | +2 projet | Consigner dans `notes.md` et cocher `todo.md` (ligne 57) |
 | 9 | **Préparer la démo du jury** : activer les options de lisibilité du prompt 89 (trace, pression, dé) ou décider de les activer par défaut | Data / mapping · Design | +1 projet | Paramètres → Options de jeu (`confort.js`) ; décision à noter dans `jeu/84-pression-morale-interface-narratrice.md` |
 | 10 | **Preflight humain** : refresh, sans API, 1920×1080, console ouverte ; scanner les QR en vrai | Prototype · Processus | +1 projet | `todo.md` (checklist de robustesse, QR codes), `site/public/assets/qr-*.png` |
 | 11 | **Mesurer les contrastes** des écrans des prompts 85 à 91 avec un outil (4,5:1) | Design & expérience | +1 projet | Rapport dans `notes.md` ; corrections dans `site/public/ds.js` si besoin |
 | 12 | **Documenter le déploiement** Cloudflare Pages et trancher le sort de `deploy.yml` | Processus & doc | 0 à +1 projet | `.github/workflows/deploy.yml`, `site/README.md` (ligne 106) |
 
-Avec les leviers 4 à 11 réalisés, le projet commun pourrait atteindre environ 64 / 70. Avec un individuel solide (25 / 30), cela donnerait 89 / 100, soit **17,8 / 20**. C'est une projection, pas un acquis.
+Les leviers 4 à 7 sont faits (projet à 59 / 70). Avec les leviers 8 à 11, le projet commun pourrait atteindre environ 64 / 70. Avec un individuel solide (25 / 30), cela donnerait 89 / 100, soit **17,8 / 20**. C'est une projection, pas un acquis.

@@ -182,7 +182,7 @@ Note finale /20 = (points projet /70 + points individuels /30) ÷ 5. Exemple du 
 Vérifié par `ls` / `grep` dans le dépôt : seuls les éléments existants sont cochés plus haut.
 
 ### Livrables manquants
-- [x] `manifest.json` au modèle du livret : `site/public/manifest.json` (prompt 46 ; `authors`, `license` et la licence Hub'Eau restent `[À COMPLÉTER]`)
+- [x] `manifest.json` au modèle du livret : `site/public/manifest.json` (prompt 46 ; `authors`, `license` et la licence Hub'Eau renseignés le 11/11/2026)
 - [ ] Cartel 80–120 mots : texte présent dans `site/src/content/oeuvres/pxe-nte001-g01-w01.json` (validé au build, affiché sur `/cartel/`) ; « satisfaction des usagers » remplacée par « budget » (prompt 46) — relecture finale par le groupe
 - [x] Captures : `site/public/captures/` — `hero.jpg`, `detail-01.jpg`, `process.jpg`, `thumb.jpg`, `demo.mp4` (28 s, refaite au prompt 59), issues du vrai rendu (prompt 46)
 - [ ] QR codes `site/public/assets/qr-*.png` : vérifiés identiques à ceux générés vers l'URL canonique (prompt 46) — reste à tester le scan en conditions réelles
@@ -191,9 +191,9 @@ Vérifié par `ls` / `grep` dans le dépôt : seuls les éléments existants son
 
 ### `[À COMPLÉTER]` qui attendent une saisie humaine du groupe
 - [ ] `site/README.md` : Auteurs (noms et rôles), Contributions (nominatives), AI usage (ce qui a été relu, réécrit, testé)
-- [ ] `site/src/content/oeuvres/pxe-nte001-g01-w01.json` : `auteurs`, `groupe` (et confirmer le numéro G01 de l'identifiant)
-- [ ] `site/public/source-sheet.md` : Contexte et 3 propriétés observables remplis (prompt 59) ; reste à **confirmer la propriété volontairement écartée** proposée
-- [ ] `LICENSE` : choisir la licence du code (recommandation : **MIT**) et nommer les titulaires des droits
+- [x] `site/src/content/oeuvres/pxe-nte001-g01-w01.json` : `auteurs` (Mattéo Brevet, Guillaume Renoult, comme `LICENSE` et les crédits du menu) et `groupe` (G01, repris de l'identifiant) renseignés le 11/11/2026
+- [x] `site/public/source-sheet.md` : Contexte et 3 propriétés observables remplis (prompt 59) ; propriété écartée confirmée le 11/11/2026
+- [x] `LICENSE` : licence MIT, titulaires Mattéo Brevet & Guillaume Renoult (README et manifest alignés le 11/11/2026)
 - [ ] Déploiement : documenter comment Cloudflare Pages publie le site (intégration Git ou dépôt manuel) ; `.github/workflows/deploy.yml` publie sur GitHub Pages (404) — le garder, le corriger ou le supprimer
 
 ### Branches à arbitrer

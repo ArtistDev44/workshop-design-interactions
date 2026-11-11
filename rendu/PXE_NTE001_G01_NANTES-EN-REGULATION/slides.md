@@ -37,7 +37,7 @@ Auteurs : [À COMPLÉTER]
 - **Temps réel Naolib** (GTFS-RT, retards par ligne) — Licence Ouverte, Nantes Métropole
 - **Agenda des événements** de Nantes Métropole — Licence Ouverte — [API](https://data.nantesmetropole.fr/explore/dataset/244400404_agenda-evenements-nantes-metropole_v2/)
 - **Météo** Open-Meteo (prévision et archive ERA5) — CC BY 4.0 — [open-meteo.com](https://open-meteo.com/)
-- **Hauteur de la Loire** à Nantes, station M800001010 (Hub'Eau) — licence à vérifier par le groupe
+- **Hauteur de la Loire** à Nantes, station M800001010 (Hub'Eau) — Licence Ouverte Etalab (CGU Hub'Eau, vérifiée le 11/11/2026)
 - Hors ligne : instantanés réels datés, rejoués sans réseau
 
 ---

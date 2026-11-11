@@ -174,7 +174,7 @@ scripts Node ; essais humains en salle à prévoir pour le micro, la webcam et l
 - Saisies humaines `[À COMPLÉTER]` : auteurs, contributions, licence, numéro G01, propriété écartée.
 - Scan réel des QR codes ; essais micro et webcam avec de vrais périphériques (seuils en salle).
 - Variante du prompt 30 du collaborateur non fusionnée : à arbitrer.
-- Licences à vérifier à la source : Hub'Eau, Loyalty Freak Music (Commons : « review needed »).
+- Licences vérifiées à la source le 11/11/2026 : Hub'Eau (Licence Ouverte Etalab, CGU § 5.1.3) ; Loyalty Freak Music (CC0 1.0 sur Free Music Archive ; la revue Commons reste en attente).
 
 ## Revue game design du 10/11/2026 (prompt 66)
 

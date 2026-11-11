@@ -124,7 +124,7 @@ function blocsDonnees() {
 		lignes: [t('donnees.loire.h', { h: nb(Math.round(LOIRE.hauteur * 100) / 100) }), LOIRE.source === 'api' ? t('donnees.loire.date', { date: dFr(LOIRE.date) }) : t('donnees.loire.repli')].concat(modeDonnees() === 'archive' ? [t('donnees.loire.pasArchive')] : []),
 		statut: LOIRE.source === 'api' ? t('donnees.direct', { heure: dFr(LOIRE.date) }) : t('donnees.repli'),
 		source: "Hub'Eau — hydrométrie, station M800001010",
-		licence: t('donnees.licenceAVerifier'),
+		licence: t('donnees.licenceHubeau'),
 		url: LOIRE.url,
 	});
 	return b;

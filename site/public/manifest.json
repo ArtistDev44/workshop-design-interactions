@@ -7,7 +7,7 @@
 	"id": "PXE-NTE001-G01-W01",
 	"project_title": "Nantes en régulation",
 	"url": "https://workshop-design-interactions.pages.dev/",
-	"authors": ["[À COMPLÉTER]"],
+	"authors": ["Mattéo Brevet", "Guillaume Renoult"],
 	"heritage_source": {
 		"title": "Réseau de transports collectifs Naolib — offre, perturbations et temps réel (Open Data Nantes Métropole)",
 		"url": "https://data.nantesmetropole.fr/explore/dataset/244400404_transports_commun_naolib_nantes_metropole_gtfs/",
@@ -20,10 +20,11 @@
 		{ "name": "Naolib GTFS-RT (temps réel)", "provider": "Open Data Nantes Métropole", "id": "244400404_reseau-transports-collectifs-naolib", "rights": "Licence Ouverte" },
 		{ "name": "Agenda des événements", "provider": "Open Data Nantes Métropole", "id": "244400404_agenda-evenements-nantes-metropole_v2", "rights": "Licence Ouverte" },
 		{ "name": "Météo (prévision et archive ERA5)", "provider": "Open-Meteo", "url": "https://open-meteo.com/", "rights": "CC BY 4.0" },
-		{ "name": "Hauteur de la Loire à Nantes (station M800001010)", "provider": "Hub'Eau — Hydrométrie (eaufrance)", "url": "https://hubeau.eaufrance.fr/", "rights": "[À COMPLÉTER] (licence Hub'Eau à vérifier)" },
-		{ "name": "Musiques (Komiku)", "provider": "Wikimedia Commons", "url": "https://commons.wikimedia.org/", "rights": "CC0 1.0" }
+		{ "name": "Hauteur de la Loire à Nantes (station M800001010)", "provider": "Hub'Eau — Hydrométrie (eaufrance)", "url": "https://hubeau.eaufrance.fr/", "rights": "Licence Ouverte Etalab (CGU Hub'Eau § 5.1.3, vérifié le 2026-11-11 ; citer l'auteur : PHyC, Service Central Vigicrues)" },
+		{ "name": "Musiques (Komiku)", "provider": "Wikimedia Commons", "url": "https://commons.wikimedia.org/", "rights": "CC0 1.0" },
+		{ "name": "Musiques lo-fi (Loyalty Freak Music, album MELODIES WITH A BEAT)", "provider": "Free Music Archive via Wikimedia Commons", "url": "https://freemusicarchive.org/music/Loyalty_Freak_Music/MELODIES_WITH_A_BEAT", "rights": "CC0 1.0 (vérifié sur les pages FMA des 3 morceaux le 2026-11-11)" }
 	],
 	"ai_usage": "Code, documentation et prompts réalisés avec un assistant IA (commits marqués Co-Authored-By: Claude), à partir de prompts écrits par le groupe (dossier prompts/). Relecture et part humaine : [À COMPLÉTER].",
-	"license": "[À COMPLÉTER] (voir LICENSE)",
+	"license": "MIT (code, voir LICENSE) ; données et médias sous leurs licences propres (data_sources)",
 	"version": "1.0"
 }
