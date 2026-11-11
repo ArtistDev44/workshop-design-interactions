@@ -468,39 +468,13 @@ function derniers(liste, n) {
 	return liste.slice(Math.max(0, liste.length - n));
 }
 
-function appPatron(z) {
-	if (Jeu.modificateurActif && Jeu.modificateurActif() === 'panne_messagerie') {
-		// Prompt 23 : panne de la messagerie — les messages arriveront à la fin de la panne
-		dsBadge(z.x + 80, z.y + 20, t('app.horsLigne'), 'erreur');
-		dsTexte(t('app.panne', { s: Math.ceil((Jeu.modificateur.fin - millis()) / 1000) }), z.x, z.y + 60, 22, DS.blanc75, 'left', z.l - 40);
-		return;
-	}
-	// Fil de bulles façon SMS (même esprit que l'intro du prompt 20), aux couleurs du design system
-	let y = z.y;
-	derniers(Jeu.messagesPatron, 9).forEach((m) => {
-		textFont(DS.policeTexte);
-		textSize(20);
-		const lmax = z.l - 260;
-		const lignes = Math.ceil(textWidth(m.texte) / (lmax - 32)) || 1;
-		const h = 24 + lignes * 28;
-		noStroke();
-		fill(DS.blanc05);
-		rect(z.x, y, Math.min(lmax, textWidth(m.texte) + 32), h);
-		fill(DS.primaire);
-		rect(z.x, y, 4, h);
-		dsTexte(m.texte, z.x + 18, y + 12, 20, DS.blanc, 'left', lmax - 32);
-		dsTexte(m.heure, z.x + z.l - 10, y + 12, 18, DS.blanc50, 'right');
-		y += h + 12;
-	});
-	if (!Jeu.messagesPatron.length) dsTexte(t('app.pasMessage'), z.x, z.y, 20, DS.blanc50, 'left');
-}
 
 // ——— Prompt 28 : plaintes des Nantais (contenu : data/messages.json) ———
 let focusReponse = 0; // réponse sélectionnée au clavier (Tab / Entrée, ou 1 / 2 / 3)
 let retourPlainte = null; // { texte, bonne, jusqua } : résultat affiché quelques secondes après une réponse
 
-function repondrePlainte(i) {
-	const p = Jeu.plaintesEnAttente()[0];
+function repondrePlainte(i, cible) {
+	const p = cible || cibleCommunity(); // prompt 85 : la plainte visée (mention ou conversation privée)
 	if (!p) return;
 	const r = Jeu.repondrePlainte(p, i, millis()); // prompt 79 : réponse rapide ou tardive
 	if (!r) return;
@@ -514,85 +488,13 @@ function repondrePlainte(i) {
 	Confort.Son.bip(r.bonne ? 'action' : 'alerte');
 }
 
-/** Bloc « plainte en attente » : texte + réponses cliquables ; renvoie la hauteur occupée */
-function blocPlainte(z) {
-	const attente = Jeu.plaintesEnAttente();
-	let y = z.y;
-	if (retourPlainte && millis() < retourPlainte.jusqua) {
-		dsBadge(z.x + 14, y + 12, retourPlainte.bonne ? '✓' : '!', retourPlainte.bonne ? 'succes' : 'alerte');
-		dsTexte(retourPlainte.texte, z.x + 40, y, 20, DS.blanc, 'left', z.l - 40);
-		y += 44;
-	}
-	if (!attente.length) return y - z.y;
-	const p = attente[0];
-	dsTexte(t('plainte.titre', { n: attente.length }), z.x, y, 20, DS.alerte, 'left');
-	y += 36;
-	noStroke();
-	fill(DS.blanc05);
-	rect(z.x, y, z.l, 84);
-	fill(DS.alerte);
-	rect(z.x, y, 4, 84);
-	dsTexte(p.auteur + ' · ' + p.heure, z.x + 18, y + 10, 18, DS.blanc50, 'left');
-	// Prompt 79 : délai de réponse restant (rouge sous 10 s) — répondre vite évite le malus
-	const reste = Jeu.resteReponse(p, millis());
-	const rapide = reste > Jeu.REGLAGES.community.delaiMs - Jeu.REGLAGES.community.rapideMs;
-	dsTexte(t(rapide ? 'plainte.delaiRapide' : 'plainte.delai', { s: Math.ceil(reste / 1000) }), z.x + z.l - 18, y + 10, 18, reste < 10000 ? DS.erreurClair : rapide ? DS.succesClair : DS.alerte, 'right');
-	dsTexte(Jeu.texteMessage(p.def.texte, p.vars), z.x + 18, y + 38, 20, DS.blanc, 'left', z.l - 36);
-	y += 96;
-	if (focusReponse >= p.def.reponses.length) focusReponse = 0;
-	p.def.reponses.forEach((r, i) => {
-		const h = 64;
-		const survol = mouseX >= z.x && mouseX <= z.x + z.l && mouseY >= y && mouseY <= y + h;
-		const actif = survol || focusReponse === i;
-		noStroke();
-		fill(actif ? DS.blanc15 : DS.blanc05);
-		rect(z.x, y, z.l, h);
-		if (actif) {
-			noFill();
-			stroke(DS.blanc);
-			strokeWeight(2);
-			rect(z.x + 1, y + 1, z.l - 2, h - 2);
-			noStroke();
-		}
-		dsTexte(String(i + 1), z.x + 16, y + 20, 22, DS.alerte, 'left');
-		dsTexte(Jeu.texteMessage(r.texte, p.vars), z.x + 52, y + 8, 19, DS.blanc, 'left', z.l - 70);
-		boutons.push({ x: z.x, y, l: z.l, h, action: () => repondrePlainte(i) });
-		y += h + 8;
-	});
-	dsTexte(t('plainte.aide'), z.x, y + 2, 16, DS.blanc50, 'left');
-	return y + 34 - z.y;
-}
 
 function appCommunity(z) {
-	let y = z.y;
-	dsTexte(t('app.reputation', { r: Jeu.jauges.reputation }), z.x, y, 20, DS.blanc75, 'left');
-	const bp = Jeu.bilanPlaintes ? Jeu.bilanPlaintes() : null;
-	if (bp && bp.total) dsTexte(t('plainte.compteur', { x: bp.traitees, y: bp.total }), z.x + z.l, y, 18, DS.blanc50, 'right');
-	y += 44;
-	const hp = blocPlainte({ x: z.x, y, l: z.l });
-	y += hp ? hp + 16 : 0;
-	const place = Math.max(1, Math.floor((z.y + z.h - y) / 88));
-	derniers(Jeu.commentaires, Math.min(8, place))
-		.reverse()
-		.forEach((c) => {
-			noStroke();
-			fill(DS.blanc05);
-			rect(z.x, y, z.l, 76);
-			stroke(DS.blanc15);
-			strokeWeight(2);
-			noFill();
-			rect(z.x + 1, y + 1, z.l - 2, 74);
-			noStroke();
-			dsTexte((c.suivi ? '↳ ' + t('suivi.reponse') + ' · ' : '') + c.auteur + ' · ' + c.heure, z.x + 16, y + 10, 18, c.suivi ? DS.alerte : DS.blanc50, 'left'); // prompt 63 : réaction à une de vos réponses
-			dsTexte(c.texte, z.x + 16, y + 38, 20, DS.blanc, 'left', z.l - 160);
-			dsBadge(z.x + z.l - 60, y + 38, t('app.rep', { d: (c.delta > 0 ? '+' : '') + c.delta }), c.delta > 0 ? 'succes' : 'erreur');
-			y += 88;
-		});
-	if (!Jeu.commentaires.length) dsTexte(t('app.aucunCommentaire'), z.x, y, 20, DS.blanc50, 'left');
+	dessinerCompteSocial(z); // prompt 85 : le compte social de la régulation (community.js)
 }
 
 // Prompt 63 : journal par journée, avec une enquête après coup sur chaque incident (données réelles uniquement)
-const JOURNAL = { jour: null, enquete: null, volet: 0 };
+const JOURNAL = { jour: null, enquete: null, volet: 0, carnet: false }; // prompt 88 : carnet de la semaine
 const VOLETS_ENQUETE = ['passe', 'contexte', 'decision', 'suites'];
 function appJournal(z) {
 	const jours = Jeu.jours || [];
@@ -601,9 +503,11 @@ function appJournal(z) {
 	const entrees = (Jeu.evenementsJournee || []).filter((e) => j && e.jour === j.date);
 	if (JOURNAL.enquete !== null && entrees[JOURNAL.enquete]) return enqueteJournal(z, entrees[JOURNAL.enquete], j);
 	JOURNAL.enquete = null;
+	if (JOURNAL.carnet) return carnetSemaine(z); // prompt 88
 	let y = z.y;
 	dsTitre(t('app.journee', { date: j ? j.date.split('-').reverse().join('/') : '' }), z.x, y, 24, DS.blanc, 'left');
 	// Navigation entre les journées déjà jouées
+	dsBouton(z.x + z.l - 610, y - 4, 196, 40, t('carnet.bouton'), basculerCarnetSemaine, 'contour'); // prompt 88
 	dsBouton(z.x + z.l - 400, y - 4, 190, 40, t('journal.veille'), () => ((JOURNAL.jour = Math.max(0, JOURNAL.jour - 1)), (JOURNAL.enquete = null)), 'contour', JOURNAL.jour <= 0);
 	dsBouton(z.x + z.l - 200, y - 4, 200, 40, t('journal.lendemain'), () => ((JOURNAL.jour = Math.min(Jeu.jourIndex, JOURNAL.jour + 1)), (JOURNAL.enquete = null)), 'contour', JOURNAL.jour >= Jeu.jourIndex);
 	y += 54;
@@ -661,7 +565,7 @@ function enqueteJournal(z, e, j) {
 		lignes.push(t('journal.evaluation', { eval: t('eval.' + Jeu.evaluer(e)) }));
 		lignes.push(t('journal.meilleure', { action: String(e.meilleureAction) }));
 		// Ce que chaque action aurait donné en moyenne dans ce contexte : c'est là que l'on apprend les effets (prompt 50)
-		lignes.push(t('journal.attendus', { liste: ['devier', 'retenir', 'renfort'].map((a) => t('action.' + a) + ' ' + signe(Math.round(e.attendus[a]))).join(' · ') }));
+		lignes.push(t('journal.attendus', { liste: Object.keys(e.attendus).filter((a) => Jeu.familleDe(a) !== 'rien').map((a) => String(Jeu.libelleAction(a)) + ' ' + signe(Math.round(e.attendus[a]))).join(' · ') }));
 	} else {
 		const p = (Jeu.plaintes || []).find((x) => x.index === idx);
 		if (p) {
@@ -742,7 +646,7 @@ const INDIC = (() => {
 		const o = JSON.parse(localStorage.getItem(CLE_INDICATEURS) || 'null');
 		if (o && Number.isFinite(o.x) && Number.isFinite(o.y)) pos = o;
 	} catch (e) {}
-	return { l: 460, h: 392, pos, prise: null };
+	return { l: 460, h: 572, pos, prise: null }; // prompt 84 : + statut auprès du patron ; prompt 88 : + grade et badges
 })();
 function basculerIndicateurs() {
 	PC.flottant = !PC.flottant;
@@ -830,4 +734,18 @@ function dessinerIndicateurs() {
 	if (o) dsTexte(t('indic.objectif', { libelle: o.libelle, ok: Jeu.jauges[o.jauge] >= o.seuil ? '✓' : '✗' }), x + 18, y + 284, 16, DS.blanc75, 'left', I.l - 36);
 	const b = Jeu.jauges.budget;
 	dsTexte(t(b < 20 ? 'indic.budgetBas' : b >= 70 ? 'indic.budgetHaut' : 'indic.budgetMoyen'), x + 18, y + 336, 16, DS.blanc50, 'left', I.l - 36);
+	// Prompt 84 : statut auprès du patron (niveau et avertissements)
+	const S = Jeu.statutPatron || { niveau: 0, avertissements: 0 };
+	dsTexte(t('indic.statut', { statut: t(['statut.normal', 'statut.surveillance', 'statut.dernier'][S.niveau] || 'statut.normal'), n: S.avertissements }), x + 18, y + 384, 16, S.niveau === 2 ? DS.erreurClair : S.niveau === 1 ? DS.alerte : DS.blanc75, 'left', I.l - 36);
+	// Prompt 88 : grade (carrière, entre les parties) et vitrine des badges — faits de la partie uniquement
+	if (typeof Taches !== 'undefined') {
+		const g = Taches.grade();
+		dsTexte(t('indic.grade', { grade: t('grade.' + g.i), xp: g.xp }), x + 18, y + 452, 16, DS.blanc, 'left', I.l - 36);
+		const c = Taches.carriere();
+		Taches.R.badges.forEach((b, i) => {
+			const obtenu = !!(c.badges[b] && c.badges[b].n);
+			dessinerBadge(b, x + 18 + i * 108, y + 492, 40, obtenu);
+			if (obtenu && c.badges[b].n > 1) dsTexte('×' + c.badges[b].n, x + 64 + i * 108, y + 512, 14, DS.blanc75, 'left');
+		});
+	}
 }

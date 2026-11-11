@@ -46,7 +46,7 @@ function region(src, dx, dy, dl, defile) {
 	PORTRAIT.regions.push({ src, dst: { x: dx, y: dy, l: dl, h: dh }, defile: !!defile });
 	return dh;
 }
-const LARGEUR_FENETRE = { partage: 900, palmares: 1440, 'livre-stress': 1400, aide: 1260, accessibilite: 1260, parametres: 1040, menu: 760, inspection: 1140, demission: 940, partir: 1040, blame: 1140, mailFin: 1140, reset: 1000, reprise: 1100 };
+const LARGEUR_FENETRE = { partage: 900, palmares: 1440, 'livre-stress': 1400, aide: 1260, accessibilite: 1260, parametres: 1040, menu: 760, inspection: 1140, demission: 940, partir: 1040, blame: 1140, mailFin: 1140, reset: 1000, reprise: 1100, tache: 1260, optionsJeu: 1120 }; // prompt 88
 
 function scenePortrait() {
 	if (typeof CINE !== 'undefined' && CINE) return 'plein';
@@ -55,6 +55,7 @@ function scenePortrait() {
 	if (fenetre || tutoriel) return 'fenetre';
 	if (MENU.actif) return 'menu';
 	if (vue === 'poste' && PC.etat === 'appli' && ecran === 'jeu') return 'appli';
+	if (vue === 'poste' && PC.etat === 'os' && (PC.fenetre === 'community' || PC.fenetre === 'patron') && ecran === 'jeu') return 'community'; // prompts 85 / 86 : une colonne
 	if (vue === 'bureau' && ecran === 'jeu' && !TRANSITION_JOUR) return 'bureau';
 	return 'plein';
 }
@@ -68,6 +69,7 @@ function composerPortrait() {
 	PORTRAIT.boutons = [];
 	const scene = scenePortrait();
 	if (scene === 'appli') regionsAppli();
+	else if (scene === 'community') region(pcVersImage({ x: FENETRE_APP.x, y: FENETRE_APP.y, l: 924, h: FENETRE_APP.h }), 0, 160, PL); // prompt 85 : colonne de 860 px, onglets en bas
 	else if (scene === 'main') region({ x: 880, y: 0, l: 780, h: H }, 0, 200, PL);
 	else if (scene === 'rapport') region({ x: 420, y: 0, l: 1420, h: H }, 0, (PH - (H * PL) / 1420) / 2, PL);
 	else if (scene === 'fenetre') {
@@ -115,7 +117,7 @@ function composerPortrait() {
 
 /** Appli Signalements : jauges fixes, puis liste des signalements + lignes et dossier (défilables), barre des tâches + « Se lever » fixes */
 function regionsAppli() {
-	const hj = region(appliVersImage({ x: DROITE.x, y: DROITE.y, l: DROITE.l, h: 110 }), 20, 12, PL - 40);
+	const hj = region(appliVersImage(BANDEAU), 20, 12, PL - 40); // prompt 87 : bandeau fin
 	const hs = region(appliVersImage(ZONE_SOMNO), (PL - 600) / 2, 12 + hj + 8, 600); // prompt 78 : somnolence (≥ 44 px)
 	const haut = 12 + hj + 8 + hs + 10;
 	const bas = PH - 190;
@@ -127,8 +129,7 @@ function regionsAppli() {
 	const nSig = Math.max(1, Math.min(typeof fileIncidents === 'function' ? fileIncidents().length : 1, 7));
 	y += region(appliVersImage({ x: FILE_SIG.x, y: FILE_SIG.y, l: FILE_SIG.l, h: Math.min(FILE_SIG.h, 130 + nSig * 122) }), 20, y, PL - 40, true) + 16;
 	const yDossier = y;
-	y += region(appliVersImage({ x: DROITE.x, y: DROITE.y + 130, l: DROITE.l, h: DROITE.h - 130 }), 20, y, PL - 40, true) + 16;
-	y += region(appliVersImage(LISTE), (PL - 560) / 2, y, 560, true);
+	y += region(appliVersImage(PANNEAU), 20, y, PL - 40, true) + 16;
 	PORTRAIT.defilMax = Math.max(0, y - bas);
 	// Défilement automatique : vers le dossier à son arrivée, vers la liste des signalements quand on attend
 	const enDossier = ['decision', 'contradiction', 'conflit', 'narration'].includes(phase);

@@ -7,6 +7,10 @@
 - **Mode en ligne / hors ligne** : forcer le fallback local.
 - **Durée du compteur** : liée à la semaine choisie (Q16, Q55) — semaine facile
   60 s / normale 30 s / difficile 15 s par décision.
+  **Prompt 87 — exception à Q16 / Q55 :** ces durées ne valent plus qu'en mode **« Défi chrono »**
+  (Paramètres, touche `0`, désactivé par défaut, enregistré dans `localStorage`, appliqué à la partie
+  suivante). Sans défi, la difficulté règle les signalements pris en même temps (3 / 2 / 1), l'aggravation
+  (×0,5 / ×1 / ×1,5) et le budget de départ (60 / 50 / 40, exception à Q40 pour le budget).
 - **Son** : **ambiance de salle de contrôle + bips d'interface**, activé / coupé (`M`).
 - **Accessibilité** : réduction des animations (`prefers-reduced-motion`),
   contraste renforcé, taille du texte.

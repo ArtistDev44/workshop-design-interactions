@@ -103,7 +103,7 @@ const Sauvegarde = (function () {
 				modeHorsLigne: s.mode === 'hors ligne',
 				parametres: { son: !!R.son, contraste: !!R.contrasteRenforce, reduireAnimations: !!R.reduireAnimations, tailleTexte: 1 },
 				// Où en était l'écran : la phase, et le temps déjà écoulé du compte à rebours (recalculé à la reprise)
-				interface: { phase, ecoule: PHASES_COMPTEUR.includes(phase) ? Math.max(0, maintenant - debutCompteur) : 0, pcJour: typeof JOUR_PC !== 'undefined' ? JOUR_PC.fait : '', explication: typeof FIL !== 'undefined' && FIL.explicationVue, somnolence: typeof SOMNO !== 'undefined' ? Math.round(SOMNO.v) : 0 }, // prompt 71 : journée dont le PC a déjà démarré ; prompt 74 : explication du poste vue
+				interface: { phase, ecoule: PHASES_COMPTEUR.includes(phase) ? Math.max(0, maintenant - debutCompteur) : 0, pcJour: typeof JOUR_PC !== 'undefined' ? JOUR_PC.fait : '', explication: typeof FIL !== 'undefined' && FIL.explicationVue, somnolence: typeof SOMNO !== 'undefined' ? Math.round(SOMNO.v) : 0, community: typeof COMMU !== 'undefined' ? COMMU.onglet : 'fil', patron: typeof PATRON !== 'undefined' ? { filtre: PATRON.filtre, defil: PATRON.defil } : null }, // prompt 71 : journée dont le PC a déjà démarré ; prompt 74 : explication du poste vue
 				complet: encoder(s),
 			},
 		};
@@ -251,6 +251,8 @@ const Sauvegarde = (function () {
 			arriveeDossier = debutCompteur = maintenant - (enCompteur ? Math.max(0, Number(ui.ecoule) || 0) : 0);
 			interaction();
 			if (typeof Rythme !== 'undefined') Rythme.clamperDebut(); // prompt 76 : sauvegarde d'avant le passage à 8 h → horloge et dossiers ramenés à 8 h
+			if (typeof COMMU !== 'undefined' && ONGLETS_COMMU.includes(ui.community)) COMMU.onglet = ui.community; // prompt 85 : onglet actif
+			if (typeof PATRON !== 'undefined' && ui.patron && FILTRES_PATRON.some((f) => f.cle === ui.patron.filtre)) Object.assign(PATRON, { filtre: ui.patron.filtre, defil: Number(ui.patron.defil) || 0 }); // prompt 86
 			if (typeof SOMNO !== 'undefined') {
 				SOMNO.v = Math.max(0, Math.min(100, Number(ui.somnolence) || 0)); // prompt 78
 				SOMNO.jourCle = cleJourSomno();

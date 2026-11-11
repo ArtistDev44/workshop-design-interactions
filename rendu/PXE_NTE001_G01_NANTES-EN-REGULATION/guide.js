@@ -62,13 +62,11 @@ const ETAPES_GUIDE = [
 	{ id: 'somnolence', cible: () => (vue === 'poste' && PC.etat === 'appli' ? 'somnolence' : vue === 'poste' ? 'iconeSignalements' : 'ecranPC'), fait: () => enSieste || (vue === 'poste' && PC.etat === 'appli' && millis() - GUIDE.debutEtape > 10000) },
 	// Prompt 66 : étape dédiée au signalement (prendre le dossier lance le compteur)
 	{ id: 'prendre', cible: () => (vue === 'poste' && PC.etat === 'appli' ? 'fileSignalements' : vue === 'poste' ? 'iconeSignalements' : 'ecranPC'), fait: () => PHASES_DOSSIER.includes(phase) || phase === 'narration' || (Jeu.historique || []).length > 0 },
-	// Prompt 72 : si le dossier est une alerte, l'étape pointe ses réponses rédigées
-	{ id: 'actions', cible: () => (vue === 'poste' && PC.etat === 'appli' ? (alerteEnCours() ? 'alerte' : 'actions') : vue === 'poste' ? 'iconeSignalements' : 'ecranPC'), fait: () => (Jeu.historique || []).length > 0 || phase === 'narration' },
+	{ id: 'actions', cible: () => (vue === 'poste' && PC.etat === 'appli' ? 'actions' : vue === 'poste' ? 'iconeSignalements' : 'ecranPC'), fait: () => (Jeu.historique || []).length > 0 || phase === 'narration' },
 	{ id: 'apps', cible: () => (vue !== 'poste' ? 'ecranPC' : PC.etat === 'appli' ? 'fermerAppli' : 'iconesOS'), fait: () => PC.etat === 'os' && (!!PC.fenetre || PC.flottant) },
 	{ id: 'quitter', cible: () => 'quitterPC', fait: () => vue === 'bureau' },
 	{ id: 'livre', cible: () => 'livreAide', fait: () => !!tutoriel || fenetre === 'livre-stress' || (typeof PIECE !== 'undefined' && !!PIECE.message) },
 ];
-const alerteEnCours = () => phase === 'decision' && typeof reponsesAlerte === 'function' && reponsesAlerte().length > 0;
 function demarrerGuide() {
 	GUIDE.actif = true;
 	GUIDE.etape = 0;
@@ -92,7 +90,6 @@ function texteEtapeGuide(e) {
 	if (c === 'ecranPC' && e.id !== 'installer' && e.id !== 'apps') return t('guide.retourPC');
 	if (c === 'iconeSignalements') return t('guide.ouvrirSignalements');
 	if (e.id === 'apps') return t(c === 'fermerAppli' ? 'guide.apps.fermer' : c === 'ecranPC' ? 'guide.retourPC' : 'guide.apps.ouvrir');
-	if (e.id === 'actions' && alerteEnCours()) return t('guide.alerte'); // prompt 72
 	return t('guide.' + e.id, { x: IMMERSION.compression }); // prompt 77 : « ×100 » suit la valeur réelle
 }
 function etapeGuideSuivante() {

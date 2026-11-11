@@ -75,3 +75,10 @@ Intervenant : Kamel Ghabte. Groupes de 2 à 3 étudiant·es.
 - Accessibilité : contraste ≥ 4,5:1, navigation clavier, `prefers-reduced-motion`, pas de flash.
 - À chaque push : une ligne en tête du tableau de [`journal.md`](journal.md) (date, commit, fichiers, résumé).
 - Travailler sur une branche ; fusionner dans `main` sur demande.
+
+## Crédits et fiction
+
+Jeu « Nantes en régulation » : Mattéo Brevet & Guillaume Renoult (code sous licence MIT, voir `LICENSE`).
+**Fiction de jeu** : le réseau social « Quai », le compte « Régul' Nantes · salle de contrôle » (@regul.nte), le
+patron, Camille et les usagers à pseudonyme sont inventés pour le jeu. Ce projet n'est affilié à aucun
+transporteur ni à aucune collectivité ; les données (incidents, météo, agenda) restent réelles et sourcées.

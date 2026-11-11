@@ -45,6 +45,9 @@ fait n'est inventé. Logique dans `game.js` (section « Prompt 47 »), interface
 
 ## Reporté (à rediscuter en groupe)
 - Arbre de compétences, événements chaînés : changeraient les règles verrouillées Q1–Q61.
+  *Prompt 88 :* proposés au groupe et livrés **désactivés par défaut** (Paramètres → Options de jeu) :
+  événements chaînés étiquetés « conséquence de jeu », déblocages par grade, arbitrage du budget ; expérience,
+  grade et badges affichés sans effet sur le jeu. Voir `82-engouement-variete.md` (§ « Points à trancher »).
 - Personnages récurrents : demanderaient d'écrire des arcs (risque d'inventer des personnes).
 - Nouvelles sources Open Data, semaines et lignes : nouvel échantillonnage des API (prompt dédié).
 - Mode « journée type » : découper une semaine en journées jouables seules.

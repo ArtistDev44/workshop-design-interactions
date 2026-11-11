@@ -23,6 +23,14 @@ contextuels (météo, heure de pointe, affluence — Q24).
 - Si le compteur atteint 0 sans choix : « ne rien faire » est appliqué, avec les
   seules conséquences naturelles du dossier (Q25).
 
+> **Prompt 87 — exceptions à Q5 et Q57–Q60 : réponses par catégorie.** Chaque dossier reçoit une catégorie
+> calculée sur ses champs réels (accident > météo > retard > travaux > affluence). Chaque catégorie propose 4
+> réponses rédigées (`site/public/data/reponses.json`), dont une « ne rien changer » ; elles passent par la même
+> formule (base + 1d6, Q61, bonus ×1,25 dans les situations où la réponse est la plus adaptée) et `Jeu.evaluer`
+> compare avec la meilleure réponse de la même catégorie. Aucune réponse n'est dominante : chacune est la
+> meilleure dans au moins un contexte réel (contrôlé par `npm test`). La table Q57–Q60 reste le repli d'un
+> dossier sans catégorie. Hors « Défi chrono », le compteur à 0 n'existe plus (voir `01-boucle-gameplay.md`).
+
 > **Prompt 79 — retard effectif.** Le « retard » lu par Q58 (Retenir : +8 si > 20 min), par la gravité (élevée
 > ≥ 20 min, moyenne ≥ 10 min), par les conséquences naturelles d'une « ligne en difficulté » (retard / 5) et par le
 > conflit A / B (retards à 5 min près) est désormais le **retard effectif** : retard réel de la source + 1 min

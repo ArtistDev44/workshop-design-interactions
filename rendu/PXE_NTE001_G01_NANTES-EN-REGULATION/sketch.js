@@ -96,7 +96,7 @@ function optionsAccueil() {
 		type: 'semaine',
 		lundi: s.lundi,
 		titre: T('accueil.semaine', { debut: { toString: () => dateLongue(s.lundi) }, fin: { toString: () => dateLongue(s.dimanche) } }),
-		detail: T('accueil.detail', { niveau: T('niveau.' + s.niveau), s: s.compteur_s }),
+		detail: Confort.Reglages.defiChrono ? T('accueil.detailChrono', { niveau: T('niveau.' + s.niveau), s: s.compteur_s }) : T('accueil.detail', { niveau: T('niveau.' + s.niveau) }), // prompt 87
 		info: T('accueil.info', { d: s.dossiers, e: s.evenements, meilleur: texteMeilleur(s.lundi) }),
 		sauvegarde: Sauvegarde.pour(s.lundi), // prompt 33
 	}));
@@ -152,6 +152,13 @@ function draw() {
 		majCurseur();
 		return;
 	}
+	// Prompt 84 : licenciement — écran « game over » plein écran
+	if (GAMEOVER) {
+		boutons = [];
+		dessinerGameOver();
+		majCurseur();
+		return;
+	}
 	// Prompt 35 : menu principal plein écran avant le bureau ; il se ferme dès qu'une partie démarre ou reprend
 	if (MENU.actif && ecran === 'jeu') fermerMenuPrincipal();
 	if (MENU.actif) {
@@ -166,8 +173,13 @@ function draw() {
 		return;
 	}
 	verifierMecaniques(); // prompt 47 : inspection surprise (avant l'horloge, qui s'arrête alors)
+	verifierTaches(); // prompt 88 : briefing du matin, tâches courtes
+	majAmbianceTaches(); // prompt 88 : humeur musicale de la crise
 	majMultitache(); // prompts 68 / 77 : arrivées, compteurs des signalements actifs, expirations en arrière-plan
 	majNotifications(); // prompt 77 : mails, commentaires, fins d'intervention
+	majLicenciement(); // prompt 84 : messages après la panne, licenciement hors décision
+	majPatron(); // prompt 86 : son, indicateur de saisie
+	if (PC.fenetre !== 'patron') PATRON.ouvert = false; // prochaine ouverture : sur le premier non lu
 	majRythme(); // prompt 74 : événements de rythme à heures fixes
 	majExplicationPoste(); // prompt 74 : explication du poste à la première ouverture de l'écran de jeu
 	majSoir(); // prompt 69 : crépuscule accéléré, sortie du bureau
@@ -250,19 +262,20 @@ function bandeauEtat() {
 	if (ecran !== 'jeu') return;
 	const cle = { attente: 'attente', reveil: 'attente', selection: 'selection', decision: 'decision', contradiction: 'contradiction', conflit: 'conflit', narration: 'narration', mail: 'mail', soir: 'soir', fin: 'fin' }[phase];
 	if (!cle) return;
-	const txt = phase === 'attente' && Jeu.journeeFinie && Jeu.journeeFinie() ? t('etat.finJournee', { fin: Jeu.formaterHeure(Jeu.finJournee()) }) : t('etat.' + cle, { x: IMMERSION.compression }); // prompt 51
+	const txt = phase === 'attente' && Jeu.journeeFinie && Jeu.journeeFinie() ? t('etat.finJournee', { fin: Jeu.formaterHeure(Jeu.finJournee()) }) : t('etat.' + cle + (cle === 'decision' && Jeu.defiChrono ? 'Chrono' : ''), { x: IMMERSION.compression }); // prompt 51 ; prompt 87 : consigne du défi chrono
 	const urgent = ['decision', 'contradiction', 'conflit'].includes(phase);
 	noStroke();
 	fill(urgent ? C.primaire : 'rgba(255,255,255,0.08)');
-	rect(GAUCHE.x, H - 38, 1500, 32);
+	rect(40, H - 38, 1500, 32);
 	fill('#ffffff');
 	textFont(POLICE_TEXTE);
 	textStyle(BOLD);
 	ajusterTaille(txt, 1470, 18);
 	textAlign(LEFT, CENTER);
-	text(txt, GAUCHE.x + 14, H - 22);
+	text(txt, 54, H - 22);
 	textStyle(NORMAL);
 	dessinerSomnolence(); // prompt 78 : jauge de somnolence, cliquable (se reposer)
+	dessinerStatutPatron(); // prompt 84 : pastille « Sous surveillance » / « Dernier avertissement »
 }
 
 function lancerPartie() {
@@ -281,6 +294,7 @@ function lancerNouvellePartie() {
 	Confort.Son.bip('choix');
 	RAPPORT = null;
 	p.then(() => {
+		Jeu.defiChrono = !!Confort.Reglages.defiChrono; // prompt 87 : sans chrono par défaut
 		Jeu.nouvellePartie();
 		nouvellePartieRythme(); // prompt 74 : ordre d'arrivée tiré par la graine, fil de la journée remis à zéro
 		demarrerJournee(); // journée 1, 8h00 (prompt 76), en attente du premier incident
@@ -327,6 +341,7 @@ function decider(action) {
 	if (action !== 'temps') Object.assign(dernierResultat, mesures);
 	else dernierResultat.sources = mesures.sources;
 	dernierResultat.contexteNarr = Rythme.contexteNarration(dernierResultat, Jeu.index - 1); // prompt 74 : phrase de contexte réelle
+	if (action !== 'temps') tachesApresDecision(dernierResultat); // prompt 88 : rotation des tâches
 	const dj = dernierResultat.deltas.map((v, i) => t('jaugeTitre.' + ['fluidite', 'reputation', 'budget'][i]) + ' ' + (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v)).join(', ');
 	annoncer(t('annonce.decision', { titre: dernierResultat.narration.titre, texte: dernierResultat.narration.texte }) + ' ' + dj + '.'); // prompt 53 : variations annoncées
 	Confort.Son.clicAction(action); // prompt 44 § 4 : un clic de console par action
@@ -345,7 +360,7 @@ function continuer() {
 // ——— Pause (Q13) : uniquement entre deux dossiers, c'est-à-dire pendant la narration ———
 function basculerPause() {
 	if (phase !== 'narration') return; // jamais pendant un compteur actif
-	if (!enPause && MULTI.actifs.length) return annoncer(t('multi.pause')); // prompt 77 : d'autres compteurs tournent
+	if (!enPause && MULTI.actifs.length && Jeu.defiChrono) return annoncer(t('multi.pause')); // prompt 77 : d'autres compteurs tournent
 	if (enPause) {
 		debutNarration += millis() - debutPause; // le temps de pause ne compte pas
 		enPause = false;
@@ -411,10 +426,8 @@ function fenetreReprise() {
 // =====================================================================
 // Écran de jeu (Q1–Q10, Q29, Q30, Q45)
 // =====================================================================
-const GAUCHE = { x: 40, y: 40, l: 1160, h: 1000 };
-const FILE_SIG = { x: 60, y: 110, l: 760, h: 910 }; // prompt 73 : la liste des signalements remplace la carte
-const LISTE = { x: 840, y: 110, l: 340, h: 910 }; // lignes concernées, objectif du jour, équipes
-const DROITE = { x: 1230, y: 40, l: 650, h: 1000 };
+// Prompt 87 : deux colonnes sous un bandeau fin (BANDEAU et PANNEAU : panneau.js) — liste à gauche, signalement à droite
+const FILE_SIG = { x: 40, y: 132, l: 700, h: 900 };
 
 function dossierCourant() {
 	return Jeu.dossierCourant ? Jeu.dossierCourant() : null;
@@ -429,7 +442,7 @@ function indicateurSauvegarde() {
 	textAlign(RIGHT, BOTTOM);
 	noStroke();
 	fill(C.gris);
-	text(s, L - 44, DROITE.y + 128); // prompt 80 : entre les jauges et le dossier (le bas droit porte la somnolence)
+	text(s, FILE_SIG.x + FILE_SIG.l - 16, FILE_SIG.y + 40); // prompt 87 : en haut à droite de la liste des signalements
 }
 
 function dessinerJeu() {
@@ -437,73 +450,19 @@ function dessinerJeu() {
 	if (phase === 'attente' || phase === 'reveil' || phase === 'mail' || phase === 'soir') return dessinerJeuAttente(); // prompt 69 : le soir, l'appli reste consultable
 	const d = dossierCourant();
 	const meteo = d ? Jeu.meteoDuJour(d.date) : null;
-
-	// Panneau gauche : en-tête, liste des signalements, lignes concernées (prompt 73 : plus de carte)
-	panneau(GAUCHE.x, GAUCHE.y, GAUCHE.l, GAUCHE.h);
-	textAlign(LEFT, TOP);
-	noStroke();
-	fill(C.accent);
-	textFont(POLICE_TEXTE);
-	textStyle(BOLD);
-	ajusterTaille(t('jeu.reseau'), 220, 30);
-	text(t('jeu.reseau'), GAUCHE.x + 24, GAUCHE.y + 22);
-	textStyle(NORMAL);
-	textFont(POLICE_DONNEES);
-	ajusterTaille(enteteMode(), 470, 20);
-	fill(C.gris);
-	text(enteteMode(), GAUCHE.x + 260, GAUCHE.y + 30);
-	// Barre d'outils (souris / touch) — équivalents des touches H, M, R
-	const bx = GAUCHE.x + GAUCHE.l - 24;
-	const outils = [
-		[t('jeu.recommencer'), () => ouvrir('reset')],
-		[t('accueil.aide'), () => ouvrir('aide')],
-	];
-	let ox = bx;
-	textFont(POLICE_TEXTE);
-	outils.forEach(([lib, act]) => {
-		textSize(16);
-		const w = Math.max(120, textWidth(lib) + 36);
-		ox -= w;
-		bouton(ox, GAUCHE.y + 18, w, 44, lib, act, false, true);
-		ox -= 10;
-	});
-	if (Jeu.etat.horsLigne) {
-		textFont(POLICE_DONNEES);
-		textSize(18);
-		fill(C.gris);
-		textAlign(RIGHT, TOP);
-		text(t('jeu.horsLigne'), ox - 10, GAUCHE.y + 30);
-	}
-
+	// Prompt 87 : bandeau fin (jauges, objectif, équipes, heure), liste des signalements, panneau du signalement ouvert
+	dessinerBandeau();
 	dessinerFileSignalements(FILE_SIG); // prompt 73
-	dessinerListeLignes(LISTE, d);
-
-	// Panneau droit : jauges, puis selon la phase : signalement en file (prompt 68), conflit, dossier ou narration
-	dessinerJauges();
 	if (phase === 'selection') dessinerSelection();
 	else if (phase === 'narration') dessinerNarration();
 	else if (phase === 'conflit') dessinerConflit();
 	else dessinerDossier(d, meteo);
 }
 
-/* Écran de jeu sans incident actif : liste des signalements + lignes, horloge simulée à droite ; mail en fin de journée */
+/* Écran de jeu sans incident actif : bandeau, liste des signalements, horloge simulée à droite ; mail en fin de journée */
 function dessinerJeuAttente() {
-	panneau(GAUCHE.x, GAUCHE.y, GAUCHE.l, GAUCHE.h);
-	textAlign(LEFT, TOP);
-	noStroke();
-	fill(C.accent);
-	textFont(POLICE_TEXTE);
-	textStyle(BOLD);
-	ajusterTaille(t('jeu.reseau'), 220, 30);
-	text(t('jeu.reseau'), GAUCHE.x + 24, GAUCHE.y + 22);
-	textStyle(NORMAL);
-	textFont(POLICE_DONNEES);
-	ajusterTaille(enteteMode(), 470, 20);
-	fill(C.gris);
-	text(enteteMode(), GAUCHE.x + 260, GAUCHE.y + 30);
+	dessinerBandeau();
 	dessinerFileSignalements(FILE_SIG); // prompt 73
-	dessinerListeLignes(LISTE, null);
-	dessinerJauges();
 	dessinerAttente();
 	if (phase === 'mail') dessinerMail();
 }
@@ -624,139 +583,13 @@ function dessinerPictosMeteo(zone, m, opacite, pluie, vent, chaud) {
 	}
 }
 
-// ——— Liste des lignes : alertes d'abord, puis retard décroissant (Q45) ———
-function dessinerListeLignes(zone, dActuel) {
-	const parLigne = new Map();
-	(Jeu.etat.dossiers || []).forEach((d, i) => {
-		if (!dossierConnu(i)) return; // prompt 50 : pas de lignes révélées d'avance
-		(d.lignes || []).forEach((n) => {
-			const prev = parLigne.get(n) || { nom: n, alerte: false, retard: null };
-			prev.alerte = prev.alerte || d.type !== 'ligne en difficulté' || i === Jeu.index;
-			if (d.retard !== null && (prev.retard === null || d.retard > prev.retard)) prev.retard = d.retard;
-			parLigne.set(n, prev);
-		});
-	});
-	const actives = new Set((dActuel && dossierConnu(Jeu.index) && dActuel.lignes) || []);
-	const items = Array.from(parLigne.values()).sort(
-		(a, b) => (actives.has(b.nom) - actives.has(a.nom)) || (b.alerte - a.alerte) || ((b.retard || 0) - (a.retard || 0)),
-	);
-
-	noStroke();
-	fill(C.fond);
-	rect(zone.x, zone.y, zone.l, zone.h, 8);
-	textAlign(LEFT, TOP);
-	textFont(POLICE_TEXTE);
-	textStyle(BOLD);
-	textSize(22);
-	fill(C.texte);
-	text(t('lignes.titre'), zone.x + 18, zone.y + 16);
-	textStyle(NORMAL);
-	// Prompt 68 : légende repliable ; prompt 73 : un clic sur une ligne met en surbrillance ses signalements dans la file
-	bouton(zone.x + zone.l - 74, zone.y + 10, 56, 36, SELECTION.legendeRepliee ? '▸' : '▾', () => (SELECTION.legendeRepliee = !SELECTION.legendeRepliee), false, true);
-	textAlign(LEFT, TOP); // bouton() laisse un alignement centré
-	let y = zone.y + 58;
-	if (SELECTION.legendeRepliee) items.length = 0;
-	if (!items.length && !SELECTION.legendeRepliee) {
-		textSize(18);
-		textLeading(26);
-		fill(C.gris);
-		// Prompt 50 : tant que la source « Lignes » n'est pas consultée, aucune ligne n'est connue
-		const dC = Jeu.dossierCourant ? Jeu.dossierCourant() : null;
-		const semaineSansLigne = !(Jeu.paquet || []).some((x) => x.lignes && x.lignes.length);
-		const cache = !semaineSansLigne || (dC && dC.lignes && dC.lignes.length && !dossierConnu(Jeu.index));
-		text(t(cache ? 'lignes.aConsulter' : 'lignes.aucune').replace(/\n/g, ' '), zone.x + 18, y, zone.l - 36, 220);
-		y += 230;
-	}
-	for (const it of items.slice(0, 5)) {
-		const actif = actives.has(it.nom);
-		const couleur = actif ? C.rouge : C.orange;
-		fill(couleur);
-		rect(zone.x + 18, y + 6, 10, 30, 3);
-		fill(C.texte);
-		textFont(POLICE_DONNEES);
-		textSize(24);
-		text(it.nom, zone.x + 40, y + 6);
-		textSize(18);
-		fill(actif ? C.rouge : C.gris);
-		text(actif ? t('lignes.actif') : it.retard !== null ? '+' + it.retard + ' min' : t('lignes.perturbation'), zone.x + 140, y + 12);
-		if (SELECTION.surbrillance === it.nom) {
-			noFill();
-			stroke('#ffffff');
-			strokeWeight(2);
-			rect(zone.x + 10, y, zone.l - 20, 44);
-			noStroke();
-		}
-		const nom = it.nom;
-		boutons.push({ x: zone.x + 10, y, l: zone.l - 20, h: 44, action: () => (SELECTION.surbrillance = SELECTION.surbrillance === nom ? null : nom) });
-		y += 52;
-	}
-	// Bandeau tactique (prompt 23) : objectif du jour et modificateur actif
-	if (Jeu.objectifDuJour) {
-		const o = Jeu.objectifDuJour();
-		const mod = Jeu.modificateurActif() ? Jeu.modificateur : null;
-		const by = zone.y + 340;
-		fill(mod ? C.orange : C.accent);
-		rect(zone.x + 18, by, zone.l - 36, 4);
-		textFont(POLICE_TEXTE);
-		textSize(14);
-		fill(C.texte);
-		textLeading(25);
-		text(t('bandeau.objectif', { libelle: o.libelle, v: Jeu.jauges[o.jauge] }), zone.x + 18, by + 12, zone.l - 36, 78);
-		fill(mod ? C.orange : C.gris);
-		text(mod ? mod.libelle + (mod.actionBloquee ? t('bandeau.bloquee', { action: Jeu.REGLAGES.effets[mod.actionBloquee].nom }) : '') + ' · ' + Math.ceil((mod.fin - millis()) / 1000) + ' s' : t('bandeau.aucunMod'), zone.x + 18, by + 92, zone.l - 36, 50);
-	}
-	// Prompt 73 : équipes en texte (disponibilités, en route / sur place / retour) à la place de la légende de la carte
-	dessinerEtatEquipes(zone.x + 18, zone.y + 520, zone.l - 36);
-}
-
-// ——— Jauges : 3 barres horizontales compactes en bandeau (Q7) ———
-function dessinerJauges() {
-	const z = { x: DROITE.x, y: DROITE.y, l: DROITE.l, h: 110 };
-	panneau(z.x, z.y, z.l, z.h);
-	cibleGuide('jauges', z.x, z.y, z.l, z.h); // prompt 37
-	const jauges = Jeu.jauges || { fluidite: 50, reputation: 50, budget: 50 }; // départ 50 (Q40)
-	const aff = jaugesAffichees(); // prompt 53 : barres qui glissent vers leur nouvelle valeur
-	const defs = [
-		[t('jaugeTitre.fluidite'), jauges.fluidite, 'fluidite'],
-		[t('jaugeTitre.reputation'), jauges.reputation, 'reputation'],
-		[t('jaugeTitre.budget'), jauges.budget, 'budget'],
-	];
-	const lb = (z.l - 48 - 2 * 20) / 3;
-	defs.forEach(([nom, v, cle], i) => {
-		const x = z.x + 24 + i * (lb + 20);
-		textAlign(LEFT, TOP);
-		noStroke();
-		textFont(POLICE_TEXTE);
-		textSize(18);
-		fill(C.texte);
-		text(nom, x, z.y + 18);
-		textFont(POLICE_DONNEES);
-		textAlign(RIGHT, TOP);
-		text(Math.round(v), x + lb, z.y + 18);
-		fill(C.piste);
-		rect(x, z.y + 56, lb, 22, 4);
-		// Jauge < 20 (Q46) : pulsation douce en opacité (prompt 53), fixe si animations réduites
-		const va = aff[cle];
-		const critique = va < 20;
-		const c = color(critique ? C.rougeFonce : va < 40 ? C.orange : C.vert);
-		if (critique) c.setAlpha(255 * opaciteCritique());
-		fill(c);
-		rect(x, z.y + 56, (lb * constrain(va, 0, 100)) / 100, 22, 4);
-		// Prompt 43 : repères des seuils réels (20 critique, 40 orange) sur chaque jauge
-		fill(255, 255, 255, 170);
-		[20, 40].forEach((s) => rect(x + (lb * s) / 100 - 1, z.y + 52, 2, 30));
-		dessinerDeltasJauge(cle, x, z.y + 56, lb); // prompt 53 : delta réel qui flotte puis s'efface
-	});
-}
-
 // ——— Dossier courant : ligne + retard + raison en priorité (Q5), glissement depuis la droite (Q10) ———
 function dessinerDossier(d, meteo) {
-	const base = { x: DROITE.x, y: DROITE.y + 130, l: DROITE.l, h: DROITE.h - 130 };
+	const base = Object.assign({}, PANNEAU);
 	const tA = reduireAnimations ? 1 : constrain((millis() - arriveeDossier) / 300, 0, 1); // prompt 53 : 300 ms, ease out
 	const decal = (1 - easeOut(tA)) * (L - base.x);
 	const x = base.x + decal;
 	panneau(x, base.y, base.l, base.h);
-
 	if (!d) {
 		textAlign(LEFT, TOP);
 		fill(C.gris);
@@ -765,92 +598,51 @@ function dessinerDossier(d, meteo) {
 		text(t('dossier.aucun'), x + 32, base.y + 40);
 		return;
 	}
-
-	// Compteur : barre horizontale qui se vide (Q6) — durée selon la semaine (Q16, Q55)
-	figerCompteurRalenti(); // prompt 55 : pendant le ralenti, le compteur ne descend pas
-	const duree = ((Jeu.etat.semaine && Jeu.etat.semaine.difficulte && Jeu.etat.semaine.difficulte.compteur_s) || 30) * 1000 * facteurDuree * facteurLecture(); // prompt 48 : lecture facile ×1,5
-	const reste = constrain(1 - (millis() - debutCompteur) / duree, 0, 1);
-	// Prompt 44 § 3 : tic-tac sous les 10 dernières secondes, qui s'accélère (1 s → 0,5 s → 0,25 s)
-	const resteMs = reste * duree;
-	if (!Confort.Reglages.lectureFacile && resteMs > 0 && resteMs < 10000 && (phase === 'decision' || phase === 'contradiction' || phase === 'conflit')) {
-		const pas = resteMs < 4000 ? 250 : resteMs < 7000 ? 500 : 1000;
-		if (millis() - dernierTic >= pas) {
-			dernierTic = millis();
-			Confort.Son.tic(1 - resteMs / 10000);
-		}
-	}
 	noStroke();
-	fill(C.piste);
-	rect(x + 24, base.y + 22, base.l - 48, 14, 7);
-	fill(couleurCompteur(resteMs)); // prompt 53 : sous 10 s, rouge qui pulse doucement
-	rect(x + 24, base.y + 22, (base.l - 48) * reste, 14, 7);
 	textFont(POLICE_DONNEES);
 	textSize(16);
-	textAlign(RIGHT, TOP);
-	fill(C.gris);
-	text(Math.ceil((reste * duree) / 1000) + ' s', x + base.l - 24, base.y + 42);
-	dessinerRalenti(x, base); // prompt 55 : bouton « Ralenti (R) » ou « Pause — 7 s »
-	if (reste * duree < 5000 && reste > 0 && !alerteTempsJouee && (phase === 'decision' || phase === 'contradiction')) {
-		alerteTempsJouee = true;
-		Confort.Son.bip('alerte'); // plus que 5 secondes
-	}
-	// Compteur à 0 : « ne rien faire » avec les seules conséquences naturelles du dossier (Q25)
-	if (reste === 0 && tA === 1 && (phase === 'decision' || phase === 'contradiction')) {
-		phase = 'decision';
-		decider('temps');
-		Confort.Son.bip('consequence'); // prompt 30 : compteur à 0
-		return;
-	}
-
-	// En-tête du dossier
 	textAlign(LEFT, TOP);
-	text(t('dossier.entete', { n: Jeu.index + 1, total: Jeu.paquet.length, type: tSi('type.' + d.type, d.type).toUpperCase(), affluence: '' }), x + 32, base.y + 42); // prompt 50 : l'affluence se découvre dans l'agenda (gravité : panneau de sélection et file, prompt 68)
-
-	// Prompt 50 : signalement vague, faits révélés source par source (enquete.js)
-	dessinerEnquete(d, x, base);
-
-	const ab = (base.l - 64 - 16) / 2;
-	if (phase === 'contradiction') {
-		// Contradiction (Q9, Q31) : choisir d'abord la source à croire
-		const c = d.contradiction;
-		fill(C.orange);
-		textFont(POLICE_TEXTE);
-		textStyle(BOLD);
-		textSize(22);
-		text(c.question, x + 32, base.y + base.h - 250, base.l - 64, 40);
-		textStyle(NORMAL);
-		[
-			['A', c.a.libelle, 'a'],
-			['B', c.b.libelle, 'b'],
-		].forEach(([tA, lib, cle], i) => {
-			const by = base.y + base.h - 200 + i * 88;
-			bouton(x + 32, by, base.l - 64, 72, tA + '  ' + lib, () => choisirSource(cle), false, true);
-		});
-		return;
-	}
-	// Prompt 72 : une alerte (météo, secours, affluence) propose des réponses rédigées pour la situation
-	if (phase === 'decision' && reponsesAlerte().length) return dessinerReponsesAlerte(d, x, base);
-	// Actions : 3 actions + « ne rien faire » (Q5)
-	const actions = [
-		['1', t('action.devier'), 'devier'],
-		['2', t('action.retenir'), 'retenir'],
-		['3', t('action.renfort'), 'renfort'],
-		['0', t('action.rien'), 'rien'],
-	];
-	if (sourceChoisie && d.contradiction) {
-		textFont(POLICE_DONNEES);
-		textSize(16);
+	fill(C.gris);
+	text(t('dossier.entete', { n: Jeu.index + 1, total: Jeu.paquet.length, type: tSi('type.' + d.type, d.type).toUpperCase(), affluence: '' }), x + 32, base.y + 24);
+	if (Jeu.defiChrono) {
+		// Mode « Défi chrono » (prompt 87, optionnel) : le compteur d'avant (Q6, Q16, Q55), ralenti, alerte des 5 s, 0 → Q25
+		figerCompteurRalenti(); // prompt 55 : pendant le ralenti, le compteur ne descend pas
+		const duree = ((Jeu.etat.semaine && Jeu.etat.semaine.difficulte && Jeu.etat.semaine.difficulte.compteur_s) || 30) * 1000 * facteurDuree * facteurLecture(); // prompt 48 : lecture facile ×1,5
+		const reste = constrain(1 - (millis() - debutCompteur) / duree, 0, 1);
+		const resteMs = reste * duree;
+		if (!Confort.Reglages.lectureFacile && resteMs > 0 && resteMs < 10000 && (phase === 'decision' || phase === 'contradiction' || phase === 'conflit')) {
+			const pas = resteMs < 4000 ? 250 : resteMs < 7000 ? 500 : 1000;
+			if (millis() - dernierTic >= pas) {
+				dernierTic = millis();
+				Confort.Son.tic(1 - resteMs / 10000);
+			}
+		}
+		noStroke();
+		fill(C.piste);
+		rect(x + 24, base.y + 6, base.l - 48, 10);
+		fill(couleurCompteur(resteMs)); // prompt 53 : sous 10 s, rouge qui pulse doucement
+		rect(x + 24, base.y + 6, (base.l - 48) * reste, 10);
+		textAlign(RIGHT, TOP);
 		fill(C.gris);
-		text(t('dossier.sourceRetenue', { libelle: d.contradiction[sourceChoisie].libelle }), x + 32, base.y + base.h - 236, base.l - 64, 30);
-	} // prompt 50 : plus de conseil — le joueur enquête lui-même
-	const bloquee = Jeu.actionBloquee ? Jeu.actionBloquee() : null;
-	actions.forEach(([touche, nom, cle], i) => {
-		const bx = x + 32 + (i % 2) * (ab + 16);
-		const by = base.y + base.h - 200 + Math.floor(i / 2) * 88;
-		bouton(bx, by, ab, 72, touche + '  ' + nom + (cle === bloquee ? t('dossier.indispo') : ''), () => decider(cle), cle === bloquee, i === 3);
-		// Prompt 50 : plus de flèches d'effet sous les boutons — les effets s'apprennent en jouant (journal, mail, rapport)
-	});
-	cibleGuide('actions', x + 32, base.y + base.h - 200, base.l - 64, 160); // prompt 37
+		text(Math.ceil(resteMs / 1000) + ' s', x + base.l - 32, base.y + 24);
+		dessinerRalenti(x, base); // prompt 55 : bouton « Ralenti (R) » ou « Pause — 7 s »
+		if (resteMs < 5000 && reste > 0 && !alerteTempsJouee && (phase === 'decision' || phase === 'contradiction')) {
+			alerteTempsJouee = true;
+			Confort.Son.bip('alerte'); // plus que 5 secondes
+		}
+		if (reste === 0 && tA === 1 && (phase === 'decision' || phase === 'contradiction')) {
+			phase = 'decision';
+			decider('temps');
+			Confort.Son.bip('consequence'); // prompt 30 : compteur à 0
+			return;
+		}
+	} else {
+		textAlign(RIGHT, TOP);
+		fill(C.gris);
+		text(t('dossier.pause'), x + base.l - 32, base.y + 24); // prompt 87 : horloge du jeu en pause pendant la lecture
+	}
+	textAlign(LEFT, TOP);
+	dessinerPanneauSignalement(d, x, base); // prompt 87 : 3 blocs, « En savoir plus », conseil, réponses de la catégorie
 }
 
 // ——— Prompt 79 : annonces (aria-live) de l'aggravation du retard affiché, et des plaintes Community expirées ———
@@ -871,121 +663,6 @@ function majRetardsEtCommunity() {
 	}
 }
 
-// ——— Prompt 72 : réponses d'alerte (alertes.js) — chacune déclenche une action existante ou un envoi d'équipe ———
-const ALERTE = { d: null, liste: [], focus: 0 };
-const hauteurReponsesAlerte = () => reponsesAlerte().length * 62 + 2 + 22 + 2 * 50 + 4; // réponses + actions de base (2 × 2), calées en bas
-function reponsesAlerte() {
-	const d = Jeu.dossierCourant ? Jeu.dossierCourant() : null;
-	if (!d || ecran !== 'jeu') return [];
-	if (ALERTE.d !== d) {
-		ALERTE.d = d;
-		ALERTE.liste = Alertes.reponses(d, Jeu.index);
-		ALERTE.focus = 0;
-		ALERTE.annoncee = false;
-	}
-	return ALERTE.liste;
-}
-/** Libellé traduit, trous remplis avec les vraies valeurs (nom d'événement réel abrégé, jamais traduit) */
-function libelleReponse(r) {
-	const v = Object.assign({}, r.vars);
-	if (v.evenement && v.evenement.length > 34) v.evenement = v.evenement.slice(0, 33).trim() + '…';
-	return t(r.cle, v);
-}
-const toucheReponse = (r) => r.touche.replace('Maj', t('alerte.maj'));
-function equipeDejaEnvoyee(r) {
-	return !!r.cible.equipe && (Jeu.equipes || []).some((q) => q.index === Jeu.index && q.cle === r.cible.equipe);
-}
-function choisirReponse(i) {
-	const r = reponsesAlerte()[i];
-	if (!r || phase !== 'decision') return;
-	ALERTE.focus = i;
-	if (r.cible.action) return decider(r.cible.action);
-	envoyerEquipeIncident(r.cible.equipe); // même refus que le prompt 68 si plus d'effectif
-}
-/** Annonce (aria-live) de la question et des réponses, une fois par alerte, à l'entrée en décision */
-function annoncerAlerte(d) {
-	if (ALERTE.annoncee) return;
-	ALERTE.annoncee = true;
-	annoncer(t('alerte.annonce', { question: t(Alertes.question(d)), liste: ALERTE.liste.map((r) => toucheReponse(r) + ' ' + libelleReponse(r)).join(' ; ') }));
-}
-function dessinerReponsesAlerte(d, x, base) {
-	annoncerAlerte(d);
-	const rep = ALERTE.liste;
-	const l = base.l - 64;
-	const y0 = base.y + base.h - hauteurReponsesAlerte();
-	const bloquee = Jeu.actionBloquee ? Jeu.actionBloquee() : null;
-	// Message d'envoi ou de refus d'équipe (prompt 68), au-dessus des réponses
-	if (SELECTION.message && millis() - SELECTION.message.t < 5000) {
-		noStroke();
-		textFont(POLICE_DONNEES);
-		textSize(16);
-		textAlign(LEFT, BOTTOM);
-		fill(SELECTION.message.ok ? C.vert : C.orange);
-		text(String(SELECTION.message.texte), x + 32, y0 - 4, l, 40);
-		textAlign(LEFT, TOP);
-	}
-	// Réponses rédigées : boutons-choix en toutes lettres (deux lignes au plus), touche à gauche
-	rep.forEach((r, i) => {
-		const by = y0 + i * 62;
-		const envoyee = equipeDejaEnvoyee(r);
-		const off = envoyee || (!!r.cible.action && r.cible.action === bloquee);
-		bouton(x + 32, by, l, 56, '', () => choisirReponse(i), off, true);
-		noStroke();
-		textFont(POLICE_DONNEES);
-		textStyle(BOLD);
-		textSize(17);
-		textAlign(CENTER, CENTER);
-		fill(off ? 'rgba(255,255,255,0.5)' : C.orange);
-		text(toucheReponse(r), x + 32 + 44, by + 28);
-		textStyle(NORMAL);
-		textFont(POLICE_TEXTE);
-		textAlign(LEFT, TOP);
-		fill(off ? 'rgba(255,255,255,0.5)' : '#FFFFFF');
-		const lib = libelleReponse(r) + (envoyee ? ' — ' + t('alerte.equipeEnvoyee') : '') + (r.cible.action && r.cible.action === bloquee ? t('dossier.indispo') : '');
-		// Deux lignes au plus : la taille baisse jusqu'à ce que le libellé tienne, centré verticalement
-		const lt = l - 116;
-		textSize(17);
-		while (textSize() > 13 && textWidth(lib) > lt * 1.6) textSize(textSize() - 1);
-		const nl = textWidth(lib) > lt * 0.98 ? 2 : 1;
-		textLeading(textSize() + 4);
-		text(lib, x + 32 + 92, by + (56 - nl * (textSize() + 4)) / 2, lt, 52);
-		if (i === ALERTE.focus) {
-			noFill();
-			stroke(C.orange);
-			strokeWeight(3);
-			rect(x + 32 - 5, by - 4, l + 10, 64);
-			noStroke();
-		}
-	});
-	// Actions de base, toujours disponibles (touches 1 / 2 / 3 / 0)
-	const yb = y0 + rep.length * 62 + 2;
-	textFont(POLICE_DONNEES);
-	textSize(15);
-	textAlign(LEFT, TOP);
-	fill(C.gris);
-	text(t('alerte.base'), x + 32, yb);
-	const lb = (l - 8) / 2;
-	[['1', 'devier'], ['2', 'retenir'], ['3', 'renfort'], ['0', 'rien']].forEach(([k, cle], i) => {
-		bouton(x + 32 + (i % 2) * (lb + 8), yb + 22 + Math.floor(i / 2) * 50, lb, 44, k + '  ' + t('action.' + cle) + (cle === bloquee ? t('dossier.indispo') : ''), () => decider(cle), cle === bloquee, true);
-	});
-	textAlign(LEFT, TOP);
-	cibleGuide('actions', x + 32, y0, l, yb + 116 - y0); // prompt 37
-	cibleGuide('alerte', x + 32, y0, l, rep.length * 62);
-}
-/** Clavier d'une alerte : ↑ ↓ / Tab parcourent les réponses, Entrée valide ; true si la touche est prise */
-function toucheAlerte() {
-	const rep = phase === 'decision' ? reponsesAlerte() : [];
-	if (!rep.length) return false;
-	const n = rep.length;
-	if (keyCode === UP_ARROW || keyCode === DOWN_ARROW || keyCode === TAB) {
-		ALERTE.focus = (ALERTE.focus + (keyCode === UP_ARROW || (keyCode === TAB && keyIsDown(SHIFT)) ? n - 1 : 1)) % n;
-		annoncer(toucheReponse(rep[ALERTE.focus]) + ' ' + libelleReponse(rep[ALERTE.focus]));
-		return true;
-	}
-	if (keyCode === ENTER || keyCode === RETURN) return choisirReponse(ALERTE.focus), true;
-	return false;
-}
-
 function choisirSource(cle) {
 	if (phase !== 'contradiction') return;
 	sourceChoisie = cle;
@@ -994,7 +671,7 @@ function choisirSource(cle) {
 
 // ——— Conflit de deux lignes (Q27) : choix binaire explicite ———
 function dessinerConflit() {
-	const z = { x: DROITE.x, y: DROITE.y + 130, l: DROITE.l, h: DROITE.h - 130 };
+	const z = Object.assign({}, PANNEAU);
 	panneau(z.x, z.y, z.l, z.h, C.orange);
 	const c = Jeu.conflit();
 	textAlign(LEFT, TOP);
@@ -1039,7 +716,7 @@ function choisirPriorite(cle) {
 
 // ——— Narration entre deux décisions (06-narration, Q17) ———
 function dessinerNarration() {
-	const z = { x: DROITE.x, y: DROITE.y + 130, l: DROITE.l, h: DROITE.h - 130 };
+	const z = Object.assign({}, PANNEAU);
 	const r = dernierResultat;
 	const couleurTon = { neutre: C.accent, tendu: C.orange, critique: C.rouge }[r.narration.ton];
 	panneau(z.x, z.y, z.l, z.h, couleurTon);
@@ -1072,13 +749,13 @@ function dessinerNarration() {
 	fill(C.gris);
 	if (ctx.length) text(t('narration.contexte', { liste: ctx.join(', ') }), z.x + 32, z.y + 570);
 	// Prompt 74 : une phrase de contexte tirée de la situation réelle (météo, heure, ligne, agenda)
-	if (r.contexteNarr) {
-		textFont(POLICE_TEXTE);
-		textSize(20);
-		textLeading(28);
-		fill(C.texte);
-		text(t(r.contexteNarr.cle, r.contexteNarr.vars), z.x + 32, z.y + 612, z.l - 64, 90);
-	}
+	// Prompt 87 : avant elle, l'explication — ce qui s'est passé, et pourquoi (ou quelle réponse convenait mieux)
+	const expl = explicationDecision(r).concat(r.contexteNarr ? [t(r.contexteNarr.cle, r.contexteNarr.vars)] : []);
+	textFont(POLICE_TEXTE);
+	textSize(20);
+	textLeading(28);
+	fill(C.texte);
+	text(expl.join('\n'), z.x + 32, z.y + 612, z.l - 64, 150);
 
 	// Suite automatique, ou Entrée / clic
 	const tA = constrain((millis() - debutNarration) / DUREE_NARRATION, 0, 1);
@@ -1168,7 +845,7 @@ function dessinerFin() {
 	if (bilanFin && bilanFin.meilleur) {
 		fill(bilanFin.record ? C.vert : C.gris);
 		text(
-			bilanFin.record ? t('fin.record') : t('fin.meilleur', { score: bilanFin.meilleur.score, le: bilanFin.meilleur.le }),
+			(bilanFin.record ? t('fin.record') : t('fin.meilleur', { score: bilanFin.meilleur.score, le: bilanFin.meilleur.le })) + (Jeu.defiChrono ? ' · ' + t('fin.defiChrono') : '') + (typeof Taches !== 'undefined' ? ' · ' + t('fin.grade', { grade: t('grade.' + Taches.grade().i), xp: (Jeu.taches && Jeu.taches.xpPartie) || 0 }) : ''), // prompt 87 ; prompt 88 : grade et expérience de la partie
 			g.x + 48,
 			g.y + 752,
 		);
@@ -1263,6 +940,7 @@ function rejouer() {
 	const e = Jeu.etat;
 	const p = e.mode === 'semaine' ? Jeu.chargerSemaine(e.semaine.lundi) : e.mode === 'direct' ? Jeu.chargerDirect() : Jeu.chargerHorsLigne();
 	p.then(() => {
+		Jeu.defiChrono = !!Confort.Reglages.defiChrono; // prompt 87 : sans chrono par défaut
 		Jeu.nouvellePartie();
 		nouvellePartieRythme(); // prompt 74
 		demarrerJournee(); // pas d'intro SMS sur « Rejouer » (§ 2)
@@ -1383,6 +1061,7 @@ function keyPressed() {
 	if (Sauvegarde.dialogueOuvert || CARNET.ouvert) return;
 	if (arreterDemo()) return false; // prompt 48 : une touche arrête la démo automatique
 	if (CINE) return toucheCinematique(), false; // prompt 41
+	if (GAMEOVER) return toucheGameOver(), false; // prompt 84
 	if (TRANSITION_JOUR && (keyCode === ENTER || keyCode === RETURN || key === ' ' || keyCode === ESCAPE)) return passerTransitionJour(), false; // prompt 43
 	Confort.Son.demarrer(); // l'audio ne peut démarrer qu'après un geste du joueur
 	interaction();
@@ -1410,7 +1089,7 @@ function keyPressed() {
 	// Langue (prompt 24) : L bascule partout, sans toucher à la partie
 	if (key === 'l' || key === 'L') return Langue.suivante(), false;
 	// Prompt 47 : inspection, démission, palmarès ; J = journal de bord, D = rendre son badge
-	if (toucheMecaniques() || toucheAccessibilite() || toucheJournee()) return false; // prompts 47, 48 et 51
+	if (toucheTaches() || toucheMecaniques() || toucheAccessibilite() || toucheJournee()) return false; // prompts 47, 48 et 51
 	// Fenêtres ouvertes : elles captent le clavier
 	if (fenetre) {
 		if (keyCode === ESCAPE || (fenetre === 'aide' && (key === 'h' || key === 'H' || key === '?'))) return fermer(), false;
@@ -1437,10 +1116,11 @@ function keyPressed() {
 			if (key === 'n' || key === 'N') lancerNouvellePartie();
 		}
 		if (fenetre === 'parametres') {
-			const cles = { 1: 'son', 2: 'horsLigneForce', 3: 'reduireAnimations', 4: 'contrasteRenforce' };
+			const cles = { 1: 'son', 2: 'horsLigneForce', 3: 'reduireAnimations', 4: 'contrasteRenforce', 0: 'defiChrono' }; // prompt 87 : 0 = défi chrono
 			if (cles[key]) basculerReglage(cles[key]);
 			if (key === '8') musiqueSuivante(); // prompt 44
 			if (key === '9') return ouvrirAccessibilite(), false; // prompt 48
+			if (key === 'g' || key === 'G') return ouvrirOptionsJeu(), false; // prompt 88
 			if (key === '5') Sauvegarde.exporter(); // prompt 33
 			if (key === '6') Sauvegarde.copier();
 			if (key === '7') return Sauvegarde.ouvrirImport(), false;
@@ -1478,7 +1158,9 @@ function keyPressed() {
 			return false;
 		}
 		// Prompt 28 : plainte en attente dans l'app Community — Tab parcourt les réponses, Entrée / 1-2-3 répond
-		const plainte = PC.fenetre === 'community' && Jeu.plaintesEnAttente && ecran === 'jeu' ? Jeu.plaintesEnAttente()[0] : null;
+		if (ecran === 'jeu' && toucheCommunity()) return false; // prompt 85 : onglets, défilement, publication
+		if (ecran === 'jeu' && touchePatron()) return false; // prompt 86 : filtres, défilement, réponses rapides
+		const plainte = PC.fenetre === 'community' && ecran === 'jeu' ? cibleCommunity() : null;
 		if (plainte && !focusQuitter && !focusDemarrer) {
 			const n = plainte.def.reponses.length;
 			if (keyCode === TAB) {
@@ -1515,7 +1197,6 @@ function keyPressed() {
 	if (keyCode === ESCAPE && !(ecran === 'jeu' && phase === 'fin')) return seLever(), false;
 	// Prompt 72 : réponses d'une alerte — ↑ ↓ / Tab les parcourent, Entrée valide (le focus « Quitter le PC » d'abord s'il est pris)
 	if (!focusQuitter && !focusDemarrer && ecran === 'jeu' && toucheMultitache()) return false; // prompt 77 : Tab passe d'un signalement actif à l'autre
-	if (!focusQuitter && !focusDemarrer && ecran === 'jeu' && toucheAlerte()) return false;
 	// Prompt 26 : Tab place le focus sur « Quitter le PC », puis (prompt 75) sur le logo de la barre des tâches, puis l'en retire
 	if (keyCode === TAB) {
 		if (focusQuitter) basculerFocusQuitter(false), basculerFocusDemarrer(true);
@@ -1531,7 +1212,7 @@ function keyPressed() {
 	if (key === 'm' || key === 'M') return toucheMEnfoncee(), false; // prompt 54 : brève = son, maintenue = micro
 	if (ecran === 'jeu') {
 		// Prompt 55 : pendant un dossier, R = ralenti tactique ; sinon R = recommencer la semaine (Q38)
-		if (key === 'r' || key === 'R') return ['decision', 'contradiction', 'conflit'].includes(phase) ? demanderRalentiUI() : ouvrir('reset'), false;
+		if (key === 'r' || key === 'R') return ['decision', 'contradiction', 'conflit'].includes(phase) ? Jeu.defiChrono && demanderRalentiUI() : ouvrir('reset'), false; // prompt 87 : ralenti seulement en défi chrono
 		if (key === 'p' || key === 'P') return basculerPause(), false;
 	}
 	if (ecran === 'accueil') {
@@ -1543,8 +1224,12 @@ function keyPressed() {
 	} else if ((phase === 'decision' || phase === 'contradiction') && toucheEnquete()) {
 		// prompt 50 : 5 à 8 consultent une source
 	} else if (phase === 'decision') {
-		const actions = { 1: 'devier', 2: 'retenir', 3: 'renfort', 0: 'rien', ' ': 'rien' };
-		if (actions[key]) decider(actions[key]);
+		// Prompt 87 : 1 à 4 = cartes de réponse affichées ; 0 ou Espace = la réponse « attendre » ; E = En savoir plus
+		if (!toucheReponses() && (key === '0' || key === ' ')) {
+			const d0 = Jeu.dossierCourant();
+			const att = d0 && reponsesAffichees(d0).find((r) => Jeu.familleDe(r.cle) === 'rien');
+			if (att) decider(att.cle);
+		}
 	} else if (phase === 'contradiction') {
 		if (key === 'a' || key === 'A') choisirSource('a');
 		if (key === 'b' || key === 'B') choisirSource('b');
@@ -1563,6 +1248,8 @@ function keyPressed() {
 // Prompt 26 : au poste, la molette fait quitter le PC (anti-rebond dans bureau.js) ; ailleurs, scroll normal
 function mouseWheel(event) {
 	interaction();
+	if (molletteCommunity(event.delta)) return false; // prompt 85 : défilement du fil
+	if (mollettePatron(event.delta)) return false; // prompt 86 : historique du patron
 	if (scrollSortiePC(event.delta)) return false;
 }
 
@@ -1613,6 +1300,8 @@ function dessinerFenetre() {
 	if (fenetre === 'rapport') return fenetreRapport(); // prompt 41
 	if (fenetre === 'mailFin') return fenetreMailFin(); // prompt 56
 	if (fenetre === 'inspection') return fenetreInspection(); // prompt 47
+	if (fenetre === 'tache') return fenetreTache(); // prompt 88
+	if (fenetre === 'optionsJeu') return fenetreOptionsJeu(); // prompt 88 (lot F)
 	if (fenetre === 'demission') return fenetreDemission(); // prompt 47
 	if (fenetre === 'palmares') return fenetrePalmares(); // prompt 47
 	if (fenetre === 'accessibilite') return fenetreAccessibilite(); // prompt 48
@@ -1648,8 +1337,8 @@ function fenetreAide() {
 	const raccourcis = [
 		[t('aide.k.entreeTouche'), t('aide.k.entree')],
 		['5 6 7 8', t('aide.k.sources')],
-		['1 / 2 / 3', t('aide.k.actions')],
-		[t('aide.k.rienTouche'), t('action.rien')],
+		[t('aide.k.actionsTouche'), t('aide.k.actions')], // prompt 87 : réponses de la catégorie
+		[t('aide.k.rienTouche'), t('aide.k.rien')],
 		['A / B', t('aide.k.ab')],
 		[t('aide.k.majTouche'), t('aide.k.equipes')],
 		['R', t('aide.k.reset')],
@@ -1786,9 +1475,10 @@ function fenetreParametres() {
 		['2', t('param.horsLigne'), 'horsLigneForce'],
 		['3', t('param.animations'), 'reduireAnimations'],
 		['4', t('param.contraste'), 'contrasteRenforce'],
+		['0', t('param.defiChrono'), 'defiChrono'], // prompt 87 : compteur, ralenti, expiration (prochaine partie)
 	];
 	lignes.forEach(([k, lib, nom], i) => {
-		const ly = y + 120 + i * 96;
+		const ly = y + 120 + i * 80;
 		textFont(POLICE_TEXTE);
 		ajusterTaille(lib, 490, 26);
 		fill(C.texte);
@@ -1810,15 +1500,15 @@ function fenetreParametres() {
 	textSize(26);
 	fill(C.texte);
 	textAlign(LEFT, CENTER);
-	text(t('langue.titre'), x + 48, y + 120 + 4 * 96 + 36);
+	text(t('langue.titre'), x + 48, y + 120 + 5 * 80 + 36);
 	textFont(POLICE_DONNEES);
 	textSize(18);
 	fill(C.gris);
-	text(t('param.touche', { k: 'L' }), x + 560, y + 120 + 4 * 96 + 36);
+	text(t('param.touche', { k: 'L' }), x + 560, y + 120 + 5 * 80 + 36);
 	textAlign(LEFT, TOP);
-	selecteurLangue(x + l - 48, y + 120 + 4 * 96 + 10);
+	selecteurLangue(x + l - 48, y + 120 + 5 * 80 + 10);
 	// Prompt 44 : choix de la musique (morceaux originaux, chiptune), touche 8
-	const ym = y + 120 + 5 * 96;
+	const ym = y + 120 + 6 * 80;
 	textFont(POLICE_TEXTE);
 	textSize(26);
 	fill(C.texte);
@@ -1835,7 +1525,7 @@ function fenetreParametres() {
 	textAlign(LEFT, TOP);
 	text(t('param.musiqueCredits'), x + 48, ym + 70, 640, 24); // crédits des morceaux CC0
 	// Prompt 33 : Progression — exporter (fichier), copier (presse-papiers), importer (fichier ou texte collé)
-	const yp = y + 120 + 6 * 96;
+	const yp = y + 120 + 7 * 80;
 	textFont(POLICE_TEXTE);
 	textSize(26);
 	fill(C.texte);
@@ -1846,7 +1536,7 @@ function fenetreParametres() {
 	bouton(x + l - 48 - 2 * lbp - 16, yp + 8, lbp, 56, t('parametres.copier'), () => Sauvegarde.copier(), false, true);
 	bouton(x + l - 48 - lbp, yp + 8, lbp, 56, t('parametres.importer'), () => Sauvegarde.ouvrirImport(), false, true);
 	// Prompt 48 : accessibilité (daltonisme, taille du texte, lecture facile) et reprise sur un autre appareil
-	const ya = yp + 96;
+	const ya = yp + 80;
 	textFont(POLICE_TEXTE);
 	textSize(26);
 	fill(C.texte);
@@ -1857,6 +1547,18 @@ function fenetreParametres() {
 	fill(C.gris);
 	text(t('param.touche', { k: '9' }), x + 560, ya + 36);
 	bouton(x + l - 48 - 280, ya + 8, 280, 56, t('acc.ouvrir'), ouvrirAccessibilite, false, true);
+	// Prompt 88 : options de jeu soumises au groupe (chaînes, déblocages, arbitrage) et remise à zéro de la progression
+	const yo = ya + 80;
+	textFont(POLICE_TEXTE);
+	textSize(26);
+	fill(C.texte);
+	textAlign(LEFT, CENTER);
+	text(t('optjeu.titre'), x + 48, yo + 36);
+	textFont(POLICE_DONNEES);
+	textSize(18);
+	fill(C.gris);
+	text(t('param.touche', { k: 'G' }), x + 560, yo + 36);
+	bouton(x + l - 48 - 280, yo + 8, 280, 56, t('optjeu.ouvrir'), ouvrirOptionsJeu, false, true);
 	textAlign(LEFT, TOP);
 	bouton(x + l - 288, y + h - 104, 240, 64, t('param.retour'), fermer);
 }

@@ -36,6 +36,8 @@ const Rythme = (() => {
 		}
 		return r;
 	}
+	/** Prompt 88 : 3 variantes par modèle, sans reprendre une variante déjà montrée dans la journée (Jeu.variante) */
+	const varier = (o, sel) => (o && Jeu.variante ? Object.assign({}, o, { cle: Jeu.variante(o.cle, sel) }) : o);
 	const nombre = (v) => (typeof Langue !== 'undefined' && Langue.actuelle === 'fr' ? String(v).replace('.', ',') : String(v));
 
 	/** À appeler juste après Jeu.nouvellePartie() (index 0) : ordre d'arrivée varié, reproductible par la graine */
@@ -96,8 +98,9 @@ const Rythme = (() => {
 			const reste = j.dossiers.filter((x) => Jeu.paquet.indexOf(x) > n).length; // calcul sur la partie
 			opts.push({ cle: reste ? 'liaison.restants' : 'liaison.dernier', vars: { n: reste } });
 		}
-		const ok = opts.length > 1 && eviter ? opts.filter((o) => o.cle !== eviter) : opts;
-		return ok.length ? ok[choix('liaison|' + n, ok.length)] : null;
+		const base = eviter ? String(eviter).replace(/\.v[12]$/, '') : null;
+		const ok = opts.length > 1 && base ? opts.filter((o) => o.cle !== base) : opts;
+		return ok.length ? varier(ok[choix('liaison|' + n, ok.length)], 'liaison|' + n) : null;
 	}
 
 	/** Événement de rythme de l'heure h (si c'est une heure de rythme) pour la journée en cours : { cle, vars } */
@@ -108,16 +111,16 @@ const Rythme = (() => {
 		const coef = nombre(Jeu.REGLAGES.coefContexte);
 		if (type === 'agenda') {
 			const ev = agendaDuJour(j.date);
-			return ev.length ? { cle: 'rythme.agenda', vars: { n: ev.length, nom: nomEvenement(ev[0]), coef } } : { cle: 'rythme.agendaVide', vars: {} };
+			return varier(ev.length ? { cle: 'rythme.agenda', vars: { n: ev.length, nom: nomEvenement(ev[0]), coef } } : { cle: 'rythme.agendaVide', vars: {} }, 'rythme|' + j.date);
 		}
 		if (type === 'meteo') {
 			const m = Jeu.meteoDuJour ? Jeu.meteoDuJour(j.date) : null;
 			if (!m) return { cle: 'rythme.meteoInconnue', vars: {} };
 			// Mêmes seuils que le contexte météo des règles (game.js : pluie ≥ 5 mm ou rafales ≥ 50 km/h)
 			const degradee = (m.pluie_mm || 0) >= 5 || (m.rafales_max || 0) >= 50;
-			return { cle: degradee ? 'rythme.meteoDegradee' : 'rythme.meteoCalme', vars: { pluie: nombre(m.pluie_mm), vent: nombre(m.rafales_max), coef } };
+			return varier({ cle: degradee ? 'rythme.meteoDegradee' : 'rythme.meteoCalme', vars: { pluie: nombre(m.pluie_mm), vent: nombre(m.rafales_max), coef } }, 'rythme|' + j.date);
 		}
-		return { cle: 'rythme.pointe', vars: { coef } }; // Q24 : heure de pointe 7 h – 9 h et 17 h – 19 h
+		return varier({ cle: 'rythme.pointe', vars: { coef } }, 'rythme|' + j.date); // Q24 : heure de pointe 7 h – 9 h et 17 h – 19 h
 	}
 
 	/** Phrase de contexte réelle ajoutée à la narration du résultat r (dossier n) */
@@ -137,7 +140,7 @@ const Rythme = (() => {
 		}
 		const ev = agendaDuJour(d.date);
 		if (ev.length) opts.push({ cle: 'narrCtx.agenda', vars: { nom: nomEvenement(ev[choix('ctx-ev|' + n, ev.length)]) } });
-		return opts.length ? opts[choix('ctx|' + n, opts.length)] : null;
+		return opts.length ? varier(opts[choix('ctx|' + n, opts.length)], 'ctx|' + n) : null;
 	}
 
 	/** Série : après une décision, 'bravo' si les 2 dernières évaluations sont bonnes, 'courage' si ratées (sinon null).
@@ -159,7 +162,7 @@ const Rythme = (() => {
 		const ev = (Jeu.evenementsJournee || []).filter((e) => e.jour === j.date);
 		const bons = ev.filter((e) => Jeu.evaluer(e) === 'bon').length;
 		const obj = (Jeu.objectifsResultats || []).find((o) => o.jourIndex === Jeu.jourIndex - 1);
-		return { cle: obj ? (obj.atteint ? 'veille.objAtteint' : 'veille.objRate') : 'veille.sansObj', vars: { n: ev.length, bons, obj: obj ? String(obj.libelle) : '' } };
+		return varier({ cle: obj ? (obj.atteint ? 'veille.objAtteint' : 'veille.objRate') : 'veille.sansObj', vars: { n: ev.length, bons, obj: obj ? String(obj.libelle) : '' } }, 'veille|' + j.date);
 	}
 
 	return { HEURES, clamperDebut, melangerArrivees, liaison, rythme, contexteNarration, serie, bilanVeille, VARIANTES };
