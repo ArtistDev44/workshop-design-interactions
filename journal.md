@@ -4,6 +4,7 @@ Règle : chaque push sur la branche main ajoute une entrée dans le tableau, la 
 
 | Date | Commit | Fichiers | Résumé |
 |---|---|---|---|
+| 2026-11-11 | ce commit (branche 88-jeu-engouement-variete-taches) | prompts/89-jeu-pression-morale-interface-narratrice.md, prompts/README.md, journal.md | Nouveau prompt 89 : à partir d'une analyse de Paper Please (5 questions) — geste décisionnel expressif (file = journal visuel, trace dans le dossier), pression moralement lisible (retard effectif qui grimpe, temps écoulé, retard figé), interface comme narration (mémoire du dossier, bureau, éclairage lié aux jauges), émotion par les règles (Q25 expliqué, dé 1d6 affiché) ; 4 options à trancher par le groupe, désactivées par défaut si non cochées |
 | 2026-11-11 | ce commit (branche main : fusion des branches 84 à 88) | journal.md, prompts/README.md | Fusion dans main des branches 84-jeu-rappel-a-lordre-licenciement-game-over à 88-jeu-engouement-variete-taches (licenciement, Community, messagerie du patron, décision sans chrono, tâches variées et progression) |
 | 2026-11-11 | ce commit | journal.md | Fusion dans main du prompt 90 (notifications variées sur le téléphone) |
 | 2026-11-11 | ce commit (branche prompts/90-notifications-telephone) | prompts/90-jeu-notifications-telephone-variees.md, prompts/README.md, journal.md | Nouveau prompt 90 : notifications du téléphone diversifiées (sources réelles et de la partie, rythme, centre de notifications) |
