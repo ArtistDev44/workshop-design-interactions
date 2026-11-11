@@ -849,6 +849,59 @@ verifier(eq.policeAvant === 1 && eq.policeMatin === 2, `équipes : effectifs non
 	verifier(/Sauvegarde\.effacer/.test(go) && !/allerFin\(|Bilans\.enregistrer|appliquerDefis/.test(go), 'licenciement : sauvegarde effacée, ni palmarès ni défis');
 }
 
+// Prompt 85 : compte social (Quai) — plaintes ajoutées, posts réels, archive, info trafic, messages privés
+{
+	const brut = JSON.parse(readFileSync(join(pub, 'data', 'messages.json'), 'utf8'));
+	const CLES_COND = ['type', 'retard_min', 'ligne', 'nature_contient', 'pointe', 'meteo'];
+	const invalides = brut.plaintes.filter((p) => !p.texte.en || p.reponses.length < 2 || !p.reponses.some((r) => r.bonne) || !p.reponses.some((r) => !r.bonne) || p.reponses.some((r) => !r.texte.en) || Object.keys(p.condition || {}).some((k) => !CLES_COND.includes(k)));
+	verifier(invalides.length === 0 && brut.plaintes.length >= 21 && brut.plaintes.filter((p) => p.prive).length >= 3, `community : plaintes invalides ${invalides.map((p) => p.id)}`);
+	verifier((brut.modeles || []).length === 3 && brut.modeles.every((m) => m.texte.fr && m.texte.en && m.coherent.length), 'community : 3 modèles d\'info trafic FR + EN');
+	const cs = vm.runInContext(
+		`(() => {
+		const r = {};
+		Jeu.chargerSemaine('2026-09-14'); Jeu.nouvellePartie();
+		r.archive1 = Jeu.postsArchive().length; // première semaine archivée : pas de semaine précédente → aucun post
+		Jeu.chargerSemaine('2026-10-12'); Jeu.nouvellePartie();
+		const prec = PXE_SEMAINES.semaines['2026-09-14'];
+		const faits = prec.dossiers.map((d) => d.texte_source).concat(prec.evenements.map((e) => String(e.texte_source).split(' — ')[0]));
+		const arch = Jeu.postsArchive().map((p) => String(p.texte));
+		r.archive = arch.length;
+		r.archiveReels = arch.every((tx) => faits.some((f) => tx.includes(f)) || /mm|°|km.h/.test(tx));
+		Jeu.decider('renfort');
+		const e0 = Jeu.evenementsJournee[0];
+		const post = Jeu.postsPartie()[0];
+		r.postFidele = String(post.texte).includes(e0.action) && post.index === 0;
+		r.coherent = Jeu.publierInfo(0, 'annonce');
+		r.deux = Jeu.publierInfo(0, 'excuses');
+		Jeu.decider('renfort');
+		const rep = Jeu.jauges.reputation;
+		r.incoherent = Jeu.publierInfo(1, 'excuses');
+		r.repDelta = Jeu.jauges.reputation - rep;
+		// Message privé : délai, effets, au plus une relance, transfert au patron
+		const def = Jeu.MESSAGES.plaintes.find((p) => p.prive);
+		const pv = { id: def.id, def, vars: { ligne: '1', nature: 'test' }, index: 0, auteur: '@test', heure: '09:00', reponse: null };
+		Jeu.plaintes.push(pv); Jeu.majPlaintes(0);
+		const resPv = Jeu.repondrePlainte(pv, 0, 5000);
+		r.prive = { rapide: resPv && !resPv.tardive, relances: (pv.suivis || []).length };
+		const pv2 = { id: def.id, def, vars: { ligne: '1', nature: 'test' }, index: 1, auteur: '@test2', heure: '09:10', reponse: null };
+		Jeu.plaintes.push(pv2);
+		const nb = Jeu.messagesPatron.length; const rp = Jeu.jauges.reputation;
+		r.transmis = Jeu.transmettrePatron(pv2) && Jeu.messagesPatron.length === nb + 1 && Jeu.jauges.reputation === rp && !Jeu.plaintesEnAttente().includes(pv2);
+		const snap = JSON.parse(JSON.stringify(Jeu.instantane(0)));
+		Jeu.chargerSemaine('2026-10-12'); Jeu.restaurerInstantane(snap, 0);
+		r.reprise = Jeu.postsJoueur.length;
+		return JSON.parse(JSON.stringify(r));
+	})()`,
+		fr,
+	);
+	verifier(cs.archive1 === 0 && cs.archive > 0 && cs.archive <= 9 && cs.archiveReels, `community : posts d'archive tirés de faits réels uniquement (${cs.archive1} / ${cs.archive}, ${cs.archiveReels})`);
+	verifier(cs.postFidele, 'community : post automatique fidèle à l\'action réelle');
+	verifier(cs.coherent && cs.coherent.coherent && cs.coherent.delta === 1 && cs.deux === null && cs.incoherent && !cs.incoherent.coherent && cs.repDelta === -2, `community : info trafic +1 / −2, une par incident (${JSON.stringify(cs.incoherent)})`);
+	verifier(cs.prive.rapide && cs.prive.relances <= 1 && cs.transmis, `community : message privé ${JSON.stringify(cs.prive)}, transmis ${cs.transmis}`);
+	verifier(cs.reprise === 2, `community : infos publiées gardées par la sauvegarde (${cs.reprise})`);
+	verifier(!/Instagram|Facebook|Naolib|Semitan|TAN\b|Nantes Métropole/.test(readFileSync(join(pub, 'community.js'), 'utf8').replace(/\/\*[\s\S]*?\*\//, '')), 'community : aucun nom de réseau ou de transporteur réel dans l\'interface');
+}
+
 // Traductions : toute clé française existe en anglais
 const manquantes = vm.runInContext('Object.keys(TRADUCTIONS.fr).filter((k) => TRADUCTIONS.en[k] === undefined)', fr);
 verifier(manquantes.length === 0, `clés sans traduction anglaise : ${manquantes.slice(0, 8).join(', ')}`);

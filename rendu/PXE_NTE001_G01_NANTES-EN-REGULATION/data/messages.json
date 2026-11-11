@@ -1,5 +1,5 @@
 {
- "_lisezMoi": "Plaintes des Nantais (prompt 28). Fichier brut modifiable à la main : ajouter une plainte = ajouter une entrée dans « plaintes », sans toucher au code. Après modification, lancer « npm run messages » dans site/ pour régénérer messages.js (double clic hors ligne) ; servi par un serveur, le jeu relit directement ce JSON. condition : type (« ligne en difficulté », « perturbation », « événement », « alerte météo » ou « * »), retard_min (minutes), ligne (nom exact), nature_contient (texte), pointe (true = 7–9 h ou 17–19 h), meteo (« pluie » = au moins 1 mm ce jour-là). Variables remplies par le dossier réel joué : {ligne}, {retard}, {nature} (les dossiers d’archive et d’agenda n’ont souvent pas de ligne : préférer {nature}). Une plainte dont une variable n'existe pas pour le dossier n'est pas proposée. effets : points ajoutés aux jauges fluidite, reputation, budget (bornés à ±15, puis jauges bornées 0–100). bonne : true pour la réponse de bon sens (au moins une par plainte).",
+ "_lisezMoi": "Plaintes des Nantais (prompt 28). Fichier brut modifiable à la main : ajouter une plainte = ajouter une entrée dans « plaintes », sans toucher au code. Après modification, lancer « npm run messages » dans site/ pour régénérer messages.js (double clic hors ligne) ; servi par un serveur, le jeu relit directement ce JSON. condition : type (« ligne en difficulté », « perturbation », « événement », « alerte météo » ou « * »), retard_min (minutes), ligne (nom exact), nature_contient (texte), pointe (true = 7–9 h ou 17–19 h), meteo (« pluie » = au moins 1 mm ce jour-là). Variables remplies par le dossier réel joué : {ligne}, {retard}, {nature} (les dossiers d’archive et d’agenda n’ont souvent pas de ligne : préférer {nature}). Une plainte dont une variable n'existe pas pour le dossier n'est pas proposée. effets : points ajoutés aux jauges fluidite, reputation, budget (bornés à ±15, puis jauges bornées 0–100). bonne : true pour la réponse de bon sens (au moins une par plainte). Prompt 85 : « prive »: true envoie la plainte dans la messagerie privée du compte (une relance au plus) ; « modeles » = les 3 modèles d’info trafic que le joueur peut publier ({sujet}, {action}), « coherent » = actions (ou « meteo ») avec lesquelles le message est cohérent (+1 réputation, sinon −2).",
  "version": 1,
  "plaintes": [
   {
@@ -542,6 +542,304 @@
      },
      "bonne": false
     }
+   ]
+  },
+  {
+   "id": "travaux_deviation",
+   "auteur": "@quai_de_la_fosse",
+   "condition": {
+    "type": "perturbation",
+    "nature_contient": "travaux"
+   },
+   "texte": {
+    "fr": "Encore des travaux ({nature}) et aucun plan de déviation affiché à mon arrêt.",
+    "en": "More roadworks ({nature}) and no diversion map posted at my stop."
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Le plan de déviation est en ligne et affiché aux arrêts concernés ; désolés pour la gêne.",
+      "en": "The diversion map is online and posted at the affected stops; sorry for the trouble."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 3,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Ce n’est pas de notre ressort.",
+      "en": "That's not our responsibility."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -4,
+      "budget": 0
+     },
+     "bonne": false
+    }
+   ]
+  },
+  {
+   "id": "affluence_soir",
+   "auteur": "@nantaise_du_tram",
+   "condition": {
+    "type": "événement"
+   },
+   "texte": {
+    "fr": "Avec « {nature} », quais bondés à la sortie et pas un agent en vue. Pas rassurant le soir.",
+    "en": "With “{nature}”, packed platforms at closing time and no staff in sight. Not reassuring at night."
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Merci du signalement : des agents sont mobilisés sur les quais à la sortie de l’événement.",
+      "en": "Thanks for the report: staff are being sent to the platforms when the event ends."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 3,
+      "budget": -2
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Évitez les heures d’affluence.",
+      "en": "Avoid peak times."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -4,
+      "budget": 0
+     },
+     "bonne": false
+    }
+   ]
+  },
+  {
+   "id": "affluence_accessibilite",
+   "auteur": "@velo_et_bus",
+   "condition": {
+    "type": "événement"
+   },
+   "texte": {
+    "fr": "Avec « {nature} », impossible de monter avec un fauteuil : les rames sont pleines.",
+    "en": "With “{nature}”, impossible to board in a wheelchair: the trams are full."
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Désolés : la fréquence est renforcée et les agents peuvent vous aider à l’embarquement.",
+      "en": "Sorry: frequency is being increased and staff can help you board."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 3,
+      "budget": -1
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Attendez le suivant.",
+      "en": "Wait for the next one."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -4,
+      "budget": 0
+     },
+     "bonne": false
+    }
+   ]
+  },
+  {
+   "id": "perturbation_horaires",
+   "auteur": "@chantenay_matin",
+   "condition": {
+    "type": "perturbation"
+   },
+   "texte": {
+    "fr": "Pendant « {nature} », quels sont les horaires réels ? Rien de clair sur le site.",
+    "en": "During “{nature}”, what are the real timetables? Nothing clear online."
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Les horaires adaptés sont publiés dans l’info trafic, mise à jour en temps réel.",
+      "en": "Adjusted timetables are published in the live traffic info."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 3,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Les horaires habituels s’appliquent.",
+      "en": "Normal timetables apply."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -3,
+      "budget": 0
+     },
+     "bonne": false
+    }
+   ]
+  },
+  {
+   "id": "prive_objet_oublie",
+   "auteur": "@ile_de_nantes",
+   "condition": {
+    "type": "*"
+   },
+   "texte": {
+    "fr": "Bonjour, j’ai oublié mon sac dans un véhicule de la ligne {ligne}. Comment le récupérer ?",
+    "en": "Hello, I left my bag on a line {ligne} vehicle. How can I get it back?"
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Bonjour : décrivez votre sac en message privé, nous le transmettons au service des objets trouvés.",
+      "en": "Hello: describe your bag in a private message and we'll pass it to lost property."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 2,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Nous ne gérons pas les objets perdus.",
+      "en": "We don't handle lost items."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -3,
+      "budget": 0
+     },
+     "bonne": false
+    }
+   ],
+   "prive": true
+  },
+  {
+   "id": "prive_accessibilite",
+   "auteur": "@usager_44",
+   "condition": {
+    "type": "événement"
+   },
+   "texte": {
+    "fr": "Bonjour, je me déplace en fauteuil : comment rentrer après « {nature} » sans attendre une heure ?",
+    "en": "Hello, I use a wheelchair: how do I get home after “{nature}” without waiting an hour?"
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Bonjour : partez un peu avant la fin, ou signalez-vous aux agents sur place qui vous aideront à embarquer.",
+      "en": "Hello: leave a little before the end, or ask the staff on site, who will help you board."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 2,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Consultez le site.",
+      "en": "Check the website."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -2,
+      "budget": 0
+     },
+     "bonne": false
+    }
+   ],
+   "prive": true
+  },
+  {
+   "id": "prive_deviation",
+   "auteur": "@quai_de_la_fosse",
+   "condition": {
+    "type": "perturbation"
+   },
+   "texte": {
+    "fr": "Bonjour, pendant « {nature} », par où passe mon bus ? Je ne trouve pas la déviation.",
+    "en": "Hello, during “{nature}”, which way does my bus go? I can't find the diversion."
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Bonjour : la déviation est détaillée dans l’info trafic, nous vous en envoyons le lien.",
+      "en": "Hello: the diversion is detailed in the traffic info, we'll send you the link."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 2,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Prenez un autre itinéraire.",
+      "en": "Take another route."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -2,
+      "budget": 0
+     },
+     "bonne": false
+    }
+   ],
+   "prive": true
+  }
+ ],
+ "modeles": [
+  {
+   "id": "annonce",
+   "texte": {
+    "fr": "Info trafic · {sujet} : {action}. Merci de votre patience.",
+    "en": "Traffic info · {sujet}: {action}. Thank you for your patience."
+   },
+   "coherent": [
+    "devier",
+    "retenir",
+    "renfort"
+   ]
+  },
+  {
+   "id": "excuses",
+   "texte": {
+    "fr": "{sujet} : nous sommes désolés pour la gêne, la situation est suivie par la salle de régulation.",
+    "en": "{sujet}: we're sorry for the trouble, the control room is following the situation."
+   },
+   "coherent": [
+    "rien",
+    "temps"
+   ]
+  },
+  {
+   "id": "prevention",
+   "texte": {
+    "fr": "{sujet} : conditions météo difficiles aujourd’hui, prévoyez de la marge sur vos trajets.",
+    "en": "{sujet}: difficult weather today, allow extra time for your journeys."
+   },
+   "coherent": [
+    "meteo"
    ]
   }
  ]

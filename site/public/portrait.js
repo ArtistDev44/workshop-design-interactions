@@ -55,6 +55,7 @@ function scenePortrait() {
 	if (fenetre || tutoriel) return 'fenetre';
 	if (MENU.actif) return 'menu';
 	if (vue === 'poste' && PC.etat === 'appli' && ecran === 'jeu') return 'appli';
+	if (vue === 'poste' && PC.etat === 'os' && PC.fenetre === 'community' && ecran === 'jeu') return 'community'; // prompt 85 : une colonne
 	if (vue === 'bureau' && ecran === 'jeu' && !TRANSITION_JOUR) return 'bureau';
 	return 'plein';
 }
@@ -68,6 +69,7 @@ function composerPortrait() {
 	PORTRAIT.boutons = [];
 	const scene = scenePortrait();
 	if (scene === 'appli') regionsAppli();
+	else if (scene === 'community') region(pcVersImage({ x: FENETRE_APP.x, y: FENETRE_APP.y, l: 924, h: FENETRE_APP.h }), 0, 160, PL); // prompt 85 : colonne de 860 px, onglets en bas
 	else if (scene === 'main') region({ x: 880, y: 0, l: 780, h: H }, 0, 200, PL);
 	else if (scene === 'rapport') region({ x: 420, y: 0, l: 1420, h: H }, 0, (PH - (H * PL) / 1420) / 2, PL);
 	else if (scene === 'fenetre') {

@@ -256,6 +256,7 @@
 		Jeu.equipes = []; // prompt 22 : équipes envoyées depuis la carte
 		Jeu.aggravationLignes = {}; // prompt 79
 		Jeu.statutPatron = nouveauStatut(); // prompt 84
+		Jeu.postsJoueur = []; // prompt 85
 		Jeu.refusEquipes = 0; // prompt 68 : envois refusés faute d'effectif
 		Jeu.nonLus = { patron: 0, community: 0 };
 		Jeu.alertesJauges = {};
@@ -322,6 +323,7 @@
 			refusEquipes: Jeu.refusEquipes || 0,
 			aggravationLignes: Object.assign({}, Jeu.aggravationLignes), // prompt 79
 			statutPatron: JSON.parse(JSON.stringify(Jeu.statutPatron)), // prompt 84 : niveau, avertissements, dates, file
+			postsJoueur: Jeu.postsJoueur || [], // prompt 85
 			carnet: Jeu.carnet || '',
 			inspection: Jeu.inspection,
 			agendaPrevenus: Object.assign({}, Jeu.agendaPrevenus),
@@ -362,6 +364,7 @@
 		Jeu.refusEquipes = s.refusEquipes || 0;
 		Jeu.aggravationLignes = Object.assign({}, s.aggravationLignes || {}); // prompt 79
 		Jeu.statutPatron = Object.assign(nouveauStatut(), s.statutPatron || {}); // prompt 84 (ancienne sauvegarde : statut neuf)
+		Jeu.postsJoueur = s.postsJoueur || []; // prompt 85
 		const m = s.modificateur && s.modificateur.id !== 'erreur_systeme' ? s.modificateur : null; // ancienne sauvegarde : l'erreur système n'existe plus
 		Jeu.modificateur = m ? Object.assign({}, m, { debut: m.debut === null ? null : m.debut + maintenant, fin: m.fin === null ? null : m.fin + maintenant }) : null;
 		Jeu.terminee = !!s.terminee;
@@ -743,6 +746,7 @@
 			cleMeilleure: meilleure,
 			attendus,
 			resultat: r,
+			index: Jeu.index, // prompt 85 : rang du dossier dans le paquet (post du compte social)
 		};
 		Jeu.evenementsJournee.push(entree);
 		Jeu.reagirApps(entree);
@@ -1009,7 +1013,7 @@
 	const COMMENTAIRES = { bon: 3, mauvais: 3, equipe: 1 }; // nombre de modèles par sorte (textes : i18n.js, clés com.<sorte>.<n>)
 	const DELTA_REPUTATION = { bon: 2, mauvais: -3, equipe: 1 };
 
-	Jeu.commenter = function (sorte, sujet, retard, equipe) {
+	Jeu.commenter = function (sorte, sujet, retard, equipe, index) {
 		const n = Jeu.commentaires.length;
 		const texte = T('com.' + sorte + '.' + (n % COMMENTAIRES[sorte]), {
 			sujet,
@@ -1018,7 +1022,7 @@
 			equipe: equipe || '',
 		});
 		const delta = DELTA_REPUTATION[sorte];
-		Jeu.commentaires.push({ heure: maintenantSim(), auteur: PSEUDOS[n % PSEUDOS.length], texte, delta });
+		Jeu.commentaires.push({ heure: maintenantSim(), auteur: PSEUDOS[n % PSEUDOS.length], texte, delta, index, jour: Jeu.jourIndex }); // prompt 85 : rattaché au post du dossier
 		Jeu.nonLus.community++;
 		Jeu.appliquerDeltas({ reputation: delta }); // chaque commentaire fait évoluer la réputation
 	};
@@ -1027,7 +1031,7 @@
 	Jeu.reagirApps = function (e) {
 		const sujet = e.ligne ? T('sujet.ligne', { ligne: e.ligne }) : e.externeCourt || e.externe;
 		const ev = Jeu.evaluer(e);
-		Jeu.commenter(ev === 'bon' ? 'bon' : 'mauvais', sujet, e.retard);
+		Jeu.commenter(ev === 'bon' ? 'bon' : 'mauvais', sujet, e.retard, undefined, e.index);
 		if (ev === 'rate') Jeu.messagePatron(T('patron.rate', { sujet, action: e.action, meilleure: e.meilleureAction }));
 		if (ev === 'trop_tard') Jeu.messagePatron(T('patron.tropTard', { sujet }));
 		Jeu.verifierAlertesPatron();
@@ -1055,7 +1059,9 @@
 			if (valide) ok.push(p);
 			else if (global.console) console.warn('messages.json : plainte n° ' + i + ' ignorée (id, texte.fr, 2 réponses dont une « bonne » requis)');
 		});
-		Jeu.MESSAGES = { plaintes: ok };
+		// Prompt 85 : modèles d'info trafic (FR + EN, « coherent »), validés comme les plaintes
+		const modeles = ((donnees && donnees.modeles) || []).filter((m) => m && typeof m.id === 'string' && m.texte && typeof m.texte.fr === 'string' && typeof m.texte.en === 'string' && Array.isArray(m.coherent));
+		Jeu.MESSAGES = { plaintes: ok, modeles };
 		return ok.length;
 	};
 	Jeu.chargerMessages(global.MESSAGES); // data/messages.js (double clic, hors ligne)
@@ -1117,7 +1123,7 @@
 	};
 
 	Jeu.MAX_PLAINTES_EN_ATTENTE = 3;
-	Jeu.plaintesEnAttente = () => (Jeu.plaintes || []).filter((p) => p.reponse === null && !p.expiree); // prompt 79 : une plainte expirée n'attend plus
+	Jeu.plaintesEnAttente = () => (Jeu.plaintes || []).filter((p) => p.reponse === null && !p.expiree && !p.transmise); // prompt 79 : une plainte expirée n'attend plus ; prompt 85 : ni une plainte transmise au patron
 
 	// Prompt 79 — délai de réponse Community (REGLAGES.community) : répondre vite évite la dégradation
 	/** Millisecondes restantes avant que la plainte s'envenime (le délai démarre à sa première vue par majPlaintes) */
@@ -1176,7 +1182,7 @@
 	Jeu.NB_MODELES_SUIVI = 4; // textes : i18n.js, suivi.<bonne|mauvaise>.<n>
 	Jeu.programmerSuivis = function (plainte) {
 		const h = (k) => hacher(String(Jeu.graine) + '|suivi|' + plainte.id + '|' + plainte.index + '|' + k);
-		const n = h('n') % 4; // 0 à 3 réactions
+		const n = plainte.def && plainte.def.prive ? h('n') % 2 : h('n') % 4; // 0 à 3 réactions ; message privé (prompt 85) : au plus 1 relance
 		const base = Jeu.horloge ? Math.floor(Jeu.horloge.minutes) : 0;
 		plainte.suivis = [];
 		for (let i = 0; i < n; i++) {
@@ -1204,6 +1210,13 @@
 				if (!echu) return;
 				sv.livre = true; // le modèle 0 cite la nature du dossier : il n'est pris que si elle existe
 				n++;
+				if (p.def && p.def.prive) {
+					// Prompt 85 : relance privée, dans la conversation (pas de réaction publique en chaîne)
+					p.relances = (p.relances || []).concat({ heure: maintenantSim(), texte: T('suivi.prive.' + (p.bonne ? 'bonne' : 'mauvaise')), delta: sv.delta });
+					Jeu.nonLus.community++;
+					Jeu.appliquerDeltas({ reputation: sv.delta });
+					return;
+				}
 				Jeu.commentaires.push({
 					heure: maintenantSim(),
 					auteur: sv.auteur,
@@ -1217,7 +1230,94 @@
 		);
 		return n;
 	};
-	Jeu.bilanPlaintes = () => ({ traitees: (Jeu.plaintes || []).filter((p) => p.reponse !== null).length, total: (Jeu.plaintes || []).length, bonnes: (Jeu.plaintes || []).filter((p) => p.bonne).length });
+	Jeu.bilanPlaintes = () => ({ traitees: (Jeu.plaintes || []).filter((p) => p.reponse !== null || p.transmise).length, total: (Jeu.plaintes || []).length, bonnes: (Jeu.plaintes || []).filter((p) => p.bonne).length });
+
+	// =====================================================================
+	// Prompt 85 — le compte social de la régulation (réseau fictif « Quai ») : posts calculés sur les faits réels
+	// de la partie, posts d'archive tirés de la semaine archivée précédente, info trafic publiée par le joueur,
+	// messages privés. Compteurs (abonnés, « j'aime ») = valeurs de jeu dérivées de la réputation, jamais réelles.
+	// =====================================================================
+	Jeu.postsJoueur = [];
+	const LIKES_EVAL = { bon: 42, aucun_detour: 24, rate: 9, trop_tard: 4 }; // valeur de jeu selon l'évaluation
+	const sujetDe = (d) => (d.lignes && d.lignes.length ? T('sujet.ligne', { ligne: d.lignes.join(', ') }) : String(d.nature || '').split(',')[0]);
+	/** Sujet de la photo pixel selon le fait réel (type de ligne de data/lignes.js, travaux, agenda, météo) */
+	Jeu.sujetPhoto = function (d) {
+		if (!d) return { sujet: 'meteo' };
+		if (d.type === 'alerte météo') return { sujet: 'meteo' };
+		if (d.type === 'événement') return { sujet: 'foule' };
+		if (d.type === 'perturbation' && /travaux|chantier|déviation/i.test(String(d.nature) + ' ' + String(d.texte_source))) return { sujet: 'travaux' };
+		const ln = d.lignes && d.lignes.length && Jeu.lignes ? Jeu.lignes.lignes.find((x) => x.nom === d.lignes[0]) : null;
+		if (ln) return { sujet: ln.type === 0 ? 'tram' : ln.type === 4 ? 'navibus' : 'bus', couleur: ln.couleur || null };
+		return { sujet: d.type === 'perturbation' ? 'bus' : 'meteo' };
+	};
+	/** Posts de la partie : un par dossier traité, fidèle à l'action et aux valeurs réelles */
+	Jeu.postsPartie = function () {
+		return (Jeu.evenementsJournee || []).map((e) => {
+			const d = e.resultat.dossier;
+			const ev = Jeu.evaluer(e);
+			return {
+				sorte: 'partie',
+				index: e.index !== undefined ? e.index : Jeu.paquet.indexOf(d),
+				jour: e.jour,
+				heure: e.heure,
+				texte: T(e.cleAction === 'temps' ? 'post.tropTard' : 'post.action', { sujet: sujetDe(d), retard: e.retard !== null ? T('post.retard', { retard: e.retard }) : '', action: e.action || '' }),
+				likes: Math.round((LIKES_EVAL[ev] || 10) * (Jeu.jauges.reputation / 50)),
+				photo: Jeu.sujetPhoto(d),
+				date: d.date,
+				minute: e.resultat.minuteSim,
+			};
+		});
+	};
+	/** Posts d'archive : faits réels de la semaine archivée précédente (changelog, alertes météo, agenda, météo) ;
+	 * aucun fait → aucun post (rien n'est inventé pour remplir). */
+	Jeu.postsArchive = function () {
+		const e = Jeu.etat || {};
+		const S = global.PXE_SEMAINES;
+		if (e.mode !== 'semaine' || !e.semaine || !S) return [];
+		const lundis = Object.keys(S.semaines).sort();
+		const prec = lundis.filter((l) => l < e.semaine.lundi).pop();
+		if (!prec) return [];
+		const w = S.semaines[prec];
+		const posts = [];
+		(w.dossiers || []).forEach((d) => {
+			if (d.type === 'perturbation') posts.push({ date: d.date, texte: T('post.archive.perturbation', { texte: d.texte_source }), photo: Jeu.sujetPhoto(d) });
+			else if (d.type === 'alerte météo') posts.push({ date: d.date, texte: T('post.archive.meteo', { nature: d.nature, valeur: d.valeur }), photo: { sujet: 'meteo' } });
+		});
+		(w.evenements || [])
+			.map((ev) => ({ ev, s: scoreAffluence(ev) }))
+			.filter((x) => x.s >= 1)
+			.slice(0, 3)
+			.forEach((x) => posts.push({ date: x.ev.date, texte: T('post.archive.agenda', { nom: String(x.ev.texte_source).split(' — ')[0] }), photo: { sujet: 'foule' } }));
+		(w.meteo || []).filter((m) => (m.pluie_mm || 0) >= 5 || (m.rafales_max || 0) >= 50).forEach((m) => posts.push({ date: m.date, texte: T('post.archive.pluie', { pluie: m.pluie_mm, vent: m.rafales_max }), photo: { sujet: 'meteo', pluie: (m.pluie_mm || 0) >= 1 } }));
+		return posts
+			.sort((a, b) => b.date.localeCompare(a.date))
+			.slice(0, 9)
+			.map((p, i) => Object.assign(p, { sorte: 'archive', heure: '', likes: Math.round((18 + ((i * 7) % 15)) * (Jeu.jauges.reputation / 50)) }));
+	};
+	Jeu.modelesInfo = () => (Jeu.MESSAGES && Jeu.MESSAGES.modeles) || [];
+	/** Le joueur publie une info trafic sur un dossier traité : +1 si cohérente avec sa décision, −2 sinon ; une par dossier */
+	Jeu.publierInfo = function (index, idModele) {
+		if ((Jeu.postsJoueur || []).some((p) => p.index === index)) return null;
+		const e = (Jeu.evenementsJournee || []).find((x) => x.index === index);
+		const m = Jeu.modelesInfo().find((x) => x.id === idModele);
+		if (!e || !m) return null;
+		const d = e.resultat.dossier;
+		const coherent = (m.coherent || []).includes(e.cleAction) || ((m.coherent || []).includes('meteo') && contexte(d).meteo);
+		const delta = coherent ? 1 : -2;
+		Jeu.appliquerDeltas({ reputation: delta });
+		const post = { index, modele: idModele, coherent, delta, heure: maintenantSim(), jour: d.date, vars: { sujet: String(sujetDe(d)), action: e.action || T('action.temps') } };
+		Jeu.postsJoueur.push(post);
+		return post;
+	};
+	/** Message privé hors du rôle du joueur : transmis au patron, sans effet de réputation */
+	Jeu.transmettrePatron = function (plainte) {
+		if (!plainte || plainte.reponse !== null || plainte.expiree || plainte.transmise) return false;
+		plainte.transmise = true;
+		plainte.statut = 'transmise';
+		plainte.jourStatut = Jeu.jourIndex;
+		Jeu.messagePatron(T('patron.transfert', { auteur: plainte.auteur, texte: { toString: () => Jeu.texteMessage(plainte.def.texte, plainte.vars) } }));
+		return true;
+	};
 
 	// Équipes envoyées depuis la carte (façon centre d'appels) : coût en budget, effets à l'arrivée
 	const EQUIPES = {
@@ -1309,7 +1409,7 @@
 				const effets = {};
 				Object.entries(EQUIPES[q.cle].effets).forEach(([k, v]) => (effets[k] = q.pertinente === false ? Math.round(v / 2) : v));
 				Jeu.appliquerDeltas(effets);
-				Jeu.commenter('equipe', q.sujet, null, q.nom);
+				Jeu.commenter('equipe', q.sujet, null, q.nom, q.index);
 			}
 		});
 	};

@@ -1488,7 +1488,8 @@ function keyPressed() {
 			return false;
 		}
 		// Prompt 28 : plainte en attente dans l'app Community — Tab parcourt les réponses, Entrée / 1-2-3 répond
-		const plainte = PC.fenetre === 'community' && Jeu.plaintesEnAttente && ecran === 'jeu' ? Jeu.plaintesEnAttente()[0] : null;
+		if (ecran === 'jeu' && toucheCommunity()) return false; // prompt 85 : onglets, défilement, publication
+		const plainte = PC.fenetre === 'community' && ecran === 'jeu' ? cibleCommunity() : null;
 		if (plainte && !focusQuitter && !focusDemarrer) {
 			const n = plainte.def.reponses.length;
 			if (keyCode === TAB) {
@@ -1573,6 +1574,7 @@ function keyPressed() {
 // Prompt 26 : au poste, la molette fait quitter le PC (anti-rebond dans bureau.js) ; ailleurs, scroll normal
 function mouseWheel(event) {
 	interaction();
+	if (molletteCommunity(event.delta)) return false; // prompt 85 : défilement du fil
 	if (scrollSortiePC(event.delta)) return false;
 }
 

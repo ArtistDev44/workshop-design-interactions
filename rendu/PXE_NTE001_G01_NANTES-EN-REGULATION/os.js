@@ -499,8 +499,8 @@ function appPatron(z) {
 let focusReponse = 0; // réponse sélectionnée au clavier (Tab / Entrée, ou 1 / 2 / 3)
 let retourPlainte = null; // { texte, bonne, jusqua } : résultat affiché quelques secondes après une réponse
 
-function repondrePlainte(i) {
-	const p = Jeu.plaintesEnAttente()[0];
+function repondrePlainte(i, cible) {
+	const p = cible || cibleCommunity(); // prompt 85 : la plainte visée (mention ou conversation privée)
 	if (!p) return;
 	const r = Jeu.repondrePlainte(p, i, millis()); // prompt 79 : réponse rapide ou tardive
 	if (!r) return;
@@ -514,81 +514,9 @@ function repondrePlainte(i) {
 	Confort.Son.bip(r.bonne ? 'action' : 'alerte');
 }
 
-/** Bloc « plainte en attente » : texte + réponses cliquables ; renvoie la hauteur occupée */
-function blocPlainte(z) {
-	const attente = Jeu.plaintesEnAttente();
-	let y = z.y;
-	if (retourPlainte && millis() < retourPlainte.jusqua) {
-		dsBadge(z.x + 14, y + 12, retourPlainte.bonne ? '✓' : '!', retourPlainte.bonne ? 'succes' : 'alerte');
-		dsTexte(retourPlainte.texte, z.x + 40, y, 20, DS.blanc, 'left', z.l - 40);
-		y += 44;
-	}
-	if (!attente.length) return y - z.y;
-	const p = attente[0];
-	dsTexte(t('plainte.titre', { n: attente.length }), z.x, y, 20, DS.alerte, 'left');
-	y += 36;
-	noStroke();
-	fill(DS.blanc05);
-	rect(z.x, y, z.l, 84);
-	fill(DS.alerte);
-	rect(z.x, y, 4, 84);
-	dsTexte(p.auteur + ' · ' + p.heure, z.x + 18, y + 10, 18, DS.blanc50, 'left');
-	// Prompt 79 : délai de réponse restant (rouge sous 10 s) — répondre vite évite le malus
-	const reste = Jeu.resteReponse(p, millis());
-	const rapide = reste > Jeu.REGLAGES.community.delaiMs - Jeu.REGLAGES.community.rapideMs;
-	dsTexte(t(rapide ? 'plainte.delaiRapide' : 'plainte.delai', { s: Math.ceil(reste / 1000) }), z.x + z.l - 18, y + 10, 18, reste < 10000 ? DS.erreurClair : rapide ? DS.succesClair : DS.alerte, 'right');
-	dsTexte(Jeu.texteMessage(p.def.texte, p.vars), z.x + 18, y + 38, 20, DS.blanc, 'left', z.l - 36);
-	y += 96;
-	if (focusReponse >= p.def.reponses.length) focusReponse = 0;
-	p.def.reponses.forEach((r, i) => {
-		const h = 64;
-		const survol = mouseX >= z.x && mouseX <= z.x + z.l && mouseY >= y && mouseY <= y + h;
-		const actif = survol || focusReponse === i;
-		noStroke();
-		fill(actif ? DS.blanc15 : DS.blanc05);
-		rect(z.x, y, z.l, h);
-		if (actif) {
-			noFill();
-			stroke(DS.blanc);
-			strokeWeight(2);
-			rect(z.x + 1, y + 1, z.l - 2, h - 2);
-			noStroke();
-		}
-		dsTexte(String(i + 1), z.x + 16, y + 20, 22, DS.alerte, 'left');
-		dsTexte(Jeu.texteMessage(r.texte, p.vars), z.x + 52, y + 8, 19, DS.blanc, 'left', z.l - 70);
-		boutons.push({ x: z.x, y, l: z.l, h, action: () => repondrePlainte(i) });
-		y += h + 8;
-	});
-	dsTexte(t('plainte.aide'), z.x, y + 2, 16, DS.blanc50, 'left');
-	return y + 34 - z.y;
-}
 
 function appCommunity(z) {
-	let y = z.y;
-	dsTexte(t('app.reputation', { r: Jeu.jauges.reputation }), z.x, y, 20, DS.blanc75, 'left');
-	const bp = Jeu.bilanPlaintes ? Jeu.bilanPlaintes() : null;
-	if (bp && bp.total) dsTexte(t('plainte.compteur', { x: bp.traitees, y: bp.total }), z.x + z.l, y, 18, DS.blanc50, 'right');
-	y += 44;
-	const hp = blocPlainte({ x: z.x, y, l: z.l });
-	y += hp ? hp + 16 : 0;
-	const place = Math.max(1, Math.floor((z.y + z.h - y) / 88));
-	derniers(Jeu.commentaires, Math.min(8, place))
-		.reverse()
-		.forEach((c) => {
-			noStroke();
-			fill(DS.blanc05);
-			rect(z.x, y, z.l, 76);
-			stroke(DS.blanc15);
-			strokeWeight(2);
-			noFill();
-			rect(z.x + 1, y + 1, z.l - 2, 74);
-			noStroke();
-			dsTexte((c.suivi ? '↳ ' + t('suivi.reponse') + ' · ' : '') + c.auteur + ' · ' + c.heure, z.x + 16, y + 10, 18, c.suivi ? DS.alerte : DS.blanc50, 'left'); // prompt 63 : réaction à une de vos réponses
-			dsTexte(c.texte, z.x + 16, y + 38, 20, DS.blanc, 'left', z.l - 160);
-			dsBadge(z.x + z.l - 60, y + 38, t('app.rep', { d: (c.delta > 0 ? '+' : '') + c.delta }), c.delta > 0 ? 'succes' : 'erreur');
-			y += 88;
-		});
-	if (!Jeu.commentaires.length) dsTexte(t('app.aucunCommentaire'), z.x, y, 20, DS.blanc50, 'left');
+	dessinerCompteSocial(z); // prompt 85 : le compte social de la régulation (community.js)
 }
 
 // Prompt 63 : journal par journée, avec une enquête après coup sur chaque incident (données réelles uniquement)
