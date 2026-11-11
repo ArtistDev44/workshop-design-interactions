@@ -30,6 +30,7 @@ function boireCafe() {
 }
 function finGorgee() {
 	CAFE.boit = false;
+	if (typeof SOMNO !== 'undefined') SOMNO.v = Math.max(0, SOMNO.v - Jeu.REGLAGES.somnolence.cafe); // prompt 78 : le café réveille
 	if (fenetre === 'cafe') fenetre = null;
 	CAFE.boost = millis();
 	CAFE.prochainBattement = millis() + 300;

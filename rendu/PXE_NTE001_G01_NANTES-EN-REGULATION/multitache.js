@@ -120,6 +120,7 @@ function expirerEnFond(d, enFile) {
 	retirerActif(d);
 	if (sel && sel.d !== d) restaurerActif(sel);
 	if (!r) return;
+	if (typeof siesteExpiration === 'function') siesteExpiration(r); // prompt 78 : pendant la sieste, malus fixe de sieste en plus (réponse trop tard)
 	r.sources = 0;
 	Confort.Son.bip('consequence');
 	annoncer(t(enFile ? 'carte.expire' : 'multi.expire', { quoi: t('enq.signalement.' + d.type) }));
@@ -161,6 +162,7 @@ const notifsVisibles = () => NOTIFS.liste.filter((n) => millis() - n.t < NOTIFS.
 /** Appelé par fileIncidents à la première apparition d'un signalement dans la liste */
 function notifierArrivee(d, i) {
 	if (ecran !== 'jeu') return;
+	if (typeof siesteArrivee === 'function') siesteArrivee(); // prompt 78 : bilan de la sieste
 	notifier({ titre: t('notif.signalement'), extrait: t('enq.signalement.' + d.type) + ' · ' + t('gravite.' + Jeu.gravite(d)) + (dossierConnu(i) && d.lignes && d.lignes.length ? ' · ' + d.lignes.join(', ') : ''), icone: 'signalements', action: () => ouvrirSignalements(d) });
 }
 const extrait = (s, n) => (String(s).length > n ? String(s).slice(0, n - 1).trim() + '…' : String(s));

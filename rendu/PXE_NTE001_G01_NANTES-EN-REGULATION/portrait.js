@@ -113,7 +113,8 @@ function composerPortrait() {
 /** Appli Signalements : jauges fixes, puis liste des signalements + lignes et dossier (défilables), barre des tâches + « Se lever » fixes */
 function regionsAppli() {
 	const hj = region(appliVersImage({ x: DROITE.x, y: DROITE.y, l: DROITE.l, h: 110 }), 20, 12, PL - 40);
-	const haut = 12 + hj + 10;
+	const hs = region(appliVersImage(ZONE_SOMNO), (PL - 600) / 2, 12 + hj + 8, 600); // prompt 78 : somnolence (≥ 44 px)
+	const haut = 12 + hj + 8 + hs + 10;
 	const bas = PH - 190;
 	PORTRAIT.hautDefil = haut;
 	PORTRAIT.basDefil = bas;
