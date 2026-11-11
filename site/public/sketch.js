@@ -1433,13 +1433,14 @@ function keyPressed() {
 	if (PC.etat !== 'appli') {
 		if (keyCode === ESCAPE) PC.fenetre ? fermerFenetreApp() : seLever();
 		if (focusQuitter && (keyCode === ENTER || keyCode === RETURN || key === ' ')) return quitterPC(), false; // prompt 26
+		if (focusDemarrer && (keyCode === ENTER || keyCode === RETURN || key === ' ')) return basculerFocusDemarrer(false), retourAccueilPC(), false; // prompt 75
 		if (PC.etat !== 'os') {
 			if (keyCode === TAB) basculerFocusQuitter(!focusQuitter);
 			return false;
 		}
 		// Prompt 28 : plainte en attente dans l'app Community — Tab parcourt les réponses, Entrée / 1-2-3 répond
 		const plainte = PC.fenetre === 'community' && Jeu.plaintesEnAttente && ecran === 'jeu' ? Jeu.plaintesEnAttente()[0] : null;
-		if (plainte && !focusQuitter) {
+		if (plainte && !focusQuitter && !focusDemarrer) {
 			const n = plainte.def.reponses.length;
 			if (keyCode === TAB) {
 				focusReponse = (focusReponse + (keyIsDown(SHIFT) ? n - 1 : 1)) % n;
@@ -1450,13 +1451,20 @@ function keyPressed() {
 			if (Number(key) >= 1 && Number(key) <= n) return repondrePlainte(Number(key) - 1), false;
 		}
 		if (keyCode === TAB) {
-			// Prompt 26 : le cycle Tab passe par les icônes puis par le bouton « Quitter le PC »
+			// Prompt 26 : le cycle Tab passe par les icônes, le bouton « Quitter le PC », puis (prompt 75) le logo
+			// en bas à gauche de la barre des tâches (accueil de RégulOS)
 			const n = ICONES_OS.length;
 			const recul = keyIsDown(SHIFT);
 			if (focusQuitter) {
 				basculerFocusQuitter(false);
-				PC.selection = recul ? n - 1 : 0;
-			} else if ((!recul && PC.selection === n - 1) || (recul && PC.selection === 0)) basculerFocusQuitter(true);
+				if (recul) PC.selection = n - 1;
+				else basculerFocusDemarrer(true);
+			} else if (focusDemarrer) {
+				basculerFocusDemarrer(false);
+				if (recul) basculerFocusQuitter(true);
+				else PC.selection = 0;
+			} else if (!recul && PC.selection === n - 1) basculerFocusQuitter(true);
+			else if (recul && PC.selection === 0) basculerFocusDemarrer(true);
 			else PC.selection = (PC.selection + (recul ? n - 1 : 1)) % n;
 			return false;
 		}
@@ -1467,10 +1475,16 @@ function keyPressed() {
 	// Au poste : Échap fait se lever (sauf à l'écran de fin)
 	if (keyCode === ESCAPE && !(ecran === 'jeu' && phase === 'fin')) return seLever(), false;
 	// Prompt 72 : réponses d'une alerte — ↑ ↓ / Tab les parcourent, Entrée valide (le focus « Quitter le PC » d'abord s'il est pris)
-	if (!focusQuitter && ecran === 'jeu' && toucheAlerte()) return false;
-	// Prompt 26 : Tab place le focus sur « Quitter le PC » (et l'en retire), Entrée l'active
-	if (keyCode === TAB) return basculerFocusQuitter(!focusQuitter), false;
+	if (!focusQuitter && !focusDemarrer && ecran === 'jeu' && toucheAlerte()) return false;
+	// Prompt 26 : Tab place le focus sur « Quitter le PC », puis (prompt 75) sur le logo de la barre des tâches, puis l'en retire
+	if (keyCode === TAB) {
+		if (focusQuitter) basculerFocusQuitter(false), basculerFocusDemarrer(true);
+		else if (focusDemarrer) basculerFocusDemarrer(false);
+		else basculerFocusQuitter(true);
+		return false;
+	}
 	if (focusQuitter && (keyCode === ENTER || keyCode === RETURN || key === ' ')) return quitterPC(), false;
+	if (focusDemarrer && (keyCode === ENTER || keyCode === RETURN || key === ' ')) return basculerFocusDemarrer(false), retourAccueilPC(), false; // prompt 75
 	if (phase === 'mail' && (keyCode === ENTER || keyCode === RETURN)) return rangerPoste(), false; // prompt 69 : on range le poste, la nuit tombe
 	// Touches valables partout
 	if (key === 'h' || key === 'H' || key === '?') return ouvrir('aide'), false;

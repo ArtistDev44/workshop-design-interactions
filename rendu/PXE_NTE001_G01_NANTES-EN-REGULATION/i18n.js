@@ -972,6 +972,8 @@ const TRADUCTIONS = {
 		"action.desc.equipes": "Équipes : envoyer police, ambulanciers, techniciens ou pompiers sur place (effectifs limités).",
 		"liaison.restants": "Encore {n} signalement(s) attendu(s) aujourd’hui.",
 		"liaison.dernier": "C’était le dernier signalement attendu aujourd’hui.",
+		"os.demarrer": "Accueil de RégulOS (clic, ou Tab puis Entrée)",
+		"os.demarrer.annonce": "Accueil de RégulOS : vos applications.",
 	},
 	en: {
 		"charge.introuvable": "Week not found: offline reference week.",
@@ -1938,6 +1940,8 @@ const TRADUCTIONS = {
 		"action.desc.equipes": "Teams: send police, paramedics, technicians or firefighters on site (limited staff).",
 		"liaison.restants": "{n} more report(s) expected today.",
 		"liaison.dernier": "That was the last report expected today.",
+		"os.demarrer": "RégulOS home (click, or Tab then Enter)",
+		"os.demarrer.annonce": "RégulOS home: your apps.",
 	},
 };
 

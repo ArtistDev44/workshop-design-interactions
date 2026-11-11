@@ -203,9 +203,7 @@ function dessinerBarreTaches() {
 	rect(0, tb, L, BARRE_OS);
 	fill(DS.blanc15);
 	rect(0, tb, L, 2);
-	fill(DS.primaire);
-	rect(8, tb + 10, 140, BARRE_OS - 20);
-	dsTitre('REGUL', 78, tb + 22, 32, DS.blanc, 'center');
+	dessinerBoutonDemarrer(tb); // prompt 75 : le logo du chargement à la place du carré rouge « REGUL »
 	ICONES_OS.filter((ic) => ic.cle !== 'corbeille').forEach((ic) => {
 		const i = ICONES_OS.indexOf(ic);
 		const k = ICONES_OS.filter((x) => x.cle !== 'corbeille').indexOf(ic);
@@ -227,6 +225,43 @@ function dessinerBarreTaches() {
 	indicateurWebcamBarre(700, tb + 22); // prompt 57 : « CAM » + point rouge tant que la webcam est active
 	if (Jeu.jauges && ecran === 'jeu') dsTexte(t('os.jauges', { b: Jeu.jauges.budget, r: Jeu.jauges.reputation, f: Jeu.jauges.fluidite }), L - 130, tb + 28, 20, DS.blanc75, 'right');
 	else dsTexte(t('os.aideClavier'), 790, tb + 28, 18, DS.blanc50, 'left');
+}
+
+// ——— Prompt 75 : bouton en bas à gauche de la barre des tâches = logo du jeu (même source que l'écran de chargement)
+// Clic, ou Tab jusqu'à lui puis Entrée : retour à l'accueil de RégulOS (appli et fenêtre fermées).
+let focusDemarrer = false;
+const BOUTON_DEMARRER = { x: 8, l: 140 };
+function dessinerBoutonDemarrer(tb) {
+	const b = { x: BOUTON_DEMARRER.x, y: tb + 8, l: BOUTON_DEMARRER.l, h: BARRE_OS - 16 };
+	const survol = mouseX >= b.x && mouseX <= b.x + b.l && mouseY >= b.y && mouseY <= b.y + b.h;
+	noStroke();
+	fill(survol || focusDemarrer ? DS.blanc15 : DS.blanc05);
+	rect(b.x, b.y, b.l, b.h);
+	dessinerLogoPXE(b.x + (b.l - 72) / 2, b.y + (b.h - 60) / 2, 60); // échelle 3 : 72 × 60 px
+	if (focusDemarrer || survol) {
+		noFill();
+		stroke(DS.blanc);
+		strokeWeight(2);
+		rect(b.x - 4, b.y - 4, b.l + 8, b.h + 8);
+		stroke(DS.fond);
+		rect(b.x - 1, b.y - 1, b.l + 2, b.h + 2);
+		noStroke();
+	}
+	boutons.push({ x: b.x, y: b.y, l: b.l, h: b.h, action: retourAccueilPC });
+	cibleGuide('demarrer', b.x, b.y, b.l, b.h);
+	if (survol || focusDemarrer) infobulle(t('os.demarrer'), b.x, b.y - 48);
+}
+/** Accueil de RégulOS : ferme l'appli de jeu et la fenêtre ouverte (rien ne s'arrête : le temps continue) */
+function retourAccueilPC() {
+	if (PC.etat !== 'appli' && PC.etat !== 'os') return;
+	PC.etat = 'os';
+	PC.fenetre = null;
+	Confort.Son.bip('choix');
+	annoncer(t('os.demarrer.annonce'));
+}
+function basculerFocusDemarrer(actif) {
+	focusDemarrer = actif;
+	if (actif) annoncer(t('os.demarrer'));
 }
 
 function dessinerDemarrage() {

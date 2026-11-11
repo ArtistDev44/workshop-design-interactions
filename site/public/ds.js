@@ -164,3 +164,27 @@ function dsPanneau(x, y, l, h, titre, couleurBarre) {
 		dsTitre(titre, x + 24, y + 12, 32, DS.blanc, 'left');
 	}
 }
+
+// ——— Prompt 75 : logo du jeu (moniteur à écran rouge et ligne de bus) — UNE seule définition des formes ———
+// Mêmes rectangles que le SVG de l'écran de chargement (index.html, #chargement .logo, viewBox 0 0 24 20) ;
+// scripts/test-jeu.mjs vérifie que les deux restent identiques.
+const LOGO_PXE = [
+	[1, 1, 22, 14, '#ffffff'], // moniteur
+	[3, 3, 18, 10, '#d4031c'], // écran rouge
+	[4, 9, 16, 1, '#ffffff'], // ligne de bus
+	[6, 7, 3, 3, '#00ca64'], // fenêtre (arrêt desservi)
+	[15, 7, 3, 3, '#ffffff'], // fenêtre
+	[11, 15, 2, 3, '#ffffff'], // pied
+	[7, 18, 10, 1, '#ffffff'], // socle
+];
+/** Dessine le logo en pixel art : (x, y) coin haut gauche, « taille » = hauteur en px (largeur 24/20 × taille) ;
+ * l'échelle est arrondie à l'entier pour des pixels nets (crisp). */
+function dessinerLogoPXE(x, y, taille) {
+	const k = Math.max(1, Math.floor(taille / 20));
+	noStroke();
+	LOGO_PXE.forEach(([rx, ry, rl, rh, c]) => {
+		fill(c);
+		rect(Math.round(x) + rx * k, Math.round(y) + ry * k, rl * k, rh * k);
+	});
+	return { l: 24 * k, h: 20 * k };
+}
