@@ -471,15 +471,6 @@ function dessinerJeuAttente() {
 	if (phase === 'mail') dessinerMail();
 }
 
-function enteteMode() {
-	const e = Jeu.etat;
-	if (e.mode === 'direct') return t('mode.direct', { date: new Date(e.horodatage).toLocaleString(localeActive()) });
-	const h = heureAffichee();
-	const horloge = Jeu.jourCourant() ? ' · ' + dateLongue(Jeu.jourCourant().date) + ' · ' + String(h.h).padStart(2, '0') + ':' + String(h.m).padStart(2, '0') : '';
-	if (e.semaine) return t('niveau.' + (e.semaine.difficulte ? e.semaine.difficulte.niveau : 'semaine')) + horloge;
-	if (e.mode === 'hors ligne') return t('mode.horsLigne') + horloge;
-	return '';
-}
 
 // ——— Décor d'ambiance (écran de fin) : eau, lignes en filigrane, météo — prompt 73 : plus de carte dans l'écran de jeu ———
 function dessinerDecor(zone, meteo, opacite, sansLegende) {
@@ -647,6 +638,7 @@ function dessinerDossier(d, meteo) {
 	}
 	textAlign(LEFT, TOP);
 	dessinerPanneauSignalement(d, x, base); // prompt 87 : 3 blocs, « En savoir plus », conseil, réponses de la catégorie
+	dessinerTamponSignalement(x + base.l - 150, base.y + 96); // prompt 53 : tampon « SIGNALEMENT » à l'arrivée (rebranché au check-up du prompt 59)
 }
 
 // ——— Prompt 79 : annonces (aria-live) de l'aggravation du retard affiché, et des plaintes Community expirées ———

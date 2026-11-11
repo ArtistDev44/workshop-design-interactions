@@ -189,12 +189,6 @@ function sortirFenetreAppli(n0) {
 	noStroke();
 }
 /** Souris (hors draw) dans les coordonnées de l'appli Régulation */
-function sourisAppli() {
-	const m = sourisEcranPC();
-	if (PC.etat !== 'appli') return m;
-	const A = FENETRE_APPLI;
-	return { x: (m.x - A.x) / A.k, y: (m.y - A.y) / A.k };
-}
 
 /** Barre des tâches de RégulOS (prompt 36), visible aussi sous l'appli Régulation (prompt 50) */
 function dessinerBarreTaches() {

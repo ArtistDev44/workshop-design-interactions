@@ -58,10 +58,6 @@ function entrerSelection() {
 	// Prompt 77 : un signalement resté trop longtemps en file expire en arrière-plan (majMultitache, multitache.js)
 }
 /** Prendre le signalement focalisé de la file (Entrée, guide) — prompt 77 : prendreSignalement (multitache.js) */
-function selectionnerIncident() {
-	if (phase !== 'selection') return;
-	prendreSignalement(SELECTION.focus || 0);
-}
 
 // ——— Panneau de droite pendant la sélection : le signalement choisi dans la file (liste à gauche, prompt 73) ———
 function dessinerSelection() {
@@ -328,33 +324,3 @@ function toucheFileSignalements() {
 	return false;
 }
 /** Équipes en texte : disponibilités et état des équipes engagées (en route / sur place / retour, temps restant) */
-function dessinerEtatEquipes(x, y, l) {
-	if (!Jeu.elementDebloque('equipes')) return;
-	const m = millis();
-	textAlign(LEFT, TOP);
-	textFont(POLICE_TEXTE);
-	textStyle(BOLD);
-	textSize(20);
-	fill(C.texte);
-	text(t('sig.equipes'), x, y);
-	textStyle(NORMAL);
-	let yy = y + 34;
-	Jeu.TYPES_EQUIPES.forEach((cle) => {
-		const dispo = Jeu.equipesDisponibles(cle, m);
-		textFont(POLICE_DONNEES);
-		textSize(16);
-		fill(dispo ? C.texte : C.orange);
-		text(String(Jeu.EQUIPES[cle].nom) + ' ' + dispo + '/' + Jeu.REGLAGES.equipes[cle].effectif, x, yy);
-		yy += 22;
-		(Jeu.equipes || [])
-			.filter((q) => q.cle === cle && q.jourIndex === Jeu.jourIndex && Jeu.phaseEquipe(q, m) !== 'libre')
-			.forEach((q) => {
-				const ph = Jeu.phaseEquipe(q, m);
-				const fin = ph === 'route' ? q.arrivee : ph === 'place' ? q.finIntervention : q.libre;
-				fill(C.gris);
-				text('  ' + t('sig.equipe.' + ph, { s: Math.max(0, Math.ceil((fin - m) / 1000)) }), x, yy);
-				yy += 22;
-			});
-		yy += 6;
-	});
-}

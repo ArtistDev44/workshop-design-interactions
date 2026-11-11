@@ -25,7 +25,7 @@ supplémentaire. Un mapping justifié avant une API.
 
 - `todo.md` — protocole des 3 jours, jalons, checklist de robustesse et barème.
 - `contexte/` — livret étudiant, framework PATRIMOINE.EXE, règles de travail.
-- `prompts/` — 70 prompts numérotés (01 à 69, deux prompts 33) pour créer le site Astro.js et le jeu p5.js ; statut ✅ / ◻ dans `prompts/README.md`.
+- `prompts/` — 93 prompts numérotés (01 à 91, deux prompts 33 et deux prompts 89) pour créer le site Astro.js et le jeu p5.js ; statut ✅ / ◻ dans `prompts/README.md`.
 - `journal.md` — journal des pushes (une ligne par push, la plus récente en tête).
 - `notes.md` — cette page wiki, les liens des API et les pistes d'animation.
 
@@ -79,6 +79,44 @@ Le site est statique et doit rester fluide sans API distante. Trois leviers, dan
 3. **View Transitions API** d'Astro (`<ViewTransitions />`) pour des changements de page fluides entre la galerie et les cartels.
 
 Contraintes d'accessibilité (prompts 04 et 12) : toujours respecter `prefers-reduced-motion` (désactiver ou réduire les animations), jamais d'animation flashante ni d'effet stroboscopique, durées courtes et easing doux. Une animation doit rendre la chaîne source → grammaire → système → œuvre plus lisible, jamais l'inverse.
+
+## Check-up du 11/11/2026 (prompt 59, réexécution après les prompts 82 à 91)
+
+Seuls les points réellement exécutés et observés sont cochés (Chromium automatisé via Playwright, scripts Node).
+
+### 1. Vérifications
+- [x] **Build et tests** : `npm run build` sans erreur (Slidev compris) ; `npm test` = smoke 313 contrôles +
+  `test-jeu.mjs` 374 contrôles, verts après chaque correction.
+- [x] **Hors ligne** : double clic (`file://…/site/public/index.html`) → menu puis partie (15 dossiers, repli local) sans
+  erreur ; après une première visite, réseau coupé → le jeu **et** `/presentation/` se rechargent depuis le service
+  worker (166 fichiers en cache).
+- [x] **Navigation réelle** : semaines complètes jouées au clavier (FR et EN, et une en mobile avec animations réduites),
+  sans erreur console ; 1280×720 : partie lancée sans erreur.
+- [x] **i18n** : toutes les clés `t('…')` existent en FR et en EN (mêmes clés des deux côtés) ; 17 clés devenues
+  orphelines supprimées (`dossier.sourceRetenue`, `plainte.titre`, `jeu.reseau`, `tel.direct`, `sig.equipe*`…).
+- [x] **Liens** : 0 lien interne cassé dans `dist/` (accueil, cartel, making-of, présentation).
+- [x] **Sécurité** : aucun motif de secret dans notre code ; les seules occurrences de « password » sont dans le code
+  minifié de p5 et de Slidev.
+- [x] **Poids** : audio 26 Mo (morceaux CC0), captures 2,4 Mo, p5 1,1 Mo, présentation 1,2 Mo, données 0,4 Mo ;
+  aucun appel réseau dans `draw()` (téléphone : au clic, 10 min, 6 s).
+- [ ] Contraste et daltonisme : non re-mesurés à l'outil aujourd'hui (couleurs des nouvelles fenêtres reprises du
+  design system) — à refaire avec un outil de contraste.
+- [ ] Essais humains (micro, webcam, QR, test de jeu des prompts 88 à 91) : [À COMPLÉTER].
+
+### 2. Problèmes trouvés et corrigés
+- **Messagerie du patron figée** (prompt 91 § 1) : `journal.js` redéfinissait la fonction globale `hauteurCarte` de
+  `patron.js` → exception à chaque image. Renommée ; doublon `ouvrirLien` (menu / données) séparé ; **nouveau test :
+  aucun nom global en double entre les scripts**.
+- **Tampon « SIGNALEMENT »** (prompt 53) plus affiché depuis la refonte du panneau (prompt 87) : rebranché.
+- **Code mort supprimé** : `enteteMode` (sketch.js), `sourisAppli` (os.js), `selectionnerIncident` et
+  `dessinerEtatEquipes` (carte.js), et leurs clés.
+- **Journal** : extrait de plainte et réponse qui se chevauchaient, tuile Équipes qui débordait.
+- **Docs** : `jeu/45` et `jeu/68` signalent les symboles retirés ; `README.md` / `notes.md` annoncent 93 prompts
+  (01 à 91, deux 33 et deux 89) et le dossier `slides/`.
+
+### 3. Reste ouvert
+- Prompt 83 (barème d'évaluation) : non exécuté (non demandé).
+- Mise en page portrait dédiée pour le Journal et le téléphone ; mesure de contraste outillée ; tests humains.
 
 ## Check-up du 10/11/2026 (prompt 59)
 

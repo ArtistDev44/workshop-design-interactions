@@ -1,6 +1,10 @@
 # 68 — Alertes : des choix de réponses pertinents (prompt 72)
 
 Code : `alertes.js` (nouveau, logique pure, testée sous Node), `sketch.js` (affichage et clavier), `enquete.js`
+
+> **Mise à jour (prompt 59, check-up du 11/11/2026) :** `alertes.js` a été retiré au prompt 87 ; les réponses
+> rédigées par catégorie (`data/reponses.json`) le remplacent. Voir `80-decision-sans-chrono.md`.
+
 (question à la place de la consigne), `guide.js`, `i18n.js` (clés `alerte.*`, aide, tutoriel). `game.js` est
 **inchangé** : règles, effets, dés et Q1–Q61 identiques.
 
