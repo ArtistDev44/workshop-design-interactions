@@ -506,7 +506,7 @@
 			onde: 'square', basse: 'square', filtre: 2200, gain: 0.26, percu: true,
 		},
 	};
-	const piste = () => PISTES[Reglages.musique] || PISTES.origine;
+	const piste = () => PISTES[(typeof Musique !== 'undefined' && Musique.humeurActive) || Reglages.musique] || PISTES.origine; // prompt 88 : humeur temporaire (crise)
 	const Musique = {
 		bus: null,
 		minuterie: null,
@@ -616,6 +616,17 @@
 				g.gain.value = 0.18;
 				s.connect(f).connect(g).connect(Musique.bus);
 				s.start(t0);
+			}
+		},
+		/** Prompt 88 : humeur temporaire (cellule de crise, journée tempête) sans toucher au morceau choisi ; null = retour au choix */
+		humeurActive: null,
+		humeur: function (nom) {
+			const n = nom && PISTES[nom] ? nom : null;
+			if (n === Musique.humeurActive) return;
+			Musique.humeurActive = n;
+			if (Musique.minuterie) {
+				Musique.arreter();
+				setTimeout(() => Musique.demarrer(), 250);
 			}
 		},
 		/** Change de morceau (mémorisé) et relance la lecture */

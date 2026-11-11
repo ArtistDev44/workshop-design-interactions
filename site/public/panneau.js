@@ -43,12 +43,28 @@ function dessinerBandeau() {
 	const o = Jeu.objectifDuJour ? Jeu.objectifDuJour() : null;
 	const eq = Jeu.elementDebloque('equipes') ? Jeu.TYPES_EQUIPES.map((k) => String(Jeu.EQUIPES[k].nom) + ' ' + Jeu.equipesDisponibles(k, millis()) + '/' + Jeu.REGLAGES.equipes[k].effectif).join(' · ') : '';
 	const h = heureAffichee();
-	const morceaux = [o ? t('bandeau.objectifCourt', { libelle: String(o.libelle), v: Math.round(Jeu.jauges[o.jauge]) }) : '', eq, String(h.h).padStart(2, '0') + ':' + String(h.m).padStart(2, '0') + (Jeu.etat.horsLigne ? ' · ' + t('jeu.horsLigne') : '')].filter(Boolean);
+	const th = typeof Taches !== 'undefined' && Jeu.jourCourant() ? Taches.theme(Jeu.jourCourant().date) : null; // prompt 88 : thème du jour
+	const morceaux = [th && th !== 'ordinaire' ? t('theme.' + th) : '', o ? t('bandeau.objectifCourt', { libelle: String(o.libelle), v: Math.round(Jeu.jauges[o.jauge]) }) : '', eq, String(h.h).padStart(2, '0') + ':' + String(h.m).padStart(2, '0') + (Jeu.etat.horsLigne ? ' · ' + t('jeu.horsLigne') : '')].filter(Boolean);
 	textFont(POLICE_DONNEES);
 	textSize(16);
 	fill(C.gris);
 	textAlign(LEFT, TOP);
-	text(morceaux.join('   ·   '), z.x + 16, z.y + 48, z.l - 460, 30);
+	const crise = typeof Taches !== 'undefined' && Taches.crise() && !Taches.crise().resultat; // prompt 88 : cellule de crise du jour
+	text(morceaux.join('  ·  '), z.x + 16, z.y + 48, z.l - (crise ? 730 : 460), 30);
+	if (crise) {
+		const actif = Taches.criseActive();
+		noStroke();
+		fill(actif ? C.primaire : 'rgba(212,3,28,0.25)');
+		rect(z.x + z.l - 700, z.y + 42, 254, 32);
+		fill('#FFFFFF');
+		textFont(POLICE_TEXTE);
+		textStyle(BOLD);
+		textAlign(CENTER, CENTER);
+		ajusterTaille(t('crise.bandeau'), 236, 18, 14);
+		text(t('crise.bandeau'), z.x + z.l - 573, z.y + 58);
+		textStyle(NORMAL);
+		textAlign(LEFT, TOP);
+	}
 	// Aide et Recommencer (souris / tactile) — équivalents des touches H et R
 	bouton(z.x + z.l - 430, z.y + 18, 180, 48, t('accueil.aide'), () => ouvrir('aide'), false, true);
 	bouton(z.x + z.l - 240, z.y + 18, 226, 48, t('jeu.recommencer'), () => ouvrir('reset'), false, true);

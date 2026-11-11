@@ -1100,6 +1100,49 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 	verifier(JSON.stringify(r.effetInfo) === '[2,-2]' && r.plainte, `info trafic : effets ${r.effetInfo}, plainte ${r.plainte}`);
 }
 
+// Prompt 88 lot D : thème du jour calculé sur les faits réels, au plus une cellule de crise par semaine
+{
+	const cd = contexte('fr');
+	const r = vm.runInContext(
+		`(() => {
+		const out = { erreurs: [], crises: [], themes: {}, repro: true, heures: true };
+		for (const lundi of Jeu.semainesProposees().map((x) => x.lundi)) {
+			Jeu.chargerSemaine(lundi); Jeu.nouvellePartie();
+			const heures = Jeu.paquet.map((d) => d.heure);
+			const e = Taches.nouvellePartie();
+			if (JSON.stringify(Jeu.paquet.map((d) => d.heure)) !== JSON.stringify(heures)) out.heures = false;
+			const th = e.themes;
+			const met = (d) => Jeu.meteoDuJour(d) || {};
+			const tempetes = Object.keys(th).filter((d) => th[d] === 'tempete');
+			const animees = Object.keys(th).filter((d) => th[d] === 'animee');
+			if (tempetes.length > 1 || animees.length > 1) out.erreurs.push(lundi + ' plusieurs tempêtes / journées animées');
+			tempetes.forEach((d) => { const m = met(d); if (!((m.pluie_mm || 0) >= 5 || (m.rafales_max || 0) >= 50)) out.erreurs.push(d + ' tempête sans météo'); });
+			animees.forEach((d) => { if (!Jeu.evenementsAffluence(d).length) out.erreurs.push(d + ' animée sans agenda'); });
+			Jeu.jours.forEach((j) => {
+				if (th[j.date] === 'chantier' && !j.dossiers.some((x) => x.type === 'perturbation')) out.erreurs.push(j.date + ' chantier sans travaux');
+				out.themes[th[j.date]] = (out.themes[th[j.date]] || 0) + 1;
+			});
+			if (e.crise) {
+				const j = Jeu.jours.find((x) => x.date === e.crise.date);
+				out.crises.push(e.crise.date);
+				if (!j || j.dossiers.length < 3) out.erreurs.push(e.crise.date + ' crise sur un jour calme');
+				const sans = j.dossiers.filter((d) => !d.heure);
+				if (sans.some((d) => d.minute < Taches.R.crise.debut || d.minute > Taches.R.crise.fin)) out.erreurs.push(e.crise.date + ' arrivées hors fenêtre de crise');
+				if (Jeu.paquet.some((d, i) => i && d.date === Jeu.paquet[i - 1].date && d.minute < Jeu.paquet[i - 1].minute)) out.erreurs.push(lundi + ' paquet non trié');
+			}
+			Jeu.chargerSemaine(lundi); Jeu.nouvellePartie();
+			if (JSON.stringify(Taches.nouvellePartie().themes) !== JSON.stringify(th)) out.repro = false;
+		}
+		return out;
+	})()`,
+		cd,
+	);
+	verifier(r.erreurs.length === 0, `thèmes et crise : ${r.erreurs.slice(0, 4)}`);
+	verifier(r.crises.length >= 1 && r.crises.length <= 3, `crise : au plus une par semaine (${r.crises})`);
+	verifier(Object.keys(r.themes).length >= 3, `thèmes : au moins 3 thèmes différents sur les 3 semaines (${JSON.stringify(r.themes)})`);
+	verifier(r.repro && r.heures, `thèmes reproductibles (${r.repro}), heures réelles intactes (${r.heures})`);
+}
+
 // Service worker : chaque script de index.html est dans la liste hors ligne de sw.js
 const html = readFileSync(join(pub, 'index.html'), 'utf8');
 const sw = readFileSync(join(pub, 'sw.js'), 'utf8');

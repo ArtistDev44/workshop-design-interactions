@@ -345,3 +345,34 @@ function court(s, n) {
 	const x = String(s);
 	return x.length > n ? x.slice(0, n - 1).trim() + '…' : x;
 }
+
+// ——— Prompt 88 § 3 : ambiance (humeur musicale) et visite surprise annoncée la veille ———
+/** Chaque image : morceau « régulation » pendant la cellule de crise et la journée tempête, sinon le choix du joueur */
+function majAmbianceTaches() {
+	const m = Confort.Son.musique;
+	if (!m || !m.humeur) return;
+	const jr = ecran === 'jeu' && Jeu.jourCourant ? Jeu.jourCourant() : null;
+	const tendu = jr && ['attente', 'selection', 'decision', 'contradiction', 'conflit', 'narration'].includes(phase) && (Taches.criseActive() || Taches.theme(jr.date) === 'tempete');
+	m.humeur(tendu ? 'regulation' : null);
+}
+/** Fin du soir : si demain est le jour de l'inspection (prompt 47), Camille prévient par SMS ; true = SMS lancé */
+function smsVeilleInspection(suite) {
+	const e = Taches.etat();
+	const demain = Jeu.jours && Jeu.jours[Jeu.jourIndex + 1];
+	if (!demain || e.smsInspection || Jeu.inspection || Jeu.jourIndex + 1 !== Jeu.jourInspection()) return false;
+	if (!(Jeu.evenementsJournee || []).some((x) => x.cleAction && x.cleAction !== 'temps')) return false; // pas de décision à inspecter
+	e.smsInspection = true;
+	lancerConversation({
+		contact: T('sms.camille'),
+		sous: T('intro.salle'),
+		messages: [
+			{ de: T('sms.camille'), texte: T('tache.sms.inspection', { theme: t('theme.' + Taches.theme(demain.date)) }) },
+			{ de: 'moi', texte: T('tache.sms.reponse') },
+		],
+		auFin: () => {
+			smsActif = false;
+			suite();
+		},
+	});
+	return true;
+}

@@ -174,6 +174,7 @@ function draw() {
 	}
 	verifierMecaniques(); // prompt 47 : inspection surprise (avant l'horloge, qui s'arrête alors)
 	verifierTaches(); // prompt 88 : briefing du matin, tâches courtes
+	majAmbianceTaches(); // prompt 88 : humeur musicale de la crise
 	majMultitache(); // prompts 68 / 77 : arrivées, compteurs des signalements actifs, expirations en arrière-plan
 	majNotifications(); // prompt 77 : mails, commentaires, fins d'intervention
 	majLicenciement(); // prompt 84 : messages après la panne, licenciement hors décision

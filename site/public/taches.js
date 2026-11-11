@@ -16,6 +16,7 @@ const Taches = (() => {
 		info: { juste: 2, faux: -2 }, // info trafic exacte et complète / avec un bloc faux (+ plainte Community)
 		prep: { cout: 3, bonus: 3, rembourse: 1 }, // préparer un événement : budget engagé tôt, réputation si utile
 		suiteMax: 3, // rotation : jamais plus de 3 fois de suite le même type de tâche
+		crise: { bonus: 3, debut: 16 * 60 + 30, fin: 17 * 60 + 45, minDossiers: 3 }, // cellule de crise : arrivées regroupées 16 h 30 – 17 h 45
 	};
 
 	function hacher(s) {
@@ -36,9 +37,80 @@ const Taches = (() => {
 	const nomEvenement = (e) => String((e && e.texte_source) || '').split(' — ')[0].trim();
 	const agenda = (date) => (Jeu.evenementsAffluence ? Jeu.evenementsAffluence(date) : []);
 
+	// ——— Thème du jour (§ 2), calculé sur les faits réels de la semaine ———
+	/** tempete : le jour le plus pluvieux ou venteux, s'il atteint les seuils du contexte météo (5 mm / 50 km/h) ;
+	 * animee : le jour qui compte le plus d'événements d'agenda ; chantier : jours de travaux annoncés (perturbations) ;
+	 * ordinaire sinon. */
+	function calculerThemes() {
+		const jours = Jeu.jours || [];
+		const themes = {};
+		const met = jours.map((j) => (Jeu.meteoDuJour && Jeu.meteoDuJour(j.date)) || {});
+		const score = (m) => (m.pluie_mm || 0) / 5 + (m.rafales_max || 0) / 50;
+		let iT = -1;
+		met.forEach((m, i) => {
+			if (((m.pluie_mm || 0) >= 5 || (m.rafales_max || 0) >= 50) && (iT < 0 || score(m) > score(met[iT]))) iT = i;
+		});
+		if (iT >= 0) themes[jours[iT].date] = 'tempete';
+		let iA = -1;
+		jours.forEach((j, i) => {
+			const n = agenda(j.date).length;
+			if (n && !themes[j.date] && (iA < 0 || n > agenda(jours[iA].date).length)) iA = i;
+		});
+		if (iA >= 0) themes[jours[iA].date] = 'animee';
+		jours.forEach((j) => {
+			if (!themes[j.date]) themes[j.date] = j.dossiers.some((d) => d.type === 'perturbation') ? 'chantier' : 'ordinaire';
+		});
+		return themes;
+	}
+	const SIGNATURE = { tempete: 'info', animee: 'evenement', chantier: 'info', ordinaire: null };
+	const theme = (date) => (etat().themes || {})[date] || 'ordinaire';
+
+	// ——— Cellule de crise (§ 3) : au plus une par semaine, le jour réel le plus difficile ———
+	/** Difficulté d'un jour réel : nombre de signalements + météo + agenda ; il faut au moins 3 signalements.
+	 * Le premier jour (prise en main) n'est pas choisi s'il y a un autre candidat. */
+	function choisirJourCrise() {
+		const jours = Jeu.jours || [];
+		const diff = (j) => {
+			const m = (Jeu.meteoDuJour && Jeu.meteoDuJour(j.date)) || {};
+			return j.dossiers.length + (m.pluie_mm || 0) / 5 + (m.rafales_max || 0) / 50 + agenda(j.date).length / 2;
+		};
+		const cands = jours.filter((j) => j.dossiers.length >= R.crise.minDossiers);
+		const pool = cands.length > 1 ? cands.filter((j) => j !== jours[0]) : cands;
+		if (!pool.length) return null;
+		return pool.reduce((a, b) => (diff(b) > diff(a) ? b : a)).date;
+	}
+	/** « Plusieurs signalements arrivent en peu de temps » : les créneaux de jeu des dossiers SANS heure réelle sont
+	 * regroupés dans la fenêtre de crise (l'heure réelle, quand elle existe, n'est jamais modifiée). Partie neuve seulement. */
+	function regrouperCrise(date) {
+		const j = (Jeu.jours || []).find((x) => x.date === date);
+		if (!j || Jeu.index !== 0 || (Jeu.etat && Jeu.etat.mode === 'direct')) return 0;
+		const sans = j.dossiers.filter((d) => !d.heure);
+		const pas = sans.length > 1 ? (R.crise.fin - R.crise.debut) / (sans.length - 1) : 0;
+		sans.forEach((d, i) => (d.minute = Math.round(R.crise.debut + i * pas)));
+		j.dossiers.sort((a, b) => a.minute - b.minute);
+		Jeu.paquet = Jeu.jours.flatMap((x) => x.dossiers);
+		Jeu.etat.dossiers = Jeu.paquet;
+		return sans.length;
+	}
+	/** Crise du jour (ou null) : { date, objectif atteint ? } ; active entre le début de la fenêtre et la fin de la journée */
+	function crise(date) {
+		const e = etat();
+		const d = date || (Jeu.jourCourant() || {}).date;
+		return e.crise && e.crise.date === d ? e.crise : null;
+	}
+	const criseActive = () => {
+		const c = crise();
+		return !!(c && !c.resultat && Jeu.horloge && Jeu.horloge.minutes >= R.crise.debut);
+	};
+
 	// ——— État ———
 	function nouvellePartie() {
-		Jeu.taches = { jours: {}, carnet: [], demande: null, xpPartie: 0 };
+		Jeu.taches = { jours: {}, carnet: [], demande: null, xpPartie: 0, themes: {}, crise: null };
+		Jeu.taches.themes = calculerThemes();
+		const dc = Jeu.jours && Jeu.jours.length > 1 ? choisirJourCrise() : null;
+		if (dc) {
+			Jeu.taches.crise = { date: dc, regroupes: regrouperCrise(dc), resultat: null };
+		}
 		return Jeu.taches;
 	}
 	function etat() {
@@ -152,6 +224,13 @@ const Taches = (() => {
 		const accordee = DEMANDES.includes(idDemande) && Jeu.jauges.reputation >= R.seuilAccord;
 		const prio = (j.priorites || []).map((p) => ({ id: p.id, vars: p.vars, etat: evaluerPriorite(p, rp.date) }));
 		const tenues = prio.filter((p) => p.etat === 'tenue').length;
+		const c = crise(rp.date);
+		if (c && !c.resultat) {
+			// Objectif de la cellule de crise : aucun signalement du jour laissé « non traité »
+			const ev = (Jeu.evenementsJournee || []).filter((e) => e.jour === rp.date);
+			c.resultat = ev.length && !ev.some((e) => e.cleAction === 'temps') ? 'maitrisee' : 'debordee';
+			if (c.resultat === 'maitrisee') Jeu.appliquerDeltas({ reputation: R.crise.bonus });
+		}
 		if (j.prep && !j.prep.resultat) {
 			j.prep.resultat = 'sansSuite'; // l'affluence n'a pas été traitée : une partie du budget revient
 			Jeu.appliquerDeltas({ budget: R.prep.rembourse });
@@ -161,7 +240,7 @@ const Taches = (() => {
 		etat().demande = j.rapport.demande ? { id: j.rapport.demande, accordee, pour: (Jeu.jourIndex || 0) + 1 } : null;
 		noter('rapport', rp.date);
 		etat().carnet = etat().carnet.filter((c) => c.date !== rp.date);
-		etat().carnet.push({ date: rp.date, theme: j.theme || null, fait: fait.texte, priorites: prio, demande: j.rapport.demande, accordee, crise: j.crise || null });
+		etat().carnet.push({ date: rp.date, theme: theme(rp.date), fait: fait.texte, priorites: prio, demande: j.rapport.demande, accordee, crise: c ? c.resultat : null });
 		return j.rapport;
 	}
 	/** Matin : applique la demande de la veille (si accordée) et la rappelle dans les messages du patron */
@@ -170,6 +249,20 @@ const Taches = (() => {
 		const d = e.demande;
 		Jeu.bonusEffectifs = {};
 		Jeu.allegementObjectif = 0;
+		const jr = Jeu.jourCourant ? Jeu.jourCourant() : null;
+		const j = jr ? jour(jr.date) : null;
+		if (j && !j.themeAnnonce && Jeu.messagePatron) {
+			// Le thème du jour donne le ton de la consigne (fait réel cité) ; la crise est annoncée le matin même
+			j.themeAnnonce = true;
+			j.theme = theme(jr.date);
+			const m = (Jeu.meteoDuJour && Jeu.meteoDuJour(jr.date)) || {};
+			const ag = agenda(jr.date);
+			if (!(crise(jr.date) && j.theme === 'ordinaire')) Jeu.messagePatron(t('theme.patron.' + j.theme, { pluie: m.pluie_mm, vent: m.rafales_max, n: ag.length, nom: ag.length ? nomEvenement(ag[0]) : '', travaux: jr.dossiers.filter((x) => x.type === 'perturbation').length }), 'consigne', { theme: j.theme });
+			if (crise(jr.date)) {
+				j.crise = true;
+				Jeu.messagePatron(t('crise.annonce', { n: jr.dossiers.length }), 'alerte', { crise: true });
+			}
+		}
 		if (!d || d.pour !== Jeu.jourIndex) return null;
 		e.demande = null;
 		if (d.accordee) {
@@ -251,11 +344,13 @@ const Taches = (() => {
 		const suite = suiteFinale(j.journal);
 		const doit = suite.type === 'signalement' && suite.n >= R.suiteMax - 1; // la tâche s'intercale avant d'atteindre le plafond
 		const p = tachePreparation(date, Jeu.paquet.indexOf(r.dossier));
-		if (p && (doit || choix('prep|' + n, 2) === 0)) {
+		const sig = SIGNATURE[theme(date)];
+		const premiere = !j.journal.some((x) => x === 'info' || x === 'evenement');
+		if (p && (doit || sig === 'evenement' || choix('prep|' + n, 2) === 0)) {
 			j.offertes.evenement = true;
 			return p;
 		}
-		if (doit || choix('info|' + n, 2) === 0) return tacheInfo(r, n);
+		if (doit || (sig === 'info' && premiere) || choix('info|' + n, 2) === 0) return tacheInfo(r, n); // tâche signature du thème en premier
 		return null;
 	}
 	/** Bonne réponse d'une tâche (simulation, tests) */
@@ -304,6 +399,6 @@ const Taches = (() => {
 		return plainte;
 	}
 
-	return { R, hacher, choix, nouvellePartie, etat, jour, noter, suiteFinale, briefing, choisirPriorites, evaluerPriorite, rapport, validerRapport, matin, apresDecision, faitsDuJour, bonneReponse, resoudre, tacheInfo, tachePreparation };
+	return { R, theme, crise, criseActive, calculerThemes, choisirJourCrise, SIGNATURE, hacher, choix, nouvellePartie, etat, jour, noter, suiteFinale, briefing, choisirPriorites, evaluerPriorite, rapport, validerRapport, matin, apresDecision, faitsDuJour, bonneReponse, resoudre, tacheInfo, tachePreparation };
 })();
 if (typeof window !== 'undefined') window.Taches = Taches;

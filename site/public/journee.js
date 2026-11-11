@@ -31,7 +31,7 @@ function messagePiece(objet, texte) {
 function terminerJournee() {
 	if (Jeu.finDeJourneeTactique) Jeu.finDeJourneeTactique();
 	if (Jeu.statutPatron && Jeu.statutPatron.licencie) return lancerLicenciement(); // prompt 84 : avant le mail du soir
-	if (tachesFinJournee()) return; // prompt 88 : rapport du soir (puis récapitulatif), avant le mail
+	if (typeof tachesFinJournee === 'function' && tachesFinJournee()) return; // prompt 88 : rapport du soir (puis récapitulatif), avant le mail
 	phase = 'mail';
 	enSieste = false;
 	JOURNEE.finAnnoncee = false;
