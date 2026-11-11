@@ -261,8 +261,36 @@ const Taches = (() => {
 		const gestion = melanger([{ id: 'zero' }, { id: 'budget', vars: { seuil: 40 } }, { id: 'reputation' }], 'briefing|' + jr.date);
 		return melanger(reel, 'briefing-reel|' + jr.date).concat(gestion).slice(0, 4);
 	}
-	/** Le briefing du jour, s'il n'a pas encore été fait : { date, options } (null sinon) */
+	/** Prompt 91 § 4 : les priorités sont IMPOSÉES par le patron (2 par journée, 3 au bout de 4 jours joués), calculées
+	 * sur les faits réels du jour (météo, agenda, travaux annoncés d'abord). Plus de fenêtre de choix. */
+	const nbPriorites = () => ((etat().joursJoues || 0) >= 4 ? 3 : 2);
+	function imposerPriorites() {
+		const jr = Jeu.jourCourant ? Jeu.jourCourant() : null;
+		if (!jr || Jeu.terminee) return null;
+		const j = jour(jr.date);
+		if (j.briefing) return j.priorites;
+		j.options = optionsBriefing(jr);
+		j.priorites = j.options.slice(0, nbPriorites());
+		j.briefing = 'impose';
+		j.repDebut = Jeu.jauges ? Jeu.jauges.reputation : null;
+		noter('briefing', jr.date);
+		const txt = t('tache.prio.imposees', { liste: j.priorites.map((p) => t('tache.prio.' + p.id, p.vars)).join(typeof Langue !== 'undefined' && Langue.actuelle === 'fr' ? ' ; ' : '; ') });
+		const consigne = (Jeu.messagesPatron || []).slice().reverse().find((x) => x.type === 'consigne' && x.jour === jr.date);
+		if (consigne) {
+			consigne.texte = String(consigne.texte) + ' ' + txt;
+			consigne.meta = Object.assign({}, consigne.meta, { priorites: j.priorites.map((p) => p.id) });
+		} else if (Jeu.messagePatron) Jeu.messagePatron(txt, 'consigne', { priorites: j.priorites.map((p) => p.id) });
+		return j.priorites;
+	}
+	const prioritesDuJour = (date) => {
+		const j = jour(date);
+		return (j && j.priorites) || [];
+	};
+	/** Le briefing du jour, s'il n'a pas encore été fait : { date, options } (null sinon) — prompt 91 : plus de choix */
 	function briefing() {
+		return null;
+	}
+	function briefingAncien() {
 		const jr = Jeu.jourCourant ? Jeu.jourCourant() : null;
 		if (!jr || Jeu.terminee) return null;
 		const j = jour(jr.date);
@@ -272,7 +300,7 @@ const Taches = (() => {
 	}
 	/** Retient 2 priorités (ou moins si le joueur passe) ; le patron en prend acte */
 	function choisirPriorites(ids) {
-		const b = briefing();
+		const b = briefingAncien(); // prompt 91 : plus utilisé en jeu (priorités imposées) ; gardé pour les tests et les anciennes sauvegardes
 		if (!b) return null;
 		const j = jour(b.date);
 		j.priorites = b.options.filter((o) => (ids || []).includes(o.id)).slice(0, 2);
@@ -357,6 +385,7 @@ const Taches = (() => {
 		j.rapport = { fait: fait.texte, demande: DEMANDES.includes(idDemande) ? idDemande : null, accordee, priorites: prio, bonus: tenues * R.bonusPriorite };
 		etat().demande = j.rapport.demande ? { id: j.rapport.demande, accordee, pour: (Jeu.jourIndex || 0) + 1 } : null;
 		noter('rapport', rp.date);
+		etat().joursJoues = (etat().joursJoues || 0) + 1; // prompt 91 § 4 : 3 priorités au bout de 4 jours joués
 		j.recap = verserJour(rp.date, j, { priorites: prio, crise: c ? c.resultat : null });
 		etat().carnet = etat().carnet.filter((c) => c.date !== rp.date);
 		etat().carnet.push({ date: rp.date, theme: theme(rp.date), fait: fait.texte, priorites: prio, demande: j.rapport.demande, accordee, crise: c ? c.resultat : null });
@@ -397,6 +426,7 @@ const Taches = (() => {
 				Jeu.messagePatron(t('crise.annonce', { n: jr.dossiers.length }), 'alerte', { crise: true });
 			}
 		}
+		imposerPriorites(); // prompt 91 § 4 : le patron impose les priorités du jour
 		if (!d || d.pour !== Jeu.jourIndex) return null;
 		e.demande = null;
 		if (d.accordee) {
@@ -496,7 +526,8 @@ const Taches = (() => {
 			return p;
 		}
 		const calme = (Jeu.jours || []).some((x) => x.date === date && x.dossiers.length <= 2); // journée calme : la tâche courte est toujours proposée
-		if (doit || calme || (sig === 'info' && premiere) || choix('info|' + n, 2) === 0) return tacheInfo(r, n); // tâche signature du thème en premier
+		// Prompt 91 : la tâche « rédiger l'info trafic » est remplacée par la publication Community depuis le dossier (§ 3)
+		void doit, calme, premiere;
 		return null;
 	}
 	// ——— Lot F : événements chaînés (option) — une conséquence de jeu, ÉTIQUETÉE comme telle, jamais un fait réel ———
@@ -607,6 +638,6 @@ const Taches = (() => {
 		return plainte;
 	}
 
-	return { R, prevision, arbitrage, creerChaine, carriere, reinitialiserCarriere, grade, gradeDe, xpJour, theme, crise, criseActive, calculerThemes, choisirJourCrise, SIGNATURE, hacher, choix, nouvellePartie, etat, jour, noter, suiteFinale, briefing, choisirPriorites, evaluerPriorite, rapport, validerRapport, matin, apresDecision, faitsDuJour, bonneReponse, resoudre, tacheInfo, tachePreparation };
+	return { R, briefingAncien, imposerPriorites, prioritesDuJour, nbPriorites, causeDe, ligneDe, dureeDe, prevision, arbitrage, creerChaine, carriere, reinitialiserCarriere, grade, gradeDe, xpJour, theme, crise, criseActive, calculerThemes, choisirJourCrise, SIGNATURE, hacher, choix, nouvellePartie, etat, jour, noter, suiteFinale, briefing, choisirPriorites, evaluerPriorite, rapport, validerRapport, matin, apresDecision, faitsDuJour, bonneReponse, resoudre, tacheInfo, tachePreparation };
 })();
 if (typeof window !== 'undefined') window.Taches = Taches;

@@ -323,14 +323,8 @@ function miniJauge(lib, v, max, seuil, x, y, l) {
 }
 /** « Voir le dossier » : ouvre l'enquête du Journal (prompt 63) sur ce dossier */
 function voirDossier(me) {
-	const e = (Jeu.evenementsJournee || []).find((x) => x.index === me.index && (!me.jour || x.jour === me.jour));
-	if (!e) return;
-	const ji = (Jeu.jours || []).findIndex((j) => j.date === e.jour);
-	JOURNAL.jour = ji;
-	JOURNAL.enquete = (Jeu.evenementsJournee || []).filter((x) => x.jour === e.jour).indexOf(e);
-	JOURNAL.volet = 0;
-	PC.fenetre = 'journal';
-	annoncer(t('journal.enquete'));
+	// Prompt 91 § 3 : redirection avec retour (Échap revient à la messagerie)
+	if (typeof voirDossierDepuis === 'function') return voirDossierDepuis(me.index);
 }
 /** Réponses rapides (2 ou 3, selon le type du dernier message) : AUCUN effet de jeu, une par message */
 function reponsesRapides(m) {

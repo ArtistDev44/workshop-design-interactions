@@ -59,6 +59,10 @@ demande de la veille complètent la consigne du jour au lieu d'être des message
 | F | `7044f73` | Options du groupe désactivées par défaut (chaînes, déblocages, arbitrage), remise à zéro de la progression |
 
 ## Tâches (§ 1)
+
+> **Prompt 91 :** le briefing au choix est remplacé par des **priorités imposées** par le patron (2, puis 3 après
+> 4 jours), et « Rédiger l'info trafic » par la **publication Community depuis le dossier** (brouillon des faits).
+> Voir `87-applis-reliees-somnolence-priorites.md`.
 Chaque tâche : une carte d'introduction (une phrase + un exemple) la première fois seulement, rappel dans l'aide
 (H), clavier seul (1 à 4, Tab, Entrée, Échap), annonce `aria-live` à l'ouverture et au résultat, temps de jeu
 suspendu pendant la fenêtre, cibles ≥ 44 px en portrait mobile.

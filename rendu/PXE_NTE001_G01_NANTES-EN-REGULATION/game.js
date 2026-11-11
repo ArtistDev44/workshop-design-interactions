@@ -532,7 +532,7 @@
 		if (d.retardFige !== undefined) return d.retardFige;
 		const A = REGLAGES.aggravation;
 		const m = minutes !== undefined ? minutes : Jeu.horloge ? Jeu.horloge.minutes : d.minute;
-		const vitesse = Jeu.defiChrono ? 1 : Jeu.difficulte().aggravation; // prompt 87 : vitesse selon la difficulté
+		const vitesse = (Jeu.defiChrono ? 1 : Jeu.difficulte().aggravation) * (Jeu.somnolenceElevee ? 1.5 : 1); // prompt 87 : vitesse selon la difficulté ; prompt 91 (option) : ×1,5 au-delà de 70 de somnolence
 		const temps = d.minute === undefined ? 0 : Math.min(A.plafond, Math.floor((Math.max(0, m - d.minute) * vitesse) / A.minutesJeuParMinute)); // sans heure d'arrivée (hors partie) : pas d'aggravation
 		return d.retard + temps + aggravationDurable(d);
 	};
@@ -1495,6 +1495,14 @@
 		Jeu.postsJoueur.push(post);
 		return post;
 	};
+	/** Prompt 91 § 3 : publication du brouillon d'info trafic (faits du dossier) — sans effet de jauge ; une par dossier */
+	Jeu.publierBrouillon = function (index) {
+		const d = (Jeu.paquet || [])[index];
+		if (!d || (Jeu.postsJoueur || []).some((p) => p.index === index)) return null;
+		const post = { index, brouillon: true, modele: null, coherent: true, delta: 0, heure: maintenantSim(), jour: d.date, vars: {} };
+		Jeu.postsJoueur.push(post);
+		return post;
+	};
 	/** Message privé hors du rôle du joueur : transmis au patron, sans effet de réputation */
 	Jeu.transmettrePatron = function (plainte) {
 		if (!plainte || plainte.reponse !== null || plainte.expiree || plainte.transmise) return false;
@@ -1581,7 +1589,7 @@
 			return { ok: false, message: T('equipe.inutile', { cout: q.cout }) };
 		}
 		const pertinente = Jeu.equipesPertinentes(d).includes(cle);
-		const arrivee = maintenant + Jeu.DELAI_EQUIPE_MS;
+		const arrivee = maintenant + Jeu.DELAI_EQUIPE_MS * (Jeu.somnolenceElevee ? 1.5 : 1); // prompt 91 (option) : fatigué, on coordonne moins vite
 		const finIntervention = arrivee + REGLAGES.equipes[cle].duree;
 		Jeu.equipes.push({ index, cle, nom: q.nom, cout: q.cout, depart: maintenant, arrivee, finIntervention, libre: finIntervention + Jeu.RETOUR_EQUIPE_MS, heure: maintenantSim(), arrivee_sim: null, jour: d.date, jourIndex: Jeu.jourIndex, pertinente, sujet });
 		return { ok: true, message: T(pertinente ? 'equipe.enRoute' : 'equipe.enRouteHorsSujet', { nom: q.nom, cout: q.cout }) };

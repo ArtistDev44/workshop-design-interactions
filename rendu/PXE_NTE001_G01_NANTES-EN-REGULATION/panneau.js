@@ -44,7 +44,8 @@ function dessinerBandeau() {
 	const eq = Jeu.elementDebloque('equipes') ? Jeu.TYPES_EQUIPES.map((k) => String(Jeu.EQUIPES[k].nom) + ' ' + Jeu.equipesDisponibles(k, millis()) + '/' + Jeu.REGLAGES.equipes[k].effectif).join(' · ') : '';
 	const h = heureAffichee();
 	const th = typeof Taches !== 'undefined' && Jeu.jourCourant() ? Taches.theme(Jeu.jourCourant().date) : null; // prompt 88 : thème du jour
-	const gr = typeof Taches !== 'undefined' ? t('grade.' + Taches.grade().i) : ''; // prompt 88 : grade du joueur
+	const pj = typeof Taches !== 'undefined' && Jeu.jourCourant() ? Taches.prioritesDuJour(Jeu.jourCourant().date) : [];
+	const gr = pj.length ? t('bandeau.priorites', { liste: pj.map((p) => t('tache.prioCourt.' + p.id, p.vars)).join(' · ') }) : ''; // prompt 91 § 4 : priorités imposées (le grade reste dans Indicateurs)
 	const morceaux = [gr, th && th !== 'ordinaire' ? t('theme.' + th) : '', o ? t('bandeau.objectifCourt', { libelle: String(o.libelle), v: Math.round(Jeu.jauges[o.jauge]) }) : '', eq, String(h.h).padStart(2, '0') + ':' + String(h.m).padStart(2, '0') + (Jeu.etat.horsLigne ? ' · ' + t('jeu.horsLigne') : '')].filter(Boolean);
 	textFont(POLICE_DONNEES);
 	textSize(16);
@@ -170,6 +171,9 @@ function dessinerPanneauSignalement(d, x, base) {
 		bouton(x + 32, y, 320, 44, t('plus.ouvrir'), basculerPlus, false, true);
 		textAlign(LEFT, TOP);
 		cibleGuide('sources', x + 32, y, 320, 44);
+		// Prompt 91 § 3 : à chaque retard (et perturbation, météo, accident), publier l'info sur Community depuis le dossier
+		if (peutPublierDossier(d)) bouton(x + 372, y, 400, 44, '→ ' + t('applis.publier') + ' (B)', () => publierDepuisDossier(d), false, true);
+		textAlign(LEFT, TOP);
 		y += 56; // bas réel des blocs : le conseil et les cartes ne le chevauchent pas
 	}
 	// Conseil factuel (prompt 23), au-dessus des réponses ; il ne désigne jamais une réponse
@@ -323,4 +327,19 @@ function explicationDecision(r) {
 	else if (e.cleAction === 'temps') lignes.push(t('retour.tard', { meilleure: String(e.meilleureAction) }));
 	else lignes.push(t('retour.mieux', { meilleure: String(e.meilleureAction), pourquoi: pourquoi || t('raison.calme') }));
 	return lignes;
+}
+
+// ——— Prompt 91 § 3 : du dossier vers Community (brouillon des faits), Échap revient au dossier ———
+function peutPublierDossier(d) {
+	const cat = d && Jeu.categorie(d);
+	return !!cat && cat !== 'affluence' && (typeof appliDebloquee !== 'function' || appliDebloquee('community')) && !(Jeu.postsJoueur || []).some((p) => p.index === Jeu.paquet.indexOf(d));
+}
+function publierDepuisDossier(d) {
+	const index = Jeu.paquet.indexOf(d);
+	if (!peutPublierDossier(d)) return;
+	redirigerVers('community', () => {
+		COMMU.onglet = 'fil';
+		COMMU.defil = 0;
+		COMMU.brouillon = { index };
+	});
 }

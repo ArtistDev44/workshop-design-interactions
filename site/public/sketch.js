@@ -175,6 +175,8 @@ function draw() {
 	verifierMecaniques(); // prompt 47 : inspection surprise (avant l'horloge, qui s'arrête alors)
 	verifierTaches(); // prompt 88 : briefing du matin, tâches courtes
 	majAmbianceTaches(); // prompt 88 : humeur musicale de la crise
+	verifierDeblocages(); // prompt 91 § 2 (option) : carte d'intro d'une appli débloquée
+	majSeuilSomnolence(); // prompt 91 § 5 (option)
 	majMultitache(); // prompts 68 / 77 : arrivées, compteurs des signalements actifs, expirations en arrière-plan
 	majNotifsTel(); // prompt 90 : notifications spontanées du téléphone (aucun appel réseau ici)
 	majNotifications(); // prompt 77 : mails, commentaires, fins d'intervention
@@ -662,6 +664,8 @@ function majRetardsEtCommunity() {
 	else if (re >= dernierRetardAnnonce.v + 5) {
 		dernierRetardAnnonce.v = re;
 		annoncer(t('retard.aggrave', { reel: d.retard, effectif: re }));
+		// Prompt 91 § 3 : info non publiée sur Community et retard qui s'aggrave → un usager se plaint (une plainte par dossier)
+		if (!(Jeu.postsJoueur || []).some((p) => p.index === Jeu.index)) Jeu.declencherPlainte(Jeu.index);
 	}
 }
 
@@ -1091,7 +1095,7 @@ function keyPressed() {
 	// Langue (prompt 24) : L bascule partout, sans toucher à la partie
 	if (key === 'l' || key === 'L') return Langue.suivante(), false;
 	// Prompt 47 : inspection, démission, palmarès ; J = journal de bord, D = rendre son badge
-	if (toucheTelephone() || toucheTaches() || toucheMecaniques() || toucheAccessibilite() || toucheJournee()) return false; // prompts 47, 48 et 51
+	if (toucheDeblocage() || toucheTelephone() || toucheTaches() || toucheMecaniques() || toucheAccessibilite() || toucheJournee()) return false; // prompts 47, 48 et 51
 	// Fenêtres ouvertes : elles captent le clavier
 	if (fenetre) {
 		if (keyCode === ESCAPE || (fenetre === 'aide' && (key === 'h' || key === 'H' || key === '?'))) return fermer(), false;
@@ -1156,7 +1160,7 @@ function keyPressed() {
 	// Au poste, système du PC (bureau RégulOS) : Tab = icônes, Entrée = ouvrir, Échap = fermer l'app puis se lever
 	if (PC.etat !== 'appli') {
 		if (PC.etat === 'os' && typeof toucheJournal === 'function' && toucheJournal()) return false; // prompt 89 : jours, filtres, cartes, enquête (Échap revient)
-		if (keyCode === ESCAPE) PC.fenetre ? fermerFenetreApp() : seLever();
+		if (keyCode === ESCAPE) return (depilerNavigation() || (PC.fenetre ? fermerFenetreApp() : seLever())), false; // prompt 91 § 3 : Échap revient d'abord à l'écran d'origine
 		if (focusQuitter && (keyCode === ENTER || keyCode === RETURN || key === ' ')) return quitterPC(), false; // prompt 26
 		if (focusDemarrer && (keyCode === ENTER || keyCode === RETURN || key === ' ')) return basculerFocusDemarrer(false), retourAccueilPC(), false; // prompt 75
 		if (PC.etat !== 'os') {
@@ -1200,7 +1204,7 @@ function keyPressed() {
 		return false;
 	}
 	// Au poste : Échap fait se lever (sauf à l'écran de fin)
-	if (keyCode === ESCAPE && !(ecran === 'jeu' && phase === 'fin')) return seLever(), false;
+	if (keyCode === ESCAPE && !(ecran === 'jeu' && phase === 'fin')) return (depilerNavigation() || seLever()), false; // prompt 91 § 3
 	// Prompt 72 : réponses d'une alerte — ↑ ↓ / Tab les parcourent, Entrée valide (le focus « Quitter le PC » d'abord s'il est pris)
 	if (!focusQuitter && !focusDemarrer && ecran === 'jeu' && toucheMultitache()) return false; // prompt 77 : Tab passe d'un signalement actif à l'autre
 	// Prompt 26 : Tab place le focus sur « Quitter le PC », puis (prompt 75) sur le logo de la barre des tâches, puis l'en retire
@@ -1230,6 +1234,7 @@ function keyPressed() {
 	} else if ((phase === 'decision' || phase === 'contradiction') && toucheEnquete()) {
 		// prompt 50 : 5 à 8 consultent une source
 	} else if (phase === 'decision') {
+		if ((key === 'b' || key === 'B') && Jeu.dossierCourant() && peutPublierDossier(Jeu.dossierCourant())) return publierDepuisDossier(Jeu.dossierCourant()), false; // prompt 91 § 3
 		// Prompt 87 : 1 à 4 = cartes de réponse affichées ; 0 ou Espace = la réponse « attendre » ; E = En savoir plus
 		if (!toucheReponses() && (key === '0' || key === ' ')) {
 			const d0 = Jeu.dossierCourant();
@@ -1310,6 +1315,7 @@ function dessinerFenetre() {
 	if (fenetre === 'inspection') return fenetreInspection(); // prompt 47
 	if (fenetre === 'tache') return fenetreTache(); // prompt 88
 	if (fenetre === 'optionsJeu') return fenetreOptionsJeu(); // prompt 88 (lot F)
+	if (fenetre === 'deblocage') return fenetreDeblocage(); // prompt 91
 	if (fenetre === 'demission') return fenetreDemission(); // prompt 47
 	if (fenetre === 'palmares') return fenetrePalmares(); // prompt 47
 	if (fenetre === 'accessibilite') return fenetreAccessibilite(); // prompt 48

@@ -160,7 +160,7 @@ function notifier(n) {
 	if (NOTIFS.liste.length > 8) NOTIFS.liste.shift();
 	annoncer(n.titre + ' : ' + n.extrait);
 }
-const notifsVisibles = () => NOTIFS.liste.filter((n) => millis() - n.t < NOTIFS.DUREE).slice(-NOTIFS.MAX);
+const notifsVisibles = () => NOTIFS.liste.filter((n) => millis() - n.t < NOTIFS.DUREE && (!n.icone || typeof appliDebloquee !== 'function' || appliDebloquee(n.icone))).slice(-NOTIFS.MAX); // prompt 91 § 2 : applis débloquées seulement
 /** Appelé par fileIncidents à la première apparition d'un signalement dans la liste */
 function notifierArrivee(d, i) {
 	if (ecran !== 'jeu') return;
