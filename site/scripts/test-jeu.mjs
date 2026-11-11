@@ -502,7 +502,7 @@ const src77 = {
 verifier(/compression: 100,/.test(src77.immersion), 'prompt 77 : IMMERSION.compression doit être ×100');
 verifier(/const NB_ACTIFS = 3;/.test(src77.carte), 'prompt 77 : NB_ACTIFS doit être 3');
 verifier(/function dessinerNotifications\(\)/.test(src77.carte) && /majNotifications\(\)/.test(src77.sketch), 'prompt 77 : notifications bureau absentes');
-verifier(/function activerSignalement\(/.test(src77.carte) && /function resteActif/.test(src77.carte), 'prompt 77 : compteurs individuels des actifs absents');
+verifier(/function activerSignalement\(/.test(src77.carte) && /resteActif = /.test(src77.carte), 'prompt 77 : compteurs individuels des actifs absents');
 
 // Traductions : toute clé française existe en anglais
 const manquantes = vm.runInContext('Object.keys(TRADUCTIONS.fr).filter((k) => TRADUCTIONS.en[k] === undefined)', fr);
