@@ -4,6 +4,7 @@ Règle : chaque push sur la branche main ajoute une entrée dans le tableau, la 
 
 | Date | Commit | Fichiers | Résumé |
 |---|---|---|---|
+| 2026-11-11 | ce commit | journal.md | Fusion dans main du prompt 93 (textes hors de leur case : détection et réparation) |
 | 2026-11-11 | ce commit (branche prompts/93-debordements-texte) | prompts/93-jeu-textes-hors-cadre-detection-reparation.md, prompts/README.md, journal.md | Nouveau prompt 93 : détecter et réparer les textes hors de leur case, sans régression |
 | 2026-11-11 | ce commit | journal.md | Fusion dans main du prompt 92 (textes d'enquête lisibles dans Signalements) |
 | 2026-11-11 | ce commit (branche prompts/92-textes-enquete) | prompts/92-jeu-textes-enquete-signalements.md, prompts/README.md, journal.md | Nouveau prompt 92 : affichage lisible des textes d'enquête dans l'appli Signalements |
