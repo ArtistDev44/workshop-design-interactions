@@ -199,7 +199,7 @@ function vueJour(z) {
 		} else if (k === 'equipes') {
 			dsTitre(String(tu.equipes.total), x + 12, y0 + 38, 36, DS.blanc, 'left');
 			const det = Object.keys(tu.equipes.parType).map((c) => String((Jeu.EQUIPES[c] || {}).nom || c) + ' ' + tu.equipes.parType[c]).join(' · ');
-			dsTexte(det || t('journal.aucuneEquipe'), x + 12, y0 + 90, 14, DS.blanc75, 'left', l - 24);
+			if (det) dsTexte(court(det, 40), x + 12, y0 + 92, 14, DS.blanc75, 'left', l - 24); // 0 : le chiffre suffit
 		} else if (k === 'theme') {
 			dsTexte(t('theme.' + tu.theme), x + 12, y0 + 34, 16, DS.blanc, 'left', l - 24);
 			if (tu.xp !== null) dsTexte('+' + tu.xp + ' XP', x + 12, y0 + 104, 16, DS.succesClair, 'left'); // fait marquant : vue Semaine (carnet)
@@ -365,8 +365,8 @@ function carteEquipe(q, x, y, l, focus) {
 }
 function cartePlainte(p, x, y, l, focus) {
 	cadreCarte(x, y, l, 64, focus, p.reponse === null ? DS.alerte : p.bonne ? DS.succes : DS.erreur);
-	dsTexte('✉ ' + p.auteur + ' · ' + court(Jeu.texteMessage(p.def.texte, p.vars), 80), x + 20, y + 8, 15, DS.blanc, 'left', l - 220);
-	dsTexte(p.reponse === null ? t('journal.sansReponse') : '↳ ' + court(Jeu.texteMessage(p.def.reponses[p.reponse].texte, p.vars), 70) + ' · ' + t(p.bonne ? 'journal.bienRecue' : 'journal.malRecue'), x + 20, y + 34, 14, DS.blanc75, 'left', l - 220);
+	dsTexte('✉ ' + p.auteur + ' · ' + court(Jeu.texteMessage(p.def.texte, p.vars), 72), x + 20, y + 8, 15, DS.blanc, 'left'); // une ligne : pas de chevauchement
+	dsTexte(p.reponse === null ? t('journal.sansReponse') : '↳ ' + court(Jeu.texteMessage(p.def.reponses[p.reponse].texte, p.vars), 64) + ' · ' + t(p.bonne ? 'journal.bienRecue' : 'journal.malRecue'), x + 20, y + 36, 14, DS.blanc75, 'left');
 	dsBouton(x + l - 190, y + 10, 176, 44, t('journal.voirCommunity'), () => ouvrirAppPC('community'), 'fantome');
 }
 function carteNote(c, x, y, l, focus) {

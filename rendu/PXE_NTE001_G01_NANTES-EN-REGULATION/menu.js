@@ -13,6 +13,11 @@ const URL_JEU = 'https://workshop-design-interactions.pages.dev/'; // URL canoni
 function ouvrirLien(url) {
 	window.open(url, '_blank', 'noopener');
 }
+/** Page de présentation du projet (diaporama Slidev, prompt 82), servie à côté du jeu */
+function ouvrirPresentation() {
+	annoncer(t('mp.presentation.annonce'));
+	ouvrirLien('./presentation/');
+}
 const MENU_C = {
 	nuit: '#0D0C0C', // Background du Pixel DS (prompt 39)
 	encre: '#0D0C0C', // Secondary-Foreground
@@ -138,6 +143,14 @@ function iconeMenu(type, x, y, c) {
 	} else if (type === 'livre') {
 		rect(8, 12, 20, 32, 3);
 		rect(28, 12, 20, 32, 3);
+	} else if (type === 'presentation') {
+		// Écran de projection : cadre, pied, et une flèche « lecture »
+		rect(6, 8, 44, 30);
+		line(28, 38, 28, 48);
+		line(18, 48, 38, 48);
+		noStroke();
+		fill(c);
+		triangle(23, 15, 23, 31, 36, 23);
 	} else if (type === 'retour') {
 		line(14, 28, 44, 28);
 		line(14, 28, 26, 16);
@@ -276,6 +289,7 @@ function dessinerMenuPrincipal() {
 const EXTRAS_MENU = [
 	{ cle: 'depot', action: () => ouvrirLien(DEPOT_URL) },
 	{ cle: 'partager', action: () => ouvrirPartage() },
+	{ cle: 'presentation', action: () => ouvrirPresentation() }, // page /presentation/ (diaporama Slidev, prompt 82)
 	{ cle: 'licence', action: () => ouvrirLien(LICENCE_URL) },
 ];
 const focusExtra = (n, cle) => MENU.choix - n === EXTRAS_MENU.findIndex((x) => x.cle === cle);
@@ -342,12 +356,13 @@ function boutonIcone(x, y, l, h, icone, libelle, action, focus) {
 	boutons.push({ x, y, l, h, action });
 	return survol;
 }
-const BLOC_PARTAGE = { x: L - 80 - 2 * 280 - 16, y: H - 40 - 68, l: 280, h: 68 }; // 68 px : ≥ 44 px à l'écran en portrait mobile
+const BLOC_PARTAGE = { x: L - 80 - 3 * 260 - 2 * 16, y: H - 40 - 68, l: 260, h: 68 }; // demande du 11/11 : + bouton Présentation // 68 px : ≥ 44 px à l'écran en portrait mobile
 function blocPartage(n) {
 	const b = BLOC_PARTAGE;
 	const s1 = boutonIcone(b.x, b.y, b.l, b.h, 'github', t('mp.depot'), () => ouvrirLien(DEPOT_URL), focusExtra(n, 'depot'));
 	const s2 = boutonIcone(b.x + b.l + 16, b.y, b.l, b.h, 'partage', t('mp.partager'), ouvrirPartage, focusExtra(n, 'partager'));
-	const bulle = s1 || focusExtra(n, 'depot') ? t('mp.depot.infobulle') : s2 || focusExtra(n, 'partager') ? t('mp.partager.infobulle') : null;
+	const s3 = boutonIcone(b.x + 2 * (b.l + 16), b.y, b.l, b.h, 'presentation', t('mp.presentation'), ouvrirPresentation, focusExtra(n, 'presentation'));
+	const bulle = s1 || focusExtra(n, 'depot') ? t('mp.depot.infobulle') : s2 || focusExtra(n, 'partager') ? t('mp.partager.infobulle') : s3 || focusExtra(n, 'presentation') ? t('mp.presentation.infobulle') : null;
 	if (bulle) {
 		textFont(POLICE_DONNEES);
 		textSize(18);
