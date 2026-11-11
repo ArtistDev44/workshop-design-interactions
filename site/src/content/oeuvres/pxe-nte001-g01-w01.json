@@ -2,9 +2,10 @@
   "id": "PXE-NTE001-G01-W01",
   "titre": "Nantes en régulation",
   "auteurs": [
-    "[À COMPLÉTER]"
+    "Mattéo Brevet",
+    "Guillaume Renoult"
   ],
-  "groupe": "[À COMPLÉTER]",
+  "groupe": "G01",
   "statut": "STUDENT",
   "source": {
     "titre": "Réseau de transports collectifs Naolib — flux temps réel GTFS-RT (retards, alertes) et météo Open-Meteo",
@@ -35,8 +36,8 @@
       "effet": "Choisit les incidents réels et le niveau de difficulté."
     },
     {
-      "nom": "Durée du compteur",
-      "effet": "60, 30 ou 15 secondes par décision selon la semaine : règle la pression du temps."
+      "nom": "Difficulté de la semaine",
+      "effet": "Signalements pris en même temps (3 / 2 / 1), vitesse d'aggravation du retard (×0,5 / ×1 / ×1,5) et budget de départ (60 / 50 / 40) ; le mode « Défi chrono » rétablit un compteur par décision."
     },
     {
       "nom": "Mode en ligne / hors ligne",
@@ -49,7 +50,7 @@
   "datasets": [
     "244400404_reseau-transports-collectifs-naolib"
   ],
-  "cartel": "Nantes en régulation place le visiteur dans une salle de contrôle des transports en commun nantais. Il y rejoue une semaine réelle du réseau de tram et de bus : chaque incident tiré des données réelles, un retard d'au moins dix minutes ou une alerte météo, devient un dossier à trancher sous la pression d'un compteur. Trois actions sont possibles, ou bien ne rien faire. Chaque décision modifie trois jauges, la fluidité du réseau, la réputation de la salle de contrôle et le budget, selon le contexte météo et l'heure. Aucun événement n'est inventé : tous les dossiers viennent des données réelles de la semaine.",
+  "cartel": "Nantes en régulation place le visiteur dans une salle de contrôle des transports en commun nantais. Il y rejoue une semaine réelle du réseau de tram et de bus : chaque incident tiré des données réelles, un retard d'au moins dix minutes ou une alerte météo, devient un dossier à trancher pendant que le retard s'aggrave. Quatre réponses adaptées à la situation sont possibles, dont attendre. Chaque décision modifie trois jauges, la fluidité du réseau, la réputation de la salle de contrôle et le budget, selon le contexte météo et l'heure. Aucun événement n'est inventé : tous les dossiers viennent des données réelles de la semaine.",
   "assets": {},
   "lien_oeuvre": "index.html"
 }

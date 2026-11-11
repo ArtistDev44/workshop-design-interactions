@@ -12,8 +12,8 @@ Code : `donnees.js` ; ouverture dans `os.js` (`ouvrirIconeOS`, `dessinerOS`). R�
     (valeurs **journalières** de l'archive ERA5 préparées par `preparer-semaines.mjs` — le jeu ne stocke pas
     d'heure par heure, donc rien de plus n'est affiché), agenda de la semaine, Loire.
 - Chaque bloc : nom, valeurs réelles, état (« en direct · … », « archive du … au … », « hors ligne → repli
-  local »), source, licence (Licence Ouverte Nantes Métropole, CC BY 4.0 Open-Meteo ; Hub'Eau : à vérifier
-  par le groupe) et **« Ouvrir l'API ↗ »** (la requête réelle dans un nouvel onglet).
+  local »), source, licence (Licence Ouverte Nantes Métropole, CC BY 4.0 Open-Meteo ; Hub'Eau : Licence Ouverte Etalab, vérifiée
+  le 11/11/2026 dans les CGU Hub'Eau § 5.1.3) et **« Ouvrir l'API ↗ »** (la requête réelle dans un nouvel onglet).
 - La Loire n'a pas d'archive dans le jeu : en semaine passée, l'appli le dit (« valeur du moment »).
 - Lecture des valeurs déjà chargées par le jeu : aucun appel réseau dans `draw()`.
 

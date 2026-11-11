@@ -4,6 +4,7 @@ Règle : chaque push sur la branche main ajoute une entrée dans le tableau, la 
 
 | Date | Commit | Fichiers | Résumé |
 |---|---|---|---|
+| 2026-11-11 | ce commit | note-eval.md, grammar.md/.pdf, source-sheet.md/.pdf, manifest.json, cartel (JSON + rendu), CREDITS.md, README.md, site/README.md, jeu/00-concept.md, jeu/55, donnees.js, i18n.js, slides, todo.md, notes.md, rendu/ | Leviers 4 à 7 de note-eval : licence MIT alignée, auteurs et groupe du cartel, grammaire et cartel à jour du prompt 87 (sans chrono, 4 réponses), propriété écartée confirmée, date d'accès 2026-11-09, licences Hub'Eau (Etalab) et Loyalty Freak (CC0 sur FMA) vérifiées à la source ; projet réévalué à 59/70 |
 | 2026-11-11 | ce commit | note-eval.md, journal.md | note-eval.md : commit de référence corrigé (f696206, prompt 93 inclus) |
 | 2026-11-11 | ce commit | note-eval.md, prompts/README.md, journal.md | Prompt 83 : note d'évaluation du livret confrontée au dépôt — projet 54/70, individuel démontrable 7/30, fourchette 12,2 à 16,8/20, 12 leviers priorisés avant la soutenance |
 | 2026-11-11 | ce commit | journal.md | Fusion dans main du prompt 93 (textes hors de leur case : détection et réparation) |

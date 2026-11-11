@@ -78,7 +78,7 @@ layout: two-cols
 <br><br>
 
 - **Météo** Open-Meteo (prévision et archive ERA5) — CC BY 4.0 — [open-meteo.com](https://open-meteo.com/)
-- **Hauteur de la Loire** à Nantes, station M800001010 (Hub'Eau) — licence à vérifier par le groupe
+- **Hauteur de la Loire** à Nantes, station M800001010 (Hub'Eau) — Licence Ouverte Etalab (CGU Hub'Eau, vérifiée le 11/11/2026)
 - **En direct sur le téléphone** (mode « aujourd'hui ») : parkings, vélos, trafic routier, pollens — Open Data Nantes Métropole
 - Hors ligne : instantanés réels datés, rejoués sans réseau
 
