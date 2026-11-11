@@ -123,6 +123,9 @@ for (const f of sources) {
 		}
 		const ph = readFileSync(join(pres, 'index.html'), 'utf8');
 		/\/presentation\/assets\//.test(ph) ? ok() : echec('presentation : base /presentation/ absente du build Slidev');
+		// Prompt 94 : assets essentiels du deck (image OG, captures fléchées) et métadonnées SEO
+		for (const f of ['og-image.png', 'img/decision.webp', 'img/sources.webp', 'img/bureau.webp', 'img/telephone.webp', 'img/journal.webp']) existsSync(join(pres, f)) ? ok() : echec(`presentation/${f} absent du build`);
+		/property="og:image" content="https:\/\/workshop-design-interactions\.pages\.dev\/presentation\/og-image\.png"/.test(ph) && /(?:name|property)="twitter:card" content="summary_large_image"/.test(ph) && /<html[^>]*lang="fr"/.test(ph) ? ok() : echec('presentation : métadonnées SEO (og:image, twitter:card, lang) absentes');
 	}
 }
 
