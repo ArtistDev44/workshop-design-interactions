@@ -258,6 +258,7 @@ function bandeauEtat() {
 	textAlign(LEFT, CENTER);
 	text(txt, GAUCHE.x + 14, H - 22);
 	textStyle(NORMAL);
+	dessinerSomnolence(); // prompt 78 : jauge de somnolence, cliquable (se reposer)
 }
 
 function lancerPartie() {
@@ -1373,6 +1374,13 @@ function keyPressed() {
 		if (key === ' ' || keyCode === ENTER || keyCode === RETURN) seReveiller();
 		return false;
 	}
+	// Prompt 78 : endormi — Espace, Entrée ou Z réveillent (la sieste forcée bloque tout le reste) ; L reste disponible
+	if (enSieste && ecran === 'jeu' && !fenetre && !(key === 'l' || key === 'L')) {
+		if (key === ' ' || key === 'z' || key === 'Z' || keyCode === ENTER || keyCode === RETURN) reveiller();
+		return false;
+	}
+	// Prompt 78 : Z = se reposer (sieste volontaire)
+	if ((key === 'z' || key === 'Z') && ecran === 'jeu' && !fenetre && !tutoriel && !MENU.actif) return dormir(true), false;
 	// Prompt 37 : G arrête le guide « Prendre en main »
 	if ((key === 'g' || key === 'G') && GUIDE.actif && !MENU.actif) return arreterGuide(), false;
 	// Prompt 34 : le tutoriel capte le clavier (L reste disponible pour changer de langue)

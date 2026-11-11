@@ -290,7 +290,7 @@ verifier(eq.policeAvant === 1 && eq.policeMatin === 2, `équipes : effectifs non
 	const cs = contexte('fr');
 	vm.runInContext(
 		`var phase = 'attente', ecran = 'jeu', vue = 'poste', fenetre = null, enPause = false, enSieste = true, reveil = null, reduireAnimations = false;
-		var MENU = { actif: false }, PC = { fenetre: 'journal' }, SABLIER = { actif: true }, CAMERA = { x: 0, y: 0 }, METEO_VISU = { nuit: 1 }, focusBureau = -1, OBJETS_BUREAU = [];
+		var MENU = { actif: false }, PC = { fenetre: 'journal' }, CAMERA = { x: 0, y: 0 }, METEO_VISU = { nuit: 1 }, focusBureau = -1, OBJETS_BUREAU = [];
 		var L = 1920, H = 1080, __t = 0, __leve = 0, __fin = 0, __annonces = [], __saves = 0;
 		var millis = () => __t, constrain = (v, a, b) => Math.max(a, Math.min(b, v));
 		var seLever = () => { __leve++; vue = 'bureau'; }, annoncer = (x) => __annonces.push(String(x)), interaction = () => {};
@@ -313,7 +313,7 @@ verifier(eq.policeAvant === 1 && eq.policeMatin === 2, `équipes : effectifs non
 		phase = 'mail';
 		const jauges = JSON.stringify(Jeu.jauges);
 		rangerPoste();
-		res.soir = phase === 'soir' && __leve === 1 && vue === 'bureau' && !enSieste && !SABLIER.actif && PC.fenetre === null && __saves === 1;
+		res.soir = phase === 'soir' && __leve === 1 && vue === 'bureau' && !enSieste && PC.fenetre === null && __saves === 1;
 		__t = 2000; majSoir(); res.mi = Jeu.horloge.minutes > Jeu.finJournee() && Jeu.horloge.minutes < 21 * 60 && !sortieVisible();
 		__t = 4100; majSoir(); res.h21 = Jeu.horloge.minutes === 21 * 60 && sortieVisible() && __annonces.some((a) => a.includes('sortie est à gauche'));
 		res.nuit = nuitSoir() === 1;
@@ -347,7 +347,7 @@ verifier(eq.policeAvant === 1 && eq.policeMatin === 2, `équipes : effectifs non
 	const garde = ((imm.match(/function tempsSuspendu\(\) \{\n\treturn ([^\n]*);/) || [])[1] || '') + (/function avancerTemps\(\)[\s\S]*?if \(tempsSuspendu\(\)\) return;/.test(imm) ? '' : ' SANS GARDE');
 	verifier(!garde.includes('SANS GARDE'), 'avancerTemps doit s\'arrêter quand tempsSuspendu()');
 	verifier(/function tempsCompresse\(\)[^}]*!tempsSuspendu\(\)/.test(imm), '« ×30 » ne doit s\'afficher que si le temps file');
-	verifier(garde.includes("phase === 'soir'"), 'soir : le temps (incidents, sieste, sablier) ne doit pas avancer pendant le soir');
+	verifier(garde.includes("phase === 'soir'"), 'soir : le temps (incidents, sieste) ne doit pas avancer pendant le soir');
 	verifier(/phase === 'soir'\) return; \/\/ prompt 69/.test(readFileSync(join(pub, 'webcam.js'), 'utf8')), 'soir : la main devant la webcam ne doit pas lancer de sieste le soir');
 	verifier(/ui\.phase === 'soir'/.test(readFileSync(join(pub, 'sauvegarde.js'), 'utf8')), 'soir : la sauvegarde doit reprendre la phase soir');
 }
@@ -657,6 +657,64 @@ verifier(eq.policeAvant === 1 && eq.policeMatin === 2, `équipes : effectifs non
 	verifier(m.reprise && m.fin, `multitâche : décisions successives sans perdre les autres (reprise ${m.reprise}, fin ${m.fin})`);
 	verifier(m.notifs >= m.arrivees, `multitâche : une notification par arrivée (${m.notifs} / ${m.arrivees})`);
 	verifier(/compression: 100,/.test(readFileSync(join(pub, 'immersion.js'), 'utf8')), 'temps : la compression entre deux dossiers doit être ×100');
+}
+
+// Prompt 78 : la somnolence remplace le sablier ; sieste volontaire ou forcée, expirations pendant la sieste punies
+{
+	const cz = contexte('fr');
+	vm.runInContext(
+		`var __t = 100000, ecran = 'jeu', phase = 'attente', enPause = false, DROITE = {}, debutCompteur = 0, arriveeDossier = 0, sourceChoisie = null, alerteTempsJouee = false, facteurDuree = 1, dernierResultat = null, reduireAnimations = true, vue = 'bureau', PC = { etat: 'appli' }, ICONES_OS = [], keyCode = 0, TAB = 9, H = 1080;
+		var enSieste = false, debutSieste = 0, reveil = null, inactifDepuis = 0, MENU = { actif: false }, fenetre = null, smsActif = false, tutoriel = null, TRANSITION_JOUR = null, __fil = [];
+		function millis() { return __t; } function facteurLecture() { return 1; } function annoncer() {} function interaction() { inactifDepuis = __t; } function seLever() {}
+		function ajouterFil(m) { __fil.push(m.cle); }
+		var Confort = { Son: { bip() {}, clic() {}, alerteDossier() {} } }; var Sauvegarde = { auto() {} };
+		function nouveauDossier() { debutCompteur = arriveeDossier = millis(); phase = 'decision'; }
+		function decider(a) { const d = Jeu.dossierCourant(); dernierResultat = Jeu.decider(a); retirerActif(d); phase = 'narration'; }`,
+		cz,
+	);
+	for (const f of ['enquete.js', 'carte.js', 'multitache.js', 'sieste.js']) vm.runInContext(readFileSync(join(pub, f), 'utf8'), cz, { filename: f });
+	const z = vm.runInContext(
+		`(() => {
+		Jeu.chargerSemaine('2026-11-02'); Jeu.nouvellePartie();
+		const R = Jeu.REGLAGES.somnolence;
+		inactifDepuis = __t;
+		majSomnolence(1000, 60); // une heure de jeu, joueur actif
+		const uneHeure = SOMNO.v;
+		__t += 20000; majSomnolence(1000, 0); // inactif depuis 20 s
+		const inactif = SOMNO.v - uneHeure;
+		// Sieste forcée à 100
+		SOMNO.v = 99.9; majSomnolence(1000, 60);
+		const forcee = enSieste && SOMNO.forcee;
+		// Pendant la sieste : deux signalements arrivent, un expire en file → « non traité » + malus de sieste
+		const ds = Jeu.jourCourant().dossiers; Jeu.horloge.minutes = ds[1].minute;
+		fileIncidents();
+		const nt0 = (Jeu.malus.non_traite || 0), si0 = (Jeu.malus.sieste || 0);
+		__t += 61000; majMultitache();
+		const r = Jeu.historique[Jeu.historique.length - 1];
+		const malus = { nonTraite: (Jeu.malus.non_traite || 0) - nt0, sieste: (Jeu.malus.sieste || 0) - si0, marque: !!(r && r.sieste) };
+		majSomnolence(1000, 100); // une seconde de sieste
+		const recupere = Math.abs(SOMNO.v - (100 - Jeu.REGLAGES.somnolence.recuperationParSeconde)) < 0.01;
+		const bilan = Object.assign({}, SOMNO.bilan);
+		reveiller();
+		const reveille = !enSieste && __fil.includes('sieste.bilan');
+		// Sieste volontaire, annulable ; impossible pendant une narration
+		phase = 'narration'; const refus = dormir(true) === false;
+		phase = 'attente'; const ok = dormir(true) && enSieste && !SOMNO.forcee; reveiller();
+		return { uneHeure, inactif, forcee, malus, recupere, bilan, reveille, refus, ok, annule: !enSieste, regle: R.parHeureJeu };
+	})()`,
+		cz,
+	);
+	verifier(Math.abs(z.uneHeure - z.regle) < 0.01 && Math.abs(z.inactif - 0.5) < 0.01, `somnolence : +${z.uneHeure} par heure de jeu, +${z.inactif} par seconde d'inactivité`);
+	verifier(z.forcee, 'somnolence : à 100, la sieste doit être forcée');
+	verifier(z.malus.nonTraite >= 1 && z.malus.sieste >= 1 && z.malus.marque && z.bilan.expires >= 1 && z.bilan.arrives >= 2, `sieste : expiration pendant la sieste ${JSON.stringify(z.malus)} · bilan ${JSON.stringify(z.bilan)}`);
+	verifier(z.recupere && z.reveille, 'sieste : récupération et bilan au réveil');
+	verifier(z.refus && z.ok && z.annule, `sieste volontaire : refus en narration ${z.refus}, déclenchable ${z.ok}, annulable ${z.annule}`);
+	const imm = readFileSync(join(pub, 'immersion.js'), 'utf8');
+	verifier(/function dormir[\s\S]*?phase = 'attente'/.test(readFileSync(join(pub, 'sieste.js'), 'utf8')) && /function tempsCompresse\(\)[^}]*phase === 'attente'/.test(imm), 'sieste : le temps doit filer ×100 pendant la sieste (phase attente compressée)');
+	verifier(!/siesteApresMs|inactifDepuis > IMMERSION/.test(imm), 'sieste : plus de sieste après 20 s d\'inactivité');
+	const tout = ['journee.js', 'immersion.js', 'bureau.js', 'soir.js', 'sieste.js', 'feedback.js', 'sketch.js', 'webcam.js', 'cafe.js'].map((f) => readFileSync(join(pub, f), 'utf8')).join('\n');
+	const clesSablier = vm.runInContext("Object.keys(TRADUCTIONS.fr).concat(Object.keys(TRADUCTIONS.en)).filter((k) => /sablier/i.test(k) || /sablier|hourglass/i.test(String(TRADUCTIONS.fr[k] || '') + String(TRADUCTIONS.en[k] || '')))", cz);
+	verifier(!/sablier/i.test(tout) && clesSablier.length === 0, `sablier : références restantes (${clesSablier.slice(0, 3)})`);
 }
 
 // Traductions : toute clé française existe en anglais

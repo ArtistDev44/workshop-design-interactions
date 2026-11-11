@@ -10,7 +10,6 @@
 const IMMERSION = {
 	minutesParSeconde: 1, // rythme normal : 1 minute de journée par seconde réelle
 	compression: 100, // § 3 : ×100 quand aucun incident n'est actif (prompt 43 : ×10 → ×30 ; prompt 77 : ×100, valeur verrouillée)
-	siesteApresMs: 20000, // § 4 : 20 s sans incident ni interaction
 	fenetreReveilMs: { 60: 3000, 30: 2000, 15: 1000 }, // § 4 : selon le compteur de la semaine
 	retardImportant: 20, // § 5 : retard ≥ 20 min = bordure rouge
 	pulsationsParSeconde: 1.5, // § 5 : jamais plus de 3 flashs/s
@@ -51,7 +50,6 @@ const OBJETS_BUREAU = [
 	{ nom: 'dossiers', piece: true, label: T('piece.dossiers'), infobulle: T('piece.dossiers.survol'), x: 390, y: 160, l: 44, h: 15 },
 	{ nom: 'fenetre', piece: true, label: T('piece.fenetre'), infobulle: T('piece.fenetre.survol'), x: 334, y: 14, l: 64, h: 96 }, // prompt 31 : la baie s'arrête au pan de mur
 	{ nom: 'horloge', label: T('objet.horloge'), infobulle: T('objet.horloge.survol'), x: 404, y: 30, l: 28, h: 29 }, // prompt 51 : finir sa journée
-	{ nom: 'sablier', label: T('objet.sablier'), infobulle: T('objet.sablier.survol'), x: 302, y: 169, l: 14, h: 22 }, // prompt 51 : faire passer le temps
 	{ nom: 'webcam', label: T('objet.webcam'), infobulle: T('objet.webcam.survol'), x: 234, y: 39, l: 13, h: 8 }, // prompt 57 : webcam posée sur l'écran
 	{ nom: 'micro', label: T('objet.micro'), infobulle: T('objet.micro.survol'), x: 150, y: 170, l: 12, h: 24 }, // prompt 54 : micro du poste (appui maintenu)
 	{ nom: 'sortie', label: T('soir.sortie'), infobulle: T('soir.infobulle'), x: 41, y: 92, l: 34, h: 56, visible: () => typeof sortieVisible === 'function' && sortieVisible() }, // prompt 69 : flèche du soir (soir.js)
@@ -128,8 +126,6 @@ function interagirPiece(nom) {
 
 function interaction() {
 	inactifDepuis = millis();
-	// Prompt 64 : endormi pendant un dossier (absence vue par la webcam), un vrai geste réveille le joueur
-	if (enSieste && ['decision', 'contradiction', 'conflit', 'narration'].includes(phase)) enSieste = false;
 }
 
 // ——— Journées et horloge simulée (§ 3) ———
@@ -212,18 +208,16 @@ function avancerTemps() {
 	const dt = derniereImage ? Math.min(250, maintenant - derniereImage) : 0;
 	derniereImage = maintenant;
 	if (tempsSuspendu()) return; // prompt 34 / 43 : tutoriel et transition suspendent le temps
-	const vitesse = IMMERSION.minutesParSeconde * (tempsCompresse() ? IMMERSION.compression : 1) * facteurSablier(); // prompt 51 : sablier
+	const vitesse = IMMERSION.minutesParSeconde * (tempsCompresse() ? IMMERSION.compression : 1); // prompt 78 : la sieste fait passer le temps ×100 (phase attente)
+	const avant = Jeu.horloge.minutes;
 	Jeu.horloge.minutes += (dt / 1000) * vitesse;
+	// Prompt 78 : l'horloge ne dépasse pas la fin de journée tant que des signalements restent (sieste ×100)
+	if (Jeu.etat.mode !== 'direct' && Jeu.horloge.minutes > Jeu.finJournee()) Jeu.horloge.minutes = Math.max(avant, Jeu.finJournee());
+	majSomnolence(dt, Jeu.horloge.minutes - avant); // prompt 78 : la somnolence monte avec le temps de jeu et l'inactivité
 	if (Jeu.majSuivis && Jeu.majSuivis()) Confort.Son.bip('choix'); // prompt 63 : une réaction arrive sur Community
 
 	if (phase === 'attente') {
-		// Sieste après 20 s sans incident ni interaction (§ 4)
-		// Prompt 67 : la webcam ne déclenche plus la sieste par absence (c'est la main qui la lance ou l'interrompt)
-		if (!enSieste && maintenant - inactifDepuis > IMMERSION.siesteApresMs) {
-			enSieste = true;
-			debutSieste = maintenant;
-			if (vue === 'poste') seLever(); // on se cale dans le fauteuil : retour à la vue bureau
-		}
+		// Prompt 78 : plus de sieste après 20 s d'inactivité — elle tombe quand la somnolence est pleine (sieste.js)
 		const prochain = Jeu.prochainDuJour();
 		if (prochain && Jeu.horloge.minutes >= prochain.minute) arriveeIncident();
 		else if (!prochain && Jeu.horloge.minutes >= Jeu.finJournee()) finJourneeAtteinte(); // prompt 51 : l'horloge s'arrête, le joueur clique dessus pour partir (journee.js)
@@ -234,10 +228,13 @@ function avancerTemps() {
 
 function arriveeIncident() {
 	if (enSieste) {
-		// Triple bip, puis fenêtre de réaction 3 / 2 / 1 s selon le compteur de la semaine
+		// Prompt 78 : pendant la sieste, les signalements s'accumulent dans la liste ; seul un signalement de gravité
+		// élevée déclenche le réveil d'urgence — triple bip, puis fenêtre de réaction 3 / 2 / 1 s selon le compteur
+		const urgent = signalementUrgentPendantSieste();
+		if (!urgent) return;
 		const c = (Jeu.etat.semaine && Jeu.etat.semaine.difficulte && Jeu.etat.semaine.difficulte.compteur_s) || 30;
 		phase = 'reveil';
-		reveil = { limite: millis() + (IMMERSION.fenetreReveilMs[c] || 2000) };
+		reveil = { limite: millis() + (IMMERSION.fenetreReveilMs[c] || 2000), d: urgent };
 		Confort.Son.bip('alerte');
 		setTimeout(() => Confort.Son.bip('alerte'), 180);
 		setTimeout(() => Confort.Son.bip('alerte'), 360);
@@ -248,21 +245,17 @@ function arriveeIncident() {
 
 function seReveiller() {
 	if (phase !== 'reveil') return;
-	enSieste = false;
-	reveil = null;
-	interaction();
-	entrerSelection(); // prompt 68
+	phase = 'attente';
+	reveiller(); // prompt 78 : bilan de la sieste, puis la liste des signalements
 }
 
+/** Réveil d'urgence raté : le signalement urgent est réglé « non traité » (Q25) + malus de sieste ; on dort encore */
 function rateReveil() {
-	enSieste = false;
+	const d = reveil && reveil.d;
 	reveil = null;
-	nouveauDossier();
-	phase = 'decision';
-	decider('temps'); // « ne rien faire » : conséquences naturelles (Q25)
-	Confort.Son.bip('consequence'); // prompt 30
-	if (dernierResultat) Jeu.malusSieste(dernierResultat); // −5 sur la jauge concernée
-	// Prompt 62 : pas d'interaction() ici — le joueur n'a rien fait, il peut se rendormir
+	phase = 'attente';
+	if (d && Jeu.paquet.indexOf(d) >= Jeu.index) expirerEnFond(d, !actifDe(d)); // malus de sieste appliqué par siesteExpiration
+	// Prompt 62 : pas d'interaction() ici — le joueur n'a rien fait
 }
 
 /** Après la narration d'une décision : incident suivant de la journée, ou attente de la fin de journée */
@@ -423,7 +416,7 @@ function terminerIntro() {
 // Relancé depuis le livre « Aide » et l'aide (T). « Tutoriel vu » persiste dans localStorage.
 // =====================================================================
 const CLE_TUTORIEL = 'pxe-nte001-tutoriel-vu';
-const ETAPES_TUTORIEL = 5;
+const ETAPES_TUTORIEL = 6; // prompt 78 : + « Le jour et la sieste »
 let tutoriel = null; // { etape, focus: 'suivant' | 'passer' }
 function tutorielVu() {
 	try {
@@ -716,7 +709,7 @@ function dessinerSommeil() {
 	const k = majSommeil();
 	if (k <= 0.001) return;
 	paupieres(drawingContext, k, L, H);
-	if (k > 0.5 && phase !== 'reveil') boutons = []; // yeux fermés : rien de caché n'est cliquable
+	if (k > 0.5 && phase !== 'reveil') boutons = []; // yeux fermés : rien de caché n'est cliquable (sauf « Se réveiller »)
 	if (k >= 0.999) {
 		// Yeux fermés : « Z » qui montent doucement, et une ligne pour comprendre ce qui se passe
 		const n = reduireAnimations ? 3 : 1 + (Math.floor(millis() / 600) % 3);
@@ -726,8 +719,10 @@ function dessinerSommeil() {
 		textFont(POLICE_TEXTE);
 		textSize(22);
 		fill('rgba(255,255,255,0.75)');
-		text(t('surv.sieste'), L / 2, H / 2 + 70);
+		text(t(SOMNO.forcee ? 'sieste.forcee' : 'surv.sieste'), L / 2, H / 2 + 70);
 		textAlign(LEFT, TOP);
+		// Prompt 78 : se réveiller (Espace, Entrée, Z ou clic) — le temps file ×100 tant qu'on dort
+		if (phase !== 'reveil') bouton(L / 2 - 200, H / 2 + 130, 400, 72, t('sieste.reveiller'), reveiller);
 	}
 }
 
@@ -831,7 +826,6 @@ function ouvrirObjetBureau(nom) {
 	if (nom === 'tasse') return boireCafe(); // prompt 52 : le café en main, puis le boost
 	if (nom === 'micro') return clicMicro(); // prompt 54 : push-to-talk
 	if (nom === 'webcam') return clicWebcam(); // prompt 57 : présence
-	if (nom === 'sablier') return clicSablier(); // prompt 51
 	if (OBJETS_BUREAU.some((o) => o.nom === nom && o.piece)) return interagirPiece(nom); // prompt 29
 }
 

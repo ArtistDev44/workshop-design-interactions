@@ -58,6 +58,8 @@ const PHASES_DOSSIER = ['decision', 'contradiction', 'conflit']; // prompt 68 : 
 const ETAPES_GUIDE = [
 	{ id: 'installer', cible: () => 'ecranPC', fait: () => vue === 'poste' },
 	{ id: 'jauges', cible: () => (vue === 'poste' && PC.etat === 'appli' ? 'jauges' : vue === 'poste' ? 'iconeSignalements' : 'ecranPC'), fait: () => phase === 'selection' || PHASES_DOSSIER.includes(phase) },
+	// Prompt 78 : la somnolence et le compromis de la sieste (validée en se reposant, ou après 10 s de lecture)
+	{ id: 'somnolence', cible: () => (vue === 'poste' && PC.etat === 'appli' ? 'somnolence' : vue === 'poste' ? 'iconeSignalements' : 'ecranPC'), fait: () => enSieste || (vue === 'poste' && PC.etat === 'appli' && millis() - GUIDE.debutEtape > 10000) },
 	// Prompt 66 : étape dédiée au signalement (prendre le dossier lance le compteur)
 	{ id: 'prendre', cible: () => (vue === 'poste' && PC.etat === 'appli' ? 'fileSignalements' : vue === 'poste' ? 'iconeSignalements' : 'ecranPC'), fait: () => PHASES_DOSSIER.includes(phase) || phase === 'narration' || (Jeu.historique || []).length > 0 },
 	// Prompt 72 : si le dossier est une alerte, l'étape pointe ses réponses rédigées

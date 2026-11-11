@@ -2,7 +2,7 @@
  * - Jauges : la barre glisse vers sa nouvelle valeur (eased, ~600 ms) ; le delta réel flotte au-dessus et
  *   s'efface ; sous 20 (Q46), pulsation douce en opacité au lieu d'un clignotement sec.
  * - Arrivée d’un dossier : tampon « SIGNALEMENT » qui s’imprime (prompt 73 : plus de carte, donc plus de ligne qui pulse).
- * - Urgence (< 10 s) : barre du compteur rouge qui pulse, sablier qui s'emballe, tic-tac plus fort.
+ * - Urgence (< 10 s) : barre du compteur rouge qui pulse, tic-tac plus fort.
  * Animations réduites : valeurs directes, deltas en texte fixe, tampon direct, rien ne pulse ni ne coule.
  * Toutes les pulsations ≤ 1,5 par seconde. game.js n'est pas touché.
  */
