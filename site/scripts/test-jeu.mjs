@@ -566,6 +566,13 @@ verifier(p79.plainteTemps, 'prompt 79 : réponse à temps sans malus');
 verifier(p79.plainteTard, 'prompt 79 : réponse tardive = même malus');
 verifier(p79.bilan, 'prompt 79 : bilan plaintes à temps/tard/expirées incorrect');
 
+// Prompt 80 (revue UX) : plus aucun libellé visible ne parle de l'ancienne « Carte »/"Map"
+const libelles80 = vm.runInContext(
+	'Object.entries(TRADUCTIONS.fr).concat(Object.entries(TRADUCTIONS.en)).filter(([k, v]) => /\\b(Carte|Map)\\b/.test(String(v)) && !k.startsWith("carte.") && !k.startsWith("enq.carte.inconnue")).map(([k]) => k)',
+	fr,
+);
+verifier(libelles80.length === 0, 'prompt 80 : libellés « Carte/Map » restants : ' + libelles80.join(', '));
+
 // Traductions : toute clé française existe en anglais
 const manquantes = vm.runInContext('Object.keys(TRADUCTIONS.fr).filter((k) => TRADUCTIONS.en[k] === undefined)', fr);
 verifier(manquantes.length === 0, `clés sans traduction anglaise : ${manquantes.slice(0, 8).join(', ')}`);

@@ -189,3 +189,24 @@ Ce qui a changé pour le joueur :
 - **Objectif du jour** rappelé en clair dans le panneau d'attente, avec **bilan de la veille** (chiffres réels du journal).
 
 Choix assumé : l'ordre d'arrivée des dossiers reste chronologique (heures réelles de la source) — le mélanger aurait modifié le paquet et donc les règles Q1–Q61 ; `game.js` est inchangé (test : l'ordre du paquet est identique avant/après les décisions).
+
+## Revue UX globale du 11/11/2026 (prompt 80)
+
+Parcours revu de bout en bout (3 parties rejouées de bout en bout FR + EN via `test-jeu.mjs`, lecture du code
+pour chaque écran) : menu principal → bureau → ouverture du PC → écran de jeu (file de signalements, prompt 73)
+→ panneau incident → décision → narration → applis (Patron, Community, Journal, Indicateurs, Aide) →
+notifications (prompt 77) → sieste (prompt 78) → fin de journée / sortie (prompt 69) → fins et rapport.
+
+Frictions trouvées et corrigées, par priorité :
+
+- **Confus** — le bandeau d'état et le tutoriel citaient encore « carte / map » comme source d'enquête
+  (renommée « Réseau » au prompt 73) et parlaient d'un repère sur la carte supprimée : corrigé FR + EN
+  (`etat.decision`, `tuto.2.texte` ×2 langues, `enq.source.carte` EN, `enq.carte.lignes` « surlignée dans la file »).
+- **Mineur** — les icônes de la barre des tâches n'avaient pas d'infobulle au survol (seul le bouton
+  démarrer en avait une) : infobulle ajoutée sur chaque icône (nom de l'appli, FR + EN).
+- **Vérifié sans friction bloquante** — états vides explicites (« aucun signalement — prochaine arrivée à … »),
+  retour arrière visible partout (Échap, croix, « Fermer »), compteurs de non lus dans la barre des tâches,
+  annonces `aria-live`, cibles ≥ 44 px en mobile, `prefers-reduced-motion` respecté.
+
+Vérification : `npm run build` ✅, `npm test` ✅ (smoke 191 + test-jeu 237 contrôles, dont 1 nouveau :
+aucun libellé « Carte/Map » restant hors clés internes). `game.js` non modifié par cette revue.

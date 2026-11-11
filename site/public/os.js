@@ -245,6 +245,8 @@ function dessinerBarreTaches() {
 		}
 		ic.dessin(x + 10, tb + 12, 0.7);
 		boutons.push({ x, y: tb + 8, l: 76, h: BARRE_OS - 16, action: () => ouvrirIconeOS(i) });
+		// Revue UX (prompt 80) : infobulle au survol de chaque icône de la barre des tâches
+		if (mouseX >= x && mouseX <= x + 76 && mouseY >= tb + 8 && mouseY <= tb + BARRE_OS - 8) infobulle(String(ic.nom), x - 10, tb - 46);
 		const b = ic.cle === 'indicateurs' ? '' : badgeIcone(ic.cle);
 		if (b) dsBadge(x + 68, tb + 10, b, 'erreur');
 	});
