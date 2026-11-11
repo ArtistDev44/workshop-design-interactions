@@ -4,6 +4,7 @@ Règle : chaque push sur la branche main ajoute une entrée dans le tableau, la 
 
 | Date | Commit | Fichiers | Résumé |
 |---|---|---|---|
+| 2026-11-11 | ce commit | journal.md | Fusion dans main du prompt 90 (notifications variées sur le téléphone) |
 | 2026-11-11 | ce commit (branche prompts/90-notifications-telephone) | prompts/90-jeu-notifications-telephone-variees.md, prompts/README.md, journal.md | Nouveau prompt 90 : notifications du téléphone diversifiées (sources réelles et de la partie, rythme, centre de notifications) |
 | 2026-11-11 | ce commit | journal.md | Fusion dans main du prompt 89 (appli Journal de bord modernisée) |
 | 2026-11-11 | ce commit (branche prompts/89-journal-moderne) | prompts/89-jeu-journal-de-bord-moderne.md, prompts/README.md, journal.md | Nouveau prompt 89 : appli Journal de bord modernisée (tuiles, frise, filtres, vue semaine, enquête illustrée) |
