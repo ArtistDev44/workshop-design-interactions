@@ -26,7 +26,7 @@ function ouvrirInspection() {
 }
 function texteInspection(i) {
 	const sujet = i.ligne ? t('insp.ligne', { ligne: i.ligne }) : i.nature;
-	return t('insp.texte', { date: dateLongue(i.jour), heure: i.heure || '—', sujet, action: t('action.' + i.cle) });
+	return t('insp.texte', { date: dateLongue(i.jour), heure: i.heure || '—', sujet, action: String(Jeu.libelleAction(i.cle)) }); // prompt 87 : réponse de catégorie ou action historique
 }
 function repondreInspection(n) {
 	const r = Jeu.repondreInspection(JAUGES_INSPECTION[n]);

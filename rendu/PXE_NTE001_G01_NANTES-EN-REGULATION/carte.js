@@ -37,6 +37,12 @@ function fileIncidents() {
 	}
 	return f;
 }
+/** Prompt 87 : état d'un signalement en file — « expire dans » en défi chrono, sinon « s'aggrave ↑ » ou « en attente » */
+function etatFile(it) {
+	if (Jeu.defiChrono) return t('carte.expireDans', { s: Math.ceil(resteAvantExpiration(it) / 1000) });
+	const re = Jeu.retardEffectif(it.d);
+	return re !== null && it.d.retard !== null && it.d.retard !== undefined && re > it.d.retard ? t('carte.aggrave', { effectif: re }) : t('carte.enAttente');
+}
 const resteAvantExpiration = (it) => Math.max(0, 2 * compteurSemaine() * facteurLecture() - (millis() - it.depuis));
 
 /** Un signalement arrive (appelé à la place de nouveauDossier quand le joueur n'est pas endormi) */
@@ -59,7 +65,7 @@ function selectionnerIncident() {
 
 // ——— Panneau de droite pendant la sélection : le signalement choisi dans la file (liste à gauche, prompt 73) ———
 function dessinerSelection() {
-	const base = { x: DROITE.x, y: DROITE.y + 130, l: DROITE.l, h: DROITE.h - 130 };
+	const base = Object.assign({}, PANNEAU);
 	panneau(base.x, base.y, base.l, base.h, C.orange);
 	const f = fileIncidents();
 	const it = f[SELECTION.focus] || f[0];
@@ -83,7 +89,7 @@ function dessinerSelection() {
 	text(t('carte.gravite', { g: t('gravite.' + Jeu.gravite(d)) }) + ' · ' + Jeu.formaterHeure(d.minute), base.x + 32, base.y + 116);
 	fill(C.gris);
 	textSize(18);
-	text(t('carte.expireDans', { s: Math.ceil(resteAvantExpiration(it) / 1000) }), base.x + 32, base.y + 150);
+	text(etatFile(it), base.x + 32, base.y + 150);
 	textFont(POLICE_TEXTE);
 	textSize(19);
 	fill(C.texte);
@@ -229,7 +235,7 @@ function dessinerFileSignalements(z) {
 	textSize(16);
 	textLeading(21);
 	fill(C.gris);
-	text(t(phase === 'selection' ? 'sig.consigne' : enCours ? (MULTI.actifs.length > 1 ? 'multi.consigne' : 'sig.consigneEnCours') : 'sig.consigneAttente'), z.x + 20, z.y + 52, z.l - 40, 56);
+	text(t(phase === 'selection' ? 'sig.consigne' : enCours ? (MULTI.actifs.length > 1 ? 'multi.consigne' : Jeu.defiChrono ? 'sig.consigneEnCours' : 'sig.consigneEnCoursSans') : 'sig.consigneAttente'), z.x + 20, z.y + 52, z.l - 40, 56);
 	if (!f.length) {
 		const prochain = Jeu.prochainDuJour ? Jeu.prochainDuJour() : null;
 		textFont(POLICE_TEXTE);
@@ -267,8 +273,8 @@ function dessinerFileSignalements(z) {
 		text(texteLignes(d, it.index), z.x + 40, y + 44, z.l - 80, 26);
 		textFont(POLICE_DONNEES);
 		textSize(17);
-		fill(actif && resteA < 10000 ? C.rouge : C.gris); // compteur d'un actif en rouge sous 10 s
-		const etat = actif ? t(courant ? 'multi.enCours' : 'multi.actif', { s: Math.ceil(resteA / 1000) }) : t('carte.expireDans', { s: Math.ceil(resteAvantExpiration(it) / 1000) });
+		fill(Jeu.defiChrono && actif && resteA < 10000 ? C.rouge : C.gris); // compteur d'un actif en rouge sous 10 s (défi chrono)
+		const etat = actif ? (Jeu.defiChrono ? t(courant ? 'multi.enCours' : 'multi.actif', { s: Math.ceil(resteA / 1000) }) : t(courant ? 'multi.enCoursSans' : 'multi.actifSans')) : etatFile(it); // prompt 87
 		text(t('carte.gravite', { g: t('gravite.' + Jeu.gravite(d)) }) + ' · ' + etat, z.x + 40, y + 78, z.l - 80, 26);
 		if (courant || actif || surligne || (r === SELECTION.focus && phase === 'selection')) {
 			noFill();

@@ -563,7 +563,7 @@ function enqueteJournal(z, e, j) {
 		lignes.push(t('journal.evaluation', { eval: t('eval.' + Jeu.evaluer(e)) }));
 		lignes.push(t('journal.meilleure', { action: String(e.meilleureAction) }));
 		// Ce que chaque action aurait donné en moyenne dans ce contexte : c'est là que l'on apprend les effets (prompt 50)
-		lignes.push(t('journal.attendus', { liste: ['devier', 'retenir', 'renfort'].map((a) => t('action.' + a) + ' ' + signe(Math.round(e.attendus[a]))).join(' · ') }));
+		lignes.push(t('journal.attendus', { liste: Object.keys(e.attendus).filter((a) => Jeu.familleDe(a) !== 'rien').map((a) => String(Jeu.libelleAction(a)) + ' ' + signe(Math.round(e.attendus[a]))).join(' · ') }));
 	} else {
 		const p = (Jeu.plaintes || []).find((x) => x.index === idx);
 		if (p) {

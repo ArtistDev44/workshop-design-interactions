@@ -197,7 +197,7 @@ function heureAffichee() {
 
 /** Le temps de jeu est-il arrêté ? (fin, mail, soir, démarrage du PC, SMS, pause, tutoriel, transition, fenêtres) */
 function tempsSuspendu() {
-	return ecran !== 'jeu' || !Jeu.horloge || phase === 'fin' || phase === 'mail' || phase === 'soir' || pcDemarre() || smsActif || enPause || tutoriel || TRANSITION_JOUR || mecaniquesSuspendentTemps() || fenetre === 'poste'; // prompt 74 : explication du poste
+	return ecran !== 'jeu' || !Jeu.horloge || phase === 'fin' || phase === 'mail' || phase === 'soir' || pcDemarre() || smsActif || enPause || tutoriel || TRANSITION_JOUR || mecaniquesSuspendentTemps() || fenetre === 'poste' || lecturePanneau(); // prompt 74 : explication du poste ; prompt 87 : lecture d'un signalement
 }
 function tempsCompresse() {
 	return ecran === 'jeu' && (phase === 'attente' || phase === 'reveil') && !tempsSuspendu(); // « ×100 » seulement quand le temps file vraiment
@@ -216,6 +216,13 @@ function avancerTemps() {
 	majSomnolence(dt, Jeu.horloge.minutes - avant); // prompt 78 : la somnolence monte avec le temps de jeu et l'inactivité
 	if (Jeu.majSuivis && Jeu.majSuivis()) Confort.Son.bip('choix'); // prompt 63 : une réaction arrive sur Community
 
+	// Prompt 87 : sans chrono, rien n'expire pendant la journée ; à l'heure de fin, ce qui reste suit la règle « non traité » (Q25)
+	if (!Jeu.defiChrono && (phase === 'attente' || phase === 'selection') && Jeu.etat.mode !== 'direct' && Jeu.horloge.minutes >= Jeu.finJournee() && Jeu.prochainDuJour()) {
+		const n = Jeu.expirerFinJournee();
+		MULTI.actifs = [];
+		phase = 'attente';
+		if (n) annoncer(t('horloge.nonTraites', { n }));
+	}
 	if (phase === 'attente') {
 		// Prompt 78 : plus de sieste après 20 s d'inactivité — elle tombe quand la somnolence est pleine (sieste.js)
 		const prochain = Jeu.prochainDuJour();
@@ -234,7 +241,7 @@ function arriveeIncident() {
 		if (!urgent) return;
 		const c = (Jeu.etat.semaine && Jeu.etat.semaine.difficulte && Jeu.etat.semaine.difficulte.compteur_s) || 30;
 		phase = 'reveil';
-		reveil = { limite: millis() + (IMMERSION.fenetreReveilMs[c] || 2000), d: urgent };
+		reveil = { limite: millis() + (Jeu.defiChrono ? IMMERSION.fenetreReveilMs[c] || 2000 : 3000), d: urgent }; // prompt 87 : 3 s hors défi chrono
 		Confort.Son.bip('alerte');
 		setTimeout(() => Confort.Son.bip('alerte'), 180);
 		setTimeout(() => Confort.Son.bip('alerte'), 360);
@@ -313,7 +320,7 @@ function bordureRouge(x, y, l, h, epaisseur) {
 
 // ——— Panneau « attente » (aucun incident actif) ———
 function dessinerAttente() {
-	const z = { x: DROITE.x, y: DROITE.y + 130, l: DROITE.l, h: DROITE.h - 130 };
+	const z = Object.assign({}, PANNEAU);
 	panneau(z.x, z.y, z.l, z.h);
 	const hA = heureAffichee();
 	textAlign(LEFT, TOP);
@@ -1027,4 +1034,9 @@ function fenetrePoste() {
 	fill(C.gris);
 	text(t('poste.apprendre'), x + 56, y + h - 196, l - 112, 90);
 	bouton(x + l - 56 - 360, y + h - 96, 360, 64, t('poste.compris'), fermer);
+}
+/** Prompt 87 : hors défi chrono, l'horloge du jeu s'arrête pendant la lecture d'un signalement ouvert (panneau de décision
+ * affiché) ; elle tourne sur la liste, dans les autres applis et au bureau. */
+function lecturePanneau() {
+	return !Jeu.defiChrono && typeof PHASES_ACTIVES !== 'undefined' && PHASES_ACTIVES.includes(phase) && vue === 'poste' && PC.etat === 'appli';
 }

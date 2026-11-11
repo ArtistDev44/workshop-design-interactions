@@ -20,6 +20,7 @@ function multiReset() {
 	if (MULTI.paquet === Jeu.paquet) return;
 	MULTI.paquet = Jeu.paquet;
 	MULTI.actifs = [];
+	MULTI.MAX = Jeu.defiChrono ? 3 : Jeu.difficulte().actifs; // prompt 87 : 3 / 2 / 1 selon la difficulté, sans chrono
 	NOTIFS.vus = null; // les notifications déjà affichées s'effacent seules (6 s)
 }
 const actifDe = (d) => MULTI.actifs.find((a) => a.d === d) || null;
@@ -78,7 +79,7 @@ function selectionnerActif(a) {
 	sauverActif();
 	restaurerActif(a);
 	Confort.Son.clic();
-	annoncer(t('multi.selection', { quoi: t('enq.signalement.' + a.d.type), s: Math.max(0, Math.ceil(resteActif(a) / 1000)) }));
+	annoncer(Jeu.defiChrono ? t('multi.selection', { quoi: t('enq.signalement.' + a.d.type), s: Math.max(0, Math.ceil(resteActif(a) / 1000)) }) : t('multi.selectionSans', { quoi: t('enq.signalement.' + a.d.type) })); // prompt 87
 }
 /** Tab (2 actifs ou plus) : passe au signalement actif suivant ; true si la touche est prise */
 function toucheMultitache() {
@@ -135,6 +136,7 @@ function majMultitache() {
 	if (ecran !== 'jeu' || !Jeu.paquet || ['fin', 'mail', 'soir', 'reveil'].includes(phase) || enPause) return;
 	multiReset();
 	fileIncidents(); // détecte les arrivées (notification à la première apparition)
+	if (!Jeu.defiChrono) return; // prompt 87 : sans chrono, aucune expiration en cours de journée (fin de journée : immersion.js)
 	// Le signalement sélectionné : compteur à 0 même si l'appli n'est pas affichée
 	const s = actifSelectionne();
 	if (s && (phase === 'decision' || phase === 'contradiction') && resteActif(s) <= 0) {

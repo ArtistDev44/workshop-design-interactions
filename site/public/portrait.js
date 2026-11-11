@@ -117,7 +117,7 @@ function composerPortrait() {
 
 /** Appli Signalements : jauges fixes, puis liste des signalements + lignes et dossier (défilables), barre des tâches + « Se lever » fixes */
 function regionsAppli() {
-	const hj = region(appliVersImage({ x: DROITE.x, y: DROITE.y, l: DROITE.l, h: 110 }), 20, 12, PL - 40);
+	const hj = region(appliVersImage(BANDEAU), 20, 12, PL - 40); // prompt 87 : bandeau fin
 	const hs = region(appliVersImage(ZONE_SOMNO), (PL - 600) / 2, 12 + hj + 8, 600); // prompt 78 : somnolence (≥ 44 px)
 	const haut = 12 + hj + 8 + hs + 10;
 	const bas = PH - 190;
@@ -129,8 +129,7 @@ function regionsAppli() {
 	const nSig = Math.max(1, Math.min(typeof fileIncidents === 'function' ? fileIncidents().length : 1, 7));
 	y += region(appliVersImage({ x: FILE_SIG.x, y: FILE_SIG.y, l: FILE_SIG.l, h: Math.min(FILE_SIG.h, 130 + nSig * 122) }), 20, y, PL - 40, true) + 16;
 	const yDossier = y;
-	y += region(appliVersImage({ x: DROITE.x, y: DROITE.y + 130, l: DROITE.l, h: DROITE.h - 130 }), 20, y, PL - 40, true) + 16;
-	y += region(appliVersImage(LISTE), (PL - 560) / 2, y, 560, true);
+	y += region(appliVersImage(PANNEAU), 20, y, PL - 40, true) + 16;
 	PORTRAIT.defilMax = Math.max(0, y - bas);
 	// Défilement automatique : vers le dossier à son arrivée, vers la liste des signalements quand on attend
 	const enDossier = ['decision', 'contradiction', 'conflit', 'narration'].includes(phase);

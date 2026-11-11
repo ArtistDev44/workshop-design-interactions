@@ -3,7 +3,7 @@
 // joue chaque semaine archivée de bout en bout avec les vraies fonctions de game.js et vérifie des
 // invariants : jauges bornées, avancée du paquet, journées, mails, bilan, sauvegarde / reprise,
 // reproductibilité, mécaniques du prompt 47. Aucune donnée inventée : seules les archives du dépôt.
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
@@ -25,7 +25,7 @@ function contexte(langue, stockage = new Map(), avecHistoire = false) {
 	ctx.window = ctx;
 	ctx.globalThis = ctx;
 	vm.createContext(ctx);
-	const fichiers = ['data/lignes.js', 'data/semaines.js', 'data/fallback.js', 'data/messages.js', 'i18n.js', 'game.js', 'alertes.js', 'rythme.js']; // prompts 72 / 74 : logique pure de la couche d'affichage
+	const fichiers = ['data/lignes.js', 'data/semaines.js', 'data/fallback.js', 'data/messages.js', 'data/reponses.js', 'i18n.js', 'game.js', 'rythme.js']; // prompt 74 : logique pure de la couche d'affichage
 	if (avecHistoire) fichiers.push('confort.js', 'histoire.js'); // prompt 56 : progression et palmarès (localStorage)
 	for (const f of fichiers) {
 		vm.runInContext(readFileSync(join(pub, f), 'utf8'), ctx, { filename: f });
@@ -396,72 +396,7 @@ verifier(eq.policeAvant === 1 && eq.policeMatin === 2, `équipes : effectifs non
 	verifier(/pcDemarre\(\)/.test((readFileSync(join(pub, 'immersion.js'), 'utf8').match(/function tempsSuspendu\(\) \{\n\treturn [^\n]*;/) || [''])[0]), 'démarrage PC : le temps de jeu doit être suspendu pendant le démarrage (et « ×30 » masqué)');
 }
 
-// Prompt 72 : réponses d'alerte — chacune mappe vers UNE action existante ou UN envoi d'équipe, mélange reproductible
-{
-	const al = vm.runInContext(
-		`(() => {
-		const actions = ['devier', 'retenir', 'renfort', 'rien'];
-		const out = { alertes: 0, nonAlertes: 0, erreurs: [], rafales: null, evenement: null, repro: true, graine: true, tirages: true };
-		for (const lundi of Jeu.semainesProposees().map((s) => s.lundi)) {
-			Jeu.chargerSemaine(lundi); Jeu.nouvellePartie();
-			const tirages = Jeu.tirages;
-			Jeu.paquet.forEach((d, n) => {
-				const r = Alertes.reponses(d, n);
-				if (!Alertes.estAlerte(d)) { out.nonAlertes++; if (r.length) out.erreurs.push('non-alerte avec réponses : ' + d.type); return; }
-				out.alertes++;
-				if (r.length < 2 || r.length > Alertes.MAX_REPONSES) out.erreurs.push('nombre de réponses ' + r.length);
-				if (!r.some((x) => x.cible.action)) out.erreurs.push('aucune réponse ne décide du dossier');
-				r.forEach((x) => {
-					const n1 = (x.cible.action ? 1 : 0) + (x.cible.equipe ? 1 : 0);
-					if (n1 !== 1) out.erreurs.push('réponse sans cible unique : ' + x.id);
-					if (x.cible.action && !actions.includes(x.cible.action)) out.erreurs.push('action inconnue ' + x.cible.action);
-					if (x.cible.equipe && !Jeu.TYPES_EQUIPES.includes(x.cible.equipe)) out.erreurs.push('équipe inconnue ' + x.cible.equipe);
-					if (TRADUCTIONS.fr[x.cle] === undefined || TRADUCTIONS.en[x.cle] === undefined) out.erreurs.push('libellé manquant ' + x.cle);
-					// Aucune réponse sans source réelle : chaque trou rempli par une valeur lue dans le dossier ou la météo du jour
-					Object.entries(x.vars).forEach(([k, v]) => { if (v === null || v === undefined || v === '') out.erreurs.push('trou vide ' + k + ' dans ' + x.id); });
-					if (x.vars.evenement && !String(d.texte_source).startsWith(x.vars.evenement)) out.erreurs.push('événement non tiré de la source');
-					if (x.vars.rafales && !/rafale|vent/i.test(d.nature) && Number(String(x.vars.rafales).replace(',', '.')) !== (Jeu.meteoDuJour(d.date) || {}).rafales_max) out.erreurs.push('rafales non tirées des données');
-				});
-				const r2 = Alertes.reponses(d, n);
-				if (r2.map((x) => x.id).join() !== r.map((x) => x.id).join()) out.repro = false;
-				if (d.type === 'alerte météo' && /rafale/.test(d.nature)) out.rafales = r.map((x) => x.id);
-				if (d.type === 'événement' && !out.evenement) out.evenement = { ids: r.map((x) => x.id), vars: r.map((x) => x.vars.evenement).filter(Boolean)[0], src: d.texte_source };
-			});
-			if (Jeu.tirages !== tirages) out.tirages = false; // les réponses ne consomment pas les dés
-		}
-		// Le mélange dépend de la graine (même dossier, autre graine → au moins un ordre différent sur 20)
-		const d = Jeu.paquet.find((x) => Alertes.estAlerte(x));
-		const ordres = new Set(Array.from({ length: 20 }, (_, g) => Alertes.reponses(d, 0, g).map((x) => x.id).join()));
-		out.graine = ordres.size > 1;
-		// Secours (fixture de test, jamais affichée : aucun accident dans les archives du dépôt)
-		Jeu.elementDebloque = () => true;
-		out.secours = Alertes.reponses({ type: 'perturbation', nature: 'incident', texte_source: 'Malaise voyageur', date: '2026-10-12', lignes: ['C1'] }, 0, 1).map((x) => x.cible.equipe || x.cible.action).sort();
-		out.secoursLigne = Alertes.reponses({ type: 'perturbation', nature: 'incident', texte_source: 'Malaise voyageur', date: '2026-10-12', lignes: ['C1'] }, 0, 1).some((x) => x.vars.ligne === 'C1') || Alertes.reponses({ type: 'perturbation', nature: 'incident', texte_source: 'Malaise voyageur', date: '2026-10-12', lignes: ['C1'] }, 0, 1).length === 3;
-		// Pluie forte réelle (12/10/2026 : 7,4 mm) sur une alerte météo du même jour → « dévier » proposé
-		out.pluie = Alertes.reponses({ type: 'alerte météo', nature: 'pluie', valeur: null, date: '2026-10-12' }, 0, 1).map((x) => x.id);
-		// Équipes verrouillées (mode histoire) : plus de réponse « équipe »
-		Jeu.elementDebloque = (x) => x !== 'equipes';
-		out.verrou = Alertes.reponses({ type: 'événement', texte_source: 'Concert — Nantes', date: '2026-10-12' }, 0, 1).every((x) => x.cible.action);
-		Jeu.elementDebloque = () => true;
-		out.perturbation = Alertes.reponses({ type: 'perturbation', nature: 'manifestation', texte_source: 'Manifestation 13/10', date: '2026-10-12' }, 0).length;
-		return out;
-	})()`,
-		fr,
-	);
-	verifier(al.erreurs.length === 0, `alertes : ${al.erreurs.slice(0, 5).join(' · ')}`);
-	verifier(al.alertes > 0 && al.nonAlertes > 0, `alertes : ${al.alertes} alertes, ${al.nonAlertes} autres dans les archives`);
-	verifier(al.repro && al.graine, `alertes : mélange non reproductible (${al.repro}) ou indépendant de la graine (${al.graine})`);
-	verifier(al.tirages, 'alertes : les réponses ne doivent pas consommer les tirages de dés');
-	verifier(al.rafales && al.rafales.includes('pompiers') && !al.rafales.includes('devierPluie'), `alertes : rafales réelles 50,4 km/h → pompiers, pas de pluie (${al.rafales})`);
-	verifier(al.evenement && al.evenement.ids.includes('policeEvenement') && al.evenement.src.startsWith(al.evenement.vars), `alertes : événement réel → police avec son nom (${JSON.stringify(al.evenement)})`);
-	verifier(JSON.stringify(al.secours) === JSON.stringify(['ambulance', 'devier', 'police']) && al.secoursLigne, `alertes : malaise → ambulanciers, police, dévier (${al.secours})`);
-	verifier(al.pluie.includes('devierPluie'), `alertes : pluie réelle 7,4 mm → dévier (${al.pluie})`);
-	verifier(al.verrou, 'alertes : équipes verrouillées → aucune réponse « équipe »');
-	verifier(al.perturbation === 0, 'alertes : une manifestation (perturbation sans secours) garde les actions 1/2/3/0 seules');
-	const sk = readFileSync(join(pub, 'sketch.js'), 'utf8');
-	verifier(/function choisirReponse\(i\)[\s\S]*?decider\(r\.cible\.action\)[\s\S]*?envoyerEquipeIncident\(r\.cible\.equipe\)/.test(sk), 'alertes : la réponse doit appeler decider() ou envoyerEquipeIncident()');
-	verifier(!/\bAlertes\.|alerte\.reponse/.test(readFileSync(join(pub, 'game.js'), 'utf8')), 'alertes : game.js doit rester inchangé');
-}
+// Prompt 72 : réponses d'alerte — retirées par le prompt 87 (remplacées par les réponses par catégorie, data/reponses.json)
 
 // Prompt 73 : plus de carte — liste de signalements ; prendre un signalement hors tête de file ne casse rien
 {
@@ -627,6 +562,7 @@ verifier(eq.policeAvant === 1 && eq.policeMatin === 2, `équipes : effectifs non
 	for (const f of ['enquete.js', 'carte.js', 'multitache.js']) vm.runInContext(readFileSync(join(pub, f), 'utf8'), cm, { filename: f });
 	const m = vm.runInContext(
 		`(() => {
+		Jeu.defiChrono = true; // prompt 87 : compteurs parallèles et expiration = mode défi chrono
 		Jeu.chargerSemaine('2026-11-02'); Jeu.nouvellePartie();
 		const ds = Jeu.jourCourant().dossiers; Jeu.horloge.minutes = ds[3].minute;
 		const arrivees = fileIncidents().length;
@@ -675,6 +611,7 @@ verifier(eq.policeAvant === 1 && eq.policeMatin === 2, `équipes : effectifs non
 	for (const f of ['enquete.js', 'carte.js', 'multitache.js', 'sieste.js']) vm.runInContext(readFileSync(join(pub, f), 'utf8'), cz, { filename: f });
 	const z = vm.runInContext(
 		`(() => {
+		Jeu.defiChrono = true; // prompt 87 : l'expiration en cours de journée n'existe qu'en défi chrono
 		Jeu.chargerSemaine('2026-11-02'); Jeu.nouvellePartie();
 		const R = Jeu.REGLAGES.somnolence;
 		inactifDepuis = __t;
@@ -721,6 +658,7 @@ verifier(eq.policeAvant === 1 && eq.policeMatin === 2, `équipes : effectifs non
 {
 	const ra = vm.runInContext(
 		`(() => {
+		Jeu.defiChrono = true; // prompt 87 : en défi chrono, l'aggravation garde sa vitesse d'origine (×1)
 		Jeu.chargerSemaine('2026-10-12'); Jeu.nouvellePartie();
 		// Fixtures de test (jamais affichées) : les archives du dépôt n'ont pas de retard chiffré (il vient du GTFS-RT en direct)
 		const fx = (min) => ({ date: Jeu.paquet[0].date, type: 'ligne en difficulté', nature: 'retard', lignes: ['C1'], retard: 12, minute: min, texte_source: 'fixture', source: 'test' });
@@ -763,6 +701,7 @@ verifier(eq.policeAvant === 1 && eq.policeMatin === 2, `équipes : effectifs non
 		const s2 = JSON.parse(JSON.stringify(Jeu.instantane(31000)));
 		const relatif = s2.plaintes[s2.plaintes.length - 1].depuis === -30000;
 		const mail = Jeu.mailDuJour().lignes.map(String).join(' | ');
+		Jeu.defiChrono = false;
 		return { r, g: [g0, g1], q58, fige, ev, durable, total, avecDurable, snap: snap.aggravationLignes, matin, rapide: rapide.tardive === false && rapide.effets.reputation === 2, tard: tard.tardive === true && tard.effets.reputation === -1, avant, expire, bc, relatif, mailCommunity: /Community/.test(mail) };
 	})()`,
 		fr,
@@ -954,6 +893,92 @@ verifier(manquantes.length === 0, `clés sans traduction anglaise : ${manquantes
 // Une partie en anglais ne laisse pas de texte manquant
 const en = jouer(contexte('en'), semaines[0], SUITES[0]);
 verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails anglais : texte manquant');
+
+// Prompt 87 : décider sans chrono — catégories réelles, réponses sans dominante, tendance honnête, horloge en pause
+{
+	const cr = contexte('fr');
+	const r = vm.runInContext(
+		`(() => {
+		const out = { cats: {}, sansCat: 0, erreursRep: [], dominantes: [], tendance: [], fin: null, defi: null, sauve: null, ancien: null, cles: [] };
+		const signe = (v) => (Math.abs(v) < 1.5 ? 0 : Math.sign(v));
+		for (const lundi of Jeu.semainesProposees().map((x) => x.lundi)) {
+			Jeu.defiChrono = false;
+			Jeu.chargerSemaine(lundi); Jeu.nouvellePartie();
+			for (const d of Jeu.paquet) {
+				const c = Jeu.categorie(d);
+				if (!c) { out.sansCat++; continue; }
+				out.cats[c] = (out.cats[c] || 0) + 1;
+				const cles = Jeu.actionsPossibles(d);
+				if (cles.length < 3 || cles.length > 4 || !cles.some((k) => Jeu.familleDe(k) === 'rien')) out.erreursRep.push(lundi + ' ' + c + ' ' + cles.length);
+				for (const k of cles) if (!Jeu.libelleAction(k) || /^rep\\./.test(Jeu.libelleAction(k))) out.cles.push(k);
+				// La tendance affichée a le signe de l'effet attendu
+				const e = Jeu.effetsAttendus(cles[0], d);
+				if (!Array.isArray(e) || e.length !== 3 || e.some((v) => typeof v !== 'number' || isNaN(v))) out.tendance.push(cles[0]);
+			}
+		}
+		// Aucune réponse dominante : chaque réponse est la meilleure (somme des effets attendus, même calcul que journaliser)
+		// dans au moins un contexte réel du jeu — dossiers réels (semaines + hors ligne) rejoués aux dates archivées
+		// (météo réelle de ces jours), en heure creuse ou de pointe, avec un retard court ou long
+		const meilleure = {};
+		const reels = [];
+		for (const lundi of Jeu.semainesProposees().map((x) => x.lundi)) { Jeu.chargerSemaine(lundi); Jeu.nouvellePartie(); reels.push(...Jeu.paquet); }
+		Jeu.chargerHorsLigne(); Jeu.nouvellePartie(); reels.push(...Jeu.paquet);
+		const dates = [...new Set(reels.map((d) => d.date))];
+		for (const d0 of reels) {
+			if (!Jeu.categorie(d0)) continue;
+			// Les archives ne contiennent ni retard mesuré (GTFS-RT, mode direct) ni accident : variantes de test construites
+			// sur des perturbations réelles (mêmes lignes, dates et heures), pour couvrir ces deux catégories
+			const types = d0.type === 'perturbation' && d0.lignes && d0.lignes.length ? [{}, { type: 'ligne en difficulté' }, { texte_source: 'Accident — ' + d0.texte_source }] : [{}];
+			for (const v of types) for (const date of dates) for (const heure of ['12:00', '08:00']) for (const retard of (v.type || d0.type) === 'ligne en difficulté' ? [10, 30] : [d0.retard]) {
+				const d = Object.assign({}, d0, v, { date, heure, retard });
+				const c = Jeu.categorie(d); if (!c) continue;
+				out.cats[c] = out.cats[c] || 0;
+				const sc = Jeu.actionsPossibles(d).map((k) => [k, Jeu.effetsAttendus(k, d).reduce((a, b) => a + b, 0)]).sort((a, b) => b[1] - a[1]);
+				meilleure[sc[0][0]] = true;
+			}
+		}
+		for (const c of Object.keys(Jeu.REPONSES)) for (const x of Jeu.REPONSES[c]) if (!meilleure[c + '.' + x.id] && out.cats[c] !== undefined) out.dominantes.push(c + '.' + x.id);
+		out.reelsCats = {};
+		for (const d of reels) { const c = Jeu.categorie(d) || 'aucune'; out.reelsCats[c] = (out.reelsCats[c] || 0) + 1; }
+		// « Non traité » seulement à l'heure de fin : sans chrono, Jeu.expirerFinJournee règle ce qui reste du jour
+		Jeu.defiChrono = false;
+		Jeu.chargerSemaine('2026-11-02'); Jeu.nouvellePartie();
+		const j0 = Jeu.jourCourant().date, restants = Jeu.dossiersRestantsDuJour();
+		const n = Jeu.expirerFinJournee();
+		out.fin = { restants, n, toutTemps: Jeu.historique.slice(0, n).every((h) => h.action === 'temps'), plusRien: Jeu.dossiersRestantsDuJour() === 0, jour: Jeu.jourCourant().date === j0 };
+		// Difficulté : budget de départ et nombre d'actifs ; défi chrono = budget 50 d'avant
+		out.difficulte = Jeu.difficulte();
+		out.budget = Jeu.jauges.budget;
+		Jeu.defiChrono = true; Jeu.nouvellePartie(); out.defi = Jeu.jauges.budget;
+		// Sauvegarde : le mode est conservé ; une ancienne sauvegarde (sans le champ) se reprend en défi chrono
+		const snap = Jeu.instantane(0); Jeu.defiChrono = false; Jeu.restaurerInstantane(JSON.parse(JSON.stringify(snap)), 0); out.sauve = Jeu.defiChrono;
+		const vieux = JSON.parse(JSON.stringify(snap)); delete vieux.defiChrono; Jeu.defiChrono = false; Jeu.restaurerInstantane(vieux, 0); out.ancien = Jeu.defiChrono;
+		return out;
+	})()`,
+		cr,
+	);
+	verifier(['travaux', 'affluence', 'meteo'].every((c) => r.reelsCats[c] > 0) && !r.reelsCats.aucune, `réponses : catégories des dossiers réels (semaines + hors ligne) ${JSON.stringify(r.reelsCats)}`);
+	verifier(Object.keys(r.cats).length === 5, `réponses : les 5 catégories couvertes par le contrôle d'équilibre (${Object.keys(r.cats)})`);
+	verifier(r.erreursRep.length === 0, `réponses : 3 ou 4 réponses dont « attendre » (${r.erreursRep.slice(0, 5)})`);
+	verifier(r.cles.length === 0, `réponses : libellé manquant (${r.cles.slice(0, 5)})`);
+	verifier(r.tendance.length === 0, `réponses : effets attendus invalides (${r.tendance.slice(0, 5)})`);
+	verifier(r.dominantes.length === 0, `réponses : jamais la meilleure dans une situation réelle (${r.dominantes})`);
+	verifier(r.fin.restants > 0 && r.fin.n === r.fin.restants && r.fin.toutTemps && r.fin.plusRien && r.fin.jour, `fin de journée : non traités à l'heure de fin ${JSON.stringify(r.fin)}`);
+	verifier(r.difficulte && r.difficulte.actifs >= 1 && r.budget === r.difficulte.budget && r.defi === 50, `difficulté : budget ${r.budget} (attendu ${r.difficulte && r.difficulte.budget}), défi chrono ${r.defi}`);
+	verifier(r.sauve === true && r.ancien === true, `sauvegarde : mode défi conservé (${r.sauve}), ancienne sauvegarde en défi chrono (${r.ancien})`);
+	const im = readFileSync(join(pub, 'immersion.js'), 'utf8');
+	verifier(/lecturePanneau\(\)/.test((im.match(/function tempsSuspendu\(\) \{\n\treturn [^\n]*;/) || [''])[0]) && /!Jeu\.defiChrono && [^\n]*PHASES_ACTIVES\.includes\(phase\)/.test(im), 'horloge : en pause pendant la lecture d\'un signalement, hors défi chrono');
+	const mt = readFileSync(join(pub, 'multitache.js'), 'utf8');
+	verifier(/if \(!Jeu\.defiChrono\) return;/.test(mt), 'multitâche : aucune expiration en cours de journée hors défi chrono');
+	const sk = readFileSync(join(pub, 'sketch.js'), 'utf8');
+	verifier(/if \(Jeu\.defiChrono\) \{[\s\S]{0,400}figerCompteurRalenti\(\)/.test(sk) && !/DROITE|dessinerListeLignes/.test(sk), 'panneau : compteur seulement en défi chrono, ancienne disposition retirée');
+	verifier(!existsSync(join(pub, 'alertes.js')), 'alertes.js retiré (remplacé par les réponses par catégorie)');
+	// Panneau : la tendance affichée suit le signe de l'effet
+	const cp = contexte('fr');
+	vm.runInContext(readFileSync(join(pub, 'panneau.js'), 'utf8').replace(/^const (BANDEAU|PANNEAU|PLUS|TOUCHES_REPONSES|RAISONS)\b/gm, 'var $1'), cp, { filename: 'panneau.js' });
+	const tend = vm.runInContext("[tendance(0), tendance(3), tendance(-3), tendance(9), tendance(-9)].join(' ')", cp);
+	verifier(tend === '≈ ▲ ▼ ▲▲ ▼▼', `panneau : tendance ${tend}`);
+}
 
 // Service worker : chaque script de index.html est dans la liste hors ligne de sw.js
 const html = readFileSync(join(pub, 'index.html'), 'utf8');

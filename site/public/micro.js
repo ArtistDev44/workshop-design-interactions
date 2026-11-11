@@ -244,7 +244,7 @@ function usagesMicro(dt) {
 	if (souffle && typeof boostActif === 'function' && boostActif()) {
 		RADIO.souffleMs += dt;
 		CAFE.boost -= dt; // le boost s'épuise deux fois plus vite
-		if (enDossier) debutCompteur += dt / 2; // compteur à mi-vitesse
+		if (enDossier && Jeu.defiChrono) debutCompteur += dt / 2; // compteur à mi-vitesse
 		if (millis() - RADIO.annonceSouffle > 6000) {
 			RADIO.annonceSouffle = millis();
 			annoncer(t('micro.souffle'));

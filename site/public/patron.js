@@ -299,7 +299,7 @@ function blocEnrichi(m, x, y, l, panne) {
 	} else if (type === 'alerte' && me.score !== undefined) {
 		miniJauge(t('patron.scoreSalle') + ' · ' + t(me.niveau === 2 ? 'statut.dernier' : 'statut.surveillance'), me.score, 300, me.niveau === 2 ? 90 : 120, x, y, Math.min(l, 520));
 	} else if (type === 'reproche' && me.index !== undefined) {
-		const rappel = (me.ligne ? t('sujet.ligne', { ligne: me.ligne }) : '') + (me.action ? ' · ' + t(me.action === 'temps' ? 'action.temps' : 'action.' + me.action) : '') + (me.meilleure ? ' → ' + t('patron.meilleure', { a: t('action.' + me.meilleure) }) : '');
+		const rappel = (me.ligne ? t('sujet.ligne', { ligne: me.ligne }) : '') + (me.action ? ' · ' + String(Jeu.libelleAction(me.action)) : '') + (me.meilleure ? ' → ' + t('patron.meilleure', { a: String(Jeu.libelleAction(me.meilleure)) }) : '');
 		dsTexte(rappel, x, y + 10, 18, DS.blanc75, 'left', l - 260);
 		dsBouton(x + l - 240, y, 240, 48, t('patron.voirDossier'), () => voirDossier(me), 'contour', panne);
 	} else if (type === 'budget' && me.b !== undefined) {

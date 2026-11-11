@@ -29,7 +29,7 @@
 	};
 
 	// ——— Réglages (écran Paramètres, 11-direction-artistique) ———
-	const DEFAUTS = { son: true, horsLigneForce: false, reduireAnimations: false, contrasteRenforce: false, musique: 'chillin', daltonisme: 'normal', tailleTexte: 100, lectureFacile: false, micro: true, webcam: false }; // prompt 57 : webcam désactivée par défaut (opt-in) // prompt 48 : accessibilité ; prompt 54 : micro (push-to-talk) // prompt 44 : choix de la musique ; prompt 62 : Chillin' Poupi par défaut
+	const DEFAUTS = { son: true, horsLigneForce: false, reduireAnimations: false, contrasteRenforce: false, musique: 'chillin', daltonisme: 'normal', tailleTexte: 100, lectureFacile: false, defiChrono: false, micro: true, webcam: false }; // prompt 57 : webcam désactivée par défaut (opt-in) // prompt 48 : accessibilité ; prompt 54 : micro (push-to-talk) // prompt 44 : choix de la musique ; prompt 62 : Chillin' Poupi par défaut
 	const Reglages = Object.assign({}, DEFAUTS, lire(CLE_REGLAGES, {}));
 	// Prompt 49 : une seule fois, la musique passe au lofi (l'ancien défaut « chillin » n'était pas un choix)
 	// Prompt 62 : « Chillin' Poupi » redevient le morceau principal (une seule bascule pour ceux restés sur le lofi par défaut)
@@ -56,7 +56,7 @@
 
 	// ——— Meilleur bilan par semaine (Q19) ———
 	const Bilans = {
-		cle: (etat) => (etat.mode === 'semaine' ? etat.semaine.lundi : etat.mode), // 'direct' | 'hors ligne'
+		cle: (etat) => (etat.mode === 'semaine' ? etat.semaine.lundi : etat.mode) + (global.Jeu && global.Jeu.defiChrono ? '|chrono' : ''), // 'direct' | 'hors ligne' ; prompt 87 : palmarès séparé en défi chrono
 		meilleur: (cle) => lire(CLE_BILANS, {})[cle] || null,
 		/** Enregistre le bilan s'il bat le précédent ; renvoie { meilleur, record } */
 		enregistrer: function (cle, score, jauges, extra) {

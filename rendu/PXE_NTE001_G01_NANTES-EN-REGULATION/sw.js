@@ -9,11 +9,10 @@
  * Enregistré seulement en http(s), jamais en file:// (index.html).
  */
 /* précache:début (généré par scripts/generer-sw.mjs — ne pas modifier à la main) */
-const VERSION = 'nte-regulation-659ca28fbe';
+const VERSION = 'nte-regulation-5853c89262';
 const ESSENTIELS = [
 	"./",
 	"./accessibilite.js",
-	"./alertes.js",
 	"./apple-touch-icon.png",
 	"./assets/qr-edition.png",
 	"./assets/qr-pxe-nte001-g01-w01.png",
@@ -57,6 +56,8 @@ const ESSENTIELS = [
 	"./data/loire.json",
 	"./data/messages.js",
 	"./data/messages.json",
+	"./data/reponses.js",
+	"./data/reponses.json",
 	"./data/semaines.js",
 	"./data/semaines/2026-09-14.json",
 	"./data/semaines/2026-10-12.json",
@@ -93,6 +94,7 @@ const ESSENTIELS = [
 	"./multitache.js",
 	"./og-image.jpg",
 	"./os.js",
+	"./panneau.js",
 	"./patron.js",
 	"./portrait.js",
 	"./rythme.js",

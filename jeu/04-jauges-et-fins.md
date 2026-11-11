@@ -3,6 +3,8 @@
 ## Les trois jauges (0–100, décisions Q40, Q44)
 - **Valeur de départ : 50** ; chaque action modifie une jauge de **±5 à ±15**
   points selon le contexte.
+  *Prompt 87 — exception à Q40 :* hors « Défi chrono », le budget part de 60 / 50 / 40 selon la difficulté
+  de la semaine (fluidité et réputation restent à 50).
 - **Poids égaux** dans le score combiné (Q44, décidé : score = somme des 3 jauges).
 | Jauge | Ce qu'elle mesure |
 |---|---|

@@ -9,3 +9,10 @@ const donnees = JSON.parse(brut); // échoue clairement si le JSON est invalide
 if (!Array.isArray(donnees.plaintes)) throw new Error('messages.json : « plaintes » doit être une liste');
 await writeFile(new URL('messages.js', dossier), '// Généré depuis messages.json par scripts/generer-messages.mjs — ne pas modifier à la main.\nwindow.MESSAGES = ' + JSON.stringify(donnees) + ';\n');
 console.log('messages.js : ' + donnees.plaintes.length + ' plainte(s)');
+
+// Prompt 87 : réponses par catégorie (data/reponses.json → data/reponses.js, hors ligne et double clic)
+const brutR = await readFile(new URL('reponses.json', dossier), 'utf8');
+const reponses = JSON.parse(brutR);
+if (!reponses.categories || typeof reponses.categories !== 'object') throw new Error('reponses.json : « categories » attendu');
+await writeFile(new URL('reponses.js', dossier), '// Généré depuis reponses.json par scripts/generer-messages.mjs — ne pas modifier à la main.\nwindow.PXE_REPONSES = ' + JSON.stringify(reponses) + ';\n');
+console.log('reponses.js : ' + Object.keys(reponses.categories).length + ' catégorie(s)');
