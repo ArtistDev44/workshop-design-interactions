@@ -169,3 +169,181 @@ button:focus-visible {
 .slidev-layout p {
 	margin: 0.4rem 0;
 }
+
+/* ——— Prompt 94 : rendu soutenance (unité 4 px, Pixel DS inchangé) ——— */
+.slidev-layout {
+	padding: 32px 48px 44px;
+}
+.slidev-layout h3 {
+	font-size: 0.85rem;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	color: var(--ds-alerte);
+	margin: 0 0 8px;
+}
+/* Couverture */
+.surtitre {
+	font-size: 0.8rem;
+	letter-spacing: 0.12em;
+	color: var(--ds-blanc75);
+	margin-bottom: 12px !important;
+}
+.slidev-layout h1.titre-cover {
+	border: 0;
+	padding: 0;
+	margin: 0 0 16px;
+	height: 88px;
+	width: 760px;
+}
+.accroche {
+	font-size: 1.15rem;
+	max-width: 640px;
+}
+.pied-cover {
+	position: absolute;
+	left: 48px;
+	bottom: 32px;
+	font-size: 0.8rem;
+	color: var(--ds-blanc75);
+}
+.slidev-layout.intro h1 {
+	font-size: 1.8rem;
+}
+.slidev-layout.intro {
+	background: var(--ds-fond) linear-gradient(180deg, var(--ds-primaire) 0 8px, transparent 8px);
+}
+/* Actes (section), énoncé, chiffre clé */
+.slidev-layout.section {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+}
+.slidev-layout.section p {
+	color: var(--ds-blanc75);
+	font-size: 1.1rem;
+	margin-left: 4px;
+}
+.slidev-layout.statement p,
+.slidev-layout.fact p {
+	max-width: 680px;
+	margin: 16px auto 0;
+	font-size: 1.1rem;
+}
+.note-sous {
+	margin-top: 16px !important;
+	color: var(--ds-blanc75);
+	font-size: 0.9rem;
+}
+.colonne-droite {
+	padding-top: 64px;
+}
+.slidev-layout.two-cols-header .col-header {
+	margin-bottom: 16px;
+}
+/* Diapositive « full » : capture en pleine page, titre posé dessus */
+.slidev-layout.full {
+	padding: 0;
+}
+.slidev-layout h1.titre-sur-image {
+	position: absolute;
+	left: 56px;
+	top: 44px;
+	font-size: 1.4rem;
+	background: var(--ds-fond);
+	padding: 4px 12px;
+}
+.grand-lien {
+	font-size: 1.4rem;
+	margin: 24px 0 !important;
+}
+/* Sommaire */
+.slidev-toc {
+	font-size: 1.05rem;
+}
+.slidev-toc ul {
+	list-style: none !important;
+	padding-left: 0 !important;
+}
+.slidev-toc li {
+	margin: 8px 0 !important;
+	border-left: 4px solid var(--ds-primaire);
+	padding-left: 12px;
+}
+.slidev-toc-item-active > div a {
+	color: var(--ds-alerte);
+}
+/* Mermaid au visuel DS */
+.mermaid {
+	margin: 8px 0 16px;
+}
+/* Pied de page */
+.pied-deck {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	height: 28px;
+	display: flex;
+	align-items: center;
+	gap: 24px;
+	padding: 0 24px;
+	font-size: 0.68rem;
+	color: var(--ds-blanc75);
+	border-top: 1px solid var(--ds-blanc15);
+	background: var(--ds-fond);
+}
+.pied-titre {
+	font-weight: 700;
+	color: var(--ds-blanc);
+}
+.pied-lien {
+	color: var(--ds-blanc75);
+	text-decoration: underline;
+	text-decoration-color: var(--ds-primaire);
+}
+.pied-num {
+	margin-left: auto;
+	font-weight: 700;
+	color: var(--ds-blanc);
+}
+/* Mouvement réduit : ni transitions entre diapositives, ni v-motion, ni marqueurs animés */
+@media (prefers-reduced-motion: reduce) {
+	.slidev-vclick-target,
+	[class*='slide-left'],
+	[class*='fade'] {
+		transition: none !important;
+	}
+}
+/* Le pied de page (global-bottom.vue) est sous les diapositives : les mises en page de contenu laissent voir le fond
+   (même couleur, portée par la page) ; couverture, actes et fin gardent leur fond plein et masquent le pied */
+.slidev-layout.default,
+.slidev-layout.two-cols,
+.slidev-layout.two-cols-header,
+.slidev-layout.center,
+.slidev-layout.quote,
+.slidev-layout.full,
+.slidev-layout.statement,
+.slidev-layout.fact {
+	background-color: transparent;
+}
+.slidev-layout.statement,
+.slidev-layout.fact {
+	background-image: linear-gradient(90deg, var(--ds-primaire) 0 12px, transparent 12px);
+}
+#slide-content,
+.slidev-slide-content,
+.slidev-page {
+	background: transparent;
+}
+.slidev-slide-container,
+#slideshow,
+#page-root {
+	background: var(--ds-fond);
+}
+.slidev-layout.statement,
+.slidev-layout.fact {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	text-align: center;
+}
