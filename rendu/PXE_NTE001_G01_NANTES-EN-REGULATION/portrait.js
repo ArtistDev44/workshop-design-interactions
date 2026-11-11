@@ -55,7 +55,7 @@ function scenePortrait() {
 	if (fenetre || tutoriel) return 'fenetre';
 	if (MENU.actif) return 'menu';
 	if (vue === 'poste' && PC.etat === 'appli' && ecran === 'jeu') return 'appli';
-	if (vue === 'poste' && PC.etat === 'os' && PC.fenetre === 'community' && ecran === 'jeu') return 'community'; // prompt 85 : une colonne
+	if (vue === 'poste' && PC.etat === 'os' && (PC.fenetre === 'community' || PC.fenetre === 'patron') && ecran === 'jeu') return 'community'; // prompts 85 / 86 : une colonne
 	if (vue === 'bureau' && ecran === 'jeu' && !TRANSITION_JOUR) return 'bureau';
 	return 'plein';
 }

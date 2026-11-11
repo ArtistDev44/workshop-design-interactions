@@ -468,32 +468,6 @@ function derniers(liste, n) {
 	return liste.slice(Math.max(0, liste.length - n));
 }
 
-function appPatron(z) {
-	if (Jeu.modificateurActif && Jeu.modificateurActif() === 'panne_messagerie') {
-		// Prompt 23 : panne de la messagerie — les messages arriveront à la fin de la panne
-		dsBadge(z.x + 80, z.y + 20, t('app.horsLigne'), 'erreur');
-		dsTexte(t('app.panne', { s: Math.ceil((Jeu.modificateur.fin - millis()) / 1000) }), z.x, z.y + 60, 22, DS.blanc75, 'left', z.l - 40);
-		return;
-	}
-	// Fil de bulles façon SMS (même esprit que l'intro du prompt 20), aux couleurs du design system
-	let y = z.y;
-	derniers(Jeu.messagesPatron, 9).forEach((m) => {
-		textFont(DS.policeTexte);
-		textSize(20);
-		const lmax = z.l - 260;
-		const lignes = Math.ceil(textWidth(m.texte) / (lmax - 32)) || 1;
-		const h = 24 + lignes * 28;
-		noStroke();
-		fill(m.important ? 'rgba(212,3,28,0.22)' : DS.blanc05); // prompt 84 : rappel à l'ordre / avertissement mis en avant
-		rect(z.x, y, Math.min(lmax, textWidth(m.texte) + 32), h);
-		fill(DS.primaire);
-		rect(z.x, y, m.important ? 8 : 4, h);
-		dsTexte(m.texte, z.x + 18, y + 12, 20, DS.blanc, 'left', lmax - 32);
-		dsTexte(m.heure, z.x + z.l - 10, y + 12, 18, DS.blanc50, 'right');
-		y += h + 12;
-	});
-	if (!Jeu.messagesPatron.length) dsTexte(t('app.pasMessage'), z.x, z.y, 20, DS.blanc50, 'left');
-}
 
 // ——— Prompt 28 : plaintes des Nantais (contenu : data/messages.json) ———
 let focusReponse = 0; // réponse sélectionnée au clavier (Tab / Entrée, ou 1 / 2 / 3)

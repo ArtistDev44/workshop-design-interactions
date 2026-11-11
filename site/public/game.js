@@ -251,6 +251,7 @@
 		Jeu.historique = [];
 		Jeu.evenementsJournee = []; // prompt 21 § 3.1 : journal des dossiers traités
 		Jeu.messagesPatron = []; // prompt 22 : app « Messages du patron »
+		Jeu.patronEnAttente = []; // prompt 86
 		Jeu.commentaires = []; // prompt 22 : app « Community manager »
 		Jeu.plaintes = []; // prompt 28 : plaintes des Nantais (data/messages.json)
 		Jeu.equipes = []; // prompt 22 : équipes envoyées depuis la carte
@@ -324,6 +325,7 @@
 			aggravationLignes: Object.assign({}, Jeu.aggravationLignes), // prompt 79
 			statutPatron: JSON.parse(JSON.stringify(Jeu.statutPatron)), // prompt 84 : niveau, avertissements, dates, file
 			postsJoueur: Jeu.postsJoueur || [], // prompt 85
+			patronEnAttente: Jeu.patronEnAttente || [], // prompt 86 : messages émis pendant la panne
 			carnet: Jeu.carnet || '',
 			inspection: Jeu.inspection,
 			agendaPrevenus: Object.assign({}, Jeu.agendaPrevenus),
@@ -365,6 +367,8 @@
 		Jeu.aggravationLignes = Object.assign({}, s.aggravationLignes || {}); // prompt 79
 		Jeu.statutPatron = Object.assign(nouveauStatut(), s.statutPatron || {}); // prompt 84 (ancienne sauvegarde : statut neuf)
 		Jeu.postsJoueur = s.postsJoueur || []; // prompt 85
+		Jeu.patronEnAttente = s.patronEnAttente || []; // prompt 86
+		(Jeu.messagesPatron || []).forEach((m) => (m.type = Jeu.TYPES_MESSAGES.includes(m.type) ? m.type : 'info')); // ancienne sauvegarde : « info »
 		const m = s.modificateur && s.modificateur.id !== 'erreur_systeme' ? s.modificateur : null; // ancienne sauvegarde : l'erreur système n'existe plus
 		Jeu.modificateur = m ? Object.assign({}, m, { debut: m.debut === null ? null : m.debut + maintenant, fin: m.fin === null ? null : m.fin + maintenant }) : null;
 		Jeu.terminee = !!s.terminee;
@@ -648,7 +652,7 @@
 		Jeu.defis = Jeu.tirerDefis(); // prompt 55 : trois défis tirés par la graine
 		if (jours[0] && Jeu.messagesPatron) {
 			Jeu.debutJourneeTactique();
-			Jeu.messagePatron(consigneDuJour());
+			Jeu.messagePatron(consigneDuJour(), 'consigne', metaConsigne());
 			Jeu.messagePatron(T('patron.defis', { liste: Jeu.defis.map((id) => T('defi.' + id)).join(' · ') })); // prompt 55 : annoncés le premier matin
 			Jeu.annoncerEffectifs(); // prompt 68
 			Jeu.prevenirAgenda(); // prompt 47
@@ -670,7 +674,7 @@
 		Jeu.aggravationLignes = {}; // prompt 79 : l'aggravation durable vaut pour la journée
 		if (Jeu.jourCourant()) {
 			Jeu.debutJourneeTactique();
-			Jeu.messagePatron(consigneDuJour());
+			Jeu.messagePatron(consigneDuJour(), 'consigne', metaConsigne());
 			Jeu.annoncerEffectifs(); // prompt 68 : équipes du jour (rentrées de la veille)
 			Jeu.prevenirAgenda(); // prompt 47
 			Jeu.appliquerBlame(); // prompt 51 : départ anticipé la veille
@@ -850,6 +854,13 @@
 		if (Jeu.verifierConseilsPatron) Jeu.verifierConseilsPatron();
 	};
 
+	/** Prompt 86 : valeurs réelles de la consigne au moment de l'envoi (puces de la carte « consigne ») */
+	function metaConsigne() {
+		const j = Jeu.jourCourant();
+		const o = Jeu.objectifDuJour();
+		const mo = Jeu.modificateur;
+		return { n: j ? j.dossiers.length : 0, jauge: o.jauge, seuil: o.seuil, budget: Jeu.jauges.budget, mod: mo ? mo.id : null, bloque: mo && mo.actionBloquee ? mo.actionBloquee : null };
+	}
 	function consigneDuJour() {
 		const j = Jeu.jourCourant();
 		const n = j ? j.dossiers.length : 0;
@@ -859,9 +870,15 @@
 		return T('patron.consigne', { n, date: j ? j.date.split('-').reverse().join('/') : '', objectif: o.libelle, budget: Jeu.jauges.budget, mod: m });
 	}
 
-	Jeu.messagePatron = function (texte, important) {
-		Jeu.messagesPatron.push({ heure: maintenantSim(), texte, important: !!important }); // prompt 84 : message mis en avant
-		if (typeof annoncer === 'function') annoncer(texte); // aria-live, langue active
+	/** Prompt 86 : message typé (consigne, alerte, conseil, budget, reproche, equipes, info) avec ses valeurs réelles
+	 * au moment de l'envoi (meta). Pendant la panne de messagerie (prompt 23), il attend et arrive « en retard ». */
+	Jeu.TYPES_MESSAGES = ['consigne', 'alerte', 'conseil', 'budget', 'reproche', 'equipes', 'info'];
+	Jeu.patronEnAttente = [];
+	Jeu.messagePatron = function (texte, type, meta) {
+		const m = { heure: maintenantSim(), jour: ((Jeu.jourCourant && Jeu.jourCourant()) || {}).date || null, texte, type: Jeu.TYPES_MESSAGES.includes(type) ? type : 'info', meta: meta || {}, important: !!(meta && meta.important), lu: false };
+		if (Jeu.modificateurActif && Jeu.modificateurActif() === 'panne_messagerie') return Jeu.patronEnAttente.push(Object.assign(m, { enRetard: true }));
+		Jeu.messagesPatron.push(m);
+		if (typeof annoncer === 'function') annoncer(T('patron.annonce', { type: T('patron.type.' + m.type), texte })); // aria-live avec le type
 		Jeu.nonLus.patron++;
 	};
 
@@ -887,20 +904,31 @@
 	/** Message de sanction : délivré tout de suite, ou mis en file pendant la panne de messagerie (prompt 23) */
 	function envoyerSanction(texte, sorte) {
 		const S = Jeu.statutPatron;
-		if (panneMessagerie()) return S.enAttente.push({ texte, sorte, jour: Jeu.jourIndex });
-		Jeu.messagePatron(texte, sorte !== 'leve');
+		if (panneMessagerie()) return S.enAttente.push({ texte, sorte, jour: Jeu.jourIndex, heure: maintenantSim() });
+		Jeu.messagePatron(texte, sorte === 'leve' ? 'info' : 'alerte', sorte === 'leve' ? {} : { important: true, score: Jeu.score(), niveau: S.niveau, sorte });
 		if (sorte === 'dernier') S.dernierRecuJour = Jeu.jourIndex;
 	}
 	/** Fin de la panne : les messages en file arrivent (le dernier avertissement compte du jour de sa réception) */
 	Jeu.livrerSanctions = function () {
 		const S = Jeu.statutPatron;
-		if (!S.enAttente.length || panneMessagerie()) return 0;
+		if (panneMessagerie()) return 0;
+		// Prompt 86 : messages ordinaires émis pendant la panne — gardent leur heure d'origine, « reçus en retard »
+		const attente = (Jeu.patronEnAttente || []).splice(0);
+		attente.forEach((m) => {
+			Jeu.messagesPatron.push(m);
+			Jeu.nonLus.patron++;
+			if (typeof annoncer === 'function') annoncer(T('patron.annonce', { type: T('patron.type.' + m.type), texte: m.texte }));
+		});
+		if (!S.enAttente.length) return attente.length;
 		const n = S.enAttente.length;
 		S.enAttente.splice(0).forEach((m) => {
-			Jeu.messagePatron(m.texte, m.sorte !== 'leve');
+			const avant = Jeu.messagesPatron.length;
+			Jeu.messagePatron(m.texte, m.sorte === 'leve' ? 'info' : 'alerte', m.sorte === 'leve' ? {} : { important: true, score: Jeu.score(), niveau: S.niveau, sorte: m.sorte });
+			const recu = Jeu.messagesPatron[avant];
+			if (recu) Object.assign(recu, { heure: m.heure || recu.heure, enRetard: true });
 			if (m.sorte === 'dernier') S.dernierRecuJour = Jeu.jourIndex;
 		});
-		return n;
+		return n + attente.length;
 	};
 	function dernierAvertissement() {
 		const S = Jeu.statutPatron;
@@ -1003,7 +1031,7 @@
 		NOMS_JAUGES.forEach((k) => {
 			if (Jeu.jauges[k] < REGLAGES.seuilCritique && !Jeu.alertesJauges[k]) {
 				Jeu.alertesJauges[k] = true;
-				Jeu.messagePatron(T('patron.alerte', { jauge: LIBELLES_JAUGES[k], v: Jeu.jauges[k] }));
+				Jeu.messagePatron(T('patron.alerte', { jauge: LIBELLES_JAUGES[k], v: Jeu.jauges[k] }), 'alerte', { jauge: k, v: Jeu.jauges[k], seuil: REGLAGES.seuilCritique });
 			}
 		});
 	};
@@ -1032,8 +1060,8 @@
 		const sujet = e.ligne ? T('sujet.ligne', { ligne: e.ligne }) : e.externeCourt || e.externe;
 		const ev = Jeu.evaluer(e);
 		Jeu.commenter(ev === 'bon' ? 'bon' : 'mauvais', sujet, e.retard, undefined, e.index);
-		if (ev === 'rate') Jeu.messagePatron(T('patron.rate', { sujet, action: e.action, meilleure: e.meilleureAction }));
-		if (ev === 'trop_tard') Jeu.messagePatron(T('patron.tropTard', { sujet }));
+		if (ev === 'rate') Jeu.messagePatron(T('patron.rate', { sujet, action: e.action, meilleure: e.meilleureAction }), 'reproche', { index: e.index, jour: e.jour, ligne: e.ligne, action: e.cleAction, meilleure: e.cleMeilleure });
+		if (ev === 'trop_tard') Jeu.messagePatron(T('patron.tropTard', { sujet }), 'reproche', { index: e.index, jour: e.jour, ligne: e.ligne, action: 'temps', meilleure: e.cleMeilleure });
 		Jeu.verifierAlertesPatron();
 	};
 
@@ -1416,7 +1444,9 @@
 	/** Message du patron au début de chaque journée : effectifs réels (remis à zéro chaque matin) */
 	Jeu.annoncerEffectifs = function () {
 		if (!Jeu.elementDebloque('equipes') || !Jeu.messagesPatron) return;
-		Jeu.messagePatron(T('patron.effectifs', { liste: Jeu.TYPES_EQUIPES.map((k) => EQUIPES[k].nom + ' ' + REGLAGES.equipes[k].effectif).join(', ') }));
+		const effectifs = {};
+		Jeu.TYPES_EQUIPES.forEach((k) => (effectifs[k] = REGLAGES.equipes[k].effectif));
+		Jeu.messagePatron(T('patron.effectifs', { liste: Jeu.TYPES_EQUIPES.map((k) => EQUIPES[k].nom + ' ' + REGLAGES.equipes[k].effectif).join(', ') }), 'equipes', { effectifs });
 	};
 	/** Bilan des équipes de la semaine : envois par type, part pertinente, refus faute d'effectif */
 	Jeu.bilanEquipes = function () {
@@ -1542,9 +1572,9 @@
 		const palier = b < 20 ? 'bas' : b >= 70 ? 'haut' : 'moyen';
 		if (Jeu.paliersBudget[palier]) return;
 		Jeu.paliersBudget[palier] = true;
-		if (palier === 'bas') Jeu.messagePatron(T('patron.budgetBas', { b }));
-		else if (palier === 'haut') Jeu.messagePatron(T('patron.budgetHaut', { b }));
-		else if (Jeu.paliersBudget.bas || Jeu.paliersBudget.haut) Jeu.messagePatron(T('patron.budgetMoyen', { b }));
+		if (palier === 'bas') Jeu.messagePatron(T('patron.budgetBas', { b }), 'budget', { b, palier });
+		else if (palier === 'haut') Jeu.messagePatron(T('patron.budgetHaut', { b }), 'budget', { b, palier });
+		else if (Jeu.paliersBudget.bas || Jeu.paliersBudget.haut) Jeu.messagePatron(T('patron.budgetMoyen', { b }), 'budget', { b, palier: 'moyen' });
 	};
 
 	/** Conseil repris par le patron quand une jauge passe sous 30 (une fois par jauge et par jour) */
@@ -1554,7 +1584,7 @@
 			const cle = 'conseil_' + k;
 			if (Jeu.jauges[k] < 30 && !Jeu.alertesJauges[cle]) {
 				Jeu.alertesJauges[cle] = true;
-				Jeu.messagePatron(T('conseil.basse', { jauge: LIBELLES_JAUGES[k], v: Jeu.jauges[k] }));
+				Jeu.messagePatron(T('conseil.basse', { jauge: LIBELLES_JAUGES[k], v: Jeu.jauges[k] }), 'conseil', { jauge: k, v: Jeu.jauges[k], seuil: 30 });
 			}
 		});
 	};
@@ -1710,7 +1740,7 @@
 		d.applique = true;
 		Jeu.appliquerDeltas({ reputation: Jeu.MALUS_DEPART });
 		const texte = T('patron.blame', { date: d.jour ? d.jour.split('-').reverse().join('/') : '', heure: d.heure, fin: d.fin, n: d.laisses, malus: Jeu.MALUS_DEPART });
-		Jeu.messagePatron(texte);
+		Jeu.messagePatron(texte, 'reproche', { blame: true, malus: Jeu.MALUS_DEPART });
 		Jeu.blame = { texte, lu: false, malus: Jeu.MALUS_DEPART };
 		return Jeu.blame;
 	};

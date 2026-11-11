@@ -177,7 +177,7 @@ function envoyerEquipeIncident(cle) {
 	annoncer(String(r.message));
 	if (r.refus) Confort.Son.bip('alerte');
 	else Confort.Son.clic();
-	if (r.refus && !Jeu.equipesDisponibles(cle, millis())) Jeu.messagePatron(T('patron.plusEquipe', { nom: Jeu.EQUIPES[cle].nom, s: Jeu.retourEquipe(cle, millis()) }));
+	if (r.refus && !Jeu.equipesDisponibles(cle, millis())) Jeu.messagePatron(T('patron.plusEquipe', { nom: Jeu.EQUIPES[cle].nom, s: Jeu.retourEquipe(cle, millis()) }), 'equipes', { cle, dispo: 0 });
 }
 /** Raccourcis Maj + 1/2/3/4 (keyCode 49–52 : indépendant AZERTY / QWERTY) ; true si la touche est prise */
 function toucheEquipes() {

@@ -176,6 +176,8 @@ function draw() {
 	majMultitache(); // prompts 68 / 77 : arrivées, compteurs des signalements actifs, expirations en arrière-plan
 	majNotifications(); // prompt 77 : mails, commentaires, fins d'intervention
 	majLicenciement(); // prompt 84 : messages après la panne, licenciement hors décision
+	majPatron(); // prompt 86 : son, indicateur de saisie
+	if (PC.fenetre !== 'patron') PATRON.ouvert = false; // prochaine ouverture : sur le premier non lu
 	majRythme(); // prompt 74 : événements de rythme à heures fixes
 	majExplicationPoste(); // prompt 74 : explication du poste à la première ouverture de l'écran de jeu
 	majSoir(); // prompt 69 : crépuscule accéléré, sortie du bureau
@@ -1489,6 +1491,7 @@ function keyPressed() {
 		}
 		// Prompt 28 : plainte en attente dans l'app Community — Tab parcourt les réponses, Entrée / 1-2-3 répond
 		if (ecran === 'jeu' && toucheCommunity()) return false; // prompt 85 : onglets, défilement, publication
+		if (ecran === 'jeu' && touchePatron()) return false; // prompt 86 : filtres, défilement, réponses rapides
 		const plainte = PC.fenetre === 'community' && ecran === 'jeu' ? cibleCommunity() : null;
 		if (plainte && !focusQuitter && !focusDemarrer) {
 			const n = plainte.def.reponses.length;
@@ -1575,6 +1578,7 @@ function keyPressed() {
 function mouseWheel(event) {
 	interaction();
 	if (molletteCommunity(event.delta)) return false; // prompt 85 : défilement du fil
+	if (mollettePatron(event.delta)) return false; // prompt 86 : historique du patron
 	if (scrollSortiePC(event.delta)) return false;
 }
 

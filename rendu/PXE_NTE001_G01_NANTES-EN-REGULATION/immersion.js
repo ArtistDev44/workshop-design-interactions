@@ -945,7 +945,7 @@ function verifierSerie() {
 	const s = Rythme.serie(Jeu.evenementsJournee, FIL.serieDepuis);
 	if (!s) return;
 	FIL.serieDepuis = (Jeu.evenementsJournee || []).length; // la série repart à zéro
-	if (Jeu.messagePatron) Jeu.messagePatron(T(s.cle));
+	if (Jeu.messagePatron) Jeu.messagePatron(T(s.cle), s.sorte === 'courage' ? 'conseil' : 'info');
 	ajouterFil({ cle: s.cle, vars: {} }, s.sorte);
 }
 /** Fil de la journée, dans le panneau d'attente : objectif, bilan, liaisons, rythme, séries (les plus récents en bas) */

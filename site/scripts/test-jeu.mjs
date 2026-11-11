@@ -902,6 +902,52 @@ verifier(eq.policeAvant === 1 && eq.policeMatin === 2, `équipes : effectifs non
 	verifier(!/Instagram|Facebook|Naolib|Semitan|TAN\b|Nantes Métropole/.test(readFileSync(join(pub, 'community.js'), 'utf8').replace(/\/\*[\s\S]*?\*\//, '')), 'community : aucun nom de réseau ou de transporteur réel dans l\'interface');
 }
 
+// Prompt 86 : messagerie du patron — messages typés avec meta réelle, file pendant la panne, réponses sans effet
+{
+	const pm = vm.runInContext(
+		`(() => {
+		const r = {};
+		Jeu.chargerSemaine('2026-10-12'); Jeu.nouvellePartie(); Jeu.modificateur = null;
+		let tours = 0;
+		while (!Jeu.terminee && tours++ < 200) { if (Jeu.prochainDuJour()) Jeu.decider(['rien', 'renfort', 'temps'][Jeu.index % 3]); else if (Jeu.jours[Jeu.jourIndex + 1]) { Jeu.finDeJourneeTactique(); Jeu.journeeSuivante(); } else break; }
+		const M = Jeu.messagesPatron;
+		r.types = [...new Set(M.map((m) => m.type))].sort();
+		r.invalides = M.filter((m) => !Jeu.TYPES_MESSAGES.includes(m.type)).length;
+		const c = M.find((m) => m.type === 'consigne');
+		r.consigne = c && c.meta.jauge && typeof c.meta.seuil === 'number' && typeof c.meta.budget === 'number' && c.meta.n >= 0;
+		const rp = M.find((m) => m.type === 'reproche' && m.meta.index !== undefined);
+		r.reproche = !rp || (Jeu.evenementsJournee.some((e) => e.index === rp.meta.index) && !!rp.meta.meilleure);
+		const eq = M.find((m) => m.type === 'equipes');
+		r.equipes = !eq || (eq.meta.effectifs && eq.meta.effectifs.police === Jeu.REGLAGES.equipes.police.effectif);
+		const al = M.find((m) => m.type === 'alerte' && m.meta.jauge);
+		r.alerte = !al || (al.meta.v < al.meta.seuil);
+		const bu = M.find((m) => m.type === 'budget');
+		r.budget = !bu || ['bas', 'moyen', 'haut'].includes(bu.meta.palier);
+		// Panne : le message attend, garde son heure, arrive « en retard »
+		Jeu.modificateur = { id: 'panne_messagerie', debut: Date.now(), fin: Date.now() + 1e7 };
+		const n0 = M.length; Jeu.messagePatron('test panne', 'info');
+		r.pendant = Jeu.messagesPatron.length - n0;
+		Jeu.modificateur.fin = 0; Jeu.livrerSanctions();
+		const recu = Jeu.messagesPatron[Jeu.messagesPatron.length - 1];
+		r.apres = recu.texte === 'test panne' && recu.enRetard === true;
+		// Ancienne sauvegarde sans type → « info »
+		const snap = JSON.parse(JSON.stringify(Jeu.instantane(0)));
+		snap.messagesPatron.forEach((m) => delete m.type);
+		Jeu.chargerSemaine('2026-10-12'); Jeu.restaurerInstantane(snap, 0);
+		r.ancienne = Jeu.messagesPatron.every((m) => m.type === 'info');
+		return JSON.parse(JSON.stringify(r));
+	})()`,
+		fr,
+	);
+	verifier(pm.invalides === 0 && pm.types.includes('consigne') && pm.types.includes('reproche') && pm.types.length >= 4, `patron : types ${pm.types}`);
+	verifier(pm.consigne && pm.reproche && pm.equipes && pm.alerte && pm.budget, `patron : meta réelle ${JSON.stringify(pm)}`);
+	verifier(pm.pendant === 0 && pm.apres, 'patron : message en file pendant la panne, « reçu en retard » ensuite');
+	verifier(pm.ancienne, 'patron : ancienne sauvegarde sans type chargée en « info »');
+	const pj = readFileSync(join(pub, 'patron.js'), 'utf8');
+	verifier(!/appliquerDeltas|Jeu\.jauges\.\w+\s*[-+]?=|compterMalus/.test(pj), 'patron : les réponses rapides n\'ont aucun effet de jeu');
+	verifier(!/function appPatron/.test(readFileSync(join(pub, 'os.js'), 'utf8')), 'patron : ancien rendu supprimé');
+}
+
 // Traductions : toute clé française existe en anglais
 const manquantes = vm.runInContext('Object.keys(TRADUCTIONS.fr).filter((k) => TRADUCTIONS.en[k] === undefined)', fr);
 verifier(manquantes.length === 0, `clés sans traduction anglaise : ${manquantes.slice(0, 8).join(', ')}`);
