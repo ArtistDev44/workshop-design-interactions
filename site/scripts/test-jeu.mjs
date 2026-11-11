@@ -493,6 +493,17 @@ verifier(h8.debut === 8 * 60, `prompt 76 : la journée démarre à ${h8.debut} m
 verifier(h8.fin === 20 * 60, 'prompt 76 : la fin de journée doit rester à 20 h 00');
 verifier(h8.min >= 8 * 60, `prompt 76 : un dossier arrive avant 8 h (${h8.min} min)`);
 
+// Prompt 77 : temps ×100 (immersion.js), 3 actifs max (carte.js), notifications présentes
+const src77 = {
+	immersion: readFileSync(join(pub, 'immersion.js'), 'utf8'),
+	carte: readFileSync(join(pub, 'carte.js'), 'utf8'),
+	sketch: readFileSync(join(pub, 'sketch.js'), 'utf8'),
+};
+verifier(/compression: 100,/.test(src77.immersion), 'prompt 77 : IMMERSION.compression doit être ×100');
+verifier(/const NB_ACTIFS = 3;/.test(src77.carte), 'prompt 77 : NB_ACTIFS doit être 3');
+verifier(/function dessinerNotifications\(\)/.test(src77.carte) && /majNotifications\(\)/.test(src77.sketch), 'prompt 77 : notifications bureau absentes');
+verifier(/function activerSignalement\(/.test(src77.carte) && /function resteActif/.test(src77.carte), 'prompt 77 : compteurs individuels des actifs absents');
+
 // Traductions : toute clé française existe en anglais
 const manquantes = vm.runInContext('Object.keys(TRADUCTIONS.fr).filter((k) => TRADUCTIONS.en[k] === undefined)', fr);
 verifier(manquantes.length === 0, `clés sans traduction anglaise : ${manquantes.slice(0, 8).join(', ')}`);

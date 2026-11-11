@@ -167,7 +167,8 @@ function draw() {
 		return;
 	}
 	verifierMecaniques(); // prompt 47 : inspection surprise (avant l'horloge, qui s'arrête alors)
-	majSelection(); // prompt 68 : un signalement trop longtemps en file expire
+	majSelection(); // prompt 68/77 : signalements actifs, expiration individuelle
+	majNotifications(); // prompt 77 : notifications bureau (signalement, mail, commentaire, équipe)
 	majSoir(); // prompt 69 : crépuscule accéléré, sortie du bureau
 	majDemarrageJour(); // prompt 71 : démarrage du PC en début de journée (jours 1 à 3)
 	avancerTemps(); // horloge simulée, sieste, arrivée des incidents, fin de journée (immersion.js)
@@ -221,6 +222,7 @@ function draw() {
 	dessinerGuide(); // prompt 37 : flèches « Prendre en main »
 	dessinerTutoriel(); // prompt 34 : par-dessus l'écran et les fenêtres
 	dessinerNoirSoir(); // prompt 69 : fondu et écran noir de la sortie
+	dessinerNotifications(); // prompt 77 : en haut à droite, par-dessus tout (vue PC comme vue bureau)
 	dessinerTransitionJour(); // prompt 43 : écran noir entre les journées, au-dessus de tout
 	dessinerClignement(); // prompt 21 § 2 : par-dessus tout, purement visuel (n'intercepte aucune entrée)
 	majCurseur();
@@ -1472,8 +1474,17 @@ function keyPressed() {
 		if (keyCode === ENTER || keyCode === RETURN) ouvrirMenuPrincipal(); // prompt 35 : plus d'accueil dans le PC
 	} else if (toucheEquipes()) {
 		// prompt 68 : Maj + 1/2/3/4 envoie une équipe sur l'incident
+	} else if (phase === 'selection' && (keyCode === TAB || keyCode === UP_ARROW || keyCode === DOWN_ARROW)) {
+		// Prompt 77 : Tab / ↑ / ↓ parcourt les signalements actifs (max 3), annoncé en aria-live
+		const n = Math.max(1, actifs().length);
+		SELECTION.focusActif = (SELECTION.focusActif + (keyCode === TAB && keyIsDown(SHIFT) || keyCode === UP_ARROW ? n - 1 : 1)) % n;
+		const it = actifs()[SELECTION.focusActif % n];
+		if (it) annoncer(t('enq.signalement.' + it.d.type) + ' · ' + t('gravite.' + Jeu.gravite(it.d)));
+		return false;
 	} else if (phase === 'selection' && (keyCode === ENTER || keyCode === RETURN || key === ' ')) {
-		selectionnerIncident(); // prompt 68 : prendre le signalement, le compteur démarre
+		// Prompt 77 : prendre le signalement actif sélectionné, son compteur démarre
+		const a = actifs();
+		activerSignalement(a[SELECTION.focusActif % Math.max(1, a.length)].index);
 	} else if ((phase === 'decision' || phase === 'contradiction') && toucheEnquete()) {
 		// prompt 50 : 5 à 8 consultent une source
 	} else if (phase === 'decision') {

@@ -9,7 +9,7 @@
 // ——— Réglages de l'immersion (tout est ici) ———
 const IMMERSION = {
 	minutesParSeconde: 1, // rythme normal : 1 minute de journée par seconde réelle
-	compression: 30, // § 3 : ×30 quand aucun incident n'est actif (prompt 43 : ×10 → ×30)
+	compression: 100, // § 3 : ×100 quand aucun incident n'est actif (prompt 77 : ×30 → ×100, valeur verrouillée)
 	siesteApresMs: 20000, // § 4 : 20 s sans incident ni interaction
 	fenetreReveilMs: { 60: 3000, 30: 2000, 15: 1000 }, // § 4 : selon le compteur de la semaine
 	retardImportant: 20, // § 5 : retard ≥ 20 min = bordure rouge

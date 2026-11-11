@@ -10,7 +10,7 @@
  *   raccourcis Maj + 1/2/3/4 (police, ambulanciers, techniciens, pompiers).
  * Données réelles uniquement ; absent → « non renseigné ».
  */
-const SELECTION = { depuis: 0, paquet: null, arrivees: {}, onglet: 'enquete', message: null, surbrillance: null, legendeRepliee: false }; // prompt 73 : plus de carte ni de repères positionnés
+const SELECTION = { depuis: 0, focusActif: 0, onglet: 'enquete', message: null, surbrillance: null, legendeRepliee: false }; // prompt 73/77 : plus de carte ; focusActif = signalement actif sélectionné au clavier
 const compteurSemaine = () => ((Jeu.etat.semaine && Jeu.etat.semaine.difficulte && Jeu.etat.semaine.difficulte.compteur_s) || 30) * 1000;
 
 /** Dossiers arrivés (heure de jeu atteinte) et pas encore traités, dans l'ordre : la tête est le prochain à traiter */
@@ -18,19 +18,15 @@ function fileIncidents() {
 	if (ecran !== 'jeu' || !Jeu.paquet || !Jeu.horloge) return [];
 	const j = Jeu.jourCourant();
 	if (!j) return [];
-	// Prompt 66 (correctif) : les arrivées sont indexées par n° de dossier ; une nouvelle partie, semaine ou reprise
-	// (nouveau paquet) les remet à zéro — sinon les signalements expiraient dès leur arrivée la semaine suivante
-	if (SELECTION.paquet !== Jeu.paquet) {
-		SELECTION.paquet = Jeu.paquet;
-		SELECTION.arrivees = {};
-	}
+	// Prompt 66 (correctif) + 77 : les arrivées sont portées par le dossier lui-même (d._arrivee), donc
+	// conservées même si le paquet est réordonné (sélection d'un signalement actif parmi plusieurs)
 	const f = [];
 	for (let i = Jeu.index; i < Jeu.paquet.length; i++) {
 		const d = Jeu.paquet[i];
 		if (d.date !== j.date) break;
 		if (d.minute > Jeu.horloge.minutes) break;
-		if (!SELECTION.arrivees[i]) SELECTION.arrivees[i] = millis(); // première apparition sur la carte
-		f.push({ index: i, d, depuis: SELECTION.arrivees[i] });
+		if (!d._arrivee) d._arrivee = millis(); // première apparition
+		f.push({ index: i, d, depuis: d._arrivee });
 	}
 	return f;
 }
@@ -61,11 +57,52 @@ function expirerSelection() {
 	Confort.Son.bip('consequence');
 	annoncer(t('carte.expire'));
 }
-/** Vérification à chaque image (draw) */
+/** Vérification à chaque image (draw) — prompt 77 : chaque signalement actif a son propre compteur */
 function majSelection() {
 	if (phase !== 'selection' || ecran !== 'jeu' || enPause) return;
-	const tete = fileIncidents()[0];
-	if (tete && resteAvantExpiration(tete) <= 0) expirerSelection();
+	const f = fileIncidents();
+	const a = actifs();
+	// expiration d'un actif (compteur individuel à 0) → règle « non traité » (Q25) pour lui seul
+	const expire = a.find((it) => resteActif(it) <= 0);
+	if (expire) return activerEtExpirer(expire.index);
+	// expiration en file (2 × le compteur de la semaine) pour la tête non active
+	const tete = f[0];
+	if (tete && !tete.d._actif && resteAvantExpiration(tete) <= 0) expirerSelection();
+}
+
+// ——— Prompt 77 : jusqu'à 3 signalements ACTIFS en parallèle, chacun avec son propre compteur ———
+const NB_ACTIFS = 3; // valeur verrouillée (prompt 77)
+/** Signalements actifs : les NB_ACTIFS premiers arrivés ; chacun démarre son compteur à son activation */
+function actifs() {
+	return fileIncidents()
+		.slice(0, NB_ACTIFS)
+		.map((it) => {
+			if (!it.d._actif) it.d._actif = millis();
+			return Object.assign({}, it, { reste: resteActif(it) });
+		});
+}
+const resteActif = (it) => Math.max(0, compteurSemaine() * facteurLecture() - (millis() - (it.d._actif || it.depuis)));
+/** Amène le signalement choisi en tête de paquet (les règles de décision de game.js restent identiques),
+ * puis le prend : son compteur démarre. Les autres actifs continuent de tourner. */
+function activerSignalement(index) {
+	if (phase !== 'selection' || ecran !== 'jeu') return;
+	const p = Jeu.paquet;
+	if (index !== Jeu.index && index < p.length) {
+		[p[Jeu.index], p[index]] = [p[index], p[Jeu.index]];
+		p[Jeu.index].conflitTranche = p[index].conflitTranche = true; // pas de re-question A/B pour cet échange
+	}
+	const d = p[Jeu.index];
+	if (d && d._actif && resteActif({ d, depuis: d._arrivee }) <= 0) return activerEtExpirer(Jeu.index);
+	selectionnerIncident();
+}
+/** Un actif a expiré (compteur à 0) : on l'amène en tête et on applique la règle « non traité » (Q25) à lui seul */
+function activerEtExpirer(index) {
+	const p = Jeu.paquet;
+	if (index !== Jeu.index && index < p.length) {
+		[p[Jeu.index], p[index]] = [p[index], p[Jeu.index]];
+		p[Jeu.index].conflitTranche = p[index].conflitTranche = true;
+	}
+	expirerSelection();
 }
 
 // ——— Panneau de droite pendant la sélection : le signalement et la file d'attente ———
@@ -247,14 +284,24 @@ function dessinerFileSignalements(zone, dActuel) {
 	}
 	const y0 = zone.y + 96;
 	const hh = 96;
+	const a = actifs();
 	f.slice(0, 8).forEach((it, i) => {
 		const y = y0 + i * (hh + 10);
 		const courant = i === 0;
+		const actif = a.some((x) => x.index === it.index); // prompt 77 : jusqu'à 3 actifs, compteur individuel
 		const enSurbrillance = SELECTION.surbrillance && (it.d.lignes || []).includes(SELECTION.surbrillance);
-		fill(courant ? 'rgba(212,3,28,0.18)' : enSurbrillance ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.05)');
+		const focus = phase === 'selection' && SELECTION.focusActif % Math.max(1, a.length) === i;
+		fill(courant ? 'rgba(212,3,28,0.18)' : actif ? 'rgba(255,193,56,0.12)' : enSurbrillance ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.05)');
 		rect(zone.x + 12, y, zone.l - 24, hh);
 		fill(couleurGravite(Jeu.gravite(it.d)));
 		rect(zone.x + 12, y, 6, hh);
+		if (focus) {
+			noFill();
+			stroke(C.accent);
+			strokeWeight(3);
+			rect(zone.x + 12 - 5, y - 5, zone.l - 24 + 10, hh + 10);
+			noStroke();
+		}
 		textFont(POLICE_TEXTE);
 		textSize(19);
 		fill(C.texte);
@@ -265,15 +312,18 @@ function dessinerFileSignalements(zone, dActuel) {
 		fill(C.gris);
 		const detail = t('gravite.' + Jeu.gravite(it.d)) + ' · ' + Jeu.formaterHeure(it.d.minute) + (it.d.retard !== null && it.d.retard !== undefined ? ' · +' + it.d.retard + ' min' : '');
 		text(detail, zone.x + 30, y + 38, zone.l - 60, 22);
-		fill(courant ? C.rouge : C.orange);
-		text(t(courant ? 'carte.expireDans' : 'carte.attendDepuis', { s: Math.ceil((courant ? resteAvantExpiration(it) : millis() - it.depuis) / 1000) }), zone.x + 30, y + 62, zone.l - 60, 22);
+		// Prompt 77 : actif = son propre compteur (rouge sous 10 s) ; en file = expiration 2 × le compteur
+		const reste = actif ? resteActif(it) : resteAvantExpiration(it);
+		const urgent = reste < 10000;
+		fill(actif ? (urgent ? C.rouge : C.orange) : C.gris);
+		text(t(actif ? 'carte.expireDans' : 'carte.attendDepuis', { s: Math.ceil((actif ? reste : millis() - it.depuis) / 1000) }) + (actif ? ' · ' + t('signalements.actif') : ''), zone.x + 30, y + 62, zone.l - 60, 22);
 		boutons.push({
 			x: zone.x + 12,
 			y,
 			l: zone.l - 24,
 			h: hh,
 			action: () => {
-				if (courant && phase === 'selection') return selectionnerIncident();
+				if (phase === 'selection') return activerSignalement(it.index);
 				annoncer(t('enq.signalement.' + it.d.type) + (lignes ? ' · ' + lignes : '') + ' · ' + detail);
 			},
 		});
@@ -416,4 +466,90 @@ function serieDecisions() {
 		else break;
 	}
 	return { type, n: serie };
+}
+
+// =====================================================================
+// Prompt 77 — notifications style bureau : à l'arrivée d'un signalement, d'un
+// mail du patron, d'un commentaire Community ou d'une équipe de retour, une
+// notification apparaît en haut à droite (aussi sur la vue bureau si le PC est
+// fermé) : titre + extrait + icône de l'appli, clic → ouvre l'appli / prend le
+// signalement. Disparaissent après 6 s (ou au clic), max 3 visibles, aria-live.
+// =====================================================================
+const NOTIFS = [];
+const NB_NOTIFS_MAX = 3; // pile visible
+const DUREE_NOTIF_MS = 6000;
+function notifier(titre, extrait, cleApp, action) {
+	NOTIFS.push({ titre: String(titre), extrait: String(extrait).slice(0, 110), cleApp, action, t: millis() });
+	while (NOTIFS.length > 8) NOTIFS.shift();
+	annoncer(String(titre) + ' — ' + String(extrait)); // aria-live
+	Confort.Son.bip('choix');
+}
+let _patronVu = 0;
+let _commsVu = 0;
+let _fileVu = 0;
+let _equipesVue = new Set();
+/** Appelée à chaque image : déclenche une notification sur chaque nouvel événement réel */
+function majNotifications() {
+	if (ecran !== 'jeu' || !Jeu.paquet) return;
+	// nouvelle partie : les listes repartent à zéro
+	if ((Jeu.messagesPatron || []).length < _patronVu) _patronVu = 0;
+	if ((Jeu.commentaires || []).length < _commsVu) _commsVu = 0;
+	if (fileIncidents().length < _fileVu) _fileVu = 0;
+	const mp = Jeu.messagesPatron || [];
+	if (mp.length > _patronVu) {
+		_patronVu = mp.length;
+		notifier(t('notif.patron'), mp[mp.length - 1].texte, 'patron', () => ouvrirIconeOS(ICONES_OS.findIndex((x) => x.cle === 'patron')));
+	}
+	const cm = Jeu.commentaires || [];
+	if (cm.length > _commsVu) {
+		_commsVu = cm.length;
+		const c = cm[cm.length - 1];
+		notifier(t('notif.community'), c.auteur + ' : ' + String(c.texte && c.texte.toString ? c.texte.toString() : c.texte).slice(0, 80), 'community', () => ouvrirIconeOS(ICONES_OS.findIndex((x) => x.cle === 'community')));
+	}
+	const f = fileIncidents();
+	if (f.length > _fileVu) {
+		_fileVu = f.length;
+		const d = f[f.length - 1].d;
+		notifier(t('notif.signalement'), t('enq.signalement.' + d.type) + ((d.lignes || []).length ? ' · ' + d.lignes.join(', ') : ''), 'carte', () => { if (PC.etat !== 'appli') ouvrirAppli(); });
+	}
+	(Jeu.equipes || []).forEach((q) => {
+		if (q.arrivee_sim && !q.inutile && !_equipesVue.has(q)) {
+			_equipesVue.add(q);
+			notifier(t('notif.equipe'), String(q.nom) + ' — ' + String(q.sujet || ''), 'carte', () => { if (PC.etat !== 'appli') ouvrirAppli(); });
+		}
+	});
+}
+/** Dessinées en coordonnées écran, par-dessus tout (vue PC comme vue bureau) — appelées dans draw() */
+function dessinerNotifications() {
+	const m = millis();
+	while (NOTIFS.length && m - NOTIFS[0].t > DUREE_NOTIF_MS) NOTIFS.shift();
+	NOTIFS.slice(-NB_NOTIFS_MAX).forEach((n, i) => {
+		const w = 400;
+		const h = 88;
+		const x = L - w - 24;
+		const y = 24 + i * (h + 10);
+		noStroke();
+		fill(13, 12, 12, 240);
+		rect(x, y, w, h);
+		fill(C.primaire);
+		rect(x, y, 5, h);
+		stroke(C.bord);
+		strokeWeight(2);
+		noFill();
+		rect(x + 1, y + 1, w - 2, h - 2);
+		noStroke();
+		if (typeof iconePixel === 'function') iconePixel(x + 14, y + 14, 0.55, n.cleApp === 'patron' ? 'enveloppe' : n.cleApp === 'community' ? 'bulle' : 'carte');
+		textAlign(LEFT, TOP);
+		textFont(POLICE_TEXTE);
+		textStyle(BOLD);
+		textSize(17);
+		fill(C.texte);
+		text(n.titre, x + 62, y + 10, w - 80, 22);
+		textStyle(NORMAL);
+		textFont(POLICE_DONNEES);
+		textSize(15);
+		fill(C.gris);
+		text(n.extrait, x + 62, y + 38, w - 80, 44);
+		boutons.push({ x, y, l: w, h, action: n.action || (() => {}) });
+	});
 }
