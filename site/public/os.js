@@ -195,6 +195,28 @@ function sourisAppli() {
 }
 
 /** Barre des tâches de RégulOS (prompt 36), visible aussi sous l'appli Régulation (prompt 50) */
+/** Prompt 75 : pictogramme du chargement (index.html #chargement .logo, viewBox 0 0 24 20) dessiné
+ * en pixel art dans le canvas — mêmes formes, même source de vérité que l'écran de chargement. */
+function dessinerLogoPXE(x, y, taille) {
+	const u = taille / 24; // viewBox 24×20
+	push();
+	translate(x, y);
+	noStroke();
+	fill('#ffffff');
+	rect(1 * u, 1 * u, 22 * u, 14 * u); // moniteur
+	fill('#d4031c');
+	rect(3 * u, 3 * u, 18 * u, 10 * u); // écran rouge
+	fill('#ffffff');
+	rect(4 * u, 9 * u, 16 * u, 1 * u); // ligne de bus
+	fill('#00ca64');
+	rect(6 * u, 7 * u, 3 * u, 3 * u); // fenêtre validée
+	fill('#ffffff');
+	rect(15 * u, 7 * u, 3 * u, 3 * u); // fenêtre active
+	rect(11 * u, 15 * u, 2 * u, 3 * u); // pied
+	rect(7 * u, 18 * u, 10 * u, 1 * u); // base
+	pop();
+}
+
 function dessinerBarreTaches() {
 	// Barre des tâches (prompt 36 : agrandie, 84 px, icônes 72 px)
 	const tb = H - BARRE_OS;
@@ -203,9 +225,13 @@ function dessinerBarreTaches() {
 	rect(0, tb, L, BARRE_OS);
 	fill(DS.blanc15);
 	rect(0, tb, L, 2);
+	// Prompt 75 : le bouton démarrer reprend le pictogramme de l'écran de chargement (plus de carré rouge uni)
 	fill(DS.primaire);
 	rect(8, tb + 10, 140, BARRE_OS - 20);
-	dsTitre('REGUL', 78, tb + 22, 32, DS.blanc, 'center');
+	dessinerLogoPXE(16, tb + 22, 40);
+	dsTitre('REGUL', 92, tb + 26, 22, DS.blanc, 'left');
+	boutons.push({ x: 8, y: tb + 10, l: 140, h: BARRE_OS - 20, action: () => ouvrir('menu') }); // même fonction : menu des applis
+	if (mouseX >= 8 && mouseX <= 148 && mouseY >= tb + 10 && mouseY <= tb + BARRE_OS - 10) infobulle(t('os.boutonDemarrer'), 160, tb - 46); // infobulle FR + EN
 	ICONES_OS.filter((ic) => ic.cle !== 'corbeille').forEach((ic) => {
 		const i = ICONES_OS.indexOf(ic);
 		const k = ICONES_OS.filter((x) => x.cle !== 'corbeille').indexOf(ic);
