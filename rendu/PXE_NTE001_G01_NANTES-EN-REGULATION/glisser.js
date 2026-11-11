@@ -13,7 +13,6 @@
 let CARTES = []; // [{ cle, x, y, l, h, lib }] — relevées par dessinerCartesReponses
 let ZONE_DEPOT = null; // { x, y, l, h }
 const GLISSER = { carte: null, x: 0, y: 0, dx: 0, dy: 0, x0: 0, y0: 0, vx: 0, ang: 0, retour: null, frappe: null };
-const SECOUSSE = { t: -1e9, amp: 0 };
 const SEUIL_CLIC_PX = 8;
 
 /** Souris en coordonnées de l'écran du PC (1920×1080), hors image (dans mousePressed / mouseReleased) */
@@ -51,7 +50,7 @@ function relacherGlisser() {
 	const centre = { x: p.x - GLISSER.dx + c.l / 2, y: p.y - GLISSER.dy + c.h / 2 };
 	if (dansRect(p, ZONE_DEPOT) || dansRect(centre, ZONE_DEPOT)) {
 		GLISSER.frappe = { t: millis(), x: GLISSER.x, y: GLISSER.y, l: c.l, h: c.h };
-		secouer(4);
+		if (typeof feedback === 'function') feedback('medium'); // prompt 96 : impact de la carte sur le dossier
 		decider(c.cle);
 		return true;
 	}
@@ -60,26 +59,7 @@ function relacherGlisser() {
 	return true;
 }
 
-// ——— Poids ———
-/** Secousse d'écran : amplitude selon l'effet le plus fort (deltas réels), coupée avec les animations réduites */
-function secouer(amp) {
-	if (reduireAnimations) return;
-	const reste = millis() - SECOUSSE.t < 300 ? SECOUSSE.amp : 0;
-	SECOUSSE.t = millis();
-	SECOUSSE.amp = Math.max(amp, reste);
-}
-function amplitudeDeltas(deltas) {
-	const m = Math.max(0, ...(deltas || []).map((v) => Math.abs(v)));
-	return m >= 10 ? 9 : m >= 6 ? 5 : m > 0 ? 2 : 0;
-}
-/** Décalage de la secousse pour cette image ({x, y}) ou null */
-function decalageSecousse() {
-	if (reduireAnimations) return null;
-	const u = (millis() - SECOUSSE.t) / 360;
-	if (u >= 1 || !SECOUSSE.amp) return null;
-	const a = SECOUSSE.amp * (1 - u) * (1 - u);
-	return { x: Math.round(Math.sin(millis() / 17) * a), y: Math.round(Math.cos(millis() / 23) * a * 0.6) };
-}
+// ——— Poids : depuis le prompt 96, secousse et hit-stop passent par juice.js (feedback(tier)) ———
 
 // ——— Dessin (appelé par panneau.js, dans l'écran du PC) ———
 /** Emplacement vide d'une carte saisie : pointillés */

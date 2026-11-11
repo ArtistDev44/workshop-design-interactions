@@ -224,7 +224,8 @@ function draw() {
 	sourisRestaurer();
 	espaceDessin = 'ecran';
 	// 2. La pièce et le moniteur autour (bureau, zoom, ou « au poste » avec la pièce visible)
-	const secousse = typeof decalageSecousse === 'function' ? decalageSecousse() : null; // prompt 94 : secousse d'écran (décision)
+	const d0 = typeof Juice !== 'undefined' ? Juice.decalage(millis()) : { x: 0, y: 0 }; // prompt 96 : secousse par trauma² (temps réel)
+	const secousse = d0.x || d0.y ? d0 : null;
 	if (secousse) push(), translate(secousse.x, secousse.y);
 	composerVue();
 	if (vue === 'bureau' && !fenetre) dessinerNotifications(L - 24, 24, 0.9); // prompt 77 : PC « fermé » (vue bureau) : notifications sur la vue
@@ -323,6 +324,7 @@ function nouveauDossier() {
 	sourceChoisie = null;
 	alerteTempsJouee = false;
 	if (!Jeu.dossierCourant()) return apresDecision();
+	if (typeof feedback === 'function') feedback('small'); // prompt 96 : un dossier arrive (tampon et cartes en pop)
 	if (Jeu.declencherPlainte) Jeu.declencherPlainte(Jeu.index); // prompt 28 : plainte liée au dossier réel (app Community)
 	// Prompt 44 § 2 : signal propre à la source (GTFS-RT, Open-Meteo, archives, agenda), plus fort s'il reste beaucoup d'incidents
 	const dInc = Jeu.dossierCourant();
@@ -355,7 +357,7 @@ function decider(action) {
 	annoncer(t('annonce.decision', { titre: dernierResultat.narration.titre, texte: dernierResultat.narration.texte }) + ' ' + dj + '.'); // prompt 53 : variations annoncées
 	Confort.Son.clicAction(Jeu.familleDe ? Jeu.familleDe(action) : action); // prompt 44 § 4 : un clic de console par action ; prompt 89 bis : famille de la réponse (son distinct)
 	Confort.Son.jauges(dernierResultat.deltas); // § 5 : chute brutale ou remontée nette, audibles
-	if (typeof secouer === 'function') secouer(amplitudeDeltas(dernierResultat.deltas)); // prompt 94 : du poids, selon l'effet réel
+	if (typeof feedback === 'function') feedback(Juice.tierDeltas(dernierResultat.deltas)); // prompts 94 / 96 : tier selon l'effet réel (small / medium / large)
 	phase = 'narration';
 	debutNarration = millis();
 	if (dernierResultat.contexteNarr) annoncer(t(dernierResultat.contexteNarr.cle, dernierResultat.contexteNarr.vars));

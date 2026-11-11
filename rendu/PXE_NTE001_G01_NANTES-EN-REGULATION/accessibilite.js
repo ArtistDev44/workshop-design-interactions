@@ -118,9 +118,10 @@ function fenetreAccessibilite() {
 		['3', t('acc.lecture'), t(R.lectureFacile ? 'commun.oui' : 'commun.non'), basculerLectureFacile, !R.lectureFacile],
 		['4', t('micro.reglage'), t(R.micro !== false ? 'commun.oui' : 'commun.non'), basculerMicroReglage, R.micro === false], // prompt 54
 		['5', t('webcam.reglage'), t(CAM.active ? 'webcam.etat.on' : R.webcam ? 'webcam.etat.attente' : 'commun.non'), basculerWebcamReglage, !R.webcam], // prompt 57
+		['6', t('acc.intensite'), (R.intensiteFeedback === undefined ? 100 : R.intensiteFeedback) + ' %', changerIntensiteFeedback, (R.intensiteFeedback === undefined ? 100 : R.intensiteFeedback) !== 100], // prompt 96 : secousse et hit-stop 100 / 50 / 0 %
 	];
 	lignes.forEach(([k, lib, valeur, action, secondaire], i) => {
-		const ly = y + 116 + i * 82;
+		const ly = y + 116 + i * 70; // prompt 96 : 82 → 70 px pour une 6e ligne
 		textFont(POLICE_TEXTE);
 		ajusterTaille(lib, 520, 26);
 		fill(C.texte);
@@ -140,16 +141,16 @@ function fenetreAccessibilite() {
 	[['bon', p.bon], ['alerte', p.alerte], ['critique', p.critique]].forEach(([n, c], i) => {
 		const px0 = x + 48 + i * 260;
 		fill(c);
-		rect(px0, y + 532, 120, 18);
+		rect(px0, y + 546, 120, 18);
 		fill(C.texte);
-		text(t('acc.niveau.' + n), px0 + 132, y + 541);
+		text(t('acc.niveau.' + n), px0 + 132, y + 555);
 	});
 	textAlign(LEFT, TOP);
 	textFont(POLICE_TEXTE);
 	textSize(18);
 	fill(C.gris);
 	textLeading(26);
-	text(t('acc.lecture.detail'), x + 48, y + 562, l - 96, 66);
+	text(t('acc.lecture.detail'), x + 48, y + 574, l - 96, 54);
 	// Reprise sur un autre appareil : QR code vers le jeu + export / import JSON
 	const yr = y + 646;
 	fill(C.bord);
@@ -180,6 +181,12 @@ function fenetreAccessibilite() {
 	if (installationPossible()) bouton(x + 680, y + h - 104, 300, 64, t('pwa.installerCourt'), installerApplication); // prompt 65
 	bouton(x + l - 288, y + h - 104, 240, 64, t('param.retour'), () => (fenetre = 'parametres'));
 }
+/** Prompt 96 : intensité du feedback (secousse, hit-stop) — 100, 50 ou 0 % ; les animations réduites coupent tout */
+function changerIntensiteFeedback() {
+	const v = Confort.Reglages.intensiteFeedback === undefined ? 100 : Confort.Reglages.intensiteFeedback;
+	Confort.Reglages.choisir('intensiteFeedback', v === 100 ? 50 : v === 50 ? 0 : 100);
+	annoncer(t('acc.intensite') + ' : ' + Confort.Reglages.intensiteFeedback + ' %');
+}
 function toucheAccessibilite() {
 	if (fenetre !== 'accessibilite') return false;
 	if (key === '1') changerDaltonisme();
@@ -187,6 +194,7 @@ function toucheAccessibilite() {
 	else if (key === '3') basculerLectureFacile();
 	else if (key === '4') basculerMicroReglage(); // prompt 54
 	else if (key === '5') basculerWebcamReglage(); // prompt 57
+	else if (key === '6') changerIntensiteFeedback(); // prompt 96
 	else if (keyCode === ESCAPE || keyCode === BACKSPACE) fenetre = 'parametres';
 	return true;
 }
