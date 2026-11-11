@@ -573,6 +573,18 @@ const libelles80 = vm.runInContext(
 );
 verifier(libelles80.length === 0, 'prompt 80 : libellés « Carte/Map » restants : ' + libelles80.join(', '));
 
+// Prompt 81 : menu partager/dépôt/crédits/licence — constantes nommées, URLs construites, LICENSE MIT complet
+const menu81 = readFileSync(join(pub, 'menu.js'), 'utf8');
+const licence = readFileSync(join(racine, '..', 'LICENSE'), 'utf8');
+verifier(/const DEPOT_URL = 'https:\/\/github\.com\/ArtistDev44\/workshop-design-interactions'/.test(menu81), 'prompt 81 : DEPOT_URL absent de menu.js');
+verifier(/const URL_JEU = 'https:\/\/workshop-design-interactions\.pages\.dev\//.test(menu81), 'prompt 81 : URL_JEU absent de menu.js');
+verifier(/encodeURIComponent/.test(menu81) && /mastodon\.social\/share/.test(menu81) && /twitter\.com\/intent\/tweet/.test(menu81), 'prompt 81 : URLs de partage mal construites');
+verifier(/function dessinerPanneauPartage\(\)/.test(menu81) && /navigator\.clipboard/.test(menu81), 'prompt 81 : panneau partager / copie du lien absents');
+verifier(/MIT License/.test(licence) && /Copyright \(c\) 2026 Matt/.test(licence) && !/\[À COMPLÉTER\]/.test(licence) && /PATRIMOINE\.EXE/.test(licence), 'prompt 81 : LICENSE doit contenir le texte MIT complet + crédits + en-tête, sans [À COMPLÉTER]');
+const cles81 = ['mp.depot','mp.partager','mp.partager.texte','mp.partager.fermer','mp.partager.x','mp.partager.facebook','mp.partager.linkedin','mp.partager.mastodon','mp.partager.copier','mp.partager.copie','mp.credits','mp.licence'];
+const trad81 = vm.runInContext('JSON.stringify(Object.keys(TRADUCTIONS.fr).concat(Object.keys(TRADUCTIONS.en)).filter((k) => k.startsWith("mp.")))', fr);
+verifier(cles81.every((k) => trad81.includes(k)), 'prompt 81 : clés i18n manquantes : ' + cles81.filter((k) => !trad81.includes(k)).join(', '));
+
 // Traductions : toute clé française existe en anglais
 const manquantes = vm.runInContext('Object.keys(TRADUCTIONS.fr).filter((k) => TRADUCTIONS.en[k] === undefined)', fr);
 verifier(manquantes.length === 0, `clés sans traduction anglaise : ${manquantes.slice(0, 8).join(', ')}`);

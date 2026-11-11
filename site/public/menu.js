@@ -4,7 +4,46 @@
  * Fond : la pièce du bureau floutée et assombrie. Tout est dessiné par le code, textes via t().
  * Dès qu'une partie démarre ou reprend (ecran === 'jeu'), le menu se ferme et l'on arrive au bureau.
  */
-const MENU = { actif: true, ecran: 'titre', choix: 0, choixSemaine: 0, debut: 0 };
+const MENU = { actif: true, ecran: 'titre', choix: 0, choixSemaine: 0, debut: 0, partage: false, choixPartage: 0 }; // prompt 81 : panneau « Partager »
+// Prompt 81 — constantes nommées (une seule source de vérité, jamais d'URL en dur ailleurs)
+const DEPOT_URL = 'https://github.com/ArtistDev44/workshop-design-interactions';
+const LICENSE_URL = DEPOT_URL + '/blob/main/LICENSE';
+const URL_JEU = 'https://workshop-design-interactions.pages.dev/'; // URL canonique à partager (prompt 02)
+/** Options de partage : icône pixel + libellé i18n + URL construite (texte encodé) */
+const PARTAGES = [
+	{ cle: 'x', icone: 'x', url: () => 'https://twitter.com/intent/tweet?url=' + encodeURIComponent(URL_JEU) + '&text=' + encodeURIComponent(t('mp.partager.texte')) },
+	{ cle: 'facebook', icone: 'facebook', url: () => 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(URL_JEU) },
+	{ cle: 'linkedin', icone: 'linkedin', url: () => 'https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(URL_JEU) },
+	{ cle: 'mastodon', icone: 'mastodon', url: () => 'https://mastodon.social/share?text=' + encodeURIComponent(t('mp.partager.texte') + ' ' + URL_JEU) },
+	{ cle: 'copier', icone: 'lien', copier: true },
+];
+function ouvrirLienExterne(url) {
+	window.open(url, '_blank', 'noopener');
+}
+/** Copier le lien du jeu (repli execCommand si l'API clipboard est indisponible) + annonce aria-live */
+function copierLienJeu() {
+	const ok = () => annoncer(t('mp.partager.copie'));
+	if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(URL_JEU).then(ok).catch(() => repliCopie(ok));
+	else repliCopie(ok);
+}
+function repliCopie(ok) {
+	try {
+		const el = document.createElement('textarea');
+		el.value = URL_JEU;
+		document.body.appendChild(el);
+		el.select();
+		document.execCommand('copy');
+		document.body.removeChild(el);
+	} catch (e) {}
+	ok();
+}
+function activerPartage(i) {
+	const p = PARTAGES[i];
+	if (!p) return;
+	if (p.copier) return copierLienJeu();
+	ouvrirLienExterne(p.url());
+	Confort.Son.bip('choix');
+}
 const MENU_C = {
 	nuit: '#0D0C0C', // Background du Pixel DS (prompt 39)
 	encre: '#0D0C0C', // Secondary-Foreground
@@ -151,6 +190,67 @@ function iconeMenu(type, x, y, c) {
 		line(12, 16, 44, 16);
 		line(12, 28, 44, 28);
 		line(12, 40, 44, 40);
+	} else if (type === 'github') {
+		// Silhouette du « chat » GitHub en traits (dessin original, pas le logo officiel)
+		circle(28, 30, 30);
+		fill(c);
+		noStroke();
+		circle(28, 30, 22);
+		stroke(c);
+		strokeWeight(4);
+		noFill();
+		arc(28, 30, 34, 34, PI * 0.15, PI * 0.85, CHORD); // oreilles
+		line(16, 44, 12, 52);
+		line(40, 44, 44, 52);
+	} else if (type === 'partage') {
+		// Trois points reliés (nœud de partage)
+		strokeWeight(4);
+		line(16, 40, 40, 16);
+		line(16, 40, 42, 38);
+		line(40, 16, 42, 38);
+		noStroke();
+		fill(c);
+		circle(16, 40, 10);
+		circle(40, 16, 10);
+		circle(42, 38, 10);
+	} else if (type === 'x') {
+		strokeWeight(6);
+		line(14, 14, 42, 42);
+		line(42, 14, 14, 42);
+	} else if (type === 'facebook') {
+		noStroke();
+		fill(c);
+		textAlign(CENTER, CENTER);
+		textFont(POLICE_TEXTE);
+		textStyle(BOLD);
+		textSize(34);
+		text('f', 28, 30);
+		textStyle(NORMAL);
+	} else if (type === 'linkedin') {
+		noStroke();
+		fill(c);
+		textAlign(CENTER, CENTER);
+		textFont(POLICE_TEXTE);
+		textStyle(BOLD);
+		textSize(24);
+		text('in', 28, 30);
+		textStyle(NORMAL);
+	} else if (type === 'mastodon') {
+		// « m » éléphant simplifié en blocs
+		strokeWeight(5);
+		line(12, 44, 12, 20);
+		line(12, 20, 24, 32);
+		line(24, 32, 32, 20);
+		line(32, 20, 32, 44);
+		line(32, 20, 44, 32);
+		line(44, 32, 44, 44);
+	} else if (type === 'lien') {
+		strokeWeight(5);
+		noFill();
+		arc(20, 34, 22, 22, PI, TWO_PI);
+		arc(36, 22, 22, 22, 0, PI);
+		line(20, 34, 20, 46);
+		line(36, 22, 36, 10);
 	}
 	pop();
 }
@@ -239,8 +339,86 @@ function dessinerMenuPrincipal() {
 	textFont(POLICE_DONNEES);
 	textSize(18);
 	fill(MENU_C.doux);
-	text(t('mp.clavier'), x0, H - 70);
-	text(t('mp.sources'), x0, H - 40);
+	text(t('mp.clavier'), x0, H - 96);
+	text(t('mp.sources'), x0, H - 70);
+	// Prompt 81 : crédits + licence MIT cliquable, en pied de page
+	text(t('mp.credits'), x0, H - 44);
+	const lc = t('mp.licence');
+	const lx = x0 + textWidth(t('mp.credits')) + 18;
+	fill(MENU_C.doux);
+	text(lc, lx, H - 44);
+	boutons.push({ x: lx - 6, y: H - 62, l: textWidth(lc) + 12, h: 26, action: () => ouvrirLienExterne(LICENSE_URL) });
+	// Bloc « partager / dépôt » en bas à droite (icônes dessinées par le code, cibles ≥ 44 px)
+	const by = H - 156;
+	bouton(L - 80 - 320, by, 150, 64, '', () => ouvrirLienExterne(DEPOT_URL));
+	iconeMenu('github', L - 80 - 320 + 22, by + 10, MENU_C.blanc);
+	dsTexte(t('mp.depot'), L - 80 - 320 + 80, by + 32, 18, MENU_C.blanc, 'left');
+	bouton(L - 80 - 160, by, 160, 64, '', () => ((MENU.partage = true), (MENU.choixPartage = 0), annoncer(t('mp.partager'))));
+	iconeMenu('partage', L - 80 - 160 + 20, by + 10, MENU_C.blanc);
+	dsTexte(t('mp.partager'), L - 80 - 160 + 78, by + 32, 18, MENU_C.blanc, 'left');
+}
+
+// ——— Prompt 81 : panneau modal « Partager » (même style que les fenêtres, Échap ferme) ———
+function dessinerPanneauPartage() {
+	if (!MENU.partage) return;
+	boutons = []; // seul le panneau est cliquable
+	voile();
+	const l = 820;
+	const h = 130 + PARTAGES.length * 84 + 90;
+	const x = (L - l) / 2;
+	const y = (H - h) / 2;
+	panneau(x, y, l, h, MENU_C.bleu);
+	textAlign(LEFT, TOP);
+	noStroke();
+	fill(MENU_C.blanc);
+	textFont(POLICE_TEXTE);
+	textStyle(BOLD);
+	textSize(34);
+	text(t('mp.partager'), x + 40, y + 26);
+	textStyle(NORMAL);
+	// croix de fermeture
+	const cx = x + l - 76;
+	const cy = y + 18;
+	const survolX = mouseX >= cx && mouseX <= cx + 44 && mouseY >= cy && mouseY <= cy + 44;
+	noStroke();
+	fill(survolX ? MENU_C.bleu : MENU_C.nuit);
+	rect(cx, cy, 44, 44);
+	stroke(MENU_C.blanc);
+	strokeWeight(3);
+	line(cx + 12, cy + 12, cx + 32, cy + 32);
+	line(cx + 32, cy + 12, cx + 12, cy + 32);
+	noStroke();
+	boutons.push({ x: cx, y: cy, l: 44, h: 44, action: () => (MENU.partage = false) });
+	PARTAGES.forEach((p, i) => {
+		const ry = y + 100 + i * 84;
+		const sel = i === MENU.choixPartage;
+		const survol = mouseX >= x + 32 && mouseX <= x + l - 32 && mouseY >= ry && mouseY <= ry + 72;
+		const actif = sel || survol;
+		noStroke();
+		fill(actif ? MENU_C.blanc : 'rgba(255,255,255,0.06)');
+		rect(x + 32, ry, l - 64, 72);
+		if (actif) {
+			fill(MENU_C.bleu);
+			rect(x + 32, ry, 6, 72);
+		}
+		iconeMenu(p.icone, x + 52, ry + 12, actif ? MENU_C.bleu : MENU_C.blanc);
+		textAlign(LEFT, CENTER);
+		textFont(POLICE_TEXTE);
+		textStyle(BOLD);
+		ajusterTaille(t('mp.partager.' + p.cle), l - 200, 24);
+		fill(actif ? MENU_C.encre : MENU_C.blanc);
+		text(t('mp.partager.' + p.cle), x + 116, ry + 36);
+		textStyle(NORMAL);
+		if (sel) {
+			noFill();
+			stroke(MENU_C.bleu);
+			strokeWeight(4);
+			rect(x + 32 - 6, ry - 6, l - 64 + 12, 72 + 12);
+			noStroke();
+		}
+		boutons.push({ x: x + 32, y: ry, l: l - 64, h: 72, action: () => activerPartage(i) });
+	});
+	bouton(x + l - 40 - 260, y + h - 78, 260, 56, t('mp.partager.fermer'), () => (MENU.partage = false), false, true);
 }
 
 /* Prompt 41 : « Nouvelle partie » = deux modes. Histoire (recommandé) : semaine facile, normale, difficile,
@@ -350,6 +528,15 @@ function dessinerChoixSemaine() {
 
 /** Clavier du menu principal ; renvoie true si la touche a été traitée */
 function toucheMenu() {
+	if (MENU.partage) {
+		// Prompt 81 : ↑/↓ ou Tab parcourt les options, Entrée active, Échap ferme le panneau
+		if (keyCode === ESCAPE || keyCode === BACKSPACE) MENU.partage = false;
+		else if (keyCode === UP_ARROW || (keyCode === TAB && keyIsDown(SHIFT))) MENU.choixPartage = (MENU.choixPartage + PARTAGES.length - 1) % PARTAGES.length;
+		else if (keyCode === DOWN_ARROW || keyCode === TAB) MENU.choixPartage = (MENU.choixPartage + 1) % PARTAGES.length;
+		else if (keyCode === ENTER || keyCode === RETURN || key === ' ') activerPartage(MENU.choixPartage);
+		if (keyCode === UP_ARROW || keyCode === DOWN_ARROW || keyCode === TAB) annoncer(t('mp.partager.' + PARTAGES[MENU.choixPartage].cle));
+		return true;
+	}
 	if (MENU.ecran === 'semaines') {
 		const n = modesNouvellePartie().length;
 		if (keyCode === LEFT_ARROW || keyCode === UP_ARROW || (keyCode === TAB && keyIsDown(SHIFT))) MENU.choixSemaine = (MENU.choixSemaine + n - 1) % n;

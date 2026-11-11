@@ -32,3 +32,6 @@ L'écran d'accueil « Nantes en régulation » (choix de la semaine) n'est plus 
 - `npm run build` et `npm test` OK.
 - Test automatisé, en FR, puis en EN avec animations réduites, sans erreur console : titre → Entrée → semaines → Entrée → partie lancée au bureau (PC sur l'appli, SMS) → Échap → menu modernisé → Menu principal → « Reprendre » apparaît → C → partie reprise.
 - Tests des prompts 25, 26, 28, 29, 33 et 34 relancés, sans régression.
+
+
+> Prompt 81 : bloc « partager / dépôt » en bas à droite de l'écran titre (panneau modal Partager : X, Facebook, LinkedIn, Mastodon, copier le lien), crédits + licence MIT cliquable en pied de page — voir `jeu/77-menu-partage-depot-credits-licence.md`.

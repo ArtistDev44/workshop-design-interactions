@@ -158,6 +158,7 @@ function draw() {
 	if (MENU.actif) {
 		boutons = [];
 		if (!dessinerDemo()) dessinerMenuPrincipal(); // prompt 48 : démo automatique après 40 s sans action
+		if (MENU.partage) dessinerPanneauPartage(); // prompt 81 : panneau modal « Partager » par-dessus
 		if (fenetre) {
 			boutons = [];
 			dessinerFenetre();

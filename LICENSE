@@ -1,17 +1,27 @@
 LICENCE DU CODE — PATRIMOINE.EXE · NTE001 · « Nantes en régulation »
 =====================================================================
 
-Choix de licence du code : [À COMPLÉTER]
+MIT License
 
-Aucun choix de licence n'est documenté dans le dépôt à la date du 10/11/2026.
-Ce choix revient au groupe (auteur·ices du code) : il n'est pas imposé ici.
-Recommandation notée dans todo.md : licence MIT (courte, permissive, compatible
-avec la réutilisation pédagogique). Une fois le choix fait, remplacer ce fichier
-par le texte intégral de la licence retenue, avec l'année et les noms des
-titulaires des droits ([À COMPLÉTER]).
+Copyright (c) 2026 Mattéo Brevet & Guillaume Renoult
 
-Tant que ce choix n'est pas fait, aucune licence n'est accordée sur le code :
-tous droits réservés à leurs auteur·ices.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 
 Périmètre : le code et la documentation du dépôt (site/, jeu/, prompts/, scripts).
 Ne sont PAS couverts par ce fichier :
