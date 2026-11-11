@@ -9,7 +9,7 @@
 // ——— Réglages de l'immersion (tout est ici) ———
 const IMMERSION = {
 	minutesParSeconde: 1, // rythme normal : 1 minute de journée par seconde réelle
-	compression: 30, // § 3 : ×30 quand aucun incident n'est actif (prompt 43 : ×10 → ×30)
+	compression: 100, // § 3 : ×100 quand aucun incident n'est actif (prompt 43 : ×10 → ×30 ; prompt 77 : ×100, valeur verrouillée)
 	siesteApresMs: 20000, // § 4 : 20 s sans incident ni interaction
 	fenetreReveilMs: { 60: 3000, 30: 2000, 15: 1000 }, // § 4 : selon le compteur de la semaine
 	retardImportant: 20, // § 5 : retard ≥ 20 min = bordure rouge
@@ -204,7 +204,7 @@ function tempsSuspendu() {
 	return ecran !== 'jeu' || !Jeu.horloge || phase === 'fin' || phase === 'mail' || phase === 'soir' || pcDemarre() || smsActif || enPause || tutoriel || TRANSITION_JOUR || mecaniquesSuspendentTemps() || fenetre === 'poste'; // prompt 74 : explication du poste
 }
 function tempsCompresse() {
-	return ecran === 'jeu' && (phase === 'attente' || phase === 'reveil') && !tempsSuspendu(); // « ×30 » seulement quand le temps file vraiment
+	return ecran === 'jeu' && (phase === 'attente' || phase === 'reveil') && !tempsSuspendu(); // « ×100 » seulement quand le temps file vraiment
 }
 
 function avancerTemps() {
@@ -269,6 +269,7 @@ function rateReveil() {
 function apresDecision() {
 	phase = 'attente';
 	filApresDecision(); // prompt 74 : texte de liaison (météo, agenda, radio) tiré des données réelles
+	reprendreActif(); // prompt 77 : un autre signalement actif attend — on le reprend (le plus urgent)
 	// Prompt 62 : plus d'interaction() ici. Après un compteur à 0, la suite est automatique : elle remettait
 	// l'inactivité à zéro et un joueur absent ne s'endormait jamais. Ses vrais gestes (clic, touche) le font.
 }
@@ -924,7 +925,8 @@ function filDebutJournee() {
 function filApresDecision() {
 	if (Jeu.index <= 0) return;
 	const prec = FIL.messages.filter((m) => m.sorte === 'liaison').pop();
-	ajouterFil(Rythme.liaison(Jeu.index - 1, prec && prec.cle), 'liaison');
+	const n = dernierResultat ? Jeu.paquet.indexOf(dernierResultat.dossier) : Jeu.index - 1; // prompt 77 : d'autres dossiers ont pu être réglés en arrière-plan
+	ajouterFil(Rythme.liaison(n, prec && prec.cle), 'liaison');
 }
 /** Une fois par image : événements de rythme à heures fixes (une fois par jour, jamais rejoués à la reprise) */
 function majRythme() {

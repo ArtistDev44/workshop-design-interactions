@@ -611,6 +611,54 @@ verifier(eq.policeAvant === 1 && eq.policeMatin === 2, `équipes : effectifs non
 	verifier(six.length === 0, `horaires : texte qui cite encore 6 h (${six})`);
 }
 
+// Prompt 77 : 3 signalements actifs en parallèle — compteurs indépendants, expiration individuelle, décisions
+{
+	const cm = contexte('fr');
+	// Bouchons de sketch.js (affichage p5) : seules les variables d'état et les appels utiles au multitâche
+	vm.runInContext(
+		`var __t = 1000, ecran = 'jeu', phase = 'selection', enPause = false, DROITE = {}, debutCompteur = 0, arriveeDossier = 0, sourceChoisie = null, alerteTempsJouee = false, facteurDuree = 1, dernierResultat = null, reduireAnimations = true, vue = 'poste', PC = { etat: 'appli' }, ICONES_OS = [], keyCode = 0, TAB = 9;
+		var __annonces = [];
+		function millis() { return __t; } function facteurLecture() { return 1; } function annoncer(x) { __annonces.push(String(x)); } function interaction() {}
+		var Confort = { Son: { bip() {}, clic() {} } }; var Sauvegarde = { auto() {} };
+		function nouveauDossier() { debutCompteur = arriveeDossier = millis(); sourceChoisie = null; phase = 'decision'; }
+		function decider(a) { const d = Jeu.dossierCourant(); dernierResultat = Jeu.decider(a); retirerActif(d); phase = 'narration'; }`,
+		cm,
+	);
+	for (const f of ['enquete.js', 'carte.js', 'multitache.js']) vm.runInContext(readFileSync(join(pub, f), 'utf8'), cm, { filename: f });
+	const m = vm.runInContext(
+		`(() => {
+		Jeu.chargerSemaine('2026-11-02'); Jeu.nouvellePartie();
+		const ds = Jeu.jourCourant().dossiers; Jeu.horloge.minutes = ds[3].minute;
+		const arrivees = fileIncidents().length;
+		prendreSignalement(0); __t += 5000;
+		prendreSignalement(fileIncidents().findIndex((it) => !actifDe(it.d))); __t += 5000;
+		prendreSignalement(fileIncidents().findIndex((it) => !actifDe(it.d)));
+		const trois = MULTI.actifs.length;
+		prendreSignalement(fileIncidents().findIndex((it) => !actifDe(it.d))); // 4e : refusé
+		const refus = MULTI.actifs.length === 3 && /3/.test(String(SELECTION.message && SELECTION.message.texte));
+		const restes = MULTI.actifs.map((a) => Math.round(resteActif(a) / 1000));
+		const sel = actifSelectionne();
+		const premier = MULTI.actifs[0].d;
+		// Le 1er (pris il y a 10 s) expire seul, en arrière-plan : le sélectionné reste affiché
+		__t += 20001;
+		majMultitache();
+		const apresExp = { actifs: MULTI.actifs.length, selReste: actifSelectionne() === sel, tete: Jeu.dossierCourant() === sel.d, regle: Jeu.historique[0].dossier === premier && Jeu.historique[0].action === 'temps', index: Jeu.index };
+		// Décision sur le sélectionné, puis reprise de l'autre actif, décision, plus aucun actif
+		decider('renfort');
+		const reprise = reprendreActif() && MULTI.actifs.length === 1 && phase === 'decision';
+		decider('retenir');
+		return { arrivees, trois, refus, restes, apresExp, reprise, fin: MULTI.actifs.length === 0 && Jeu.index === 3, notifs: NOTIFS.liste.length };
+	})()`,
+		cm,
+	);
+	verifier(m.trois === 3 && m.refus, `multitâche : 3 actifs (${m.trois}), 4e refusé (${m.refus})`);
+	verifier(JSON.stringify(m.restes) === JSON.stringify([20, 25, 30]), `multitâche : compteurs indépendants ${m.restes}`);
+	verifier(m.apresExp.actifs === 2 && m.apresExp.selReste && m.apresExp.tete && m.apresExp.regle && m.apresExp.index === 1, `multitâche : expiration individuelle en arrière-plan ${JSON.stringify(m.apresExp)}`);
+	verifier(m.reprise && m.fin, `multitâche : décisions successives sans perdre les autres (reprise ${m.reprise}, fin ${m.fin})`);
+	verifier(m.notifs >= m.arrivees, `multitâche : une notification par arrivée (${m.notifs} / ${m.arrivees})`);
+	verifier(/compression: 100,/.test(readFileSync(join(pub, 'immersion.js'), 'utf8')), 'temps : la compression entre deux dossiers doit être ×100');
+}
+
 // Traductions : toute clé française existe en anglais
 const manquantes = vm.runInContext('Object.keys(TRADUCTIONS.fr).filter((k) => TRADUCTIONS.en[k] === undefined)', fr);
 verifier(manquantes.length === 0, `clés sans traduction anglaise : ${manquantes.slice(0, 8).join(', ')}`);

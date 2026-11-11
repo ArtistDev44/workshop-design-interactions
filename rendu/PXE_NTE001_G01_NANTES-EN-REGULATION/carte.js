@@ -29,7 +29,10 @@ function fileIncidents() {
 		const d = Jeu.paquet[i];
 		if (d.date !== j.date) break;
 		if (d.minute > Jeu.horloge.minutes) break;
-		if (!SELECTION.arrivees[i]) SELECTION.arrivees[i] = millis(); // première apparition dans la liste
+		if (!SELECTION.arrivees[i]) {
+			SELECTION.arrivees[i] = millis(); // première apparition dans la liste
+			if (typeof notifierArrivee === 'function') notifierArrivee(d, i); // prompt 77 : notification style bureau
+		}
 		f.push({ index: i, d, depuis: SELECTION.arrivees[i] });
 	}
 	return f;
@@ -46,26 +49,12 @@ function entrerSelection() {
 	Confort.Son.alerteDossier(d.type, fileIncidents().length);
 	annoncer(t('carte.signalement', { quoi: t('enq.signalement.' + d.type), gravite: t('gravite.' + Jeu.gravite(d)) }));
 	fileIncidents(); // met à jour les arrivées (et les remet à zéro si le paquet a changé)
-	if (SELECTION.arrivees[Jeu.index] && millis() - SELECTION.arrivees[Jeu.index] > 2 * compteurSemaine() * facteurLecture()) expirerSelection();
+	// Prompt 77 : un signalement resté trop longtemps en file expire en arrière-plan (majMultitache, multitache.js)
 }
+/** Prendre le signalement focalisé de la file (Entrée, guide) — prompt 77 : prendreSignalement (multitache.js) */
 function selectionnerIncident() {
 	if (phase !== 'selection') return;
-	interaction();
-	nouveauDossier(); // le compteur démarre maintenant (conflit, contradiction ou décision)
-}
-/** File d'attente dépassée : le dossier est réglé sans le joueur (conséquences naturelles, malus « non traité ») */
-function expirerSelection() {
-	nouveauDossier();
-	phase = 'decision';
-	decider('temps');
-	Confort.Son.bip('consequence');
-	annoncer(t('carte.expire'));
-}
-/** Vérification à chaque image (draw) */
-function majSelection() {
-	if (phase !== 'selection' || ecran !== 'jeu' || enPause) return;
-	const tete = fileIncidents()[0];
-	if (tete && resteAvantExpiration(tete) <= 0) expirerSelection();
+	prendreSignalement(SELECTION.focus || 0);
 }
 
 // ——— Panneau de droite pendant la sélection : le signalement choisi dans la file (liste à gauche, prompt 73) ———
@@ -181,7 +170,7 @@ function dessinerEquipesIncident(d, x, y, l) {
 }
 function envoyerEquipeIncident(cle) {
 	if (!['decision', 'contradiction', 'conflit', 'narration', 'selection'].includes(phase)) return;
-	const index = phase === 'narration' ? Jeu.index - 1 : Jeu.index;
+	const index = phase === 'narration' && dernierResultat ? Jeu.paquet.indexOf(dernierResultat.dossier) : Jeu.index; // prompt 77 : d'autres dossiers ont pu être réglés entre-temps
 	const r = Jeu.envoyerEquipe(index, cle, millis());
 	SELECTION.message = { texte: r.message, ok: r.ok, t: millis() };
 	annoncer(String(r.message));
@@ -220,16 +209,6 @@ function amenerEnTete(k) {
 	Object.keys(SELECTION.arrivees).forEach((j) => (arr[remap(Number(j))] = SELECTION.arrivees[j]));
 	SELECTION.arrivees = arr;
 	(Jeu.equipes || []).forEach((q) => (q.index = remap(q.index)));
-	if (typeof ENQ !== 'undefined') ENQ.dossier = -1; // l'enquête repart de zéro pour le dossier pris
-}
-/** Prendre le signalement de rang r dans la file (clic ou Entrée) */
-function prendreSignalement(r) {
-	if (phase !== 'selection') return;
-	const it = fileIncidents()[r];
-	if (!it) return;
-	amenerEnTete(it.index);
-	SELECTION.focus = 0;
-	selectionnerIncident();
 }
 /** Liste des signalements (partie gauche de l'écran de jeu) */
 function dessinerFileSignalements(z) {
@@ -243,13 +222,13 @@ function dessinerFileSignalements(z) {
 	textStyle(BOLD);
 	textSize(24);
 	fill(C.texte);
-	text(t('sig.titre', { n: f.length }), z.x + 20, z.y + 16);
+	text(t('sig.titre', { n: f.length }) + (MULTI.actifs.length ? ' · ' + t('multi.actifs', { n: MULTI.actifs.length, max: MULTI.MAX }) : ''), z.x + 20, z.y + 16); // prompt 77
 	textStyle(NORMAL);
 	textFont(POLICE_DONNEES);
 	textSize(16);
 	textLeading(21);
 	fill(C.gris);
-	text(t(phase === 'selection' ? 'sig.consigne' : enCours ? 'sig.consigneEnCours' : 'sig.consigneAttente'), z.x + 20, z.y + 52, z.l - 40, 56);
+	text(t(phase === 'selection' ? 'sig.consigne' : enCours ? (MULTI.actifs.length > 1 ? 'multi.consigne' : 'sig.consigneEnCours') : 'sig.consigneAttente'), z.x + 20, z.y + 52, z.l - 40, 56);
 	if (!f.length) {
 		const prochain = Jeu.prochainDuJour ? Jeu.prochainDuJour() : null;
 		textFont(POLICE_TEXTE);
@@ -268,9 +247,11 @@ function dessinerFileSignalements(z) {
 	f.slice(0, max).forEach((it, r) => {
 		const y = z.y + 110 + r * (hc + 10);
 		const d = it.d;
+		const actif = actifDe(d); // prompt 77 : signalement pris, son compteur tourne
 		const courant = enCours && it.index === Jeu.index;
+		const resteA = actif ? Math.max(0, resteActif(actif)) : 0;
 		const surligne = SELECTION.surbrillance && dossierConnu(it.index) && (d.lignes || []).includes(SELECTION.surbrillance);
-		fill(courant ? 'rgba(212,3,28,0.22)' : r === SELECTION.focus && phase === 'selection' ? 'rgba(255,193,56,0.14)' : 'rgba(255,255,255,0.05)');
+		fill(courant ? 'rgba(212,3,28,0.22)' : actif ? 'rgba(212,3,28,0.10)' : r === SELECTION.focus && phase === 'selection' ? 'rgba(255,193,56,0.14)' : 'rgba(255,255,255,0.05)');
 		rect(z.x + 16, y, z.l - 32, hc);
 		fill(couleurGravite(Jeu.gravite(d)));
 		rect(z.x + 16, y, 8, hc);
@@ -285,27 +266,36 @@ function dessinerFileSignalements(z) {
 		text(texteLignes(d, it.index), z.x + 40, y + 44, z.l - 80, 26);
 		textFont(POLICE_DONNEES);
 		textSize(17);
-		fill(C.gris);
-		const etat = courant ? t('sig.enCours') : r === 0 || phase === 'selection' ? t('carte.expireDans', { s: Math.ceil(resteAvantExpiration(it) / 1000) }) : t('carte.attendDepuis', { s: Math.ceil((millis() - it.depuis) / 1000) });
+		fill(actif && resteA < 10000 ? C.rouge : C.gris); // compteur d'un actif en rouge sous 10 s
+		const etat = actif ? t(courant ? 'multi.enCours' : 'multi.actif', { s: Math.ceil(resteA / 1000) }) : t('carte.expireDans', { s: Math.ceil(resteAvantExpiration(it) / 1000) });
 		text(t('carte.gravite', { g: t('gravite.' + Jeu.gravite(d)) }) + ' · ' + etat, z.x + 40, y + 78, z.l - 80, 26);
-		if (courant || surligne || (r === SELECTION.focus && phase === 'selection')) {
+		if (courant || actif || surligne || (r === SELECTION.focus && phase === 'selection')) {
 			noFill();
-			stroke(courant ? C.primaire : surligne ? '#FFFFFF' : C.orange);
+			stroke(courant ? C.primaire : surligne ? '#FFFFFF' : actif ? C.rougeFonce : C.orange);
 			strokeWeight(3);
 			rect(z.x + 16, y, z.l - 32, hc);
 			noStroke();
 		}
-		if (phase === 'selection') {
+		if ((phase === 'selection' || enCours) && !courant) {
+			// Prompt 77 : pendant un dossier aussi — prendre un autre signalement (3 actifs au plus) ou basculer vers un actif
 			textAlign(RIGHT, TOP);
 			textFont(POLICE_DONNEES);
 			textSize(16);
 			fill(C.orange);
-			text(t('sig.prendre'), z.x + z.l - 32, y + 14);
+			text(t(actif ? 'multi.basculer' : 'sig.prendre'), z.x + z.l - 32, y + 14);
 			textAlign(LEFT, TOP);
 			boutons.push({ x: z.x + 16, y, l: z.l - 32, h: hc, action: () => prendreSignalement(r) });
 		}
 		if (r === 0) cibleGuide('fileSignalements', z.x + 16, y, z.l - 32, hc);
 	});
+	// Prompt 77 : message récent (refus d'un 4e signalement actif, envoi d'équipe) sous la liste
+	if (SELECTION.message && millis() - SELECTION.message.t < 5000) {
+		textFont(POLICE_DONNEES);
+		textSize(17);
+		textLeading(22);
+		fill(SELECTION.message.ok ? C.vert : C.orange);
+		text(String(SELECTION.message.texte), z.x + 20, z.y + z.h - 74, z.l - 40, 46);
+	}
 	if (f.length > max) {
 		textFont(POLICE_DONNEES);
 		textSize(17);

@@ -166,7 +166,8 @@ function draw() {
 		return;
 	}
 	verifierMecaniques(); // prompt 47 : inspection surprise (avant l'horloge, qui s'arrête alors)
-	majSelection(); // prompt 68 : un signalement trop longtemps en file expire
+	majMultitache(); // prompts 68 / 77 : arrivées, compteurs des signalements actifs, expirations en arrière-plan
+	majNotifications(); // prompt 77 : mails, commentaires, fins d'intervention
 	majRythme(); // prompt 74 : événements de rythme à heures fixes
 	majExplicationPoste(); // prompt 74 : explication du poste à la première ouverture de l'écran de jeu
 	majSoir(); // prompt 69 : crépuscule accéléré, sortie du bureau
@@ -197,11 +198,13 @@ function draw() {
 		sortirFenetreAppli(n0);
 		dessinerBarreTaches();
 	} else dessinerOS();
+	if (PC.etat === 'appli' || PC.etat === 'os') dessinerNotifications(L, 16); // prompt 77 : notifications en haut à droite de l'écran du PC
 	dessinerIndicateurs(); // prompt 36 : app flottante, au premier plan
 	sourisRestaurer();
 	espaceDessin = 'ecran';
 	// 2. La pièce et le moniteur autour (bureau, zoom, ou « au poste » avec la pièce visible)
 	composerVue();
+	if (vue === 'bureau' && !fenetre) dessinerNotifications(L - 24, 24, 0.9); // prompt 77 : PC « fermé » (vue bureau) : notifications sur la vue
 	dessinerBoost(); // prompt 52 : cœur, pulsation rouge, lignes de vitesse, flou
 	dessinerMicro(); // prompt 54 : oscilloscope et mesures pendant l'appui
 	dessinerOffreDemission(); // prompt 47 : les trois jauges sous 20 → « Rendre son badge »
@@ -312,8 +315,10 @@ function decider(action) {
 	if (Jeu.actionBloquee && action === Jeu.actionBloquee()) return; // erreur système : action indisponible
 	// Prompt 56 : mesures de la décision (temps réel de décision, sources consultées) pour le rapport de semaine
 	const mesures = { dureeMs: Math.max(0, millis() - arriveeDossier), sources: typeof enqueteDossier === 'function' ? Object.keys(enqueteDossier().revele).length : 0 };
+	const dDecide = Jeu.dossierCourant();
 	dernierResultat = Jeu.decider(action, sourceChoisie);
 	if (!dernierResultat) return;
+	retirerActif(dDecide); // prompt 77 : ce signalement n'est plus actif
 	if (action !== 'temps') Object.assign(dernierResultat, mesures);
 	else dernierResultat.sources = mesures.sources;
 	dernierResultat.contexteNarr = Rythme.contexteNarration(dernierResultat, Jeu.index - 1); // prompt 74 : phrase de contexte réelle
@@ -335,6 +340,7 @@ function continuer() {
 // ——— Pause (Q13) : uniquement entre deux dossiers, c'est-à-dire pendant la narration ———
 function basculerPause() {
 	if (phase !== 'narration') return; // jamais pendant un compteur actif
+	if (!enPause && MULTI.actifs.length) return annoncer(t('multi.pause')); // prompt 77 : d'autres compteurs tournent
 	if (enPause) {
 		debutNarration += millis() - debutPause; // le temps de pause ne compte pas
 		enPause = false;
@@ -892,7 +898,7 @@ function dessinerReponsesAlerte(d, x, base) {
 		textSize(16);
 		textAlign(LEFT, BOTTOM);
 		fill(SELECTION.message.ok ? C.vert : C.orange);
-		text(String(SELECTION.message.texte), x + 32, y0 - 4);
+		text(String(SELECTION.message.texte), x + 32, y0 - 4, l, 40);
 		textAlign(LEFT, TOP);
 	}
 	// Réponses rédigées : boutons-choix en toutes lettres (deux lignes au plus), touche à gauche
@@ -1001,9 +1007,11 @@ function dessinerConflit() {
 
 function choisirPriorite(cle) {
 	if (phase !== 'conflit') return;
+	const ancien = Jeu.dossierCourant();
 	Jeu.choisirPriorite(cle);
 	phase = Jeu.dossierCourant().contradiction ? 'contradiction' : 'decision';
 	debutCompteur = millis();
+	apresChoixPriorite(ancien); // prompt 77 : la fiche du signalement actif suit le dossier choisi
 }
 
 // ——— Narration entre deux décisions (06-narration, Q17) ———
@@ -1475,6 +1483,7 @@ function keyPressed() {
 	// Au poste : Échap fait se lever (sauf à l'écran de fin)
 	if (keyCode === ESCAPE && !(ecran === 'jeu' && phase === 'fin')) return seLever(), false;
 	// Prompt 72 : réponses d'une alerte — ↑ ↓ / Tab les parcourent, Entrée valide (le focus « Quitter le PC » d'abord s'il est pris)
+	if (!focusQuitter && !focusDemarrer && ecran === 'jeu' && toucheMultitache()) return false; // prompt 77 : Tab passe d'un signalement actif à l'autre
 	if (!focusQuitter && !focusDemarrer && ecran === 'jeu' && toucheAlerte()) return false;
 	// Prompt 26 : Tab place le focus sur « Quitter le PC », puis (prompt 75) sur le logo de la barre des tâches, puis l'en retire
 	if (keyCode === TAB) {
