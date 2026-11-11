@@ -4,6 +4,7 @@ Règle : chaque push sur la branche main ajoute une entrée dans le tableau, la 
 
 | Date | Commit | Fichiers | Résumé |
 |---|---|---|---|
+| 2026-11-11 | ce commit | journal.md | Fusion dans main du prompt 88 (engouement et variété des tâches) |
 | 2026-11-11 | ce commit (branche prompts/88-engouement-variete) | prompts/88-jeu-engouement-variete-taches.md, prompts/README.md, journal.md | Nouveau prompt 88 : engouement et variété des tâches (tâches courtes variées, thèmes du jour, crise, progression, badges) |
 | 2026-11-11 | ce commit | journal.md | Fusion dans main du prompt 87 (décider sans chrono, réponses par type de problème) |
 | 2026-11-11 | ce commit (branche prompts/87-decision-sans-chrono) | prompts/87-jeu-decision-sans-chrono-reponses-claires.md, prompts/README.md, journal.md | Nouveau prompt 87 : décider sans chrono, écran principal simplifié, réponses variées et expliquées selon le type de problème |
