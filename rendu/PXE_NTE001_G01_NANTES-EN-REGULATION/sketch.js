@@ -167,6 +167,8 @@ function draw() {
 	}
 	verifierMecaniques(); // prompt 47 : inspection surprise (avant l'horloge, qui s'arrête alors)
 	majSelection(); // prompt 68 : un signalement trop longtemps en file expire
+	majRythme(); // prompt 74 : événements de rythme à heures fixes
+	majExplicationPoste(); // prompt 74 : explication du poste à la première ouverture de l'écran de jeu
 	majSoir(); // prompt 69 : crépuscule accéléré, sortie du bureau
 	majDemarrageJour(); // prompt 71 : démarrage du PC en début de journée (jours 1 à 3)
 	avancerTemps(); // horloge simulée, sieste, arrivée des incidents, fin de journée (immersion.js)
@@ -272,6 +274,7 @@ function lancerNouvellePartie() {
 	RAPPORT = null;
 	p.then(() => {
 		Jeu.nouvellePartie();
+		nouvellePartieRythme(); // prompt 74 : ordre d'arrivée tiré par la graine, fil de la journée remis à zéro
 		demarrerJournee(); // journée 1, 6h00, en attente du premier incident
 		const ch = chapitreCourant();
 		if (!introVue) lancerIntroSMS(); // § 2 : une seule fois, pas sur « Rejouer »
@@ -313,12 +316,15 @@ function decider(action) {
 	if (!dernierResultat) return;
 	if (action !== 'temps') Object.assign(dernierResultat, mesures);
 	else dernierResultat.sources = mesures.sources;
+	dernierResultat.contexteNarr = Rythme.contexteNarration(dernierResultat, Jeu.index - 1); // prompt 74 : phrase de contexte réelle
 	const dj = dernierResultat.deltas.map((v, i) => t('jaugeTitre.' + ['fluidite', 'reputation', 'budget'][i]) + ' ' + (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v)).join(', ');
 	annoncer(t('annonce.decision', { titre: dernierResultat.narration.titre, texte: dernierResultat.narration.texte }) + ' ' + dj + '.'); // prompt 53 : variations annoncées
 	Confort.Son.clicAction(action); // prompt 44 § 4 : un clic de console par action
 	Confort.Son.jauges(dernierResultat.deltas); // § 5 : chute brutale ou remontée nette, audibles
 	phase = 'narration';
 	debutNarration = millis();
+	if (dernierResultat.contexteNarr) annoncer(t(dernierResultat.contexteNarr.cle, dernierResultat.contexteNarr.vars));
+	verifierSerie(); // prompt 74 : 2 bonnes ou 2 ratées d'affilée → mot du patron (sans effet sur les jauges)
 	Sauvegarde.auto(false); // prompt 33 : après chaque décision (l'annonce de la décision n'est pas écrasée)
 }
 
@@ -1034,6 +1040,14 @@ function dessinerNarration() {
 	const ctx = [r.contexte.meteo && t('ctx.meteo'), r.contexte.pointe && t('ctx.pointe'), r.contexte.affluence && t('ctx.affluence')].filter(Boolean);
 	fill(C.gris);
 	if (ctx.length) text(t('narration.contexte', { liste: ctx.join(', ') }), z.x + 32, z.y + 570);
+	// Prompt 74 : une phrase de contexte tirée de la situation réelle (météo, heure, ligne, agenda)
+	if (r.contexteNarr) {
+		textFont(POLICE_TEXTE);
+		textSize(20);
+		textLeading(28);
+		fill(C.texte);
+		text(t(r.contexteNarr.cle, r.contexteNarr.vars), z.x + 32, z.y + 612, z.l - 64, 90);
+	}
 
 	// Suite automatique, ou Entrée / clic
 	const tA = constrain((millis() - debutNarration) / DUREE_NARRATION, 0, 1);
@@ -1219,6 +1233,7 @@ function rejouer() {
 	const p = e.mode === 'semaine' ? Jeu.chargerSemaine(e.semaine.lundi) : e.mode === 'direct' ? Jeu.chargerDirect() : Jeu.chargerHorsLigne();
 	p.then(() => {
 		Jeu.nouvellePartie();
+		nouvellePartieRythme(); // prompt 74
 		demarrerJournee(); // pas d'intro SMS sur « Rejouer » (§ 2)
 	});
 }
@@ -1363,6 +1378,7 @@ function keyPressed() {
 		if (keyCode === ESCAPE || (fenetre === 'aide' && (key === 'h' || key === 'H' || key === '?'))) return fermer(), false;
 		if (fenetre === 'aide' && (key === 't' || key === 'T')) return lancerTutoriel(), false; // prompt 34
 		if (fenetre === 'telephone' && (keyCode === ENTER || keyCode === RETURN)) return fermer(), false; // prompt 38
+		if (fenetre === 'poste' && (keyCode === ENTER || keyCode === RETURN || key === ' ')) return fermer(), false; // prompt 74
 		if (fenetre === 'rapport' && (keyCode === ENTER || keyCode === RETURN)) return actionRapport(), false; // prompt 41
 		if (fenetre === 'menu') {
 			// Prompt 35 : menu Échap modernisé — ↑ ↓ / Tab pour choisir, Entrée pour valider
@@ -1548,6 +1564,7 @@ function dessinerFenetre() {
 	if (fenetre === 'accessibilite') return fenetreAccessibilite(); // prompt 48
 	if (fenetre === 'partir') return fenetrePartir(); // prompt 51
 	if (fenetre === 'blame') return fenetreBlame(); // prompt 51
+	if (fenetre === 'poste') return fenetrePoste(); // prompt 74
 	if (fenetre === 'aide') return fenetreAide();
 	if (fenetre === 'reset') return fenetreReset();
 	if (fenetre === 'parametres') return fenetreParametres();
