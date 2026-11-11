@@ -215,6 +215,41 @@ function ouvrirAppliNotif(cle) {
 	if (i < 0 || (PC.etat !== 'os' && PC.etat !== 'appli')) return;
 	if (PC.fenetre !== cle) ouvrirIconeOS(i);
 }
+/** Prompt 80 : la dernière notification en une ligne, dans la barre des tâches (entre les icônes et les jauges) */
+function dessinerNotificationBarre() {
+	const liste = notifsVisibles();
+	if (!liste.length) return;
+	const n = liste[liste.length - 1];
+	const x = 760;
+	const l = 500; // s'arrête avant les jauges de la barre des tâches
+	const y = H - BARRE_OS + 10;
+	const h = BARRE_OS - 20;
+	noStroke();
+	fill(DS.blanc15);
+	rect(x, y, l, h);
+	fill(n.icone === 'patron' ? DS.primaire : n.icone === 'community' ? DS.info : DS.alerte);
+	rect(x, y, 6, h);
+	const ic = ICONES_OS.find((c) => c.cle === n.icone);
+	if (ic) ic.dessin(x + 14, y + 6, 0.65);
+	const txt = n.titre + ' · ' + n.extrait;
+	textFont(POLICE_TEXTE);
+	textStyle(BOLD);
+	textSize(18);
+	textAlign(LEFT, CENTER);
+	fill(DS.blanc);
+	const place = l - 86 - (liste.length > 1 ? 48 : 0);
+	let court = txt;
+	while (court.length > 8 && textWidth(court) > place) court = court.slice(0, -2);
+	text(court === txt ? txt : court.trim() + '…', x + 78, y + h / 2);
+	textStyle(NORMAL);
+	if (liste.length > 1) {
+		textAlign(RIGHT, CENTER);
+		fill(DS.alerte);
+		text(t('notif.autres', { n: liste.length - 1 }), x + l - 10, y + h / 2);
+	}
+	textAlign(LEFT, TOP);
+	boutons.push({ x, y, l, h, action: () => ((n.t = -Infinity), n.action && n.action()) });
+}
 /** Pile de notifications en haut à droite de la zone (x0 = bord droit), dans l'espace de dessin courant */
 function dessinerNotifications(xDroite, y0, echelle) {
 	const liste = notifsVisibles();

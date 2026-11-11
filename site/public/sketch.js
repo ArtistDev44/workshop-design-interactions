@@ -199,7 +199,10 @@ function draw() {
 		sortirFenetreAppli(n0);
 		dessinerBarreTaches();
 	} else dessinerOS();
-	if (PC.etat === 'appli' || PC.etat === 'os') dessinerNotifications(L, 16); // prompt 77 : notifications en haut à droite de l'écran du PC
+	// Prompt 77 : notifications en haut à droite de l'écran du PC ; prompt 80 : appli ou fenêtre ouverte → bandeau compact
+	// dans la barre des tâches (les jauges, le dossier et le contenu des applis ne sont plus masqués)
+	if (PC.etat === 'appli' || (PC.etat === 'os' && PC.fenetre)) dessinerNotificationBarre();
+	else if (PC.etat === 'os') dessinerNotifications(L, 16);
 	dessinerIndicateurs(); // prompt 36 : app flottante, au premier plan
 	sourisRestaurer();
 	espaceDessin = 'ecran';

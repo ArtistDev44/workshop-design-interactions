@@ -1004,6 +1004,8 @@ const TRADUCTIONS = {
 		"plainte.delai": "répondre dans {s} s",
 		"plainte.delaiRapide": "réponse rapide : encore {s} s",
 		"plainte.tardive": "Réponse tardive : réputation −3.",
+		"notif.autres": "+{n}",
+		"aide.k.sieste": "Se reposer (sieste, temps ×100) · se réveiller",
 	},
 	en: {
 		"charge.introuvable": "Week not found: offline reference week.",
@@ -2002,6 +2004,8 @@ const TRADUCTIONS = {
 		"plainte.delai": "reply within {s} s",
 		"plainte.delaiRapide": "quick reply: {s} s left",
 		"plainte.tardive": "Late reply: reputation −3.",
+		"notif.autres": "+{n}",
+		"aide.k.sieste": "Rest (nap, time ×100) · wake up",
 	},
 };
 
