@@ -51,6 +51,7 @@ function choisirFiltreJournal(f) {
 	annoncer(t('journal.filtre.' + f) + ' : ' + JournalDonnees.compteurs(JOURNAL.jour)[f]);
 }
 function ouvrirEnqueteJournal(e) {
+	JOURNAL.citationOuverte = false; // prompt 92
 	const ev = (Jeu.evenementsJournee || []).filter((x) => x.jour === e.jour);
 	JOURNAL.enquete = ev.indexOf(e);
 	JOURNAL.volet = 0;
@@ -517,18 +518,18 @@ function voletPasse(f, z, y) {
 	const items = [t('journal.type', { type: tSi('type.' + F.type, F.type) }), t('journal.nature', { nature: F.nature || nonRenseigne() }), F.lignes ? t('dossier.ligne', { lignes: F.lignes }) : t('enq.lignes.inconnue'), F.retard !== null ? t('dossier.retard', { retard: F.retard }) : t('dossier.retardInconnu')];
 	items.forEach((s, i) => dsTexte(s, z.x + 16 + (i % 2) * (z.l / 2), y + 40 + Math.floor(i / 2) * 34, 17, DS.blanc, 'left', z.l / 2 - 32));
 	y += 140;
-	// Bloc citation : texte réel de la source, liseré blanc 15 %
-	fill(DS.blanc15);
-	rect(z.x, y, 6, 140);
-	textFont(DS.policeTexte);
-	textStyle(ITALIC);
-	textSize(19);
-	textLeading(28);
-	fill(DS.blanc);
-	textAlign(LEFT, TOP);
-	text('« ' + (F.citation || nonRenseigne()) + ' »', z.x + 24, y + 4, z.l - 40, 132);
-	textStyle(NORMAL);
-	y += 156;
+	// Bloc citation : texte réel de la source, liseré blanc 15 % — prompt 92 : même composant que l'enquête de
+	// Signalements (nettoyage typographique, 4 lignes puis « … » en fin de mot et « Lire tout »)
+	const cit = F.citation ? nettoyerTexteSource(t('dossier.citation', { texte: F.citation }), Langue.actuelle) : nonRenseigne();
+	const rc = dessinerTexte(cit, z.x + 24, y + 4, Math.min(z.l - 40, 70 * TexteUI.mesurer('0', DS.policeTexte, 21)), { police: DS.policeTexte, taille: 21, style: ITALIC, couleur: DS.blanc, maxLignes: JOURNAL.citationOuverte ? 0 : 4 });
+	fill(Confort.Reglages.contrasteRenforce ? DS.blanc50 : DS.blanc15);
+	rect(z.x, y, 6, Math.max(40, rc.h + 8));
+	y += Math.max(40, rc.h + 8) + 12;
+	if (F.citation && Langue.actuelle !== 'fr') y += dessinerTexte(t('enq.original'), z.x + 24, y - 6, z.l - 40, { police: DS.policeTexte, taille: 18, couleur: DS.blanc75 }).h + 6;
+	if (rc.tronque || JOURNAL.citationOuverte) {
+		dsBouton(z.x + 24, y, 240, 44, t(JOURNAL.citationOuverte ? 'enq.reduire' : 'enq.lireTout'), () => (JOURNAL.citationOuverte = !JOURNAL.citationOuverte), 'contour');
+		y += 56;
+	}
 	dsTexte(F.consequence ? t('savoir.consequence', { heure: F.consequence.heure }) : t('journal.source', { source: F.source || nonRenseigne(), date: dateLongue(F.date) + (F.heure ? ' · ' + F.heure : '') }), z.x, y, 16, DS.blanc75, 'left', z.l);
 }
 function puce(txt, x, y, l) {
@@ -539,7 +540,7 @@ function puce(txt, x, y, l) {
 	noFill();
 	rect(x + 1, y + 1, l - 2, 46);
 	noStroke();
-	dsTexte(txt, x + 14, y + 13, 17, DS.blanc, 'left', l - 28);
+	dessinerTexte(txt, x + 14, y + 12, l - 28, { police: DS.policeTexte, taille: 18, couleur: DS.blanc, maxLignes: 1, interligne: 24 }); // prompt 92 : « … » en fin de mot
 }
 function voletContexte(f, z, y) {
 	const C2 = f.contexte;
@@ -558,7 +559,8 @@ function voletContexte(f, z, y) {
 	dsTexte(t('journal.agendaTitre').toUpperCase(), z.x, y, 14, DS.blanc75, 'left');
 	y += 26;
 	if (!C2.agenda.length) dsTexte(t('journal.agendaVide'), z.x, y, 16, DS.blanc50, 'left', z.l);
-	C2.agenda.slice(0, 4).forEach((n, i) => puce('◷ ' + court(n, 60), z.x + (i % 2) * (l + 12), y + Math.floor(i / 2) * 60, l));
+	C2.agenda.slice(0, 4).forEach((n, i) => puce('◷ ' + nettoyerTexteSource(n, Langue.actuelle), z.x + (i % 2) * (l + 12), y + Math.floor(i / 2) * 60, l));
+	if (C2.agenda.length > 4) dsTexte(t('enq.autres', { n: C2.agenda.length - 4 }), z.x, y + 2 * 60 + 4, 18, DS.blanc75, 'left', z.l); // prompt 92 : rien de caché sans le dire
 }
 function faceDe(v, x, y, s) {
 	fill(DS.blanc);

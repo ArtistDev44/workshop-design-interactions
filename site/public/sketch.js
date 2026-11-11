@@ -1198,6 +1198,7 @@ function keyPressed() {
 	// Au poste : Échap fait se lever (sauf à l'écran de fin)
 	if (keyCode === ESCAPE && !(ecran === 'jeu' && phase === 'fin')) return (depilerNavigation() || seLever()), false; // prompt 91 § 3
 	// Prompt 72 : réponses d'une alerte — ↑ ↓ / Tab les parcourent, Entrée valide (le focus « Quitter le PC » d'abord s'il est pris)
+	if (!focusQuitter && !focusDemarrer && ecran === 'jeu' && toucheSourcesEnquete()) return false; // prompt 92 : Tab / Entrée / ↑ ↓ dans les sources d'« En savoir plus »
 	if (!focusQuitter && !focusDemarrer && ecran === 'jeu' && toucheMultitache()) return false; // prompt 77 : Tab passe d'un signalement actif à l'autre
 	// Prompt 26 : Tab place le focus sur « Quitter le PC », puis (prompt 75) sur le logo de la barre des tâches, puis l'en retire
 	if (keyCode === TAB) {
@@ -1254,6 +1255,7 @@ function mouseWheel(event) {
 	if (molletteCommunity(event.delta)) return false; // prompt 85 : défilement du fil
 	if (mollettePatron(event.delta)) return false; // prompt 86 : historique du patron
 	if (molletteJournal(event.delta)) return false; // prompt 89 : frise du Journal
+	if (molletteEnquete(event.delta)) return false; // prompt 92 : sources de l'enquête
 	if (scrollSortiePC(event.delta)) return false;
 }
 

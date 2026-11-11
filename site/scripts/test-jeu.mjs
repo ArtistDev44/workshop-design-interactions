@@ -25,7 +25,7 @@ function contexte(langue, stockage = new Map(), avecHistoire = false) {
 	ctx.window = ctx;
 	ctx.globalThis = ctx;
 	vm.createContext(ctx);
-	const fichiers = ['data/lignes.js', 'data/semaines.js', 'data/fallback.js', 'data/messages.js', 'data/reponses.js', 'data/loire.js', 'i18n.js', 'game.js', 'rythme.js', 'taches.js', 'journal-donnees.js', 'traces.js', 'notifs-tel.js']; // prompts 74 / 88 / 89 / 90 : logique pure de la couche d'affichage
+	const fichiers = ['data/lignes.js', 'data/semaines.js', 'data/fallback.js', 'data/messages.js', 'data/reponses.js', 'data/loire.js', 'i18n.js', 'game.js', 'rythme.js', 'taches.js', 'journal-donnees.js', 'traces.js', 'notifs-tel.js', 'texte.js']; // prompts 74 / 88 / 89 / 90 / 92 : logique pure de la couche d'affichage
 	if (avecHistoire) fichiers.push('confort.js', 'histoire.js'); // prompt 56 : progression et palmarès (localStorage)
 	for (const f of fichiers) {
 		vm.runInContext(readFileSync(join(pub, f), 'utf8'), ctx, { filename: f });
@@ -1530,6 +1530,102 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 	const sx = readFileSync(join(pub, 'sieste.js'), 'utf8');
 	verifier(/q\.arrivee -= decal/.test(sx) && /sieste\.prevision/.test(sx) && /somnolenceNecessaire \? 2 : 1/.test(sx), 'somnolence : la sieste fait arriver les équipes et annonce le prochain signalement ; option ×2');
 	verifier(!/return tacheInfo\(r, n\)/.test(readFileSync(join(pub, 'taches.js'), 'utf8')), 'info trafic (prompt 88) remplacée par la publication Community');
+}
+
+// Prompt 92 : composant de texte fiable (coupure, ellipse en fin de mot, cache), nettoyage typographique
+// mot pour mot, découpage de l'agenda, modèles des sources d'enquête (rien d'inventé, citation intacte)
+for (const langue of ['fr', 'en']) {
+	const ct = contexte(langue);
+	vm.runInContext('var MOBILE = { actif: false }; var C = {}; function dateLongue(d) { return String(d); } function nombreFr(v) { return Langue.actuelle === "fr" ? String(v).replace(".", ",") : String(v); }', ct);
+	vm.runInContext(readFileSync(join(pub, 'enquete.js'), 'utf8'), ct, { filename: 'enquete.js' });
+	const r = vm.runInContext(
+		`(() => {
+		TexteUI.mesureur = (s, p, t) => [...String(s)].length * t * 0.6; // police à chasse fixe : 0,6 em par caractère
+		const W = (s) => [...s].length * 22 * 0.6;
+		const out = { erreurs: [] };
+		const err = (x) => out.erreurs.push(x);
+		// couperLignes : largeur respectée, mots longs coupés (trait d'union ou coupure naturelle), retours à la ligne
+		const larg = 300; // 22 caractères
+		const long = 'Anticonstitutionnellementissimementplus';
+		const lm = TexteUI.couperLignes('Un ' + long + ' fin', larg, 'mono', 22);
+		if (lm.some((l) => W(l) > larg)) err('mot long : ligne trop large ' + JSON.stringify(lm));
+		if (!lm.some((l) => l.endsWith('-'))) err('mot long : pas de trait d\\'union ' + JSON.stringify(lm));
+		if (lm.join('').replace(/-/g, '').replace(/ /g, '') !== ('Un' + long + 'fin')) err('mot long : lettres perdues');
+		const url = TexteUI.couperLignes('Voir https://data.nantesmetropole.fr/explore/dataset/244400404_reseau', larg, 'mono', 22);
+		if (url.some((l) => W(l) > larg) || !url.some((l) => /\\/$/.test(l))) err('URL : coupure après « / » attendue ' + JSON.stringify(url));
+		const cc = TexteUI.couperLignes('Lignes C1/C2/C3/C4/C5/C6/C7/C8/C9/C10 déviées', 200, 'mono', 22);
+		if (cc.some((l) => W(l) > 200) || cc.some((l) => /-$/.test(l))) err('C1/C2 : coupure après « / » sans trait d\\'union ' + JSON.stringify(cc));
+		const nl = TexteUI.couperLignes('Ligne 1\\nLigne 2', 600, 'mono', 22);
+		if (nl.length !== 2) err('retour à la ligne de la source non respecté');
+		const etroit = TexteUI.couperLignes('Bonjour tout le monde', 1, 'mono', 22);
+		if (!etroit.length || etroit.some((l) => !l)) err('largeur minimale : lignes vides');
+		const n0 = TexteUI.tailleCache();
+		const a1 = TexteUI.couperLignes('Texte mis en cache pour le test', 260, 'mono', 22);
+		const a2 = TexteUI.couperLignes('Texte mis en cache pour le test', 260, 'mono', 22);
+		if (a1 !== a2 || TexteUI.tailleCache() !== n0 + 1) err('cache : résultat recalculé');
+		// Ellipse en fin de mot + indicateur « tronqué »
+		const phrase = 'Manifestation et service garanti le dix-sept octobre sur toutes les lignes du réseau de tramway et de bus';
+		const h = TexteUI.hauteurTexte(phrase, 300, { taille: 22, maxLignes: 2, police: 'mono' });
+		const der = h.lignes[1];
+		if (!h.tronque || h.lignes.length !== 2 || !/ …$/.test(der)) err('ellipse : ' + JSON.stringify(h.lignes));
+		const motsVus = (h.lignes[0] + ' ' + der.replace(/ …$/, '')).split(' ');
+		if (motsVus.join(' ') !== phrase.split(' ').slice(0, motsVus.length).join(' ')) err('ellipse au milieu d\\'un mot : ' + der);
+		if (TexteUI.hauteurTexte('court', 300, { taille: 22, maxLignes: 2, police: 'mono' }).tronque) err('texte court marqué tronqué');
+		// Nettoyage typographique
+		const n = (s) => TexteUI.nettoyerTexteSource(s, Langue.actuelle);
+		const brut = 'Travaux &amp; d&#039;eviation  <b>ligne C1</b> : 50.4 km/h , 12 mm... 18min ,, 12345 voyageurs en 2026 !';
+		const net = n(brut);
+		if (/&amp;|&#|<b>|  /.test(net) || !/&/.test(net)) err('nettoyage commun : ' + net);
+		if (Langue.actuelle === 'fr') {
+			if (!/d’eviation/.test(net) || !/C1\u202F:/.test(net) || !/50,4\u00A0km\\/h/.test(net) || !/12\u00A0mm/.test(net) || !/…/.test(net) || !/18\u00A0min/.test(net) || !/12\u00A0345/.test(net) || !/2026\u202F!/.test(net)) err('typographie FR : ' + JSON.stringify(net));
+			if (!/15:00/.test(n('le 2026-09-15 à 15:00'))) err('heure 15:00 modifiée');
+			if (n('« Ligne 1 »') !== '«\u202FLigne 1\u202F»') err('guillemets FR');
+		} else {
+			if (/ [!:,]/.test(net) || !/50\\.4/.test(net)) err('typographie EN : ' + JSON.stringify(net));
+			if (n('« Line 1 »') !== '“Line 1”') err('guillemets EN');
+		}
+		// Mot pour mot : sur toutes les citations réelles des 3 semaines (et le fallback)
+		let nb = 0;
+		for (const l of Jeu.semainesProposees().map((x) => x.lundi)) {
+			Jeu.chargerSemaine(l); Jeu.nouvellePartie();
+			const sources = Jeu.paquet.map((d) => d.texte_source).concat(Jeu.evenementsAffluence ? Jeu.paquet.flatMap((d) => Jeu.evenementsAffluence(d.date).map((x) => x.texte_source)) : []);
+			for (const s of sources) {
+				if (!s) continue;
+				nb++;
+				if (TexteUI.mots(n(String(s))).join(' ') !== TexteUI.mots(String(s)).join(' ')) err('mots changés : ' + s + ' → ' + n(String(s)));
+			}
+			// Modèles des 4 sources sur chaque dossier : textes présents, citation identique à la donnée
+			for (const d of Jeu.paquet) {
+				for (const cle of ['lignes', 'trafic', 'meteo', 'agenda']) {
+					const m = modeleSource(cle, d);
+					const tout = [m.fait, m.provenance].concat(m.paires.flat(), (m.puces || []).map((x) => x.txt), (m.liste || []).map((x) => x.titre)).join(' | ');
+					if (!m.fait || /undefined|\\[À COMPLÉTER\\]|\\{\\w+\\}|NaN/.test(tout)) err(cle + ' : texte manquant ' + tout);
+					if (cle === 'trafic' && d.texte_source && m.citation !== String(d.texte_source)) err('citation reformulée');
+					if (cle === 'trafic' && d.texte_source && !annonceSource(m).includes(n(String(d.texte_source)))) err('annonce : citation incomplète');
+				}
+			}
+		}
+		out.nb = nb;
+		// Agenda : « Titre — Lieu, Ville », repli si le format diffère
+		const ag = TexteUI.decouperAgenda('Exposition Le Muséum au fil du temps — Place de la Monnaie, Nantes');
+		if (ag.titre !== 'Exposition Le Muséum au fil du temps' || ag.lieu !== 'Place de la Monnaie, Nantes') err('agenda : découpage ' + JSON.stringify(ag));
+		const ag2 = TexteUI.decouperAgenda('Atelier sans lieu');
+		if (ag2.titre !== 'Atelier sans lieu' || ag2.lieu !== null) err('agenda : repli');
+		// Relief : le texte reconstitué est identique
+		const sg = TexteUI.segments('Ligne C1 : 18 min le 4/10', /\\d+(?:[\\/]\\d+)*|C\\d+/g);
+		if (sg.map((x) => x.txt).join('') !== 'Ligne C1 : 18 min le 4/10' || sg.filter((x) => x.relief).length !== 3) err('relief : ' + JSON.stringify(sg));
+		return out;
+	})()`,
+		ct,
+	);
+	verifier(r.erreurs.length === 0, `textes d'enquête (${langue}) : ${r.erreurs.slice(0, 4).join(' ; ')}`);
+	verifier(r.nb > 50, `textes d'enquête : trop peu de citations réelles vérifiées (${r.nb})`);
+}
+for (const f of ['enquete.js', 'carte.js', 'journal.js']) verifier(!/\*\s*1\.05\s*\)/.test(readFileSync(join(pub, f), 'utf8')), `${f} : estimation « textWidth × 1,05 » restante (prompt 92)`);
+{
+	const en = readFileSync(join(pub, 'enquete.js'), 'utf8');
+	verifier(/toucheSourcesEnquete\(\)/.test(readFileSync(join(pub, 'sketch.js'), 'utf8')) && /molletteEnquete\(/.test(readFileSync(join(pub, 'sketch.js'), 'utf8')), 'sources : clavier et molette branchés');
+	verifier(/reduireAnimations \? 1/.test(en) && /reduireAnimations \|\|/.test(en), 'sources : fondu et défilement instantanés avec animations réduites');
 }
 
 // Service worker : chaque script de index.html est dans la liste hors ligne de sw.js
