@@ -1859,6 +1859,24 @@ for (const [langue, mots] of [
 }
 verifier(/aide\.k\.glisserTouche/.test(readFileSync(join(pub, 'sketch.js'), 'utf8')) && /texteDifficulteChapitre/.test(readFileSync(join(pub, 'menu.js'), 'utf8')), 'prompt 97 : aide (glisser, Q) et difficulté du mode histoire affichées');
 
+// Prompt 98 (skill game-ui-design, validations.md) : aucun texte fixe sous 14 px, boutons qui ne rétrécissent pas
+// sous 14 px, zones de clic élargies (✕ des applis, somnolence), infobulle du bandeau temporisée (350 ms)
+{
+	const petits = [];
+	for (const f of readdirSync(pub).filter((x) => x.endsWith('.js') && x !== 'audit-textes.js')) {
+		const src = readFileSync(join(pub, f), 'utf8');
+		for (const m of src.matchAll(/textSize\((\d+)\)|dsTexte\([^;\n]*?, (\d+), (?:DS|C|MENU_C)\.[a-zA-Z0-9]+, '(?:left|right|center)'/g)) {
+			const v = Number(m[1] || m[2]);
+			if (v < 14) petits.push(`${f} : ${m[0].slice(0, 50)}`);
+		}
+	}
+	verifier(petits.length === 0, `textes sous 14 px (prompt 98) : ${petits.slice(0, 4).join(' ; ')}`);
+	const sk98 = readFileSync(join(pub, 'sketch.js'), 'utf8');
+	verifier(/while \(textSize\(\) > 14 && textWidth\(label\)/.test(sk98), 'bouton() ne doit pas réduire un libellé sous 14 px');
+	verifier(/millis\(\) - BANDEAU\.survolDepuis >= 350/.test(sk98), 'infobulle du bandeau : délai de 350 ms');
+	verifier(/boutons\.push\(\{ x: x - 12, y: 0, l: 58, h: 52, action: fermerAppli \}\)/.test(readFileSync(join(pub, 'os.js'), 'utf8')) && /y: z\.y - 18, l: z\.l, h: z\.h \+ 18, action: basculerSieste/.test(readFileSync(join(pub, 'sieste.js'), 'utf8')), 'zones de clic ≥ 44 px : ✕ des applis et somnolence');
+}
+
 // Service worker : chaque script de index.html est dans la liste hors ligne de sw.js
 const html = readFileSync(join(pub, 'index.html'), 'utf8');
 const sw = readFileSync(join(pub, 'sw.js'), 'utf8');

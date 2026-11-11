@@ -208,7 +208,9 @@ function draw() {
 			dessinerJeu();
 			bandeauEtat(); // prompt 43
 			indicateurSauvegarde(); // prompt 33
-			if (BANDEAU.survol) infobulle(BANDEAU.survol, Math.min(BANDEAU.x + 16, L - 28 - textWidth(BANDEAU.survol)), BANDEAU.y + BANDEAU.h + 4); // prompt 93 : ligne complète du bandeau
+			// Prompt 93 : ligne complète du bandeau ; prompt 98 : infobulle après 350 ms de survol (validations : tooltip-no-delay)
+			if (BANDEAU.survol !== BANDEAU.survolPrec) (BANDEAU.survolPrec = BANDEAU.survol), (BANDEAU.survolDepuis = millis());
+			if (BANDEAU.survol && millis() - BANDEAU.survolDepuis >= 350) infobulle(BANDEAU.survol, Math.min(BANDEAU.x + 16, L - 28 - textWidth(BANDEAU.survol)), BANDEAU.y + BANDEAU.h + 4);
 			BANDEAU.survol = null;
 		}
 		if (enPause) dessinerPause();
@@ -876,9 +878,7 @@ function dessinerFin() {
 		fill(C.gris);
 		textSize(17);
 		const det = t('fin.profilDetail', { objectifs: p.objectifs, jour: p.meilleurJour, equipes: p.equipes, malus: p.malusFrequent });
-		textSize(13);
-		textLeading(17);
-		text(det, g.x + 48, g.y + 808, g.l - 96, 36); // prompt 39 : deux lignes au plus, au-dessus des boutons
+		dessinerTexte(det, g.x + 48, g.y + 806, g.l - 96, { taille: 14, couleur: C.gris, maxLignes: 2, interligne: 19 }); // prompt 39 : deux lignes au plus ; prompt 98 : 13 → 14 px, « … » en fin de mot si besoin
 	}
 	const bl = (g.l - 96 - 20) / 2;
 	bouton(g.x + 48, g.y + g.h - 92, bl, 64, t('fin.rejouer'), rejouer); // prompt 39 : abaissés sous le profil
@@ -1036,7 +1036,7 @@ function bouton(x, y, l, h, label, action, desactive, secondaire) {
 	textFont(POLICE_TEXTE);
 	textStyle(BOLD);
 	textSize(Math.min(28, h * 0.34));
-	while (textSize() > 13 && textWidth(label) > l - 28) textSize(textSize() - 1); // le libellé tient dans le bouton
+	while (textSize() > 14 && textWidth(label) > l - 28) textSize(textSize() - 1); // le libellé tient dans le bouton ; prompt 98 : jamais sous 14 px
 	textAlign(CENTER, CENTER);
 	zoneTexteDebut('bouton', x, y, l, h); // prompt 93
 	text(label, x + l / 2, y + h / 2);
@@ -1403,7 +1403,7 @@ function fenetreAide() {
 		fill(C.accent);
 		text(k, x + 48, y + 136 + i * 31);
 		textFont(POLICE_TEXTE);
-		ajusterTaille(d, 580, 20);
+		ajusterTaille(d, 580, 20, 14); // prompt 98 : 14 px au minimum
 		fill(C.texte);
 		text(d, x + 260, y + 136 + i * 31);
 	});
@@ -1556,8 +1556,9 @@ function fenetreParametres() {
 	textFont(POLICE_DONNEES);
 	textSize(18);
 	fill(C.gris);
-	text(t('param.touche', { k: '8' }), x + 560, ym + 36);
-	bouton(x + l - 48 - 280, ym + 8, 280, 56, '♪ ' + t('musique.' + (Confort.Reglages.musique || 'chillin')), musiqueSuivante, false, true);
+	text(t('param.touche', { k: '8' }), x + 500, ym + 36);
+	bouton(x + l - 48 - 340, ym + 8, 340, 56, // prompt 98 : 280 → 340, le titre du morceau tient sans passer sous 14 px
+		 '♪ ' + t('musique.' + (Confort.Reglages.musique || 'chillin')), musiqueSuivante, false, true);
 	textFont(POLICE_DONNEES);
 	textSize(14);
 	fill(C.gris);

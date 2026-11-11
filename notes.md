@@ -282,3 +282,18 @@ de retard chiffré). Webcam et micro réels : à essayer en salle (prompts 54, 5
 - Verbatim 1 : [À COMPLÉTER]
 - Verbatim 2 : [À COMPLÉTER]
 - Verbatim 3 : [À COMPLÉTER]
+
+## Revue UI / HUD (prompt 98, 11/11/2026)
+Les écrans ont été audités par le parcours `?audit=textes&parcours=1` : 59 étapes, en FR et en EN, avec et sans contraste renforcé, en 1920×1080 et en mobile portrait. Détail dans `jeu/94-revue-ui-hud.md`.
+
+| Écran | Avant | Après |
+|---|---|---|
+| Signalement ouvert | 19 boutons ; « En savoir plus », onglets et bandeau à 36-39 px | 19 boutons ; 43-45 px |
+| Liste des signalements | 15 boutons ; ✕ de 21 px, somnolence 27 px | 15 boutons ; ✕ 43 px, somnolence 54 px |
+| Aide H | deux libellés à 13 px | 14 px au minimum (libellés raccourcis) |
+| Paramètres | bouton de musique à 13 px | 14 px (bouton de 340 px) |
+| Rapport de semaine | axes à 13 px | 15 px |
+| Journal (jour et semaine) | axes et légendes à 12-13 px | 14 px |
+
+- Défauts A à D : 0 avant comme après.
+- Tests humains (pouce seul en mobile portrait, clavier seul de bout en bout) : [À COMPLÉTER].

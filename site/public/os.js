@@ -342,7 +342,7 @@ function dessinerFermerAppli() {
 	line(x + 14, y + 8, x + 26, y + 20);
 	line(x + 26, y + 8, x + 14, y + 20);
 	noStroke();
-	boutons.push({ x, y, l: 40, h: 28, action: fermerAppli });
+	boutons.push({ x: x - 12, y: 0, l: 58, h: 52, action: fermerAppli }); // prompt 98 : zone de clic ≥ 44 px (le dessin reste 40 × 28)
 	cibleGuide('fermerAppli', x, y, 40, 28); // prompt 37
 }
 

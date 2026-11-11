@@ -35,6 +35,9 @@
 		erreurs: [],
 		nonMesurables: 0,
 		nonMesParAppelant: {},
+		petits: new Map(), // prompt 98 : textes < 14 px à l'écran (validations.md « small-font-size »)
+		cibles: new Map(), // prompt 98 : cibles cliquables < 44 px (« small-touch-target »)
+		boutonsParEcran: {}, // prompt 98 : nombre de boutons cliquables par écran (« moins de boutons »)
 	};
 	const TOL = 1;
 
@@ -155,6 +158,15 @@
 			bx = ha === CENTER ? x - bl / 2 : ha === RIGHT ? x - bl : x;
 			by = va === CENTER ? y - bh / 2 : va === BOTTOM ? y - bh : va === BASELINE ? y - asc : y;
 		}
+		// Prompt 98 : taille réellement affichée (canevas 1920×1080 ; au poste, l'écran du PC est réduit à 90 %)
+		const m0 = moi.drawingContext.getTransform();
+		const dpx = moi.pixelDensity ? moi.pixelDensity() : 1;
+		const echelleCSS = (typeof width !== 'undefined' && moi.canvas ? moi.canvas.getBoundingClientRect().height / height : 1) || 1;
+		const tAff = (moi.textSize() * Math.hypot(m0.c, m0.d)) / dpx * (typeof espaceDessin !== 'undefined' && espaceDessin === 'pc' && typeof vue !== 'undefined' && vue === 'poste' ? 0.9 : 1);
+		if (A.enParcours && A.enregistre && tAff < 14) {
+			const k = A.ecran + '|' + s.slice(0, 50);
+			if (!A.petits.has(k)) A.petits.set(k, { ecran: A.ecran, texte: s.slice(0, 80), taille: Math.round(tAff * 10) / 10, tailleEcranCSS: Math.round(tAff * echelleCSS * 10) / 10, appelant: appelant() });
+		}
 		const b = versEcran(bx, by, bl, bh, tampon);
 		const anc = versEcran(enBoite ? x : bx + (ha === RIGHT ? bl : ha === CENTER ? bl / 2 : 0), enBoite ? y : by + Math.min(bh, asc), 0, 0, tampon);
 		const z = zoneReference(anc.x, anc.y, tampon);
@@ -243,6 +255,19 @@
 		try {
 			chevauchements();
 		} catch (e) {}
+		// Prompt 98 : boutons cliquables de l'image (nombre, et cibles trop petites)
+		if (A.enParcours && A.enregistre && typeof boutons !== 'undefined') {
+			A.boutonsParEcran[A.ecran] = Math.max(A.boutonsParEcran[A.ecran] || 0, boutons.length);
+			const ech = 1; // boutons déjà en coordonnées d'écran (composerVue)
+			boutons.forEach((b) => {
+				if (b.l >= L - 1 && b.h >= H - 1) return; // zone plein écran (« clic pour continuer »)
+				const mn = Math.min(b.l, b.h) * ech;
+				if (mn < 44) {
+					const k = A.ecran + '|' + Math.round(b.x) + ',' + Math.round(b.y);
+					if (!A.cibles.has(k)) A.cibles.set(k, { ecran: A.ecran, rect: [b.x, b.y, b.l, b.h].map(Math.round), minPx: Math.round(mn) });
+				}
+			});
+		}
 		// Contours fixes (aucun clignotement) : rouge = texte fautif, orange = sa zone
 		const ctx = drawingContext;
 		ctx.save();
@@ -279,6 +304,9 @@
 				.sort((a, b) => b.depassePx - a.depassePx)
 				.slice(0, 10),
 			defauts: liste,
+			petitsTextes: [...A.petits.values()],
+			petitesCibles: [...A.cibles.values()],
+			boutonsParEcran: A.boutonsParEcran,
 		};
 	}
 	function telecharger() {

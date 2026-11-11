@@ -107,7 +107,7 @@ function couleurGravite(g) {
 const ONGLETS_INCIDENT = ['enquete', 'historique', 'equipes'];
 function dessinerOngletsIncident(x, y, l) {
 	const lb = (l - 2 * 10) / 3;
-	ONGLETS_INCIDENT.forEach((o, i) => bouton(x + i * (lb + 10), y, lb, 44, t('carte.onglet.' + o), () => (SELECTION.onglet = o), false, SELECTION.onglet !== o));
+	ONGLETS_INCIDENT.forEach((o, i) => bouton(x + i * (lb + 10), y, lb, 52, t('carte.onglet.' + o), () => (SELECTION.onglet = o), false, SELECTION.onglet !== o));
 	textAlign(LEFT, TOP);
 }
 /** Historique de la ligne dans la semaine (calcul sur Jeu.evenementsJournee) */
