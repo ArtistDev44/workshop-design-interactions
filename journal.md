@@ -4,6 +4,7 @@ Règle : chaque push sur la branche main ajoute une entrée dans le tableau, la 
 
 | Date | Commit | Fichiers | Résumé |
 |---|---|---|---|
+| 2026-11-11 | ce commit (branche prompts/93-debordements-texte) | prompts/93-jeu-textes-hors-cadre-detection-reparation.md, prompts/README.md, journal.md | Nouveau prompt 93 : détecter et réparer les textes hors de leur case, sans régression |
 | 2026-11-11 | ce commit | journal.md | Fusion dans main du prompt 92 (textes d'enquête lisibles dans Signalements) |
 | 2026-11-11 | ce commit (branche prompts/92-textes-enquete) | prompts/92-jeu-textes-enquete-signalements.md, prompts/README.md, journal.md | Nouveau prompt 92 : affichage lisible des textes d'enquête dans l'appli Signalements |
 | 2026-11-11 | ce commit (branche main (branche 59-checkup-site-optimisation fusionnée)) | site/public/ (sketch.js, os.js, carte.js, i18n.js, sw.js), notes.md, README.md, jeu/45, jeu/68, prompts/README.md, rendu/, journal.md | Prompt 59 réexécuté (check-up du 11/11) : build et tests verts, hors ligne (file:// et service worker, jeu et présentation), i18n FR/EN complète, 0 lien cassé, aucun secret ; tampon « SIGNALEMENT » rebranché, code mort et 17 clés orphelines supprimés, docs harmonisées (93 prompts, slides/) ; rapport dans notes.md ; fusion dans main |
