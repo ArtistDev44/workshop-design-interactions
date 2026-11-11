@@ -502,13 +502,13 @@ let retourPlainte = null; // { texte, bonne, jusqua } : résultat affiché quelq
 function repondrePlainte(i) {
 	const p = Jeu.plaintesEnAttente()[0];
 	if (!p) return;
-	const r = Jeu.repondrePlainte(p, i);
+	const r = Jeu.repondrePlainte(p, i, millis()); // prompt 79 : réponse rapide ou tardive
 	if (!r) return;
 	focusReponse = 0;
 	const fx = Object.keys(r.effets)
 		.map((k) => t('jauge.' + k) + ' ' + (r.effets[k] > 0 ? '+' : '') + r.effets[k])
 		.join(' · ');
-	const texte = t(r.bonne ? 'plainte.bonne' : 'plainte.mauvaise', { effets: fx || '0' });
+	const texte = t(r.bonne ? 'plainte.bonne' : 'plainte.mauvaise', { effets: fx || '0' }) + (r.tardive ? ' ' + t('plainte.tardive') : '');
 	retourPlainte = { texte, bonne: r.bonne, jusqua: millis() + 5000 };
 	annoncer(texte); // aria-live
 	Confort.Son.bip(r.bonne ? 'action' : 'alerte');
@@ -533,6 +533,10 @@ function blocPlainte(z) {
 	fill(DS.alerte);
 	rect(z.x, y, 4, 84);
 	dsTexte(p.auteur + ' · ' + p.heure, z.x + 18, y + 10, 18, DS.blanc50, 'left');
+	// Prompt 79 : délai de réponse restant (rouge sous 10 s) — répondre vite évite le malus
+	const reste = Jeu.resteReponse(p, millis());
+	const rapide = reste > Jeu.REGLAGES.community.delaiMs - Jeu.REGLAGES.community.rapideMs;
+	dsTexte(t(rapide ? 'plainte.delaiRapide' : 'plainte.delai', { s: Math.ceil(reste / 1000) }), z.x + z.l - 18, y + 10, 18, reste < 10000 ? DS.erreurClair : rapide ? DS.succesClair : DS.alerte, 'right');
 	dsTexte(Jeu.texteMessage(p.def.texte, p.vars), z.x + 18, y + 38, 20, DS.blanc, 'left', z.l - 36);
 	y += 96;
 	if (focusReponse >= p.def.reponses.length) focusReponse = 0;

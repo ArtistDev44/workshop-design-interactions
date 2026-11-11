@@ -156,7 +156,7 @@
 		coefContexte: 1.25,
 		// Conséquences « naturelles » d'un dossier non traité (compteur à 0, Q25), sans malus supplémentaire
 		naturel: {
-			'ligne en difficulté': (d) => [-Math.min(15, Math.max(4, Math.round(d.retard / 5))), 0, 0],
+			'ligne en difficulté': (d) => [-Math.min(15, Math.max(4, Math.round(Jeu.retardEffectif(d) / 5))), 0, 0], // prompt 79 : retard effectif
 			perturbation: () => [-5, 0, 0],
 			'alerte météo': () => [-4, 0, 0],
 			événement: () => [0, -4, 0], // affluence non gérée : la réputation en pâtit
@@ -164,6 +164,14 @@
 		// Contradiction de sources (Q9, Q31) : mauvaise source = malus réputation + conséquence réelle
 		malusMauvaiseSource: -6,
 		seuilCritique: 20, // Q46
+		// Prompt 79 — les retards s'aggravent avec le temps (calcul documenté, jamais une donnée inventée) :
+		// retard effectif = retard réel de la source + 1 min toutes les 2 minutes de jeu depuis l'arrivée du dossier
+		// (plafond +30), figé à la décision ; après une décision « raté » ou « trop tard » sur un dossier avec retard,
+		// +5 min durables sur sa (ses) ligne(s) jusqu'au soir (plafond +15). Q58, gravité, conséquences naturelles et
+		// conflit A / B lisent le retard effectif ; seuils et effets de base inchangés.
+		aggravation: { minutesJeuParMinute: 2, plafond: 30, durable: 5, plafondDurable: 15 },
+		// Prompt 79 — Community : délai de réponse aux plaintes (temps réel) ; malus = celui d'un mauvais commentaire (prompt 22)
+		community: { delaiMs: 45000, rapideMs: 15000 },
 	};
 	Jeu.REGLAGES = REGLAGES;
 	const NOMS_JAUGES = ['fluidite', 'reputation', 'budget'];
@@ -241,6 +249,7 @@
 		Jeu.commentaires = []; // prompt 22 : app « Community manager »
 		Jeu.plaintes = []; // prompt 28 : plaintes des Nantais (data/messages.json)
 		Jeu.equipes = []; // prompt 22 : équipes envoyées depuis la carte
+		Jeu.aggravationLignes = {}; // prompt 79
 		Jeu.refusEquipes = 0; // prompt 68 : envois refusés faute d'effectif
 		Jeu.nonLus = { patron: 0, community: 0 };
 		Jeu.alertesJauges = {};
@@ -296,7 +305,7 @@
 			evenementsJournee: Jeu.evenementsJournee,
 			messagesPatron: Jeu.messagesPatron,
 			commentaires: Jeu.commentaires,
-			plaintes: (Jeu.plaintes || []).map((p) => Object.assign({}, p, { def: undefined })),
+			plaintes: (Jeu.plaintes || []).map((p) => Object.assign({}, p, { def: undefined, depuis: p.depuis === undefined ? undefined : p.depuis - maintenant })), // prompt 79 : délai relatif
 			equipes: (Jeu.equipes || []).map((q) => Object.assign({}, q, { depart: q.depart - maintenant, arrivee: q.arrivee - maintenant, finIntervention: (q.finIntervention || q.arrivee) - maintenant, libre: (q.libre || q.arrivee) - maintenant })), // prompt 68 : cycle complet
 			nonLus: Object.assign({}, Jeu.nonLus),
 			alertesJauges: Object.assign({}, Jeu.alertesJauges),
@@ -305,6 +314,7 @@
 			modificateur: m ? Object.assign({}, m, { debut: m.debut === null ? null : m.debut - maintenant, fin: m.fin === null ? null : m.fin - maintenant }) : null,
 			paliersBudget: Object.assign({}, Jeu.paliersBudget),
 			refusEquipes: Jeu.refusEquipes || 0,
+			aggravationLignes: Object.assign({}, Jeu.aggravationLignes), // prompt 79
 			carnet: Jeu.carnet || '',
 			inspection: Jeu.inspection,
 			agendaPrevenus: Object.assign({}, Jeu.agendaPrevenus),
@@ -339,10 +349,11 @@
 		Jeu.defisAppliques = s.defisAppliques || null;
 		Jeu.ralenti = s.ralenti || { jour: -1, debut: 0, fin: 0, utilises: 0 };
 		Jeu.plaintes = (s.plaintes || [])
-			.map((p) => Object.assign({}, p, { def: Jeu.MESSAGES.plaintes.find((x) => x.id === p.id) }))
+			.map((p) => Object.assign({}, p, { def: Jeu.MESSAGES.plaintes.find((x) => x.id === p.id), depuis: p.depuis === undefined || p.depuis === null ? undefined : p.depuis + maintenant }))
 			.filter((p) => p.def); // une plainte retirée de messages.json depuis la sauvegarde est ignorée
 		Jeu.equipes = (s.equipes || []).map((q) => Object.assign({}, q, { depart: q.depart + maintenant, arrivee: q.arrivee + maintenant, finIntervention: (q.finIntervention === undefined ? q.arrivee : q.finIntervention) + maintenant, libre: (q.libre === undefined ? q.arrivee : q.libre) + maintenant }));
 		Jeu.refusEquipes = s.refusEquipes || 0;
+		Jeu.aggravationLignes = Object.assign({}, s.aggravationLignes || {}); // prompt 79
 		const m = s.modificateur && s.modificateur.id !== 'erreur_systeme' ? s.modificateur : null; // ancienne sauvegarde : l'erreur système n'existe plus
 		Jeu.modificateur = m ? Object.assign({}, m, { debut: m.debut === null ? null : m.debut + maintenant, fin: m.fin === null ? null : m.fin + maintenant }) : null;
 		Jeu.terminee = !!s.terminee;
@@ -365,7 +376,9 @@
 		const ls = s.lignes || [];
 		if (!ld.length || !ls.length || ld.some((x) => ls.includes(x))) return null;
 		// Vrai dilemme seulement si les deux situations sont comparables (retards à 5 min près, ou tous deux sans durée)
-		const comparables = d.retard === null || s.retard === null ? d.retard === s.retard : Math.abs(d.retard - s.retard) <= 5;
+		const rd = Jeu.retardEffectif(d); // prompt 79 : retards effectifs
+		const rs = Jeu.retardEffectif(s);
+		const comparables = rd === null || rs === null ? rd === rs : Math.abs(rd - rs) <= 5;
 		if (!comparables || d.conflitTranche || s.conflitTranche) return null;
 		return { a: d, b: s };
 	};
@@ -392,6 +405,20 @@
 		return Math.max(-REGLAGES.bornesEffet, Math.min(REGLAGES.bornesEffet, v));
 	}
 
+	/** Prompt 79 : aggravation durable par ligne (journée en cours) */
+	Jeu.aggravationLignes = {};
+	const aggravationDurable = (d) => (d.lignes || []).reduce((mx, l) => Math.max(mx, (Jeu.aggravationLignes || {})[l] || 0), 0);
+	/** Retard effectif d'un dossier (minutes) : réel + aggravation dans le temps + aggravation durable de la ligne ;
+	 * null si la source ne donne pas de retard ; figé à la décision (d.retardFige). */
+	Jeu.retardEffectif = function (d, minutes) {
+		if (!d || d.retard === null || d.retard === undefined) return null;
+		if (d.retardFige !== undefined) return d.retardFige;
+		const A = REGLAGES.aggravation;
+		const m = minutes !== undefined ? minutes : Jeu.horloge ? Jeu.horloge.minutes : d.minute;
+		const temps = d.minute === undefined ? 0 : Math.min(A.plafond, Math.floor(Math.max(0, m - d.minute) / A.minutesJeuParMinute)); // sans heure d'arrivée (hors partie) : pas d'aggravation
+		return d.retard + temps + aggravationDurable(d);
+	};
+
 	/**
 	 * Applique une décision. action ∈ 'devier' | 'retenir' | 'renfort' | 'rien' | 'temps'
 	 * (« temps » = compteur à 0 → conséquences naturelles seules, Q25).
@@ -401,6 +428,8 @@
 	Jeu.decider = function (action, sourceChoisie) {
 		const d = Jeu.dossierCourant();
 		if (!d || Jeu.terminee) return null;
+		if (d.retard !== null && d.retard !== undefined) d.retardFige = Jeu.retardEffectif(d); // prompt 79 : figé à la décision
+		const re = Jeu.retardEffectif(d);
 		const ctx = contexte(d);
 		let deltas = [0, 0, 0];
 		const des = [null, null, null];
@@ -413,7 +442,7 @@
 		} else {
 			const eff = REGLAGES.effets[action];
 			const base = eff.base.slice();
-			if (action === 'retenir') base[1] = d.retard !== null && d.retard > 20 ? 8 : 4; // Q58 (réputation)
+			if (action === 'retenir') base[1] = re !== null && re > 20 ? 8 : 4; // Q58 (réputation) — prompt 79 : retard effectif
 			deltas = base.map((b, i) => {
 				if (!b) return 0;
 				des[i] = Jeu.de6();
@@ -448,7 +477,14 @@
 		resultat.minuteSim = Jeu.horloge ? Math.floor(Jeu.horloge.minutes) : null; // heure de la partie (prompt 20)
 		resultat.jour = d.date;
 		resultat.jaugesApres = Object.assign({}, Jeu.jauges); // prompt 48 : courbes du rapport
-		Jeu.journaliser(resultat, ctx);
+		const entree = Jeu.journaliser(resultat, ctx);
+		// Prompt 79 : mauvaise réaction sur un retard → la ligne reste aggravée jusqu'au soir (malus : ceux qui existent déjà)
+		const ev = Jeu.evaluer(entree);
+		if (re !== null && (ev === 'rate' || ev === 'trop_tard') && d.lignes && d.lignes.length) {
+			const A = REGLAGES.aggravation;
+			d.lignes.forEach((l) => (Jeu.aggravationLignes[l] = Math.min(A.plafondDurable, (Jeu.aggravationLignes[l] || 0) + A.durable)));
+			resultat.aggravation = { lignes: d.lignes.slice(), plus: A.durable };
+		}
 		resultat.narration = Jeu.narrer(resultat);
 		Jeu.historique.push(resultat);
 		Jeu.index++;
@@ -467,7 +503,8 @@
 		const d = r.dossier;
 		const quand = d.date.split('-').reverse().join('/') + (d.heure ? ' ' + d.heure : '');
 		const objet = d.lignes && d.lignes.length ? T('narr.objetLigne', { lignes: d.lignes.join(', ') }) : d.type === 'événement' ? T('narr.objetAffluence') : d.nature;
-		const fait = d.retard !== null && d.retard !== undefined ? ' (+' + d.retard + ' min)' : '';
+		const re = Jeu.retardEffectif(d);
+		const fait = d.retard !== null && d.retard !== undefined ? (re !== d.retard ? T('narr.retardAggrave', { reel: d.retard, effectif: re }) : ' (+' + d.retard + ' min)') : ''; // prompt 79
 		const items = r.deltas.map((v, i) => (v ? T('delta', { jauge: LIBELLES_JAUGES[NOMS_JAUGES[i]], v: (v > 0 ? '+' : '') + v }) : null)).filter(Boolean);
 		const ton = Jeu.ton();
 		return {
@@ -618,6 +655,7 @@
 	Jeu.journeeSuivante = function () {
 		Jeu.jourIndex++;
 		Jeu.alertesJauges = {};
+		Jeu.aggravationLignes = {}; // prompt 79 : l'aggravation durable vaut pour la journée
 		if (Jeu.jourCourant()) {
 			Jeu.debutJourneeTactique();
 			Jeu.messagePatron(consigneDuJour());
@@ -656,7 +694,8 @@
 		if (action === 'rien') return [-5 / 3, -5 / 3, -5 / 3]; // −2 à −8 sur une jauge au hasard : −5 en moyenne
 		const eff = REGLAGES.effets[action];
 		const base = eff.base.slice();
-		if (action === 'retenir') base[1] = d.retard !== null && d.retard !== undefined && d.retard > 20 ? 8 : 4;
+		const re = Jeu.retardEffectif(d); // prompt 79
+		if (action === 'retenir') base[1] = re !== null && re > 20 ? 8 : 4;
 		return base.map((b, i) => {
 			if (!b) return 0;
 			let v = Math.sign(b) * (Math.abs(b) + 2.5); // dé moyen : d6 − 1 = 2,5
@@ -687,6 +726,7 @@
 			externe: externe(d, ctx),
 			externeCourt: d.type === 'événement' ? String(d.nature).split(',')[0] : d.type === 'ligne en difficulté' ? T('ext.retard') : d.nature,
 			retard: d.retard === undefined ? null : d.retard,
+			retardEffectif: Jeu.retardEffectif(d), // prompt 79
 			action: r.action === 'temps' ? null : r.nomAction,
 			cleAction: r.action,
 			deltas, // deltas réels (référence vers le résultat : la sieste ratée les met à jour)
@@ -711,7 +751,7 @@
 
 	Jeu.ligneMail = function (e) {
 		const sujet = e.ligne ? T('sujet.ligne', { ligne: e.ligne }) : T('sujet.reseau');
-		const retard = e.retard !== null ? T('mail.retard', { retard: e.retard }) : '';
+		const retard = e.retard !== null ? T('mail.retard', { retard: e.retardEffectif !== undefined && e.retardEffectif !== null ? e.retardEffectif : e.retard }) : ''; // prompt 79 : retard qui a compté
 		const ev = Jeu.evaluer(e);
 		const suite =
 			e.cleAction === 'temps'
@@ -747,6 +787,11 @@
 			lignes.push(T('mail.journal', { date }));
 			duJour.forEach((e) => lignes.push(Jeu.ligneMail(e)));
 		}
+		// Prompt 79 : Community (réponses à temps / tardives / plaintes expirées) et lignes aggravées durablement
+		const bc = Jeu.bilanCommunity(Jeu.jourIndex);
+		if (bc.temps + bc.tard + bc.expire) lignes.push(T('mail.community', bc));
+		const aggr = Object.keys(Jeu.aggravationLignes || {});
+		if (aggr.length) lignes.push(T('mail.aggravation', { lignes: aggr.map((l) => l + ' (+' + Jeu.aggravationLignes[l] + ' min)').join(', ') }));
 		const obj = (Jeu.objectifsResultats || []).find((o) => o.jourIndex === Jeu.jourIndex);
 		if (obj) lignes.push(T('mail.objectif', { libelle: obj.libelle, resultat: T(obj.atteint ? 'mail.atteint' : 'mail.rate', { effet: obj.effet }) }));
 		lignes.push(T('mail.jauges', { f: Jeu.jauges.fluidite, r: Jeu.jauges.reputation, b: Jeu.jauges.budget }));
@@ -922,17 +967,48 @@
 	};
 
 	Jeu.MAX_PLAINTES_EN_ATTENTE = 3;
-	Jeu.plaintesEnAttente = () => (Jeu.plaintes || []).filter((p) => p.reponse === null);
+	Jeu.plaintesEnAttente = () => (Jeu.plaintes || []).filter((p) => p.reponse === null && !p.expiree); // prompt 79 : une plainte expirée n'attend plus
+
+	// Prompt 79 — délai de réponse Community (REGLAGES.community) : répondre vite évite la dégradation
+	/** Millisecondes restantes avant que la plainte s'envenime (le délai démarre à sa première vue par majPlaintes) */
+	Jeu.resteReponse = (p, maintenant) => (p.depuis === undefined ? REGLAGES.community.delaiMs : Math.max(0, REGLAGES.community.delaiMs - (maintenant - p.depuis)));
+	/** À chaque image : les plaintes sans réponse à l'expiration s'enveniment (malus d'un mauvais commentaire, prompt 22) */
+	Jeu.majPlaintes = function (maintenant) {
+		const expirees = [];
+		Jeu.plaintesEnAttente().forEach((p) => {
+			if (p.depuis === undefined) p.depuis = maintenant;
+			if (maintenant - p.depuis < REGLAGES.community.delaiMs) return;
+			p.expiree = true;
+			p.statut = 'expire';
+			p.jourStatut = Jeu.jourIndex;
+			const delta = DELTA_REPUTATION.mauvais;
+			Jeu.appliquerDeltas({ reputation: delta });
+			Jeu.commentaires.push({ heure: maintenantSim(), auteur: p.auteur, texte: T('community.envenime', { auteur: p.auteur }), delta });
+			Jeu.nonLus.community++;
+			expirees.push(p);
+		});
+		return expirees;
+	};
+	/** Bilan Community d'une journée : réponses à temps, tardives, plaintes expirées */
+	Jeu.bilanCommunity = function (jourIndex) {
+		const du = (Jeu.plaintes || []).filter((p) => p.jourStatut === jourIndex);
+		return { temps: du.filter((p) => p.statut === 'temps').length, tard: du.filter((p) => p.statut === 'tard').length, expire: du.filter((p) => p.statut === 'expire').length };
+	};
 
 	/** Le joueur répond : effets du JSON (bornés à ±bornesEffet) appliqués aux jauges, bornées 0–100 */
-	Jeu.repondrePlainte = function (plainte, i) {
-		const r = plainte && plainte.reponse === null ? plainte.def.reponses[i] : null;
+	Jeu.repondrePlainte = function (plainte, i, maintenant) {
+		const r = plainte && plainte.reponse === null && !plainte.expiree ? plainte.def.reponses[i] : null;
 		if (!r) return null;
 		const effets = {};
 		NOMS_JAUGES.forEach((k) => {
 			const v = Number((r.effets || {})[k]) || 0;
 			if (v) effets[k] = borner(v);
 		});
+		// Prompt 79 : réponse rapide = effets existants ; réponse tardive = malus d'un mauvais commentaire en plus
+		const tardive = maintenant !== undefined && plainte.depuis !== undefined && maintenant - plainte.depuis > REGLAGES.community.rapideMs;
+		if (tardive) effets.reputation = borner((effets.reputation || 0) + DELTA_REPUTATION.mauvais);
+		plainte.statut = tardive ? 'tard' : 'temps';
+		plainte.jourStatut = Jeu.jourIndex;
 		plainte.reponse = i;
 		plainte.bonne = r.bonne === true;
 		Jeu.appliquerDeltas(effets);
@@ -943,7 +1019,7 @@
 			delta: effets.reputation || 0,
 		});
 		Jeu.programmerSuivis(plainte); // prompt 63 : 0 à 3 réactions, à des heures variées
-		return { effets, bonne: plainte.bonne };
+		return { effets, bonne: plainte.bonne, tardive };
 	};
 
 	// Prompt 63 — réactions en chaîne : tirées par hachage (graine + plainte), sans toucher aux dés de la partie
@@ -1040,8 +1116,9 @@
 	/** Gravité calculée (affichée avec sa règle dans l'aide) : élevée, moyenne ou faible */
 	Jeu.gravite = function (d) {
 		if (!d) return 'faible';
-		if ((d.retard !== null && d.retard !== undefined && d.retard >= 20) || d.type === 'alerte météo') return 'elevee';
-		if ((d.retard !== null && d.retard !== undefined && d.retard >= 10) || d.type === 'événement' || d.affluence) return 'moyenne';
+		const re = Jeu.retardEffectif(d); // prompt 79 : la gravité suit le retard effectif
+		if ((re !== null && re >= 20) || d.type === 'alerte météo') return 'elevee';
+		if ((re !== null && re >= 10) || d.type === 'événement' || d.affluence) return 'moyenne';
 		return 'faible';
 	};
 
