@@ -2,6 +2,11 @@
 
 Direction choisie par le groupe le 10/11/2026 (question posée) : **enquête par les sources**.
 Code : `enquete.js` ; panneau du dossier dans `sketch.js` (`dessinerDossier` → `dessinerEnquete`).
+
+> **Mise à jour (prompt 59, check-up du 11/11/2026) :** depuis le prompt 87, `dessinerEnquete` est devenu
+> `corpsEnquete` (enquete.js), affiché dans « En savoir plus » du panneau (`panneau.js`) ; `sourisAppli` (os.js),
+> plus appelé, a été supprimé.
+
 `game.js` (effets, dés, règles Q1–Q61) est inchangé : `test-jeu.mjs` reste vert.
 
 ## Déroulé
