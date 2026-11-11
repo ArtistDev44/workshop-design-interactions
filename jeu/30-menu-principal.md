@@ -32,3 +32,27 @@ L'écran d'accueil « Nantes en régulation » (choix de la semaine) n'est plus 
 - `npm run build` et `npm test` OK.
 - Test automatisé, en FR, puis en EN avec animations réduites, sans erreur console : titre → Entrée → semaines → Entrée → partie lancée au bureau (PC sur l'appli, SMS) → Échap → menu modernisé → Menu principal → « Reprendre » apparaît → C → partie reprise.
 - Tests des prompts 25, 26, 28, 29, 33 et 34 relancés, sans régression.
+
+## Prompt 81 — dépôt, partage, crédits et licence MIT (écran titre uniquement)
+- Constantes nommées en tête de `menu.js` (une seule définition, vérifiée par `npm test`) : `DEPOT_URL`
+  (`https://github.com/ArtistDev44/workshop-design-interactions`), `LICENCE_URL` (son `LICENSE`), `URL_JEU`
+  (`https://workshop-design-interactions.pages.dev/`, reprise aussi par l'écran « reprise sur un autre appareil »).
+  Liens externes : `window.open(url, '_blank', 'noopener')`.
+- **Bloc bas droite** : « Dépôt du code » (icône pixel dessinée par le code, chat-pieuvre stylisé original) et
+  « Partager » (trois points reliés) ; infobulles FR + EN qui restent dans l'écran.
+- **Panneau « Partager »** (fenêtre `partage`, modale par-dessus le menu) : X (Twitter), Facebook, LinkedIn,
+  Mastodon — URL construites par `urlPartage(cle)` avec le texte `mp.partager.texte` encodé
+  (`encodeURIComponent`) — et « Copier le lien » (`navigator.clipboard.writeText`, repli sélection +
+  `execCommand('copy')`, « Lien copié » annoncé en `aria-live`). Icônes pixel art dessinées par le code
+  (`iconeReseau`), aucun fichier image. Croix, « Fermer (Échap) » et Échap ferment ; fonctionne hors ligne
+  (les liens externes restent au choix du navigateur).
+- **Pied de page** : `mp.clavier`, `mp.sources`, puis « Mattéo Brevet & Guillaume Renoult · Code sous licence
+  MIT » (licence soulignée et cliquable → `LICENSE` du dépôt).
+- **Clavier** : ↑ ↓ / Tab parcourent les cartes du menu, puis « Dépôt du code », « Partager », la licence ;
+  dans le panneau, ↑ ↓ / Tab parcourent les options puis « Fermer », Entrée active, Échap ferme ; focus visible.
+- **Portrait mobile** : le bloc bas droite passe sous la colonne du menu (≥ 44 px à l'écran), le panneau est
+  recomposé avec des options et une croix plus hautes.
+- `LICENSE` racine : texte MIT standard complet, `Copyright (c) 2026 Mattéo Brevet & Guillaume Renoult`, en-tête
+  PATRIMOINE.EXE · NTE001 · « Nantes en régulation » et périmètre (p5.js, données, livret exclus) conservés.
+- Vérifié dans Chromium (FR, EN, portrait) : URL construites et encodées, presse-papiers, Échap, lien de licence ;
+  aucune erreur console. `game.js` inchangé.

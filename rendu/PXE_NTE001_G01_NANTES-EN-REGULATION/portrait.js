@@ -46,7 +46,7 @@ function region(src, dx, dy, dl, defile) {
 	PORTRAIT.regions.push({ src, dst: { x: dx, y: dy, l: dl, h: dh }, defile: !!defile });
 	return dh;
 }
-const LARGEUR_FENETRE = { palmares: 1440, 'livre-stress': 1400, aide: 1260, accessibilite: 1260, parametres: 1040, menu: 760, inspection: 1140, demission: 940, partir: 1040, blame: 1140, mailFin: 1140, reset: 1000, reprise: 1100 };
+const LARGEUR_FENETRE = { partage: 900, palmares: 1440, 'livre-stress': 1400, aide: 1260, accessibilite: 1260, parametres: 1040, menu: 760, inspection: 1140, demission: 940, partir: 1040, blame: 1140, mailFin: 1140, reset: 1000, reprise: 1100 };
 
 function scenePortrait() {
 	if (typeof CINE !== 'undefined' && CINE) return 'plein';
@@ -73,7 +73,10 @@ function composerPortrait() {
 	else if (scene === 'fenetre') {
 		const W = tutoriel ? 1400 : LARGEUR_FENETRE[fenetre] || 1260;
 		region({ x: (L - W) / 2, y: 0, l: W, h: H }, 0, (PH - (H * PL) / W) / 2, PL);
-	} else if (scene === 'menu') region({ x: 110, y: 60, l: 1200, h: 1000 }, 0, 440, PL); // colonne du menu, titre entier
+	} else if (scene === 'menu') {
+		const hm = region({ x: 110, y: 60, l: BLOC_PARTAGE.x - 120, h: 1000 }, 0, 440, PL); // colonne du menu, titre entier (s'arrête avant le bloc de partage)
+		region({ x: BLOC_PARTAGE.x - 12, y: BLOC_PARTAGE.y - 12, l: 2 * BLOC_PARTAGE.l + 40, h: BLOC_PARTAGE.h + 24 }, 20, 440 + hm + 24, PL - 40); // prompt 81 : dépôt et partage sous le menu (≥ 44 px)
+	}
 	else if (scene === 'bureau') {
 		region({ x: 0, y: 0, l: L, h: H }, 0, 150, PL);
 		boutonsBureau();

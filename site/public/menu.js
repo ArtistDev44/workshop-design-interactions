@@ -5,6 +5,14 @@
  * Dès qu'une partie démarre ou reprend (ecran === 'jeu'), le menu se ferme et l'on arrive au bureau.
  */
 const MENU = { actif: true, ecran: 'titre', choix: 0, choixSemaine: 0, debut: 0 };
+// Prompt 81 : liens du projet — une seule définition (constantes nommées), jamais recopiés ailleurs
+const DEPOT_URL = 'https://github.com/ArtistDev44/workshop-design-interactions';
+const LICENCE_URL = DEPOT_URL + '/blob/main/LICENSE';
+const URL_JEU = 'https://workshop-design-interactions.pages.dev/'; // URL canonique du jeu (prompt 02)
+/** Lien externe dans un nouvel onglet, sans accès à cette page (même motif que donnees.js) */
+function ouvrirLien(url) {
+	window.open(url, '_blank', 'noopener');
+}
 const MENU_C = {
 	nuit: '#0D0C0C', // Background du Pixel DS (prompt 39)
 	encre: '#0D0C0C', // Secondary-Foreground
@@ -151,8 +159,25 @@ function iconeMenu(type, x, y, c) {
 		line(12, 16, 44, 16);
 		line(12, 28, 44, 28);
 		line(12, 40, 44, 40);
-	}
+	} else iconeReseau(type, c); // prompt 81 : dépôt, partage, réseaux sociaux, lien
 	pop();
+}
+/** Prompt 81 : icônes pixel art (rectangles de 4 px, dans le carré 56 × 56 de iconeMenu), dessinées par le code */
+function iconeReseau(type, c) {
+	noStroke();
+	fill(c);
+	const px = (motif) => motif.forEach((ligne, j) => [...ligne].forEach((v, i) => v === '#' && rect(4 + i * 4, 4 + j * 4, 4, 4)));
+	const MOTIFS = {
+		// Chat-pieuvre stylisé (dépôt de code) — dessin original, pas le logo d'une marque
+		github: ['....######....', '..##########..', '.############.', '.##.######.##.', '##..######..##', '##############', '##############', '##############', '.############.', '.############.', '..##..##..##..', '...#..##..#...', '..............'],
+		partage: ['..........##..', '.........####.', '.......#.##...', '.....##.......', '..##..........', '.####.........', '..##..........', '.....##.......', '.......#.##...', '.........####.', '..........##..', '..............'],
+		x: ['##........##..', '.##......##...', '..##....##....', '...##..##.....', '....####......', '.....##.......', '....####......', '...##..##.....', '..##....##....', '.##......##...', '##........##..'],
+		facebook: ['.....####.....', '....######....', '....##........', '....##........', '..########....', '..########....', '....##........', '....##........', '....##........', '....##........', '....##........'],
+		linkedin: ['.##...........', '.##...........', '..............', '.##..#.####...', '.##..########.', '.##..##....##.', '.##..##....##.', '.##..##....##.', '.##..##....##.', '.##..##....##.'],
+		mastodon: ['.###########..', '##.........##.', '#..##...##..#.', '#..##...##..#.', '#..##.#.##..#.', '#..##.#.##..#.', '#.....#.....#.', '##.........##.', '.###########..', '.....##.......', '..####........'],
+		lien: ['......####....', '.....#....#...', '....#..##..#..', '....#.#..#.#..', '.....#..#.#...', '...#.#..#.....', '..#.#..#.#....', '..#..##..#....', '...#....#.....', '....####......'],
+	};
+	if (MOTIFS[type]) px(MOTIFS[type]);
 }
 
 /** Carte de menu moderne : sélection = carte blanche + liseré bleu ; sinon carte sombre translucide */
@@ -218,11 +243,12 @@ function dessinerMenuPrincipal() {
 	fill(MENU_C.doux);
 	text(t('accueil.sousTitre'), x0, 276, 900, 80);
 	const e = entreesMenu();
-	if (MENU.choix >= e.length) MENU.choix = 0;
+	if (MENU.choix >= e.length + EXTRAS_MENU.length) MENU.choix = 0;
+	let yc = 370; // prompt 81 : cartes empilées (écart 12 à 6 entrées) — le pied de page a une ligne de plus
 	e.forEach((it, i) => {
 		const h = it.sous ? 104 : 84;
-		const y = e.length > 5 ? 370 + i * 106 : 380 + i * 116; // prompt 47 : 6 entrées avec le palmarès
-		carteMenu(x0, y, 620, h, t('mp.' + it.cle), it.sous, it.action, i === MENU.choix, it.icone);
+		carteMenu(x0, yc, 620, h, t('mp.' + it.cle), it.sous, it.action, i === MENU.choix, it.icone);
+		yc += h + (e.length > 5 ? 12 : 30);
 	});
 	selecteurLangue(L - 80, 56);
 	// Prompt 65 : installation de la webapp (seulement si le navigateur la propose) ; mention une fois installée
@@ -239,8 +265,202 @@ function dessinerMenuPrincipal() {
 	textFont(POLICE_DONNEES);
 	textSize(18);
 	fill(MENU_C.doux);
-	text(t('mp.clavier'), x0, H - 70);
-	text(t('mp.sources'), x0, H - 40);
+	text(t('mp.clavier'), x0, H - 100);
+	text(t('mp.sources'), x0, H - 70);
+	piedCredits(x0, H - 40, e.length);
+	blocPartage(e.length);
+}
+
+// ——— Prompt 81 : crédits, licence MIT, dépôt et partage (écran titre uniquement) ———
+/** Éléments focalisables après les cartes du menu (↑ ↓ / Tab) : dépôt, partager, licence */
+const EXTRAS_MENU = [
+	{ cle: 'depot', action: () => ouvrirLien(DEPOT_URL) },
+	{ cle: 'partager', action: () => ouvrirPartage() },
+	{ cle: 'licence', action: () => ouvrirLien(LICENCE_URL) },
+];
+const focusExtra = (n, cle) => MENU.choix - n === EXTRAS_MENU.findIndex((x) => x.cle === cle);
+function piedCredits(x, y, n) {
+	const credits = t('mp.credits') + ' · ';
+	textFont(POLICE_DONNEES);
+	textSize(18);
+	textAlign(LEFT, BOTTOM);
+	fill(MENU_C.doux);
+	text(credits, x, y);
+	const lx = x + textWidth(credits);
+	const lib = t('mp.licence');
+	const lw = textWidth(lib);
+	const survol = mouseX >= lx && mouseX <= lx + lw && mouseY >= y - 30 && mouseY <= y + 6;
+	fill(MENU_C.blanc);
+	text(lib, lx, y);
+	stroke(MENU_C.blanc);
+	strokeWeight(survol || focusExtra(n, 'licence') ? 3 : 1);
+	line(lx, y + 2, lx + lw, y + 2); // lien souligné
+	noStroke();
+	if (focusExtra(n, 'licence')) {
+		noFill();
+		stroke(MENU_C.bleu);
+		strokeWeight(3);
+		rect(lx - 8, y - 32, lw + 16, 42);
+		noStroke();
+	}
+	boutons.push({ x: lx - 8, y: y - 34, l: lw + 16, h: 46, action: () => ouvrirLien(LICENCE_URL) });
+	if (survol) infobulle(t('mp.licence.infobulle'), lx, y - 76);
+}
+/** Bouton à icône du bloc bas droite (style des cartes du menu, focus en double bordure) */
+function boutonIcone(x, y, l, h, icone, libelle, action, focus) {
+	const survol = mouseX >= x && mouseX <= x + l && mouseY >= y && mouseY <= y + h;
+	const actif = survol || focus;
+	noStroke();
+	fill(actif ? MENU_C.blanc : 'rgba(255,255,255,0.09)');
+	rect(x, y, l, h);
+	if (!actif) {
+		stroke(255, 255, 255, 60);
+		strokeWeight(2);
+		noFill();
+		rect(x + 1, y + 1, l - 2, h - 2);
+		noStroke();
+	}
+	push();
+	translate(x + 10, y + (h - 56 * 0.8) / 2);
+	scale(0.8);
+	iconeMenu(icone, 0, 0, actif ? MENU_C.bleu : MENU_C.blanc);
+	pop();
+	textFont(POLICE_TEXTE);
+	textStyle(BOLD);
+	textAlign(LEFT, CENTER);
+	ajusterTaille(libelle, l - 74, 24, 14);
+	fill(actif ? MENU_C.encre : MENU_C.blanc);
+	text(libelle, x + 64, y + h / 2);
+	textStyle(NORMAL);
+	if (focus) {
+		noFill();
+		stroke(MENU_C.bleu);
+		strokeWeight(4);
+		rect(x - 6, y - 6, l + 12, h + 12);
+		noStroke();
+	}
+	boutons.push({ x, y, l, h, action });
+	return survol;
+}
+const BLOC_PARTAGE = { x: L - 80 - 2 * 280 - 16, y: H - 40 - 68, l: 280, h: 68 }; // 68 px : ≥ 44 px à l'écran en portrait mobile
+function blocPartage(n) {
+	const b = BLOC_PARTAGE;
+	const s1 = boutonIcone(b.x, b.y, b.l, b.h, 'github', t('mp.depot'), () => ouvrirLien(DEPOT_URL), focusExtra(n, 'depot'));
+	const s2 = boutonIcone(b.x + b.l + 16, b.y, b.l, b.h, 'partage', t('mp.partager'), ouvrirPartage, focusExtra(n, 'partager'));
+	const bulle = s1 || focusExtra(n, 'depot') ? t('mp.depot.infobulle') : s2 || focusExtra(n, 'partager') ? t('mp.partager.infobulle') : null;
+	if (bulle) {
+		textFont(POLICE_DONNEES);
+		textSize(18);
+		infobulle(bulle, Math.min(b.x, L - 24 - (textWidth(bulle) + 28)), b.y - 52); // reste dans l'écran
+	}
+	textAlign(LEFT, TOP);
+}
+
+// ——— Panneau « Partager » : modal par-dessus le menu (fenêtre 'partage'), Échap / croix / « Fermer » ———
+const PARTAGE = { focus: 0, copie: 0 };
+const OPTIONS_PARTAGE = [
+	{ cle: 'x', url: (u, txt) => 'https://twitter.com/intent/tweet?url=' + u + '&text=' + txt },
+	{ cle: 'facebook', url: (u) => 'https://www.facebook.com/sharer/sharer.php?u=' + u },
+	{ cle: 'linkedin', url: (u) => 'https://www.linkedin.com/sharing/share-offsite/?url=' + u },
+	{ cle: 'mastodon', url: (u, txt, brut) => 'https://mastodon.social/share?text=' + encodeURIComponent(brut + ' ' + URL_JEU) },
+	{ cle: 'lien', copie: true },
+];
+/** URL de partage construite (texte de partage traduit, tout encodé) — exposée pour la vérification en console */
+function urlPartage(cle) {
+	const o = OPTIONS_PARTAGE.find((x) => x.cle === cle);
+	if (!o || o.copie) return null;
+	const brut = t('mp.partager.texte');
+	return o.url(encodeURIComponent(URL_JEU), encodeURIComponent(brut), brut);
+}
+const libellePartage = (o) => t(o.copie ? 'mp.partager.copier' : 'mp.partager.' + o.cle);
+function ouvrirPartage() {
+	PARTAGE.focus = 0;
+	PARTAGE.copie = 0;
+	ouvrir('partage');
+	annoncer(t('mp.partager.annonce'));
+}
+function activerPartage(i) {
+	const o = OPTIONS_PARTAGE[i];
+	if (!o) return fermer();
+	PARTAGE.focus = i;
+	if (o.copie) return copierLienJeu();
+	ouvrirLien(urlPartage(o.cle));
+}
+/** Copie de l'URL du jeu : API presse-papiers, sinon sélection + execCommand ; « Lien copié » annoncé */
+function copierLienJeu() {
+	const ok = () => {
+		PARTAGE.copie = millis();
+		annoncer(t('mp.partager.copie'));
+		Confort.Son.bip('choix');
+	};
+	const repli = () => {
+		try {
+			const z = document.createElement('textarea');
+			z.value = URL_JEU;
+			z.setAttribute('readonly', '');
+			z.style.position = 'fixed';
+			z.style.opacity = '0';
+			document.body.appendChild(z);
+			z.select();
+			const r = document.execCommand('copy');
+			document.body.removeChild(z);
+			if (r) return ok();
+		} catch (e) {}
+		annoncer(t('mp.partager.echec', { url: URL_JEU }));
+	};
+	if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(URL_JEU).then(ok, repli);
+	else repli();
+}
+function fenetrePartage() {
+	const portrait = typeof PORTRAIT !== 'undefined' && PORTRAIT.actif; // mobile portrait : cibles ≥ 44 px à l'écran
+	const ho = portrait ? 104 : 66;
+	const l = 900;
+	const h = portrait ? 960 : 700;
+	const x = (L - l) / 2;
+	const y = (H - h) / 2;
+	panneau(x, y, l, h, C.accent);
+	noStroke();
+	textAlign(LEFT, TOP);
+	fill(C.texte);
+	textFont(POLICE_TEXTE);
+	textStyle(BOLD);
+	textSize(36);
+	text(t('mp.partager'), x + 48, y + 36);
+	textStyle(NORMAL);
+	textFont(POLICE_DONNEES);
+	textSize(18);
+	fill(C.gris);
+	text(URL_JEU, x + 48, y + 92);
+	// Croix de fermeture
+	const tc = portrait ? 96 : 48; // croix ≥ 44 px à l'écran en portrait
+	bouton(x + l - 28 - tc, y + 28, tc, tc, '×', fermer, false, true);
+	OPTIONS_PARTAGE.forEach((o, i) => {
+		const by = y + 140 + i * (ho + 16);
+		const lib = o.copie && PARTAGE.copie && millis() - PARTAGE.copie < 3000 ? t('mp.partager.copie') : libellePartage(o);
+		boutonIcone(x + 48, by, l - 96, ho, o.cle, lib, () => activerPartage(i), PARTAGE.focus === i);
+	});
+	bouton(x + l - 48 - 260, y + h - 96, 260, 60, t('mp.partager.fermer'), fermer, false, PARTAGE.focus !== OPTIONS_PARTAGE.length);
+	if (PARTAGE.focus === OPTIONS_PARTAGE.length) {
+		noFill();
+		stroke(MENU_C.bleu);
+		strokeWeight(4);
+		rect(x + l - 48 - 260 - 6, y + h - 96 - 6, 272, 72);
+		noStroke();
+	}
+	textAlign(LEFT, TOP);
+	fill(C.gris);
+	textFont(POLICE_DONNEES);
+	textSize(16);
+	text(t('mp.partager.clavier'), x + 48, y + h - 80, l - 400, 50);
+}
+/** Clavier du panneau : ↑ ↓ / Tab parcourent (options puis « Fermer »), Entrée active ; Échap ferme (sketch.js) */
+function touchePartage() {
+	const n = OPTIONS_PARTAGE.length + 1;
+	if (keyCode === UP_ARROW || (keyCode === TAB && keyIsDown(SHIFT))) PARTAGE.focus = (PARTAGE.focus + n - 1) % n;
+	else if (keyCode === DOWN_ARROW || keyCode === TAB) PARTAGE.focus = (PARTAGE.focus + 1) % n;
+	else if (keyCode === ENTER || keyCode === RETURN || key === ' ') return activerPartage(PARTAGE.focus);
+	else return;
+	annoncer(PARTAGE.focus < OPTIONS_PARTAGE.length ? libellePartage(OPTIONS_PARTAGE[PARTAGE.focus]) : t('mp.partager.fermer'));
 }
 
 /* Prompt 41 : « Nouvelle partie » = deux modes. Histoire (recommandé) : semaine facile, normale, difficile,
@@ -362,12 +582,14 @@ function toucheMenu() {
 		return true;
 	}
 	const e = entreesMenu();
-	if (keyCode === UP_ARROW || (keyCode === TAB && keyIsDown(SHIFT))) MENU.choix = (MENU.choix + e.length - 1) % e.length;
-	else if (keyCode === DOWN_ARROW || keyCode === TAB) MENU.choix = (MENU.choix + 1) % e.length;
-	else if (keyCode === ENTER || keyCode === RETURN || key === ' ') e[MENU.choix].action();
+	const n = e.length + EXTRAS_MENU.length; // prompt 81 : puis dépôt, partager, licence
+	const choisi = () => (MENU.choix < e.length ? e[MENU.choix] : EXTRAS_MENU[MENU.choix - e.length]);
+	if (keyCode === UP_ARROW || (keyCode === TAB && keyIsDown(SHIFT))) MENU.choix = (MENU.choix + n - 1) % n;
+	else if (keyCode === DOWN_ARROW || keyCode === TAB) MENU.choix = (MENU.choix + 1) % n;
+	else if (keyCode === ENTER || keyCode === RETURN || key === ' ') choisi().action();
 	else if ((key === 'c' || key === 'C') && e.some((x) => x.cle === 'reprendre')) continuerPartie();
 	else if (key === 'h' || key === 'H' || key === '?') ouvrir('aide');
-	if (keyCode === UP_ARROW || keyCode === DOWN_ARROW || keyCode === TAB) annoncer(t('mp.' + e[MENU.choix].cle));
+	if (keyCode === UP_ARROW || keyCode === DOWN_ARROW || keyCode === TAB) annoncer(t('mp.' + choisi().cle));
 	return true;
 }
 
