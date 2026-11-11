@@ -177,3 +177,30 @@ Règles Q1–Q61 et `game.js` inchangés (`git diff` vide, `test-jeu.mjs` vert).
 - Sur mobile, les mentions clavier « (Entrée) », « (R) » restent affichées sur les boutons tactiles.
 - Le rapport papier garde des textes de 15–16 px (hors PC) : à agrandir si on change sa mise en page.
 - Pas de test automatique de `carte.js` (le test du jeu ne charge que `game.js`) : le correctif est vérifié en navigateur.
+
+## Prompt 74 — variété et compréhension du poste (11/11/2026)
+
+**Joué** (Chromium, pilote clavier automatisé, 1920 × 1080 sauf mention) : trois semaines complètes jusqu'au
+mail de fin et au bilan — semaine 1 « facile » en français, semaine 2 « normale » en anglais, semaine 3
+« difficile » en français en portrait mobile 412 × 915 avec animations réduites. 15 décisions par semaine,
+inspection surprise, contradiction de sources, soirées et sorties traversées ; aucune erreur console. Les
+données jouées sont les archives du dépôt (aucun réseau).
+
+**Ce qui change pour le joueur :**
+- À la première ouverture de l'appli « Signalements » de la partie, une fenêtre explique qui il est (opérateur
+  du centre de régulation), ce que fait le poste et ce que veulent dire 1 Dévier, 2 Retenir, 3 Renfort,
+  0 Ne rien faire et les équipes, en langage métier, sans dire laquelle est « bonne ». Temps arrêté pendant
+  la lecture ; vue une fois par partie (gardée dans la sauvegarde).
+- Les mêmes phrases sont dans le tutoriel / livre « Aide » (étape 3), l'aide (H) et le guide « Prendre en main ».
+- L'ordre d'arrivée des dossiers sans heure réelle change d'une semaine à l'autre (graine), et à minute égale
+  aussi ; la sauvegarde le fige.
+- Le panneau d'attente montre l'objectif du jour avec sa règle et sa valeur actuelle, puis un **fil de la
+  journée** : objectif et bilan de la veille au matin, un texte de liaison après chaque dossier (météo du
+  jour, agenda du jour, radio d'un chauffeur avec le vrai retard, signalements restants — jamais deux fois le
+  même d'affilée), les événements de rythme de 10 h (agenda), 12 h (météo) et 17 h (pointe) avec la règle
+  déjà en vigueur (× 1,25), et les mots du patron après 2 bonnes ou 2 ratées d'affilée.
+- Après chaque décision, la narration ajoute une phrase de contexte réelle (météo du jour, heure de la
+  décision, nom réel de la ligne, événement d'agenda).
+
+**Limites connues :** les semaines archivées citent rarement une ligne, si bien que la radio des chauffeurs
+apparaît peu ; la variété reste bornée par les données réelles (aucun texte inventé pour combler).

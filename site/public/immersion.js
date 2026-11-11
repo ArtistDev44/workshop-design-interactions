@@ -142,6 +142,7 @@ function demarrerJournee() {
 	interaction();
 	annoncerJournee(); // prompt 43 : écran noir « JOUR n — SEMAINE n »
 	demarrageDuJour(); // prompt 71 : le PC redémarre les 3 premiers jours
+	filDebutJournee(); // prompt 74 : objectif du jour et bilan de la veille, avant le premier signalement
 }
 
 // ——— Prompt 43 : transition entre journées — fond noir, « JOUR n — SEMAINE n » et la date, centrés ———
@@ -200,7 +201,7 @@ function heureAffichee() {
 
 /** Le temps de jeu est-il arrêté ? (fin, mail, soir, démarrage du PC, SMS, pause, tutoriel, transition, fenêtres) */
 function tempsSuspendu() {
-	return ecran !== 'jeu' || !Jeu.horloge || phase === 'fin' || phase === 'mail' || phase === 'soir' || pcDemarre() || smsActif || enPause || tutoriel || TRANSITION_JOUR || mecaniquesSuspendentTemps();
+	return ecran !== 'jeu' || !Jeu.horloge || phase === 'fin' || phase === 'mail' || phase === 'soir' || pcDemarre() || smsActif || enPause || tutoriel || TRANSITION_JOUR || mecaniquesSuspendentTemps() || fenetre === 'poste'; // prompt 74 : explication du poste
 }
 function tempsCompresse() {
 	return ecran === 'jeu' && (phase === 'attente' || phase === 'reveil') && !tempsSuspendu(); // « ×30 » seulement quand le temps file vraiment
@@ -267,6 +268,7 @@ function rateReveil() {
 /** Après la narration d'une décision : incident suivant de la journée, ou attente de la fin de journée */
 function apresDecision() {
 	phase = 'attente';
+	filApresDecision(); // prompt 74 : texte de liaison (météo, agenda, radio) tiré des données réelles
 	// Prompt 62 : plus d'interaction() ici. Après un compteur à 0, la suite est automatique : elle remettait
 	// l'inactivité à zéro et un joueur absent ne s'endormait jamais. Ses vrais gestes (clic, touche) le font.
 }
@@ -348,8 +350,22 @@ function dessinerAttente() {
 	if (enSieste) {
 		fill(C.orange);
 		textSize(22);
-		text(t('surv.sieste'), z.x + 32, z.y + 480);
+		text(t('surv.sieste'), z.x + 32, z.y + 440);
 	}
+	// Prompt 74 : objectif du jour avec sa règle, puis le fil de la journée (objectif, bilan, liaisons, rythme)
+	const o = Jeu.objectifDuJour ? Jeu.objectifDuJour() : null;
+	if (o) {
+		fill(255, 255, 255, 13);
+		rect(z.x + 32, z.y + 484, z.l - 64, 92);
+		fill(C.accent);
+		rect(z.x + 32, z.y + 484, 4, 92);
+		textFont(POLICE_TEXTE);
+		textSize(19);
+		textLeading(26);
+		fill(C.texte);
+		text(t('fil.objectifRegle', { libelle: String(o.libelle), v: Math.round(Jeu.jauges[o.jauge]) }), z.x + 48, z.y + 494, z.l - 96, 78);
+	}
+	dessinerFil(z.x + 32, z.y + 598, z.l - 64, z.h - 618);
 }
 
 // ——— Mail de fin de journée (§ 6), affiché dans l'écran du PC ———
@@ -875,4 +891,143 @@ function infobulle(texte, x, y) {
 	fill('#FFFFFF');
 	textAlign(LEFT, CENTER);
 	text(texte, x + 14, y + 20);
+}
+
+// =====================================================================
+// Prompt 74 — comprendre le poste, et une journée qui « vit » (rythme.js : logique pure, reproductible)
+// =====================================================================
+const FIL = { messages: [], serieDepuis: 0, rythmeFaits: {}, jourCle: '', explicationVue: false };
+/** Remise à zéro pour une nouvelle partie (le mélange des arrivées est fait juste après Jeu.nouvellePartie) */
+function nouvellePartieRythme() {
+	Rythme.melangerArrivees();
+	FIL.messages = [];
+	FIL.serieDepuis = 0;
+	FIL.rythmeFaits = {};
+	FIL.jourCle = '';
+	FIL.explicationVue = false;
+}
+/** Ajoute une ligne au fil de la journée (texte traduit au dessin) ; annoncée en aria-live */
+function ajouterFil(m, sorte) {
+	if (!m) return;
+	FIL.messages.push({ cle: m.cle, vars: m.vars, sorte: sorte || 'info', heure: Jeu.horloge ? Jeu.formaterHeure(Jeu.horloge.minutes) : '' });
+	if (FIL.messages.length > 6) FIL.messages.shift();
+	annoncer(t(m.cle, m.vars));
+}
+/** Début de journée : objectif concret avec sa règle, et bilan de la veille (chiffres réels) */
+function filDebutJournee() {
+	const o = Jeu.objectifDuJour ? Jeu.objectifDuJour() : null;
+	if (o) ajouterFil({ cle: 'fil.objectif', vars: { libelle: String(o.libelle) } }, 'objectif');
+	ajouterFil(Rythme.bilanVeille(), 'veille');
+}
+/** Après chaque décision : texte de liaison (après la narration) */
+function filApresDecision() {
+	if (Jeu.index <= 0) return;
+	const prec = FIL.messages.filter((m) => m.sorte === 'liaison').pop();
+	ajouterFil(Rythme.liaison(Jeu.index - 1, prec && prec.cle), 'liaison');
+}
+/** Une fois par image : événements de rythme à heures fixes (une fois par jour, jamais rejoués à la reprise) */
+function majRythme() {
+	if (ecran !== 'jeu' || !Jeu.horloge || !Jeu.jourCourant || !Jeu.jourCourant() || phase === 'fin') return;
+	const cle = (Jeu.etat.semaine ? Jeu.etat.semaine.lundi : Jeu.etat.mode) + '|' + Jeu.jourIndex;
+	const h = Math.floor(Jeu.horloge.minutes / 60);
+	if (FIL.jourCle !== cle) {
+		// Nouvelle journée (ou reprise) : les heures déjà passées ne sont pas rejouées
+		FIL.jourCle = cle;
+		Object.keys(Rythme.HEURES).forEach((x) => (FIL.rythmeFaits[cle + '|' + x] = Number(x) <= h && Jeu.horloge.minutes > Jeu.debutJournee() + 1));
+	}
+	Object.keys(Rythme.HEURES).forEach((x) => {
+		const k = cle + '|' + x;
+		if (FIL.rythmeFaits[k] || h < Number(x)) return;
+		FIL.rythmeFaits[k] = true;
+		ajouterFil(Rythme.rythme(Number(x)), 'rythme');
+		Confort.Son.bip('choix');
+	});
+}
+/** Après chaque décision : série de 2 bonnes ou 2 ratées → mot du patron (présentation seule, aucun effet) */
+function verifierSerie() {
+	const s = Rythme.serie(Jeu.evenementsJournee, FIL.serieDepuis);
+	if (!s) return;
+	FIL.serieDepuis = (Jeu.evenementsJournee || []).length; // la série repart à zéro
+	if (Jeu.messagePatron) Jeu.messagePatron(T(s.cle));
+	ajouterFil({ cle: s.cle, vars: {} }, s.sorte);
+}
+/** Fil de la journée, dans le panneau d'attente : objectif, bilan, liaisons, rythme, séries (les plus récents en bas) */
+function dessinerFil(x, y, l, h) {
+	const couleurs = { objectif: C.accent, veille: C.gris, liaison: C.texte, rythme: C.orange, bravo: C.vert, courage: C.orange, info: C.texte };
+	noStroke();
+	textAlign(LEFT, TOP);
+	textFont(POLICE_TEXTE);
+	textStyle(BOLD);
+	textSize(20);
+	fill(C.texte);
+	text(t('fil.titre'), x, y);
+	textStyle(NORMAL);
+	textFont(POLICE_DONNEES);
+	textSize(17);
+	textLeading(22);
+	let yy = y + 34;
+	const liste = FIL.messages.slice(-4);
+	if (!liste.length) {
+		fill(C.gris);
+		text(t('fil.vide'), x, yy, l, 44);
+		return;
+	}
+	liste.forEach((m) => {
+		const txt = (m.heure ? m.heure + ' · ' : '') + t(m.cle, m.vars);
+		const n = Math.min(3, Math.ceil((textWidth(txt) * 1.08) / l));
+		if (yy + n * 22 > y + h) return;
+		fill(couleurs[m.sorte] || C.texte);
+		text(txt, x, yy, l, n * 22 + 4);
+		yy += n * 22 + 10;
+	});
+}
+
+// ——— Explication du poste : à la première ouverture de l'écran de jeu de la partie (gardée dans la sauvegarde) ———
+function majExplicationPoste() {
+	if (FIL.explicationVue || fenetre || tutoriel || smsActif || TRANSITION_JOUR || MENU.actif) return;
+	if (ecran !== 'jeu' || vue !== 'poste' || PC.etat !== 'appli' || phase === 'fin') return;
+	FIL.explicationVue = true;
+	ouvrir('poste');
+	annoncer(t('poste.titre') + '. ' + t('poste.role') + ' ' + ['devier', 'retenir', 'renfort', 'rien'].map((a) => t('action.desc.' + a)).join(' '));
+}
+function fenetrePoste() {
+	const l = 1240;
+	const h = 860;
+	const x = (L - l) / 2;
+	const y = (H - h) / 2;
+	panneau(x, y, l, h, C.accent);
+	noStroke();
+	textAlign(LEFT, TOP);
+	fill(C.texte);
+	textFont(POLICE_TEXTE);
+	textStyle(BOLD);
+	textSize(36);
+	text(t('poste.titre'), x + 56, y + 44, l - 112, 50);
+	textStyle(NORMAL);
+	textSize(22);
+	textLeading(32);
+	text(t('poste.role'), x + 56, y + 108, l - 112, 140);
+	textStyle(BOLD);
+	textSize(24);
+	text(t('poste.decisions'), x + 56, y + 262);
+	textStyle(NORMAL);
+	[['1', 'devier'], ['2', 'retenir'], ['3', 'renfort'], ['0', 'rien'], [t('alerte.maj') + ' + 1–4', 'equipes']].forEach(([k, a], i) => {
+		const yy = y + 310 + i * 62;
+		textFont(POLICE_DONNEES);
+		textStyle(BOLD);
+		textSize(22);
+		fill(C.orange);
+		text(k, x + 56, yy);
+		textStyle(NORMAL);
+		textFont(POLICE_TEXTE);
+		textSize(21);
+		textLeading(27);
+		fill(C.texte);
+		text(t('action.desc.' + a), x + 230, yy, l - 290, 58);
+	});
+	textSize(20);
+	textLeading(28);
+	fill(C.gris);
+	text(t('poste.apprendre'), x + 56, y + h - 196, l - 112, 90);
+	bouton(x + l - 56 - 360, y + h - 96, 360, 64, t('poste.compris'), fermer);
 }
