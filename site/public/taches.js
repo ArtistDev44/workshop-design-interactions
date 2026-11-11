@@ -13,6 +13,9 @@ const Taches = (() => {
 		bonusPriorite: 2, // réputation par priorité du matin tenue
 		seuilAccord: 50, // réputation minimale pour que le patron accorde la demande du rapport du soir
 		demande: { budget: 5, equipe: 1, calme: 5 }, // budget du lendemain, +1 équipe (police), objectif allégé de 5
+		info: { juste: 2, faux: -2 }, // info trafic exacte et complète / avec un bloc faux (+ plainte Community)
+		prep: { cout: 3, bonus: 3, rembourse: 1 }, // préparer un événement : budget engagé tôt, réputation si utile
+		suiteMax: 3, // rotation : jamais plus de 3 fois de suite le même type de tâche
 	};
 
 	function hacher(s) {
@@ -149,6 +152,10 @@ const Taches = (() => {
 		const accordee = DEMANDES.includes(idDemande) && Jeu.jauges.reputation >= R.seuilAccord;
 		const prio = (j.priorites || []).map((p) => ({ id: p.id, vars: p.vars, etat: evaluerPriorite(p, rp.date) }));
 		const tenues = prio.filter((p) => p.etat === 'tenue').length;
+		if (j.prep && !j.prep.resultat) {
+			j.prep.resultat = 'sansSuite'; // l'affluence n'a pas été traitée : une partie du budget revient
+			Jeu.appliquerDeltas({ budget: R.prep.rembourse });
+		}
 		if (tenues) Jeu.appliquerDeltas({ reputation: tenues * R.bonusPriorite });
 		j.rapport = { fait: fait.texte, demande: DEMANDES.includes(idDemande) ? idDemande : null, accordee, priorites: prio, bonus: tenues * R.bonusPriorite };
 		etat().demande = j.rapport.demande ? { id: j.rapport.demande, accordee, pour: (Jeu.jourIndex || 0) + 1 } : null;
@@ -174,14 +181,129 @@ const Taches = (() => {
 		return d;
 	}
 
-	/** Après une décision du joueur : la note au journal (rotation) */
-	function apresDecision(r) {
-		if (!r || !r.dossier) return null;
-		if (r.dossier.contradiction) noter('verifier', r.dossier.date);
-		noter('signalement', r.dossier.date);
-		return null;
+	// ——— Rédiger l'info trafic (§ 1) : 4 blocs, chacun 3 propositions dont 1 exacte, tirées des dossiers réels ———
+	const FAMILLES_ALT = ['devier', 'retenir', 'renfort', 'rien'];
+	function causeDe(d) {
+		if (d.type === 'ligne en difficulté') return t('tache.cause.retard');
+		if (d.type === 'événement') return t('tache.cause.affluence', { nom: nomEvenement(d) });
+		if (d.type === 'alerte météo') return t('tache.cause.meteo', { nature: d.nature });
+		return String(d.nature || '').split(',')[0].trim() || t('carte.nonRenseigne');
+	}
+	const ligneDe = (d) => (d.lignes && d.lignes.length ? t('tache.info.ligne', { ligne: d.lignes[0] }) : t('tache.info.ligneInconnue'));
+	function dureeDe(d, r) {
+		const re = r && r.retardEffectif !== undefined ? r.retardEffectif : Jeu.retardEffectif(d);
+		return re !== null && re !== undefined ? t('tache.info.duree', { min: re }) : t('tache.info.dureeInconnue');
+	}
+	/** 3 propositions : l'exacte + 2 autres prises dans les autres dossiers réels de la semaine (ordre tiré par la graine) */
+	function bloc(id, exacte, autres, cle) {
+		const pool = [...new Set(autres.filter((x) => x && x !== exacte))];
+		const leurres = melanger(pool, cle + '|leurres').slice(0, 2);
+		const options = melanger([exacte].concat(leurres), cle);
+		return { id, options, bonne: options.indexOf(exacte) };
+	}
+	function tacheInfo(r, n) {
+		const d = r.dossier;
+		const autres = (Jeu.paquet || []).filter((x) => x !== d);
+		const fam = Jeu.familleDe ? Jeu.familleDe(r.action) : r.action;
+		const famille = FAMILLES_ALT.includes(fam) ? fam : 'rien';
+		const blocs = [
+			// Leurres : lignes des autres dossiers de la semaine, sinon lignes réelles du réseau (data/lignes.json)
+			bloc('ligne', ligneDe(d), autres.map(ligneDe).concat([t('tache.info.ligneInconnue')], ((Jeu.lignes && Jeu.lignes.lignes) || []).slice(0, 12).map((x) => t('tache.info.ligne', { ligne: x.nom }))), 'info-ligne|' + n),
+			bloc('cause', causeDe(d), autres.map(causeDe), 'info-cause|' + n),
+			bloc('duree', dureeDe(d, r), [10, 20, 30, 45].map((m) => t('tache.info.duree', { min: m })).concat([t('tache.info.dureeInconnue')]), 'info-duree|' + n),
+			bloc('alternative', t('tache.alt.' + famille), FAMILLES_ALT.map((f) => t('tache.alt.' + f)), 'info-alt|' + n),
+		];
+		return { type: 'info', index: n, date: d.date, sujet: d.lignes && d.lignes.length ? t('dossier.ligne', { lignes: d.lignes.join(', ') }) : causeDe(d), action: String(r.nomAction || ''), blocs };
 	}
 
-	return { R, hacher, choix, nouvellePartie, etat, jour, noter, suiteFinale, briefing, choisirPriorites, evaluerPriorite, rapport, validerRapport, matin, apresDecision, faitsDuJour };
+	// ——— Préparer un événement (§ 1) : l'agenda annonce un événement et son affluence n'est pas encore arrivée ———
+	function tachePreparation(date, apres) {
+		const j = jour(date);
+		if (j.offertes.evenement) return null;
+		const d = (Jeu.paquet || []).find((x, i) => i > apres && x.date === date && x.type === 'événement');
+		if (!d) return null; // pas d'affluence à venir aujourd'hui : la tâche n'est pas proposée
+		return { type: 'evenement', date, index: Jeu.paquet.indexOf(d), nom: nomEvenement(d), heure: Jeu.formaterHeure ? Jeu.formaterHeure(d.minute) : '', options: ['police', 'vehicule', 'rien'] };
+	}
+	/** La réponse choisie sur le dossier préparé correspond-elle à la préparation ? */
+	function preparationUtile(prep, r) {
+		const rep = Jeu.reponse ? Jeu.reponse(r.dossier, r.action) : null;
+		const fam = Jeu.familleDe ? Jeu.familleDe(r.action) : r.action;
+		if (prep.choix === 'police') return !!(rep && rep.equipe === 'police');
+		if (prep.choix === 'vehicule') return fam === 'renfort';
+		return false;
+	}
+
+	/** Après une décision du joueur : journal (rotation), effet d'une préparation, et tâche courte éventuelle.
+	 * Rotation : après 3 signalements d'affilée, une tâche d'une autre nature est proposée d'office ; sinon une
+	 * décision sur deux environ (tirage par la graine) — « certaines décisions, pas toutes ». */
+	function apresDecision(r, n) {
+		if (!r || !r.dossier) return null;
+		const date = r.dossier.date;
+		const j = jour(date);
+		if (r.dossier.contradiction) noter('verifier', date);
+		noter('signalement', date);
+		const prep = j.prep;
+		if (prep && prep.index === Jeu.paquet.indexOf(r.dossier) && !prep.resultat) {
+			prep.resultat = preparationUtile(prep, r) ? 'utile' : 'inutile';
+			if (prep.resultat === 'utile') Jeu.appliquerDeltas({ reputation: R.prep.bonus });
+			else Jeu.appliquerDeltas({ budget: R.prep.rembourse }); // budget perdu en partie seulement
+		}
+		const suite = suiteFinale(j.journal);
+		const doit = suite.type === 'signalement' && suite.n >= R.suiteMax - 1; // la tâche s'intercale avant d'atteindre le plafond
+		const p = tachePreparation(date, Jeu.paquet.indexOf(r.dossier));
+		if (p && (doit || choix('prep|' + n, 2) === 0)) {
+			j.offertes.evenement = true;
+			return p;
+		}
+		if (doit || choix('info|' + n, 2) === 0) return tacheInfo(r, n);
+		return null;
+	}
+	/** Bonne réponse d'une tâche (simulation, tests) */
+	function bonneReponse(tache) {
+		if (tache.type === 'info') return tache.blocs.map((b) => b.bonne);
+		if (tache.type === 'evenement') return 'police';
+		return null;
+	}
+	/** Résout une tâche courte ; reponse = null → passée (aucun effet). Renvoie { ok, effets, textes } */
+	function resoudre(tache, reponse) {
+		const j = jour(tache.date);
+		noter(tache.type, tache.date);
+		if (tache.type === 'info') {
+			const textes = [t('tache.info.contexte', { sujet: tache.sujet, action: tache.action })]; // phrase montrée (les blocs sont des boutons)
+			if (!reponse) return { ok: null, textes };
+			const juste = tache.blocs.every((b, i) => reponse[i] === b.bonne);
+			const e = etat();
+			e.infos = e.infos || { publiees: 0, parfaites: 0 };
+			e.infos.publiees++;
+			if (juste) {
+				e.infos.parfaites++;
+				Jeu.appliquerDeltas({ reputation: R.info.juste });
+			} else {
+				Jeu.appliquerDeltas({ reputation: R.info.faux });
+				plainteInfo(tache);
+			}
+			j.info = (j.info || 0) + 1;
+			return { ok: juste, effets: { reputation: juste ? R.info.juste : R.info.faux }, textes, faux: tache.blocs.map((b, i) => reponse[i] !== b.bonne) };
+		}
+		if (tache.type === 'evenement') {
+			const textes = [t('tache.prep.contexte', { nom: tache.nom, heure: tache.heure })];
+			if (!reponse || reponse === 'rien') return { ok: null, textes };
+			Jeu.appliquerDeltas({ budget: -R.prep.cout });
+			j.prep = { choix: reponse, index: tache.index, nom: tache.nom, resultat: null };
+			return { ok: true, effets: { budget: -R.prep.cout }, textes };
+		}
+		return null;
+	}
+	/** Info trafic avec un bloc faux : un usager (pseudonyme fictif) le signale sur Community */
+	function plainteInfo(tache) {
+		const def = Jeu.MESSAGES && Jeu.MESSAGES.plaintes.find((p) => p.id === 'info_erronee');
+		if (!def || !Jeu.plaintes) return null;
+		const plainte = { id: def.id, def, vars: { sujet: tache.sujet }, index: tache.index, heure: Jeu.horloge ? Jeu.formaterHeure(Jeu.horloge.minutes) : '', auteur: def.auteur, reponse: null };
+		Jeu.plaintes.push(plainte);
+		if (Jeu.nonLus) Jeu.nonLus.community++;
+		return plainte;
+	}
+
+	return { R, hacher, choix, nouvellePartie, etat, jour, noter, suiteFinale, briefing, choisirPriorites, evaluerPriorite, rapport, validerRapport, matin, apresDecision, faitsDuJour, bonneReponse, resoudre, tacheInfo, tachePreparation };
 })();
 if (typeof window !== 'undefined') window.Taches = Taches;

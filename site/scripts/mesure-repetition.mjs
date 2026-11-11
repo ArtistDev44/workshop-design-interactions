@@ -45,7 +45,7 @@ export function mesurer(langue = 'fr') {
 				jour.plaintesAvant = Jeu.plaintes.length;
 			};
 			ouvrir();
-			while (!Jeu.terminee && garde++ < 600) {
+			while (garde++ < 600) { // la dernière journée va jusqu'au rapport du soir, comme en jeu
 				const d = Jeu.prochainDuJour();
 				if (d) {
 					Jeu.horloge.minutes = Math.max(Jeu.horloge.minutes, d.minute); // l'horloge avance comme en jeu

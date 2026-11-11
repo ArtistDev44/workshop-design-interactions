@@ -2,7 +2,7 @@
  * Clavier : 1 à 4 = choisir, Tab = groupe ou case suivante, Entrée = valider, Échap = passer.
  * La logique (options, effets, rotation) est dans taches.js ; ici, l'affichage et les annonces (aria-live).
  */
-const TACHE = { courante: null, choix: [], groupe: 0, suite: null, file: [], introVues: null };
+const TACHE = { courante: null, choix: [], groupe: 0, suite: null, file: [], introVues: null, resultat: null };
 const CLE_INTRO_TACHES = 'pxe-nte001-taches-intro';
 
 function introTacheVue(type) {
@@ -28,6 +28,8 @@ function verifierTaches() {
 	if (MENU.actif || ecran !== 'jeu' || fenetre || smsActif || tutoriel || TRANSITION_JOUR || enPause || (typeof CARNET !== 'undefined' && CARNET.ouvert)) return false;
 	if (!['attente', 'selection'].includes(phase) || vue !== 'poste' || PC.etat !== 'appli' || (typeof pcDemarre === 'function' && pcDemarre())) return false;
 	if (typeof CINE !== 'undefined' && CINE) return false;
+	if (typeof FIL !== 'undefined' && !FIL.explicationVue) return false; // l'explication du poste passe d'abord
+	if (TACHE.courante) return ouvrir('tache'), true; // tâche interrompue par une autre fenêtre : on la reprend
 	const b = Taches.briefing();
 	if (b) return ouvrirTache({ type: 'briefing', donnees: b }), true;
 	const suivante = TACHE.file.shift();
@@ -36,8 +38,9 @@ function verifierTaches() {
 }
 function ouvrirTache(tache, suite) {
 	TACHE.courante = tache;
-	TACHE.choix = [];
+	TACHE.choix = tache.type === 'info' ? tache.blocs.map(() => null) : [];
 	TACHE.groupe = 0;
+	TACHE.resultat = null;
 	TACHE.suite = suite || null;
 	TACHE.premiere = !introTacheVue(tache.type);
 	ouvrir('tache');
@@ -75,6 +78,18 @@ function basculerChoix(i) {
 		else if (TACHE.choix.length < 2) TACHE.choix.push(o.id);
 		else annoncer(t('tache.briefing.max'));
 		annoncer(t('tache.prio.' + o.id, o.vars) + ' : ' + t(TACHE.choix.includes(o.id) ? 'tache.choisi' : 'tache.retire'));
+	} else if (tache.type === 'info') {
+		const b = tache.blocs[TACHE.groupe];
+		if (!b || !b.options[i]) return;
+		TACHE.choix[TACHE.groupe] = i;
+		annoncer(t('tache.info.bloc.' + b.id) + ' : ' + b.options[i]);
+		const vide = TACHE.choix.findIndex((c) => c === null);
+		if (vide >= 0) TACHE.groupe = vide; // case suivante à remplir
+	} else if (tache.type === 'evenement') {
+		const o = tache.options[i];
+		if (!o) return;
+		TACHE.choix = [o];
+		annoncer(t('tache.prep.' + o, { nom: tache.nom, cout: Taches.R.prep.cout }));
 	} else if (tache.type === 'rapport') {
 		const liste = TACHE.groupe === 0 ? tache.donnees.faits : tache.donnees.demandes;
 		const o = liste[i];
@@ -88,6 +103,20 @@ function basculerChoix(i) {
 function validerTache(passer) {
 	const tache = TACHE.courante;
 	if (!tache) return;
+	if (TACHE.resultat) return fermerTache(); // écran de résultat : Entrée / Échap pour continuer
+	if (tache.type === 'info' || tache.type === 'evenement') {
+		if (!passer && (tache.type === 'info' ? TACHE.choix.some((c) => c === null) : !TACHE.choix[0])) return annoncer(t('tache.' + tache.type + '.incomplet'));
+		const r = Taches.resoudre(tache, passer ? null : tache.type === 'info' ? TACHE.choix.slice() : TACHE.choix[0]);
+		if (passer || !r || r.ok === null) {
+			annoncer(t('tache.passee'));
+			return fermerTache();
+		}
+		TACHE.resultat = r;
+		const txt = tache.type === 'info' ? t(r.ok ? 'tache.info.juste' : 'tache.info.faux', { v: Math.abs(r.effets.reputation) }) : t('tache.prep.ok', { nom: tache.nom, cout: Taches.R.prep.cout });
+		annoncer(txt);
+		Confort.Son.bip(r.ok === false ? 'alerte' : 'choix');
+		return;
+	}
 	if (tache.type === 'briefing') {
 		if (!passer && TACHE.choix.length < 2) return annoncer(t('tache.briefing.deux'));
 		const p = Taches.choisirPriorites(passer ? [] : TACHE.choix);
@@ -113,6 +142,10 @@ function toucheTaches() {
 	if (!tache) return fermer(), true;
 	if (['1', '2', '3', '4'].includes(key)) basculerChoix(Number(key) - 1);
 	else if (keyCode === TAB) {
+		if (tache.type === 'info') {
+			TACHE.groupe = (TACHE.groupe + (keyIsDown(SHIFT) ? tache.blocs.length - 1 : 1)) % tache.blocs.length;
+			annoncer(t('tache.info.bloc.' + tache.blocs[TACHE.groupe].id));
+		}
 		if (tache.type === 'rapport') {
 			TACHE.groupe = 1 - TACHE.groupe;
 			annoncer(t(TACHE.groupe ? 'tache.rapport.groupeDemande' : 'tache.rapport.groupeFait'));
@@ -152,14 +185,18 @@ function fenetreTache() {
 		text(t('tache.exemple.' + tache.type), x + 76, yy + 44, l - 152, 60);
 		yy += 130;
 	}
-	if (tache.type === 'briefing') yy = corpsBriefing(tache.donnees, x + 56, yy, l - 112);
+	if (TACHE.resultat) yy = corpsResultat(tache, TACHE.resultat, x + 56, yy, l - 112);
+	else if (tache.type === 'briefing') yy = corpsBriefing(tache.donnees, x + 56, yy, l - 112);
+	else if (tache.type === 'info') yy = corpsInfo(tache, x + 56, yy, l - 112);
+	else if (tache.type === 'evenement') yy = corpsPreparation(tache, x + 56, yy, l - 112);
 	else if (tache.type === 'rapport') yy = corpsRapport(tache.donnees, x + 56, yy, l - 112);
 	// Pied : consigne clavier + boutons
 	textFont(POLICE_DONNEES);
 	textSize(18);
 	textAlign(LEFT, TOP);
 	fill(C.gris);
-	text(t('tache.consigne.' + tache.type), x + 56, y + h - 104, l - 112 - 560, 70);
+	text(t(TACHE.resultat ? 'tache.consigne.resultat' : 'tache.consigne.' + tache.type), x + 56, y + h - 104, l - 112 - 560, 70);
+	if (TACHE.resultat) return bouton(x + l - 56 - 260, y + h - 104, 260, 68, t('tache.continuer'), fermerTache);
 	bouton(x + l - 56 - 260, y + h - 104, 260, 68, t('tache.valider'), () => validerTache(false));
 	bouton(x + l - 56 - 260 - 276, y + h - 104, 260, 68, t('tache.passer'), () => validerTache(true), false, true);
 }
@@ -239,4 +276,72 @@ function carnetSemaine(z) {
 		dsTexte(prio + dem, z.x + 18, y + 30, 17, DS.blanc75, 'left', z.l - 30);
 		y += 92;
 	});
+}
+
+/** Ouvre la prochaine tâche en file juste après une narration (avant de reprendre un autre signalement) */
+function ouvrirTacheEnFile(suite) {
+	if (!TACHE.file.length || fenetre || ecran !== 'jeu') return false;
+	ouvrirTache(TACHE.file.shift(), suite);
+	return true;
+}
+function corpsInfo(tache, x, y, l) {
+	y = ligneInfo(t('tache.info.contexte', { sujet: tache.sujet, action: tache.action }), x, y, l) + 8;
+	tache.blocs.forEach((b, k) => {
+		const actif = TACHE.groupe === k;
+		textAlign(LEFT, TOP);
+		textFont(POLICE_DONNEES);
+		textStyle(BOLD);
+		textSize(17);
+		fill(actif ? C.accent : C.gris);
+		text(t('tache.info.bloc.' + b.id).toUpperCase() + (actif ? '  ◀' : ''), x, y + 14);
+		textStyle(NORMAL);
+		const lb = (l - 220 - 2 * 10) / 3;
+		b.options.forEach((o, i) => {
+			const pris = TACHE.choix[k] === i;
+			bouton(x + 220 + i * (lb + 10), y, lb, 52, (actif ? i + 1 + '  ' : '') + (pris ? '✓ ' : '') + court(o, 30), () => ((TACHE.groupe = k), basculerChoix(i)), false, !pris);
+		});
+		y += 64;
+	});
+	return y;
+}
+function corpsPreparation(tache, x, y, l) {
+	y = ligneInfo(t('tache.prep.contexte', { nom: tache.nom, heure: tache.heure }), x, y, l) + 12;
+	tache.options.forEach((o, i) => {
+		const pris = TACHE.choix[0] === o;
+		bouton(x, y, l, 64, i + 1 + '  ' + (pris ? '✓ ' : '') + t('tache.prep.' + o, { nom: tache.nom, cout: Taches.R.prep.cout }), () => basculerChoix(i), false, !pris);
+		y += 76;
+	});
+	return y;
+}
+function corpsResultat(tache, r, x, y, l) {
+	textAlign(LEFT, TOP);
+	textFont(POLICE_TEXTE);
+	textStyle(BOLD);
+	textSize(24);
+	fill(r.ok === false ? C.rouge : C.vert);
+	const titre = tache.type === 'info' ? t(r.ok ? 'tache.info.juste' : 'tache.info.faux', { v: Math.abs(r.effets.reputation) }) : t('tache.prep.ok', { nom: tache.nom, cout: Taches.R.prep.cout });
+	text(titre, x, y, l, 70);
+	textStyle(NORMAL);
+	y += 84;
+	if (tache.type === 'info') {
+		tache.blocs.forEach((b, k) => {
+			const ok = !r.faux[k];
+			textSize(20);
+			fill(ok ? C.texte : C.orange);
+			text((ok ? '✓ ' : '✗ ') + t('tache.info.resultat', { bloc: t('tache.info.bloc.' + b.id), choix: court(b.options[TACHE.choix[k]], 60) }) + (ok ? '' : ' → ' + court(b.options[b.bonne], 60)), x, y, l, 30);
+			y += 34;
+		});
+		if (!r.ok) {
+			fill(C.gris);
+			text(t('tache.info.plainte'), x, y + 6, l, 30);
+			y += 40;
+		}
+	}
+	return y;
+}
+
+/** Libellé de bouton raccourci (le texte complet reste dans la phrase de contexte et l'annonce) */
+function court(s, n) {
+	const x = String(s);
+	return x.length > n ? x.slice(0, n - 1).trim() + '…' : x;
 }

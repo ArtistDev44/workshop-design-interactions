@@ -1049,6 +1049,57 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 	verifier(r.sauve, 'sauvegarde : les tâches de la partie (priorités, rapport, carnet) sont restaurées');
 }
 
+// Prompt 88 lot C : rotation des tâches, info trafic fondée sur le dossier réel, préparation seulement si l'agenda l'annonce
+{
+	const { mesurer } = await import('./mesure-repetition.mjs');
+	const jours = mesurer('fr');
+	const mauvais = jours.filter((j) => j.maxSuiteActif > 3 || j.typesActifs < 3 || j.partDominantActif >= 0.5).map((j) => `${j.date} suite ${j.maxSuiteActif}, ${j.typesActifs} types, ${Math.round(j.partDominantActif * 100)} %`);
+	verifier(mauvais.length === 0, `rotation : au plus 3 fois de suite, au moins 3 types, type dominant < 50 % (${mauvais.slice(0, 3)})`);
+	const cc = contexte('fr');
+	const r = vm.runInContext(
+		`(() => {
+		const out = { infos: 0, erreursInfo: [], prepSansEvenement: 0, preps: 0, effetInfo: null, plainte: false };
+		for (const lundi of Jeu.semainesProposees().map((x) => x.lundi)) {
+			Jeu.chargerSemaine(lundi); Jeu.nouvellePartie(); Taches.nouvellePartie();
+			while (Jeu.prochainDuJour() || Jeu.jours[Jeu.jourIndex + 1]) {
+				if (!Jeu.prochainDuJour()) { Jeu.journeeSuivante(); continue; }
+				const d = Jeu.dossierCourant();
+				const res = Jeu.decider(Jeu.actionsPossibles(d)[0]);
+				const tache = Taches.apresDecision(res, Jeu.index - 1);
+				if (!tache) continue;
+				if (tache.type === 'info') {
+					out.infos++;
+					const b = tache.blocs;
+					const ligne = d.lignes && d.lignes.length ? T('tache.info.ligne', { ligne: d.lignes[0] }) : T('tache.info.ligneInconnue');
+					if (String(b[0].options[b[0].bonne]) !== String(ligne)) out.erreursInfo.push('ligne ' + d.texte_source);
+					if (b.some((x) => x.options.length < 2 || x.bonne < 0 || new Set(x.options.map(String)).size !== x.options.length)) out.erreursInfo.push('options ' + d.texte_source);
+				}
+				if (tache.type === 'evenement') {
+					out.preps++;
+					const ev = Jeu.paquet[tache.index];
+					if (!ev || ev.type !== 'événement' || ev.date !== d.date || tache.index <= Jeu.index - 1) out.prepSansEvenement++;
+				}
+			}
+		}
+		// Effet : info exacte +2, info fausse −2 et une plainte Community étiquetée « info_erronee »
+		Jeu.chargerSemaine('2026-11-02'); Jeu.nouvellePartie(); Taches.nouvellePartie();
+		const res = Jeu.decider(Jeu.actionsPossibles(Jeu.dossierCourant())[0]);
+		const tache = Taches.tacheInfo(res, 0);
+		const r0 = Jeu.jauges.reputation;
+		Taches.resoudre(tache, Taches.bonneReponse(tache));
+		const r1 = Jeu.jauges.reputation;
+		Taches.resoudre(tache, tache.blocs.map((b) => (b.bonne + 1) % b.options.length));
+		out.effetInfo = [r1 - r0, Jeu.jauges.reputation - r1];
+		out.plainte = Jeu.plaintes.some((p) => p.id === 'info_erronee');
+		return out;
+	})()`,
+		cc,
+	);
+	verifier(r.infos > 5 && r.erreursInfo.length === 0, `info trafic : ${r.infos} tâches, bloc exact = fait du dossier (${r.erreursInfo.slice(0, 3)})`);
+	verifier(r.prepSansEvenement === 0, `préparer un événement : proposé sans affluence réelle à venir (${r.prepSansEvenement}/${r.preps})`);
+	verifier(JSON.stringify(r.effetInfo) === '[2,-2]' && r.plainte, `info trafic : effets ${r.effetInfo}, plainte ${r.plainte}`);
+}
+
 // Service worker : chaque script de index.html est dans la liste hors ligne de sw.js
 const html = readFileSync(join(pub, 'index.html'), 'utf8');
 const sw = readFileSync(join(pub, 'sw.js'), 'utf8');

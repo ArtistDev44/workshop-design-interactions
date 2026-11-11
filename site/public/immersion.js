@@ -269,7 +269,7 @@ function rateReveil() {
 function apresDecision() {
 	phase = 'attente';
 	filApresDecision(); // prompt 74 : texte de liaison (météo, agenda, radio) tiré des données réelles
-	reprendreActif(); // prompt 77 : un autre signalement actif attend — on le reprend (le plus urgent)
+	if (!ouvrirTacheEnFile(reprendreActif)) reprendreActif(); // prompt 77 : un autre signalement actif attend — on le reprend (le plus urgent) ; prompt 88 : la tâche courte passe avant (rotation)
 	// Prompt 62 : plus d'interaction() ici. Après un compteur à 0, la suite est automatique : elle remettait
 	// l'inactivité à zéro et un joueur absent ne s'endormait jamais. Ses vrais gestes (clic, touche) le font.
 }
