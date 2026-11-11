@@ -128,7 +128,9 @@ function dsBouton(x, y, l, h, label, action, variante, desactive) {
 	while (taille > 18 && textWidth(label + '  ›') > l - 24) textSize(--taille); // prompt 66 : le libellé reste dans le bouton
 	fill(desactive ? DS.blanc50 : v.texte);
 	textAlign(CENTER, CENTER);
+	zoneTexteDebut('bouton', x, y, l, h); // prompt 93
 	text(label + '  ›', x + l / 2, y + h / 2);
+	zoneTexteFin();
 	if (!desactive) boutons.push({ x, y, l, h, action });
 }
 
@@ -142,7 +144,9 @@ function dsBadge(x, y, txt, type) {
 	rect(x - l / 2, y - 14, l, 28);
 	fill(type === 'alerte' || type === 'succes' ? DS.fond : DS.blanc);
 	textAlign(CENTER, CENTER);
+	zoneTexteDebut('badge', x - l / 2, y - 14, l, 28); // prompt 93
 	text(txt, x, y);
+	zoneTexteFin();
 }
 
 /** Panneau / dialogue du design system : fond noir, bordure blanc 15 %, barre de titre en pixels */
@@ -155,6 +159,7 @@ function dsPanneau(x, y, l, h, titre, couleurBarre) {
 	noFill();
 	rect(x + 1, y + 1, l - 2, h - 2);
 	noStroke();
+	zoneTexteDeclarer('panneauDS', x, y, l, h); // prompt 93
 	if (titre) {
 		fill(couleurBarre || DS.blanc05);
 		rect(x + 2, y + 2, l - 4, 56);

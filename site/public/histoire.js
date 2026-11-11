@@ -226,7 +226,9 @@ function fenetreRapport() {
 	textAlign(CENTER, CENTER);
 	textStyle(BOLD);
 	textSize(30);
+	zoneTexteDebut('tampon', -130, -42, 260, 84); // prompt 93 : cadre du tampon (repère tourné)
 	text(t('rapport.tampon.' + tampon), 0, 0);
+	zoneTexteFin();
 	textStyle(NORMAL);
 	pop();
 	// Score et texte de la fin

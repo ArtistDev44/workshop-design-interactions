@@ -152,6 +152,7 @@ function appPatron(z) {
 	drawingContext.beginPath();
 	drawingContext.rect(zf.x - 4, zf.y, zf.l + 8, zf.h);
 	drawingContext.clip();
+	zoneTexteDebut('filPatron', zf.x - 4, zf.y, zf.l + 8, zf.h, { clip: true }); // prompt 93 : zone défilante (ce qui en sort est masqué exprès)
 	const n0 = boutons.length;
 	let yy = zf.y - PATRON.defil;
 	let jour = null;
@@ -190,6 +191,7 @@ function appPatron(z) {
 	// Accusé du dernier message : « Envoyé » à la réception, « Lu · HH:MM » une fois affiché
 	const dernier = liste[liste.length - 1];
 	if (dernier && dernier !== cachee) dsTexte(dernier.lu ? t('patron.lu', { heure: dernier.luA || dernier.heure }) : t('patron.envoye'), zf.x + l, yy - 4, 16, DS.blanc50, 'right');
+	zoneTexteFin();
 	drawingContext.restore();
 	for (let i = boutons.length - 1; i >= n0; i--) if (boutons[i].y + boutons[i].h < zf.y || boutons[i].y > zf.y + zf.h) boutons.splice(i, 1);
 	if (panne) {
@@ -244,6 +246,7 @@ function carteMessage(m, x, y, l, groupe, panne) {
 	noFill();
 	rect(x + dx + 1, y + 1, l - 2, h - 2 - (m.reponse ? 56 : 0));
 	noStroke();
+	zoneTexteDeclarer('carteMessage', x + dx, y, l, h); // prompt 93
 	fill(c);
 	rect(x + dx, y, 4, h - (m.reponse ? 56 : 0));
 	if (!m.lu) {

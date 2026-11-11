@@ -257,6 +257,7 @@ function dessinerFileSignalements(z) {
 		const surligne = SELECTION.surbrillance && dossierConnu(it.index) && (d.lignes || []).includes(SELECTION.surbrillance);
 		fill(courant ? 'rgba(212,3,28,0.22)' : actif ? 'rgba(212,3,28,0.10)' : r === SELECTION.focus && phase === 'selection' ? 'rgba(255,193,56,0.14)' : 'rgba(255,255,255,0.05)');
 		rect(z.x + 16, y, z.l - 32, hc);
+		zoneTexteDeclarer('carteFile', z.x + 16, y, z.l - 32, hc); // prompt 93
 		fill(couleurGravite(Jeu.gravite(d)));
 		rect(z.x + 16, y, 8, hc);
 		textFont(POLICE_TEXTE);
@@ -267,7 +268,7 @@ function dessinerFileSignalements(z) {
 		textStyle(NORMAL);
 		textSize(18);
 		fill(C.texte);
-		text(texteLignes(d, it.index), z.x + 40, y + 44, z.l - 80, 26);
+		dessinerTexte(texteLignes(d, it.index), z.x + 40, y + 41, z.l - 80, { taille: 18, couleur: C.texte, maxLignes: 1, interligne: 28 }); // prompt 93 : plus de 2e ligne masquée
 		textFont(POLICE_DONNEES);
 		textSize(17);
 		fill(Jeu.defiChrono && actif && resteA < 10000 ? C.rouge : C.gris); // compteur d'un actif en rouge sous 10 s (défi chrono)

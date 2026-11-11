@@ -208,6 +208,8 @@ function draw() {
 			dessinerJeu();
 			bandeauEtat(); // prompt 43
 			indicateurSauvegarde(); // prompt 33
+			if (BANDEAU.survol) infobulle(BANDEAU.survol, Math.min(BANDEAU.x + 16, L - 28 - textWidth(BANDEAU.survol)), BANDEAU.y + BANDEAU.h + 4); // prompt 93 : ligne complète du bandeau
+			BANDEAU.survol = null;
 		}
 		if (enPause) dessinerPause();
 		dessinerFermerAppli();
@@ -966,6 +968,10 @@ function tracer(t) {
 }
 
 /** Prompt 39 : taille de texte réduite (de tailleMax vers tailleMin) jusqu'à tenir dans « largeur » — police monospace plus large */
+// Prompt 93 : cadres des textes, pour le détecteur ?audit=textes (audit-textes.js les remplace) ; vides en jeu normal
+function zoneTexteDebut() {}
+function zoneTexteFin() {}
+function zoneTexteDeclarer() {}
 function ajusterTaille(txt, largeur, tailleMax, tailleMin) {
 	textSize(tailleMax);
 	while (textSize() > (tailleMin || 12) && textWidth(String(txt)) > largeur) textSize(textSize() - 1);
@@ -979,6 +985,7 @@ function panneau(x, y, l, h, bordure) {
 	strokeWeight(2);
 	rect(x + 1, y + 1, l - 2, h - 2);
 	noStroke();
+	zoneTexteDeclarer('panneau', x, y, l, h); // prompt 93
 }
 
 function bouton(x, y, l, h, label, action, desactive, secondaire) {
@@ -1013,7 +1020,9 @@ function bouton(x, y, l, h, label, action, desactive, secondaire) {
 	textSize(Math.min(28, h * 0.34));
 	while (textSize() > 13 && textWidth(label) > l - 28) textSize(textSize() - 1); // le libellé tient dans le bouton
 	textAlign(CENTER, CENTER);
+	zoneTexteDebut('bouton', x, y, l, h); // prompt 93
 	text(label, x + l / 2, y + h / 2);
+	zoneTexteFin();
 	textStyle(NORMAL);
 	if (!desactive) boutons.push({ x, y, l, h, action });
 }
@@ -1531,7 +1540,8 @@ function fenetreParametres() {
 	textSize(14);
 	fill(C.gris);
 	textAlign(LEFT, TOP);
-	text(t('param.musiqueCredits'), x + 48, ym + 70, 640, 24); // crédits des morceaux CC0
+	text(t('param.musiqueCredits'), x + 48, ym + 70, l - 96, 24); // crédits des morceaux CC0 ; prompt 93 : largeur libre sous le bouton, libellé court
+	if (mouseX >= x + 48 && mouseX <= x + l - 48 && mouseY >= ym + 66 && mouseY <= ym + 92) infobulle(t('param.musiqueCreditsLong'), x + 48, ym + 96);
 	// Prompt 33 : Progression — exporter (fichier), copier (presse-papiers), importer (fichier ou texte collé)
 	const yp = y + 120 + 7 * 80;
 	textFont(POLICE_TEXTE);

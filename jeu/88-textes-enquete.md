@@ -71,7 +71,7 @@ Les sources non consultées sont des boutons DS avec la touche (5 à 8), le nom 
   - À la révélation d'une source, la vue défile jusqu'à sa carte, instantanément avec les animations réduites.
 - Apparition d'une carte : fondu de 300 ms et glissé de 6 px, tous deux supprimés avec les animations réduites.
 - Les boutons d'une carte ne sont cliquables que s'ils sont entièrement visibles dans la zone.
-- Quand « En savoir plus » est ouvert, les cartes de réponse remontent de 50 px : la zone des sources passe de 238 à 296 px.
+- Prompt 93 : le décalage de 50 px des cartes de réponse, ajouté ici pour agrandir la zone des sources, a été annulé. Il coupait l'explication des cartes (défaut B relevé par l'audit des textes) ; la zone des sources reste à 238 px et défile.
 - **Historique** et **Équipes** utilisent le composant partagé.
   - Les rangées d'Équipes prennent leur hauteur de la zone. Pendant les 5 s du message d'envoi, elles passent sur une seule ligne, pour ne plus déborder sur le conseil.
 

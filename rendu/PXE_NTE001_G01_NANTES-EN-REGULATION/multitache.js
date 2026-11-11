@@ -275,6 +275,7 @@ function dessinerNotifications(xDroite, y0, echelle) {
 			strokeWeight(2);
 			rect(x, y, l, h);
 			noStroke();
+			zoneTexteDeclarer('notification', x, y, l, h); // prompt 93
 			fill(n.icone === 'patron' ? DS.primaire : n.icone === 'community' ? DS.info : DS.alerte);
 			rect(x, y, 6 * k, h);
 			const ic = ICONES_OS.find((c) => c.cle === n.icone);

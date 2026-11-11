@@ -400,6 +400,7 @@ function corpsEnquete(d, x, y0, l, h) {
 	ctx.beginPath();
 	ctx.rect(x - 8, y0, l + 16, h);
 	ctx.clip();
+	zoneTexteDebut('sourcesDefilantes', x - 8, y0, l + 16, h, { clip: true }); // prompt 93 : masqué exprès hors zone
 	items.forEach((it, i) => {
 		const yc = Math.round(y0 + it.y - ENQ_UI.defil);
 		if (yc > y0 + h || yc + it.h < y0) return;
@@ -412,6 +413,7 @@ function corpsEnquete(d, x, y0, l, h) {
 		carteSource(it.m, x, yg, lc, { ouvert: !!(e.ouvert && e.ouvert[it.cle]), heure: e.heure && e.heure[it.cle], focus: i === ENQ_UI.focus, zoneY: y0, zoneH: h }, true);
 		ctx.globalAlpha = 1;
 	});
+	zoneTexteFin();
 	ctx.restore();
 	// Barre de défilement DS
 	if (ENQ_UI.defilMax > 0) {

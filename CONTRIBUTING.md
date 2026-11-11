@@ -57,3 +57,16 @@ La page `/making-of/` du site est générée depuis ce tableau au build.
 
 ## Service worker (hors ligne)
 La liste des fichiers mis en cache dans `site/public/sw.js` est **générée** à chaque `npm run build` (ou `npm run sw`) par `scripts/generer-sw.mjs` : ajouter un fichier dans `public/` suffit, ne pas éditer la liste à la main.
+
+## Dessiner du texte (règle du prompt 93)
+
+- **Plusieurs lignes** : `dessinerTexte(texte, x, y, largeur, { taille, maxLignes, … })` ou `couperLignes` (`site/public/texte.js`). La coupure est réelle, et un texte tronqué finit par « … » après un mot entier, avec un moyen de lire la suite (« Lire tout », infobulle, volet).
+- **Libellé court** (bouton, badge, titre) : `ajusterTaille(texte, largeur, tailleMax, tailleMin)`, sans descendre sous les minimums (corps 22 px, métadonnées 18 px, en coordonnées 1920×1080).
+- **Cadre déclaré** :
+  - un conteneur encadre son libellé avec `zoneTexteDebut(nom, x, y, l, h)` / `zoneTexteFin()`, ou déclare sa carte avec `zoneTexteDeclarer(nom, x, y, l, h)` ;
+  - une zone défilante est déclarée avec `{ clip: true }`.
+- **Interdit** :
+  - un nouveau `text(…, x, y)` sans largeur dans une zone de taille fixe ;
+  - une estimation `textWidth(...) * 1.05`.
+- `npm test` refuse ces deux cas. Les exceptions (heures, chiffres, touches) sont plafonnées par fichier dans `scripts/test-jeu.mjs`.
+- **Avant toute fusion qui touche l'interface** : ouvrir `index.html?audit=textes&parcours=1` (à 1920×1080, 1366×768 et en mobile portrait). Le rapport doit garder 0 défaut A à D (détail dans `jeu/89-textes-hors-cadre.md`).

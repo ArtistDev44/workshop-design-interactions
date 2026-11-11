@@ -61,6 +61,7 @@ function dessinerTelephoneEnMain(contenu, objet) {
 		fill('#0a0b0c');
 		circle(x + pl / 2, e.y + 24, 16); // caméra
 	}
+	zoneTexteDeclarer('telephone', e.x, e.y, e.l, e.h); // prompt 93 : cadre de l'écran du téléphone
 	if (contenu) contenu(e, k >= 1);
 	dessinerMain(x, y, pl, ph);
 }
@@ -132,7 +133,7 @@ function contenuConversation(e, pret) {
 	textAlign(CENTER, TOP);
 	textFont(POLICE_TEXTE);
 	textStyle(BOLD);
-	textSize(26);
+	ajusterTaille(String(c.contact), e.l - 32, 26, 22); // prompt 93 : le nom sortait de l'écran du téléphone
 	text(c.contact, e.x + e.l / 2, e.y + 44);
 	textStyle(NORMAL);
 	textSize(15);

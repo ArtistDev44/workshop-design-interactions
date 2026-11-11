@@ -218,12 +218,14 @@ function dessinerCompteSocial(z) {
 	drawingContext.beginPath();
 	drawingContext.rect(zc.x - 4, zc.y, zc.l + 8, zc.h);
 	drawingContext.clip();
+	zoneTexteDebut('filCommunity', zc.x - 4, zc.y, zc.l + 8, zc.h, { clip: true }); // prompt 93 : zone défilante (ce qui en sort est masqué exprès)
 	const n0 = boutons.length;
 	let haut = 0;
 	if (COMMU.onglet === 'fil') haut = ongletFil(zc);
 	else if (COMMU.onglet === 'mentions') haut = ongletMentions(zc);
 	else if (COMMU.onglet === 'messagerie') haut = ongletMessagerie(zc);
 	else haut = ongletStats(zc);
+	zoneTexteFin();
 	drawingContext.restore();
 	// Les zones cliquables hors de la partie visible ne doivent pas l'être
 	for (let i = boutons.length - 1; i >= n0; i--) {
@@ -321,7 +323,7 @@ function carteDePost(p, x, y, l, rang) {
 	const lt = l - 300;
 	textFont(DS.policeTexte);
 	textSize(20);
-	const nl = Math.max(1, Math.ceil((textWidth(String(p.texte)) * 1.05) / lt));
+	const nl = Math.max(1, couperLignes(String(p.texte), lt, DS.policeTexte, 20).length); // prompt 93 : vraie coupure (plus d'estimation × 1,05)
 	const comms = p.index !== undefined && p.sorte !== 'archive' ? commentairesDuPost(p.index) : [];
 	const hTexte = 46 + nl * 28 + 40;
 	const hc = Math.max(176, hTexte);
@@ -332,6 +334,7 @@ function carteDePost(p, x, y, l, rang) {
 	strokeWeight(2);
 	rect(x, y + arrivee, l, hc);
 	noStroke();
+	zoneTexteDeclarer('post', x, y + arrivee, l, hc); // prompt 93
 	dessinerPhoto(p.photo, x + 12, y + 12 + arrivee, 260, 152, (m.pluie_mm || 0) >= 1 || p.photo.pluie, nuitDe(p.minute));
 	avatarCompte(x + 288, y + 12, 28);
 	dsTexte(t('commu.nom') + ' · ' + (p.sorte === 'archive' ? t('commu.archive', { date: p.date.split('-').reverse().join('/') }) : p.heure + (p.sorte === 'joueur' ? ' · ' + t('commu.votrePost') : '')), x + 326, y + 16, 18, DS.blanc50, 'left', lt - 40);
@@ -421,7 +424,7 @@ function blocPlainteSociale(pl, x, y, l, prive) {
 	dsTexte(Jeu.texteMessage(pl.def.texte, pl.vars), x + 34, yy + 30, 20, DS.blanc, 'left', l - 60);
 	textFont(DS.policeTexte);
 	textSize(20);
-	yy += 40 + Math.ceil((textWidth(Jeu.texteMessage(pl.def.texte, pl.vars)) * 1.05) / (l - 60)) * 28;
+	yy += 40 + couperLignes(String(Jeu.texteMessage(pl.def.texte, pl.vars)), l - 60, DS.policeTexte, 20).length * 28; // prompt 93
 	if (pl.reponse !== null) {
 		const r = pl.def.reponses[pl.reponse];
 		noStroke();
@@ -534,7 +537,7 @@ function colonneNantes(x, y, l, h) {
 		dsTexte('· ' + ln, x + 14, yy, 18, DS.blanc75, 'left', l - 28);
 		textFont(DS.policeTexte);
 		textSize(18);
-		yy += Math.ceil((textWidth('· ' + ln) * 1.05) / (l - 28)) * 26 + 8;
+		yy += couperLignes('· ' + ln, l - 28, DS.policeTexte, 18).length * 26 + 8; // prompt 93
 	});
 	yy += 12;
 	dsTexte(t('commu.cites'), x + 14, yy, 20, DS.blanc, 'left');

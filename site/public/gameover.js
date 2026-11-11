@@ -109,7 +109,9 @@ function dessinerGameOver() {
 		textFont(POLICE_TEXTE);
 		textStyle(BOLD);
 		textSize(44);
+		zoneTexteDebut('tampon', -150, -46, 300, 92); // prompt 93 : cadre du tampon (repère tourné)
 		text(t('gameover.tampon'), 0, 2);
+		zoneTexteFin();
 		textStyle(NORMAL);
 		pop();
 	} else {
