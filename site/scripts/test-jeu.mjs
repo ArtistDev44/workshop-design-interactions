@@ -285,12 +285,12 @@ verifier(eq.pert === true ? eq.gain === eq.eff : eq.gain === Math.round(eq.eff /
 verifier(eq.snapPhase, 'équipes : la sauvegarde ne garde pas le cycle');
 verifier(eq.policeAvant === 1 && eq.policeMatin === 2, `équipes : effectifs non remis à zéro le matin (${eq.policeAvant} → ${eq.policeMatin})`);
 
-// Prompt 69 : fin de journée — phase « soir », nuit à 21 h, sortie → lendemain 6 h (ou bilan le dernier jour)
+// Prompt 69 : fin de journée — phase « soir », nuit à 21 h, sortie → lendemain 8 h (prompt 76) ou bilan
 {
 	const cs = contexte('fr');
 	vm.runInContext(
 		`var phase = 'attente', ecran = 'jeu', vue = 'poste', fenetre = null, enPause = false, enSieste = true, reveil = null, reduireAnimations = false;
-		var MENU = { actif: false }, PC = { fenetre: 'journal' }, SABLIER = { actif: true }, CAMERA = { x: 0, y: 0 }, METEO_VISU = { nuit: 1 }, focusBureau = -1, OBJETS_BUREAU = [];
+		var MENU = { actif: false }, PC = { fenetre: 'journal' }, CAMERA = { x: 0, y: 0 }, METEO_VISU = { nuit: 1 }, focusBureau = -1, OBJETS_BUREAU = []; // prompt 78 : plus de SABLIER
 		var L = 1920, H = 1080, __t = 0, __leve = 0, __fin = 0, __annonces = [], __saves = 0;
 		var millis = () => __t, constrain = (v, a, b) => Math.max(a, Math.min(b, v));
 		var seLever = () => { __leve++; vue = 'bureau'; }, annoncer = (x) => __annonces.push(String(x)), interaction = () => {};
@@ -313,7 +313,7 @@ verifier(eq.policeAvant === 1 && eq.policeMatin === 2, `équipes : effectifs non
 		phase = 'mail';
 		const jauges = JSON.stringify(Jeu.jauges);
 		rangerPoste();
-		res.soir = phase === 'soir' && __leve === 1 && vue === 'bureau' && !enSieste && !SABLIER.actif && PC.fenetre === null && __saves === 1;
+		res.soir = phase === 'soir' && __leve === 1 && vue === 'bureau' && !enSieste && PC.fenetre === null && __saves === 1; // prompt 78 : le sablier n'existe plus
 		__t = 2000; majSoir(); res.mi = Jeu.horloge.minutes > Jeu.finJournee() && Jeu.horloge.minutes < 21 * 60 && !sortieVisible();
 		__t = 4100; majSoir(); res.h21 = Jeu.horloge.minutes === 21 * 60 && sortieVisible() && __annonces.some((a) => a.includes('sortie est à gauche'));
 		res.nuit = nuitSoir() === 1;
@@ -503,6 +503,13 @@ verifier(/compression: 100,/.test(src77.immersion), 'prompt 77 : IMMERSION.compr
 verifier(/const NB_ACTIFS = 3;/.test(src77.carte), 'prompt 77 : NB_ACTIFS doit être 3');
 verifier(/function dessinerNotifications\(\)/.test(src77.carte) && /majNotifications\(\)/.test(src77.sketch), 'prompt 77 : notifications bureau absentes');
 verifier(/function activerSignalement\(/.test(src77.carte) && /resteActif = /.test(src77.carte), 'prompt 77 : compteurs individuels des actifs absents');
+
+// Prompt 78 : le sablier est supprimé (code + i18n), la jauge de somnolence le remplace
+const src78 = ['immersion.js', 'journee.js', 'bureau.js', 'sketch.js', 'i18n.js', 'soir.js', 'webcam.js', 'feedback.js'].map((f) => [f, readFileSync(join(pub, f), 'utf8').split('\n').map((l) => l.replace(/\/\/.*$/, '')).filter((l) => !l.trim().startsWith('*') && !l.trim().startsWith('/')).join('\n')]); // commentaires exclus
+verifier(src78.every(([, c]) => !/sablier|SABLIER/.test(c.replace(/remplac/g, ''))), 'prompt 78 : il reste des références au sablier : ' + src78.filter(([, c]) => /sablier|SABLIER/.test(c.replace(/remplac/g, ''))).map(([f]) => f).join(', '));
+verifier(/const SOMNOLENCE = \{/.test(readFileSync(join(pub, 'immersion.js'), 'utf8')), 'prompt 78 : jauge SOMNOLENCE absente');
+verifier(/facteurSieste: 100/.test(readFileSync(join(pub, 'immersion.js'), 'utf8')), 'prompt 78 : temps ×100 pendant la sieste absent');
+verifier(/function seReposer\(\)/.test(readFileSync(join(pub, 'immersion.js'), 'utf8')) && /function lancerSieste\(/.test(readFileSync(join(pub, 'immersion.js'), 'utf8')), 'prompt 78 : sieste volontaire/forcée absente');
 
 // Traductions : toute clé française existe en anglais
 const manquantes = vm.runInContext('Object.keys(TRADUCTIONS.fr).filter((k) => TRADUCTIONS.en[k] === undefined)', fr);

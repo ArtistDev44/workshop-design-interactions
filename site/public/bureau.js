@@ -199,7 +199,7 @@ const COUCHES_PIECE = [
 	},
 ];
 /** Coefficient de plan des objets cliquables : leurs zones suivent leur plan */
-const COEF_OBJETS = { rapport: 1.25, aide: 1.25, stress: 1.25, tasse: 1.25, telephone: 1.25, plante: 1.1, dossiers: 1.1, lampe: 0.7, fenetre: 0.7, horloge: 0.7, sablier: 1.1, micro: 1.1, webcam: 1 }; // prompt 51 : horloge (mur), sablier (fond du plateau)
+const COEF_OBJETS = { rapport: 1.25, aide: 1.25, stress: 1.25, tasse: 1.25, telephone: 1.25, plante: 1.1, dossiers: 1.1, lampe: 0.7, fenetre: 0.7, horloge: 0.7, repos: 1.1, micro: 1.1, webcam: 1 }; // prompt 51 : horloge (mur), sablier (fond du plateau)
 
 function dessinerPieceBureau() {
 	COUCHES_PIECE.forEach((c) => {
@@ -642,7 +642,7 @@ function dessinerObjetsDuFond(g) {
 	// Petite plante grasse (gauche, au fond)
 	ombreObjet(g, 70, 174, 15); // prompt 51
 	boite(g, 70, 164, 14, 10, '#e8e9ea', '#ffffff', '#c3c7cb');
-	dessinerSablier(g); // prompt 51 : sablier entre le pied de l'écran et la souris
+	dessinerRepos(g); // prompt 78 : objet « se reposer » (coussin + Z) à la place du sablier
 	dessinerMicroPoste(g); // prompt 54 : micro du poste, entre la tasse et le clavier
 	feuillage(g, 77, 158, 6);
 }
@@ -1108,4 +1108,12 @@ function seLever() {
 	if (typeof PC !== 'undefined') PC.fenetre = null; // prompt 22 : se lever referme l'app ouverte
 	clignement = { debut: millis(), sens: 'arriere', bascule: false }; // la vue bascule à mi-clignement
 	Confort.Son.bip('choix');
+}
+
+// ——— Prompt 78 : objet « se reposer » du bureau (coussin + Z), à la place du sablier ———
+function dessinerRepos(g) {
+	const x = 302, y = 169, l = 16, h = 20;
+	ombreObjet(g, x - 1, y + h, l + 3);
+	boite(g, x, y + 9, l, 11, '#5a6b8c', '#7c8db0', '#3c4a66'); // coussin
+	textePixel(g, 'Z', x + 4, y, '#f7f1e1');
 }

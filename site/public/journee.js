@@ -1,4 +1,4 @@
-/* Nantes en régulation — prompt 51 : finir sa journée à l'horloge, sablier, lumière de la pièce, ombres.
+/* Nantes en régulation — prompt 51/78 : finir sa journée à l'horloge, lumière de la pièce, ombres (le sablier est remplacé par la jauge de somnolence, prompt 78).
  * - À l'heure de fin, l'horloge s'arrête : un clic sur l'horloge murale termine la journée (mail du soir).
  * - Avant l'heure : alerte « journée pas finie » ; partir quand même → dossiers restants réglés par la règle
  *   « non traité » (Q25), et le lendemain un mail du patron mis en avant retire de la réputation (game.js).
@@ -7,8 +7,6 @@
  *   l'écran du PC devient la source de lumière (halo). Ombres portées des objets selon la lumière.
  */
 const JOURNEE = { finAnnoncee: false };
-const SABLIER = { x: 304, y: 170, l: 11, h: 19, actif: false, debut: 0, retourne: 0 };
-const SABLIER_VITESSE = 14; // le temps file 14 fois plus vite que l'attente accélérée (×30) tant que le sable coule
 
 // ——— Horloge : terminer la journée ———
 function clicHorloge() {
@@ -34,7 +32,6 @@ function terminerJournee() {
 	if (Jeu.finDeJourneeTactique) Jeu.finDeJourneeTactique();
 	phase = 'mail';
 	enSieste = false;
-	SABLIER.actif = false;
 	JOURNEE.finAnnoncee = false;
 	Confort.Son.bip('mail');
 	Sauvegarde.auto(true);
@@ -47,7 +44,6 @@ function partirQuandMeme() {
 	fenetre = null;
 	if (vue === 'poste') seLever();
 	Jeu.partirAvantLaFin(texteHeure());
-	SABLIER.actif = false;
 	JOURNEE.finAnnoncee = false;
 	Confort.Son.bip('consequence');
 	if (Jeu.terminee) return allerFin();
@@ -142,62 +138,11 @@ function toucheJournee() {
 /** Appelée par avancerTemps quand il n'y a plus de dossier et que l'heure de fin est atteinte */
 function finJourneeAtteinte() {
 	Jeu.horloge.minutes = Jeu.finJournee(); // l'horloge s'arrête sur l'heure de fin
-	SABLIER.actif = false;
 	if (!JOURNEE.finAnnoncee) {
 		JOURNEE.finAnnoncee = true;
 		Confort.Son.bip('mail');
 		annoncer(t('horloge.finAtteinte', { fin: Jeu.formaterHeure(Jeu.finJournee()) }));
 	}
-}
-
-// ——— Sablier : faire passer le temps entre deux dossiers ———
-function clicSablier() {
-	interaction();
-	if (ecran !== 'jeu' || !Jeu.horloge) return messagePiece('sablier', t('sablier.libre'));
-	if (phase !== 'attente') return messagePiece('sablier', t('sablier.occupe'));
-	if (Jeu.journeeFinie()) return messagePiece('sablier', t('sablier.fini'));
-	SABLIER.actif = !SABLIER.actif;
-	SABLIER.retourne = millis();
-	Confort.Son.clic();
-	messagePiece('sablier', t(SABLIER.actif ? 'sablier.on' : 'sablier.off'));
-}
-/** Multiplicateur de temps appliqué par avancerTemps */
-function facteurSablier() {
-	if (!SABLIER.actif) return 1;
-	if (phase !== 'attente' || enSieste) {
-		SABLIER.actif = false; // un dossier arrive : le sable s'arrête
-		return 1;
-	}
-	return SABLIER_VITESSE;
-}
-function dessinerSablier(g) {
-	const s = SABLIER;
-	ombreObjet(g, s.x - 1, s.y + s.h, s.l + 3);
-	const verre = '#cfe3ee';
-	const bois = '#7a4a2a';
-	px(g, bois, s.x - 1, s.y, s.l + 2, 2); // socle haut
-	px(g, bois, s.x - 1, s.y + s.h - 2, s.l + 2, 2); // socle bas
-	px(g, '#5a3420', s.x, s.y + 2, 1, s.h - 4); // montants
-	px(g, '#5a3420', s.x + s.l - 1, s.y + 2, 1, s.h - 4);
-	const mi = s.y + Math.floor(s.h / 2);
-	for (let y = s.y + 2; y < s.y + s.h - 2; y++) {
-		const d = Math.abs(y - mi);
-		const demi = Math.max(1, Math.round(d * 0.55));
-		px(g, verre, s.x + Math.floor(s.l / 2) - demi, y, demi * 2 + 1, 1);
-	}
-	// Sable : il coule quand le sablier tourne ; sinon il repose en bas
-	// Prompt 53 : sous 10 s de compteur, le sablier s'emballe (le sable tombe de plus en plus vite)
-	const urg = typeof urgenceCompteur === 'function' ? urgenceCompteur() : 0;
-	const coule = (s.actif || urg > 0) && !reduireAnimations;
-	const periode = urg > 0 ? 1600 - urg * 1200 : 4000;
-	const p = coule ? ((millis() - (urg > 0 ? 0 : s.retourne)) / periode) % 1 : 1;
-	const sable = '#e2b25a';
-	const haut = Math.round((1 - p) * 5);
-	const bas = Math.round(p * 5);
-	for (let k = 0; k < haut; k++) px(g, sable, s.x + Math.floor(s.l / 2) - 2 + Math.floor(k / 3), mi - 2 - k, 5 - Math.floor(k / 2), 1);
-	for (let k = 0; k < bas; k++) px(g, sable, s.x + 2 + Math.floor(k / 3), s.y + s.h - 3 - k, s.l - 4 - Math.floor(k / 2) * 2, 1);
-	if (coule && Math.floor(millis() / (urg > 0 ? 60 : 120)) % 2) px(g, sable, s.x + Math.floor(s.l / 2), mi - 1, 1, 4); // filet de sable
-	else if (s.actif) px(g, sable, s.x + Math.floor(s.l / 2), mi, 1, 3);
 }
 
 // ——— Lumière de la pièce : jour / nuit, stores, lampe ; l'écran éclaire le bureau dans le noir ———

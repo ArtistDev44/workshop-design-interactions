@@ -1,5 +1,5 @@
 /* Nantes en régulation — prompt 69 : fin de journée, la nuit tombe, une flèche montre la sortie du bureau.
- * - Le mail du soir se ferme par « Ranger le poste » : phase « soir » (ni incident, ni sieste, ni sablier).
+ * - Le mail du soir se ferme par « Ranger le poste » : phase « soir » (ni incident, ni sieste).
  * - Le joueur se lève, le PC passe en veille, l'horloge simulée file jusqu'à 21 h en ~4 s (crépuscule
  *   accéléré ; nuit directe si les animations sont réduites). Les règles et la boucle (Q1–Q61) ne changent pas.
  * - Nuit installée : flèche « Sortie » au bord gauche de la vue bureau (Tab, Entrée ou S, clic, tactile).
@@ -25,7 +25,6 @@ function rangerPoste() {
 	SOIR.sortie = 0;
 	enSieste = false;
 	reveil = null;
-	if (typeof SABLIER !== 'undefined') SABLIER.actif = false;
 	if (typeof PC !== 'undefined') PC.fenetre = null;
 	if (vue === 'poste') seLever(); // on se lève : vue bureau, PC en veille
 	Confort.Son.bip('choix');

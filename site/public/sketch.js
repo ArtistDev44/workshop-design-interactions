@@ -249,14 +249,33 @@ function bandeauEtat() {
 	const urgent = ['decision', 'contradiction', 'conflit'].includes(phase);
 	noStroke();
 	fill(urgent ? C.primaire : 'rgba(255,255,255,0.08)');
-	rect(GAUCHE.x, H - 38, 1500, 32);
+	rect(GAUCHE.x, H - 38, 1180, 32);
 	fill('#ffffff');
 	textFont(POLICE_TEXTE);
 	textStyle(BOLD);
-	ajusterTaille(txt, 1470, 18);
+	ajusterTaille(txt, 1160, 18);
 	textAlign(LEFT, CENTER);
 	text(txt, GAUCHE.x + 14, H - 22);
 	textStyle(NORMAL);
+	// Prompt 78 : jauge de somnolence à droite du bandeau — cliquable pour se reposer volontairement
+	if (typeof somnolence !== 'undefined') {
+		const jx = GAUCHE.x + 1200;
+		const jl = 300;
+		textAlign(LEFT, CENTER);
+		textFont(POLICE_DONNEES);
+		textSize(15);
+		fill(C.gris);
+		text(t('somnolence.titre'), jx, H - 22);
+		const jw = jl - textWidth(t('somnolence.titre')) - 90;
+		fill(C.piste);
+		rect(jx + 90 + textWidth(t('somnolence.titre')), H - 30, jw, 16, 4);
+		const sc = color(somnolence >= SOMNOLENCE.max ? C.rougeFonce : somnolence >= 70 ? C.orange : C.vert);
+		fill(sc);
+		rect(jx + 90 + textWidth(t('somnolence.titre')), H - 30, (jw * Math.min(100, somnolence)) / 100, 16, 4);
+		boutons.push({ x: jx, y: H - 38, l: jl, h: 32, action: () => seReposer() });
+		const survolJauge = mouseX >= jx && mouseX <= jx + jl && mouseY >= H - 38 && mouseY <= H - 6;
+		if (survolJauge) infobulle(t('somnolence.aide'), jx, H - 84);
+	}
 }
 
 function lancerPartie() {
@@ -1353,11 +1372,12 @@ function keyPressed() {
 		if (keyCode === ENTER || keyCode === RETURN || key === ' ') avancerConversation(); // prompt 42
 		return false;
 	}
-	// Réveil (§ 4) : barre d'espace
+	// Réveil (§ 4) : barre d'espace ; prompt 78 : réveille aussi d'une sieste volontaire (paupières fermées)
 	if (phase === 'reveil' && reveil) {
 		if (key === ' ' || keyCode === ENTER || keyCode === RETURN) seReveiller();
 		return false;
 	}
+	if (enSieste && (key === ' ' || keyCode === ENTER || keyCode === RETURN)) return seReveillerVolontaire(), false;
 	// Prompt 37 : G arrête le guide « Prendre en main »
 	if ((key === 'g' || key === 'G') && GUIDE.actif && !MENU.actif) return arreterGuide(), false;
 	// Prompt 34 : le tutoriel capte le clavier (L reste disponible pour changer de langue)

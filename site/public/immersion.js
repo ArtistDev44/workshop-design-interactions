@@ -10,7 +10,6 @@
 const IMMERSION = {
 	minutesParSeconde: 1, // rythme normal : 1 minute de journée par seconde réelle
 	compression: 100, // § 3 : ×100 quand aucun incident n'est actif (prompt 77 : ×30 → ×100, valeur verrouillée)
-	siesteApresMs: 20000, // § 4 : 20 s sans incident ni interaction
 	fenetreReveilMs: { 60: 3000, 30: 2000, 15: 1000 }, // § 4 : selon le compteur de la semaine
 	retardImportant: 20, // § 5 : retard ≥ 20 min = bordure rouge
 	pulsationsParSeconde: 1.5, // § 5 : jamais plus de 3 flashs/s
@@ -51,7 +50,7 @@ const OBJETS_BUREAU = [
 	{ nom: 'dossiers', piece: true, label: T('piece.dossiers'), infobulle: T('piece.dossiers.survol'), x: 390, y: 160, l: 44, h: 15 },
 	{ nom: 'fenetre', piece: true, label: T('piece.fenetre'), infobulle: T('piece.fenetre.survol'), x: 334, y: 14, l: 64, h: 96 }, // prompt 31 : la baie s'arrête au pan de mur
 	{ nom: 'horloge', label: T('objet.horloge'), infobulle: T('objet.horloge.survol'), x: 404, y: 30, l: 28, h: 29 }, // prompt 51 : finir sa journée
-	{ nom: 'sablier', label: T('objet.sablier'), infobulle: T('objet.sablier.survol'), x: 302, y: 169, l: 14, h: 22 }, // prompt 51 : faire passer le temps
+	{ nom: 'repos', label: T('objet.repos'), infobulle: T('objet.repos.survol'), x: 302, y: 169, l: 16, h: 20 }, // prompt 78 : « se reposer » (sieste volontaire) à la place du sablier
 	{ nom: 'webcam', label: T('objet.webcam'), infobulle: T('objet.webcam.survol'), x: 234, y: 39, l: 13, h: 8 }, // prompt 57 : webcam posée sur l'écran
 	{ nom: 'micro', label: T('objet.micro'), infobulle: T('objet.micro.survol'), x: 150, y: 170, l: 12, h: 24 }, // prompt 54 : micro du poste (appui maintenu)
 	{ nom: 'sortie', label: T('soir.sortie'), infobulle: T('soir.infobulle'), x: 41, y: 92, l: 34, h: 56, visible: () => typeof sortieVisible === 'function' && sortieVisible() }, // prompt 69 : flèche du soir (soir.js)
@@ -139,6 +138,8 @@ function demarrerJournee() {
 	phase = 'attente';
 	enSieste = false;
 	reveil = null;
+	somnolence = 0; // prompt 78 : la jauge de somnolence repart à zéro chaque matin
+	siesteBilan = null;
 	interaction();
 	annoncerJournee(); // prompt 43 : écran noir « JOUR n — SEMAINE n »
 	demarrageDuJour(); // prompt 71 : le PC redémarre les 3 premiers jours
@@ -211,17 +212,26 @@ function avancerTemps() {
 	const dt = derniereImage ? Math.min(250, maintenant - derniereImage) : 0;
 	derniereImage = maintenant;
 	if (tempsSuspendu()) return; // prompt 34 / 43 : tutoriel et transition suspendent le temps
-	const vitesse = IMMERSION.minutesParSeconde * (tempsCompresse() ? IMMERSION.compression : 1) * facteurSablier(); // prompt 51 : sablier
+	const vitesse = IMMERSION.minutesParSeconde * (tempsCompresse() ? IMMERSION.compression : 1) * (enSieste ? SOMNOLENCE.facteurSieste : 1); // prompt 78 : ×100 pendant la sieste
 	Jeu.horloge.minutes += (dt / 1000) * vitesse;
 	if (Jeu.majSuivis && Jeu.majSuivis()) Confort.Son.bip('choix'); // prompt 63 : une réaction arrive sur Community
 
 	if (phase === 'attente') {
-		// Sieste après 20 s sans incident ni interaction (§ 4)
-		// Prompt 67 : la webcam ne déclenche plus la sieste par absence (c'est la main qui la lance ou l'interrompt)
-		if (!enSieste && maintenant - inactifDepuis > IMMERSION.siesteApresMs) {
-			enSieste = true;
-			debutSieste = maintenant;
-			if (vue === 'poste') seLever(); // on se cale dans le fauteuil : retour à la vue bureau
+		// Prompt 78 : plus de sieste « par surprise » après 20 s — elle tombe quand la jauge de
+		// somnolence est pleine (ou volontairement, clic jauge / objet « se reposer »)
+		majSomnolence(dt, vitesse);
+		if (!enSieste && somnolence >= SOMNOLENCE.max) lancerSieste(true);
+		if (enSieste && typeof actifs === 'function') {
+			// Prompt 78 : pendant la sieste les signalements continuent d'arriver et expirent (malus « non traité »)
+			const exp = actifs().find((it) => resteActif(it) <= 0);
+			if (exp) {
+				if (siesteBilan) siesteBilan.expires++;
+				enSieste = false;
+				reveil = null;
+				activerEtExpirer(exp.index);
+				return;
+			}
+			if (siesteBilan) siesteBilan.arrives = fileIncidents().length;
 		}
 		const prochain = Jeu.prochainDuJour();
 		if (prochain && Jeu.horloge.minutes >= prochain.minute) arriveeIncident();
@@ -250,7 +260,61 @@ function seReveiller() {
 	enSieste = false;
 	reveil = null;
 	interaction();
+	bilanSieste(); // prompt 78 : bilan au réveil (arrivés / expirés pendant la sieste)
 	entrerSelection(); // prompt 68
+}
+
+// =====================================================================
+// Prompt 78 — la somnolence remplace le sablier : jauge 0–100 qui monte avec
+// le temps de jeu et l'inactivité ; sieste volontaire (jauge / objet « se
+// reposer ») ou forcée à 100. Pendant la sieste : temps ×100, paupières fermées,
+// les signalements continuent d'arriver et leurs compteurs tournent ; ceux qui
+// expirent sont réglés « non traité » (Q25) — le malus vient du retard.
+// =====================================================================
+const SOMNOLENCE = { parMinuteJeu: 2.4, parSecondeInactivite: 1.1, max: 100, facteurSieste: 100 }; // valeurs verrouillées (prompt 78)
+let somnolence = 0;
+let siesteBilan = null; // { forcee, arrives, expires, debutIndex } de la sieste en cours
+/** Monte la jauge (appelée dans avancerTemps) : avec le temps de jeu et l'inactivité */
+function majSomnolence(dt, vitesse) {
+	if (!Jeu.horloge || tempsSuspendu()) return;
+	const inactif = maintenantInactif();
+	somnolence = Math.min(SOMNOLENCE.max, somnolence + ((dt / 1000) * vitesse * SOMNOLENCE.parMinuteJeu) / 60 + (inactif > 5000 ? (dt / 1000) * SOMNOLENCE.parSecondeInactivite : 0));
+}
+const maintenantInactif = () => millis() - inactifDepuis;
+/** Lance la sieste (volontaire ou forcée à 100) */
+function lancerSieste(forcee) {
+	enSieste = true;
+	debutSieste = millis();
+	siesteBilan = { forcee: !!forcee, arrives: 0, expires: 0, debutIndex: Jeu.index };
+	if (vue === 'poste') seLever(); // on se cale dans le fauteuil
+	annoncer(t(forcee ? 'somnolence.forcee' : 'somnolence.sieste'));
+	Confort.Son.bip('alerte');
+}
+/** Sieste volontaire : clic sur la jauge ou objet « se reposer » du bureau */
+function seReposer() {
+	interaction();
+	if (ecran !== 'jeu' || !Jeu.horloge || enSieste || phase === 'fin') return;
+	if (somnolence < 20) return messagePiece('repos', t('somnolence.pasFatigue'));
+	lancerSieste(false);
+}
+/** Réveil volontaire (bouton « Se réveiller » sous les paupières, ou barre espace) */
+function seReveillerVolontaire() {
+	if (!enSieste) return;
+	enSieste = false;
+	reveil = null;
+	interaction();
+	bilanSieste();
+	annoncer(t('somnolence.reveil'));
+	Confort.Son.bip('choix');
+}
+/** Bilan au réveil : signalements arrivés / expirés pendant la sieste (chiffres réels) */
+function bilanSieste() {
+	if (!siesteBilan) return;
+	const b = siesteBilan;
+	siesteBilan = null;
+	const arrives = Math.max(0, (Jeu.index - b.debutIndex));
+	if (Jeu.messagePatron) Jeu.messagePatron(T('sieste.bilan', { n: arrives + b.arrives, e: b.expires, f: b.forcee ? 1 : 0 }));
+	annoncer(T('sieste.bilan', { n: arrives + b.arrives, e: b.expires, f: b.forcee ? 1 : 0 }));
 }
 
 function rateReveil() {
@@ -724,6 +788,8 @@ function dessinerSommeil() {
 		textSize(22);
 		fill('rgba(255,255,255,0.75)');
 		text(t('surv.sieste'), L / 2, H / 2 + 70);
+		// Prompt 78 : sieste volontaire ou forcée — bouton « Se réveiller » (la webcam peut aussi interrompre, prompt 67)
+		bouton(L / 2 - 180, H / 2 + 110, 360, 64, t('somnolence.reveiller'), seReveillerVolontaire);
 		textAlign(LEFT, TOP);
 	}
 }
@@ -828,7 +894,7 @@ function ouvrirObjetBureau(nom) {
 	if (nom === 'tasse') return boireCafe(); // prompt 52 : le café en main, puis le boost
 	if (nom === 'micro') return clicMicro(); // prompt 54 : push-to-talk
 	if (nom === 'webcam') return clicWebcam(); // prompt 57 : présence
-	if (nom === 'sablier') return clicSablier(); // prompt 51
+	if (nom === 'repos') return seReposer(); // prompt 78 : sieste volontaire
 	if (OBJETS_BUREAU.some((o) => o.nom === nom && o.piece)) return interagirPiece(nom); // prompt 29
 }
 
