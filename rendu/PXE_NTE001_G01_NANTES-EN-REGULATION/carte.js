@@ -145,9 +145,9 @@ function dessinerEquipesIncident(d, x, y, l, h) {
 		return;
 	}
 	const pert = Jeu.equipesPertinentes(d);
-	const m = millis();
+	const m = (typeof tempsEquipes === 'function' ? tempsEquipes() : millis()); // prompt 95 : temps de jeu
 	// Prompt 92 : hauteur des rangées tirée de la zone (rien ne déborde sur le conseil) ; une ligne si la place manque
-	const msg = SELECTION.message && m - SELECTION.message.t < 5000;
+	const msg = SELECTION.message && millis() - SELECTION.message.t < 5000; // message affiché 5 s réelles
 	const rang = Math.min(78, Math.floor(((h || 330) - (msg ? 52 : 0)) / Jeu.TYPES_EQUIPES.length));
 	const compact = rang < 70;
 	Jeu.TYPES_EQUIPES.forEach((cle, i) => {
@@ -173,12 +173,12 @@ function dessinerEquipesIncident(d, x, y, l, h) {
 function envoyerEquipeIncident(cle) {
 	if (!['decision', 'contradiction', 'conflit', 'narration', 'selection'].includes(phase)) return;
 	const index = phase === 'narration' && dernierResultat ? Jeu.paquet.indexOf(dernierResultat.dossier) : Jeu.index; // prompt 77 : d'autres dossiers ont pu être réglés entre-temps
-	const r = Jeu.envoyerEquipe(index, cle, millis());
+	const r = Jeu.envoyerEquipe(index, cle, (typeof tempsEquipes === 'function' ? tempsEquipes() : millis())); // prompt 95
 	SELECTION.message = { texte: r.message, ok: r.ok, t: millis() };
 	annoncer(String(r.message));
 	if (r.refus) Confort.Son.bip('alerte');
 	else Confort.Son.clic();
-	if (r.refus && !Jeu.equipesDisponibles(cle, millis())) Jeu.messagePatron(T('patron.plusEquipe', { nom: Jeu.EQUIPES[cle].nom, s: Jeu.retourEquipe(cle, millis()) }), 'equipes', { cle, dispo: 0 });
+	if (r.refus && !Jeu.equipesDisponibles(cle, (typeof tempsEquipes === 'function' ? tempsEquipes() : millis()))) Jeu.messagePatron(T('patron.plusEquipe', { nom: Jeu.EQUIPES[cle].nom, s: Jeu.retourEquipe(cle, (typeof tempsEquipes === 'function' ? tempsEquipes() : millis())) }), 'equipes', { cle, dispo: 0 });
 }
 /** Raccourcis Maj + 1/2/3/4 (keyCode 49–52 : indépendant AZERTY / QWERTY) ; true si la touche est prise */
 function toucheEquipes() {

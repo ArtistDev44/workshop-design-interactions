@@ -142,7 +142,39 @@ function demarrerJournee() {
 }
 
 // ——— Prompt 43 : transition entre journées — fond noir, « JOUR n — SEMAINE n » et la date, centrés ———
-const DUREE_TRANSITION_JOUR = 2800;
+const DUREE_TRANSITION_JOUR = 5200; // prompt 95 : 2,8 → 5,2 s pour lire l'explication de la journée (Entrée / clic passent)
+/** Prompt 95 : « lundi 14 septembre » */
+function jourDate(iso) {
+	if (!iso) return '';
+	return new Date(iso + 'T12:00:00Z').toLocaleDateString(localeActive(), { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
+}
+/** Jours de la semaine (lundi → dimanche) sans événement réel, donc non joués */
+function joursSansEvenement() {
+	const e = Jeu.etat;
+	if (!e || e.mode === 'direct' || !e.semaine || !e.semaine.lundi || !Jeu.jours) return [];
+	const joues = new Set(Jeu.jours.map((j) => j.date));
+	const out = [];
+	for (let i = 0; i < 7; i++) {
+		const d = new Date(e.semaine.lundi + 'T12:00:00Z');
+		d.setUTCDate(d.getUTCDate() + i);
+		const iso = d.toISOString().slice(0, 10);
+		if (!joues.has(iso)) out.push(iso);
+	}
+	return out;
+}
+/** Lignes d'explication de la journée (transition) — toutes tirées de la partie réelle */
+function lignesTransitionJour() {
+	const T0 = TRANSITION_JOUR;
+	const j = Jeu.jours && Jeu.jours[T0.jour - 1];
+	const l = [];
+	if (j) l.push(t('transition.prevus', { n: j.dossiers.length }));
+	l.push(t('transition.service', { debut: Jeu.formaterHeure(Jeu.debutJournee ? Jeu.debutJournee() : 480), fin: Jeu.formaterHeure(Jeu.finJournee()) }));
+	l.push(t('transition.rythme'));
+	l.push(t('transition.finir'));
+	const absents = T0.jour === 1 ? joursSansEvenement() : [];
+	if (absents.length) l.push(t('transition.courte', { n: Jeu.jours.length, jours: absents.map(jourDate).join(', ') }));
+	return l;
+}
 let TRANSITION_JOUR = null; // { debut, jour, semaine, date }
 let derniereJourneeAnnoncee = '';
 function annoncerJournee() {
@@ -152,11 +184,14 @@ function annoncerJournee() {
 	if (cle === derniereJourneeAnnoncee) return; // pas deux fois pour la même journée (intro SMS)
 	derniereJourneeAnnoncee = cle;
 	TRANSITION_JOUR = { debut: millis(), jour: Jeu.jourIndex + 1, semaine: typeof chapitreCourant === 'function' ? chapitreCourant() : 0, date: j.date };
-	annoncer(texteTransitionJour() + ' — ' + dateLongue(j.date));
+	annoncer(texteTransitionJour() + ' — ' + jourDate(j.date) + '. ' + lignesTransitionJour().join(' '));
 }
+/** Prompt 95 : titre juste — histoire « JOUR n/N — SEMAINE s », archive « JOUR n/N », direct « JOUR n — TEMPS RÉEL » */
 function texteTransitionJour() {
 	const T0 = TRANSITION_JOUR;
-	return T0.semaine ? t('transition.jour', { j: T0.jour, s: T0.semaine }) : t('transition.jourDirect', { j: T0.jour });
+	if (Jeu.etat && Jeu.etat.mode === 'direct') return t('transition.jourDirect', { j: T0.jour });
+	const N = Jeu.jours ? Jeu.jours.length : T0.jour;
+	return T0.semaine ? t('transition.jour', { j: T0.jour + '/' + N, s: T0.semaine }) : t('transition.jourArchive', { j: T0.jour, n: N });
 }
 function resteTransitionJour() {
 	return TRANSITION_JOUR ? Math.max(0, DUREE_TRANSITION_JOUR - (millis() - TRANSITION_JOUR.debut)) : 0;
@@ -174,13 +209,19 @@ function dessinerTransitionJour() {
 	fill(0, 0, 0, 255 * a);
 	rect(0, 0, L, H);
 	if (a > 0.6) {
-		dsTitre(texteTransitionJour(), L / 2, H / 2 - 60, 72, '#ffffff', 'center');
+		dsTitre(texteTransitionJour(), L / 2, H / 2 - 220, 72, '#ffffff', 'center'); // prompt 95 : remonté pour l'explication
 		noStroke();
 		textAlign(CENTER, TOP);
 		textFont(POLICE_TEXTE);
 		textSize(26);
 		fill('rgba(255,255,255,0.75)');
-		text(dateLongue(TRANSITION_JOUR.date), L / 2, H / 2 + 40);
+		text(jourDate(TRANSITION_JOUR.date), L / 2, H / 2 - 120);
+		// Prompt 95 : ce que sera la journée (signalements prévus, service, rythme du temps, comment finir)
+		let yl = H / 2 - 40;
+		lignesTransitionJour().forEach((ln) => {
+			yl += dessinerTexte(ln, L / 2 - 560, yl, 1120, { taille: 22, couleur: '#FFFFFF', align: 'center', interligne: 32 }).h + 6;
+		});
+		dessinerTexte(t('transition.passer'), L / 2 - 560, yl + 18, 1120, { taille: 18, couleur: 'rgba(255,255,255,0.75)', align: 'center', maxLignes: 1 });
 	}
 	return true;
 }
@@ -203,12 +244,23 @@ function tempsCompresse() {
 	return ecran === 'jeu' && (phase === 'attente' || phase === 'reveil') && !tempsSuspendu(); // « ×100 » seulement quand le temps file vraiment
 }
 
+// Prompt 95 : horloge des équipes (ms) — avance avec le temps de JEU (×1, ×100 en temps accéléré, 0 quand il est
+// suspendu). 1 000 ms = 1 minute de jeu au rythme normal : « 20 s » d'avant deviennent 20 min de jeu, qui ne filent plus
+// pendant la lecture d'un signalement. game.js reçoit cette valeur comme « maintenant » (API inchangée).
+const TEMPS_EQUIPES = { ms: 0 };
+const tempsEquipes = () => TEMPS_EQUIPES.ms;
+/** État de la vitesse du temps : 'pause' | 'normal' | 'accelere' */
+function vitesseTemps() {
+	if (ecran !== 'jeu' || !Jeu.horloge || tempsSuspendu()) return 'pause';
+	return tempsCompresse() ? 'accelere' : 'normal';
+}
 function avancerTemps() {
 	const maintenant = millis();
 	const dt = derniereImage ? Math.min(250, maintenant - derniereImage) : 0;
 	derniereImage = maintenant;
 	if (tempsSuspendu()) return; // prompt 34 / 43 : tutoriel et transition suspendent le temps
 	const vitesse = IMMERSION.minutesParSeconde * (tempsCompresse() ? IMMERSION.compression : 1); // prompt 78 : la sieste fait passer le temps ×100 (phase attente)
+	TEMPS_EQUIPES.ms += dt * (vitesse / IMMERSION.minutesParSeconde); // prompt 95
 	const avant = Jeu.horloge.minutes;
 	Jeu.horloge.minutes += (dt / 1000) * vitesse;
 	// Prompt 78 : l'horloge ne dépasse pas la fin de journée tant que des signalements restent (sieste ×100)
@@ -348,7 +400,7 @@ function dessinerAttente() {
 	textSize(20);
 	fill(C.gris);
 	const restants = Jeu.paquet.length - Jeu.index;
-	text(t('surv.restants', { n: restants, total: Jeu.paquet.length, j: Jeu.jourIndex + 1, jours: Jeu.jours.length }), z.x + 32, z.y + 380, z.l - 64, 80);
+	text(t('surv.restants', { n: restants, total: Jeu.paquet.length, j: Jeu.jourIndex + 1, jours: Jeu.jours.length }) + ' · ' + jourDate(Jeu.jourCourant() && Jeu.jourCourant().date), z.x + 32, z.y + 380, z.l - 64, 80); // prompt 95 : le jour et sa date
 	if (enSieste) {
 		fill(C.orange);
 		textSize(22);
