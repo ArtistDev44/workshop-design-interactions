@@ -72,6 +72,35 @@ function fenetrePartir() {
 	bouton(x + l - 56 - 420, y + h - 112, 420, 72, t('partir.partir'), partirQuandMeme, false, true);
 }
 
+// ——— Prompt 94 : « Quitter la journée » (bouton du bandeau, touche Q) — avance l'étape de sortie en cours ———
+/** Fin de service atteinte → mail du soir ; mail → on range le poste ; soir → sortie du bureau (crépuscule sauté) ;
+ * avant l'heure → la fenêtre « partir quand même » (malus expliqué, prompt 51). Les jauges ne bougent pas ici. */
+function quitterJourneeRapide() {
+	if (ecran !== 'jeu' || !Jeu.horloge || !Jeu.jourCourant || !Jeu.jourCourant()) return false;
+	if (phase === 'fin' || (typeof CINE !== 'undefined' && CINE) || (typeof GAMEOVER !== 'undefined' && GAMEOVER)) return false;
+	if (typeof interaction === 'function') interaction();
+	if (phase === 'mail') {
+		rangerPoste();
+		annoncer(t('quitter.range'));
+		return true;
+	}
+	if (phase === 'soir') {
+		if (SOIR.sortie) return true;
+		if (vue === 'poste') seLever();
+		SOIR.debut = millis() - DUREE_CREPUSCULE; // crépuscule sauté
+		SOIR.depart = MINUTES_NUIT;
+		SOIR.annonce = true;
+		SOIR.sortie = millis();
+		Confort.Son.bip('choix');
+		annoncer(texteNoirSoir().titre + '. ' + (texteNoirSoir().sous || ''));
+		return true;
+	}
+	if (Jeu.journeeFinie() && phase === 'attente') return terminerJournee(), true;
+	ouvrir('partir');
+	annoncer(t('partir.titre') + ' ' + textePartir());
+	return true;
+}
+
 // ——— Le lendemain : mail du patron mis en avant ———
 function verifierBlame() {
 	if (!Jeu.blame || Jeu.blame.lu || fenetre || smsActif || tutoriel || TRANSITION_JOUR || MENU.actif || ecran !== 'jeu') return false;
@@ -133,6 +162,8 @@ function toucheJournee() {
 		if (keyCode === ENTER || keyCode === RETURN || keyCode === ESCAPE) lireBlame();
 		return true;
 	}
+	// Prompt 94 : Q = quitter la journée (étape de sortie en cours), hors fenêtre, tutoriel et menu
+	if ((key === 'q' || key === 'Q') && !fenetre && !tutoriel && !MENU.actif && ecran === 'jeu') return quitterJourneeRapide(), true;
 	return false;
 }
 

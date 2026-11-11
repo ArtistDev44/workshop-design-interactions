@@ -224,8 +224,11 @@ function draw() {
 	sourisRestaurer();
 	espaceDessin = 'ecran';
 	// 2. La pièce et le moniteur autour (bureau, zoom, ou « au poste » avec la pièce visible)
+	const secousse = typeof decalageSecousse === 'function' ? decalageSecousse() : null; // prompt 94 : secousse d'écran (décision)
+	if (secousse) push(), translate(secousse.x, secousse.y);
 	composerVue();
 	if (vue === 'bureau' && !fenetre) dessinerNotifications(L - 24, 24, 0.9); // prompt 77 : PC « fermé » (vue bureau) : notifications sur la vue
+	if (secousse) pop();
 	dessinerBoost(); // prompt 52 : cœur, pulsation rouge, lignes de vitesse, flou
 	dessinerMicro(); // prompt 54 : oscilloscope et mesures pendant l'appui
 	dessinerOffreDemission(); // prompt 47 : les trois jauges sous 20 → « Rendre son badge »
@@ -352,6 +355,7 @@ function decider(action) {
 	annoncer(t('annonce.decision', { titre: dernierResultat.narration.titre, texte: dernierResultat.narration.texte }) + ' ' + dj + '.'); // prompt 53 : variations annoncées
 	Confort.Son.clicAction(Jeu.familleDe ? Jeu.familleDe(action) : action); // prompt 44 § 4 : un clic de console par action ; prompt 89 bis : famille de la réponse (son distinct)
 	Confort.Son.jauges(dernierResultat.deltas); // § 5 : chute brutale ou remontée nette, audibles
+	if (typeof secouer === 'function') secouer(amplitudeDeltas(dernierResultat.deltas)); // prompt 94 : du poids, selon l'effet réel
 	phase = 'narration';
 	debutNarration = millis();
 	if (dernierResultat.contexteNarr) annoncer(t(dernierResultat.contexteNarr.cle, dernierResultat.contexteNarr.vars));
@@ -1049,6 +1053,7 @@ function mousePressed() {
 	if (arreterDemo()) return; // prompt 48
 	Confort.Son.demarrer();
 	interaction();
+	if (typeof debutGlisser === 'function' && debutGlisser()) return; // prompt 94 : une carte de réponse est saisie (clic ou glisser-déposer)
 	for (let i = boutons.length - 1; i >= 0; i--) {
 		const b = boutons[i];
 		if (mouseX >= b.x && mouseX <= b.x + b.l && mouseY >= b.y && mouseY <= b.y + b.h) {

@@ -51,6 +51,7 @@ function keyReleased() {
 	if (key === 'm' || key === 'M') toucheMRelachee();
 }
 function mouseReleased() {
+	if (typeof relacherGlisser === 'function') relacherGlisser(); // prompt 94 : dépôt d'une carte (ou clic)
 	if (MICRO.ouvert && MICRO.par === 'clic') arreterMicro();
 }
 function touchEnded(e) {
