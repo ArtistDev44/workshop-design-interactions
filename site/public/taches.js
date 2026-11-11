@@ -17,6 +17,12 @@ const Taches = (() => {
 		prep: { cout: 3, bonus: 3, rembourse: 1 }, // préparer un événement : budget engagé tôt, réputation si utile
 		suiteMax: 3, // rotation : jamais plus de 3 fois de suite le même type de tâche
 		crise: { bonus: 3, debut: 16 * 60 + 30, fin: 17 * 60 + 45, minDossiers: 3 }, // cellule de crise : arrivées regroupées 16 h 30 – 17 h 45
+		// Progression (§ 4) : expérience sans effet sur les jauges ; la série du prompt 74 multiplie l'expérience des décisions
+		xp: { bon: 10, autre: 4, info: 8, prep: 8, priorite: 10, objectif: 15, crise: 25, defi: 20 },
+		serie: { pas: 0.25, max: 1.5 },
+		grades: [0, 150, 450, 900], // Stagiaire → Régulateur·rice → Régulateur·rice confirmé·e → Chef·fe de salle
+		badges: ['zero_non_traite', 'info_parfaite', 'semaine_budget', 'crise_maitrisee'],
+		infosPourBadge: 5,
 	};
 
 	function hacher(s) {
@@ -102,6 +108,99 @@ const Taches = (() => {
 		const c = crise();
 		return !!(c && !c.resultat && Jeu.horloge && Jeu.horloge.minutes >= R.crise.debut);
 	};
+
+	// ——— Carrière (§ 4) : expérience, grade et badges, gardés entre les parties (localStorage), réinitialisables ———
+	const CLE_CARRIERE = 'pxe-nte001-carriere';
+	let carriereMemoire = null; // repli sans localStorage (tests, navigation privée)
+	const carriereVide = () => ({ xp: 0, badges: {}, infosParfaites: 0, jours: [] });
+	function carriere() {
+		if (carriereMemoire) return carriereMemoire;
+		let c = null;
+		try {
+			c = JSON.parse(localStorage.getItem(CLE_CARRIERE) || 'null');
+		} catch (e) {}
+		carriereMemoire = Object.assign(carriereVide(), c || {});
+		return carriereMemoire;
+	}
+	function sauverCarriere() {
+		try {
+			localStorage.setItem(CLE_CARRIERE, JSON.stringify(carriere()));
+		} catch (e) {}
+	}
+	function reinitialiserCarriere() {
+		carriereMemoire = carriereVide();
+		sauverCarriere();
+		return carriereMemoire;
+	}
+	const gradeDe = (xp) => R.grades.reduce((g, seuil, i) => (xp >= seuil ? i : g), 0);
+	function grade() {
+		const c = carriere();
+		const i = gradeDe(c.xp);
+		return { i, xp: c.xp, prochain: R.grades[i + 1] === undefined ? null : R.grades[i + 1] };
+	}
+	/** Expérience d'une journée, calculée sur ses faits (décisions évaluées, tâches réussies, priorités, objectif, crise) */
+	function xpJour(date, j, extra) {
+		const ev = (Jeu.evenementsJournee || []).filter((e) => e.jour === date);
+		const lignes = [];
+		let serie = 0;
+		let dec = 0;
+		ev.forEach((e) => {
+			const v = Jeu.evaluer(e);
+			if (e.cleAction === 'temps') return (serie = 0);
+			serie = v === 'bon' ? serie + 1 : 0;
+			const mult = Math.min(R.serie.max, 1 + R.serie.pas * Math.max(0, serie - 1));
+			dec += Math.round((v === 'bon' ? R.xp.bon : R.xp.autre) * mult);
+		});
+		if (dec) lignes.push({ cle: 'xp.decisions', v: dec, n: ev.length });
+		if (j.infoJustes) lignes.push({ cle: 'xp.info', v: j.infoJustes * R.xp.info, n: j.infoJustes });
+		if (j.prep && j.prep.resultat === 'utile') lignes.push({ cle: 'xp.prep', v: R.xp.prep });
+		const tenues = (extra.priorites || []).filter((p) => p.etat === 'tenue').length;
+		if (tenues) lignes.push({ cle: 'xp.priorites', v: tenues * R.xp.priorite, n: tenues });
+		const obj = (Jeu.objectifsResultats || []).find((o) => o.jourIndex === Jeu.jourIndex);
+		if (obj && obj.atteint) lignes.push({ cle: 'xp.objectif', v: R.xp.objectif });
+		if (extra.crise === 'maitrisee') lignes.push({ cle: 'xp.crise', v: R.xp.crise });
+		const defis = Jeu.defisAppliques && Jeu.jourIndex >= (Jeu.jours || []).length - 1 ? Jeu.defisAppliques.filter((d) => d.tenu).length : 0;
+		if (defis) lignes.push({ cle: 'xp.defis', v: defis * R.xp.defi, n: defis });
+		return { total: lignes.reduce((a, l) => a + l.v, 0), lignes };
+	}
+	/** Badges gagnés ce jour (faits de la partie) ; un badge compte ses obtentions */
+	function badgesJour(date, j, extra) {
+		const c = carriere();
+		const gagnes = [];
+		const ev = (Jeu.evenementsJournee || []).filter((e) => e.jour === date);
+		if (ev.length && !ev.some((e) => e.cleAction === 'temps')) gagnes.push('zero_non_traite');
+		if (j.infoJustes) {
+			const avant = c.infosParfaites;
+			c.infosParfaites += j.infoJustes;
+			if (avant < R.infosPourBadge && c.infosParfaites >= R.infosPourBadge) gagnes.push('info_parfaite');
+		}
+		if (extra.crise === 'maitrisee') gagnes.push('crise_maitrisee');
+		const dernier = Jeu.jourIndex >= (Jeu.jours || []).length - 1;
+		if (dernier && !(Jeu.malus && Jeu.malus.budget_epuise) && Jeu.jauges.budget >= 30) gagnes.push('semaine_budget');
+		gagnes.forEach((b) => {
+			const x = c.badges[b] || { n: 0, le: null };
+			c.badges[b] = { n: x.n + 1, le: date };
+		});
+		return gagnes;
+	}
+	/** Verse l'expérience et les badges du jour dans la carrière, une seule fois par journée de partie */
+	function verserJour(date, j, extra) {
+		const c = carriere();
+		const cle = String(Jeu.graine) + '|' + date;
+		const x = xpJour(date, j, extra);
+		const avant = grade().i;
+		let badges = [];
+		if (!c.jours.includes(cle)) {
+			c.jours = c.jours.concat([cle]).slice(-60);
+			c.xp += x.total;
+			badges = badgesJour(date, j, extra);
+			sauverCarriere();
+		}
+		etat().xpPartie = (etat().xpPartie || 0) + (j.xp ? 0 : x.total);
+		j.xp = x;
+		j.badges = badges;
+		return { xp: x, badges, grade: grade(), monte: grade().i > avant };
+	}
 
 	// ——— État ———
 	function nouvellePartie() {
@@ -239,6 +338,7 @@ const Taches = (() => {
 		j.rapport = { fait: fait.texte, demande: DEMANDES.includes(idDemande) ? idDemande : null, accordee, priorites: prio, bonus: tenues * R.bonusPriorite };
 		etat().demande = j.rapport.demande ? { id: j.rapport.demande, accordee, pour: (Jeu.jourIndex || 0) + 1 } : null;
 		noter('rapport', rp.date);
+		j.recap = verserJour(rp.date, j, { priorites: prio, crise: c ? c.resultat : null });
 		etat().carnet = etat().carnet.filter((c) => c.date !== rp.date);
 		etat().carnet.push({ date: rp.date, theme: theme(rp.date), fait: fait.texte, priorites: prio, demande: j.rapport.demande, accordee, crise: c ? c.resultat : null });
 		return j.rapport;
@@ -372,6 +472,7 @@ const Taches = (() => {
 			e.infos.publiees++;
 			if (juste) {
 				e.infos.parfaites++;
+				j.infoJustes = (j.infoJustes || 0) + 1;
 				Jeu.appliquerDeltas({ reputation: R.info.juste });
 			} else {
 				Jeu.appliquerDeltas({ reputation: R.info.faux });
@@ -399,6 +500,6 @@ const Taches = (() => {
 		return plainte;
 	}
 
-	return { R, theme, crise, criseActive, calculerThemes, choisirJourCrise, SIGNATURE, hacher, choix, nouvellePartie, etat, jour, noter, suiteFinale, briefing, choisirPriorites, evaluerPriorite, rapport, validerRapport, matin, apresDecision, faitsDuJour, bonneReponse, resoudre, tacheInfo, tachePreparation };
+	return { R, carriere, reinitialiserCarriere, grade, gradeDe, xpJour, theme, crise, criseActive, calculerThemes, choisirJourCrise, SIGNATURE, hacher, choix, nouvellePartie, etat, jour, noter, suiteFinale, briefing, choisirPriorites, evaluerPriorite, rapport, validerRapport, matin, apresDecision, faitsDuJour, bonneReponse, resoudre, tacheInfo, tachePreparation };
 })();
 if (typeof window !== 'undefined') window.Taches = Taches;

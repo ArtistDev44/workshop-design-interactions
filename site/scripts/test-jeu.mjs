@@ -1143,6 +1143,53 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 	verifier(r.repro && r.heures, `thèmes reproductibles (${r.repro}), heures réelles intactes (${r.heures})`);
 }
 
+// Prompt 88 lot E : expérience, grade et badges calculés sur des faits de la partie, sans effet sur les jauges
+{
+	const ce = contexte('fr');
+	const r = vm.runInContext(
+		`(() => {
+		Taches.reinitialiserCarriere();
+		const out = { jours: [], jaugesIntactes: true, double: null, grades: null, reset: null };
+		Jeu.chargerSemaine('2026-09-14'); Jeu.nouvellePartie(); Taches.nouvellePartie();
+		for (let i = 0; i < Jeu.jours.length; i++) {
+			Taches.choisirPriorites(Taches.briefing().options.slice(0, 2).map((o) => o.id));
+			let k = 0;
+			while (Jeu.prochainDuJour()) Jeu.decider(k++ % 3 === 2 ? 'temps' : Jeu.actionsPossibles(Jeu.dossierCourant())[0]);
+			Jeu.finDeJourneeTactique();
+			const date = Jeu.jourCourant().date;
+			const rp = Taches.rapport();
+			const xp0 = Taches.carriere().xp;
+			Taches.validerRapport(rp.faits[0].id, null);
+			const j = Taches.jour(date);
+			const ev = Jeu.evenementsJournee.filter((e) => e.jour === date);
+			const jauges = JSON.stringify(Jeu.jauges);
+			const x2 = Taches.xpJour(date, j, { priorites: j.rapport.priorites, crise: null });
+			if (JSON.stringify(Jeu.jauges) !== jauges) out.jaugesIntactes = false;
+			out.jours.push({ date, xp: j.recap.xp.total, somme: j.recap.xp.lignes.reduce((a, l) => a + l.v, 0), recalc: x2.total, verse: Taches.carriere().xp - xp0, zero: j.recap.badges.includes('zero_non_traite'), sansTemps: ev.length > 0 && !ev.some((e) => e.cleAction === 'temps') });
+			if (!Jeu.jours[Jeu.jourIndex + 1]) break;
+			Jeu.journeeSuivante(); Taches.matin();
+		}
+		// Rejouer la même journée (même graine) ne verse pas deux fois
+		const xp = Taches.carriere().xp;
+		const date = Jeu.jourCourant().date;
+		Taches.jour(date).rapport = null;
+		Taches.validerRapport('x', null);
+		out.double = Taches.carriere().xp === xp;
+		out.grades = [0, 149, 150, 449, 450, 899, 900, 5000].map((v) => Taches.gradeDe(v));
+		Taches.reinitialiserCarriere();
+		out.reset = Taches.carriere().xp === 0 && Object.keys(Taches.carriere().badges).length === 0;
+		return out;
+	})()`,
+		ce,
+	);
+	const faux = r.jours.filter((j) => j.xp !== j.somme || j.xp !== j.recalc || j.verse !== j.xp || j.zero !== j.sansTemps);
+	verifier(r.jours.length >= 6 && faux.length === 0, `expérience / badge « zéro non traité » calculés sur les faits (${JSON.stringify(faux.slice(0, 2))})`);
+	verifier(r.jaugesIntactes, 'expérience : aucun effet sur les jauges');
+	verifier(r.double, 'carrière : une journée n\'est versée qu\'une fois');
+	verifier(JSON.stringify(r.grades) === '[0,0,1,1,2,2,3,3]', `grades : seuils 150 / 450 / 900 (${r.grades})`);
+	verifier(r.reset, 'carrière : réinitialisation');
+}
+
 // Service worker : chaque script de index.html est dans la liste hors ligne de sw.js
 const html = readFileSync(join(pub, 'index.html'), 'utf8');
 const sw = readFileSync(join(pub, 'sw.js'), 'utf8');

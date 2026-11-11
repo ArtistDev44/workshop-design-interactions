@@ -646,7 +646,7 @@ const INDIC = (() => {
 		const o = JSON.parse(localStorage.getItem(CLE_INDICATEURS) || 'null');
 		if (o && Number.isFinite(o.x) && Number.isFinite(o.y)) pos = o;
 	} catch (e) {}
-	return { l: 460, h: 432, pos, prise: null }; // prompt 84 : + statut auprès du patron
+	return { l: 460, h: 572, pos, prise: null }; // prompt 84 : + statut auprès du patron ; prompt 88 : + grade et badges
 })();
 function basculerIndicateurs() {
 	PC.flottant = !PC.flottant;
@@ -737,4 +737,15 @@ function dessinerIndicateurs() {
 	// Prompt 84 : statut auprès du patron (niveau et avertissements)
 	const S = Jeu.statutPatron || { niveau: 0, avertissements: 0 };
 	dsTexte(t('indic.statut', { statut: t(['statut.normal', 'statut.surveillance', 'statut.dernier'][S.niveau] || 'statut.normal'), n: S.avertissements }), x + 18, y + 384, 16, S.niveau === 2 ? DS.erreurClair : S.niveau === 1 ? DS.alerte : DS.blanc75, 'left', I.l - 36);
+	// Prompt 88 : grade (carrière, entre les parties) et vitrine des badges — faits de la partie uniquement
+	if (typeof Taches !== 'undefined') {
+		const g = Taches.grade();
+		dsTexte(t('indic.grade', { grade: t('grade.' + g.i), xp: g.xp }), x + 18, y + 452, 16, DS.blanc, 'left', I.l - 36);
+		const c = Taches.carriere();
+		Taches.R.badges.forEach((b, i) => {
+			const obtenu = !!(c.badges[b] && c.badges[b].n);
+			dessinerBadge(b, x + 18 + i * 108, y + 492, 40, obtenu);
+			if (obtenu && c.badges[b].n > 1) dsTexte('×' + c.badges[b].n, x + 64 + i * 108, y + 512, 14, DS.blanc75, 'left');
+		});
+	}
 }

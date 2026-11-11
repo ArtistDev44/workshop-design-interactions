@@ -103,7 +103,7 @@ function basculerChoix(i) {
 function validerTache(passer) {
 	const tache = TACHE.courante;
 	if (!tache) return;
-	if (TACHE.resultat) return fermerTache(); // écran de résultat : Entrée / Échap pour continuer
+	if (TACHE.resultat || tache.type === 'recap') return fermerTache(); // écran de résultat ou récapitulatif : Entrée / Échap pour continuer
 	if (tache.type === 'info' || tache.type === 'evenement') {
 		if (!passer && (tache.type === 'info' ? TACHE.choix.some((c) => c === null) : !TACHE.choix[0])) return annoncer(t('tache.' + tache.type + '.incomplet'));
 		const r = Taches.resoudre(tache, passer ? null : tache.type === 'info' ? TACHE.choix.slice() : TACHE.choix[0]);
@@ -125,6 +125,10 @@ function validerTache(passer) {
 		if (!passer && (!TACHE.choix[0] || !TACHE.choix[1])) return annoncer(t('tache.rapport.incomplet'));
 		const r = Taches.validerRapport(TACHE.choix[0] || null, passer ? null : TACHE.choix[1]);
 		annoncer(t('tache.rapport.ok') + ' ' + texteDemande(r));
+		// Récapitulatif du soir (§ 4), puis la suite de la fin de journée
+		const j = Taches.jour(tache.donnees.date);
+		Confort.Son.bip('choix');
+		return ouvrirRecap({ date: tache.donnees.date, rapport: r, recap: j.recap });
 	}
 	Confort.Son.bip('choix');
 	fermerTache();
@@ -189,14 +193,15 @@ function fenetreTache() {
 	else if (tache.type === 'briefing') yy = corpsBriefing(tache.donnees, x + 56, yy, l - 112);
 	else if (tache.type === 'info') yy = corpsInfo(tache, x + 56, yy, l - 112);
 	else if (tache.type === 'evenement') yy = corpsPreparation(tache, x + 56, yy, l - 112);
+	else if (tache.type === 'recap') yy = corpsRecap(tache.donnees, x + 56, yy, l - 112);
 	else if (tache.type === 'rapport') yy = corpsRapport(tache.donnees, x + 56, yy, l - 112);
 	// Pied : consigne clavier + boutons
 	textFont(POLICE_DONNEES);
 	textSize(18);
 	textAlign(LEFT, TOP);
 	fill(C.gris);
-	text(t(TACHE.resultat ? 'tache.consigne.resultat' : 'tache.consigne.' + tache.type), x + 56, y + h - 104, l - 112 - 560, 70);
-	if (TACHE.resultat) return bouton(x + l - 56 - 260, y + h - 104, 260, 68, t('tache.continuer'), fermerTache);
+	text(t(TACHE.resultat || tache.type === 'recap' ? 'tache.consigne.resultat' : 'tache.consigne.' + tache.type), x + 56, y + h - 104, l - 112 - 560, 70);
+	if (TACHE.resultat || tache.type === 'recap') return bouton(x + l - 56 - 260, y + h - 104, 260, 68, t('tache.continuer'), fermerTache);
 	bouton(x + l - 56 - 260, y + h - 104, 260, 68, t('tache.valider'), () => validerTache(false));
 	bouton(x + l - 56 - 260 - 276, y + h - 104, 260, 68, t('tache.passer'), () => validerTache(true), false, true);
 }
@@ -375,4 +380,94 @@ function smsVeilleInspection(suite) {
 		},
 	});
 	return true;
+}
+
+// ——— Récapitulatif du soir (§ 4) : expérience, badges, priorités, fait marquant ; sans animation si réduites ———
+function ouvrirRecap(donnees) {
+	const suite = TACHE.suite;
+	marquerIntroTache('rapport');
+	TACHE.courante = { type: 'recap', donnees };
+	TACHE.premiere = !introTacheVue('recap');
+	TACHE.resultat = null;
+	TACHE.suite = suite;
+	TACHE.debutRecap = millis();
+	const rc = donnees.recap || { xp: { total: 0, lignes: [] }, badges: [], grade: Taches.grade() };
+	annoncer(t('recap.annonce', { xp: rc.xp.total, grade: t('grade.' + rc.grade.i) }) + (rc.badges.length ? ' ' + t('recap.badges', { liste: rc.badges.map((b) => t('badge.' + b)).join(', ') }) : '') + (rc.monte ? ' ' + t('recap.monte', { grade: t('grade.' + rc.grade.i) }) : ''));
+}
+function corpsRecap(d, x, y, l) {
+	const rc = d.recap || { xp: { total: 0, lignes: [] }, badges: [], grade: Taches.grade() };
+	const k = reduireAnimations ? 1 : constrain((millis() - TACHE.debutRecap) / 1200, 0, 1);
+	textAlign(LEFT, TOP);
+	textFont(POLICE_TEXTE);
+	textStyle(BOLD);
+	textSize(40);
+	fill(C.vert);
+	text('+' + Math.round(rc.xp.total * easeOut(k)) + ' XP', x, y);
+	textStyle(NORMAL);
+	textSize(20);
+	fill(C.texte);
+	const g = rc.grade;
+	text(t('recap.grade', { grade: t('grade.' + g.i), xp: g.xp }) + (g.prochain !== null ? ' · ' + t('recap.prochain', { reste: g.prochain - g.xp, grade: t('grade.' + (g.i + 1)) }) : ''), x + 260, y + 4, l - 260, 30);
+	if (g.prochain !== null) {
+		const bas = Taches.R.grades[g.i];
+		fill(C.piste);
+		rect(x + 260, y + 36, l - 260, 10);
+		fill(C.accent);
+		rect(x + 260, y + 36, ((l - 260) * (g.xp - bas)) / (g.prochain - bas), 10);
+	}
+	if (rc.monte) {
+		fill(C.accent);
+		textStyle(BOLD);
+		text(t('recap.monte', { grade: t('grade.' + g.i) }), x + 260, y + 50, l - 260, 30);
+		textStyle(NORMAL);
+	}
+	y += 88;
+	textFont(POLICE_DONNEES);
+	textSize(18);
+	rc.xp.lignes.forEach((ln) => {
+		fill(C.gris);
+		text(t(ln.cle, { n: ln.n }) + '  +' + ln.v, x, y);
+		y += 26;
+	});
+	y += 8;
+	textFont(POLICE_TEXTE);
+	textSize(20);
+	(d.rapport && d.rapport.priorites ? d.rapport.priorites : []).forEach((p) => {
+		fill(p.etat === 'tenue' ? C.vert : p.etat === 'manquee' ? C.orange : C.gris);
+		text((p.etat === 'tenue' ? '✓ ' : p.etat === 'manquee' ? '✗ ' : '· ') + t('tache.prio.' + p.id, p.vars) + ' — ' + t('carnet.etat.' + p.etat), x, y, l, 28);
+		y += 30;
+	});
+	fill(C.texte);
+	if (d.rapport) {
+		text(t('recap.fait', { fait: d.rapport.fait }), x, y + 4, l, 56);
+		y += textWidth(t('recap.fait', { fait: d.rapport.fait })) > l ? 62 : 34;
+		fill(C.gris);
+		text(texteDemande(d.rapport), x, y, l, 30);
+		y += 40;
+	}
+	rc.badges.forEach((b, i) => {
+		dessinerBadge(b, x + i * 280, y, 44, true);
+		fill(C.texte);
+		textSize(18);
+		text(t('badge.' + b), x + i * 280 + 54, y + 10, 220, 30);
+	});
+	return y + 56;
+}
+
+/** Badges pixel (design system) : motif 8 × 8 dessiné par le code ; gris si pas encore obtenu */
+const MOTIFS_BADGES = {
+	zero_non_traite: ['..####..', '.#....#.', '#..##..#', '#.#..#.#', '#.#..#.#', '#..##..#', '.#....#.', '..####..'],
+	info_parfaite: ['########', '#......#', '#.####.#', '#......#', '#.###..#', '#......#', '####.###', '...##...'],
+	semaine_budget: ['...##...', '.######.', '##.##...', '.#####..', '...##.#.', '...####.', '.######.', '...##...'],
+	crise_maitrisee: ['...##...', '..####..', '.##..##.', '.#.##.#.', '.#.##.#.', '.##..##.', '..####..', '...##...'],
+};
+function dessinerBadge(id, x, y, taille, obtenu) {
+	const m = MOTIFS_BADGES[id];
+	if (!m) return;
+	const p = taille / 8;
+	noStroke();
+	fill(obtenu ? 'rgba(255,193,56,0.18)' : 'rgba(255,255,255,0.06)');
+	rect(x - 2, y - 2, taille + 4, taille + 4);
+	fill(obtenu ? C.accent : C.bord);
+	m.forEach((ligne, r) => [...ligne].forEach((c, k) => c === '#' && rect(x + k * p, y + r * p, Math.ceil(p), Math.ceil(p))));
 }

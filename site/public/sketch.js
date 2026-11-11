@@ -845,7 +845,7 @@ function dessinerFin() {
 	if (bilanFin && bilanFin.meilleur) {
 		fill(bilanFin.record ? C.vert : C.gris);
 		text(
-			(bilanFin.record ? t('fin.record') : t('fin.meilleur', { score: bilanFin.meilleur.score, le: bilanFin.meilleur.le })) + (Jeu.defiChrono ? ' · ' + t('fin.defiChrono') : ''), // prompt 87
+			(bilanFin.record ? t('fin.record') : t('fin.meilleur', { score: bilanFin.meilleur.score, le: bilanFin.meilleur.le })) + (Jeu.defiChrono ? ' · ' + t('fin.defiChrono') : '') + (typeof Taches !== 'undefined' ? ' · ' + t('fin.grade', { grade: t('grade.' + Taches.grade().i), xp: (Jeu.taches && Jeu.taches.xpPartie) || 0 }) : ''), // prompt 87 ; prompt 88 : grade et expérience de la partie
 			g.x + 48,
 			g.y + 752,
 		);
