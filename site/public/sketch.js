@@ -1660,6 +1660,7 @@ function fenetreAide() {
 		['← → ↑ ↓', t('aide.k.regarder')],
 		[t('aide.k.quitterTouche'), t('aide.k.quitter')],
 		['↑ ↓', t('aide.k.semaine')],
+		['Z', t('aide.k.sieste')], // prompt 80 : touches ajoutées par les prompts 72 à 79
 	];
 	textSize(24);
 	fill(C.texte);
@@ -1705,9 +1706,16 @@ function fenetreAide() {
 	fill(C.texte);
 	text(t('aide.regles'), rx, y + 96);
 	textStyle(NORMAL);
-	textSize(19);
-	textLeading(27);
-	text(t('aide.texte'), rx, y + 136, rl, 820);
+	// Prompt 80 : le texte des règles s'est allongé (prompts 72 à 79) — la taille s'ajuste pour qu'il tienne en entier
+	const regles = t('aide.texte');
+	let ts = 19;
+	for (; ts > 13; ts--) {
+		textSize(ts);
+		const lignes = regles.split('\n').reduce((n, par) => n + Math.max(1, Math.ceil((textWidth(par) * 1.08) / rl)), 0);
+		if (lignes * Math.round(ts * 1.4) <= 820) break;
+	}
+	textLeading(Math.round(ts * 1.4));
+	text(regles, rx, y + 136, rl, 820);
 	textLeading(textSize() * 1.25);
 	bouton(x + l - 288, y + h - 92, 240, 60, t('commun.fermer'), fermer);
 	bouton(x + l - 288 - 300, y + h - 92, 280, 60, t('tuto.relancer'), lancerTutoriel, false, true); // prompt 34
