@@ -1445,6 +1445,21 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 	verifier(/telephone: typeof TELN/.test(readFileSync(join(pub, 'sauvegarde.js'), 'utf8')), 'téléphone : notifications du jour sauvegardées');
 }
 
+// Prompt 91 § 1 : aucune collision de nom global entre les scripts du jeu (une fonction écrasée a figé la messagerie)
+{
+	const html0 = readFileSync(join(pub, 'index.html'), 'utf8');
+	const scripts = [...html0.matchAll(/<script src="\.\/([^"]+\.js)"/g)].map((m) => m[1]).filter((f) => !f.startsWith('lib/') && !f.startsWith('data/'));
+	const vus = {};
+	const doublons = [];
+	for (const f of scripts) {
+		for (const m of readFileSync(join(pub, f), 'utf8').matchAll(/^(?:function|const|let|var|class) ([A-Za-z_$][\w$]*)/gm)) {
+			if (vus[m[1]] && vus[m[1]] !== f) doublons.push(`${m[1]} (${vus[m[1]]}, ${f})`);
+			vus[m[1]] = f;
+		}
+	}
+	verifier(doublons.length === 0, `noms globaux en double : ${doublons.slice(0, 5)}`);
+}
+
 // Service worker : chaque script de index.html est dans la liste hors ligne de sw.js
 const html = readFileSync(join(pub, 'index.html'), 'utf8');
 const sw = readFileSync(join(pub, 'sw.js'), 'utf8');

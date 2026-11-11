@@ -230,7 +230,7 @@ const DS_JAUGES = [
 ];
 
 // ——— 3. Frise (cartes ancrées à leur heure, regroupées par dossier) ———
-function hauteurCarte(c) {
+function hauteurCarteJournal(c) {
 	return HAUTEURS_CARTES[c.sorte] + c.groupe.reduce((a, g) => a + HAUTEURS_CARTES[g.sorte] + 8, 0);
 }
 function frise(z, y0) {
@@ -246,7 +246,7 @@ function frise(z, y0) {
 		if (note) carteNote(note, z.x + 84, y0 + 140, z.l - 100);
 		return;
 	}
-	const hs = liste.map(hauteurCarte);
+	const hs = liste.map(hauteurCarteJournal);
 	const total = hs.reduce((a, b) => a + b + 12, 0);
 	JOURNAL.defilMax = Math.max(0, total - hz);
 	JOURNAL.defil = constrain(JOURNAL.defil, 0, JOURNAL.defilMax);
@@ -715,7 +715,7 @@ function toucheJournal() {
 		JOURNAL.zone = 2;
 		JOURNAL.focus = constrain(JOURNAL.focus + (keyCode === DOWN_ARROW ? 1 : -1), 0, Math.max(0, liste.length - 1));
 		// Défilement pour garder la carte visible
-		const hs = liste.map(hauteurCarte);
+		const hs = liste.map(hauteurCarteJournal);
 		const haut = hs.slice(0, JOURNAL.focus).reduce((a, b) => a + b + 12, 0);
 		JOURNAL.defil = constrain(haut - 120, 0, JOURNAL.defilMax);
 		const c = liste[JOURNAL.focus];

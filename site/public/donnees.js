@@ -184,10 +184,10 @@ function dessinerAppliDonnees() {
 		textSize(20);
 		fill(DS.blanc75);
 		text(t('donnees.source', { source: b.source, licence: b.licence }), x + 24, y + bh - 118, bl - 48, 56);
-		dsBouton(x + 24, y + bh - 60, 360, 44, t('donnees.ouvrir'), () => ouvrirLien(b.url), 'contour');
+		dsBouton(x + 24, y + bh - 60, 360, 44, t('donnees.ouvrir'), () => ouvrirLienApi(b.url), 'contour');
 	});
 }
-function ouvrirLien(url) {
+function ouvrirLienApi(url) {
 	try {
 		window.open(url, '_blank', 'noopener');
 	} catch (e) {}

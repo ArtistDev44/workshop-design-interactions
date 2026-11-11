@@ -1151,6 +1151,8 @@ function keyPressed() {
 	}
 	// Prompt 36 : I ouvre / ferme l'app flottante « Indicateurs » (au poste)
 	if (key === 'i' || key === 'I') return basculerIndicateurs(), false;
+	// Prompt 91 § 1 : une fenêtre RégulOS ouverte par-dessus l'appli de jeu reçoit les touches d'abord (Échap la ferme)
+	if (PC.fenetre && PC.etat === 'appli') PC.etat = 'os';
 	// Au poste, système du PC (bureau RégulOS) : Tab = icônes, Entrée = ouvrir, Échap = fermer l'app puis se lever
 	if (PC.etat !== 'appli') {
 		if (PC.etat === 'os' && typeof toucheJournal === 'function' && toucheJournal()) return false; // prompt 89 : jours, filtres, cartes, enquête (Échap revient)
