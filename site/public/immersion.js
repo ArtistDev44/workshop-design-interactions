@@ -46,7 +46,7 @@ const OBJETS_BUREAU = [
 	{ nom: 'plante', piece: true, label: T('piece.plante'), infobulle: T('piece.plante.survol'), x: 69, y: 153, l: 16, h: 21 },
 	{ nom: 'tasse', piece: true, label: T('piece.tasse'), infobulle: T('piece.tasse.survol'), x: 118, y: 178, l: 22, h: 28 },
 	{ nom: 'rapport', label: T('objet.rapport'), infobulle: T('objet.rapport.survol'), x: 272, y: 178, l: 58, h: 20, visible: () => !!RAPPORT || !!rapportVeille() }, // prompt 41 ; prompt 89 bis : le rapport de la veille reste sur le bureau : posée entre le pied de l'écran et le clavier
-	{ nom: 'telephone', label: T('objet.telephone'), infobulle: T('objet.telephone.survol'), x: 364, y: 192, l: 26, h: 32 }, // prompt 38
+	{ nom: 'telephone', label: T('objet.telephone'), infobulle: { toString: () => t('objet.telephone.survol') + (typeof telNonLues === 'function' && telNonLues() ? ' · ' + t('tel.nonLues', { n: telNonLues() }) : '') }, x: 364, y: 192, l: 26, h: 32 }, // prompt 38
 	{ nom: 'dossiers', piece: true, label: T('piece.dossiers'), infobulle: T('piece.dossiers.survol'), x: 390, y: 160, l: 44, h: 15 },
 	{ nom: 'fenetre', piece: true, label: T('piece.fenetre'), infobulle: T('piece.fenetre.survol'), x: 334, y: 14, l: 64, h: 96 }, // prompt 31 : la baie s'arrête au pan de mur
 	{ nom: 'horloge', label: T('objet.horloge'), infobulle: T('objet.horloge.survol'), x: 404, y: 30, l: 28, h: 29 }, // prompt 51 : finir sa journée

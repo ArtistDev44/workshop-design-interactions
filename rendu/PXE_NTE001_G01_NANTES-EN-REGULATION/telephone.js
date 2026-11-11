@@ -69,6 +69,8 @@ function ouvrirTelephone() {
 	TEL.date = dateTelephone();
 	TEL.ouverture = millis();
 	chargerNotifications(TEL.date);
+	if (typeof chargerDirectTel === 'function') chargerDirectTel(); // prompt 90 : sources en direct, au clic seulement
+	if (typeof TELN !== 'undefined') (TELN.recues.forEach((n) => (n.vu = true)), (TELN.focus = 0), (TELN.spontanee = null));
 	ouvrir('telephone');
 	leverTelephone(); // prompt 42 : on saisit le téléphone
 	if (typeof revelerSource === 'function') revelerSource('agenda', false); // prompt 50 : l'agenda du jour, consulté sur le téléphone
@@ -77,7 +79,7 @@ function ouvrirTelephone() {
 
 /** Vue téléphone (prompt 38, rendue par l'animation « téléphone en main » du prompt 42) */
 function fenetreTelephone() {
-	dessinerTelephoneEnMain(contenuNotifications);
+	dessinerTelephoneEnMain(typeof contenuCentreNotifications === 'function' ? contenuCentreNotifications : contenuNotifications); // prompt 90 : écran de verrouillage et centre de notifications
 }
 function contenuNotifications(e, pret) {
 	const x = e.x - 16;

@@ -143,3 +143,17 @@ Autres règles simples :
 1. Quelle **source patrimoniale** (P1 à P4, ou une autre du corpus) ? Elle commande tout le reste.
 2. **Zéro ou une** API temps réel (T1 à T5) ? Le livret accepte un projet purement génératif si le mapping n'est pas justifiable.
 3. ~~Intégrer `src/lib/nantes-api.js`, `scripts/snapshot.mjs` et la page `/donnees/` aux prompts~~ : fait, voir `prompts/11-donnees-vivantes-nantes.md`.
+
+## 8. Prompt 90 — sources « en direct » du téléphone (vérifiées le 11/11/2026, `limit=1` + `select`)
+
+| Source | Jeu de données | Requête utilisée | Champs vérifiés | Fréquence d'appel dans le jeu |
+|---|---|---|---|---|
+| Parkings | `244400404_parkings-publics-nantes-disponibilites` (27) | `limit=1&select=grp_nom,grp_disponible,grp_horodatage&order_by=grp_disponible desc` | `grp_nom`, `grp_disponible`, `grp_horodatage` (ISO) | au clic sur le téléphone, 1 fois / 10 min au plus |
+| Vélos | `244400404_disponibilite-temps-reel-velos-libre-service-naolib-nantes-metropole` (120) | `limit=1&select=name,available_bikes,last_update` | `name`, `available_bikes` (texte), `last_update` (ISO) | idem |
+| Trafic routier | `244400404_fluidite-axes-routiers-nantes-metropole` (889) | `select=etat_trafic,count(*) as n&group_by=etat_trafic&limit=10` | `etat_trafic` (Fluide, Dense, Bloqué, Indéterminé) ; pas d'heure dans l'agrégat → heure de consultation | idem |
+| Pollens | `323266205_alerte-pollens-nantes` (15) | `limit=1&select=name,lib_etat,state&order_by=state desc` | `name`, `lib_etat`, `state` ; **pas de champ de date** (`date_maj` n'existe pas) → heure de consultation | idem |
+
+Règles : délai 6 s, cache en mémoire, échec ou champ absent → la source n'est pas proposée ; jamais d'appel dans
+`draw()` ; ces données ne s'affichent qu'en mode « Aujourd'hui » ou dans l'onglet « En direct aujourd'hui » du
+téléphone, avec « Données d'aujourd'hui, pas de la semaine jouée » pendant une semaine archivée. Volume : au plus
+4 requêtes par tranche de 10 minutes et par joueur, aucun quota ni clé.

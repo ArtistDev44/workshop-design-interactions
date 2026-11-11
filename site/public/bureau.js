@@ -580,9 +580,10 @@ function dessinerSourisPerspective(g, cx, y0) {
    les 9 s (bulle de notification), avec une petite vibration de 1 px. Animations réduites : écran fixe. */
 function dessinerTelephonePerspective(g, cx, y0) {
 	const pied = y0 + 26;
-	const cycle = reduireAnimations ? 99999 : millis() % 9000;
-	const allume = cycle < 1500;
-	const vibre = allume && cycle < 450 && Math.floor(millis() / 60) % 2 ? 1 : 0;
+	// Prompt 90 : l'écran s'allume pour de vraies notifications (plus d'animation au hasard) ; vibration 2 px, fixe si animations réduites
+	const et = typeof etatTelephoneBureau === 'function' ? etatTelephoneBureau() : { allume: false, vibre: 0, pastille: 0 };
+	const allume = et.allume;
+	const vibre = et.vibre;
 	const x = cx + vibre;
 	const d = (y) => x + decalVersEcran(cx, pied, y);
 	ombreObjet(g, Math.round(d(pied)) - 11, y0 + 27, 21); // prompt 51 : ombre selon la lumière
@@ -598,6 +599,7 @@ function dessinerTelephonePerspective(g, cx, y0) {
 		px(g, '#9aa8b6', d(y0 + 8) - 1, y0 + 8, 5, 1);
 		px(g, '#c8d2da', d(y0 + 10) - 1, y0 + 10, 4, 1);
 	}
+	if (et.pastille) (px(g, '#d4031c', d(y0) + 7, y0 - 2, 5, 5), px(g, '#ffffff', d(y0) + 9, y0, 1, 1)); // pastille des non lues (nombre dans l'infobulle et l'annonce)
 }
 
 /* Tasse de café (prompt 52, thé avant) : café, volutes de vapeur ; vide une fois bue dans la journée. */

@@ -7,6 +7,19 @@ const dossier = new URL('../public/data/', import.meta.url);
 const brut = await readFile(new URL('messages.json', dossier), 'utf8');
 const donnees = JSON.parse(brut); // échoue clairement si le JSON est invalide
 if (!Array.isArray(donnees.plaintes)) throw new Error('messages.json : « plaintes » doit être une liste');
+// Prompt 90 : modèles du téléphone — FR + EN obligatoires, 3 variantes au moins par fait (Camille) ou par type (chauffeurs)
+if (donnees.telephone) {
+	const tel = donnees.telephone;
+	for (const [groupe, cle] of [['camille', 'fait'], ['chauffeur', 'type']]) {
+		const liste = tel[groupe] || [];
+		const parCle = {};
+		for (const m of liste) {
+			if (!m[cle] || !m.texte || !m.texte.fr || !m.texte.en) throw new Error('messages.json : téléphone.' + groupe + ' incomplet (' + JSON.stringify(m).slice(0, 80) + ')');
+			parCle[m[cle]] = (parCle[m[cle]] || 0) + 1;
+		}
+		for (const [k, n] of Object.entries(parCle)) if (n < 3) throw new Error('messages.json : téléphone.' + groupe + ' « ' + k + ' » : 3 variantes au moins');
+	}
+}
 await writeFile(new URL('messages.js', dossier), '// Généré depuis messages.json par scripts/generer-messages.mjs — ne pas modifier à la main.\nwindow.MESSAGES = ' + JSON.stringify(donnees) + ';\n');
 console.log('messages.js : ' + donnees.plaintes.length + ' plainte(s)');
 

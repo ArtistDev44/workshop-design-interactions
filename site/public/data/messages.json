@@ -880,5 +880,117 @@
     "meteo"
    ]
   }
- ]
+ ],
+ "telephone": {
+  "_lisezMoi": "Prompt 90 : messages du téléphone (Camille, chauffeurs sans nom). Chaque modèle est déclenché seulement par un fait réel de la partie (condition) ; 3 variantes au moins par fait, tirées par la graine. Messages professionnels, sans vie privée.",
+  "camille": [
+   {
+    "fait": "inspection",
+    "texte": {
+     "fr": "Le directeur passe en salle aujourd'hui. Garde ton journal sous la main.",
+     "en": "The director is visiting the room today. Keep your log handy."
+    }
+   },
+   {
+    "fait": "inspection",
+    "texte": {
+     "fr": "Visite du directeur prévue aujourd'hui : il reviendra sur une décision de la semaine.",
+     "en": "Director's visit planned today: one of the week's decisions will be reviewed."
+    }
+   },
+   {
+    "fait": "inspection",
+    "texte": {
+     "fr": "Petit rappel : inspection aujourd'hui. Relis tes choix d'hier.",
+     "en": "Quick reminder: inspection today. Reread yesterday's choices."
+    }
+   },
+   {
+    "fait": "crise",
+    "texte": {
+     "fr": "Cellule de crise cet après-midi : {n} signalements attendus aujourd'hui. On s'organise.",
+     "en": "Crisis unit this afternoon: {n} reports expected today. Let's get organised."
+    }
+   },
+   {
+    "fait": "crise",
+    "texte": {
+     "fr": "Ça va chauffer vers 16 h 30 : la cellule de crise ouvre. Je reste joignable.",
+     "en": "Things will heat up around 4:30 pm: the crisis unit opens. I'm reachable."
+    }
+   },
+   {
+    "fait": "crise",
+    "texte": {
+     "fr": "Cet après-midi, cellule de crise. Pense aux équipes disponibles.",
+     "en": "This afternoon, crisis unit. Keep the available teams in mind."
+    }
+   },
+   {
+    "fait": "agenda",
+    "texte": {
+     "fr": "« {nom} » aujourd'hui : il y aura du monde sur le réseau.",
+     "en": "“{nom}” today: the network will be busy."
+    }
+   },
+   {
+    "fait": "agenda",
+    "texte": {
+     "fr": "Tu as vu l'agenda ? « {nom} » attire du public aujourd'hui.",
+     "en": "Seen the agenda? “{nom}” draws a crowd today."
+    }
+   },
+   {
+    "fait": "agenda",
+    "texte": {
+     "fr": "À l'agenda du jour : « {nom} ». Anticipe l'affluence.",
+     "en": "On today's agenda: “{nom}”. Anticipate the crowds."
+    }
+   }
+  ],
+  "chauffeur": [
+   {
+    "type": "ligne en difficulté",
+    "texte": {
+     "fr": "Ligne {ligne} : on accumule du retard, {retard} min annoncées.",
+     "en": "Line {ligne}: we're running late, {retard} min reported."
+    }
+   },
+   {
+    "type": "ligne en difficulté",
+    "texte": {
+     "fr": "Ici la ligne {ligne} : ça bouchonne, on a pris {retard} min.",
+     "en": "Line {ligne} here: traffic's backed up, we're {retard} min down."
+    }
+   },
+   {
+    "type": "ligne en difficulté",
+    "texte": {
+     "fr": "Chauffeur ligne {ligne} : retard de {retard} min sur le parcours.",
+     "en": "Line {ligne} driver: {retard} min delay on the route."
+    }
+   },
+   {
+    "type": "perturbation",
+    "texte": {
+     "fr": "Ligne {ligne} : on passe à côté de « {nature} », ça ralentit.",
+     "en": "Line {ligne}: we're going past “{nature}”, it's slowing us down."
+    }
+   },
+   {
+    "type": "perturbation",
+    "texte": {
+     "fr": "Chauffeur ligne {ligne} : « {nature} » sur le trajet, prudence.",
+     "en": "Line {ligne} driver: “{nature}” on the route, careful."
+    }
+   },
+   {
+    "type": "perturbation",
+    "texte": {
+     "fr": "Ici la ligne {ligne} : « {nature} », on adapte la conduite.",
+     "en": "Line {ligne} here: “{nature}”, we're adapting our driving."
+    }
+   }
+  ]
+ }
 }
