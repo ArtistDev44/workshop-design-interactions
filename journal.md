@@ -4,6 +4,7 @@ Règle : chaque push sur la branche main ajoute une entrée dans le tableau, la 
 
 | Date | Commit | Fichiers | Résumé |
 |---|---|---|---|
+| 2026-11-11 | ce commit (branche prompts/86-patron-messagerie-moderne) | prompts/86-jeu-patron-messagerie-moderne.md, prompts/README.md, journal.md | Nouveau prompt 86 : appli Messages du patron modernisée (cartes typées, filtres, historique, épinglé, accusés de lecture, panne lisible) |
 | 2026-11-11 | ce commit | prompts/84-jeu-rappel-a-lordre-licenciement-game-over.md, prompts/85-jeu-community-compte-reseau-social.md, prompts/README.md, journal.md | Fusion dans main des prompts 84 (rappel à l'ordre, licenciement, game over) et 85 (Community en compte social) |
 | 2026-11-11 | ce commit (branche prompts/85-community-reseau-social) | prompts/85-jeu-community-compte-reseau-social.md, prompts/README.md, journal.md | Nouveau prompt 85 : l'appli Community devient le compte social fictif de la régulation (fil illustré, photos pixel, réponses aux commentaires, messagerie) |
 | 2026-11-11 | ce commit (branche prompts/84-rappel-ordre-licenciement) | prompts/84-jeu-rappel-a-lordre-licenciement-game-over.md, prompts/README.md, journal.md | Nouveau prompt 84 : rappel à l'ordre du patron, dernier avertissement, licenciement et écran game over |
