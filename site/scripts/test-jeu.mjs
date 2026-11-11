@@ -25,7 +25,7 @@ function contexte(langue, stockage = new Map(), avecHistoire = false) {
 	ctx.window = ctx;
 	ctx.globalThis = ctx;
 	vm.createContext(ctx);
-	const fichiers = ['data/lignes.js', 'data/semaines.js', 'data/fallback.js', 'data/messages.js', 'i18n.js', 'game.js'];
+	const fichiers = ['data/lignes.js', 'data/semaines.js', 'data/fallback.js', 'data/messages.js', 'i18n.js', 'game.js', 'alertes.js']; // prompt 72 : alertes.js (logique pure de la couche d'affichage)
 	if (avecHistoire) fichiers.push('confort.js', 'histoire.js'); // prompt 56 : progression et palmarès (localStorage)
 	for (const f of fichiers) {
 		vm.runInContext(readFileSync(join(pub, f), 'utf8'), ctx, { filename: f });
@@ -394,6 +394,73 @@ verifier(eq.policeAvant === 1 && eq.policeMatin === 2, `équipes : effectifs non
 		verifier(!j.replay, `démarrage PC, jour ${i + 1} : rejoué deux fois dans la journée`);
 	});
 	verifier(/pcDemarre\(\)/.test((readFileSync(join(pub, 'immersion.js'), 'utf8').match(/function tempsSuspendu\(\) \{\n\treturn [^\n]*;/) || [''])[0]), 'démarrage PC : le temps de jeu doit être suspendu pendant le démarrage (et « ×30 » masqué)');
+}
+
+// Prompt 72 : réponses d'alerte — chacune mappe vers UNE action existante ou UN envoi d'équipe, mélange reproductible
+{
+	const al = vm.runInContext(
+		`(() => {
+		const actions = ['devier', 'retenir', 'renfort', 'rien'];
+		const out = { alertes: 0, nonAlertes: 0, erreurs: [], rafales: null, evenement: null, repro: true, graine: true, tirages: true };
+		for (const lundi of Jeu.semainesProposees().map((s) => s.lundi)) {
+			Jeu.chargerSemaine(lundi); Jeu.nouvellePartie();
+			const tirages = Jeu.tirages;
+			Jeu.paquet.forEach((d, n) => {
+				const r = Alertes.reponses(d, n);
+				if (!Alertes.estAlerte(d)) { out.nonAlertes++; if (r.length) out.erreurs.push('non-alerte avec réponses : ' + d.type); return; }
+				out.alertes++;
+				if (r.length < 2 || r.length > Alertes.MAX_REPONSES) out.erreurs.push('nombre de réponses ' + r.length);
+				if (!r.some((x) => x.cible.action)) out.erreurs.push('aucune réponse ne décide du dossier');
+				r.forEach((x) => {
+					const n1 = (x.cible.action ? 1 : 0) + (x.cible.equipe ? 1 : 0);
+					if (n1 !== 1) out.erreurs.push('réponse sans cible unique : ' + x.id);
+					if (x.cible.action && !actions.includes(x.cible.action)) out.erreurs.push('action inconnue ' + x.cible.action);
+					if (x.cible.equipe && !Jeu.TYPES_EQUIPES.includes(x.cible.equipe)) out.erreurs.push('équipe inconnue ' + x.cible.equipe);
+					if (TRADUCTIONS.fr[x.cle] === undefined || TRADUCTIONS.en[x.cle] === undefined) out.erreurs.push('libellé manquant ' + x.cle);
+					// Aucune réponse sans source réelle : chaque trou rempli par une valeur lue dans le dossier ou la météo du jour
+					Object.entries(x.vars).forEach(([k, v]) => { if (v === null || v === undefined || v === '') out.erreurs.push('trou vide ' + k + ' dans ' + x.id); });
+					if (x.vars.evenement && !String(d.texte_source).startsWith(x.vars.evenement)) out.erreurs.push('événement non tiré de la source');
+					if (x.vars.rafales && !/rafale|vent/i.test(d.nature) && Number(String(x.vars.rafales).replace(',', '.')) !== (Jeu.meteoDuJour(d.date) || {}).rafales_max) out.erreurs.push('rafales non tirées des données');
+				});
+				const r2 = Alertes.reponses(d, n);
+				if (r2.map((x) => x.id).join() !== r.map((x) => x.id).join()) out.repro = false;
+				if (d.type === 'alerte météo' && /rafale/.test(d.nature)) out.rafales = r.map((x) => x.id);
+				if (d.type === 'événement' && !out.evenement) out.evenement = { ids: r.map((x) => x.id), vars: r.map((x) => x.vars.evenement).filter(Boolean)[0], src: d.texte_source };
+			});
+			if (Jeu.tirages !== tirages) out.tirages = false; // les réponses ne consomment pas les dés
+		}
+		// Le mélange dépend de la graine (même dossier, autre graine → au moins un ordre différent sur 20)
+		const d = Jeu.paquet.find((x) => Alertes.estAlerte(x));
+		const ordres = new Set(Array.from({ length: 20 }, (_, g) => Alertes.reponses(d, 0, g).map((x) => x.id).join()));
+		out.graine = ordres.size > 1;
+		// Secours (fixture de test, jamais affichée : aucun accident dans les archives du dépôt)
+		Jeu.elementDebloque = () => true;
+		out.secours = Alertes.reponses({ type: 'perturbation', nature: 'incident', texte_source: 'Malaise voyageur', date: '2026-10-12', lignes: ['C1'] }, 0, 1).map((x) => x.cible.equipe || x.cible.action).sort();
+		out.secoursLigne = Alertes.reponses({ type: 'perturbation', nature: 'incident', texte_source: 'Malaise voyageur', date: '2026-10-12', lignes: ['C1'] }, 0, 1).some((x) => x.vars.ligne === 'C1') || Alertes.reponses({ type: 'perturbation', nature: 'incident', texte_source: 'Malaise voyageur', date: '2026-10-12', lignes: ['C1'] }, 0, 1).length === 3;
+		// Pluie forte réelle (12/10/2026 : 7,4 mm) sur une alerte météo du même jour → « dévier » proposé
+		out.pluie = Alertes.reponses({ type: 'alerte météo', nature: 'pluie', valeur: null, date: '2026-10-12' }, 0, 1).map((x) => x.id);
+		// Équipes verrouillées (mode histoire) : plus de réponse « équipe »
+		Jeu.elementDebloque = (x) => x !== 'equipes';
+		out.verrou = Alertes.reponses({ type: 'événement', texte_source: 'Concert — Nantes', date: '2026-10-12' }, 0, 1).every((x) => x.cible.action);
+		Jeu.elementDebloque = () => true;
+		out.perturbation = Alertes.reponses({ type: 'perturbation', nature: 'manifestation', texte_source: 'Manifestation 13/10', date: '2026-10-12' }, 0).length;
+		return out;
+	})()`,
+		fr,
+	);
+	verifier(al.erreurs.length === 0, `alertes : ${al.erreurs.slice(0, 5).join(' · ')}`);
+	verifier(al.alertes > 0 && al.nonAlertes > 0, `alertes : ${al.alertes} alertes, ${al.nonAlertes} autres dans les archives`);
+	verifier(al.repro && al.graine, `alertes : mélange non reproductible (${al.repro}) ou indépendant de la graine (${al.graine})`);
+	verifier(al.tirages, 'alertes : les réponses ne doivent pas consommer les tirages de dés');
+	verifier(al.rafales && al.rafales.includes('pompiers') && !al.rafales.includes('devierPluie'), `alertes : rafales réelles 50,4 km/h → pompiers, pas de pluie (${al.rafales})`);
+	verifier(al.evenement && al.evenement.ids.includes('policeEvenement') && al.evenement.src.startsWith(al.evenement.vars), `alertes : événement réel → police avec son nom (${JSON.stringify(al.evenement)})`);
+	verifier(JSON.stringify(al.secours) === JSON.stringify(['ambulance', 'devier', 'police']) && al.secoursLigne, `alertes : malaise → ambulanciers, police, dévier (${al.secours})`);
+	verifier(al.pluie.includes('devierPluie'), `alertes : pluie réelle 7,4 mm → dévier (${al.pluie})`);
+	verifier(al.verrou, 'alertes : équipes verrouillées → aucune réponse « équipe »');
+	verifier(al.perturbation === 0, 'alertes : une manifestation (perturbation sans secours) garde les actions 1/2/3/0 seules');
+	const sk = readFileSync(join(pub, 'sketch.js'), 'utf8');
+	verifier(/function choisirReponse\(i\)[\s\S]*?decider\(r\.cible\.action\)[\s\S]*?envoyerEquipeIncident\(r\.cible\.equipe\)/.test(sk), 'alertes : la réponse doit appeler decider() ou envoyerEquipeIncident()');
+	verifier(!/\bAlertes\.|alerte\.reponse/.test(readFileSync(join(pub, 'game.js'), 'utf8')), 'alertes : game.js doit rester inchangé');
 }
 
 // Traductions : toute clé française existe en anglais
