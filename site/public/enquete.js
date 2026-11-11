@@ -1,14 +1,14 @@
 /* Nantes en régulation — prompt 50 : découvrir la situation (enquête par les sources).
  * Un dossier arrive comme un SIGNALEMENT vague. Le joueur révèle les faits réels en consultant quatre
- * sources : carte (lignes), info trafic (retard, nature, citation), météo (jour joué), agenda (événements
- * grand public du jour). Chaque consultation dans l'appli coûte 4 s de compteur ; les gestes dans la pièce
- * révèlent aussi : téléphone → agenda, fenêtre → météo, appli Carte de RégulOS → carte.
+ * sources : lignes (numéro + nom réel ; « carte » jusqu'au prompt 73), info trafic (retard, nature, citation),
+ * météo (jour joué), agenda (événements grand public du jour). Chaque consultation dans l'appli coûte 4 s de
+ * compteur ; les gestes dans la pièce révèlent aussi : téléphone → agenda, fenêtre → météo.
  * Rien n'est inventé : seule la mise en scène change ; game.js (effets, dés) est inchangé.
  */
 const ENQ = { dossier: -1, revele: {}, depuis: {} };
 const ENQ_COUT_MS = 4000;
 const SOURCES_ENQ = [
-	{ cle: 'carte', touche: '5' },
+	{ cle: 'lignes', touche: '5' },
 	{ cle: 'trafic', touche: '6' },
 	{ cle: 'meteo', touche: '7' },
 	{ cle: 'agenda', touche: '8' },
@@ -22,10 +22,10 @@ function enqueteDossier() {
 	}
 	return ENQ;
 }
-/** Un dossier est-il connu (carte, liste des lignes) ? Les dossiers déjà traités le sont ; le courant si la carte est consultée */
+/** Un dossier est-il connu (lignes affichées) ? Les dossiers déjà traités le sont ; le courant si la source « Lignes » est consultée */
 function dossierConnu(i) {
 	if (i < Jeu.index) return true;
-	return i === Jeu.index && !!enqueteDossier().revele.carte;
+	return i === Jeu.index && !!enqueteDossier().revele.lignes;
 }
 const enquetePossible = () => ecran === 'jeu' && (phase === 'decision' || phase === 'contradiction') && !!Jeu.dossierCourant();
 
@@ -43,9 +43,18 @@ function revelerSource(cle, payant) {
 	return true;
 }
 
+/** Prompt 73 : ligne(s) du dossier avec leur nom réel (data/lignes.js), ex. « 1 (François Mitterrand / Jamet - …) » */
+function texteLignesSource(d) {
+	return d.lignes
+		.map((n) => {
+			const ln = Jeu.lignes && Jeu.lignes.lignes.find((x) => x.nom === n);
+			return ln && ln.libelle ? n + ' (' + ln.libelle + ')' : n;
+		})
+		.join(', ');
+}
 /** Faits réels d'une source pour le dossier d (une ou deux lignes de texte) */
 function texteSource(cle, d) {
-	if (cle === 'carte') return [d.lignes && d.lignes.length ? t('enq.carte.lignes', { lignes: d.lignes.join(', ') }) : t('enq.carte.inconnue')];
+	if (cle === 'lignes') return [d.lignes && d.lignes.length ? t('enq.lignes.lignes', { lignes: texteLignesSource(d) }) : t('enq.lignes.inconnue')];
 	if (cle === 'trafic')
 		return [
 			(d.retard !== null && d.retard !== undefined ? t('dossier.retard', { retard: d.retard }) : t('dossier.retardInconnu')) + ' · ' + String(d.nature),
@@ -75,10 +84,10 @@ function dessinerEnquete(d, x, base) {
 	fill(C.texte);
 	textFont(POLICE_TEXTE);
 	textStyle(BOLD);
-	const titre = e.revele.carte && d.lignes && d.lignes.length ? t('dossier.ligne', { lignes: d.lignes.join(', ') }) : t('enq.signalement.' + d.type);
+	const titre = e.revele.lignes && d.lignes && d.lignes.length ? t('dossier.ligne', { lignes: d.lignes.join(', ') }) : t('enq.signalement.' + d.type);
 	ajusterTaille(titre, l - 200, 38, 22); // place laissée au tampon « SIGNALEMENT » (prompt 53)
 	text(titre, x + 32, base.y + 78);
-	if (!e.revele.carte || !(d.lignes && d.lignes.length)) dessinerTamponSignalement(x + base.l - 116, base.y + 104);
+	if (!e.revele.lignes || !(d.lignes && d.lignes.length)) dessinerTamponSignalement(x + base.l - 116, base.y + 104);
 	textStyle(NORMAL);
 	textFont(POLICE_DONNEES);
 	textSize(17);

@@ -170,7 +170,7 @@ function draw() {
 	majSoir(); // prompt 69 : crépuscule accéléré, sortie du bureau
 	majDemarrageJour(); // prompt 71 : démarrage du PC en début de journée (jours 1 à 3)
 	avancerTemps(); // horloge simulée, sieste, arrivée des incidents, fin de journée (immersion.js)
-	if (Jeu.equipes) Jeu.majEquipes(millis()); // équipes envoyées depuis la carte (prompt 22)
+	if (Jeu.equipes) Jeu.majEquipes(millis()); // équipes envoyées depuis les signalements (prompts 22, 68)
 	boutons = [];
 	// 1. Contenu de l'écran du PC, en 1920×1080 : l'appli de régulation, ou le système (démarrage, bureau)
 	ciblesGuide = {}; // prompt 37 : cibles des flèches, relevées pendant le dessin
@@ -311,7 +311,6 @@ function decider(action) {
 	const mesures = { dureeMs: Math.max(0, millis() - arriveeDossier), sources: typeof enqueteDossier === 'function' ? Object.keys(enqueteDossier().revele).length : 0 };
 	dernierResultat = Jeu.decider(action, sourceChoisie);
 	if (!dernierResultat) return;
-	traceDecision(dernierResultat); // prompt 68 : repère vert ou orange qui s'efface sur la carte
 	if (action !== 'temps') Object.assign(dernierResultat, mesures);
 	else dernierResultat.sources = mesures.sources;
 	const dj = dernierResultat.deltas.map((v, i) => t('jaugeTitre.' + ['fluidite', 'reputation', 'budget'][i]) + ' ' + (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v)).join(', ');
@@ -396,8 +395,8 @@ function fenetreReprise() {
 // Écran de jeu (Q1–Q10, Q29, Q30, Q45)
 // =====================================================================
 const GAUCHE = { x: 40, y: 40, l: 1160, h: 1000 };
-const CARTE = { x: 60, y: 110, l: 760, h: 910 };
-const LISTE = { x: 840, y: 110, l: 340, h: 910 };
+const FILE_SIG = { x: 60, y: 110, l: 760, h: 910 }; // prompt 73 : la liste des signalements remplace la carte
+const LISTE = { x: 840, y: 110, l: 340, h: 910 }; // lignes concernées, objectif du jour, équipes
 const DROITE = { x: 1230, y: 40, l: 650, h: 1000 };
 
 function dossierCourant() {
@@ -422,7 +421,7 @@ function dessinerJeu() {
 	const d = dossierCourant();
 	const meteo = d ? Jeu.meteoDuJour(d.date) : null;
 
-	// Panneau gauche : en-tête, carte, liste des lignes
+	// Panneau gauche : en-tête, liste des signalements, lignes concernées (prompt 73 : plus de carte)
 	panneau(GAUCHE.x, GAUCHE.y, GAUCHE.l, GAUCHE.h);
 	textAlign(LEFT, TOP);
 	noStroke();
@@ -459,10 +458,7 @@ function dessinerJeu() {
 		text(t('jeu.horsLigne'), ox - 10, GAUCHE.y + 30);
 	}
 
-	dessinerDecor(CARTE, meteo, 1, true);
-	dessinerLignesEtat(CARTE, d);
-	dessinerBandeauEquipes(); // prompt 68
-	commandesCarte(); // zoom de la carte
+	dessinerFileSignalements(FILE_SIG); // prompt 73
 	dessinerListeLignes(LISTE, d);
 
 	// Panneau droit : jauges, puis selon la phase : signalement en file (prompt 68), conflit, dossier ou narration
@@ -473,10 +469,8 @@ function dessinerJeu() {
 	else dessinerDossier(d, meteo);
 }
 
-/* Écran de jeu sans incident actif : carte + liste, horloge simulée à droite ; mail en fin de journée */
+/* Écran de jeu sans incident actif : liste des signalements + lignes, horloge simulée à droite ; mail en fin de journée */
 function dessinerJeuAttente() {
-	const j = Jeu.jourCourant();
-	const meteo = j ? Jeu.meteoDuJour(j.date) : null;
 	panneau(GAUCHE.x, GAUCHE.y, GAUCHE.l, GAUCHE.h);
 	textAlign(LEFT, TOP);
 	noStroke();
@@ -490,10 +484,7 @@ function dessinerJeuAttente() {
 	ajusterTaille(enteteMode(), 470, 20);
 	fill(C.gris);
 	text(enteteMode(), GAUCHE.x + 260, GAUCHE.y + 30);
-	dessinerDecor(CARTE, meteo, 1, true);
-	dessinerLignesEtat(CARTE, null);
-	dessinerBandeauEquipes(); // prompt 68
-	commandesCarte(); // zoom de la carte
+	dessinerFileSignalements(FILE_SIG); // prompt 73
 	dessinerListeLignes(LISTE, null);
 	dessinerJauges();
 	dessinerAttente();
@@ -510,88 +501,15 @@ function enteteMode() {
 	return '';
 }
 
-// ——— Décor en couches : eau (1), relief léger des quais (2), météo du jour (Q8, Q30) ———
-// ——— Carte de l'appli Régulation : zoom (molette centrée sur le curseur, + / −, ⟲) et déplacement (glisser) ———
-const CARTE_VUE = { k: 1, px: 0, py: 0, prise: null };
-const ZOOM_MAX = 6;
-function zoomerProjection(p, zone) {
-	const v = CARTE_VUE;
-	const zx = zone.x + zone.l / 2;
-	const zy = zone.y + zone.h / 2;
-	return { x: (lon) => zx + (p.x(lon) - zx) * v.k + v.px, y: (lat) => zy + (p.y(lat) - zy) * v.k + v.py };
-}
-function bornerCarte() {
-	const v = CARTE_VUE;
-	const mx = ((v.k - 1) * CARTE.l) / 2;
-	const my = ((v.k - 1) * CARTE.h) / 2;
-	v.px = constrain(v.px, -mx, mx);
-	v.py = constrain(v.py, -my, my);
-	if (v.k <= 1) (v.px = 0), (v.py = 0);
-}
-/** Zoom autour du point (mx, my) de l'écran du PC — par défaut le centre de la carte */
-function zoomerCarte(facteur, mx, my) {
-	const v = CARTE_VUE;
-	const zx = CARTE.x + CARTE.l / 2;
-	const zy = CARTE.y + CARTE.h / 2;
-	const ax = mx === undefined ? zx : mx;
-	const ay = my === undefined ? zy : my;
-	const k2 = constrain(v.k * facteur, 1, ZOOM_MAX);
-	v.px = ax - zx - ((ax - zx - v.px) * k2) / v.k;
-	v.py = ay - zy - ((ay - zy - v.py) * k2) / v.k;
-	v.k = k2;
-	bornerCarte();
-}
-function reinitialiserCarte() {
-	CARTE_VUE.k = 1;
-	CARTE_VUE.px = 0;
-	CARTE_VUE.py = 0;
-}
-const carteVisible = () => vue === 'poste' && PC.etat === 'appli' && ecran === 'jeu' && phase !== 'fin' && !fenetre && !smsActif;
-/** Molette au-dessus de la carte : zoom (renvoie true si l'événement est consommé) */
-function zoomCarteMolette(delta) {
-	if (!carteVisible()) return false;
-	const m = sourisAppli();
-	if (m.x < CARTE.x || m.x > CARTE.x + CARTE.l || m.y < CARTE.y || m.y > CARTE.y + CARTE.h) return false;
-	zoomerCarte(delta < 0 ? 1.2 : 1 / 1.2, m.x, m.y);
-	return true;
-}
-/** Commandes du zoom (dans la carte) + glisser pour se déplacer ; appelé dans le contexte de l'écran du PC */
-function commandesCarte() {
-	const v = CARTE_VUE;
-	if (v.prise) {
-		if (mouseIsPressed) {
-			v.px = v.prise.px + (mouseX - v.prise.x);
-			v.py = v.prise.py + (mouseY - v.prise.y);
-			bornerCarte();
-		} else v.prise = null;
-	}
-	if (v.k > 1) boutons.push({ x: CARTE.x, y: CARTE.y, l: CARTE.l, h: CARTE.h, action: () => (v.prise = { x: sourisAppli().x, y: sourisAppli().y, px: v.px, py: v.py }) });
-	const bx = CARTE.x + CARTE.l - 64;
-	[['+', () => zoomerCarte(1.4)], ['−', () => zoomerCarte(1 / 1.4)], ['⟲', reinitialiserCarte]].forEach(([lib, act], i) => bouton(bx, CARTE.y + 16 + i * 56, 48, 48, lib, act, false, true));
-	if (v.k > 1) {
-		noStroke();
-		textFont(POLICE_DONNEES);
-		textSize(15);
-		fill(C.gris);
-		textAlign(RIGHT, TOP);
-		text(t('carte.zoom', { k: v.k.toFixed(1).replace('.', Langue.actuelle === 'fr' ? ',' : '.') }), bx - 10, CARTE.y + 20);
-	}
-}
-
-function dessinerDecor(zone, meteo, opacite, avecCadre, sansLegende) {
+// ——— Décor d'ambiance (écran de fin) : eau, lignes en filigrane, météo — prompt 73 : plus de carte dans l'écran de jeu ———
+function dessinerDecor(zone, meteo, opacite, sansLegende) {
 	projection = projeter(zone);
-	if (avecCadre && zone === CARTE) projection = zoomerProjection(projection, zone); // carte de l'appli : zoom
 	push();
 	drawingContext.save();
 	drawingContext.beginPath();
 	drawingContext.rect(zone.x, zone.y, zone.l, zone.h);
 	drawingContext.clip();
 
-	if (avecCadre) {
-		noStroke();
-		fill(C.fond);
-		rect(zone.x, zone.y, zone.l, zone.h, 8);
-	}
 	// Couche 1 : eau (Loire, Erdre, Sèvre — occupation du sol 2022), ombre douce = couche 2 « quais »
 	if (Jeu.lignes && Jeu.lignes.eau) {
 		const eau = color(C.eau);
@@ -612,8 +530,8 @@ function dessinerDecor(zone, meteo, opacite, avecCadre, sansLegende) {
 			endShape(CLOSE);
 		}
 	}
-	// Lignes en filigrane sur l'accueil
-	if (!avecCadre && Jeu.lignes) {
+	// Lignes en filigrane (fond d'ambiance)
+	if (Jeu.lignes) {
 		noFill();
 		for (const l of Jeu.lignes.lignes) {
 			stroke(28, 39, 51, l.type === 0 ? 70 * opacite : 30 * opacite);
@@ -621,7 +539,7 @@ function dessinerDecor(zone, meteo, opacite, avecCadre, sansLegende) {
 			l.traces.forEach(tracer);
 		}
 	}
-	if (!avecCadre) dessinerMeteo(zone, meteo, opacite, sansLegende, false); // prompt 49 : plus aucune météo sur la carte de l'appli (ni pictos, ni ligne chiffrée)
+	dessinerMeteo(zone, meteo, opacite, sansLegende, false);
 	drawingContext.restore();
 	pop();
 }
@@ -647,7 +565,7 @@ function dessinerMeteo(zone, m, opacite, sansLegende, sansPictos) {
 	textAlign(LEFT, CENTER);
 	text(txt, zone.x + 24, zone.y + zone.h - 28);
 }
-/** Soleil, nuages, pluie et vent dessinés (fonds d'ambiance : accueil, fin) — plus sur la carte de l'appli */
+/** Soleil, nuages, pluie et vent dessinés (fond d'ambiance de l'écran de fin) */
 function dessinerPictosMeteo(zone, m, opacite, pluie, vent, chaud) {
 	// Soleil (journée sèche) ou nuages (pluie)
 	if (pluie < 1) {
@@ -689,62 +607,6 @@ function dessinerPictosMeteo(zone, m, opacite, pluie, vent, chaud) {
 	}
 }
 
-// ——— Carte : état des lignes (Q29) — vert à l'heure, orange retard, rouge clignotant incident actif ———
-function etatsLignes(dActuel) {
-	const etats = new Map();
-	// Prompt 50 : seuls les dossiers déjà traités, et le dossier courant une fois la carte consultée
-	(Jeu.etat.dossiers || []).forEach((d, i) => i < Jeu.index && (d.lignes || []).forEach((n) => etats.set(n, 'retard')));
-	if (dActuel && dossierConnu(Jeu.index)) (dActuel.lignes || []).forEach((n) => etats.set(n, 'incident'));
-	return etats;
-}
-
-function dessinerLignesEtat(zone, d) {
-	if (!Jeu.lignes) return;
-	const etats = etatsLignes(d);
-	push();
-	drawingContext.save();
-	drawingContext.beginPath();
-	drawingContext.rect(zone.x, zone.y, zone.l, zone.h);
-	drawingContext.clip();
-	noFill();
-	// Lignes « à l'heure » d'abord, puis retard, puis incident (au-dessus)
-	const ordre = { undefined: 0, retard: 1, incident: 2 };
-	const liste = Jeu.lignes.lignes.slice().sort((a, b) => ordre[etats.get(a.nom)] - ordre[etats.get(b.nom)]);
-	for (const l of liste) {
-		const e = etats.get(l.nom);
-		if (e === 'incident') {
-			// Prompt 53 : la ligne du dossier pulse doucement (épaisseur et opacité), sans clignotement sec
-			const p = pulsationDouce(1.2);
-			const c = color(C.rouge);
-			c.setAlpha(255 * (0.6 + 0.4 * p));
-			stroke(c);
-			strokeWeight(4 + 5 * p);
-		} else if (e === 'retard') {
-			stroke(C.orange);
-			strokeWeight(5);
-		} else {
-			const v = color(C.vert);
-			v.setAlpha(l.type === 0 ? 200 : 90);
-			stroke(v);
-			strokeWeight(l.type === 0 ? 3 : 1.2);
-		}
-		l.traces.forEach(tracer);
-	}
-	// Prompt 68 : ligne mise en surbrillance depuis la légende, puis repères (incident, file, équipes, traces)
-	if (SELECTION.surbrillance) {
-		const ls = Jeu.lignes.lignes.find((l) => l.nom === SELECTION.surbrillance);
-		if (ls) {
-			stroke('#ffffff');
-			strokeWeight(7);
-			ls.traces.forEach(tracer);
-		}
-	}
-	noStroke();
-	dessinerReperesCarte();
-	drawingContext.restore();
-	pop();
-}
-
 // ——— Liste des lignes : alertes d'abord, puis retard décroissant (Q45) ———
 function dessinerListeLignes(zone, dActuel) {
 	const parLigne = new Map();
@@ -772,7 +634,7 @@ function dessinerListeLignes(zone, dActuel) {
 	fill(C.texte);
 	text(t('lignes.titre'), zone.x + 18, zone.y + 16);
 	textStyle(NORMAL);
-	// Prompt 68 : légende repliable ; un clic sur une ligne la met en surbrillance sur la carte
+	// Prompt 68 : légende repliable ; prompt 73 : un clic sur une ligne met en surbrillance ses signalements dans la file
 	bouton(zone.x + zone.l - 74, zone.y + 10, 56, 36, SELECTION.legendeRepliee ? '▸' : '▾', () => (SELECTION.legendeRepliee = !SELECTION.legendeRepliee), false, true);
 	textAlign(LEFT, TOP); // bouton() laisse un alignement centré
 	let y = zone.y + 58;
@@ -781,14 +643,14 @@ function dessinerListeLignes(zone, dActuel) {
 		textSize(18);
 		textLeading(26);
 		fill(C.gris);
-		// Prompt 50 : tant que la carte n'est pas consultée, aucune ligne n'est connue
+		// Prompt 50 : tant que la source « Lignes » n'est pas consultée, aucune ligne n'est connue
 		const dC = Jeu.dossierCourant ? Jeu.dossierCourant() : null;
 		const semaineSansLigne = !(Jeu.paquet || []).some((x) => x.lignes && x.lignes.length);
 		const cache = !semaineSansLigne || (dC && dC.lignes && dC.lignes.length && !dossierConnu(Jeu.index));
 		text(t(cache ? 'lignes.aConsulter' : 'lignes.aucune').replace(/\n/g, ' '), zone.x + 18, y, zone.l - 36, 220);
 		y += 230;
 	}
-	for (const it of items.slice(0, Jeu.objectifDuJour ? 10 : 14)) {
+	for (const it of items.slice(0, 5)) {
 		const actif = actives.has(it.nom);
 		const couleur = actif ? C.rouge : C.orange;
 		fill(couleur);
@@ -815,7 +677,7 @@ function dessinerListeLignes(zone, dActuel) {
 	if (Jeu.objectifDuJour) {
 		const o = Jeu.objectifDuJour();
 		const mod = Jeu.modificateurActif() ? Jeu.modificateur : null;
-		const by = zone.y + zone.h - 250;
+		const by = zone.y + 340;
 		fill(mod ? C.orange : C.accent);
 		rect(zone.x + 18, by, zone.l - 36, 4);
 		textFont(POLICE_TEXTE);
@@ -826,22 +688,8 @@ function dessinerListeLignes(zone, dActuel) {
 		fill(mod ? C.orange : C.gris);
 		text(mod ? mod.libelle + (mod.actionBloquee ? t('bandeau.bloquee', { action: Jeu.REGLAGES.effets[mod.actionBloquee].nom }) : '') + ' · ' + Math.ceil((mod.fin - millis()) / 1000) + ' s' : t('bandeau.aucunMod'), zone.x + 18, by + 92, zone.l - 36, 50);
 	}
-	// Légende
-	const ly = zone.y + zone.h - 120;
-	textFont(POLICE_DONNEES);
-	textSize(16);
-	[
-		[C.vert, t('legende.heure')],
-		[C.orange, t('legende.retard')],
-		[C.rouge, t('legende.actif') + (reduireAnimations ? '' : t('legende.clignote'))],
-	].forEach(([c, lib], i) => {
-		stroke(c);
-		strokeWeight(6);
-		line(zone.x + 18, ly + i * 32 + 10, zone.x + 58, ly + i * 32 + 10);
-		noStroke();
-		fill(C.texte);
-		text(lib, zone.x + 70, ly + i * 32);
-	});
+	// Prompt 73 : équipes en texte (disponibilités, en route / sur place / retour) à la place de la légende de la carte
+	dessinerEtatEquipes(zone.x + 18, zone.y + 520, zone.l - 36);
 }
 
 // ——— Jauges : 3 barres horizontales compactes en bandeau (Q7) ———
@@ -1056,12 +904,16 @@ function dessinerReponsesAlerte(d, x, base) {
 		text(toucheReponse(r), x + 32 + 44, by + 28);
 		textStyle(NORMAL);
 		textFont(POLICE_TEXTE);
-		textSize(17);
-		textLeading(21);
-		textAlign(LEFT, CENTER);
+		textAlign(LEFT, TOP);
 		fill(off ? 'rgba(255,255,255,0.5)' : '#FFFFFF');
 		const lib = libelleReponse(r) + (envoyee ? ' — ' + t('alerte.equipeEnvoyee') : '') + (r.cible.action && r.cible.action === bloquee ? t('dossier.indispo') : '');
-		text(lib, x + 32 + 92, by + 3, l - 108, 50);
+		// Deux lignes au plus : la taille baisse jusqu'à ce que le libellé tienne, centré verticalement
+		const lt = l - 116;
+		textSize(17);
+		while (textSize() > 13 && textWidth(lib) > lt * 1.6) textSize(textSize() - 1);
+		const nl = textWidth(lib) > lt * 0.98 ? 2 : 1;
+		textLeading(textSize() + 4);
+		text(lib, x + 32 + 92, by + (56 - nl * (textSize() + 4)) / 2, lt, 52);
 		if (i === ALERTE.focus) {
 			noFill();
 			stroke(C.orange);
@@ -1211,7 +1063,7 @@ function dessinerFin() {
 	noStroke();
 	fill(amb.fond);
 	rect(0, 0, L, H);
-	dessinerDecor({ x: 0, y: 0, l: L, h: H }, amb.meteo, b.type === 'mauvaise' ? 0.45 : 0.6, false, true);
+	dessinerDecor({ x: 0, y: 0, l: L, h: H }, amb.meteo, b.type === 'mauvaise' ? 0.45 : 0.6, true);
 
 	// Panneau gauche : la fin, le texte, les jauges
 	const g = { x: 80, y: 70, l: 860, h: 940 };
@@ -1559,9 +1411,6 @@ function keyPressed() {
 		if (key === 'h' || key === 'H' || key === '?') ouvrir('aide');
 		return false;
 	}
-	// Zoom de la carte : + et − (au poste, dans l'appli)
-	if ((key === '+' || key === '=') && carteVisible()) return zoomerCarte(1.4), false;
-	if ((key === '-' || key === '_') && carteVisible()) return zoomerCarte(1 / 1.4), false;
 	// Prompt 36 : I ouvre / ferme l'app flottante « Indicateurs » (au poste)
 	if (key === 'i' || key === 'I') return basculerIndicateurs(), false;
 	// Au poste, système du PC (bureau RégulOS) : Tab = icônes, Entrée = ouvrir, Échap = fermer l'app puis se lever
@@ -1619,8 +1468,8 @@ function keyPressed() {
 		if (keyCode === ENTER || keyCode === RETURN) ouvrirMenuPrincipal(); // prompt 35 : plus d'accueil dans le PC
 	} else if (toucheEquipes()) {
 		// prompt 68 : Maj + 1/2/3/4 envoie une équipe sur l'incident
-	} else if (phase === 'selection' && (keyCode === ENTER || keyCode === RETURN || key === ' ')) {
-		selectionnerIncident(); // prompt 68 : prendre le signalement, le compteur démarre
+	} else if (toucheFileSignalements()) {
+		// prompt 73 : ↑ ↓ choisissent un signalement de la file, Entrée le prend (le compteur démarre)
 	} else if ((phase === 'decision' || phase === 'contradiction') && toucheEnquete()) {
 		// prompt 50 : 5 à 8 consultent une source
 	} else if (phase === 'decision') {
@@ -1644,7 +1493,6 @@ function keyPressed() {
 // Prompt 26 : au poste, la molette fait quitter le PC (anti-rebond dans bureau.js) ; ailleurs, scroll normal
 function mouseWheel(event) {
 	interaction();
-	if (zoomCarteMolette(event.delta)) return false; // molette au-dessus de la carte : zoom (avant la sortie du PC)
 	if (scrollSortiePC(event.delta)) return false;
 }
 

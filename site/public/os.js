@@ -6,7 +6,7 @@
 const PC = { etat: 'eteint', debut: 0, selection: 0, fenetre: null, message: '', flottant: false };
 // Prompt 36 : grille d'icônes agrandie et barre des tâches plus haute
 const GRILLE_OS = { x: 36, y: 36, l: 200, h: 200, ecart: 16, lignes: 4, echelle: 1.35 };
-const BARRE_OS = 84; // etat : 'eteint' | 'demarrage' | 'os' | 'appli' ; fenetre : null | 'patron' | 'carte' | 'community' | 'journal'
+const BARRE_OS = 84; // etat : 'eteint' | 'demarrage' | 'os' | 'appli' ; fenetre : null | 'patron' | 'community' | 'journal' | 'corbeille'
 const DUREE_DEMARRAGE = 3400;
 let gFondOS = null;
 
@@ -127,8 +127,8 @@ function dessinerOS() {
 		rect(x + g.l / 2 - tl / 2, y + 138, tl, 36);
 		dsTexte(ic.nom, x + g.l / 2, y + 142, 22, DS.blanc, 'center');
 		boutons.push({ x, y, l: g.l, h: g.h, action: () => ouvrirIconeOS(i) });
-		if (i === 0) cibleGuide('iconeCarte', x, y, g.l, g.h); // prompt 37 ; prompt 68 : la Carte est la première icône
-		if (i === 1) cibleGuide('iconesOS', x, y, g.l * 2 + g.ecart, g.h * 3 + g.ecart * 2); // patron, carte, community, journal, indicateurs
+		if (i === 0) cibleGuide('iconeSignalements', x, y, g.l, g.h); // prompt 37 ; prompts 68 / 73 : « Signalements » est la première icône
+		if (i === 1) cibleGuide('iconesOS', x, y, g.l * 2 + g.ecart, g.h * 3 + g.ecart * 2); // patron, community, journal, indicateurs, corbeille
 		const b = ic.cle === 'indicateurs' ? (PC.flottant ? '●' : '') : badgeIcone(ic.cle);
 		if (b) dsBadge(x + g.l - 34, y + 20, b, ic.cle === 'indicateurs' ? 'succes' : 'erreur');
 	});
@@ -210,7 +210,7 @@ function dessinerBarreTaches() {
 		const i = ICONES_OS.indexOf(ic);
 		const k = ICONES_OS.filter((x) => x.cle !== 'corbeille').indexOf(ic);
 		const x = 164 + k * 84;
-		const actif = (ic.cle === 'carte' && PC.etat === 'appli') || PC.fenetre === ic.cle || (ic.cle === 'indicateurs' && PC.flottant);
+		const actif = (ic.cle === 'signalements' && PC.etat === 'appli') || PC.fenetre === ic.cle || (ic.cle === 'indicateurs' && PC.flottant);
 		fill(actif ? DS.blanc15 : DS.blanc05);
 		rect(x, tb + 8, 76, BARRE_OS - 16);
 		if (actif) {
@@ -319,7 +319,7 @@ function dessinerFermerAppli() {
 // Le temps ne s'arrête pas pendant la lecture d'une app (comme les livres du prompt 20).
 // =====================================================================
 const ICONES_OS = [
-	{ cle: 'carte', nom: T('app.carte'), dessin: (x, y, s) => iconePixel(x, y, s, 'carte') }, // prompt 68 : la Carte est l'écran de jeu (l'appli Régulation n'existe plus)
+	{ cle: 'signalements', nom: T('app.signalements'), dessin: (x, y, s) => iconePixel(x, y, s, 'signalements') }, // prompts 68 / 73 : l'écran de jeu (ex-« Carte », plus de carte)
 	{ cle: 'patron', nom: T('app.patron'), dessin: (x, y, s) => iconePixel(x, y, s, 'enveloppe') },
 	{ cle: 'community', nom: T('app.community'), dessin: (x, y, s) => iconePixel(x, y, s, 'bulle') },
 	{ cle: 'journal', nom: T('app.journal'), dessin: (x, y, s) => iconePixel(x, y, s, 'livre') },
@@ -330,11 +330,10 @@ const ICONES_OS = [
 function ouvrirIconeOS(i) {
 	PC.selection = i;
 	const cle = ICONES_OS[i].cle;
-	if (cle === 'carte') return ouvrirAppli(); // prompt 68 : la Carte ouvre l'écran de jeu
+	if (cle === 'signalements') return ouvrirAppli(); // prompts 68 / 73 : « Signalements » ouvre l'écran de jeu
 	if (cle === 'indicateurs') return basculerIndicateurs(); // prompt 36 : app flottante
 	if (cle === 'donnees') return ouvrirDonnees(); // prompt 61 : appli plein écran
 	if (PC.etat === 'appli') PC.etat = 'os';
-	if (cle === 'carte' && typeof revelerSource === 'function') revelerSource('carte', false); // prompt 50
 	PC.fenetre = PC.fenetre === cle ? null : cle; // re-cliquer l'icône active referme l'app
 	PC.message = '';
 	if (PC.fenetre && Jeu.nonLus && Jeu.nonLus[cle] !== undefined) Jeu.nonLus[cle] = 0;
@@ -344,7 +343,7 @@ function fermerFenetreApp() {
 	PC.fenetre = null;
 }
 function badgeIcone(cle) {
-	if (cle === 'carte') return typeof incidentActif === 'function' && (incidentActif() || phase === 'mail') ? '!' : ''; // prompt 68
+	if (cle === 'signalements') return typeof incidentActif === 'function' && (incidentActif() || phase === 'mail') ? '!' : ''; // prompt 68
 	if (!Jeu.nonLus) return '';
 	return Jeu.nonLus[cle] ? String(Jeu.nonLus[cle]) : '';
 }
@@ -368,17 +367,18 @@ function iconePixel(x, y, s, type) {
 		rect(12, 22, 56, 38);
 		fill(DS.primaire);
 		for (let k = 0; k < 7; k++) rect(16 + k * 4, 26 + k * 3, 4, 4), rect(60 - k * 4, 26 + k * 3, 4, 4);
-	} else if (type === 'carte') {
-		fill('#2b3a4a');
-		rect(10, 10, 60, 60);
-		fill(DS.info);
-		rect(10, 40, 60, 8); // la Loire
-		fill(DS.blanc50);
-		rect(36, 10, 4, 60);
-		rect(10, 24, 60, 3);
+	} else if (type === 'signalements') {
+		// Prompt 73 : une liste de signalements (pastille de gravité + deux traits), plus de carte
+		[DS.primaire, '#FFC138', DS.blanc50].forEach((c, k) => {
+			fill(c);
+			rect(12, 14 + k * 19, 8, 13);
+			fill(DS.blanc);
+			rect(26, 15 + k * 19, 42 - k * 6, 4);
+			fill(DS.blanc50);
+			rect(26, 22 + k * 19, 30 - k * 4, 3);
+		});
 		fill(DS.primaire);
-		rect(22, 28, 10, 10);
-		rect(50, 52, 8, 8);
+		rect(12, 66, 56, 4);
 	} else if (type === 'bulle') {
 		fill(DS.blanc);
 		rect(10, 14, 60, 38);
@@ -603,7 +603,7 @@ function enqueteJournal(z, e, j) {
 	if (v === 'passe') {
 		lignes.push(t('journal.type', { type: tSi('type.' + d.type, d.type) }));
 		lignes.push(t('journal.nature', { nature: d.nature }));
-		lignes.push(d.lignes && d.lignes.length ? t('dossier.ligne', { lignes: d.lignes.join(', ') }) : t('enq.carte.inconnue'));
+		lignes.push(d.lignes && d.lignes.length ? t('dossier.ligne', { lignes: d.lignes.join(', ') }) : t('enq.lignes.inconnue'));
 		lignes.push(d.retard !== null && d.retard !== undefined ? t('dossier.retard', { retard: d.retard }) : t('dossier.retardInconnu'));
 		lignes.push(t('dossier.citation', { texte: d.texte_source }));
 		lignes.push(t('journal.source', { source: d.source, date: dateLongue(d.date) + (d.heure ? ' · ' + d.heure : '') }));
@@ -642,24 +642,6 @@ function enqueteJournal(z, e, j) {
 	});
 }
 const signe = (v) => (v > 0 ? '+' + v : v < 0 ? '−' + Math.abs(v) : '0');
-
-// ——— Carte : position d'une ligne = centre réel de son tracé (data/lignes.json) ———
-const cacheCentres = new Map();
-function centreLigne(nom) {
-	if (cacheCentres.has(nom)) return cacheCentres.get(nom);
-	const l = Jeu.lignes && Jeu.lignes.lignes.find((x) => x.nom === nom);
-	let c = null;
-	if (l) {
-		let sx = 0;
-		let sy = 0;
-		let n = 0;
-		l.traces.forEach((t) => t.forEach((p) => ((sx += p[0]), (sy += p[1]), n++)));
-		c = [sx / n, sy / n];
-	}
-	cacheCentres.set(nom, c);
-	return c;
-}
-
 
 // =====================================================================
 // Prompt 36 — Corbeille (plaintes traitées) et app flottante « Indicateurs »

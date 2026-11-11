@@ -53,7 +53,7 @@ Auteurs : [À COMPLÉTER]
 
 # Le système
 
-- Un dossier arrive comme un **signalement vague** ; le joueur **enquête** (carte, info trafic, météo, agenda — ou dans la pièce : téléphone, fenêtre), chaque source coûte 4 s
+- Un dossier arrive comme un **signalement vague** ; le joueur **enquête** (lignes, info trafic, météo, agenda — ou dans la pièce : téléphone, fenêtre), chaque source coûte 4 s
 - **4 décisions** : dévier la ligne, retenir en terminus, bus de renfort, ne rien faire
 - **3 jauges** : fluidité, réputation, budget ; score sur 300
 - **3 fins** selon le score : bonne (≥ 240), moyenne (≥ 150), mauvaise ; une **démission** possible si les trois jauges passent sous 20
@@ -64,7 +64,7 @@ Auteurs : [À COMPLÉTER]
 # L'œuvre
 
 - Une pièce en pixel art, vue depuis la chaise : baie sur la ville, la Loire, la grue Titan
-- Un PC avec son système, **RégulOS** : **carte** (appli de jeu : incidents, file, équipes limitées), patron, community, journal, indicateurs, **données**
+- Un PC avec son système, **RégulOS** : **signalements** (appli de jeu : liste des incidents, file, équipes limitées), patron, community, journal, indicateurs, **données**
 - Une journée de travail : on la termine à **l'horloge**, le **sablier** fait passer le temps, le **café** fait monter l'adrénaline
 - Le soir, un mail ; en fin de semaine, un **rapport papier** et le bilan du patron
 

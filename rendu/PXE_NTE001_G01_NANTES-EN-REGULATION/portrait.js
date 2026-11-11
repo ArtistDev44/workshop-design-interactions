@@ -1,7 +1,7 @@
 /* Nantes en régulation — prompt 60, sous-étape 60b : mise en page portrait dédiée (téléphone tenu droit).
  * Principe : RECOMPOSITION. Le jeu continue de dessiner en 1920×1080 (ordinateur et paysage inchangés) ; en
  * portrait, un second canevas 1080×1920 recompose, à chaque image, des régions de cette image empilées :
- *   appli Régulation : jauges (fixes) / carte + lignes, dossier avec sources, compteur et actions (défilables,
+ *   appli Signalements : jauges (fixes) / liste des signalements + lignes, dossier avec sources, compteur et actions (défilables,
  *     défilement automatique vers le dossier à son arrivée) / barre des tâches et « Se lever » (fixes) ;
  *   fenêtres : recadrées à leur largeur ; téléphone et tasse en main : recadrés sur l'objet ; menu : sa colonne ;
  *   bureau : la pièce en haut, et tous les objets en grosses cibles tactiles en dessous (≥ 96 px).
@@ -110,7 +110,7 @@ function composerPortrait() {
 	}
 }
 
-/** Appli Régulation : jauges fixes, puis carte + lignes et dossier (défilables), barre des tâches + « Se lever » fixes */
+/** Appli Signalements : jauges fixes, puis liste des signalements + lignes et dossier (défilables), barre des tâches + « Se lever » fixes */
 function regionsAppli() {
 	const hj = region(appliVersImage({ x: DROITE.x, y: DROITE.y, l: DROITE.l, h: 110 }), 20, 12, PL - 40);
 	const haut = 12 + hj + 10;
@@ -118,11 +118,15 @@ function regionsAppli() {
 	PORTRAIT.hautDefil = haut;
 	PORTRAIT.basDefil = bas;
 	let y = haut;
-	y += region(appliVersImage({ x: CARTE.x, y: CARTE.y, l: LISTE.x + LISTE.l - CARTE.x, h: CARTE.h }), 20, y, PL - 40, true) + 16;
+	// Prompt 73 : la liste des signalements en haut (hauteur selon le nombre de signalements), le dossier dessous,
+	// puis la colonne lignes / objectif / équipes
+	const nSig = Math.max(1, Math.min(typeof fileIncidents === 'function' ? fileIncidents().length : 1, 7));
+	y += region(appliVersImage({ x: FILE_SIG.x, y: FILE_SIG.y, l: FILE_SIG.l, h: Math.min(FILE_SIG.h, 130 + nSig * 122) }), 20, y, PL - 40, true) + 16;
 	const yDossier = y;
-	y += region(appliVersImage({ x: DROITE.x, y: DROITE.y + 130, l: DROITE.l, h: DROITE.h - 130 }), 20, y, PL - 40, true);
+	y += region(appliVersImage({ x: DROITE.x, y: DROITE.y + 130, l: DROITE.l, h: DROITE.h - 130 }), 20, y, PL - 40, true) + 16;
+	y += region(appliVersImage(LISTE), (PL - 560) / 2, y, 560, true);
 	PORTRAIT.defilMax = Math.max(0, y - bas);
-	// Défilement automatique : vers le dossier à son arrivée, vers la carte quand on attend
+	// Défilement automatique : vers le dossier à son arrivée, vers la liste des signalements quand on attend
 	const enDossier = ['decision', 'contradiction', 'conflit', 'narration'].includes(phase);
 	const cle = enDossier ? Jeu.index : -1;
 	if (cle !== PORTRAIT.dernierDossier) {

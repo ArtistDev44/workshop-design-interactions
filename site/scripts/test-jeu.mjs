@@ -463,6 +463,47 @@ verifier(eq.policeAvant === 1 && eq.policeMatin === 2, `équipes : effectifs non
 	verifier(!/\bAlertes\.|alerte\.reponse/.test(readFileSync(join(pub, 'game.js'), 'utf8')), 'alertes : game.js doit rester inchangé');
 }
 
+// Prompt 73 : plus de carte — liste de signalements ; prendre un signalement hors tête de file ne casse rien
+{
+	const cs = contexte('fr');
+	// Couche d'affichage chargée avec des bouchons minimaux (pas de p5) : seules les fonctions de file sont appelées
+	vm.runInContext('var ecran = "jeu", phase = "selection", DROITE = {}, ENQ_STUB = 0; function millis() { return 1000; } function facteurLecture() { return 1; }', cs);
+	for (const f of ['enquete.js', 'carte.js']) vm.runInContext(readFileSync(join(pub, f), 'utf8'), cs, { filename: f });
+	const r = vm.runInContext(
+		`(() => {
+		Jeu.chargerSemaine('2026-11-02'); Jeu.nouvellePartie(); Jeu.elementDebloque = () => true; Jeu.jauges.budget = 100;
+		const j = Jeu.jourCourant();
+		Jeu.horloge.minutes = j.dossiers[2].minute;
+		const f = fileIncidents();
+		const avant = f.map((x) => x.d);
+		Jeu.envoyerEquipe(0, 'police', 1000); // équipe envoyée sur la tête de file (phase sélection)
+		amenerEnTete(f[2].index);
+		const ordre = [Jeu.paquet[0] === avant[2], Jeu.paquet[1] === avant[0], Jeu.paquet[2] === avant[1]];
+		const equipeSuit = Jeu.paquet[Jeu.equipes[0].index] === avant[0];
+		const arrivees = Object.keys(SELECTION.arrivees).length === 3;
+		const lignes = texteLignes({ lignes: ['1'] }, 5); // dossier à venir : ligne pas encore identifiée
+		const connu = texteLignes({ lignes: ['1'] }, -1); // dossier déjà traité : ligne connue
+		Jeu.decider('rien');
+		const snap = JSON.parse(JSON.stringify(Jeu.instantane(0)));
+		const coherent = snap.jours.every((jj) => jj.dossiers.every((i) => i >= 0)) && new Set(snap.jours.flatMap((jj) => jj.dossiers)).size === snap.paquet.length;
+		let tours = 0;
+		while (!Jeu.terminee && tours++ < 200) { if (Jeu.prochainDuJour()) Jeu.decider('renfort'); else if (Jeu.jours[Jeu.jourIndex + 1]) Jeu.journeeSuivante(); else break; }
+		return { ordre, equipeSuit, arrivees, coherent, fin: Jeu.index === Jeu.paquet.length, lignes, connu };
+	})()`,
+		cs,
+	);
+	verifier(r.ordre.every(Boolean), `signalements : ordre après prise du 3e (${r.ordre})`);
+	verifier(r.equipeSuit, 'signalements : l\'équipe envoyée doit suivre son dossier après réordonnancement');
+	verifier(r.arrivees, 'signalements : heures d\'arrivée perdues au réordonnancement');
+	verifier(r.coherent && r.fin, `signalements : sauvegarde cohérente (${r.coherent}) et semaine jouée jusqu'au bout (${r.fin})`);
+	verifier(/François Mitterrand/.test(r.connu) && !/Mitterrand/.test(r.lignes), `signalements : ligne avec son nom réel une fois identifiée (${r.connu} / ${r.lignes})`);
+	const code = ['sketch.js', 'carte.js', 'os.js', 'portrait.js', 'mobile.js', 'guide.js'].map((f) => readFileSync(join(pub, f), 'utf8')).join('\n');
+	verifier(!/zoomerCarte|CARTE_VUE|commandesCarte|dessinerLignesEtat|dessinerReperesCarte|positionDossier|centreLigne|traceDecision|dessinerBandeauEquipes|zoomCarteMolette|iconeCarte/.test(code), 'signalements : reste du code de la carte');
+	const orphelines = vm.runInContext("['carte.zoom', 'carte.reseau', 'legende.heure', 'app.carte', 'enq.source.carte', 'guide.ouvrirCarte'].filter((k) => TRADUCTIONS.fr[k] !== undefined || TRADUCTIONS.en[k] !== undefined)", cs);
+	verifier(orphelines.length === 0, `signalements : clés i18n orphelines ${orphelines}`);
+	verifier(vm.runInContext("TRADUCTIONS.fr['app.signalements'] === 'Signalements' && TRADUCTIONS.en['app.signalements'] === 'Reports'", cs), 'signalements : appli mal nommée');
+}
+
 // Traductions : toute clé française existe en anglais
 const manquantes = vm.runInContext('Object.keys(TRADUCTIONS.fr).filter((k) => TRADUCTIONS.en[k] === undefined)', fr);
 verifier(manquantes.length === 0, `clés sans traduction anglaise : ${manquantes.slice(0, 8).join(', ')}`);
