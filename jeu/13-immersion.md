@@ -6,7 +6,7 @@ Ajoutée sans toucher aux décisions Q1–Q61. Code : `immersion.js` (réglages 
 
 - **Échap** : au poste = se lever ; au bureau = menu (Reprendre, Paramètres, Quitter). Le temps continue.
 - **Intro SMS** : 6 messages statiques au premier lancement (clic / Entrée, puis « Commencer ») ; pas rejouée sur « Rejouer ».
-- **Journées** : une par date réelle des dossiers ; heure d'arrivée = heure de la source si connue, sinon créneaux réguliers 7h–19h (heure DE LA PARTIE). Journée 6h → 20h ; mode « aujourd'hui » : départ à l'heure réelle, incident toutes les 20 min.
+- **Journées** : une par date réelle des dossiers ; heure d'arrivée = heure de la source si connue, sinon créneaux réguliers 8h–19h (prompt 76) (heure DE LA PARTIE). Journée 8h → 20h (prompt 76) ; mode « aujourd'hui » : départ à l'heure réelle, incident toutes les 20 min.
 - **Horloge simulée** : horloge du bureau, ciel et en-tête la suivent ; ×10 sans incident actif (léger flou du décor, sauf animations réduites).
 - **Sieste** : après 20 s sans incident ni interaction ; incident pendant la sieste = triple bip + « Se réveiller » (Espace) en 3 / 2 / 1 s selon le compteur 60 / 30 / 15 s ; raté = « ne rien faire » + −5 sur la jauge concernée (fluidité, ou satisfaction pour un événement).
 - **Bordure rouge** (retard ≥ 20 min ou conflit) autour du moniteur, au bureau et en plein écran, 1,5 pulsation/s (fixe si animations réduites).

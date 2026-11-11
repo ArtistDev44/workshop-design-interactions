@@ -479,6 +479,20 @@ verifier(p74.liaisons.some((l) => l !== p74.liaisons[0]) || p74.liaisons.length 
 verifier(p74.serie && p74.serie.n >= 1 && ['bon', 'rate'].includes(p74.serie.type), 'prompt 74 : la série des évaluations ne fonctionne pas');
 verifier(p74.avant === p74.apres, 'prompt 74 : game.js / l\u2019ordre du paquet a changé (doit rester inchangé)');
 
+// Prompt 76 : la journée démarre à 8 h 00, aucun dossier avant 8 h, fin toujours à 20 h
+const h8 = vm.runInContext(
+	`(() => {
+		Jeu.chargerSemaine('2026-09-14'); Jeu.nouvellePartie();
+		const debuts = Jeu.jours.map((j) => j.debut || 8 * 60);
+		const minutes = Jeu.paquet.map((d) => d.minute);
+		return { debut: Jeu.debutJournee(), fin: Jeu.finJournee(), min: Math.min(...minutes), debutsOk: debuts.every((d) => d === undefined || d >= 8 * 60) };
+	})()`,
+	fr,
+);
+verifier(h8.debut === 8 * 60, `prompt 76 : la journée démarre à ${h8.debut} min au lieu de 8 h 00`);
+verifier(h8.fin === 20 * 60, 'prompt 76 : la fin de journée doit rester à 20 h 00');
+verifier(h8.min >= 8 * 60, `prompt 76 : un dossier arrive avant 8 h (${h8.min} min)`);
+
 // Traductions : toute clé française existe en anglais
 const manquantes = vm.runInContext('Object.keys(TRADUCTIONS.fr).filter((k) => TRADUCTIONS.en[k] === undefined)', fr);
 verifier(manquantes.length === 0, `clés sans traduction anglaise : ${manquantes.slice(0, 8).join(', ')}`);

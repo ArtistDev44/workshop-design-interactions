@@ -21,9 +21,9 @@ Code : `soir.js` (nouveau), `immersion.js`, `bureau.js`, `journee.js`, `sketch.j
    Mobile portrait : grand bouton « ← Sortie » en tête (124 px image, ≈ 47 px CSS sur 412 px).
 5. Sortie : pan de 0,8 s vers la gauche (caméra du prompt 40) qui découvre un couloir sombre et le panneau vert
    au-dessus d'une ouverture, fondu au noir 0,6 s, écran noir 1,5 s passable (Entrée, clic) : « Fin de la journée
-   du {date} — Retour demain, 6 h », « Fin de la semaine » le dernier jour, « Fin de service » en temps réel.
+   du {date} — Retour demain, 8 h », « Fin de la semaine » le dernier jour, « Fin de service » en temps réel.
    Animations réduites : ni pan ni pulsation, fondu au noir direct.
-6. Lendemain : `journeeSuivante()` inchangée (transition « JOUR n », pièce à 6 h, aube) ; le dernier jour,
+6. Lendemain : `journeeSuivante()` inchangée (transition « JOUR n », pièce à 8 h, aube) ; le dernier jour,
    `allerFin()` (bilan) inchangé.
 
 ## États et cas particuliers
@@ -37,9 +37,9 @@ Code : `soir.js` (nouveau), `immersion.js`, `bureau.js`, `journee.js`, `sketch.j
 
 ## Vérifications
 - `npm run build`, `npm test` : 13 contrôles « soir » dans `test-jeu.mjs` (soir.js chargé avec game.js) —
-  phase soir, 21 h, jauges intactes, pan, lendemain 6 h, départ anticipé (malus −8 le lendemain, inchangé),
+  phase soir, 21 h, jauges intactes, pan, lendemain 8 h, départ anticipé (malus −8 le lendemain, inchangé),
   reprise, dernier soir → bilan ; gardes du temps, de la webcam et de la sauvegarde.
 - Chromium FR, EN, FR animations réduites : mail → Entrée → crépuscule → flèche (lampe allumée puis éteinte) →
-  Tab → Entrée → pan → noir → JOUR 2 à 6 h → aube ; clic souris ; reprise de sauvegarde ; semaine jusqu'au
+  Tab → Entrée → pan → noir → JOUR 2 à 8 h → aube ; clic souris ; reprise de sauvegarde ; semaine jusqu'au
   bilan ; jour pluvieux réel (12/10/2026, 7,4 mm) : pluie la nuit. Aucune erreur console, aucune clé manquante.
 - Contraste : blanc sur plaque #0D0C0C ≈ 19:1, jaune #FFC138 ≈ 11:1, blanc sur vert #0B7A3E ≈ 5,6:1.

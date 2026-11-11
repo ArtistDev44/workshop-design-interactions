@@ -275,7 +275,7 @@ function lancerNouvellePartie() {
 	p.then(() => {
 		Jeu.nouvellePartie();
 		derniereSerieAnnoncee = 0; // prompt 74
-		demarrerJournee(); // journée 1, 6h00, en attente du premier incident
+		demarrerJournee(); // journée 1, 8h00 (prompt 76), en attente du premier incident
 		const ch = chapitreCourant();
 		if (!introVue) lancerIntroSMS(); // § 2 : une seule fois, pas sur « Rejouer »
 		else if (ch) conversationChapitre(ch); // prompt 41 : le patron présente la semaine et son nouvel élément

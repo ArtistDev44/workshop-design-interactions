@@ -411,7 +411,7 @@ function terminerIntro() {
 	smsActif = false;
 	introVue = true;
 	demarrerJournee();
-	vue = 'bureau'; // on arrive au bureau : l'ouverture est à 6h
+	vue = 'bureau'; // on arrive au bureau : l'ouverture est à 8h (prompt 76)
 	if (!tutorielVu() && !GUIDE.actif) lancerTutoriel(); // prompt 34 : à la première partie, juste après les SMS (sauf guide)
 }
 

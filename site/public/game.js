@@ -557,7 +557,7 @@
 	// =====================================================================
 	// Prompt 20 — journées de travail, horloge simulée, sieste, mail de fin de journée
 	// =====================================================================
-	const DEBUT_JOURNEE = 6 * 60; // 6h00
+	const DEBUT_JOURNEE = 8 * 60; // 8h00 (prompt 76 : un centre de régulation n'ouvre pas à 6 h)
 	const FIN_JOURNEE = 20 * 60; // 20h00
 	const NOMS_JAUGES_LONGS = { fluidite: T('jaugeLong.fluidite'), reputation: T('jaugeLong.reputation'), budget: T('jaugeLong.budget') };
 
@@ -578,8 +578,9 @@
 			.forEach((date) => {
 				const ds = parJour.get(date);
 				const sans = ds.filter((d) => !d.heure);
-				sans.forEach((d, i) => (d.minute = 7 * 60 + Math.round(((i + 1) * 12 * 60) / (sans.length + 1))));
-				ds.filter((d) => d.heure).forEach((d) => (d.minute = Number(d.heure.slice(0, 2)) * 60 + Number(d.heure.slice(3, 5))));
+				// Prompt 76 : créneaux réguliers entre 8 h et 19 h ; un dossier daté avant 8 h est calé à 8 h (calcul, donnée intacte)
+				sans.forEach((d, i) => (d.minute = 8 * 60 + Math.round(((i + 1) * 11 * 60) / (sans.length + 1))));
+				ds.filter((d) => d.heure).forEach((d) => (d.minute = Math.max(8 * 60, Number(d.heure.slice(0, 2)) * 60 + Number(d.heure.slice(3, 5)))));
 				ds.sort((a, b) => a.minute - b.minute);
 				jours.push({ date, dossiers: ds });
 			});
