@@ -575,7 +575,7 @@ verifier(libelles80.length === 0, 'prompt 80 : libellés « Carte/Map » restant
 
 // Prompt 81 : menu partager/dépôt/crédits/licence — constantes nommées, URLs construites, LICENSE MIT complet
 const menu81 = readFileSync(join(pub, 'menu.js'), 'utf8');
-const licence = readFileSync(join(racine, '..', 'LICENSE'), 'utf8');
+const licence = readFileSync(join(pub, '..', '..', 'LICENSE'), 'utf8');
 verifier(/const DEPOT_URL = 'https:\/\/github\.com\/ArtistDev44\/workshop-design-interactions'/.test(menu81), 'prompt 81 : DEPOT_URL absent de menu.js');
 verifier(/const URL_JEU = 'https:\/\/workshop-design-interactions\.pages\.dev\//.test(menu81), 'prompt 81 : URL_JEU absent de menu.js');
 verifier(/encodeURIComponent/.test(menu81) && /mastodon\.social\/share/.test(menu81) && /twitter\.com\/intent\/tweet/.test(menu81), 'prompt 81 : URLs de partage mal construites');
