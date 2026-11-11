@@ -1708,8 +1708,7 @@ for (const f of ['enquete.js', 'carte.js', 'journal.js']) verifier(!/\*\s*1\.05\
 		phase = 'narration'; ecranVers(900, 700); r.horsDecision = debutGlisser() === false; phase = 'decision';
 		MOBILE.actif = true; r.tactile = debutGlisser() === false; MOBILE.actif = false;
 		// poids : amplitude selon les deltas réels, coupée avec les animations réduites
-		r.amp = amplitudeDeltas([-12, 3, 0]) === 9 && amplitudeDeltas([6, 0, 0]) === 5 && amplitudeDeltas([1, 0, 0]) === 2 && amplitudeDeltas([0, 0, 0]) === 0;
-		reduireAnimations = true; SECOUSSE.amp = 0; secouer(9); r.reduit = decalageSecousse() === null;
+		// prompt 96 : la secousse passe par juice.js (testé plus bas)
 		return r;
 	})()`,
 		cg,
@@ -1804,6 +1803,43 @@ for (const f of ['enquete.js', 'carte.js', 'journal.js']) verifier(!/\*\s*1\.05\
 	for (const cle of ['temps.pause', 'temps.normal', 'temps.accelere', 'temps.explication', 'jour.reste', 'jour.resteAucun', 'jour.resteArrives', 'transition.jourArchive', 'transition.prevus', 'transition.service', 'transition.rythme', 'transition.finir', 'transition.courte', 'transition.passer', 'sauvegarde.autoJeu']) {
 		verifier(vm.runInContext(`t(${JSON.stringify(cle)})`, c95) !== '[À COMPLÉTER]' && vm.runInContext(`t(${JSON.stringify(cle)})`, en95) !== '[À COMPLÉTER]', `prompt 95 : clé ${cle} absente en FR ou EN`);
 	}
+}
+
+// Prompt 96 : game feel (skill game-feel) — tiers selon les deltas réels, trauma² qui revient à 0 en temps réel,
+// hit-stop à propriétaire unique (deux impacts à 30 ms), pops qui finissent exactement à 1, réduction du mouvement
+{
+	const cj = vm.createContext({ Math, reduireAnimations: false, Confort: { Reglages: { intensiteFeedback: 100 } } });
+	cj.window = cj;
+	vm.runInContext(readFileSync(join(pub, 'juice.js'), 'utf8'), cj, { filename: 'juice.js' });
+	const j = vm.runInContext(
+		`(() => {
+		const r = {};
+		r.tiers = Juice.tierDeltas([-12, 3, 0]) === 'large' && Juice.tierDeltas([6, 0, 0]) === 'medium' && Juice.tierDeltas([1, -2, 0]) === 'small' && Juice.tierDeltas([0, 0, 0]) === 'small';
+		// deux impacts larges à 30 ms : l'échelle revient à 1 après le plus récent, pas avant
+		Juice.retour('large', 1000); Juice.retour('large', 1030);
+		r.borne = Juice.E.trauma === 1;
+		r.stopPendant = Juice.echelleTemps(1110) === 0.05; // le premier aurait fini à 1100
+		r.stopFini = Juice.echelleTemps(1131) === 1;
+		// la secousse décroît en temps réel et revient exactement à 0 en moins de 1 / décroissance
+		let d = Juice.decalage(1030), max = 0;
+		for (let t = 1046; t <= 1030 + 900; t += 16) { d = Juice.decalage(t); max = Math.max(max, Math.abs(d.x)); }
+		r.secoue = max > 1;
+		r.repos = d.x === 0 && d.y === 0 && Juice.E.trauma === 0;
+		// pops : dépassent puis finissent exactement à 1
+		r.pop = Juice.pop(0, 90) < 1.15 && Juice.pop(0, 180) === 1 && Juice.pop(0, 1000) === 1 && Math.min(...[20, 60, 100, 140].map((t) => Juice.pop(0, t))) < 1;
+		// mouvement réduit ou intensité 0 : rien
+		reduireAnimations = true; const a = Juice.retour('large', 5000); r.reduit = a.stop === 0 && Juice.echelleTemps(5010) === 1 && Juice.pop(4990, 5000) === 1;
+		reduireAnimations = false; Confort.Reglages.intensiteFeedback = 0; Juice.retour('large', 6000); r.intensiteZero = Juice.E.trauma === 0;
+		Confort.Reglages.intensiteFeedback = 50; Juice.retour('medium', 7000); r.intensiteMoitie = Math.abs(Juice.E.trauma - 0.2) < 1e-9;
+		return r;
+	})()`,
+		cj,
+	);
+	for (const [k, v] of Object.entries(j)) verifier(v === true, `game feel (prompt 96) : ${k}`);
+	const sk96 = readFileSync(join(pub, 'sketch.js'), 'utf8');
+	verifier(/feedback\(Juice\.tierDeltas\(dernierResultat\.deltas\)\)/.test(sk96) && /Juice\.decalage\(millis\(\)\)/.test(sk96) && /Juice\.echelleTemps\(maintenant\)/.test(readFileSync(join(pub, 'immersion.js'), 'utf8')), 'game feel : décision, secousse et hit-stop branchés');
+	verifier(!/Jeu\.|game\.js/.test(readFileSync(join(pub, 'juice.js'), 'utf8').replace(/\/\*[\s\S]*?\*\//, '')), 'game feel : juice.js ne doit pas toucher la simulation (Jeu)');
+	verifier(vm.runInContext("t('acc.intensite')", contexte('fr')) !== '[À COMPLÉTER]' && vm.runInContext("t('acc.intensite')", contexte('en')) !== '[À COMPLÉTER]', 'game feel : clé acc.intensite FR / EN');
 }
 
 // Service worker : chaque script de index.html est dans la liste hors ligne de sw.js

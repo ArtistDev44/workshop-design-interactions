@@ -279,6 +279,10 @@ function dessinerCartesReponses(d, x, y, l, h) {
 		const cy = y + Math.floor(i / 2) * (hc + 16);
 		if (r.cle !== bloquee) CARTES.push({ cle: r.cle, x: cx, y: cy, l: lc, h: hc, lib: String(r.lib), touche: TOUCHES_REPONSES[i] });
 		if (carteSaisie(r.cle)) return emplacementCarte({ x: cx, y: cy, l: lc, h: hc }); // la carte flotte : son emplacement en pointillés
+		// Prompt 96 : les cartes arrivent en pop (1,15 → 1, ease-out-back, décalées de 50 ms) ; exactement 1 ensuite
+		const sp = typeof Juice !== 'undefined' ? Juice.pop(arriveeDossier + 250 + i * 50, millis()) : 1;
+		push();
+		if (sp !== 1) translate(cx + lc / 2, cy + hc / 2), scale(sp), translate(-(cx + lc / 2), -(cy + hc / 2));
 		const survol = mouseX >= cx && mouseX <= cx + lc && mouseY >= cy && mouseY <= cy + hc;
 		noStroke();
 		fill(survol ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.06)');
@@ -319,6 +323,7 @@ function dessinerCartesReponses(d, x, y, l, h) {
 			text(t('rep.equipe', { nom: String(Jeu.EQUIPES[r.equipe].nom), n: dispo, maj: Jeu.TYPES_EQUIPES.indexOf(r.equipe) + 1 }), cx + lc - 14, cy + hc - 32);
 			textAlign(LEFT, TOP);
 		}
+		pop();
 		if (r.cle !== bloquee) boutons.push({ x: cx, y: cy, l: lc, h: hc, action: () => decider(r.cle) });
 	});
 	cibleGuide('actions', x, y, l, h); // prompt 37

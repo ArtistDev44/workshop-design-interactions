@@ -47,7 +47,7 @@ function jaugesAffichees() {
 /** Delta flottant au-dessus d'une jauge (x, y : coin haut gauche de la barre, l : largeur) */
 function dessinerDeltasJauge(cle, x, y, l) {
 	// Prompt 94 : éclair bref (220 ms, une fois par changement) sur la barre de la jauge qui vient de bouger
-	const recent = JAUGES_AFF.deltas.filter((d) => d.jauge === cle && millis() - d.t < 220).pop();
+	const recent = JAUGES_AFF.deltas.filter((d) => d.jauge === cle && millis() - d.t < 220 && Math.abs(d.d) >= 6).pop(); // prompt 96 : flash réservé aux tiers medium / large
 	if (recent && !reduireAnimations) {
 		noStroke();
 		fill(255, 255, 255, 130 * (1 - (millis() - recent.t) / 220));
@@ -57,7 +57,8 @@ function dessinerDeltasJauge(cle, x, y, l) {
 		.filter((d) => d.jauge === cle)
 		.forEach((d, i) => {
 			const u = (millis() - d.t) / DUREE_DELTA_MS;
-			const monte = reduireAnimations ? 0 : easeOut(Math.min(1, u * 1.5)) * 14; // part de la barre et monte un peu
+			const k = Math.min(1, u * 1.5);
+			const monte = reduireAnimations ? 0 : (1 + 2.70158 * Math.pow(k - 1, 3) + 1.70158 * Math.pow(k - 1, 2)) * 14; // prompt 96 : ease-out-back (dépasse puis se pose)
 			const a = reduireAnimations ? 1 : 1 - Math.max(0, (u - 0.5) / 0.5);
 			const c = color(d.d > 0 ? C.vert : C.rouge);
 			c.setAlpha(255 * a);
@@ -106,7 +107,8 @@ function dessinerTamponSignalement(x, y) {
 	push();
 	translate(x, y);
 	rotate(-0.14);
-	scale(1.6 - 0.6 * e);
+	const eb = u >= 1 ? 1 : 1 + 2.70158 * Math.pow(u - 1, 3) + 1.70158 * Math.pow(u - 1, 2); // prompt 96 : pop ease-out-back, finit exactement à 1
+	scale(1.6 - 0.6 * eb);
 	const c = color(C.orange);
 	c.setAlpha(255 * e);
 	noFill();

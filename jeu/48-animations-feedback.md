@@ -38,3 +38,6 @@ Code : `feedback.js` ; appels dans `sketch.js` (jauges, compteur, carte), `enque
 - Chromium (normal et animations réduites), sans erreur console : arrivée annoncée, tampon visible,
   compteur à 6 s → urgence 0,45 (barre rouge), décision au clavier → deltas +10 / +4 / −11 lisibles sur
   les barres, budget à 12 → pulsation douce ; annonce de décision avec les variations.
+
+## Prompt 96 : game feel
+Les décisions, l'arrivée d'un dossier, le dépôt d'une carte et la sortie du bureau déclenchent maintenant des bundles par tier : secousse trauma², hit-stop, pops ease-out-back, flash de jauge pour les décisions moyennes et fortes. Le tampon et les deltas existants reçoivent un dépassement en ease-out-back. Détail dans `jeu/92-game-feel-juice.md`.

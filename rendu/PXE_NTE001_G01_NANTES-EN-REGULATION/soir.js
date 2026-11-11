@@ -82,6 +82,7 @@ function quitterBureau() {
 	interaction();
 	SOIR.sortie = millis();
 	focusBureau = -1;
+	if (typeof feedback === 'function') feedback('small'); // prompt 96 : sortie du bureau
 	Confort.Son.bip('choix');
 	annoncer(texteNoirSoir().titre + '. ' + (texteNoirSoir().sous || ''));
 	try {
