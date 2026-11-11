@@ -4,6 +4,7 @@ Règle : chaque push sur la branche main ajoute une entrée dans le tableau, la 
 
 | Date | Commit | Fichiers | Résumé |
 |---|---|---|---|
+| 2026-11-11 | ce commit | journal.md | Fusion dans main du prompt 89 (appli Journal de bord modernisée) |
 | 2026-11-11 | ce commit (branche prompts/89-journal-moderne) | prompts/89-jeu-journal-de-bord-moderne.md, prompts/README.md, journal.md | Nouveau prompt 89 : appli Journal de bord modernisée (tuiles, frise, filtres, vue semaine, enquête illustrée) |
 | 2026-11-11 | ce commit | journal.md | Fusion dans main du prompt 88 (engouement et variété des tâches) |
 | 2026-11-11 | ce commit (branche prompts/88-engouement-variete) | prompts/88-jeu-engouement-variete-taches.md, prompts/README.md, journal.md | Nouveau prompt 88 : engouement et variété des tâches (tâches courtes variées, thèmes du jour, crise, progression, badges) |
