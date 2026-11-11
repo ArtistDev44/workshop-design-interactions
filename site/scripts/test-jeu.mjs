@@ -25,7 +25,7 @@ function contexte(langue, stockage = new Map(), avecHistoire = false) {
 	ctx.window = ctx;
 	ctx.globalThis = ctx;
 	vm.createContext(ctx);
-	const fichiers = ['data/lignes.js', 'data/semaines.js', 'data/fallback.js', 'data/messages.js', 'data/reponses.js', 'i18n.js', 'game.js', 'rythme.js', 'taches.js', 'journal-donnees.js']; // prompts 74 / 88 / 89 : logique pure de la couche d'affichage
+	const fichiers = ['data/lignes.js', 'data/semaines.js', 'data/fallback.js', 'data/messages.js', 'data/reponses.js', 'i18n.js', 'game.js', 'rythme.js', 'taches.js', 'journal-donnees.js', 'traces.js']; // prompts 74 / 88 / 89 : logique pure de la couche d'affichage
 	if (avecHistoire) fichiers.push('confort.js', 'histoire.js'); // prompt 56 : progression et palmarès (localStorage)
 	for (const f of fichiers) {
 		vm.runInContext(readFileSync(join(pub, f), 'utf8'), ctx, { filename: f });
@@ -1193,7 +1193,7 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 // Prompt 88 lot F : options du groupe désactivées par défaut ; chaînes étiquetées et plafonnées ; déblocages ; arbitrage
 {
 	const conf = readFileSync(join(pub, 'confort.js'), 'utf8');
-	verifier(/chaines: false, deblocages: false, arbitrage: false/.test(conf), 'options du groupe : désactivées par défaut (Confort.Reglages)');
+	verifier(/chaines: false, deblocages: false, arbitrage: false, traceDossier: false, pressionVisible: false, deVisible: false, eclairageJauges: false/.test(conf), 'options du groupe : désactivées par défaut (Confort.Reglages)');
 	const cf = contexte('fr');
 	const r = vm.runInContext(
 		`(() => {
@@ -1311,6 +1311,68 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 	const sv = readFileSync(join(pub, 'sauvegarde.js'), 'utf8');
 	verifier(/journal: typeof JOURNAL[^\n]*vue: JOURNAL\.vue, jour: JOURNAL\.jour, filtre: JOURNAL\.filtre, defil/.test(sv) && /ui\.journal/.test(sv), 'journal : vue, jour, filtre et défilement sauvegardés');
 	verifier(!/function appJournal|function enqueteJournal/.test(readFileSync(join(pub, 'os.js'), 'utf8')), 'journal : ancien rendu retiré d’os.js');
+}
+
+// Prompt 89 bis : traces dans la file, pression lisible, Q25 expliqué, dé visible — aucune valeur d'effet modifiée
+{
+	const ct = contexte('fr');
+	const r = vm.runInContext(
+		`(() => {
+		const out = { erreurs: [] };
+		var Confort = globalThis.Confort || { Reglages: {} };
+		globalThis.Confort = Confort;
+		const jouer = (opts) => {
+			Confort.Reglages = Object.assign({}, opts);
+			Jeu.chargerSemaine('2026-11-02'); Jeu.nouvellePartie();
+			const lignes = [];
+			for (let i = 0; i < 3; i++) {
+				let k = 0;
+				while (Jeu.prochainDuJour()) {
+					const d = Jeu.prochainDuJour();
+					Jeu.horloge.minutes = Math.max(Jeu.horloge.minutes, d.minute);
+					const p1 = Traces.pression(d);
+					Jeu.horloge.minutes += 30;
+					const p2 = Traces.pression(d);
+					if (p2.ecoule !== Math.floor(Jeu.horloge.minutes - d.minute)) out.erreurs.push('temps écoulé');
+					if (p1.retard !== null && p2.retard < p1.retard) out.erreurs.push('retard qui baisse');
+					const res = Jeu.decider(k++ % 4 === 3 ? 'temps' : Jeu.actionsPossibles(d)[k % 3]);
+					const e = Jeu.evenementsJournee[Jeu.evenementsJournee.length - 1];
+					Jeu.horloge.minutes += 60;
+					if (e.retardEffectif !== null && e.retardEffectif !== undefined && Jeu.retardEffectif(d) !== e.retardEffectif) out.erreurs.push('retard non figé');
+					const l = Traces.lignesFile(d.date)[0];
+					if (e.cleAction === 'temps') { if (l.etat !== 'nonTraite' || !l.detail) out.erreurs.push('non traité sans calcul'); }
+					else if (l.etat !== 'traite' || !l.titre.includes(String(e.action)) || !/\\d+h\\d\\d/.test(l.titre)) out.erreurs.push('trace file ' + l.titre);
+					const des = Traces.texteDes(res);
+					if (des && res.des.some((v, n) => v && !des.includes('dé ' + v))) out.erreurs.push('dé affiché ≠ dé tiré');
+				}
+				lignes.push(...Traces.lignesFile(Jeu.jourCourant().date).map((x) => x.titre));
+				Jeu.finDeJourneeTactique(); Jeu.journeeSuivante();
+			}
+			return { lignes, jauges: JSON.stringify(Jeu.jauges), tirages: Jeu.tirages };
+		};
+		const sans = jouer({});
+		const avec = jouer({ traceDossier: true, pressionVisible: true, deVisible: true, eclairageJauges: true });
+		const bis = jouer({});
+		out.memesEffets = sans.jauges === avec.jauges && sans.tirages === avec.tirages;
+		out.repro = JSON.stringify(sans.lignes) === JSON.stringify(bis.lignes);
+		out.nb = sans.lignes.length;
+		// Q25 : le calcul cite les effets réellement appliqués
+		const tps = Jeu.evenementsJournee.filter((e) => e.cleAction === 'temps');
+		out.q25 = tps.every((e) => { const c = Traces.calculQ25(e); return ['fluidite', 'reputation', 'budget'].every((k) => !e.deltas[k] || c.includes(String(Math.abs(e.deltas[k])))); }) && tps.length > 0;
+		// Sauvegarde : les traces sont reconstruites à l'identique depuis le journal sauvegardé
+		const date = Jeu.jours[0].date;
+		const avant = JSON.stringify(Traces.lignesFile(date).map((x) => x.titre));
+		Jeu.restaurerInstantane(JSON.parse(JSON.stringify(Jeu.instantane(0))), 0);
+		out.sauve = JSON.stringify(Traces.lignesFile(date).map((x) => x.titre)) === avant;
+		return out;
+	})()`,
+		ct,
+	);
+	verifier(r.erreurs.length === 0, `traces : ${[...new Set(r.erreurs)].slice(0, 4)}`);
+	verifier(r.memesEffets, 'traces : les options d\'affichage ne changent ni les jauges ni les dés');
+	verifier(r.repro && r.nb > 5, `traces : reproductibles par la graine (${r.nb} lignes)`);
+	verifier(r.q25, 'Q25 : le calcul affiché cite les effets réellement appliqués');
+	verifier(r.sauve, 'traces : restaurées depuis la sauvegarde');
 }
 
 // Service worker : chaque script de index.html est dans la liste hors ligne de sw.js

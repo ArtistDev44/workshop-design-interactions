@@ -134,15 +134,38 @@ function dessinerPanneauSignalement(d, x, base) {
 	text(titre, x + 32, y);
 	textStyle(NORMAL);
 	y += 46;
+	// Prompt 89 bis (option « pression visible ») : le retard effectif grimpe, gravité doublée d'un seuil, temps écoulé
+	if (typeof Traces !== 'undefined' && Traces.option('pressionVisible')) {
+		const pr = Traces.pression(d);
+		if (pr) {
+			const g = t('gravite.' + pr.gravite) + (pr.gravite === 'elevee' ? ' (≥ 20 min)' : pr.gravite === 'moyenne' ? ' (≥ 10 min)' : '');
+			const txt = (pr.retard !== null ? t('trace.pressionRetard', { retard: pr.retard, reel: pr.reel === null ? '—' : pr.reel }) + ' · ' : '') + t('carte.gravite', { g }) + ' · ' + t('trace.arrive', { ecoule: pr.ecouleTexte });
+			textFont(POLICE_DONNEES);
+			textSize(17);
+			fill(couleurGravite(pr.gravite));
+			text(txt, x + 32, y - 6, l, 24);
+			y += 26;
+		}
+	}
 	if (PLUS.ouvert) {
 		// « En savoir plus » : sources, historique de la ligne, équipes
 		bouton(x + 32, y, 320, 44, t('plus.fermer'), basculerPlus, false, true);
 		textAlign(LEFT, TOP);
+		// Prompt 89 bis : mémoire du dossier — décisions déjà prises aujourd'hui sur cette ligne (journal réel)
+		const mem = typeof Traces !== 'undefined' ? Traces.memoire(d) : [];
+		if (mem.length) {
+			textFont(POLICE_DONNEES);
+			textSize(16);
+			fill(C.gris);
+			text(t('trace.memoireTitre') + ' ' + mem.slice(-3).join(' · '), x + 372, y + 2, l - 340, 44);
+		}
 		corpsEnquete(d, x + 32, y + 60, l, base.y + base.h - 430 - (y + 60));
 	} else {
 		y = bloc(t('bloc.passe'), [phraseSituation(d)], x + 32, y, l, C.accent);
 		y = bloc(t('bloc.pourquoi'), pucesImportance(d).map((p) => '• ' + p), x + 32, y, l, C.orange);
 		const sv = savoirs(d);
+		const memo = typeof Traces !== 'undefined' && Traces.option('traceDossier') ? Traces.memoire(d) : []; // option : trace dans le dossier
+		if (memo.length) sv.splice(Math.min(2, sv.length), sv.length, { sur: true, txt: t('trace.memoireTitre') + ' ' + memo[memo.length - 1] });
 		y = bloc(t('bloc.savoir'), sv.map((s) => (s.sur ? '✓ ' : '? ') + s.txt), x + 32, y, l, C.gris);
 		bouton(x + 32, y, 320, 44, t('plus.ouvrir'), basculerPlus, false, true);
 		textAlign(LEFT, TOP);
@@ -290,7 +313,9 @@ function explicationDecision(r) {
 	const e = (Jeu.evenementsJournee || []).filter((x) => x.resultat === r)[0];
 	if (!e) return [];
 	const effets = ['fluidite', 'reputation', 'budget'].filter((k, i) => r.deltas[i]).map((k, i) => t('jaugeTitre.' + k) + ' ' + (r.deltas[['fluidite', 'reputation', 'budget'].indexOf(k)] > 0 ? '+' : '') + r.deltas[['fluidite', 'reputation', 'budget'].indexOf(k)]);
-	const lignes = [t('retour.passe', { action: String(e.action || t('action.temps')), effets: effets.join(', ') || t('narr.aucunEffet') })];
+	const lignes = [t('retour.passe', { action: String(e.action || t('action.temps')), effets: effets.join(', ') || t('narr.aucunEffet') }) + (e.retardEffectif !== null && e.retardEffectif !== undefined ? ' ' + t('trace.retardFige', { retard: e.retardEffectif }) : '')]; // prompt 89 bis : retard retenu au moment du choix
+	const des = typeof Traces !== 'undefined' && Traces.option('deVisible') ? Traces.texteDes(r) : null; // option : le dé réellement tiré
+	if (des) lignes.push(des);
 	const sit = e.categorie ? Jeu.situation(r.dossier) : null;
 	const pourquoi = sit ? sit.split('+').map((s) => t(RAISONS[s] || 'raison.calme')).join(', ') : '';
 	const ev = Jeu.evaluer(e);

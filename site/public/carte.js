@@ -247,6 +247,7 @@ function dessinerFileSignalements(z) {
 		textSize(19);
 		const pv = typeof Taches !== 'undefined' ? Taches.prevision() : null; // prompt 88 (option) : prévision à 1 h débloquée par le grade
 		text(pv ? t('deblocage.prevision', { heure: Jeu.formaterHeure(pv.minute), type: t('enq.signalement.' + pv.type), g: t('gravite.' + pv.gravite) }) : prochain ? t('sig.prochain', { heure: Jeu.formaterHeure(prochain.minute) }) : t('sig.finJour'), z.x + 20, z.y + 160, z.l - 40, 60);
+		if (typeof dessinerTracesFile === 'function') dessinerTracesFile(z, z.y + 236); // prompt 89 bis : la file devient le journal de la journée
 		return;
 	}
 	if (SELECTION.focus >= f.length) SELECTION.focus = 0;
@@ -296,6 +297,7 @@ function dessinerFileSignalements(z) {
 		}
 		if (r === 0) cibleGuide('fileSignalements', z.x + 16, y, z.l - 32, hc);
 	});
+	if (typeof dessinerTracesFile === 'function') dessinerTracesFile(z, z.y + 110 + Math.min(f.length, max) * (hc + 10) + 8); // prompt 89 bis
 	// Prompt 77 : message récent (refus d'un 4e signalement actif, envoi d'équipe) sous la liste
 	if (SELECTION.message && millis() - SELECTION.message.t < 5000) {
 		textFont(POLICE_DONNEES);

@@ -103,9 +103,9 @@ function dessinerEcranRapportImprime() {
 
 /** Feuille sur la table (plan « proches ») : elle sort de dessous l'écran et glisse vers le joueur */
 function dessinerFeuilleRapport(g) {
-	if (!RAPPORT) return;
+	if (!RAPPORT && !rapportVeille()) return;
 	const o = OBJETS_BUREAU.find((x) => x.nom === 'rapport');
-	const k = reduireAnimations ? 1 : easeOut(constrain((millis() - RAPPORT.debut - 1800) / 900, 0, 1));
+	const k = !RAPPORT || reduireAnimations ? 1 : easeOut(constrain((millis() - RAPPORT.debut - 1800) / 900, 0, 1)); // rapport de la veille : posé, immobile
 	const y = Math.round(lerp(o.y - 26, o.y, k));
 	ombreTramee(g, o.x + 2, y + o.h, o.l, 2, 100);
 	for (let r = 0; r < o.h; r++) {
@@ -114,10 +114,10 @@ function dessinerFeuilleRapport(g) {
 	}
 	for (let r = 5; r < o.h - 4; r += 3) px(g, '#c9c3b5', o.x + 8, y + r, o.l - 22 - (r % 6), 1); // lignes de texte
 	px(g, '#b3261e', o.x + o.l - 16, y + o.h - 10, 9, 6); // tampon
-	if (!reduireAnimations && Math.floor(millis() / 700) % 2) px(g, '#f2c94c', o.x - 2, y - 2, 3, 3); // repère discret
+	if (RAPPORT && !reduireAnimations && Math.floor(millis() / 700) % 2) px(g, '#f2c94c', o.x - 2, y - 2, 3, 3); // repère discret
 }
 function ouvrirRapport() {
-	if (!RAPPORT) return;
+	if (!RAPPORT) return rapportVeille() ? (ouvrir('rapportVeille'), annoncer(texteRapportVeille())) : undefined;
 	livreOuverture = millis();
 	ouvrir('rapport');
 	annoncer(t('rapport.titre', { n: RAPPORT.chapitre || '' }) + ' — ' + t('rapport.score', { s: RAPPORT.bilan.score }));
@@ -585,4 +585,33 @@ function fenetreRapportChiffres() {
 	boutonPageRapport(x + l, y);
 	const by = y + h + 20;
 	bouton(L / 2 - 220, by + 10, 440, 64, t(RAPPORT.cine ? 'finSemaine.cine' : RAPPORT.chapitre && !b.demission ? 'rapport.suivante' : 'fin.rejouer'), actionRapport);
+}
+
+// ——— Prompt 89 bis : le rapport du soir de la veille (prompt 88) reste posé sur le bureau jusqu'à la fin de la semaine ———
+function rapportVeille() {
+	if (typeof Jeu === 'undefined' || !Jeu.taches || !Jeu.taches.carnet || ecran !== 'jeu' || phase === 'fin') return null;
+	const j = Jeu.jourCourant && Jeu.jourCourant();
+	const c = Jeu.taches.carnet.filter((x) => !j || x.date < j.date);
+	return c.length ? c[c.length - 1] : null;
+}
+function texteRapportVeille() {
+	const c = rapportVeille();
+	if (!c) return '';
+	const prio = (c.priorites || []).map((p) => t('tache.prio.' + p.id, p.vars) + ' (' + t('carnet.etat.' + p.etat) + ')').join(' ; ');
+	return [t('veilleRapport.titre', { date: c.date.split('-').reverse().join('/') }), t('recap.fait', { fait: c.fait }), prio ? t('veilleRapport.prio', { liste: prio }) : '', c.demande ? t('veilleRapport.demande', { demande: t('tache.demande.' + c.demande, Taches.R.demande), etat: t(c.accordee ? 'veilleRapport.accordee' : 'veilleRapport.refusee') }) : ''].filter(Boolean).join('\n');
+}
+function fenetreRapportVeille() {
+	const l = 1100;
+	const h = 560;
+	const x = (L - l) / 2;
+	const y = (H - h) / 2;
+	panneau(x, y, l, h, C.accent);
+	noStroke();
+	textAlign(LEFT, TOP);
+	textFont(POLICE_TEXTE);
+	textSize(22);
+	textLeading(32);
+	fill(C.texte);
+	text(texteRapportVeille(), x + 56, y + 56, l - 112, h - 180);
+	bouton(x + l - 56 - 300, y + h - 100, 300, 64, t('commun.fermer'), fermer);
 }

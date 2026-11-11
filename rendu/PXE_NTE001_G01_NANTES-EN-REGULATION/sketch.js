@@ -342,9 +342,10 @@ function decider(action) {
 	else dernierResultat.sources = mesures.sources;
 	dernierResultat.contexteNarr = Rythme.contexteNarration(dernierResultat, Jeu.index - 1); // prompt 74 : phrase de contexte réelle
 	if (action !== 'temps') tachesApresDecision(dernierResultat); // prompt 88 : rotation des tâches
+	if (typeof tracerDecision === 'function') tracerDecision(dernierResultat); // prompt 89 bis : trace dans la file
 	const dj = dernierResultat.deltas.map((v, i) => t('jaugeTitre.' + ['fluidite', 'reputation', 'budget'][i]) + ' ' + (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v)).join(', ');
 	annoncer(t('annonce.decision', { titre: dernierResultat.narration.titre, texte: dernierResultat.narration.texte }) + ' ' + dj + '.'); // prompt 53 : variations annoncées
-	Confort.Son.clicAction(action); // prompt 44 § 4 : un clic de console par action
+	Confort.Son.clicAction(Jeu.familleDe ? Jeu.familleDe(action) : action); // prompt 44 § 4 : un clic de console par action ; prompt 89 bis : famille de la réponse (son distinct)
 	Confort.Son.jauges(dernierResultat.deltas); // § 5 : chute brutale ou remontée nette, audibles
 	phase = 'narration';
 	debutNarration = millis();
@@ -442,7 +443,7 @@ function indicateurSauvegarde() {
 	textAlign(RIGHT, BOTTOM);
 	noStroke();
 	fill(C.gris);
-	text(s, FILE_SIG.x + FILE_SIG.l - 16, FILE_SIG.y + 40); // prompt 87 : en haut à droite de la liste des signalements
+	text(s, FILE_SIG.x + FILE_SIG.l - 16, FILE_SIG.y + FILE_SIG.h - 6); // prompt 89 bis : en bas à droite de la liste (ne chevauche plus le titre)
 }
 
 function dessinerJeu() {
@@ -1098,6 +1099,7 @@ function keyPressed() {
 		if (fenetre === 'poste' && (keyCode === ENTER || keyCode === RETURN || key === ' ')) return fermer(), false; // prompt 74
 		if (fenetre === 'partage' && keyCode !== ESCAPE) return touchePartage(), false; // prompt 81
 		if (fenetre === 'rapport' && (keyCode === ENTER || keyCode === RETURN)) return actionRapport(), false; // prompt 41
+		if (fenetre === 'rapportVeille' && (keyCode === ENTER || keyCode === RETURN || keyCode === ESCAPE)) return fermer(), false; // prompt 89 bis
 		if (fenetre === 'menu') {
 			// Prompt 35 : menu Échap modernisé — ↑ ↓ / Tab pour choisir, Entrée pour valider
 			const n = ENTREES_PAUSE.length;
@@ -1300,6 +1302,7 @@ function dessinerFenetre() {
 	if (fenetre === 'cafe') return fenetreCafe(); // prompt 52 : même animation, la tasse en main
 	voile();
 	if (fenetre === 'rapport') return fenetreRapport(); // prompt 41
+	if (fenetre === 'rapportVeille') return fenetreRapportVeille(); // prompt 89 bis
 	if (fenetre === 'mailFin') return fenetreMailFin(); // prompt 56
 	if (fenetre === 'inspection') return fenetreInspection(); // prompt 47
 	if (fenetre === 'tache') return fenetreTache(); // prompt 88
