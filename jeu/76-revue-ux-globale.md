@@ -12,7 +12,7 @@ Rapport complet : `notes.md`, section « Revue UX du 11/11/2026 (prompt 80) ». 
    d'autres), cliquable ; la pile en haut à droite reste sur le bureau RégulOS vide et sur la vue bureau.
 3. **Confus — aide (H)** (`e087a00`) : règles réécrites plus court et taille ajustée automatiquement pour tenir en
    entier ; raccourcis Z, Tab (objets, signalements actifs, logo RégulOS), ↑ ↓ (liste, réponses d'alerte, semaine).
-4. **Mineur — couleurs** : l'aide explique rouge (urgent), orange (attention), vert (bon choix), bleu (Community,
+4. **Mineur — couleurs** (`56dcfcc`) : l'aide explique rouge (urgent), orange (attention), vert (bon choix), bleu (Community,
    somnolence).
 
 ## Vérifications

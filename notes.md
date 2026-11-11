@@ -221,7 +221,7 @@ console. Données : archives du dépôt (hors ligne).
 | Bloquant | Écran de jeu, bandeau d'état | Dans l'appli, aucun texte ne descend sous 20 px (prompt 49) : les messages longs du bandeau (« SIGNALEMENT · … », « À VOUS · … ») débordaient sur la jauge de somnolence, illisible ; l'indicateur « Partie sauvegardée » était sous la jauge | `dd73c46` : messages raccourcis FR + EN, jauge en un seul libellé « Somnolence 42 · Z » (aide au survol), indicateur de sauvegarde entre les jauges et le dossier |
 | Confus | Écran de jeu, applis | Les notifications (prompt 77) couvraient les jauges, le compteur et le haut du dossier, ou le début des messages du patron, pendant 6 s à chaque arrivée | `ee6f913` : appli ou fenêtre ouverte → la dernière notification tient en une ligne dans la barre des tâches (+n), cliquable ; la pile en haut à droite reste pour le bureau RégulOS vide et la vue bureau |
 | Confus | Aide (H) | Les règles, allongées par les prompts 72 à 79, étaient coupées en bas ; les raccourcis ne citaient ni Z, ni Tab entre signalements actifs, ni ↑ ↓ dans la liste | `e087a00` : règles réécrites plus court, taille ajustée pour tenir en entier (≈ 20 px) ; raccourcis à jour |
-| Mineur | Aide (H) | Les codes couleur (rouge, orange, vert, bleu) n'étaient expliqués nulle part | commit « l'aide explique les codes couleur » |
+| Mineur | Aide (H) | Les codes couleur (rouge, orange, vert, bleu) n'étaient expliqués nulle part | `56dcfcc` : rouge = urgent, orange = attention, vert = bon choix, bleu = Community et somnolence (FR + EN) |
 
 **Checklist (§ 2).** Navigation : chaque appli a sa croix et « Fermer (Échap) », le PC « Quitter le PC (Échap) »,
 le logo de la barre des tâches ramène à l'accueil de RégulOS (prompt 75) ; Échap ferme toutes les fenêtres.
