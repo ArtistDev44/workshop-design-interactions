@@ -23,6 +23,10 @@ contextuels (météo, heure de pointe, affluence — Q24).
 - Si le compteur atteint 0 sans choix : « ne rien faire » est appliqué, avec les
   seules conséquences naturelles du dossier (Q25).
 
+> **Prompt 89 (pression morale) — Q25 expliqué, sans changement de valeur.** Un signalement non traité affiche
+> le calcul de ses conséquences naturelles à partir du dossier réel (« retard 25 min → fluidité −5 »), dans la file
+> et à l'annonce de fin de service.
+
 > **Prompt 87 — exceptions à Q5 et Q57–Q60 : réponses par catégorie.** Chaque dossier reçoit une catégorie
 > calculée sur ses champs réels (accident > météo > retard > travaux > affluence). Chaque catégorie propose 4
 > réponses rédigées (`site/public/data/reponses.json`), dont une « ne rien changer » ; elles passent par la même

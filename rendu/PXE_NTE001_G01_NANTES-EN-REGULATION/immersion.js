@@ -45,7 +45,7 @@ const OBJETS_BUREAU = [
 	{ nom: 'lampe', piece: true, label: T('piece.lampe'), infobulle: T('piece.lampe.survol'), x: 410, y: 86, l: 16, h: 14 }, // prompt 31 : applique murale (recalée pour le plein écran)
 	{ nom: 'plante', piece: true, label: T('piece.plante'), infobulle: T('piece.plante.survol'), x: 69, y: 153, l: 16, h: 21 },
 	{ nom: 'tasse', piece: true, label: T('piece.tasse'), infobulle: T('piece.tasse.survol'), x: 118, y: 178, l: 22, h: 28 },
-	{ nom: 'rapport', label: T('objet.rapport'), infobulle: T('objet.rapport.survol'), x: 272, y: 178, l: 58, h: 20, visible: () => !!RAPPORT }, // prompt 41 : posée entre le pied de l'écran et le clavier
+	{ nom: 'rapport', label: T('objet.rapport'), infobulle: T('objet.rapport.survol'), x: 272, y: 178, l: 58, h: 20, visible: () => !!RAPPORT || !!rapportVeille() }, // prompt 41 ; prompt 89 bis : le rapport de la veille reste sur le bureau : posée entre le pied de l'écran et le clavier
 	{ nom: 'telephone', label: T('objet.telephone'), infobulle: T('objet.telephone.survol'), x: 364, y: 192, l: 26, h: 32 }, // prompt 38
 	{ nom: 'dossiers', piece: true, label: T('piece.dossiers'), infobulle: T('piece.dossiers.survol'), x: 390, y: 160, l: 44, h: 15 },
 	{ nom: 'fenetre', piece: true, label: T('piece.fenetre'), infobulle: T('piece.fenetre.survol'), x: 334, y: 14, l: 64, h: 96 }, // prompt 31 : la baie s'arrête au pan de mur
@@ -221,7 +221,7 @@ function avancerTemps() {
 		const n = Jeu.expirerFinJournee();
 		MULTI.actifs = [];
 		phase = 'attente';
-		if (n) annoncer(t('horloge.nonTraites', { n }));
+		if (n) annoncer(t('horloge.nonTraites', { n }) + ' ' + Jeu.evenementsJournee.slice(-n).map((e) => Traces.calculQ25(e)).join(' ')); // prompt 89 bis : Q25 expliqué
 	}
 	if (phase === 'attente') {
 		// Prompt 78 : plus de sieste après 20 s d'inactivité — elle tombe quand la somnolence est pleine (sieste.js)

@@ -962,6 +962,9 @@
 			l.ok = false;
 			lignes.push(l);
 		} else if (SP && SP.avertissements >= 2 && Jeu.jourIndex >= (Jeu.jours || []).length - 1) lignes.push(T('mail.avertissementEnCours'));
+		// Prompt 89 bis : la narration du soir reprend le fait marquant choisi au rapport du soir (prompt 88)
+		const rapportJour = j && Jeu.taches && Jeu.taches.jours && Jeu.taches.jours[j.date] && Jeu.taches.jours[j.date].rapport;
+		if (rapportJour && rapportJour.fait) lignes.push(T('mail.faitMarquant', { fait: rapportJour.fait }));
 		if (parfaite) lignes.push(T('mail.parfait'));
 		else {
 			lignes.push(T('mail.journal', { date }));

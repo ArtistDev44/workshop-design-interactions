@@ -155,7 +155,8 @@ function lumiereCible() {
 	const nuit = METEO_VISU.nuit === null ? facteurNuit() : METEO_VISU.nuit;
 	const jour = (1 - nuit) * (PIECE.store ? 0.35 : 1);
 	const ville = phase === 'soir' ? 0.3 : 0.12; // prompt 69 : le soir, plafonnier éteint, la ville éclaire la pièce (lisible)
-	return constrain(ville + jour * 0.8 + (PIECE.lampe ? 0.45 : 0), 0, 1);
+	const baisse = typeof Traces !== 'undefined' ? Traces.baisseLumiere() : 0; // prompt 89 bis (option) : la salle s'assombrit quand des jauges passent sous 40
+	return constrain(ville + jour * 0.8 + (PIECE.lampe ? 0.45 : 0) - baisse, 0, 1);
 }
 function lumierePiece() {
 	const cible = lumiereCible();

@@ -468,7 +468,7 @@ function corpsArbitrage(tache, x, y, l) {
 }
 
 // ——— Lot F : options soumises au groupe (Paramètres → G), désactivées par défaut ———
-const OPTIONS_JEU = ['chaines', 'deblocages', 'arbitrage'];
+const OPTIONS_JEU = ['chaines', 'deblocages', 'arbitrage', 'traceDossier', 'pressionVisible', 'deVisible', 'eclairageJauges']; // prompt 89 bis : 4 options de plus (§ 6)
 let confirmerRemiseCarriere = 0;
 function ouvrirOptionsJeu() {
 	confirmerRemiseCarriere = 0;
@@ -477,7 +477,7 @@ function ouvrirOptionsJeu() {
 }
 function basculerOptionJeu(nom) {
 	Confort.Reglages.basculer(nom);
-	annoncer(t('optjeu.' + nom) + ' : ' + t(Confort.Reglages[nom] ? 'commun.oui' : 'commun.non') + '. ' + t('optjeu.prochaine'));
+	annoncer(t('optjeu.' + nom) + ' : ' + t(Confort.Reglages[nom] ? 'commun.oui' : 'commun.non') + (OPTIONS_JEU.indexOf(nom) < 3 ? '. ' + t('optjeu.prochaine') : '.'));
 }
 function remettreCarriere() {
 	if (!confirmerRemiseCarriere || millis() - confirmerRemiseCarriere > 5000) {
@@ -491,7 +491,7 @@ function remettreCarriere() {
 }
 function fenetreOptionsJeu() {
 	const l = 1100;
-	const h = 700;
+	const h = 1040;
 	const x = (L - l) / 2;
 	const y = (H - h) / 2;
 	panneau(x, y, l, h, C.accent);
@@ -499,7 +499,7 @@ function fenetreOptionsJeu() {
 	dsTitre(t('optjeu.titre').toUpperCase(), x + 48, y + 36, 36, C.texte, 'left');
 	const R = Confort.Reglages;
 	OPTIONS_JEU.forEach((nom, i) => {
-		const ly = y + 120 + i * 92;
+		const ly = y + 100 + i * 100;
 		textAlign(LEFT, TOP);
 		textFont(POLICE_TEXTE);
 		textSize(22);
@@ -511,13 +511,13 @@ function fenetreOptionsJeu() {
 		text(t('optjeu.' + nom + '.detail'), x + 48, ly + 38, l - 400, 44);
 		bouton(x + l - 48 - 200, ly + 6, 200, Math.min(hb(60), 86), t(R[nom] ? 'commun.oui' : 'commun.non'), () => basculerOptionJeu(nom), false, !R[nom]);
 	});
-	const yr = y + 120 + 3 * 92;
+	const yr = y + 100 + OPTIONS_JEU.length * 100;
 	textAlign(LEFT, TOP);
 	textFont(POLICE_TEXTE);
 	textSize(22);
 	fill(C.texte);
 	const g = Taches.grade();
-	text('4  ' + t('optjeu.carriere', { grade: t('grade.' + g.i), xp: g.xp }), x + 48, yr + 18, l - 460, 30);
+	text('8  ' + t('optjeu.carriere', { grade: t('grade.' + g.i), xp: g.xp }), x + 48, yr + 18, l - 460, 30);
 	bouton(x + l - 48 - 300, yr + 6, 300, 60, t(confirmerRemiseCarriere && millis() - confirmerRemiseCarriere < 5000 ? 'optjeu.confirmerBouton' : 'optjeu.remettre'), remettreCarriere, false, true);
 	textAlign(LEFT, TOP);
 	textFont(POLICE_DONNEES);
@@ -528,9 +528,9 @@ function fenetreOptionsJeu() {
 }
 function toucheOptionsJeu() {
 	if (fenetre !== 'optionsJeu') return false;
-	const i = ['1', '2', '3'].indexOf(key);
+	const i = ['1', '2', '3', '4', '5', '6', '7'].indexOf(key);
 	if (i >= 0) basculerOptionJeu(OPTIONS_JEU[i]);
-	else if (key === '4') remettreCarriere();
+	else if (key === '8') remettreCarriere();
 	else if (keyCode === ESCAPE || keyCode === ENTER || keyCode === RETURN) ouvrir('parametres');
 	return true;
 }
