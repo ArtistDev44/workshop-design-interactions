@@ -85,9 +85,10 @@ function dessinerBandeau() {
 		textAlign(LEFT, TOP);
 	}
 	// Aide et Recommencer (souris / tactile) — équivalents des touches H et R
-	bouton(z.x + z.l - 648, z.y + 18, 280, 48, t('quitter.bouton'), quitterJourneeRapide, false, false); // prompt 94 : toujours visible, touche Q
-	bouton(z.x + z.l - 358, z.y + 18, 128, 48, t('accueil.aide'), () => ouvrir('aide'), false, true);
-	bouton(z.x + z.l - 220, z.y + 18, 206, 48, t('jeu.recommencer'), () => ouvrir('reset'), false, true);
+	bouton(z.x + z.l - 648, z.y + 14, 280, 56, t('quitter.bouton'), quitterJourneeRapide, false, false); // prompt 94 : toujours visible, touche Q
+	bouton(z.x + z.l - 358, z.y + 14, 128, 56, t('accueil.aide'), () => ouvrir('aide'), false, true);
+	bouton(z.x + z.l - 220, z.y + 14, 206, 56, // prompt 98 : boutons du bandeau 48 → 56 px (≈ 45 px à l'écran)
+		 t('jeu.recommencer'), () => ouvrir('reset'), false, true);
 	textAlign(LEFT, TOP);
 }
 
@@ -168,7 +169,7 @@ function dessinerPanneauSignalement(d, x, base) {
 	}
 	if (PLUS.ouvert) {
 		// « En savoir plus » : sources, historique de la ligne, équipes
-		bouton(x + 32, y, 320, 44, t('plus.fermer'), basculerPlus, false, true);
+		bouton(x + 32, y, 320, 52, t('plus.fermer'), basculerPlus, false, true); // prompt 98 : 44 → 52 px
 		textAlign(LEFT, TOP);
 		// Prompt 89 bis : mémoire du dossier — décisions déjà prises aujourd'hui sur cette ligne (journal réel)
 		const mem = typeof Traces !== 'undefined' ? Traces.memoire(d) : [];
@@ -186,11 +187,11 @@ function dessinerPanneauSignalement(d, x, base) {
 		const memo = typeof Traces !== 'undefined' && Traces.option('traceDossier') ? Traces.memoire(d) : []; // option : trace dans le dossier
 		if (memo.length) sv.splice(Math.min(2, sv.length), sv.length, { sur: true, txt: t('trace.memoireTitre') + ' ' + memo[memo.length - 1] });
 		y = bloc(t('bloc.savoir'), sv.map((s) => (s.sur ? '✓ ' : '? ') + s.txt), x + 32, y, l, C.gris);
-		bouton(x + 32, y, 320, 44, t('plus.ouvrir'), basculerPlus, false, true);
+		bouton(x + 32, y, 320, 52, t('plus.ouvrir'), basculerPlus, false, true); // prompt 98 : 44 → 52 px
 		textAlign(LEFT, TOP);
-		cibleGuide('sources', x + 32, y, 320, 44);
+		cibleGuide('sources', x + 32, y, 320, 52);
 		// Prompt 91 § 3 : à chaque retard (et perturbation, météo, accident), publier l'info sur Community depuis le dossier
-		if (peutPublierDossier(d)) bouton(x + 372, y, 400, 44, '→ ' + t('applis.publier') + ' (B)', () => publierDepuisDossier(d), false, true);
+		if (peutPublierDossier(d)) bouton(x + 372, y, 400, 52, '→ ' + t('applis.publier') + ' (B)', () => publierDepuisDossier(d), false, true);
 		textAlign(LEFT, TOP);
 		y += 56; // bas réel des blocs : le conseil et les cartes ne le chevauchent pas
 	}

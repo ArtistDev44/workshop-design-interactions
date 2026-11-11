@@ -296,7 +296,7 @@ function dessinerCourbesJauges(x, y, l, h, encre, gris) {
 	noStroke();
 	fill(gris);
 	textFont(POLICE_DONNEES);
-	textSize(13);
+	textSize(15); // prompt 98 : 13 → 15 (validations : pas de texte sous 14 px)
 	textAlign(RIGHT, CENTER);
 	[0, 50, 100].forEach((v) => text(v, x - 6, y + h - (h * v) / 100));
 	const p = palette().papier;
@@ -318,7 +318,7 @@ function dessinerCourbesJauges(x, y, l, h, encre, gris) {
 	drawingContext.setLineDash([]);
 	noStroke();
 	textAlign(LEFT, TOP);
-	textSize(13);
+	textSize(15); // prompt 98 : 13 → 15 (validations : pas de texte sous 14 px)
 	series.forEach(([cle, c], i) => {
 		fill(c);
 		rect(x + i * (l / 3), y + h + 8, 18, 4);

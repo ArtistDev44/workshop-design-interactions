@@ -363,8 +363,8 @@ function basculerLireTout(cle) {
 function corpsEnquete(d, x, y0, l, h) {
 	const e = enqueteDossier();
 	dessinerOngletsIncident(x, y0, l);
-	y0 += 56;
-	h -= 56;
+	y0 += 62; // prompt 98 : onglets 44 → 52 px
+	h -= 62;
 	ENQ_UI.vu = frameCount;
 	if (SELECTION.onglet === 'historique') return (ENQ_UI.zone = null), dessinerHistoriqueLigne(d, x, y0, l, h);
 	if (SELECTION.onglet === 'equipes') return (ENQ_UI.zone = null), dessinerEquipesIncident(d, x, y0, l, h);

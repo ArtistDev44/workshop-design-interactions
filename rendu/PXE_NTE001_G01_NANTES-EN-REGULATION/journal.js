@@ -190,7 +190,7 @@ function vueJour(z) {
 				rect(cx, y0 + 58, cl, 70);
 				sparkline(tu.jauges.points, cle, cx + 4, y0 + 60, cl - 8, 66, couleur);
 			});
-			dsTexte(t('journal.echelle'), x + l - 12, y0 + 10, 12, DS.blanc50, 'right');
+			dsTexte(t('journal.echelle'), x + l - 12, y0 + 10, 14, DS.blanc50, 'right');
 		} else if (k === 'objectif') {
 			const o = tu.objectif;
 			if (!o) dsTexte(nonRenseigne(), x + 12, y0 + 40, 16, DS.blanc50, 'left', l - 24);
@@ -412,7 +412,7 @@ function vueSemaine(z) {
 	s.colonnes.forEach((c) => {
 		const x = z.x + c.i * (lc + 10);
 		tuileFond(x, y0, lc, 230, nomJour(c.i) + ' · ' + dateCourte(c.date));
-		if (c.theme) dsTexte(t('theme.' + c.theme), x + 12, y0 + 32, 13, DS.blanc75, 'left', lc - 24);
+		if (c.theme) dsTexte(t('theme.' + c.theme), x + 12, y0 + 32, 14, DS.blanc75, 'left', lc - 24);
 		dsTexte(t('journal.sem.signalements', { n: c.signalements }), x + 12, y0 + 54, 14, DS.blanc, 'left', lc - 24);
 		dsTexte(t('journal.sem.bons', { n: c.bons, total: c.total }), x + 12, y0 + 74, 14, DS.blanc, 'left', lc - 24);
 		dsTexte(c.objectif ? (c.objectif.enCours ? '• ' + t('journal.enCours') : (c.objectif.atteint ? '✓ ' : '✗ ') + t(c.objectif.atteint ? 'journal.atteint' : 'journal.rate')) : '—', x + 12, y0 + 94, 14, c.objectif && !c.objectif.enCours ? (c.objectif.atteint ? DS.succesClair : DS.erreurClair) : DS.blanc75, 'left');
@@ -425,7 +425,7 @@ function vueSemaine(z) {
 				rect(bx, y0 + 124, lb, 76);
 				fill(couleur);
 				rect(bx, y0 + 200 - (76 * c.fin[k]) / 100, lb, (76 * c.fin[k]) / 100);
-				dsTexte(lettre + ' ' + c.fin[k], bx, y0 + 206, 12, DS.blanc75, 'left');
+				dsTexte(lettre + ' ' + c.fin[k], bx, y0 + 206, 14, DS.blanc75, 'left');
 			});
 		}
 		boutons.push({ x, y: y0, l: lc, h: 230, action: () => choisirJourJournal(c.i) });
@@ -447,14 +447,14 @@ function vueSemaine(z) {
 	const pts = s.courbe;
 	const px = (i) => gx + (pts.length < 2 ? gl / 2 : (i * gl) / (pts.length - 1));
 	const py = (v, max) => gy + hc - (v / max) * hc;
-	dsTexte('300', gx - 8, gy - 6, 12, DS.blanc50, 'right');
-	dsTexte('0', gx - 8, gy + hc - 12, 12, DS.blanc50, 'right');
+	dsTexte('300', gx - 8, gy - 6, 14, DS.blanc50, 'right');
+	dsTexte('0', gx - 8, gy + hc - 12, 14, DS.blanc50, 'right');
 	s.seuils.forEach((v) => {
 		stroke(DS.blanc50);
 		strokeWeight(1);
 		for (let xx = gx; xx < gx + gl; xx += 12) line(xx, py(v, 300), xx + 6, py(v, 300));
 		noStroke();
-		dsTexte(String(v), gx + gl + 4, py(v, 300) - 8, 12, DS.blanc75, 'left');
+		dsTexte(String(v), gx + gl + 4, py(v, 300) - 8, 14, DS.blanc75, 'left');
 	});
 	const serie = (k, max, couleur, epaisseur) => {
 		stroke(couleur);
@@ -468,7 +468,7 @@ function vueSemaine(z) {
 	serie('r', 300, '#FFC138', 2);
 	serie('b', 300, '#00B74F', 2);
 	serie('score', 300, DS.blanc, 3);
-	dsTexte(t('journal.legendeCourbe'), z.x + 12, gy + hc + 10, 12, DS.blanc75, 'left', lc2 - 24);
+	dsTexte(t('journal.legendeCourbe'), z.x + 12, gy + hc + 10, 14, DS.blanc75, 'left', lc2 - 24);
 	// Décisions clés et carnet de la semaine
 	const xd = z.x + lc2 + 16;
 	const ld = z.l - lc2 - 16;
@@ -602,9 +602,9 @@ function voletDecision(f, e, z, y) {
 	strokeWeight(2);
 	line(axe, y - 4, axe, y + D.barres.length * 40);
 	noStroke();
-	dsTexte('−' + D.echelle, axe - demi, y + D.barres.length * 40 + 4, 12, DS.blanc50, 'center');
-	dsTexte('0', axe, y + D.barres.length * 40 + 4, 12, DS.blanc50, 'center');
-	dsTexte('+' + D.echelle, axe + demi, y + D.barres.length * 40 + 4, 12, DS.blanc50, 'center');
+	dsTexte('−' + D.echelle, axe - demi, y + D.barres.length * 40 + 4, 14, DS.blanc50, 'center');
+	dsTexte('0', axe, y + D.barres.length * 40 + 4, 14, DS.blanc50, 'center');
+	dsTexte('+' + D.echelle, axe + demi, y + D.barres.length * 40 + 4, 14, DS.blanc50, 'center');
 	D.barres.forEach((b, i) => {
 		const by = y + i * 40;
 		dsTexte(court(b.lib, 34), z.x, by + 6, 15, b.choix || b.meilleure ? DS.blanc : DS.blanc75, 'left');

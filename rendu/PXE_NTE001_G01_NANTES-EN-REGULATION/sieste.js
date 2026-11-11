@@ -143,7 +143,7 @@ function dessinerSomnolence() {
 	text(t(Confort.Reglages.somnolenceNecessaire ? 'sieste.jaugeSeuil' : 'sieste.jauge', { v }) + (Confort.Reglages.somnolenceNecessaire && v >= 70 ? ' ⚠' : ''), z.x + 10, z.y + 4); // prompt 80 : un seul libellé ; prompt 91 : seuil 70 en texte
 	textStyle(NORMAL);
 	textAlign(LEFT, TOP);
-	boutons.push({ x: z.x, y: z.y, l: z.l, h: z.h, action: basculerSieste });
+	boutons.push({ x: z.x, y: z.y - 18, l: z.l, h: z.h + 18, action: basculerSieste }); // prompt 98 : zone de clic 54 px (dessin inchangé)
 	cibleGuide('somnolence', z.x, z.y, z.l, z.h);
 	if (survol) {
 		// Ligne d'aide : à quoi sert la jauge (clic ou Z : se reposer), et le compromis de la sieste
