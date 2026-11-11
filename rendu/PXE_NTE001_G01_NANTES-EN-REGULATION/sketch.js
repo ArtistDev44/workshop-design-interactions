@@ -176,6 +176,7 @@ function draw() {
 	verifierTaches(); // prompt 88 : briefing du matin, tâches courtes
 	majAmbianceTaches(); // prompt 88 : humeur musicale de la crise
 	majMultitache(); // prompts 68 / 77 : arrivées, compteurs des signalements actifs, expirations en arrière-plan
+	majNotifsTel(); // prompt 90 : notifications spontanées du téléphone (aucun appel réseau ici)
 	majNotifications(); // prompt 77 : mails, commentaires, fins d'intervention
 	majLicenciement(); // prompt 84 : messages après la panne, licenciement hors décision
 	majPatron(); // prompt 86 : son, indicateur de saisie
@@ -1090,7 +1091,7 @@ function keyPressed() {
 	// Langue (prompt 24) : L bascule partout, sans toucher à la partie
 	if (key === 'l' || key === 'L') return Langue.suivante(), false;
 	// Prompt 47 : inspection, démission, palmarès ; J = journal de bord, D = rendre son badge
-	if (toucheTaches() || toucheMecaniques() || toucheAccessibilite() || toucheJournee()) return false; // prompts 47, 48 et 51
+	if (toucheTelephone() || toucheTaches() || toucheMecaniques() || toucheAccessibilite() || toucheJournee()) return false; // prompts 47, 48 et 51
 	// Fenêtres ouvertes : elles captent le clavier
 	if (fenetre) {
 		if (keyCode === ESCAPE || (fenetre === 'aide' && (key === 'h' || key === 'H' || key === '?'))) return fermer(), false;

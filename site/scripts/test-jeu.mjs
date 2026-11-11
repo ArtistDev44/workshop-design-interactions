@@ -25,7 +25,7 @@ function contexte(langue, stockage = new Map(), avecHistoire = false) {
 	ctx.window = ctx;
 	ctx.globalThis = ctx;
 	vm.createContext(ctx);
-	const fichiers = ['data/lignes.js', 'data/semaines.js', 'data/fallback.js', 'data/messages.js', 'data/reponses.js', 'i18n.js', 'game.js', 'rythme.js', 'taches.js', 'journal-donnees.js', 'traces.js']; // prompts 74 / 88 / 89 : logique pure de la couche d'affichage
+	const fichiers = ['data/lignes.js', 'data/semaines.js', 'data/fallback.js', 'data/messages.js', 'data/reponses.js', 'data/loire.js', 'i18n.js', 'game.js', 'rythme.js', 'taches.js', 'journal-donnees.js', 'traces.js', 'notifs-tel.js']; // prompts 74 / 88 / 89 / 90 : logique pure de la couche d'affichage
 	if (avecHistoire) fichiers.push('confort.js', 'histoire.js'); // prompt 56 : progression et palmarès (localStorage)
 	for (const f of fichiers) {
 		vm.runInContext(readFileSync(join(pub, f), 'utf8'), ctx, { filename: f });
@@ -1373,6 +1373,76 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 	verifier(r.repro && r.nb > 5, `traces : reproductibles par la graine (${r.nb} lignes)`);
 	verifier(r.q25, 'Q25 : le calcul affiché cite les effets réellement appliqués');
 	verifier(r.sauve, 'traces : restaurées depuis la sauvegarde');
+}
+
+// Prompt 90 : notifications du téléphone — données réelles seulement, rythme, priorités, Ne pas déranger, pas de doublon
+{
+	const cn = contexte('fr');
+	const r = vm.runInContext(
+		`(() => {
+		const out = { erreurs: [], parJour: [], repro: true };
+		const DIRECT = ['parkings', 'velos', 'trafic', 'pollens'];
+		for (const lundi of Jeu.semainesProposees().map((x) => x.lundi)) {
+			Jeu.chargerSemaine(lundi); Jeu.nouvellePartie(); Taches.nouvellePartie();
+			const plans = [];
+			for (let i = 0; i < Jeu.jours.length; i++) {
+				const jr = Jeu.jourCourant();
+				const plan = NotifsTel.planJour(jr);
+				plans.push(plan.map((n) => n.id + NotifsTel.texte(n)).join('|'));
+				const m = Jeu.meteoDuJour(jr.date) || {};
+				plan.forEach((n) => {
+					if (DIRECT.includes(n.app)) out.erreurs.push('direct dans une semaine archivée');
+					if (n.app === 'meteo' && !((m.pluie_mm || 0) >= 1 || (m.rafales_max || 0) >= 40 || (m.temp_min !== null && m.temp_min <= 0))) out.erreurs.push(jr.date + ' météo sans seuil');
+					if (n.app === 'travaux' && !jr.dossiers.some((d) => d.type === 'perturbation')) out.erreurs.push(jr.date + ' travaux sans changelog');
+					if (n.app === 'agenda' && !Jeu.evenementsAffluence(jr.date).length) out.erreurs.push(jr.date + ' agenda vide');
+					if (n.app === 'loire' && !(jr.date >= window.PXE_LOIRE.periode.du.slice(0, 10) && jr.date <= window.PXE_LOIRE.periode.au.slice(0, 10))) out.erreurs.push(jr.date + ' Loire hors période');
+					if (n.de === 'chauffeur' && !(Jeu.paquet[n.dossier] && Jeu.paquet[n.dossier].lignes.length)) out.erreurs.push('chauffeur sans dossier');
+					if (/\\{\\w+\\}|undefined|\\[À COMPLÉTER\\]/.test(NotifsTel.texte(n))) out.erreurs.push('texte ' + NotifsTel.texte(n));
+				});
+				// Rythme : une journée simulée par pas de 5 min de jeu
+				const et = NotifsTel.etatVide();
+				let spont = [], ouvert = 0;
+				for (let mn = 480; mn <= Jeu.finJournee(); mn += 5) {
+					Jeu.horloge.minutes = mn;
+					const panneau = mn >= 600 && mn < 640; // un panneau ouvert 40 min
+					const x = NotifsTel.maj(et, { panneauOuvert: panneau, npd: false });
+					if (x && panneau) ouvert++;
+					if (x) {
+						spont.push({ mn, prio: x.n.prio, bureau: !!x.n.bureau });
+						if (x.autres && et.recues.filter((n) => !n.bureau).length < x.autres + 1) out.erreurs.push('regroupement');
+					}
+				}
+				if (ouvert) out.erreurs.push('notification pendant un panneau ouvert');
+				if (spont.length > NotifsTel.R.maxJour) out.erreurs.push(jr.date + ' trop de spontanées ' + spont.length);
+				spont.forEach((s, k) => { if (k && s.prio !== 0 && s.mn - spont[k - 1].mn < NotifsTel.R.ecartMin) out.erreurs.push(jr.date + ' écart < 20 min'); if (s.bureau) out.erreurs.push('doublon bureau'); });
+				out.parJour.push(spont.length);
+				while (Jeu.prochainDuJour()) Jeu.decider('temps');
+				if (!Jeu.jours[Jeu.jourIndex + 1]) break;
+				Jeu.journeeSuivante(); Taches.matin();
+			}
+			Jeu.chargerSemaine(lundi); Jeu.nouvellePartie(); Taches.nouvellePartie();
+			if (NotifsTel.planJour(Jeu.jourCourant()).map((n) => n.id + NotifsTel.texte(n)).join('|') !== plans[0]) out.repro = false;
+		}
+		// Priorités et Ne pas déranger : une alerte de jauge passe avant tout, et seule en Ne pas déranger
+		Jeu.chargerSemaine('2026-09-14'); Jeu.nouvellePartie(); Taches.nouvellePartie();
+		const et = NotifsTel.etatVide();
+		Jeu.horloge.minutes = 600; Jeu.jauges.budget = 20;
+		const a = NotifsTel.maj(et, { panneauOuvert: false, npd: false });
+		out.prio = a && a.n.app === 'regul' && a.n.prio === 0;
+		const et2 = NotifsTel.etatVide(); Jeu.jauges.budget = 60; Jeu.horloge.minutes = 1150;
+		out.npd = NotifsTel.maj(et2, { panneauOuvert: false, npd: true }) === null && et2.recues.length > 0;
+		return out;
+	})()`,
+		cn,
+	);
+	verifier(r.erreurs.length === 0, `téléphone : ${[...new Set(r.erreurs)].slice(0, 4)}`);
+	verifier(r.parJour.some((n) => n >= 3) && r.parJour.every((n) => n <= 10), `téléphone : rythme par journée (${r.parJour})`);
+	verifier(r.repro, 'téléphone : plan et variantes reproductibles par la graine');
+	verifier(r.prio && r.npd, `téléphone : alerte prioritaire (${r.prio}), Ne pas déranger ne laisse passer que les alertes (${r.npd})`);
+	const nt = readFileSync(join(pub, 'notifs-tel.js'), 'utf8');
+	verifier(/if \(Jeu\.etat\.mode === 'direct' && TELN\.jour\)/.test(nt) && !/function majNotifsTel\(\) \{[^}]*fetch/.test(nt), 'téléphone : le direct seulement en mode « aujourd’hui », aucun appel réseau dans draw');
+	verifier(/Date\.now\(\) - dernier < 10 \* 60 \* 1000/.test(nt) && /6000/.test(nt) && /limit=1/.test(nt), 'téléphone : appels sobres (10 min, 6 s, limit=1)');
+	verifier(/telephone: typeof TELN/.test(readFileSync(join(pub, 'sauvegarde.js'), 'utf8')), 'téléphone : notifications du jour sauvegardées');
 }
 
 // Service worker : chaque script de index.html est dans la liste hors ligne de sw.js
