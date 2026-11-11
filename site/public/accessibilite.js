@@ -173,7 +173,7 @@ function fenetreAccessibilite() {
 	textSize(15);
 	fill(C.gris);
 	textAlign(RIGHT, TOP);
-	text('workshop-design-interactions.pages.dev', x + l - 48, yr + q + 10);
+	text(URL_JEU.replace(/^https:\/\//, '').replace(/\/$/, ''), x + l - 48, yr + q + 10); // prompt 81 : URL_JEU (menu.js), une seule définition
 	textAlign(LEFT, TOP);
 	bouton(x + 48, y + h - 104, 300, 64, t('parametres.exporter'), () => Sauvegarde.exporter(), false, true);
 	bouton(x + 364, y + h - 104, 300, 64, t('parametres.importer'), () => Sauvegarde.ouvrirImport(), false, true);
