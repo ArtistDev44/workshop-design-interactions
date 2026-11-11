@@ -527,6 +527,11 @@ function blocPlainte(z) {
 	fill(DS.alerte);
 	rect(z.x, y, 4, 84);
 	dsTexte(p.auteur + ' · ' + p.heure, z.x + 18, y + 10, 18, DS.blanc50, 'left');
+	// Prompt 79 : compteur de réponse — à l'expiration la plainte « s'envenime » (malus réputation)
+	if (p.delaiJusqua && !p.expiree) {
+		const reste = Math.max(0, Math.ceil((p.delaiJusqua - millis()) / 1000));
+		dsTexte(t('plainte.delai', { s: reste }), z.x + z.l - 18, y + 10, 18, reste < 10 ? DS.erreur : DS.blanc50, 'right');
+	} else if (p.expiree) dsBadge(z.x + z.l - 120, y + 8, t('plainte.expireeBadge'), 'erreur');
 	dsTexte(Jeu.texteMessage(p.def.texte, p.vars), z.x + 18, y + 38, 20, DS.blanc, 'left', z.l - 36);
 	y += 96;
 	if (focusReponse >= p.def.reponses.length) focusReponse = 0;

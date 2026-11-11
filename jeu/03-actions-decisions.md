@@ -22,3 +22,6 @@ contextuels (météo, heure de pointe, affluence — Q24).
   l'affluence du dossier.
 - Si le compteur atteint 0 sans choix : « ne rien faire » est appliqué, avec les
   seules conséquences naturelles du dossier (Q25).
+
+
+> Prompt 79 : Q58 (et la gravité « élevée ») lisent désormais le **retard effectif** (réel + aggravation dynamique + durable), seuils inchangés — voir `jeu/75-retards-aggravation-community.md`.

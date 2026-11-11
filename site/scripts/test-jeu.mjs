@@ -511,6 +511,61 @@ verifier(/const SOMNOLENCE = \{/.test(readFileSync(join(pub, 'immersion.js'), 'u
 verifier(/facteurSieste: 100/.test(readFileSync(join(pub, 'immersion.js'), 'utf8')), 'prompt 78 : temps ×100 pendant la sieste absent');
 verifier(/function seReposer\(\)/.test(readFileSync(join(pub, 'immersion.js'), 'utf8')) && /function lancerSieste\(/.test(readFileSync(join(pub, 'immersion.js'), 'utf8')), 'prompt 78 : sieste volontaire/forcée absente');
 
+// Prompt 79 : retard effectif = réel + aggravation (bornes), aggravation durable après « raté », persistance sauvegarde
+const p79 = vm.runInContext(
+	`(() => {
+		Jeu.chargerSemaine('2026-09-14'); Jeu.nouvellePartie();
+		const out = { base: null, apresAttente: null, durable: null, restaure: null, plainteExpiree: null, plainteTard: null, plainteTemps: null };
+		// aucun retard dans les archives (ils viennent du GTFS-RT en direct) : dossier aux champs réels du flux
+		const d = Object.assign({}, Jeu.paquet[0], { type: 'ligne en difficulté', nature: 'retard', retard: 12, lignes: ['1'], minute: Jeu.horloge.minutes });
+		out.base = Jeu.retardEffectif(d); // à l'arrivée : le vrai chiffre (aggravation dynamique nulle au début de la minute)
+		Jeu.horloge.minutes = d.minute + 10; // 10 min de jeu écoulées -> +5 min d'aggravation (parMinutes = 2)
+		out.apresAttente = Jeu.retardEffectif(d);
+		Jeu.horloge.minutes = d.minute + 4000; // plafonné à +30
+		out.plafond = Jeu.retardEffectif(d);
+		// décision « ratée » forcée : aggravation durable +5 sur la ligne
+		Jeu.aggraverLignes(d);
+		out.durable = Jeu.retardEffectif(d);
+		// persistance dans l'instantané
+		const inst = Jeu.instantane(0);
+		Jeu.aggravationLignes = {};
+		Jeu.restaurerInstantane(JSON.parse(JSON.stringify(inst)), 0);
+		out.restaure = Jeu.retardEffectif(d);
+		// plaintes : expiration applique le malus, réponse à temps non, réponse tardive oui
+		Jeu.plaintes = [];
+		const p1 = Jeu.declencherPlainte(Jeu.index) || null;
+		// fabriquer une plainte avec délai dépassé
+		const fausse = { id: 'test', def: { id: 'test', texte: { fr: 'x' }, reponses: [{ texte: { fr: 'ok' }, bonne: true, effets: {} }] }, vars: {}, index: 0, heure: '08:00', auteur: '@test', reponse: null, delaiJusqua: 1, expiree: false, tarde: false };
+		Jeu.plaintes.push(fausse);
+		const repAvant = Jeu.jauges.reputation;
+		Jeu.majPlaintes();
+		out.plainteExpiree = fausse.expiree === true && Jeu.jauges.reputation === repAvant - 3;
+		const r2 = { id: 't2', def: fausse.def, vars: {}, index: 1, heure: '08:00', auteur: '@t2', reponse: null, delaiJusqua: Date.now() + 60000, expiree: false, tarde: false };
+		Jeu.plaintes.push(r2);
+		const av2 = Jeu.jauges.reputation;
+		Jeu.repondrePlainte(r2, 0);
+		out.plainteTemps = Jeu.jauges.reputation === av2 && r2.reponse === 0 && r2.tarde === false;
+		const r3 = { id: 't3', def: fausse.def, vars: {}, index: 2, heure: '08:00', auteur: '@t3', reponse: null, delaiJusqua: 1, expiree: false, tarde: false };
+		Jeu.plaintes.push(r3);
+		const av3 = Jeu.jauges.reputation;
+		Jeu.repondrePlainte(r3, 0);
+		out.plainteTard = r3.tarde === true && Jeu.jauges.reputation === av3 - 3;
+		const b = Jeu.bilanPlaintes();
+		out.bilan = b.expires === 1 && b.tard === 1 && b.aTemps === 1;
+		return out;
+	})()`,
+	fr,
+);
+verifier(p79.base === p79.apresAttente - 0 || p79.apresAttente >= p79.base, 'prompt 79 : le retard effectif doit croître avec le temps');
+verifier(p79.apresAttente === p79.base + 5, `prompt 79 : aggravation dynamique = +5 après 10 min (lu ${p79.apresAttente - p79.base})`);
+verifier(p79.plafond === p79.base + 30, 'prompt 79 : aggravation plafonnée à +30');
+verifier(p79.durable === p79.plafond + 5, 'prompt 79 : aggravation durable +5 après « raté »');
+verifier(p79.restaure === p79.durable, 'prompt 79 : l’aggravation durable n’est pas restaurée par la sauvegarde');
+verifier(p79.plainteExpiree, 'prompt 79 : expiration d’une plainte = malus réputation −3');
+verifier(p79.plainteTemps, 'prompt 79 : réponse à temps sans malus');
+verifier(p79.plainteTard, 'prompt 79 : réponse tardive = même malus');
+verifier(p79.bilan, 'prompt 79 : bilan plaintes à temps/tard/expirées incorrect');
+
 // Traductions : toute clé française existe en anglais
 const manquantes = vm.runInContext('Object.keys(TRADUCTIONS.fr).filter((k) => TRADUCTIONS.en[k] === undefined)', fr);
 verifier(manquantes.length === 0, `clés sans traduction anglaise : ${manquantes.slice(0, 8).join(', ')}`);

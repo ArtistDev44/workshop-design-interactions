@@ -164,6 +164,12 @@
 		// Contradiction de sources (Q9, Q31) : mauvaise source = malus réputation + conséquence réelle
 		malusMauvaiseSource: -6,
 		seuilCritique: 20, // Q46
+		// Prompt 79 (valeurs verrouillées) : les retards s'aggravent avec le temps — retard effectif =
+		// retard réel de la source + aggravation dynamique (temps de jeu écoulé, plafonnée) + aggravation
+		// durable par ligne après une décision « ratée » ; les plaintes Community ont un délai de réponse.
+		aggravation: { parMinutes: 2, plafond: 30, durableRate: 5, plafondDurable: 30 },
+		delaiReponsePlainte_s: 45, // compteur de réponse d'une plainte Community ; à l'expiration elle « s'envenime »
+		malusPlainteExpiree: -3, // réputation, appliqué à l'expiration ou à une réponse tardive
 	};
 	Jeu.REGLAGES = REGLAGES;
 	const NOMS_JAUGES = ['fluidite', 'reputation', 'budget'];
@@ -257,6 +263,7 @@
 		Jeu.defis = null; // prompt 55 : tirés dans preparerJournees (après le paquet)
 		Jeu.defisAppliques = null;
 		Jeu.ralenti = { jour: -1, debut: 0, fin: 0, utilises: 0 }; // prompt 55
+		Jeu.aggravationLignes = {}; // prompt 79
 		Jeu.terminee = Jeu.paquet.length === 0;
 		Jeu.preparerJournees();
 		return Jeu.paquet;
@@ -314,6 +321,7 @@
 			defisAppliques: Jeu.defisAppliques,
 			ralenti: Jeu.ralenti ? { jour: Jeu.ralenti.jour, utilises: Jeu.ralenti.utilises, debut: 0, fin: 0 } : null,
 			terminee: Jeu.terminee,
+			aggravationLignes: Object.assign({}, Jeu.aggravationLignes || {}), // prompt 79
 		};
 	};
 
@@ -346,11 +354,33 @@
 		const m = s.modificateur && s.modificateur.id !== 'erreur_systeme' ? s.modificateur : null; // ancienne sauvegarde : l'erreur système n'existe plus
 		Jeu.modificateur = m ? Object.assign({}, m, { debut: m.debut === null ? null : m.debut + maintenant, fin: m.fin === null ? null : m.fin + maintenant }) : null;
 		Jeu.terminee = !!s.terminee;
+		Jeu.aggravationLignes = Object.assign({}, s.aggravationLignes || {}); // prompt 79
 		return Jeu.index >= 0 && Jeu.index <= Jeu.paquet.length && !!Jeu.jours.length;
 	};
 
 	Jeu.dossierCourant = () => (Jeu.paquet || [])[Jeu.index] || null;
 	Jeu.score = () => NOMS_JAUGES.reduce((s, k) => s + Jeu.jauges[k], 0); // 0–300, poids égaux (Q44)
+
+	// ——— Prompt 79 : retard effectif (réel + aggravation), aggravation durable par ligne ———
+	Jeu.aggravationLignes = {}; // ligne -> minutes d'aggravation durable (décisions « ratées »), borné
+	/** Retard effectif d'un dossier « ligne en difficulté » non traité : retard réel + aggravation
+	 * dynamique (temps de jeu écoulé depuis l'arrivée, / parMinutes, plafonnée) + durable (par ligne).
+	 * Le retard de départ affiché reste le vrai chiffre de la source (d.retard). */
+	Jeu.retardEffectif = function (d) {
+		if (!d || d.retard === null || d.retard === undefined) return d ? d.retard : null;
+		if (d.type !== 'ligne en difficulté') return d.retard;
+		const dyn = Jeu.horloge && d.minute !== undefined ? Math.max(0, Math.floor((Jeu.horloge.minutes - d.minute) / REGLAGES.aggravation.parMinutes)) : 0;
+		const dur = (d.lignes || []).reduce((s2, n) => s2 + (Jeu.aggravationLignes[n] || 0), 0);
+		return d.retard + Math.min(REGLAGES.aggravation.plafond, dyn) + Math.min(REGLAGES.aggravation.plafondDurable, dur);
+	};
+	/** Décision « ratée » (ou « trop tard ») sur un dossier avec retard : aggravation durable de la ligne (+5 min, cumulatif, borné) */
+	Jeu.aggraverLignes = function (d) {
+		if (!d || !d.lignes || !d.lignes.length || d.retard === null || d.retard === undefined) return;
+		d.lignes.forEach((n) => {
+			Jeu.aggravationLignes[n] = Math.min(REGLAGES.aggravation.plafondDurable, (Jeu.aggravationLignes[n] || 0) + REGLAGES.aggravation.durableRate);
+		});
+		Jeu.compterMalus('retard_aggrave');
+	};
 
 	/* Conflit de deux lignes (Q27) : le dossier suivant a la même date et concerne d'autres lignes. */
 	/** Prompt 41 : éléments de jeu débloqués par chapitre du mode histoire (redéfini par histoire.js) */
@@ -413,7 +443,7 @@
 		} else {
 			const eff = REGLAGES.effets[action];
 			const base = eff.base.slice();
-			if (action === 'retenir') base[1] = d.retard !== null && d.retard > 20 ? 8 : 4; // Q58 (réputation)
+			if (action === 'retenir') base[1] = Jeu.retardEffectif(d) > 20 ? 8 : 4; // Q58 (réputation) — lit le retard effectif (prompt 79)
 			deltas = base.map((b, i) => {
 				if (!b) return 0;
 				des[i] = Jeu.de6();
@@ -657,7 +687,7 @@
 		if (action === 'rien') return [-5 / 3, -5 / 3, -5 / 3]; // −2 à −8 sur une jauge au hasard : −5 en moyenne
 		const eff = REGLAGES.effets[action];
 		const base = eff.base.slice();
-		if (action === 'retenir') base[1] = d.retard !== null && d.retard !== undefined && d.retard > 20 ? 8 : 4;
+		if (action === 'retenir') base[1] = Jeu.retardEffectif(d) > 20 ? 8 : 4; // prompt 79 : retard effectif
 		return base.map((b, i) => {
 			if (!b) return 0;
 			let v = Math.sign(b) * (Math.abs(b) + 2.5); // dé moyen : d6 − 1 = 2,5
@@ -750,6 +780,8 @@
 		}
 		const obj = (Jeu.objectifsResultats || []).find((o) => o.jourIndex === Jeu.jourIndex);
 		if (obj) lignes.push(T('mail.objectif', { libelle: obj.libelle, resultat: T(obj.atteint ? 'mail.atteint' : 'mail.rate', { effet: obj.effet }) }));
+		const bp = Jeu.bilanPlaintes(); // prompt 79 : commentaires Community répondus à temps / tard / expirés
+		if (bp.total) lignes.push(T('mail.plaintes', { a: bp.aTemps, t: bp.tard, e: bp.expires, total: bp.total }));
 		lignes.push(T('mail.jauges', { f: Jeu.jauges.fluidite, r: Jeu.jauges.reputation, b: Jeu.jauges.budget }));
 		// Prompt 55 : défis rappelés chaque soir ; le dernier soir, leur bilan avec les vrais chiffres
 		if (Jeu.defis && Jeu.defis.length) {
@@ -833,6 +865,7 @@
 	Jeu.reagirApps = function (e) {
 		const sujet = e.ligne ? T('sujet.ligne', { ligne: e.ligne }) : e.externeCourt || e.externe;
 		const ev = Jeu.evaluer(e);
+		if (ev === 'rate' || ev === 'trop_tard') Jeu.aggraverLignes(e.resultat.dossier); // prompt 79 : aggravation durable de la ligne
 		Jeu.commenter(ev === 'bon' ? 'bon' : 'mauvais', sujet, e.retard);
 		if (ev === 'rate') Jeu.messagePatron(T('patron.rate', { sujet, action: e.action, meilleure: e.meilleureAction }));
 		if (ev === 'trop_tard') Jeu.messagePatron(T('patron.tropTard', { sujet }));
@@ -916,7 +949,7 @@
 		const max = Math.max(...pool.map(specificite));
 		const meilleures = pool.filter((p) => specificite(p) === max);
 		const def = meilleures[index % meilleures.length]; // déterministe : ne touche pas au tirage des dés
-		const plainte = { id: def.id, def, vars, index, heure: maintenantSim(), auteur: def.auteur || '@usager_44', reponse: null };
+		const plainte = { id: def.id, def, vars, index, heure: maintenantSim(), auteur: def.auteur || '@usager_44', reponse: null, delaiJusqua: (typeof millis === 'function' ? millis() : Date.now()) + REGLAGES.delaiReponsePlainte_s * 1000, expiree: false, tarde: false }; // prompt 79 : compteur de réponse
 		Jeu.plaintes.push(plainte);
 		Jeu.nonLus.community++;
 		return plainte;
@@ -924,11 +957,31 @@
 
 	Jeu.MAX_PLAINTES_EN_ATTENTE = 3;
 	Jeu.plaintesEnAttente = () => (Jeu.plaintes || []).filter((p) => p.reponse === null);
+	/** Prompt 79 : à chaque image, les plaintes en attente dont le délai est passé « s'enveniment » (réputation −3, malus) */
+	Jeu.majPlaintes = function () {
+		const m = typeof millis === 'function' ? millis() : Date.now();
+		let n = 0;
+		(Jeu.plaintes || []).forEach((p) => {
+			if (p.reponse !== null || p.expiree || !p.delaiJusqua || m < p.delaiJusqua) return;
+			p.expiree = true; // s'envenime : plus de réponse possible, malus appliqué une fois
+			Jeu.compterMalus('plainte_expiree');
+			Jeu.appliquerDeltas({ reputation: REGLAGES.malusPlainteExpiree });
+			if (Jeu.messagePatron) Jeu.messagePatron(T('plainte.expiree', { auteur: p.auteur, malus: REGLAGES.malusPlainteExpiree }));
+			n++;
+		});
+		return n;
+	};
 
 	/** Le joueur répond : effets du JSON (bornés à ±bornesEffet) appliqués aux jauges, bornées 0–100 */
 	Jeu.repondrePlainte = function (plainte, i) {
 		const r = plainte && plainte.reponse === null ? plainte.def.reponses[i] : null;
 		if (!r) return null;
+		if (plainte.expiree) return null; // prompt 79 : déjà « envenimée »
+		if (plainte.delaiJusqua && (typeof millis === 'function' ? millis() : Date.now()) > plainte.delaiJusqua) {
+			plainte.tarde = true; // réponse tardive : le même malus que l'expiration
+			Jeu.compterMalus('plainte_expiree');
+			Jeu.appliquerDeltas({ reputation: REGLAGES.malusPlainteExpiree });
+		}
 		const effets = {};
 		NOMS_JAUGES.forEach((k) => {
 			const v = Number((r.effets || {})[k]) || 0;
@@ -992,7 +1045,14 @@
 		);
 		return n;
 	};
-	Jeu.bilanPlaintes = () => ({ traitees: (Jeu.plaintes || []).filter((p) => p.reponse !== null).length, total: (Jeu.plaintes || []).length, bonnes: (Jeu.plaintes || []).filter((p) => p.bonne).length });
+	Jeu.bilanPlaintes = () => ({
+		traitees: (Jeu.plaintes || []).filter((p) => p.reponse !== null).length,
+		total: (Jeu.plaintes || []).length,
+		bonnes: (Jeu.plaintes || []).filter((p) => p.bonne).length,
+		aTemps: (Jeu.plaintes || []).filter((p) => p.reponse !== null && !p.tarde).length, // prompt 79
+		tard: (Jeu.plaintes || []).filter((p) => p.reponse !== null && p.tarde).length,
+		expires: (Jeu.plaintes || []).filter((p) => p.expiree).length,
+	});
 
 	// Équipes envoyées depuis la carte (façon centre d'appels) : coût en budget, effets à l'arrivée
 	const EQUIPES = {
@@ -1041,8 +1101,9 @@
 	/** Gravité calculée (affichée avec sa règle dans l'aide) : élevée, moyenne ou faible */
 	Jeu.gravite = function (d) {
 		if (!d) return 'faible';
-		if ((d.retard !== null && d.retard !== undefined && d.retard >= 20) || d.type === 'alerte météo') return 'elevee';
-		if ((d.retard !== null && d.retard !== undefined && d.retard >= 10) || d.type === 'événement' || d.affluence) return 'moyenne';
+		const re = Jeu.retardEffectif(d); // prompt 79 : la gravité lit le retard effectif
+		if ((re !== null && re !== undefined && re >= 20) || d.type === 'alerte météo') return 'elevee';
+		if ((re !== null && re !== undefined && re >= 10) || d.type === 'événement' || d.affluence) return 'moyenne';
 		return 'faible';
 	};
 
@@ -1201,6 +1262,8 @@
 		{ id: 'objectif_rate', libelle: T('malus.objectif_rate.l'), condition: T('malus.objectif_rate.c'), consequence: T('malus.objectif_rate.q') },
 		{ id: 'equipe_inutile', libelle: T('malus.equipe_inutile.l'), condition: T('malus.equipe_inutile.c'), consequence: T('malus.equipe_inutile.q') },
 		{ id: 'budget_epuise', libelle: T('malus.budget_epuise.l'), condition: T('malus.budget_epuise.c'), consequence: T('malus.budget_epuise.q') },
+		{ id: 'retard_aggrave', libelle: T('malus.retard_aggrave.l'), condition: T('malus.retard_aggrave.c'), consequence: T('malus.retard_aggrave.q') }, // prompt 79
+		{ id: 'plainte_expiree', libelle: T('malus.plainte_expiree.l'), condition: T('malus.plainte_expiree.c'), consequence: T('malus.plainte_expiree.q') }, // prompt 79
 	];
 	Jeu.compterMalus = function (id) {
 		Jeu.malus = Jeu.malus || {};

@@ -169,6 +169,7 @@ function draw() {
 	verifierMecaniques(); // prompt 47 : inspection surprise (avant l'horloge, qui s'arrête alors)
 	majSelection(); // prompt 68/77 : signalements actifs, expiration individuelle
 	majNotifications(); // prompt 77 : notifications bureau (signalement, mail, commentaire, équipe)
+	if (Jeu.majPlaintes) Jeu.majPlaintes(); // prompt 79 : plaintes Community qui s'enveniment à l'expiration
 	majSoir(); // prompt 69 : crépuscule accéléré, sortie du bureau
 	majDemarrageJour(); // prompt 71 : démarrage du PC en début de journée (jours 1 à 3)
 	avancerTemps(); // horloge simulée, sieste, arrivée des incidents, fin de journée (immersion.js)

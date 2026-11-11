@@ -181,6 +181,8 @@ function dessinerHistoriqueLigne(d, x, y, l, h) {
 		d.lignes.forEach((n) => {
 			const ln = Jeu.lignes && Jeu.lignes.lignes.find((x) => x.nom === n);
 			lignes.push(t('carte.histo.ligne', { nom: n, mode: ln && TRADUCTIONS.fr['mode.' + ln.type] !== undefined ? t('mode.' + ln.type) : t('carte.nonRenseigne') }));
+			const ag = (Jeu.aggravationLignes || {})[n] || 0; // prompt 79 : aggravation durable après une décision « ratée »
+			if (ag > 0) lignes.push(t('carte.histo.aggravation', { nom: n, min: ag }));
 		});
 	}
 	textFont(POLICE_TEXTE);
