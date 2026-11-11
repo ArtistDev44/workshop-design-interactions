@@ -480,6 +480,14 @@ function touchePartage() {
 
 /* Prompt 41 : « Nouvelle partie » = deux modes. Histoire (recommandé) : semaine facile, normale, difficile,
    un élément de jeu de plus chaque semaine. Temps réel : débloqué quand l'histoire est terminée. */
+/** Prompt 97 : difficulté de la semaine, lisible avant de jouer (réglages verrouillés de game.js, non modifiés) */
+function texteDifficulteChapitre(lundi) {
+	const s = Jeu.semainesProposees().find((x) => x.lundi === lundi);
+	const niveau = (s && s.niveau) || 'normale';
+	const d = (Jeu.REGLAGES && Jeu.REGLAGES.difficultes && Jeu.REGLAGES.difficultes[niveau]) || null;
+	if (!d) return '';
+	return t('mp.difficulte', { niveau: t('niveau.' + niveau), budget: d.budget, actifs: d.actifs, aggravation: String(d.aggravation).replace('.', Langue.actuelle === 'fr' ? ',' : '.') });
+}
 function modesNouvellePartie() {
 	const p = progressionHistoire();
 	const semaines = semainesHistoire();
@@ -490,7 +498,7 @@ function modesNouvellePartie() {
 			cle: 'histoire',
 			titre: t('mp.mode.histoire'),
 			detail: t('mp.mode.histoire.sous'),
-			info: t('mp.mode.histoire.etat', { n: prochain, element: t('histoire.element.' + ELEMENTS_CHAPITRE[prochain]) }),
+			info: t('mp.mode.histoire.etat', { n: prochain, element: t('histoire.element.' + ELEMENTS_CHAPITRE[prochain]) }) + '\n' + texteDifficulteChapitre(semaines[prochain - 1]), // prompt 97 : le canal de flow visible avant de jouer
 			chapitre: prochain,
 			recommande: true,
 			desactive: semaines.length < 3,
@@ -573,8 +581,9 @@ function dessinerChoixSemaine() {
 		fill(o.verrou ? encre : actif ? MENU_C.bleu : MENU_C.doux);
 		text(o.detail, x + 40, y + 140, lc - 80, 140);
 		textSize(19);
+		textLeading(26); // prompt 97 : 3 lignes (étape + difficulté) tiennent dans la case
 		fill(o.verrou ? encre : actif ? 'rgba(13,12,12,0.75)' : MENU_C.doux);
-		text(o.info, x + 40, y + 290, lc - 80, 90);
+		text(o.info, x + 40, y + 278, lc - 80, 116);
 		boutons.push({ x, y, l: lc, h: hc, action: () => (MENU.choixSemaine === i ? lancerDepuisMenu() : (MENU.choixSemaine = i)) });
 	});
 	if (typeof dessinerOptionsNouvellePartie === 'function') dessinerOptionsNouvellePartie(160, H - 250); // prompt 37

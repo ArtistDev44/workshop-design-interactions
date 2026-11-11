@@ -1094,6 +1094,7 @@ function keyPressed() {
 	// Intro SMS (§ 2) : clic / Entrée pour avancer
 	if (smsActif) {
 		if (keyCode === ENTER || keyCode === RETURN || key === ' ') avancerConversation(); // prompt 42
+		else if (keyCode === ESCAPE) passerConversation(); // prompt 97 : une touche pour tout passer (learn < 1 min)
 		return false;
 	}
 	// Réveil (§ 4) : barre d'espace
@@ -1374,6 +1375,8 @@ function fenetreAide() {
 		[t('aide.k.entreeTouche'), t('aide.k.entree')],
 		['5 6 7 8', t('aide.k.sources')],
 		[t('aide.k.actionsTouche'), t('aide.k.actions')], // prompt 87 : réponses de la catégorie
+		[t('aide.k.glisserTouche'), t('aide.k.glisser')], // prompts 94 / 97
+		[t('aide.k.quitterJourneeTouche'), t('aide.k.quitterJournee')], // prompts 94 / 97
 		[t('aide.k.rienTouche'), t('aide.k.rien')],
 		['A / B', t('aide.k.ab')],
 		[t('aide.k.majTouche'), t('aide.k.equipes')],

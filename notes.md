@@ -275,3 +275,10 @@ sur toutes les annonces ajoutées, animations réduites respectées, contraste d
 **à faire en salle**. En portrait mobile, le bureau RégulOS (hors appli de jeu) n'est pas recomposé (antérieur aux
 prompts 72 à 80). Le retard qui s'aggrave (prompt 79) ne se voit qu'en mode « aujourd'hui » (les archives n'ont pas
 de retard chiffré). Webcam et micro réels : à essayer en salle (prompts 54, 57, 67).
+
+## Test joueur novice (prompt 97, à faire)
+- Joueur hors projet, semaine 1, sans aide extérieure : 3e décision atteinte en moins de 2 min ? [À COMPLÉTER]
+- Dit à voix haute ce qu'il doit préserver (les 3 jauges) ? [À COMPLÉTER]
+- Verbatim 1 : [À COMPLÉTER]
+- Verbatim 2 : [À COMPLÉTER]
+- Verbatim 3 : [À COMPLÉTER]

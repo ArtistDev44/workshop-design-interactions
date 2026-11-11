@@ -1842,6 +1842,23 @@ for (const f of ['enquete.js', 'carte.js', 'journal.js']) verifier(!/\*\s*1\.05\
 	verifier(vm.runInContext("t('acc.intensite')", contexte('fr')) !== '[À COMPLÉTER]' && vm.runInContext("t('acc.intensite')", contexte('en')) !== '[À COMPLÉTER]', 'game feel : clé acc.intensite FR / EN');
 }
 
+// Prompt 97 (skill game-design-theory) : apprendre vite — l'aide H et le guide nomment les gestes (glisser / clic,
+// 1-4, Q) et les 3 jauges, et répondent à « pourquoi ma décision a raté ? » ; la difficulté est lisible avant de jouer
+for (const [langue, mots] of [
+	['fr', { glisser: /Glisser/, touches: /1 à 4/, q: /Quitter la journée/, jauges: /fluidité, réputation et budget/, rate: /Pourquoi une décision a raté/, guide: /glissez une carte sur le dossier/, diff: /Difficulté facile : budget 60 · 3 signalement/ }],
+	['en', { glisser: /Drag/, touches: /1 to 4/, q: /End the day/, jauges: /flow, reputation and budget/, rate: /Why did a decision fail/, guide: /drag a card onto the case/, diff: /easy difficulty: budget 60 · 3 report/ }],
+]) {
+	const c97 = contexte(langue);
+	const a = vm.runInContext(
+		`({ raccourcis: [t('aide.k.glisserTouche'), t('aide.k.glisser'), t('aide.k.actionsTouche'), t('aide.k.quitterJournee')].join(' | '), texte: t('aide.texte'), guide: t('guide.actions'), diff: t('mp.difficulte', { niveau: t('niveau.facile'), budget: Jeu.REGLAGES.difficultes.facile.budget, actifs: Jeu.REGLAGES.difficultes.facile.actifs, aggravation: 0.5 }) })`,
+		c97,
+	);
+	const tout = a.raccourcis + ' ' + a.texte;
+	for (const [k, re] of Object.entries(mots)) verifier(re.test(k === 'guide' ? a.guide : k === 'diff' ? a.diff : tout), `aide / guide (prompt 97, ${langue}) : « ${k} » absent`);
+	verifier(!/briefing du matin|morning briefing|info trafic \(4 blocs|traffic info \(4 exact/.test(a.texte), `aide (prompt 97, ${langue}) : décrit encore le briefing ou l'info trafic retirés au prompt 91`);
+}
+verifier(/aide\.k\.glisserTouche/.test(readFileSync(join(pub, 'sketch.js'), 'utf8')) && /texteDifficulteChapitre/.test(readFileSync(join(pub, 'menu.js'), 'utf8')), 'prompt 97 : aide (glisser, Q) et difficulté du mode histoire affichées');
+
 // Service worker : chaque script de index.html est dans la liste hors ligne de sw.js
 const html = readFileSync(join(pub, 'index.html'), 'utf8');
 const sw = readFileSync(join(pub, 'sw.js'), 'utf8');

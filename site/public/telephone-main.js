@@ -115,6 +115,14 @@ function avancerConversation() {
 		Confort.Son.bip('choix');
 	} else poserTelephoneConversation();
 }
+/** Prompt 97 : passer toute la conversation d'un geste ; les messages restants sont annoncés d'un bloc (rien n'est perdu) */
+function passerConversation() {
+	if (!conversation || TEL_MAIN.descente) return;
+	const reste = conversation.messages.slice(smsIndex + 1).map((m) => String(m.texte));
+	if (reste.length) annoncer(reste.join(' '));
+	smsIndex = conversation.messages.length - 1;
+	poserTelephoneConversation();
+}
 function poserTelephoneConversation() {
 	const c = conversation;
 	baisserTelephone(() => {
@@ -174,11 +182,8 @@ function contenuConversation(e, pret) {
 	const dernier = smsIndex === c.messages.length - 1;
 	if (pret && dernier && !ecrit) bouton(e.x + 40, e.y + e.h - 112, e.l - 80, 72, t('tel.poser'), poserTelephoneConversation);
 	else {
-		textAlign(CENTER, CENTER);
-		textFont(POLICE_DONNEES);
-		textSize(16);
-		fill('rgba(255,255,255,0.6)');
-		text(t('intro.suivant'), e.x + e.l / 2, e.y + e.h - 76);
+		// Prompt 97 : consigne sur deux lignes au plus dans la largeur de l'écran (« Échap : tout passer » ajouté)
+		dessinerTexte(t('intro.suivant'), e.x + 24, e.y + e.h - 98, e.l - 48, { police: POLICE_DONNEES, taille: 16, couleur: 'rgba(255,255,255,0.6)', align: 'center', maxLignes: 2, interligne: 22 });
 		if (pret) boutons.push({ x: 0, y: 0, l: L, h: H, action: avancerConversation });
 	}
 }
