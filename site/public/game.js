@@ -557,7 +557,7 @@
 	// =====================================================================
 	// Prompt 20 — journées de travail, horloge simulée, sieste, mail de fin de journée
 	// =====================================================================
-	const DEBUT_JOURNEE = 6 * 60; // 6h00
+	const DEBUT_JOURNEE = 8 * 60; // 8h00 — valeur verrouillée (prompt 76 : un centre de régulation n'ouvre pas à 6 h)
 	const FIN_JOURNEE = 20 * 60; // 20h00
 	const NOMS_JAUGES_LONGS = { fluidite: T('jaugeLong.fluidite'), reputation: T('jaugeLong.reputation'), budget: T('jaugeLong.budget') };
 

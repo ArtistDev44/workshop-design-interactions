@@ -55,6 +55,23 @@ const Rythme = (() => {
 		return true;
 	}
 
+	/** Prompt 76 : la journée commence à 8 h — un dossier dont l'heure d'arrivée dans la partie tombe avant le début
+	 * de la journée (heure réelle de la source avant 8 h, ou créneau calculé) arrive à 8 h. Calcul sur l'heure DE LA
+	 * PARTIE (d.minute) ; la donnée réelle (d.heure) n'est pas modifiée. Sans effet en mode « aujourd'hui ». À la
+	 * reprise d'une ancienne sauvegarde (journée à 6 h), l'horloge est aussi ramenée à 8 h. */
+	function clamperDebut() {
+		if (!Jeu.jours || !Jeu.etat || Jeu.etat.mode === 'direct') return 0;
+		let n = 0;
+		Jeu.jours.forEach((j, i) => {
+			const debut = j.debut || Jeu.debutJournee();
+			j.dossiers.forEach((d) => {
+				if (d.minute < debut) (d.minute = debut), n++;
+			});
+			if (i === Jeu.jourIndex && Jeu.horloge && Jeu.horloge.minutes < debut) Jeu.horloge.minutes = debut;
+		});
+		return n;
+	}
+
 	/** Événements d'agenda réels du jour (noms jamais traduits) */
 	const agendaDuJour = (date) => (Jeu.evenementsAffluence ? Jeu.evenementsAffluence(date) : []);
 	const nomEvenement = (e) => String(e.texte_source || '').split(' — ')[0].trim();
@@ -145,6 +162,6 @@ const Rythme = (() => {
 		return { cle: obj ? (obj.atteint ? 'veille.objAtteint' : 'veille.objRate') : 'veille.sansObj', vars: { n: ev.length, bons, obj: obj ? String(obj.libelle) : '' } };
 	}
 
-	return { HEURES, melangerArrivees, liaison, rythme, contexteNarration, serie, bilanVeille, VARIANTES };
+	return { HEURES, clamperDebut, melangerArrivees, liaison, rythme, contexteNarration, serie, bilanVeille, VARIANTES };
 })();
 if (typeof window !== 'undefined') window.Rythme = Rythme;

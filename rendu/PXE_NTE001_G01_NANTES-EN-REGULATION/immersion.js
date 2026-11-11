@@ -413,7 +413,7 @@ function terminerIntro() {
 	smsActif = false;
 	introVue = true;
 	demarrerJournee();
-	vue = 'bureau'; // on arrive au bureau : l'ouverture est à 6h
+	vue = 'bureau'; // on arrive au bureau : l'ouverture est à 8 h (prompt 76)
 	if (!tutorielVu() && !GUIDE.actif) lancerTutoriel(); // prompt 34 : à la première partie, juste après les SMS (sauf guide)
 }
 
@@ -899,6 +899,7 @@ function infobulle(texte, x, y) {
 const FIL = { messages: [], serieDepuis: 0, rythmeFaits: {}, jourCle: '', explicationVue: false };
 /** Remise à zéro pour une nouvelle partie (le mélange des arrivées est fait juste après Jeu.nouvellePartie) */
 function nouvellePartieRythme() {
+	Rythme.clamperDebut(); // prompt 76 : aucun dossier avant 8 h
 	Rythme.melangerArrivees();
 	FIL.messages = [];
 	FIL.serieDepuis = 0;
