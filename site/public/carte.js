@@ -120,6 +120,7 @@ function dessinerHistoriqueLigne(d, x, y, l, h) {
 		const der = passes[passes.length - 1];
 		if (der) lignes.push(t('carte.histo.derniere', { date: der.jour.split('-').reverse().join('/'), action: der.action ? String(der.action) : t('journal.aucuneAction'), eval: t('eval.' + Jeu.evaluer(der)) }));
 		d.lignes.forEach((n) => {
+			if (Jeu.aggravationLignes && Jeu.aggravationLignes[n]) lignes.push(t('carte.histo.aggravation', { nom: n, plus: Jeu.aggravationLignes[n] })); // prompt 79
 			const ln = Jeu.lignes && Jeu.lignes.lignes.find((x) => x.nom === n);
 			lignes.push(t('carte.histo.ligne', { nom: n, mode: ln && TRADUCTIONS.fr['mode.' + ln.type] !== undefined ? t('mode.' + ln.type) : t('carte.nonRenseigne') }));
 		});

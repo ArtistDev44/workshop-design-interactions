@@ -64,7 +64,7 @@ function texteSource(cle, d) {
 	if (cle === 'lignes') return [d.lignes && d.lignes.length ? t('enq.lignes.lignes', { lignes: texteLignesSource(d) }) : t('enq.lignes.inconnue')];
 	if (cle === 'trafic')
 		return [
-			(d.retard !== null && d.retard !== undefined ? t('dossier.retard', { retard: d.retard }) : t('dossier.retardInconnu')) + ' · ' + String(d.nature),
+			(d.retard !== null && d.retard !== undefined ? (Jeu.retardEffectif(d) !== d.retard ? t('dossier.retardEffectif', { reel: d.retard, effectif: Jeu.retardEffectif(d) }) : t('dossier.retard', { retard: d.retard })) : t('dossier.retardInconnu')) + ' · ' + String(d.nature), // prompt 79 : réel → actuellement
 			t('dossier.citation', { texte: d.texte_source }) + ' — ' + String(d.source) + (d.heure ? ' · ' + d.heure : ''),
 		];
 	if (cle === 'meteo') {

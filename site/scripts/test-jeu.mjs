@@ -717,6 +717,66 @@ verifier(eq.policeAvant === 1 && eq.policeMatin === 2, `équipes : effectifs non
 	verifier(!/sablier/i.test(tout) && clesSablier.length === 0, `sablier : références restantes (${clesSablier.slice(0, 3)})`);
 }
 
+// Prompt 79 : retards qui s'aggravent (réel + calcul documenté), aggravation durable après un raté ; Community avec délai
+{
+	const ra = vm.runInContext(
+		`(() => {
+		Jeu.chargerSemaine('2026-10-12'); Jeu.nouvellePartie();
+		// Fixtures de test (jamais affichées) : les archives du dépôt n'ont pas de retard chiffré (il vient du GTFS-RT en direct)
+		const fx = (min) => ({ date: Jeu.paquet[0].date, type: 'ligne en difficulté', nature: 'retard', lignes: ['C1'], retard: 12, minute: min, texte_source: 'fixture', source: 'test' });
+		const a = fx(600);
+		const r = [600, 610, 616, 700].map((m) => Jeu.retardEffectif(a, m));
+		Jeu.horloge.minutes = 600; const g0 = Jeu.gravite(a);
+		Jeu.horloge.minutes = 616; const g1 = Jeu.gravite(a);
+		// Q58 : « retenir » vaut +8 en réputation si le retard EFFECTIF dépasse 20 min (réel 12 + 10 = 22)
+		Jeu.paquet.splice(Jeu.index, 0, a);
+		Jeu.horloge.minutes = 620;
+		const res = Jeu.decider('retenir');
+		const q58 = res.deltas[1] >= 8;
+		const fige = a.retardFige === 22 && Jeu.retardEffectif(a, 900) === 22;
+		// Raté sur un retard : +5 durables sur la ligne C1 pour la suite de la journée
+		const b = fx(620);
+		Jeu.paquet.splice(Jeu.index, 0, b);
+		const avantRate = Jeu.aggravationLignes.C1 || 0; // « retenir » a pu déjà être évalué raté
+		Jeu.decider('rien');
+		const ev = Jeu.evaluer(Jeu.evenementsJournee[Jeu.evenementsJournee.length - 1]);
+		const durable = Jeu.aggravationLignes.C1 - avantRate;
+		const total = Jeu.aggravationLignes.C1;
+		const c = fx(Jeu.horloge.minutes);
+		const avecDurable = Jeu.retardEffectif(c);
+		const snap = JSON.parse(JSON.stringify(Jeu.instantane(0)));
+		Jeu.journeeSuivante();
+		const matin = Object.keys(Jeu.aggravationLignes).length;
+		// Community : délai de réponse (temps réel)
+		const def = { id: 'fixture', texte: 'Plainte de test', reponses: [{ texte: 'Réponse', effets: { reputation: 2 }, bonne: true }] };
+		const nouvelle = () => { const p = { id: 'fixture', def, vars: {}, index: 0, auteur: '@test', heure: '09:00', reponse: null }; Jeu.plaintes.push(p); return p; };
+		const p1 = nouvelle(); Jeu.majPlaintes(0);
+		const r0 = Jeu.jauges.reputation; const rapide = Jeu.repondrePlainte(p1, 0, 10000);
+		const p2 = nouvelle(); Jeu.majPlaintes(0);
+		const tard = Jeu.repondrePlainte(p2, 0, 20000);
+		const p3 = nouvelle(); Jeu.majPlaintes(0);
+		Jeu.majPlaintes(44999); const avant = !p3.expiree;
+		const r1 = Jeu.jauges.reputation; Jeu.majPlaintes(45000);
+		const expire = p3.expiree && Jeu.jauges.reputation === Math.max(0, r1 - 3) && !Jeu.plaintesEnAttente().includes(p3);
+		const bc = Jeu.bilanCommunity(Jeu.jourIndex);
+		const p4 = nouvelle(); Jeu.majPlaintes(1000);
+		const s2 = JSON.parse(JSON.stringify(Jeu.instantane(31000)));
+		const relatif = s2.plaintes[s2.plaintes.length - 1].depuis === -30000;
+		const mail = Jeu.mailDuJour().lignes.map(String).join(' | ');
+		return { r, g: [g0, g1], q58, fige, ev, durable, total, avecDurable, snap: snap.aggravationLignes, matin, rapide: rapide.tardive === false && rapide.effets.reputation === 2, tard: tard.tardive === true && tard.effets.reputation === -1, avant, expire, bc, relatif, mailCommunity: /Community/.test(mail) };
+	})()`,
+		fr,
+	);
+	verifier(JSON.stringify(ra.r) === JSON.stringify([12, 17, 20, 42]), `retards : effectif = réel + 1 min / 2 min de jeu, plafond +30 (${ra.r})`);
+	verifier(ra.g[0] === 'moyenne' && ra.g[1] === 'elevee', `retards : la gravité suit le retard effectif (${ra.g})`);
+	verifier(ra.q58 && ra.fige, `retards : Q58 sur le retard effectif (${ra.q58}), figé à la décision (${ra.fige})`);
+	verifier(ra.ev === 'rate' && ra.durable === 5 && ra.avecDurable === 12 + ra.total && ra.total <= 15 && ra.snap && ra.snap.C1 === ra.total && ra.matin === 0, `retards : aggravation durable après « ${ra.ev} » (${ra.durable}, ${ra.avecDurable}), sauvegardée, remise à zéro le matin (${ra.matin})`);
+	verifier(ra.rapide && ra.tard, `community : réponse rapide = effets prévus (${ra.rapide}), tardive = −3 en plus (${ra.tard})`);
+	verifier(ra.avant && ra.expire, `community : expiration à 45 s → réputation −3, plainte close (${ra.avant} / ${ra.expire})`);
+	verifier(ra.bc.temps === 1 && ra.bc.tard === 1 && ra.bc.expire === 1 && ra.mailCommunity, `community : bilan du jour ${JSON.stringify(ra.bc)} et ligne du mail`);
+	verifier(ra.relatif, 'community : le délai doit être sauvegardé relativement à la reprise');
+}
+
 // Traductions : toute clé française existe en anglais
 const manquantes = vm.runInContext('Object.keys(TRADUCTIONS.fr).filter((k) => TRADUCTIONS.en[k] === undefined)', fr);
 verifier(manquantes.length === 0, `clés sans traduction anglaise : ${manquantes.slice(0, 8).join(', ')}`);

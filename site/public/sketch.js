@@ -174,6 +174,7 @@ function draw() {
 	majDemarrageJour(); // prompt 71 : démarrage du PC en début de journée (jours 1 à 3)
 	avancerTemps(); // horloge simulée, sieste, arrivée des incidents, fin de journée (immersion.js)
 	if (Jeu.equipes) Jeu.majEquipes(millis()); // équipes envoyées depuis les signalements (prompts 22, 68)
+	majRetardsEtCommunity(); // prompt 79 : retards qui s'aggravent, plaintes qui s'enveniment
 	boutons = [];
 	// 1. Contenu de l'écran du PC, en 1920×1080 : l'appli de régulation, ou le système (démarrage, bureau)
 	ciblesGuide = {}; // prompt 37 : cibles des flèches, relevées pendant le dessin
@@ -847,6 +848,24 @@ function dessinerDossier(d, meteo) {
 		// Prompt 50 : plus de flèches d'effet sous les boutons — les effets s'apprennent en jouant (journal, mail, rapport)
 	});
 	cibleGuide('actions', x + 32, base.y + base.h - 200, base.l - 64, 160); // prompt 37
+}
+
+// ——— Prompt 79 : annonces (aria-live) de l'aggravation du retard affiché, et des plaintes Community expirées ———
+let dernierRetardAnnonce = { d: null, v: null };
+function majRetardsEtCommunity() {
+	if (ecran !== 'jeu' || !Jeu.paquet || phase === 'fin' || enPause || tempsSuspendu()) return;
+	(Jeu.majPlaintes ? Jeu.majPlaintes(millis()) : []).forEach((p) => {
+		annoncer(t('community.envenimeAnnonce', { auteur: p.auteur }));
+		Confort.Son.bip('alerte');
+	});
+	const d = PHASES_ACTIVES.includes(phase) ? Jeu.dossierCourant() : null;
+	const re = d ? Jeu.retardEffectif(d) : null;
+	if (re === null) return;
+	if (dernierRetardAnnonce.d !== d) dernierRetardAnnonce = { d, v: re };
+	else if (re >= dernierRetardAnnonce.v + 5) {
+		dernierRetardAnnonce.v = re;
+		annoncer(t('retard.aggrave', { reel: d.retard, effectif: re }));
+	}
 }
 
 // ——— Prompt 72 : réponses d'alerte (alertes.js) — chacune déclenche une action existante ou un envoi d'équipe ———
