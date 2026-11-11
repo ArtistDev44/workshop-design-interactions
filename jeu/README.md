@@ -78,7 +78,7 @@ dossier à trancher sous pression. »*
 | 61 | `61-main-webcam-sieste.md` | Prompt 67 : une main montrée à la webcam lance ou interrompt la sieste (couleur peau + mouvement, local) ; l'absence ne déclenche plus la sieste |
 | 62 | `62-carte-appli-principale.md` | Prompt 68 : la Carte remplace l'appli Régulation (phase sélection sans chrono, file, gravité, onglets Enquête / Historique / Équipes), équipes limitées (effectifs, cycle, pertinence, demi-effet hors sujet) |
 | 63 | `63-revue-game-design.md` | Prompt 66 : revue game design — correctif de la file de la Carte entre deux semaines, guide en 7 étapes dont la bulle ne masque plus le dossier, aide et tutoriel complets, rapport lisible |
-| 64 | `64-fin-de-journee-nuit-sortie.md` | Prompt 69 : « Ranger le poste », la nuit tombe (21 h en 4 s), flèche « Sortie » au bord gauche, pan vers le couloir, écran noir, lendemain 6 h ou bilan |
+| 64 | `64-fin-de-journee-nuit-sortie.md` | Prompt 69 : « Ranger le poste », la nuit tombe (21 h en 4 s), flèche « Sortie » au bord gauche, pan vers le couloir, écran noir, lendemain 8 h (prompt 76) ou bilan |
 | 65 | `65-sieste-paupieres.md` | Sieste : paupières en surcouche plein écran (tout le contenu caché), fermeture avec sursaut et ouverture avec clignement, fondu si animations réduites |
 | 66 | `66-livre-aide.md` | Prompt 70 : le livre « Commande » devient « Aide » (objet, couverture pixel, textes FR + EN, guide) |
 | 67 | `67-demarrage-pc-chaque-jour.md` | Prompt 71 : démarrage du PC rejoué au début des jours 1 à 3 (après « JOUR n »), une fois par jour, temps suspendu, écourté si animations réduites |
@@ -86,3 +86,4 @@ dossier à trancher sous pression. »*
 | 69 | `69-suppression-carte.md` | Prompt 73 : plus de carte (aucune géométrie dans les sources) — appli « Signalements », liste à gauche (heure, type, ligne + nom réel, gravité, expiration), n'importe quel signalement se prend au clic ou ↑ ↓ Entrée, équipes en texte |
 | 70 | `70-variete-comprehension-regulation.md` | Prompt 74 : explication du poste à la première ouverture, actions en langage métier (tutoriel, aide, guide), ordre d'arrivée par la graine, fil de la journée (objectif, bilan de la veille, liaisons, rythme 10 h / 12 h / 17 h, séries), narration enrichie |
 | 71 | `71-logo-bouton-demarrer.md` | Prompt 75 : le bouton en bas à gauche de la barre des tâches reprend le logo du chargement (formes uniques `LOGO_PXE`, testées contre le SVG), retour à l'accueil de RégulOS au clic ou Tab + Entrée |
+| 72 | `72-horaires-8h.md` | Prompt 76 : la journée commence à 8 h 00 (fin 20 h), dossiers d'avant 8 h ramenés à 8 h (calcul sur l'heure de la partie), anciennes sauvegardes recalées, textes FR + EN |

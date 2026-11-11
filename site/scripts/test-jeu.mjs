@@ -285,7 +285,7 @@ verifier(eq.pert === true ? eq.gain === eq.eff : eq.gain === Math.round(eq.eff /
 verifier(eq.snapPhase, 'équipes : la sauvegarde ne garde pas le cycle');
 verifier(eq.policeAvant === 1 && eq.policeMatin === 2, `équipes : effectifs non remis à zéro le matin (${eq.policeAvant} → ${eq.policeMatin})`);
 
-// Prompt 69 : fin de journée — phase « soir », nuit à 21 h, sortie → lendemain 6 h (ou bilan le dernier jour)
+// Prompt 69 : fin de journée — phase « soir », nuit à 21 h, sortie → lendemain 8 h (prompt 76 ; ou bilan le dernier jour)
 {
 	const cs = contexte('fr');
 	vm.runInContext(
@@ -573,6 +573,42 @@ verifier(eq.policeAvant === 1 && eq.policeMatin === 2, `équipes : effectifs non
 	verifier(rects.length > 0 && JSON.stringify(rects) === JSON.stringify(formes), `logo : formes du bouton ≠ SVG du chargement (${rects.length} / ${formes.length})`);
 	const os = readFileSync(join(pub, 'os.js'), 'utf8');
 	verifier(/dessinerLogoPXE\(/.test(os) && !/dsTitre\('REGUL'/.test(os) && !/rect\(8, tb \+ 10, 140/.test(os), 'logo : le carré rouge « REGUL » doit être remplacé par le logo');
+}
+
+// Prompt 76 : la journée commence à 8 h 00 (fin toujours à 20 h), aucun dossier avant 8 h, anciennes sauvegardes recalées
+{
+	const h = vm.runInContext(
+		`(() => {
+		const out = { debut: [], fin: [], avant8: 0, heuresIntactes: true, lendemain: null, reprise: null };
+		for (const lundi of Jeu.semainesProposees().map((s) => s.lundi)) {
+			Jeu.chargerSemaine(lundi); Jeu.nouvellePartie();
+			const heures = Jeu.paquet.map((d) => d.heure || '');
+			Rythme.clamperDebut(); Rythme.melangerArrivees();
+			out.debut.push(Jeu.horloge.minutes, Jeu.debutJournee());
+			out.fin.push(Jeu.finJournee());
+			out.avant8 += Jeu.paquet.filter((d) => d.minute < 8 * 60).length;
+			out.heuresIntactes = out.heuresIntactes && Jeu.paquet.map((d) => d.heure || '').sort().join() === heures.sort().join();
+			Jeu.journeeSuivante();
+			out.lendemain = Jeu.horloge.minutes;
+		}
+		// Sauvegarde d'avant le prompt 76 : horloge à 6 h 30, un dossier à 7 h → ramenés à 8 h
+		Jeu.chargerSemaine('2026-10-12'); Jeu.nouvellePartie();
+		const snap = JSON.parse(JSON.stringify(Jeu.instantane(0)));
+		snap.horloge.minutes = 6 * 60 + 30;
+		snap.paquet[0].minute = 7 * 60;
+		Jeu.chargerSemaine('2026-10-12');
+		Jeu.restaurerInstantane(snap, 0);
+		Rythme.clamperDebut();
+		out.reprise = [Jeu.horloge.minutes, Jeu.paquet[0].minute];
+		return out;
+	})()`,
+		fr,
+	);
+	verifier(h.debut.every((m) => m === 480) && h.fin.every((m) => m === 1200) && h.lendemain === 480, `horaires : début ${h.debut}, fin ${h.fin}, lendemain ${h.lendemain}`);
+	verifier(h.avant8 === 0 && h.heuresIntactes, `horaires : ${h.avant8} dossier(s) avant 8 h, heures réelles intactes ${h.heuresIntactes}`);
+	verifier(JSON.stringify(h.reprise) === '[480,480]', `horaires : ancienne sauvegarde non recalée à 8 h (${h.reprise})`);
+	const six = vm.runInContext("[...Object.entries(TRADUCTIONS.fr), ...Object.entries(TRADUCTIONS.en)].filter(([, v]) => /(^|[^0-9])6 ?h([^a-z0-9]|$)|6 ?a\\.m\\.|06:00/.test(String(v))).map(([k]) => k)", fr);
+	verifier(six.length === 0, `horaires : texte qui cite encore 6 h (${six})`);
 }
 
 // Traductions : toute clé française existe en anglais

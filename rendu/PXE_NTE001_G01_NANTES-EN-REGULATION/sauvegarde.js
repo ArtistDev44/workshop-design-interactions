@@ -250,6 +250,7 @@ const Sauvegarde = (function () {
 			facteurDuree = Jeu.modificateurActif && Jeu.modificateurActif(maintenant) === 'heure_pointe' ? 0.8 : 1;
 			arriveeDossier = debutCompteur = maintenant - (enCompteur ? Math.max(0, Number(ui.ecoule) || 0) : 0);
 			interaction();
+			if (typeof Rythme !== 'undefined') Rythme.clamperDebut(); // prompt 76 : sauvegarde d'avant le passage à 8 h → horloge et dossiers ramenés à 8 h
 			if (typeof FIL !== 'undefined') {
 				FIL.messages = [];
 				FIL.serieDepuis = (Jeu.evenementsJournee || []).length;

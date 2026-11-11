@@ -4,7 +4,7 @@
  *   accéléré ; nuit directe si les animations sont réduites). Les règles et la boucle (Q1–Q61) ne changent pas.
  * - Nuit installée : flèche « Sortie » au bord gauche de la vue bureau (Tab, Entrée ou S, clic, tactile).
  * - Sortie : la vue pivote vers la gauche (couloir sombre, panneau vert « Sortie » au-dessus d'une ouverture),
- *   fondu au noir, écran de transition (passable), puis le lendemain 6 h — ou le bilan le dernier jour.
+ *   fondu au noir, écran de transition (passable), puis le lendemain 8 h (prompt 76) — ou le bilan le dernier jour.
  * Aucune donnée inventée : la météo de la nuit reste celle du jour joué (pluie comprise).
  */
 const SOIR = { debut: 0, depart: 0, annonce: false, sortie: 0, finie: false };
@@ -93,7 +93,7 @@ function texteNoirSoir() {
 	const j = Jeu.jourCourant ? Jeu.jourCourant() : null;
 	return { titre: t('soir.finJour', { date: j ? dateLongue(j.date) : '' }), sous: t('soir.demain') };
 }
-/** Fin de l'écran noir : lendemain 6 h (transition « JOUR n ») ou bilan de la semaine */
+/** Fin de l'écran noir : lendemain 8 h (transition « JOUR n ») ou bilan de la semaine */
 function finirSoir() {
 	if (phase !== 'soir') return;
 	SOIR.sortie = 0;
