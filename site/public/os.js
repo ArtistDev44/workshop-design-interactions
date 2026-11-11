@@ -494,7 +494,7 @@ function appCommunity(z) {
 }
 
 // Prompt 63 : journal par journée, avec une enquête après coup sur chaque incident (données réelles uniquement)
-const JOURNAL = { jour: null, enquete: null, volet: 0 };
+const JOURNAL = { jour: null, enquete: null, volet: 0, carnet: false }; // prompt 88 : carnet de la semaine
 const VOLETS_ENQUETE = ['passe', 'contexte', 'decision', 'suites'];
 function appJournal(z) {
 	const jours = Jeu.jours || [];
@@ -503,9 +503,11 @@ function appJournal(z) {
 	const entrees = (Jeu.evenementsJournee || []).filter((e) => j && e.jour === j.date);
 	if (JOURNAL.enquete !== null && entrees[JOURNAL.enquete]) return enqueteJournal(z, entrees[JOURNAL.enquete], j);
 	JOURNAL.enquete = null;
+	if (JOURNAL.carnet) return carnetSemaine(z); // prompt 88
 	let y = z.y;
 	dsTitre(t('app.journee', { date: j ? j.date.split('-').reverse().join('/') : '' }), z.x, y, 24, DS.blanc, 'left');
 	// Navigation entre les journées déjà jouées
+	dsBouton(z.x + z.l - 610, y - 4, 196, 40, t('carnet.bouton'), basculerCarnetSemaine, 'contour'); // prompt 88
 	dsBouton(z.x + z.l - 400, y - 4, 190, 40, t('journal.veille'), () => ((JOURNAL.jour = Math.max(0, JOURNAL.jour - 1)), (JOURNAL.enquete = null)), 'contour', JOURNAL.jour <= 0);
 	dsBouton(z.x + z.l - 200, y - 4, 200, 40, t('journal.lendemain'), () => ((JOURNAL.jour = Math.min(Jeu.jourIndex, JOURNAL.jour + 1)), (JOURNAL.enquete = null)), 'contour', JOURNAL.jour >= Jeu.jourIndex);
 	y += 54;

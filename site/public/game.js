@@ -257,6 +257,9 @@
 		Jeu.evenementsJournee = []; // prompt 21 § 3.1 : journal des dossiers traités
 		Jeu.messagesPatron = []; // prompt 22 : app « Messages du patron »
 		Jeu.variantesDuJour = {}; // prompt 88
+		Jeu.taches = null; // prompt 88 : tâches de la partie (taches.js)
+		Jeu.bonusEffectifs = {};
+		Jeu.allegementObjectif = 0;
 		Jeu.patronEnAttente = []; // prompt 86
 		Jeu.commentaires = []; // prompt 22 : app « Community manager »
 		Jeu.plaintes = []; // prompt 28 : plaintes des Nantais (data/messages.json)
@@ -332,6 +335,9 @@
 			statutPatron: JSON.parse(JSON.stringify(Jeu.statutPatron)), // prompt 84 : niveau, avertissements, dates, file
 			defiChrono: !!Jeu.defiChrono, // prompt 87
 			variantesDuJour: Object.assign({}, Jeu.variantesDuJour), // prompt 88
+			taches: Jeu.taches ? JSON.parse(JSON.stringify(Jeu.taches)) : null,
+			bonusEffectifs: Object.assign({}, Jeu.bonusEffectifs || {}),
+			allegementObjectif: Jeu.allegementObjectif || 0,
 			postsJoueur: Jeu.postsJoueur || [], // prompt 85
 			patronEnAttente: Jeu.patronEnAttente || [], // prompt 86 : messages émis pendant la panne
 			carnet: Jeu.carnet || '',
@@ -375,6 +381,9 @@
 		Jeu.aggravationLignes = Object.assign({}, s.aggravationLignes || {}); // prompt 79
 		Jeu.statutPatron = Object.assign(nouveauStatut(), s.statutPatron || {}); // prompt 84 (ancienne sauvegarde : statut neuf)
 		Jeu.variantesDuJour = Object.assign({}, s.variantesDuJour || {}); // prompt 88
+		Jeu.taches = s.taches ? JSON.parse(JSON.stringify(s.taches)) : null; // ancienne sauvegarde : tâches recréées au besoin
+		Jeu.bonusEffectifs = Object.assign({}, s.bonusEffectifs || {});
+		Jeu.allegementObjectif = s.allegementObjectif || 0;
 		Jeu.defiChrono = s.defiChrono === undefined ? true : !!s.defiChrono; // prompt 87 : ancienne sauvegarde = jouée avec chrono
 		Jeu.postsJoueur = s.postsJoueur || []; // prompt 85
 		Jeu.patronEnAttente = s.patronEnAttente || []; // prompt 86
@@ -1512,11 +1521,11 @@
 	Jeu.RETOUR_EQUIPE_MS = 10000;
 	Jeu.TYPES_EQUIPES = ['police', 'ambulance', 'techniciens', 'pompiers']; // ordre des raccourcis Maj + 1/2/3/4
 	const engagees = (cle, maintenant) => (Jeu.equipes || []).filter((q) => q.cle === cle && !q.inutile && q.jourIndex === Jeu.jourIndex && maintenant < q.libre);
-	Jeu.equipesDisponibles = (cle, maintenant) => Math.max(0, REGLAGES.equipes[cle].effectif - engagees(cle, maintenant).length);
+	Jeu.equipesDisponibles = (cle, maintenant) => Math.max(0, REGLAGES.equipes[cle].effectif + ((Jeu.bonusEffectifs || {})[cle] || 0) - engagees(cle, maintenant).length); // prompt 88 : demande « une équipe de plus » accordée
 	/** Secondes avant le retour de la première équipe engagée de ce type (0 si une est libre) */
 	Jeu.retourEquipe = (cle, maintenant) => {
 		const e = engagees(cle, maintenant);
-		return e.length < REGLAGES.equipes[cle].effectif ? 0 : Math.ceil((Math.min(...e.map((q) => q.libre)) - maintenant) / 1000);
+		return e.length < REGLAGES.equipes[cle].effectif + ((Jeu.bonusEffectifs || {})[cle] || 0) ? 0 : Math.ceil((Math.min(...e.map((q) => q.libre)) - maintenant) / 1000);
 	};
 	/** Phase d'une équipe engagée : 'route' | 'place' | 'retour' | 'libre' */
 	Jeu.phaseEquipe = (q, maintenant) => (q.inutile || maintenant >= q.libre ? 'libre' : maintenant < q.arrivee ? 'route' : maintenant < q.finIntervention ? 'place' : 'retour');
@@ -1673,7 +1682,7 @@
 		if ((Jeu.objectifsResultats || []).some((o) => o.jourIndex === Jeu.jourIndex)) return;
 		Jeu.finJourneeStatut(); // prompt 84 : dernier avertissement ou licenciement, avant le mail du soir
 		const o = Jeu.objectifDuJour();
-		const atteint = Jeu.jauges[o.jauge] >= o.seuil;
+		const atteint = Jeu.jauges[o.jauge] >= o.seuil - (Jeu.allegementObjectif || 0); // prompt 88 : demande « un jour plus calme » accordée
 		let effet;
 		if (atteint) {
 			const f = Jeu.facteurBonusObjectif ? Jeu.facteurBonusObjectif() : 1; // semaine 1 du mode histoire : bonus ×1,5 (histoire.js)

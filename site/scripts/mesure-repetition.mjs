@@ -32,7 +32,11 @@ export function mesurer(langue = 'fr') {
 				const j = Jeu.jourCourant();
 				jour = { date: j.date, niveau: s.niveau, taches: [], textes: [], patronAvant: Jeu.messagesPatron.length, plaintesAvant: Jeu.plaintes.length };
 				jours.push(jour);
-				if (avecTaches) Taches.debutJournee().forEach((x) => { jour.taches.push(x.type); jour.textes.push(...x.textes); });
+				if (avecTaches) {
+					Taches.matin();
+					const b = Taches.briefing();
+					if (b) { Taches.choisirPriorites(b.options.slice(0, 2).map((o) => o.id)); jour.taches.push('briefing'); jour.textes.push(...b.options.map((o) => T('tache.prio.' + o.id, o.vars))); }
+				}
 			};
 			const fermer = () => {
 				Jeu.messagesPatron.slice(jour.patronAvant).forEach((m) => { jour.taches.push('message'); jour.textes.push(String(m.texte)); });
@@ -60,9 +64,15 @@ export function mesurer(langue = 'fr') {
 						const l = Rythme.liaison(n, liaisonPrec); if (l) { liaisonPrec = l.cle; jour.textes.push(T(l.cle, l.vars)); }
 					}
 					fermer();
-					if (avecTaches) Taches.apresDecision(r, n).forEach((x) => { jour.taches.push(x.type); jour.textes.push(...x.textes); });
+					if (avecTaches) {
+						const tache = Taches.apresDecision(r, n);
+						if (tache) { const res = Taches.resoudre(tache, Taches.bonneReponse(tache)); jour.taches.push(tache.type); jour.textes.push(...(res && res.textes ? res.textes : [])); }
+					}
 				} else {
-					if (avecTaches) Taches.finJournee().forEach((x) => { jour.taches.push(x.type); jour.textes.push(...x.textes); });
+					if (avecTaches) {
+						const rp = Taches.rapport();
+						if (rp) { jour.taches.push('rapport'); jour.textes.push(...rp.faits.map((f) => f.texte)); Taches.validerRapport(rp.faits[0].id, 'budget'); }
+					}
 					Jeu.finDeJourneeTactique();
 					const m = Jeu.mailDuJour();
 					m.lignes.forEach((l) => jour.textes.push(String(l)));

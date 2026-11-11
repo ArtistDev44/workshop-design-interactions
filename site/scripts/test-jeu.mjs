@@ -25,7 +25,7 @@ function contexte(langue, stockage = new Map(), avecHistoire = false) {
 	ctx.window = ctx;
 	ctx.globalThis = ctx;
 	vm.createContext(ctx);
-	const fichiers = ['data/lignes.js', 'data/semaines.js', 'data/fallback.js', 'data/messages.js', 'data/reponses.js', 'i18n.js', 'game.js', 'rythme.js']; // prompt 74 : logique pure de la couche d'affichage
+	const fichiers = ['data/lignes.js', 'data/semaines.js', 'data/fallback.js', 'data/messages.js', 'data/reponses.js', 'i18n.js', 'game.js', 'rythme.js', 'taches.js']; // prompts 74 / 88 : logique pure de la couche d'affichage
 	if (avecHistoire) fichiers.push('confort.js', 'histoire.js'); // prompt 56 : progression et palmarès (localStorage)
 	for (const f of fichiers) {
 		vm.runInContext(readFileSync(join(pub, f), 'utf8'), ctx, { filename: f });
@@ -990,6 +990,63 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 		const bis = mesurer(lg);
 		verifier(JSON.stringify(bis) === JSON.stringify(jours), `variantes (${lg}) : deux mesures de même graine doivent être identiques`);
 	}
+}
+
+// Prompt 88 lot B : briefing du matin (priorités sur faits réels), rapport du soir (demande selon la réputation), carnet
+{
+	const cb = contexte('fr');
+	const r = vm.runInContext(
+		`(() => {
+		const out = { erreursOpt: [], flux: null, accord: null, refus: null, carnet: 0, sauve: null };
+		for (const lundi of Jeu.semainesProposees().map((x) => x.lundi)) {
+			Jeu.chargerSemaine(lundi); Jeu.nouvellePartie(); Taches.nouvellePartie();
+			for (let i = 0; i < Jeu.jours.length; i++) {
+				const j = Jeu.jourCourant();
+				const b = Taches.briefing();
+				if (!b || b.options.length < 2 || b.options.length > 4) out.erreursOpt.push(j.date + ' ' + (b && b.options.length));
+				const m = Jeu.meteoDuJour(j.date) || {};
+				for (const o of b.options) {
+					if (o.id === 'meteo' && !((m.pluie_mm || 0) >= 5 || (m.rafales_max || 0) >= 50)) out.erreursOpt.push(j.date + ' météo sans fait');
+					if (o.id === 'evenement' && !Jeu.evenementsAffluence(j.date).length) out.erreursOpt.push(j.date + ' agenda vide');
+					if (o.id === 'ligne' && !j.dossiers.some((d) => d.type === 'perturbation' && (d.lignes || []).includes(o.vars.ligne))) out.erreursOpt.push(j.date + ' ligne sans travaux');
+				}
+				Taches.choisirPriorites(b.options.slice(0, 2).map((o) => o.id));
+				while (Jeu.prochainDuJour()) Jeu.decider(Jeu.actionsPossibles(Jeu.dossierCourant())[0]);
+				Jeu.finDeJourneeTactique();
+				const rp = Taches.rapport();
+				Taches.validerRapport(rp.faits[0].id, 'budget');
+				if (!Jeu.jours[Jeu.jourIndex + 1]) break;
+				Jeu.journeeSuivante(); Taches.matin();
+			}
+			out.carnet = Math.max(out.carnet, Jeu.taches.carnet.length);
+		}
+		// Demande accordée (réputation ≥ 50) : +5 de budget le lendemain matin ; refusée sous 50
+		Jeu.chargerSemaine('2026-11-02'); Jeu.nouvellePartie(); Taches.nouvellePartie();
+		Taches.choisirPriorites([]);
+		Jeu.jauges.reputation = 60; Jeu.finDeJourneeTactique();
+		const r1 = Taches.validerRapport('x', 'budget');
+		while (Jeu.prochainDuJour()) Jeu.decider('temps');
+		Jeu.journeeSuivante(); const b0 = Jeu.jauges.budget; Taches.matin();
+		out.accord = { accordee: r1.accordee, delta: Jeu.jauges.budget - b0, message: String(Jeu.messagesPatron[Jeu.messagesPatron.length - 1].texte) };
+		Taches.choisirPriorites([]);
+		Jeu.jauges.reputation = 30;
+		const r2 = Taches.validerRapport('x', 'equipe');
+		Jeu.journeeSuivante(); Taches.matin();
+		out.refus = { accordee: r2.accordee, bonus: JSON.stringify(Jeu.bonusEffectifs) };
+		// Sauvegarde : les tâches de la journée reviennent à l'identique
+		const snap = JSON.parse(JSON.stringify(Jeu.instantane(0)));
+		const avant = JSON.stringify(Jeu.taches);
+		Jeu.taches = null; Jeu.restaurerInstantane(snap, 0);
+		out.sauve = JSON.stringify(Jeu.taches) === avant;
+		return out;
+	})()`,
+		cb,
+	);
+	verifier(r.erreursOpt.length === 0, `briefing : options sans fait réel ou en nombre incorrect (${r.erreursOpt.slice(0, 4)})`);
+	verifier(r.carnet >= 6, `carnet : une ligne par journée (${r.carnet})`);
+	verifier(r.accord.accordee && r.accord.delta === 5 && /accordée/.test(r.accord.message), `rapport : demande accordée → +5 de budget le lendemain (${JSON.stringify(r.accord)})`);
+	verifier(r.refus.accordee === false && r.refus.bonus === '{}', `rapport : réputation < 50 → demande refusée (${JSON.stringify(r.refus)})`);
+	verifier(r.sauve, 'sauvegarde : les tâches de la partie (priorités, rapport, carnet) sont restaurées');
 }
 
 // Service worker : chaque script de index.html est dans la liste hors ligne de sw.js

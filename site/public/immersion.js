@@ -277,6 +277,7 @@ function apresDecision() {
 function journeeSuivante() {
 	if (Jeu.terminee || !Jeu.jours[Jeu.jourIndex + 1]) return allerFin();
 	Jeu.journeeSuivante();
+	Taches.matin(); // prompt 88 : demande du rapport de la veille, accordée ou non
 	demarrerJournee();
 	Sauvegarde.auto(false); // prompt 33
 }
@@ -903,6 +904,7 @@ const FIL = { messages: [], serieDepuis: 0, rythmeFaits: {}, jourCle: '', explic
 function nouvellePartieRythme() {
 	Rythme.clamperDebut(); // prompt 76 : aucun dossier avant 8 h
 	Rythme.melangerArrivees();
+	Taches.nouvellePartie(); // prompt 88 : tâches de la partie
 	FIL.messages = [];
 	FIL.serieDepuis = 0;
 	FIL.rythmeFaits = {};

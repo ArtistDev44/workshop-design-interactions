@@ -13,7 +13,7 @@ function verifierMecaniques() {
 }
 /** Le temps s'arrête pendant l'inspection et quand le journal de bord est ouvert */
 function mecaniquesSuspendentTemps() {
-	return fenetre === 'inspection' || fenetre === 'demission' || fenetre === 'partir' || fenetre === 'blame' || fenetre === 'cafe' || CARNET.ouvert;
+	return fenetre === 'inspection' || fenetre === 'tache' || fenetre === 'demission' || fenetre === 'partir' || fenetre === 'blame' || fenetre === 'cafe' || CARNET.ouvert;
 }
 
 // ——— Inspection surprise (une fois par semaine) ———

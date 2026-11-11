@@ -173,6 +173,7 @@ function draw() {
 		return;
 	}
 	verifierMecaniques(); // prompt 47 : inspection surprise (avant l'horloge, qui s'arrête alors)
+	verifierTaches(); // prompt 88 : briefing du matin, tâches courtes
 	majMultitache(); // prompts 68 / 77 : arrivées, compteurs des signalements actifs, expirations en arrière-plan
 	majNotifications(); // prompt 77 : mails, commentaires, fins d'intervention
 	majLicenciement(); // prompt 84 : messages après la panne, licenciement hors décision
@@ -339,6 +340,7 @@ function decider(action) {
 	if (action !== 'temps') Object.assign(dernierResultat, mesures);
 	else dernierResultat.sources = mesures.sources;
 	dernierResultat.contexteNarr = Rythme.contexteNarration(dernierResultat, Jeu.index - 1); // prompt 74 : phrase de contexte réelle
+	if (action !== 'temps') tachesApresDecision(dernierResultat); // prompt 88 : rotation des tâches
 	const dj = dernierResultat.deltas.map((v, i) => t('jaugeTitre.' + ['fluidite', 'reputation', 'budget'][i]) + ' ' + (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v)).join(', ');
 	annoncer(t('annonce.decision', { titre: dernierResultat.narration.titre, texte: dernierResultat.narration.texte }) + ' ' + dj + '.'); // prompt 53 : variations annoncées
 	Confort.Son.clicAction(action); // prompt 44 § 4 : un clic de console par action
@@ -1086,7 +1088,7 @@ function keyPressed() {
 	// Langue (prompt 24) : L bascule partout, sans toucher à la partie
 	if (key === 'l' || key === 'L') return Langue.suivante(), false;
 	// Prompt 47 : inspection, démission, palmarès ; J = journal de bord, D = rendre son badge
-	if (toucheMecaniques() || toucheAccessibilite() || toucheJournee()) return false; // prompts 47, 48 et 51
+	if (toucheTaches() || toucheMecaniques() || toucheAccessibilite() || toucheJournee()) return false; // prompts 47, 48 et 51
 	// Fenêtres ouvertes : elles captent le clavier
 	if (fenetre) {
 		if (keyCode === ESCAPE || (fenetre === 'aide' && (key === 'h' || key === 'H' || key === '?'))) return fermer(), false;
@@ -1296,6 +1298,7 @@ function dessinerFenetre() {
 	if (fenetre === 'rapport') return fenetreRapport(); // prompt 41
 	if (fenetre === 'mailFin') return fenetreMailFin(); // prompt 56
 	if (fenetre === 'inspection') return fenetreInspection(); // prompt 47
+	if (fenetre === 'tache') return fenetreTache(); // prompt 88
 	if (fenetre === 'demission') return fenetreDemission(); // prompt 47
 	if (fenetre === 'palmares') return fenetrePalmares(); // prompt 47
 	if (fenetre === 'accessibilite') return fenetreAccessibilite(); // prompt 48
