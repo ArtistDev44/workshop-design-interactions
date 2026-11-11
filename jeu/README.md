@@ -83,3 +83,4 @@ dossier à trancher sous pression. »*
 | 66 | `66-livre-aide.md` | Prompt 70 : le livre « Commande » devient « Aide » (objet, couverture pixel, textes FR + EN, guide) |
 | 67 | `67-demarrage-pc-chaque-jour.md` | Prompt 71 : démarrage du PC rejoué au début des jours 1 à 3 (après « JOUR n »), une fois par jour, temps suspendu, écourté si animations réduites |
 | 68 | `68-alertes-choix-reponses.md` | Prompt 72 : alertes (météo, secours, affluence) — 2 ou 3 réponses rédigées sur les données réelles, chacune une action ou un envoi d'équipe, ordre mélangé par la graine, actions de base toujours disponibles |
+| 69 | `69-suppression-carte.md` | Prompt 73 : plus de carte (aucune géométrie dans les sources) — appli « Signalements », liste à gauche (heure, type, ligne + nom réel, gravité, expiration), n'importe quel signalement se prend au clic ou ↑ ↓ Entrée, équipes en texte |

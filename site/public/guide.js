@@ -57,11 +57,11 @@ function cibleReelle(nom) {
 const PHASES_DOSSIER = ['decision', 'contradiction', 'conflit']; // prompt 68 : la sélection d'un signalement précède le dossier
 const ETAPES_GUIDE = [
 	{ id: 'installer', cible: () => 'ecranPC', fait: () => vue === 'poste' },
-	{ id: 'jauges', cible: () => (vue === 'poste' && PC.etat === 'appli' ? 'jauges' : vue === 'poste' ? 'iconeCarte' : 'ecranPC'), fait: () => phase === 'selection' || PHASES_DOSSIER.includes(phase) },
+	{ id: 'jauges', cible: () => (vue === 'poste' && PC.etat === 'appli' ? 'jauges' : vue === 'poste' ? 'iconeSignalements' : 'ecranPC'), fait: () => phase === 'selection' || PHASES_DOSSIER.includes(phase) },
 	// Prompt 66 : étape dédiée au signalement (prendre le dossier lance le compteur)
-	{ id: 'prendre', cible: () => (vue === 'poste' && PC.etat === 'appli' ? 'actions' : vue === 'poste' ? 'iconeCarte' : 'ecranPC'), fait: () => PHASES_DOSSIER.includes(phase) || phase === 'narration' || (Jeu.historique || []).length > 0 },
+	{ id: 'prendre', cible: () => (vue === 'poste' && PC.etat === 'appli' ? 'fileSignalements' : vue === 'poste' ? 'iconeSignalements' : 'ecranPC'), fait: () => PHASES_DOSSIER.includes(phase) || phase === 'narration' || (Jeu.historique || []).length > 0 },
 	// Prompt 72 : si le dossier est une alerte, l'étape pointe ses réponses rédigées
-	{ id: 'actions', cible: () => (vue === 'poste' && PC.etat === 'appli' ? (alerteEnCours() ? 'alerte' : 'actions') : vue === 'poste' ? 'iconeCarte' : 'ecranPC'), fait: () => (Jeu.historique || []).length > 0 || phase === 'narration' },
+	{ id: 'actions', cible: () => (vue === 'poste' && PC.etat === 'appli' ? (alerteEnCours() ? 'alerte' : 'actions') : vue === 'poste' ? 'iconeSignalements' : 'ecranPC'), fait: () => (Jeu.historique || []).length > 0 || phase === 'narration' },
 	{ id: 'apps', cible: () => (vue !== 'poste' ? 'ecranPC' : PC.etat === 'appli' ? 'fermerAppli' : 'iconesOS'), fait: () => PC.etat === 'os' && (!!PC.fenetre || PC.flottant) },
 	{ id: 'quitter', cible: () => 'quitterPC', fait: () => vue === 'bureau' },
 	{ id: 'livre', cible: () => 'livreAide', fait: () => !!tutoriel || fenetre === 'livre-stress' || (typeof PIECE !== 'undefined' && !!PIECE.message) },
@@ -88,7 +88,7 @@ function annoncerEtapeGuide() {
 function texteEtapeGuide(e) {
 	const c = e.cible();
 	if (c === 'ecranPC' && e.id !== 'installer' && e.id !== 'apps') return t('guide.retourPC');
-	if (c === 'iconeCarte') return t('guide.ouvrirCarte');
+	if (c === 'iconeSignalements') return t('guide.ouvrirSignalements');
 	if (e.id === 'apps') return t(c === 'fermerAppli' ? 'guide.apps.fermer' : c === 'ecranPC' ? 'guide.retourPC' : 'guide.apps.ouvrir');
 	if (e.id === 'actions' && alerteEnCours()) return t('guide.alerte'); // prompt 72
 	return t('guide.' + e.id);
@@ -153,7 +153,7 @@ function dessinerGuide() {
 	if (!c) return bulleGuide(texte, L / 2, H - 260, true);
 	const rebond = reduireAnimations ? 0 : Math.sin(millis() / 220) * 10;
 	// Prompt 66 : cible dans la colonne de droite de l'appli (jauges, dossier, croix) → bulle à sa gauche, sur la
-	// carte, pour ne jamais masquer les sources, les actions ni le texte des conséquences
+	// liste des signalements, pour ne jamais masquer les sources, les actions ni le texte des conséquences
 	const aGauche = vue === 'poste' && PC.etat === 'appli' && c.x > L * 0.55;
 	const cx = constrain(c.x + c.l / 2, 60, L - 60);
 	const versBas = c.y > 260; // la flèche arrive par le haut, sauf si la cible est tout en haut

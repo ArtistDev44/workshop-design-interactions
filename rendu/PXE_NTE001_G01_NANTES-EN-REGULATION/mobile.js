@@ -48,7 +48,7 @@ function toucherFin() {
 	const dist = Math.hypot(dx, dy) / k;
 	if (Math.abs(dy) / k > SEUIL_SWIPE && Math.abs(dy) > Math.abs(dx)) {
 		// Swipe vertical : doigt vers le haut = molette vers le haut (s'installer) ; vers le bas = se lever
-		if (!scrollSortiePC(dy < 0 ? -150 : 150)) zoomCarteMolette(dy < 0 ? -120 : 120);
+		scrollSortiePC(dy < 0 ? -150 : 150);
 		return;
 	}
 	if (dist < 14 && millis() - d.t >= DUREE_APPUI_LONG) return; // appui long : l'infobulle reste affichée, pas de clic

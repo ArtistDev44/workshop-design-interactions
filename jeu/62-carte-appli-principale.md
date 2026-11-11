@@ -1,5 +1,8 @@
 # 62 — La Carte devient l'application principale, équipes limitées (prompt 68)
 
+> Depuis le prompt 73 (`69-suppression-carte.md`), il n'y a plus de carte : l'appli s'appelle « Signalements »
+> et la file s'affiche en liste ; le reste de ce document (sélection, file, gravité, onglets, équipes) reste valable.
+
 Code : `carte.js` (nouveau), `game.js` (bloc équipes), `os.js`, `sketch.js`, `immersion.js`, `enquete.js`,
 `guide.js`, `histoire.js`, `i18n.js`. Exception documentée aux règles verrouillées : le bloc **équipes** de
 `game.js` change (effectifs, cycle, pertinence) ; les effets des décisions et le tirage des dés sont inchangés.

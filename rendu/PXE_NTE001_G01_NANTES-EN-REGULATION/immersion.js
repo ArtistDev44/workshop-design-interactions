@@ -242,7 +242,7 @@ function arriveeIncident() {
 		setTimeout(() => Confort.Son.bip('alerte'), 360);
 		return;
 	}
-	entrerSelection(); // prompt 68 : un signalement sur la carte ; le compteur démarre quand le joueur le prend
+	entrerSelection(); // prompts 68 / 73 : un signalement dans la liste ; le compteur démarre quand le joueur le prend
 }
 
 function seReveiller() {

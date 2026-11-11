@@ -1,16 +1,16 @@
-/* Nantes en régulation — prompt 68 : la Carte devient l'écran de jeu unique (proposé par un membre du groupe).
- * - L'appli « Régulation » disparaît de RégulOS ; l'icône Carte ouvre l'écran de jeu (carte + panneau incident).
- * - Les incidents arrivent comme des SIGNALEMENTS sur la carte et dans une FILE D'ATTENTE ; le compteur ne démarre
- *   qu'à la sélection (Entrée ou clic). En file, chaque incident expire après 2 × le compteur de la semaine :
- *   il est alors réglé par la règle « non traité » (Q25, malus du prompt 23).
- * - Repère à l'emplacement réel de la ligne (une fois la carte consultée, prompt 50), sinon « Réseau » au centre ;
- *   après la décision, le repère passe au vert (bon choix) ou à l'orange (raté) puis s'efface.
+/* Nantes en régulation — prompt 68, refondu au prompt 73 : l'appli « Signalements » est l'écran de jeu unique.
+ * - Les incidents arrivent comme des SIGNALEMENTS dans une FILE (liste à gauche de l'écran de jeu) ; le compteur ne
+ *   démarre qu'à la prise (clic ou Entrée sur un signalement de la file). En file, chaque incident expire après
+ *   2 × le compteur de la semaine : il est alors réglé par la règle « non traité » (Q25, malus du prompt 23).
+ * - Prompt 73 : plus de carte géographique (les sources ne donnent aucune géométrie de ligne : la position était
+ *   arbitraire). Chaque signalement montre heure, type, ligne(s) (numéro + nom réel, une fois identifiées par la
+ *   source « Lignes », prompt 50), gravité calculée et expiration ; les équipes s'affichent en texte (en route /
+ *   sur place / retour, temps restant).
  * - Panneau incident : gravité calculée, onglets Enquête (sources, prompt 50) / Historique de la ligne / Équipes.
- * - Équipes limitées (game.js) : pictogrammes qui partent du centre de régulation vers l'incident puis reviennent ;
- *   raccourcis Maj + 1/2/3/4 (police, ambulanciers, techniciens, pompiers).
+ * - Équipes limitées (game.js) ; raccourcis Maj + 1/2/3/4 (police, ambulanciers, techniciens, pompiers).
  * Données réelles uniquement ; absent → « non renseigné ».
  */
-const SELECTION = { depuis: 0, paquet: null, arrivees: {}, traces: [], onglet: 'enquete', message: null, surbrillance: null, legendeRepliee: false };
+const SELECTION = { depuis: 0, paquet: null, arrivees: {}, onglet: 'enquete', message: null, surbrillance: null, legendeRepliee: false, focus: 0 };
 const compteurSemaine = () => ((Jeu.etat.semaine && Jeu.etat.semaine.difficulte && Jeu.etat.semaine.difficulte.compteur_s) || 30) * 1000;
 
 /** Dossiers arrivés (heure de jeu atteinte) et pas encore traités, dans l'ordre : la tête est le prochain à traiter */
@@ -23,14 +23,13 @@ function fileIncidents() {
 	if (SELECTION.paquet !== Jeu.paquet) {
 		SELECTION.paquet = Jeu.paquet;
 		SELECTION.arrivees = {};
-		SELECTION.traces = [];
 	}
 	const f = [];
 	for (let i = Jeu.index; i < Jeu.paquet.length; i++) {
 		const d = Jeu.paquet[i];
 		if (d.date !== j.date) break;
 		if (d.minute > Jeu.horloge.minutes) break;
-		if (!SELECTION.arrivees[i]) SELECTION.arrivees[i] = millis(); // première apparition sur la carte
+		if (!SELECTION.arrivees[i]) SELECTION.arrivees[i] = millis(); // première apparition dans la liste
 		f.push({ index: i, d, depuis: SELECTION.arrivees[i] });
 	}
 	return f;
@@ -69,20 +68,20 @@ function majSelection() {
 	if (tete && resteAvantExpiration(tete) <= 0) expirerSelection();
 }
 
-// ——— Panneau de droite pendant la sélection : le signalement et la file d'attente ———
+// ——— Panneau de droite pendant la sélection : le signalement choisi dans la file (liste à gauche, prompt 73) ———
 function dessinerSelection() {
 	const base = { x: DROITE.x, y: DROITE.y + 130, l: DROITE.l, h: DROITE.h - 130 };
 	panneau(base.x, base.y, base.l, base.h, C.orange);
 	const f = fileIncidents();
-	const tete = f[0];
-	const d = Jeu.dossierCourant();
+	const it = f[SELECTION.focus] || f[0];
 	noStroke();
 	textAlign(LEFT, TOP);
 	textFont(POLICE_DONNEES);
 	textSize(18);
 	fill(C.orange);
 	text(t('carte.nouveau', { n: f.length }), base.x + 32, base.y + 26);
-	if (!d) return;
+	if (!it) return;
+	const d = it.d;
 	textFont(POLICE_TEXTE);
 	textStyle(BOLD);
 	ajusterTaille(t('enq.signalement.' + d.type), base.l - 64, 36, 22);
@@ -95,30 +94,19 @@ function dessinerSelection() {
 	text(t('carte.gravite', { g: t('gravite.' + Jeu.gravite(d)) }) + ' · ' + Jeu.formaterHeure(d.minute), base.x + 32, base.y + 116);
 	fill(C.gris);
 	textSize(18);
-	if (tete) text(t('carte.expireDans', { s: Math.ceil(resteAvantExpiration(tete) / 1000) }), base.x + 32, base.y + 150);
-	bouton(base.x + 32, base.y + 190, base.l - 64, 76, t('carte.prendre'), selectionnerIncident);
+	text(t('carte.expireDans', { s: Math.ceil(resteAvantExpiration(it) / 1000) }), base.x + 32, base.y + 150);
+	textFont(POLICE_TEXTE);
+	textSize(19);
+	fill(C.texte);
+	text(texteLignes(d, it.index), base.x + 32, base.y + 184, base.l - 64, 56);
+	bouton(base.x + 32, base.y + 250, base.l - 64, 76, t('carte.prendre'), () => prendreSignalement(f.indexOf(it)));
 	textAlign(LEFT, TOP);
-	cibleGuide('actions', base.x + 32, base.y + 190, base.l - 64, 76);
-	// File d'attente
-	textFont(POLICE_DONNEES);
-	textSize(18);
+	cibleGuide('actions', base.x + 32, base.y + 250, base.l - 64, 76);
+	textFont(POLICE_TEXTE);
+	textSize(19);
+	textLeading(27);
 	fill(C.gris);
-	text(t('carte.file', { n: f.length }), base.x + 32, base.y + 300);
-	f.slice(0, 6).forEach((it, i) => {
-		const y = base.y + 336 + i * 70;
-		fill(i === 0 ? 'rgba(255,193,56,0.16)' : 'rgba(255,255,255,0.05)');
-		rect(base.x + 32, y, base.l - 64, 60);
-		fill(couleurGravite(Jeu.gravite(it.d)));
-		rect(base.x + 32, y, 6, 60);
-		textFont(POLICE_TEXTE);
-		textSize(19);
-		fill(C.texte);
-		text(Jeu.formaterHeure(it.d.minute) + ' · ' + t('enq.signalement.' + it.d.type), base.x + 50, y + 8, base.l - 100, 26);
-		textFont(POLICE_DONNEES);
-		textSize(16);
-		fill(C.gris);
-		text(t('gravite.' + Jeu.gravite(it.d)) + ' · ' + t(i === 0 ? 'carte.expireDans' : 'carte.attendDepuis', { s: Math.ceil((i === 0 ? resteAvantExpiration(it) : millis() - it.depuis) / 1000) }), base.x + 50, y + 36);
-	});
+	text(t(f.length > 1 ? 'sig.choisir' : 'sig.seul'), base.x + 32, base.y + 356, base.l - 64, 120);
 }
 function couleurGravite(g) {
 	return g === 'elevee' ? C.rouge : g === 'moyenne' ? C.orange : C.gris;
@@ -136,7 +124,7 @@ function dessinerHistoriqueLigne(d, x, y, l, h) {
 	const e = enqueteDossier();
 	const lignes = [];
 	if (!(d.lignes && d.lignes.length)) lignes.push(t('carte.histo.sansLigne'));
-	else if (!e.revele.carte) lignes.push(t('carte.histo.consulter'));
+	else if (!e.revele.lignes) lignes.push(t('carte.histo.consulter'));
 	else {
 		const passes = (Jeu.evenementsJournee || []).filter((x) => x.resultat && (x.resultat.dossier.lignes || []).some((n) => d.lignes.includes(n)));
 		lignes.push(t('carte.histo.nb', { n: passes.length, lignes: d.lignes.join(', ') }));
@@ -208,95 +196,165 @@ function toucheEquipes() {
 	return true;
 }
 
-// ——— Carte : repères, file, équipes en mouvement, surbrillance (appelé avec la projection de la carte) ———
-function positionDossier(d, rang) {
-	const idx = Jeu.paquet.indexOf(d);
-	// Lieu réel seulement s'il est connu du joueur : dossier traité, ou dossier courant après consultation de la carte
-	const connu = d.lignes && d.lignes.length && (idx < Jeu.index || (idx === Jeu.index && enqueteDossier().revele.carte));
-	const c = connu ? centreLigne(d.lignes[0]) : null;
-	if (c) return { x: projection.x(c[0]), y: projection.y(c[1]), reseau: false };
-	const r = rang || 0; // signalements en file, lieu inconnu : rangés autour du centre « Réseau »
-	return { x: CARTE.x + CARTE.l / 2 + (r ? Math.cos(r * 1.3) * 46 : 0), y: CARTE.y + CARTE.h / 2 + (r ? Math.sin(r * 1.3) * 46 : 0), reseau: true };
+// ——— Prompt 73 : plus de carte — la file des signalements, les lignes concernées et l'état des équipes en texte ———
+/** Ligne(s) d'un dossier en texte : numéro + nom réel (data/lignes.js) si connue(s) du joueur, sinon « à identifier » */
+function texteLignes(d, i) {
+	if (!(d.lignes && d.lignes.length)) return t('sig.lignes.aucune');
+	if (!dossierConnu(i)) return t('sig.lignes.inconnue');
+	return d.lignes
+		.map((n) => {
+			const ln = Jeu.lignes && Jeu.lignes.lignes.find((x) => x.nom === n);
+			return t('sig.ligne', { nom: n, libelle: ln && ln.libelle ? ln.libelle : t('carte.nonRenseigne') });
+		})
+		.join(' · ');
 }
-function dessinerReperesCarte() {
-	if (ecran !== 'jeu' || !projection || !Jeu.paquet) return;
-	const m = millis();
-	const p = pulsationDouce(1.2);
-	// Équipes engagées : du centre de régulation vers le repère, puis retour
-	const base = { x: CARTE.x + CARTE.l / 2, y: CARTE.y + CARTE.h / 2 };
-	(Jeu.equipes || []).forEach((q) => {
-		const ph = Jeu.phaseEquipe(q, m);
-		if (ph === 'libre' || q.jourIndex !== Jeu.jourIndex) return;
-		const cible = positionDossier(Jeu.paquet[q.index]);
-		let k = ph === 'place' ? 1 : ph === 'route' ? constrain((m - q.depart) / (q.arrivee - q.depart), 0, 1) : 1 - constrain((m - q.finIntervention) / (q.libre - q.finIntervention), 0, 1);
-		if (reduireAnimations) k = ph === 'retour' ? 0 : 1;
-		const x = lerp(base.x, cible.x, k);
-		const y = lerp(base.y, cible.y, k);
-		noStroke();
-		fill(q.cle === 'police' ? '#3d8bff' : q.cle === 'ambulance' ? '#ffffff' : q.cle === 'pompiers' ? '#ff3b30' : '#ffc138');
-		rect(x - 7 + 14, y - 7, 14, 14);
-		fill(13, 12, 12);
-		rect(x - 3 + 14, y - 3, 6, 6);
-	});
-	// File d'attente (repères orange) puis incident courant (rouge, pulse)
+/** Amène le dossier k (arrivé, en file) en tête du paquet pour le traiter : seul l'ordre de traitement change,
+ * les index mémorisés (arrivées, équipes) suivent le déplacement ; règles et tirages inchangés. */
+function amenerEnTete(k) {
+	const i = Jeu.index;
+	if (k === i || k < i || k >= Jeu.paquet.length) return;
+	const [d] = Jeu.paquet.splice(k, 1);
+	Jeu.paquet.splice(i, 0, d);
+	const remap = (j) => (j === k ? i : j >= i && j < k ? j + 1 : j);
+	const arr = {};
+	Object.keys(SELECTION.arrivees).forEach((j) => (arr[remap(Number(j))] = SELECTION.arrivees[j]));
+	SELECTION.arrivees = arr;
+	(Jeu.equipes || []).forEach((q) => (q.index = remap(q.index)));
+	if (typeof ENQ !== 'undefined') ENQ.dossier = -1; // l'enquête repart de zéro pour le dossier pris
+}
+/** Prendre le signalement de rang r dans la file (clic ou Entrée) */
+function prendreSignalement(r) {
+	if (phase !== 'selection') return;
+	const it = fileIncidents()[r];
+	if (!it) return;
+	amenerEnTete(it.index);
+	SELECTION.focus = 0;
+	selectionnerIncident();
+}
+/** Liste des signalements (partie gauche de l'écran de jeu) */
+function dessinerFileSignalements(z) {
+	noStroke();
+	fill(C.fond);
+	rect(z.x, z.y, z.l, z.h);
 	const f = fileIncidents();
-	f.forEach((it, i) => {
-		if (i === 0 && phase !== 'selection' && !['decision', 'contradiction', 'conflit'].includes(phase)) return;
-		const pos = positionDossier(it.d, i);
-		const courant = i === 0;
-		const r = courant ? 12 + 6 * p : 9;
-		noFill();
-		stroke(courant ? C.rouge : C.orange);
-		strokeWeight(courant ? 4 : 3);
-		rect(pos.x - r, pos.y - r, r * 2, r * 2);
-		noStroke();
-		fill(courant ? C.rougeFonce : C.orange);
-		rect(pos.x - 5, pos.y - 5, 10, 10);
-		if (pos.reseau && courant) {
+	const enCours = ['decision', 'contradiction', 'conflit'].includes(phase);
+	textAlign(LEFT, TOP);
+	textFont(POLICE_TEXTE);
+	textStyle(BOLD);
+	textSize(24);
+	fill(C.texte);
+	text(t('sig.titre', { n: f.length }), z.x + 20, z.y + 16);
+	textStyle(NORMAL);
+	textFont(POLICE_DONNEES);
+	textSize(16);
+	textLeading(21);
+	fill(C.gris);
+	text(t(phase === 'selection' ? 'sig.consigne' : enCours ? 'sig.consigneEnCours' : 'sig.consigneAttente'), z.x + 20, z.y + 52, z.l - 40, 56);
+	if (!f.length) {
+		const prochain = Jeu.prochainDuJour ? Jeu.prochainDuJour() : null;
+		textFont(POLICE_TEXTE);
+		textSize(22);
+		textLeading(30);
+		fill(C.texte);
+		text(t('sig.vide'), z.x + 20, z.y + 120, z.l - 40, 40);
+		fill(C.gris);
+		textSize(19);
+		text(prochain ? t('sig.prochain', { heure: Jeu.formaterHeure(prochain.minute) }) : t('sig.finJour'), z.x + 20, z.y + 160, z.l - 40, 60);
+		return;
+	}
+	if (SELECTION.focus >= f.length) SELECTION.focus = 0;
+	const hc = 112;
+	const max = Math.floor((z.h - 120) / (hc + 10));
+	f.slice(0, max).forEach((it, r) => {
+		const y = z.y + 110 + r * (hc + 10);
+		const d = it.d;
+		const courant = enCours && it.index === Jeu.index;
+		const surligne = SELECTION.surbrillance && dossierConnu(it.index) && (d.lignes || []).includes(SELECTION.surbrillance);
+		fill(courant ? 'rgba(212,3,28,0.22)' : r === SELECTION.focus && phase === 'selection' ? 'rgba(255,193,56,0.14)' : 'rgba(255,255,255,0.05)');
+		rect(z.x + 16, y, z.l - 32, hc);
+		fill(couleurGravite(Jeu.gravite(d)));
+		rect(z.x + 16, y, 8, hc);
+		textFont(POLICE_TEXTE);
+		textStyle(BOLD);
+		textSize(22);
+		fill(C.texte);
+		text(Jeu.formaterHeure(d.minute) + ' · ' + t('enq.signalement.' + d.type), z.x + 40, y + 10, z.l - 200, 30);
+		textStyle(NORMAL);
+		textSize(18);
+		fill(C.texte);
+		text(texteLignes(d, it.index), z.x + 40, y + 44, z.l - 80, 26);
+		textFont(POLICE_DONNEES);
+		textSize(17);
+		fill(C.gris);
+		const etat = courant ? t('sig.enCours') : r === 0 || phase === 'selection' ? t('carte.expireDans', { s: Math.ceil(resteAvantExpiration(it) / 1000) }) : t('carte.attendDepuis', { s: Math.ceil((millis() - it.depuis) / 1000) });
+		text(t('carte.gravite', { g: t('gravite.' + Jeu.gravite(d)) }) + ' · ' + etat, z.x + 40, y + 78, z.l - 80, 26);
+		if (courant || surligne || (r === SELECTION.focus && phase === 'selection')) {
+			noFill();
+			stroke(courant ? C.primaire : surligne ? '#FFFFFF' : C.orange);
+			strokeWeight(3);
+			rect(z.x + 16, y, z.l - 32, hc);
+			noStroke();
+		}
+		if (phase === 'selection') {
+			textAlign(RIGHT, TOP);
 			textFont(POLICE_DONNEES);
 			textSize(16);
-			fill(C.texte);
-			textAlign(CENTER, TOP);
-			text(t('carte.reseau'), pos.x, pos.y + r + 6);
+			fill(C.orange);
+			text(t('sig.prendre'), z.x + z.l - 32, y + 14);
 			textAlign(LEFT, TOP);
+			boutons.push({ x: z.x + 16, y, l: z.l - 32, h: hc, action: () => prendreSignalement(r) });
 		}
+		if (r === 0) cibleGuide('fileSignalements', z.x + 16, y, z.l - 32, hc);
 	});
-	// Décisions récentes : vert (bon choix) ou orange (raté), puis fondu en 4 s
-	SELECTION.traces = SELECTION.traces.filter((tr) => m - tr.t < 4000);
-	SELECTION.traces.forEach((tr) => {
-		const a = reduireAnimations ? 1 : 1 - (m - tr.t) / 4000;
-		const c = color(tr.bon ? C.vert : C.orange);
-		c.setAlpha(255 * a);
-		noStroke();
-		fill(c);
-		rect(tr.x - 9, tr.y - 9, 18, 18);
-	});
+	if (f.length > max) {
+		textFont(POLICE_DONNEES);
+		textSize(17);
+		fill(C.gris);
+		text(t('sig.autres', { n: f.length - max }), z.x + 20, z.y + z.h - 30);
+	}
 }
-/** Après une décision (appelée par sketch.js) : laisser une trace colorée à l'emplacement de l'incident */
-function traceDecision(resultat) {
-	if (!projection || !resultat) return;
-	const pos = positionDossier(resultat.dossier);
-	const e = (Jeu.evenementsJournee || [])[Jeu.evenementsJournee.length - 1];
-	SELECTION.traces.push({ x: pos.x, y: pos.y, bon: e ? Jeu.evaluer(e) === 'bon' : false, t: millis() });
+/** Clavier de la file (phase sélection) : ↑ ↓ choisissent, Entrée prend ; true si la touche est prise */
+function toucheFileSignalements() {
+	if (phase !== 'selection') return false;
+	const n = fileIncidents().length;
+	if (!n) return false;
+	if (keyCode === UP_ARROW || keyCode === DOWN_ARROW) {
+		SELECTION.focus = (SELECTION.focus + (keyCode === UP_ARROW ? n - 1 : 1)) % n;
+		const it = fileIncidents()[SELECTION.focus];
+		annoncer(Jeu.formaterHeure(it.d.minute) + ' · ' + t('enq.signalement.' + it.d.type) + ' · ' + t('carte.gravite', { g: t('gravite.' + Jeu.gravite(it.d)) }));
+		return true;
+	}
+	if (keyCode === ENTER || keyCode === RETURN || key === ' ') return prendreSignalement(SELECTION.focus), true;
+	return false;
 }
-/** Bandeau des équipes (en haut de la carte) : « Police 1/2 · … », orange à 0 */
-function dessinerBandeauEquipes() {
-	if (ecran !== 'jeu' || !Jeu.elementDebloque('equipes')) return;
+/** Équipes en texte : disponibilités et état des équipes engagées (en route / sur place / retour, temps restant) */
+function dessinerEtatEquipes(x, y, l) {
+	if (!Jeu.elementDebloque('equipes')) return;
 	const m = millis();
-	let x = CARTE.x + 12;
-	const y = CARTE.y + CARTE.h - 42; // en bas de la carte : le zoom occupe le coin haut droit
-	textFont(POLICE_DONNEES);
-	textSize(15);
 	textAlign(LEFT, TOP);
+	textFont(POLICE_TEXTE);
+	textStyle(BOLD);
+	textSize(20);
+	fill(C.texte);
+	text(t('sig.equipes'), x, y);
+	textStyle(NORMAL);
+	let yy = y + 34;
 	Jeu.TYPES_EQUIPES.forEach((cle) => {
 		const dispo = Jeu.equipesDisponibles(cle, m);
-		const txt = String(Jeu.EQUIPES[cle].nom) + ' ' + dispo + '/' + Jeu.REGLAGES.equipes[cle].effectif;
-		const w = textWidth(txt) + 16;
-		noStroke();
-		fill(13, 12, 12, 220);
-		rect(x, y, w, 30);
+		textFont(POLICE_DONNEES);
+		textSize(16);
 		fill(dispo ? C.texte : C.orange);
-		text(txt, x + 8, y + 6);
-		x += w + 6;
+		text(String(Jeu.EQUIPES[cle].nom) + ' ' + dispo + '/' + Jeu.REGLAGES.equipes[cle].effectif, x, yy);
+		yy += 22;
+		(Jeu.equipes || [])
+			.filter((q) => q.cle === cle && q.jourIndex === Jeu.jourIndex && Jeu.phaseEquipe(q, m) !== 'libre')
+			.forEach((q) => {
+				const ph = Jeu.phaseEquipe(q, m);
+				const fin = ph === 'route' ? q.arrivee : ph === 'place' ? q.finIntervention : q.libre;
+				fill(C.gris);
+				text('  ' + t('sig.equipe.' + ph, { s: Math.max(0, Math.ceil((fin - m) / 1000)) }), x, yy);
+				yy += 22;
+			});
+		yy += 6;
 	});
 }
