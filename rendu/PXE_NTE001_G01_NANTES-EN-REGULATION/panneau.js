@@ -160,7 +160,7 @@ function dessinerPanneauSignalement(d, x, base) {
 			fill(C.gris);
 			text(t('trace.memoireTitre') + ' ' + mem.slice(-3).join(' · '), x + 372, y + 2, l - 340, 44);
 		}
-		corpsEnquete(d, x + 32, y + 60, l, base.y + base.h - 430 - (y + 60));
+		corpsEnquete(d, x + 32, y + 60, l, base.y + base.h - 372 - (y + 60)); // prompt 92 : réponses remontées de 50 px quand « En savoir plus » est ouvert
 	} else {
 		y = bloc(t('bloc.passe'), [phraseSituation(d)], x + 32, y, l, C.accent);
 		y = bloc(t('bloc.pourquoi'), pucesImportance(d).map((p) => '• ' + p), x + 32, y, l, C.orange);
@@ -177,7 +177,7 @@ function dessinerPanneauSignalement(d, x, base) {
 		y += 56; // bas réel des blocs : le conseil et les cartes ne le chevauchent pas
 	}
 	// Conseil factuel (prompt 23), au-dessus des réponses ; il ne désigne jamais une réponse
-	let yr = base.y + base.h - 360;
+	let yr = base.y + base.h - (PLUS.ouvert ? 310 : 360);
 	const conseil = Jeu.conseil ? String(Jeu.conseil(d)) : '';
 	if (conseil) {
 		textFont(POLICE_DONNEES);

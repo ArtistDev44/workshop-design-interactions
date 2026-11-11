@@ -127,15 +127,16 @@ function dessinerHistoriqueLigne(d, x, y, l, h) {
 			lignes.push(t('carte.histo.ligne', { nom: n, mode: ln && TRADUCTIONS.fr['mode.' + ln.type] !== undefined ? t('mode.' + ln.type) : t('carte.nonRenseigne') }));
 		});
 	}
-	textFont(POLICE_TEXTE);
-	textSize(20);
-	textLeading(28);
-	fill(C.texte);
-	textAlign(LEFT, TOP);
-	text(lignes.join('\n'), x, y, l, h);
+	// Prompt 92 : composant de texte partagé — vrai retour à la ligne, « … » en fin de mot si la zone est pleine
+	let yy = y + 4;
+	lignes.forEach((ln, i) => {
+		const reste = y + h - yy;
+		if (reste < 31) return;
+		yy += dessinerTexte(ln, x, yy, l, { taille: i ? 20 : 22, couleur: C.texte, style: i ? NORMAL : BOLD, maxLignes: Math.max(1, Math.floor(reste / (i ? 28 : 31))), interligne: i ? 28 : 31 }).h + 8;
+	});
 }
 /** Équipes : disponibilité, pertinence (indication, pas une recommandation d'action de régulation), envoi */
-function dessinerEquipesIncident(d, x, y, l) {
+function dessinerEquipesIncident(d, x, y, l, h) {
 	if (!Jeu.elementDebloque('equipes')) {
 		textFont(POLICE_TEXTE);
 		textSize(20);
@@ -145,30 +146,28 @@ function dessinerEquipesIncident(d, x, y, l) {
 	}
 	const pert = Jeu.equipesPertinentes(d);
 	const m = millis();
+	// Prompt 92 : hauteur des rangées tirée de la zone (rien ne déborde sur le conseil) ; une ligne si la place manque
+	const msg = SELECTION.message && m - SELECTION.message.t < 5000;
+	const rang = Math.min(78, Math.floor(((h || 330) - (msg ? 52 : 0)) / Jeu.TYPES_EQUIPES.length));
+	const compact = rang < 70;
 	Jeu.TYPES_EQUIPES.forEach((cle, i) => {
 		const q = Jeu.EQUIPES[cle];
-		const yy = y + i * 70;
+		const yy = y + i * rang;
 		const dispo = Jeu.equipesDisponibles(cle, m);
 		const eff = Jeu.REGLAGES.equipes[cle].effectif;
 		fill(255, 255, 255, 13);
-		rect(x, yy, l, 60);
-		textFont(POLICE_TEXTE);
-		textSize(19);
-		fill(C.texte);
-		textAlign(LEFT, TOP);
-		text(String(q.nom) + (pert.includes(cle) ? ' · ' + t('carte.pertinente') : ''), x + 12, yy + 6, l - 250, 26);
-		textFont(POLICE_DONNEES);
-		textSize(16);
-		fill(dispo ? C.gris : C.orange);
-		text(t('carte.dispo', { n: dispo, eff, cout: q.cout }) + (dispo ? '' : ' · ' + t('carte.retour', { s: Jeu.retourEquipe(cle, m) })), x + 12, yy + 34, l - 250, 22);
-		bouton(x + l - 228, yy + 8, 228, 44, t('carte.envoyer', { n: i + 1 }), () => envoyerEquipeIncident(cle), !dispo, !pert.includes(cle));
+		rect(x, yy, l, rang - 8);
+		// Prompt 92 : textes du composant partagé (une ligne, « … » en fin de mot si trop long)
+		dessinerTexte(String(q.nom) + (pert.includes(cle) ? ' · ' + t('carte.pertinente') : ''), x + 12, compact ? yy + (rang - 8 - 31) / 2 : yy + 4, compact ? 380 : l - 256, { taille: 22, couleur: C.texte, maxLignes: 1, interligne: 31 });
+		dessinerTexte(t('carte.dispo', { n: dispo, eff, cout: q.cout }) + (dispo ? '' : ' · ' + t('carte.retour', { s: Jeu.retourEquipe(cle, m) })), compact ? x + 404 : x + 12, compact ? yy + (rang - 8 - 26) / 2 : yy + 38, compact ? l - 256 - 404 : l - 256, { taille: 18, couleur: dispo ? C.gris : C.orange, maxLignes: 1, interligne: 26 });
+		bouton(x + l - 228, yy + (rang - 8 - 44) / 2, 228, 44, t('carte.envoyer', { n: i + 1 }), () => envoyerEquipeIncident(cle), !dispo, !pert.includes(cle));
 		textAlign(LEFT, TOP);
 	});
-	if (SELECTION.message && m - SELECTION.message.t < 5000) {
+	if (msg) {
 		textFont(POLICE_DONNEES);
 		textSize(17);
 		fill(SELECTION.message.ok ? C.vert : C.orange);
-		text(String(SELECTION.message.texte), x, y + 4 * 70 + 4, l, 44);
+		dessinerTexte(String(SELECTION.message.texte), x, y + Jeu.TYPES_EQUIPES.length * rang + 4, l, { taille: 18, couleur: SELECTION.message.ok ? C.vert : C.orange, maxLignes: 2, interligne: 24 });
 	}
 }
 function envoyerEquipeIncident(cle) {

@@ -46,6 +46,7 @@ function toucherFin() {
 	const dy = mouseY - d.y;
 	const k = width / document.querySelector('#scene canvas').getBoundingClientRect().width; // px écran → px canevas
 	const dist = Math.hypot(dx, dy) / k;
+	if (Math.abs(dy) / k > SEUIL_SWIPE && Math.abs(dy) > Math.abs(dx) && dansZoneSources(d.x, d.y)) return; // prompt 92 : le glisser a fait défiler les sources (mouseDragged)
 	if (Math.abs(dy) / k > SEUIL_SWIPE && Math.abs(dy) > Math.abs(dx)) {
 		// Swipe vertical : doigt vers le haut = molette vers le haut (s'installer) ; vers le bas = se lever
 		scrollSortiePC(dy < 0 ? -150 : 150);

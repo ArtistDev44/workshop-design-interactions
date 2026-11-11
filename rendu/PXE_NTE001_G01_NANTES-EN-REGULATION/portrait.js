@@ -249,6 +249,7 @@ function portraitFin(e) {
 function touchMoved(e) {
 	if (horsCanevas(e)) return;
 	if (PORTRAIT.actif) return portraitDeplacement(e), false;
+	if (MOBILE.actif && typeof mouseDragged === 'function') return mouseDragged(), false; // prompt 92 : glisser dans les sources de l'enquête (paysage)
 }
 // Recomposition après chaque image dessinée par p5
 if (typeof p5 !== 'undefined') p5.prototype.registerMethod('post', composerPortrait);
