@@ -360,7 +360,7 @@ function continuer() {
 // ——— Pause (Q13) : uniquement entre deux dossiers, c'est-à-dire pendant la narration ———
 function basculerPause() {
 	if (phase !== 'narration') return; // jamais pendant un compteur actif
-	if (!enPause && MULTI.actifs.length) return annoncer(t('multi.pause')); // prompt 77 : d'autres compteurs tournent
+	if (!enPause && MULTI.actifs.length && Jeu.defiChrono) return annoncer(t('multi.pause')); // prompt 77 : d'autres compteurs tournent
 	if (enPause) {
 		debutNarration += millis() - debutPause; // le temps de pause ne compte pas
 		enPause = false;
@@ -1337,8 +1337,8 @@ function fenetreAide() {
 	const raccourcis = [
 		[t('aide.k.entreeTouche'), t('aide.k.entree')],
 		['5 6 7 8', t('aide.k.sources')],
-		['1 / 2 / 3', t('aide.k.actions')],
-		[t('aide.k.rienTouche'), t('action.rien')],
+		[t('aide.k.actionsTouche'), t('aide.k.actions')], // prompt 87 : réponses de la catégorie
+		[t('aide.k.rienTouche'), t('aide.k.rien')],
 		['A / B', t('aide.k.ab')],
 		[t('aide.k.majTouche'), t('aide.k.equipes')],
 		['R', t('aide.k.reset')],

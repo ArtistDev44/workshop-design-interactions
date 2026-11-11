@@ -99,7 +99,7 @@ function finirSoir() {
 	CAMERA.x = 0;
 	CAMERA.y = 0;
 	if (Confort.Son.musique && Confort.Son.musique.attenuer) Confort.Son.musique.attenuer(1);
-	journeeSuivante(); // inchangé : allerFin() le dernier jour
+	if (typeof smsVeilleInspection !== 'function' || !smsVeilleInspection(journeeSuivante)) journeeSuivante(); // inchangé : allerFin() le dernier jour ; prompt 88 : SMS de Camille la veille de l'inspection
 }
 
 /** Caméra de la sortie (bureau.js : majCamera) : pan vers la gauche, ou null hors sortie */

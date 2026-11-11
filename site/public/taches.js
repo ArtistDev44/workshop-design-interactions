@@ -279,7 +279,15 @@ const Taches = (() => {
 		j.briefing = j.priorites.length ? 'fait' : 'passe';
 		j.repDebut = Jeu.jauges ? Jeu.jauges.reputation : null;
 		noter('briefing', b.date);
-		if (j.priorites.length && Jeu.messagePatron) Jeu.messagePatron(t('tache.briefing.patron', { liste: j.priorites.map((p) => t('tache.prio.' + p.id, p.vars)).join(Langue.actuelle === 'fr' ? ' ; ' : '; ') }), 'consigne', { priorites: j.priorites.map((p) => p.id) });
+		if (j.priorites.length) {
+			const txt = t('tache.briefing.patron', { liste: j.priorites.map((p) => t('tache.prio.' + p.id, p.vars)).join(Langue.actuelle === 'fr' ? ' ; ' : '; ') });
+			// Le patron prend acte dans la consigne du jour (le ton de ses messages suit les priorités) — pas un message de plus
+			const consigne = (Jeu.messagesPatron || []).slice().reverse().find((x) => x.type === 'consigne' && x.jour === b.date);
+			if (consigne) {
+				consigne.texte = String(consigne.texte) + ' ' + txt;
+				consigne.meta = Object.assign({}, consigne.meta, { priorites: j.priorites.map((p) => p.id) });
+			} else if (Jeu.messagePatron) Jeu.messagePatron(txt, 'consigne', { priorites: j.priorites.map((p) => p.id) });
+		}
 		return j.priorites;
 	}
 	/** Une priorité est-elle tenue ? Calcul sur le journal réel de la journée : 'tenue' | 'manquee' | 'sansObjet' */
@@ -375,7 +383,15 @@ const Taches = (() => {
 			j.theme = theme(jr.date);
 			const m = (Jeu.meteoDuJour && Jeu.meteoDuJour(jr.date)) || {};
 			const ag = agenda(jr.date);
-			if (!(crise(jr.date) && j.theme === 'ordinaire')) Jeu.messagePatron(t('theme.patron.' + j.theme, { pluie: nombre(m.pluie_mm), vent: nombre(m.rafales_max), n: ag.length, nom: ag.length ? nomEvenement(ag[0]) : '', travaux: jr.dossiers.filter((x) => x.type === 'perturbation').length }), 'consigne', { theme: j.theme });
+			if (!(crise(jr.date) && j.theme === 'ordinaire')) {
+				const txt = t('theme.patron.' + j.theme, { pluie: nombre(m.pluie_mm), vent: nombre(m.rafales_max), n: ag.length, nom: ag.length ? nomEvenement(ag[0]) : '', travaux: jr.dossiers.filter((x) => x.type === 'perturbation').length });
+				// Le thème complète la consigne du jour (même message) : pas un message de plus à lire
+				const consigne = (Jeu.messagesPatron || []).slice().reverse().find((x) => x.type === 'consigne' && x.jour === jr.date && !(x.meta && x.meta.theme));
+				if (consigne) {
+					consigne.texte = String(consigne.texte) + ' ' + txt;
+					consigne.meta = Object.assign({}, consigne.meta, { theme: j.theme });
+				} else Jeu.messagePatron(txt, 'consigne', { theme: j.theme });
+			}
 			if (crise(jr.date)) {
 				j.crise = true;
 				Jeu.messagePatron(t('crise.annonce', { n: jr.dossiers.length }), 'alerte', { crise: true });
@@ -388,7 +404,13 @@ const Taches = (() => {
 			if (d.id === 'equipe') ajouter('police', R.demande.equipe);
 			if (d.id === 'calme') Jeu.allegementObjectif = R.demande.calme;
 		}
-		if (Jeu.messagePatron) Jeu.messagePatron(t('tache.demande.' + (d.accordee ? 'accordee' : 'refusee') + '.' + d.id, Object.assign({ seuil: R.seuilAccord }, R.demande)), d.accordee ? 'info' : 'reproche', { demande: d.id, accordee: d.accordee });
+		const txt = t('tache.demande.' + (d.accordee ? 'accordee' : 'refusee') + '.' + d.id, Object.assign({ seuil: R.seuilAccord }, R.demande));
+		// La réponse à la demande d'hier complète la consigne du jour (un message de moins à lire)
+		const consigne = jr && (Jeu.messagesPatron || []).slice().reverse().find((x) => x.type === 'consigne' && x.jour === jr.date);
+		if (consigne) {
+			consigne.texte = String(consigne.texte) + ' ' + txt;
+			consigne.meta = Object.assign({}, consigne.meta, { demande: d.id, accordee: d.accordee });
+		} else if (Jeu.messagePatron) Jeu.messagePatron(txt, d.accordee ? 'info' : 'reproche', { demande: d.id, accordee: d.accordee });
 		return d;
 	}
 
@@ -473,7 +495,8 @@ const Taches = (() => {
 			j.offertes.evenement = true;
 			return p;
 		}
-		if (doit || (sig === 'info' && premiere) || choix('info|' + n, 2) === 0) return tacheInfo(r, n); // tâche signature du thème en premier
+		const calme = (Jeu.jours || []).some((x) => x.date === date && x.dossiers.length <= 2); // journée calme : la tâche courte est toujours proposée
+		if (doit || calme || (sig === 'info' && premiere) || choix('info|' + n, 2) === 0) return tacheInfo(r, n); // tâche signature du thème en premier
 		return null;
 	}
 	// ——— Lot F : événements chaînés (option) — une conséquence de jeu, ÉTIQUETÉE comme telle, jamais un fait réel ———

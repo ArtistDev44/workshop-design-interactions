@@ -245,7 +245,8 @@ function dessinerFileSignalements(z) {
 		text(t('sig.vide'), z.x + 20, z.y + 120, z.l - 40, 40);
 		fill(C.gris);
 		textSize(19);
-		text(prochain ? t('sig.prochain', { heure: Jeu.formaterHeure(prochain.minute) }) : t('sig.finJour'), z.x + 20, z.y + 160, z.l - 40, 60);
+		const pv = typeof Taches !== 'undefined' ? Taches.prevision() : null; // prompt 88 (option) : prévision à 1 h débloquée par le grade
+		text(pv ? t('deblocage.prevision', { heure: Jeu.formaterHeure(pv.minute), type: t('enq.signalement.' + pv.type), g: t('gravite.' + pv.gravite) }) : prochain ? t('sig.prochain', { heure: Jeu.formaterHeure(prochain.minute) }) : t('sig.finJour'), z.x + 20, z.y + 160, z.l - 40, 60);
 		return;
 	}
 	if (SELECTION.focus >= f.length) SELECTION.focus = 0;

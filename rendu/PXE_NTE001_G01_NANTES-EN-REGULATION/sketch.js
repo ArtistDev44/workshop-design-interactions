@@ -173,6 +173,8 @@ function draw() {
 		return;
 	}
 	verifierMecaniques(); // prompt 47 : inspection surprise (avant l'horloge, qui s'arrête alors)
+	verifierTaches(); // prompt 88 : briefing du matin, tâches courtes
+	majAmbianceTaches(); // prompt 88 : humeur musicale de la crise
 	majMultitache(); // prompts 68 / 77 : arrivées, compteurs des signalements actifs, expirations en arrière-plan
 	majNotifications(); // prompt 77 : mails, commentaires, fins d'intervention
 	majLicenciement(); // prompt 84 : messages après la panne, licenciement hors décision
@@ -339,6 +341,7 @@ function decider(action) {
 	if (action !== 'temps') Object.assign(dernierResultat, mesures);
 	else dernierResultat.sources = mesures.sources;
 	dernierResultat.contexteNarr = Rythme.contexteNarration(dernierResultat, Jeu.index - 1); // prompt 74 : phrase de contexte réelle
+	if (action !== 'temps') tachesApresDecision(dernierResultat); // prompt 88 : rotation des tâches
 	const dj = dernierResultat.deltas.map((v, i) => t('jaugeTitre.' + ['fluidite', 'reputation', 'budget'][i]) + ' ' + (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v)).join(', ');
 	annoncer(t('annonce.decision', { titre: dernierResultat.narration.titre, texte: dernierResultat.narration.texte }) + ' ' + dj + '.'); // prompt 53 : variations annoncées
 	Confort.Son.clicAction(action); // prompt 44 § 4 : un clic de console par action
@@ -357,7 +360,7 @@ function continuer() {
 // ——— Pause (Q13) : uniquement entre deux dossiers, c'est-à-dire pendant la narration ———
 function basculerPause() {
 	if (phase !== 'narration') return; // jamais pendant un compteur actif
-	if (!enPause && MULTI.actifs.length) return annoncer(t('multi.pause')); // prompt 77 : d'autres compteurs tournent
+	if (!enPause && MULTI.actifs.length && Jeu.defiChrono) return annoncer(t('multi.pause')); // prompt 77 : d'autres compteurs tournent
 	if (enPause) {
 		debutNarration += millis() - debutPause; // le temps de pause ne compte pas
 		enPause = false;
@@ -842,7 +845,7 @@ function dessinerFin() {
 	if (bilanFin && bilanFin.meilleur) {
 		fill(bilanFin.record ? C.vert : C.gris);
 		text(
-			(bilanFin.record ? t('fin.record') : t('fin.meilleur', { score: bilanFin.meilleur.score, le: bilanFin.meilleur.le })) + (Jeu.defiChrono ? ' · ' + t('fin.defiChrono') : ''), // prompt 87
+			(bilanFin.record ? t('fin.record') : t('fin.meilleur', { score: bilanFin.meilleur.score, le: bilanFin.meilleur.le })) + (Jeu.defiChrono ? ' · ' + t('fin.defiChrono') : '') + (typeof Taches !== 'undefined' ? ' · ' + t('fin.grade', { grade: t('grade.' + Taches.grade().i), xp: (Jeu.taches && Jeu.taches.xpPartie) || 0 }) : ''), // prompt 87 ; prompt 88 : grade et expérience de la partie
 			g.x + 48,
 			g.y + 752,
 		);
@@ -1086,7 +1089,7 @@ function keyPressed() {
 	// Langue (prompt 24) : L bascule partout, sans toucher à la partie
 	if (key === 'l' || key === 'L') return Langue.suivante(), false;
 	// Prompt 47 : inspection, démission, palmarès ; J = journal de bord, D = rendre son badge
-	if (toucheMecaniques() || toucheAccessibilite() || toucheJournee()) return false; // prompts 47, 48 et 51
+	if (toucheTaches() || toucheMecaniques() || toucheAccessibilite() || toucheJournee()) return false; // prompts 47, 48 et 51
 	// Fenêtres ouvertes : elles captent le clavier
 	if (fenetre) {
 		if (keyCode === ESCAPE || (fenetre === 'aide' && (key === 'h' || key === 'H' || key === '?'))) return fermer(), false;
@@ -1117,6 +1120,7 @@ function keyPressed() {
 			if (cles[key]) basculerReglage(cles[key]);
 			if (key === '8') musiqueSuivante(); // prompt 44
 			if (key === '9') return ouvrirAccessibilite(), false; // prompt 48
+			if (key === 'g' || key === 'G') return ouvrirOptionsJeu(), false; // prompt 88
 			if (key === '5') Sauvegarde.exporter(); // prompt 33
 			if (key === '6') Sauvegarde.copier();
 			if (key === '7') return Sauvegarde.ouvrirImport(), false;
@@ -1296,6 +1300,8 @@ function dessinerFenetre() {
 	if (fenetre === 'rapport') return fenetreRapport(); // prompt 41
 	if (fenetre === 'mailFin') return fenetreMailFin(); // prompt 56
 	if (fenetre === 'inspection') return fenetreInspection(); // prompt 47
+	if (fenetre === 'tache') return fenetreTache(); // prompt 88
+	if (fenetre === 'optionsJeu') return fenetreOptionsJeu(); // prompt 88 (lot F)
 	if (fenetre === 'demission') return fenetreDemission(); // prompt 47
 	if (fenetre === 'palmares') return fenetrePalmares(); // prompt 47
 	if (fenetre === 'accessibilite') return fenetreAccessibilite(); // prompt 48
@@ -1331,8 +1337,8 @@ function fenetreAide() {
 	const raccourcis = [
 		[t('aide.k.entreeTouche'), t('aide.k.entree')],
 		['5 6 7 8', t('aide.k.sources')],
-		['1 / 2 / 3', t('aide.k.actions')],
-		[t('aide.k.rienTouche'), t('action.rien')],
+		[t('aide.k.actionsTouche'), t('aide.k.actions')], // prompt 87 : réponses de la catégorie
+		[t('aide.k.rienTouche'), t('aide.k.rien')],
 		['A / B', t('aide.k.ab')],
 		[t('aide.k.majTouche'), t('aide.k.equipes')],
 		['R', t('aide.k.reset')],
@@ -1472,7 +1478,7 @@ function fenetreParametres() {
 		['0', t('param.defiChrono'), 'defiChrono'], // prompt 87 : compteur, ralenti, expiration (prochaine partie)
 	];
 	lignes.forEach(([k, lib, nom], i) => {
-		const ly = y + 120 + i * 88;
+		const ly = y + 120 + i * 80;
 		textFont(POLICE_TEXTE);
 		ajusterTaille(lib, 490, 26);
 		fill(C.texte);
@@ -1494,15 +1500,15 @@ function fenetreParametres() {
 	textSize(26);
 	fill(C.texte);
 	textAlign(LEFT, CENTER);
-	text(t('langue.titre'), x + 48, y + 120 + 5 * 88 + 36);
+	text(t('langue.titre'), x + 48, y + 120 + 5 * 80 + 36);
 	textFont(POLICE_DONNEES);
 	textSize(18);
 	fill(C.gris);
-	text(t('param.touche', { k: 'L' }), x + 560, y + 120 + 5 * 88 + 36);
+	text(t('param.touche', { k: 'L' }), x + 560, y + 120 + 5 * 80 + 36);
 	textAlign(LEFT, TOP);
-	selecteurLangue(x + l - 48, y + 120 + 5 * 88 + 10);
+	selecteurLangue(x + l - 48, y + 120 + 5 * 80 + 10);
 	// Prompt 44 : choix de la musique (morceaux originaux, chiptune), touche 8
-	const ym = y + 120 + 6 * 88;
+	const ym = y + 120 + 6 * 80;
 	textFont(POLICE_TEXTE);
 	textSize(26);
 	fill(C.texte);
@@ -1519,7 +1525,7 @@ function fenetreParametres() {
 	textAlign(LEFT, TOP);
 	text(t('param.musiqueCredits'), x + 48, ym + 70, 640, 24); // crédits des morceaux CC0
 	// Prompt 33 : Progression — exporter (fichier), copier (presse-papiers), importer (fichier ou texte collé)
-	const yp = y + 120 + 7 * 88;
+	const yp = y + 120 + 7 * 80;
 	textFont(POLICE_TEXTE);
 	textSize(26);
 	fill(C.texte);
@@ -1530,7 +1536,7 @@ function fenetreParametres() {
 	bouton(x + l - 48 - 2 * lbp - 16, yp + 8, lbp, 56, t('parametres.copier'), () => Sauvegarde.copier(), false, true);
 	bouton(x + l - 48 - lbp, yp + 8, lbp, 56, t('parametres.importer'), () => Sauvegarde.ouvrirImport(), false, true);
 	// Prompt 48 : accessibilité (daltonisme, taille du texte, lecture facile) et reprise sur un autre appareil
-	const ya = yp + 88;
+	const ya = yp + 80;
 	textFont(POLICE_TEXTE);
 	textSize(26);
 	fill(C.texte);
@@ -1541,6 +1547,18 @@ function fenetreParametres() {
 	fill(C.gris);
 	text(t('param.touche', { k: '9' }), x + 560, ya + 36);
 	bouton(x + l - 48 - 280, ya + 8, 280, 56, t('acc.ouvrir'), ouvrirAccessibilite, false, true);
+	// Prompt 88 : options de jeu soumises au groupe (chaînes, déblocages, arbitrage) et remise à zéro de la progression
+	const yo = ya + 80;
+	textFont(POLICE_TEXTE);
+	textSize(26);
+	fill(C.texte);
+	textAlign(LEFT, CENTER);
+	text(t('optjeu.titre'), x + 48, yo + 36);
+	textFont(POLICE_DONNEES);
+	textSize(18);
+	fill(C.gris);
+	text(t('param.touche', { k: 'G' }), x + 560, yo + 36);
+	bouton(x + l - 48 - 280, yo + 8, 280, 56, t('optjeu.ouvrir'), ouvrirOptionsJeu, false, true);
 	textAlign(LEFT, TOP);
 	bouton(x + l - 288, y + h - 104, 240, 64, t('param.retour'), fermer);
 }

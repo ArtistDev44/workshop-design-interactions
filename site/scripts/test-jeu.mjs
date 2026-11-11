@@ -1027,7 +1027,7 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 		const r1 = Taches.validerRapport('x', 'budget');
 		while (Jeu.prochainDuJour()) Jeu.decider('temps');
 		Jeu.journeeSuivante(); const b0 = Jeu.jauges.budget; Taches.matin();
-		out.accord = { accordee: r1.accordee, delta: Jeu.jauges.budget - b0, message: String(Jeu.messagesPatron[Jeu.messagesPatron.length - 1].texte) };
+		out.accord = { accordee: r1.accordee, delta: Jeu.jauges.budget - b0, message: Jeu.messagesPatron.filter((m) => m.jour === Jeu.jourCourant().date).map((m) => String(m.texte)).join(' | ') };
 		Taches.choisirPriorites([]);
 		Jeu.jauges.reputation = 30;
 		const r2 = Taches.validerRapport('x', 'equipe');
@@ -1053,7 +1053,7 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 {
 	const { mesurer } = await import('./mesure-repetition.mjs');
 	const jours = mesurer('fr');
-	const mauvais = jours.filter((j) => j.maxSuiteActif > 3 || j.typesActifs < 3 || j.partDominantActif >= 0.5).map((j) => `${j.date} suite ${j.maxSuiteActif}, ${j.typesActifs} types, ${Math.round(j.partDominantActif * 100)} %`);
+	const mauvais = jours.filter((j) => j.maxSuiteActif > 3 || j.typesActifs < 3 || j.partDominantActif >= 0.5 || j.partDominant >= 0.5).map((j) => `${j.date} suite ${j.maxSuiteActif}, ${j.typesActifs} types, ${Math.round(j.partDominantActif * 100)} %`);
 	verifier(mauvais.length === 0, `rotation : au plus 3 fois de suite, au moins 3 types, type dominant < 50 % (${mauvais.slice(0, 3)})`);
 	const cc = contexte('fr');
 	const r = vm.runInContext(

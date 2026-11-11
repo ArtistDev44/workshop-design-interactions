@@ -806,6 +806,44 @@
     }
    ],
    "prive": true
+  },
+  {
+   "id": "info_erronee",
+   "auteur": "@arret_commerce",
+   "condition": {
+    "type": "__info_trafic__"
+   },
+   "_note": "Prompt 88 : déclenchée seulement par une info trafic publiée avec un bloc faux (taches.js), jamais par un dossier.",
+   "texte": {
+    "fr": "Votre info trafic sur « {sujet} » ne correspond pas à ce qu’on voit sur place. On croit qui ?",
+    "en": "Your traffic info about “{sujet}” doesn’t match what we see on the ground. Who are we supposed to believe?"
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Merci du signalement : l’info a été corrigée, toutes nos excuses.",
+      "en": "Thanks for flagging it: the info has been corrected, our apologies."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 2,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Notre information est la bonne.",
+      "en": "Our information is correct."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -2,
+      "budget": 0
+     },
+     "bonne": false
+    }
+   ]
   }
  ],
  "modeles": [
