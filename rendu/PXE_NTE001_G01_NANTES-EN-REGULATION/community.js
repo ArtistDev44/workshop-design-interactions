@@ -6,7 +6,7 @@
  * Photos : dessinées par le code (createGraphics basse définition, agrandies avec un lissage léger), mises en cache.
  * Compteurs (abonnés, « j'aime ») : valeurs de jeu dérivées de la réputation, jamais présentées comme réelles.
  */
-const COMMU = { onglet: 'fil', defil: 0, grille: false, conv: 0, ouvert: null, publier: null, vus: 0 };
+const COMMU = { onglet: 'fil', defil: 0, grille: false, conv: 0, ouvert: null, publier: null, vus: 0, brouillon: null }; // prompt 91 : brouillon venu d'un dossier
 const ONGLETS_COMMU = ['fil', 'mentions', 'messagerie', 'stats'];
 const cachePhotos = new Map();
 const plaintesPubliques = () => (Jeu.plaintes || []).filter((p) => !(p.def && p.def.prive));
@@ -263,7 +263,7 @@ function annoncerNouveautesCommunity() {
 /** Tous les posts du fil, du plus récent au plus ancien */
 function postsDuFil() {
 	const partie = Jeu.postsPartie();
-	const joueur = Jeu.postsJoueur.map((p) => ({ sorte: 'joueur', index: p.index, jour: p.jour, heure: p.heure, texte: t('commu.info.' + p.modele, p.vars), photo: Jeu.sujetPhoto(Jeu.paquet[p.index]), likes: Math.round(12 * (Jeu.jauges.reputation / 50)), date: p.jour, coherent: p.coherent }));
+	const joueur = Jeu.postsJoueur.map((p) => ({ sorte: 'joueur', index: p.index, jour: p.jour, heure: p.heure, texte: p.brouillon ? texteBrouillon(p.index) : t('commu.info.' + p.modele, p.vars), photo: Jeu.sujetPhoto(Jeu.paquet[p.index]), likes: Math.round(12 * (Jeu.jauges.reputation / 50)), date: p.jour, coherent: p.coherent }));
 	const archive = Jeu.postsArchive().map((p) => Object.assign({}, p, { texte: String(p.texte) }));
 	return partie
 		.concat(joueur)
@@ -277,6 +277,7 @@ function ongletFil(z) {
 	const dernier = (Jeu.evenementsJournee || []).slice(-1)[0];
 	if (dernier && !Jeu.postsJoueur.some((p) => p.index === dernier.index)) dsBouton(z.x + 236, y, 360, 44, t('commu.publier'), () => (COMMU.publier = COMMU.publier === null ? dernier.index : null), 'secondaire');
 	y += 60;
+	y = carteBrouillon(z, y); // prompt 91 § 3 : brouillon pré-rempli depuis le dossier
 	if (COMMU.publier !== null) {
 		dsTexte(t('commu.publierAide'), z.x, y, 18, DS.blanc75, 'left', z.l);
 		y += 34;
@@ -336,7 +337,14 @@ function carteDePost(p, x, y, l, rang) {
 	dsTexte(t('commu.nom') + ' · ' + (p.sorte === 'archive' ? t('commu.archive', { date: p.date.split('-').reverse().join('/') }) : p.heure + (p.sorte === 'joueur' ? ' · ' + t('commu.votrePost') : '')), x + 326, y + 16, 18, DS.blanc50, 'left', lt - 40);
 	dsTexte(String(p.texte), x + 288, y + 50, 20, DS.blanc, 'left', lt);
 	dsTexte('♥ ' + p.likes + '   ' + (comms.length ? t('commu.nbComm', { n: comms.length }) : ''), x + 288, y + hc - 34, 18, DS.blanc75, 'left');
-	if (p.index !== undefined && p.sorte === 'partie') {
+	if (p.index !== undefined && p.sorte !== 'archive' && typeof voirDossierDepuis === 'function') {
+		// Prompt 91 § 3 : retour croisé vers le dossier (Échap revient ici)
+		textFont(DS.policeTexte);
+		textSize(18);
+		const lien = '→ ' + t('applis.voirDossier');
+		dsTexte(lien, x + l - 16, y + hc - 34, 18, DS.infoClair, 'right');
+		boutons.push({ x: x + l - 16 - textWidth(lien), y: y + hc - 40, l: textWidth(lien), h: 32, action: () => voirDossierDepuis(p.index) });
+	} else if (p.index !== undefined && p.sorte === 'partie') {
 		textFont(DS.policeTexte);
 		textSize(18);
 		const lien = t('commu.voirListe');
@@ -565,4 +573,38 @@ function molletteCommunity(delta) {
 	if (PC.fenetre !== 'community' || !COMMU.zone || vue !== 'poste') return false;
 	COMMU.defil = constrain(COMMU.defil + delta, 0, COMMU.max || 0);
 	return true;
+}
+
+// ——— Prompt 91 § 3 : brouillon d'info trafic pré-rempli avec les FAITS réels du dossier (ligne, cause, durée) ———
+// Jamais l'effet attendu d'une réponse. Publier : aucun effet de jauge ; ne pas publier : pas de malus immédiat,
+// mais si le retard s'aggrave ensuite, une plainte arrive (sketch.js, majRetardsEtCommunity).
+function texteBrouillon(index) {
+	const d = Jeu.paquet && Jeu.paquet[index];
+	if (!d) return '';
+	return t('commu.brouillon.texte', { ligne: Taches.ligneDe(d), cause: Taches.causeDe(d), duree: Taches.dureeDe(d) });
+}
+function carteBrouillon(z, y) {
+	const b = COMMU.brouillon;
+	if (!b || Jeu.postsJoueur.some((p) => p.index === b.index)) return y;
+	noStroke();
+	fill(DS.blanc05);
+	rect(z.x, y, z.l, 170);
+	fill(DS.info);
+	rect(z.x, y, 6, 170);
+	dsTexte(t('commu.brouillon.titre'), z.x + 20, y + 12, 18, DS.blanc75, 'left');
+	dsTexte(texteBrouillon(b.index), z.x + 20, y + 44, 20, DS.blanc, 'left', z.l - 40);
+	dsBouton(z.x + 20, y + 110, 300, 48, t('commu.brouillon.publier'), publierBrouillon, 'primaire');
+	dsBouton(z.x + 340, y + 110, 320, 48, '← ' + t('applis.voirDossier'), () => (depilerNavigation() || voirDossierDepuis(b.index)), 'contour');
+	dsBouton(z.x + 680, y + 110, 220, 48, t('commu.brouillon.annuler'), () => ((COMMU.brouillon = null), annoncer(t('commu.brouillon.annule'))), 'fantome');
+	return y + 186;
+}
+function publierBrouillon() {
+	const b = COMMU.brouillon;
+	if (!b) return;
+	const r = Jeu.publierBrouillon(b.index);
+	COMMU.brouillon = null;
+	if (!r) return;
+	if (typeof Taches !== 'undefined' && Jeu.paquet[b.index]) Taches.noter('community', Jeu.paquet[b.index].date);
+	Confort.Son.bip('action');
+	annoncer(t('commu.brouillon.publie'));
 }

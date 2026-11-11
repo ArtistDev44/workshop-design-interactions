@@ -119,7 +119,8 @@ function dessinerOS() {
 			rect(x + 1, y + 1, g.l - 2, g.h - 2);
 			noStroke();
 		}
-		ic.dessin(x + (g.l - 80 * g.echelle) / 2, y + 14, g.echelle);
+		ic.dessin(x + (g.l - 80 * g.echelle) / 2 + decalTremble(ic.cle), y + 14, g.echelle);
+		voileVerrou(ic.cle, x, y, g.l, g.h); // prompt 91 § 2 (option) : appli verrouillée grisée, cadenas
 		fill(DS.noir50);
 		textFont(DS.policeTexte);
 		textSize(22);
@@ -129,9 +130,10 @@ function dessinerOS() {
 		boutons.push({ x, y, l: g.l, h: g.h, action: () => ouvrirIconeOS(i) });
 		if (i === 0) cibleGuide('iconeSignalements', x, y, g.l, g.h); // prompt 37 ; prompts 68 / 73 : « Signalements » est la première icône
 		if (i === 1) cibleGuide('iconesOS', x, y, g.l * 2 + g.ecart, g.h * 3 + g.ecart * 2); // patron, community, journal, indicateurs, corbeille
-		const b = ic.cle === 'indicateurs' ? (PC.flottant ? '●' : '') : badgeIcone(ic.cle);
+		const b = !appliDebloquee(ic.cle) ? '' : ic.cle === 'indicateurs' ? (PC.flottant ? '●' : '') : badgeIcone(ic.cle); // prompt 91 : pas de pastille sur une appli verrouillée
 		if (b) dsBadge(x + g.l - 34, y + 20, b, ic.cle === 'indicateurs' ? 'succes' : 'erreur');
 	});
+	dessinerBulleVerrou(); // prompt 91 § 2
 	// Fenêtre d'application ouverte (prompt 22)
 	if (PC.fenetre) dessinerFenetreApp();
 	dessinerBarreTaches();
@@ -204,9 +206,10 @@ function dessinerBarreTaches() {
 	fill(DS.blanc15);
 	rect(0, tb, L, 2);
 	dessinerBoutonDemarrer(tb); // prompt 75 : le logo du chargement à la place du carré rouge « REGUL »
-	ICONES_OS.filter((ic) => ic.cle !== 'corbeille').forEach((ic) => {
+	const barre = ICONES_OS.filter((ic) => ic.cle !== 'corbeille' && appliDebloquee(ic.cle)); // prompt 91 § 2 : la barre ne montre que les applis débloquées
+	barre.forEach((ic) => {
 		const i = ICONES_OS.indexOf(ic);
-		const k = ICONES_OS.filter((x) => x.cle !== 'corbeille').indexOf(ic);
+		const k = barre.indexOf(ic);
 		const x = 164 + k * 84;
 		const actif = (ic.cle === 'signalements' && PC.etat === 'appli') || PC.fenetre === ic.cle || (ic.cle === 'indicateurs' && PC.flottant);
 		fill(actif ? DS.blanc15 : DS.blanc05);
@@ -365,6 +368,7 @@ const ICONES_OS = [
 function ouvrirIconeOS(i) {
 	PC.selection = i;
 	const cle = ICONES_OS[i].cle;
+	if (!appliDebloquee(cle)) return refuserAppliVerrouillee(cle); // prompt 91 § 2
 	if (cle === 'signalements') return ouvrirAppli(); // prompts 68 / 73 : « Signalements » ouvre l'écran de jeu
 	if (cle === 'indicateurs') return basculerIndicateurs(); // prompt 36 : app flottante
 	if (cle === 'donnees') return ouvrirDonnees(); // prompt 61 : appli plein écran

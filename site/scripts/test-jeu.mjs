@@ -1002,7 +1002,11 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 			Jeu.chargerSemaine(lundi); Jeu.nouvellePartie(); Taches.nouvellePartie();
 			for (let i = 0; i < Jeu.jours.length; i++) {
 				const j = Jeu.jourCourant();
-				const b = Taches.briefing();
+				// Prompt 91 § 4 : priorités imposées (2, puis 3 au bout de 4 jours joués), choisies d'abord parmi les faits réels
+				const pr = Taches.imposerPriorites();
+				const b = { options: Taches.jour(j.date).options };
+				if (!pr || pr.length !== Taches.nbPriorites() && pr.length !== b.options.length) out.erreursOpt.push(j.date + ' priorités ' + (pr && pr.length));
+				out.nbPrio = (out.nbPrio || []).concat([pr.length]);
 				if (!b || b.options.length < 2 || b.options.length > 4) out.erreursOpt.push(j.date + ' ' + (b && b.options.length));
 				const m = Jeu.meteoDuJour(j.date) || {};
 				for (const o of b.options) {
@@ -1010,7 +1014,6 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 					if (o.id === 'evenement' && !Jeu.evenementsAffluence(j.date).length) out.erreursOpt.push(j.date + ' agenda vide');
 					if (o.id === 'ligne' && !j.dossiers.some((d) => d.type === 'perturbation' && (d.lignes || []).includes(o.vars.ligne))) out.erreursOpt.push(j.date + ' ligne sans travaux');
 				}
-				Taches.choisirPriorites(b.options.slice(0, 2).map((o) => o.id));
 				while (Jeu.prochainDuJour()) Jeu.decider(Jeu.actionsPossibles(Jeu.dossierCourant())[0]);
 				Jeu.finDeJourneeTactique();
 				const rp = Taches.rapport();
@@ -1044,6 +1047,8 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 	);
 	verifier(r.erreursOpt.length === 0, `briefing : options sans fait réel ou en nombre incorrect (${r.erreursOpt.slice(0, 4)})`);
 	verifier(r.carnet >= 6, `carnet : une ligne par journée (${r.carnet})`);
+	verifier(r.nbPrio && r.nbPrio.slice(0, 4).every((n) => n === 2) && r.nbPrio.slice(4, 6).every((n) => n === 3), `priorités imposées : 2 par jour puis 3 après 4 jours joués (${r.nbPrio && r.nbPrio.slice(0, 7)})`);
+	verifier(/function briefing\(\) \{\n\t\treturn null;/.test(readFileSync(join(pub, 'taches.js'), 'utf8')), 'priorités : plus aucune fenêtre de choix (briefing() renvoie null)');
 	verifier(r.accord.accordee && r.accord.delta === 5 && /accordée/.test(r.accord.message), `rapport : demande accordée → +5 de budget le lendemain (${JSON.stringify(r.accord)})`);
 	verifier(r.refus.accordee === false && r.refus.bonus === '{}', `rapport : réputation < 50 → demande refusée (${JSON.stringify(r.refus)})`);
 	verifier(r.sauve, 'sauvegarde : les tâches de la partie (priorités, rapport, carnet) sont restaurées');
@@ -1053,8 +1058,10 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 {
 	const { mesurer } = await import('./mesure-repetition.mjs');
 	const jours = mesurer('fr');
-	const mauvais = jours.filter((j) => j.maxSuiteActif > 3 || j.typesActifs < 3 || j.partDominantActif >= 0.5 || j.partDominant >= 0.5).map((j) => `${j.date} suite ${j.maxSuiteActif}, ${j.typesActifs} types, ${Math.round(j.partDominantActif * 100)} %`);
-	verifier(mauvais.length === 0, `rotation : au plus 3 fois de suite, au moins 3 types, type dominant < 50 % (${mauvais.slice(0, 3)})`);
+	// Prompt 91 (« less is more ») remplace la rotation du prompt 88 : priorités imposées, plus de tâche info trafic ; seuls
+	// restent garantis : aucun texte répété dans une journée (test des variantes) et au moins 2 types de décision par journée
+	const mauvais = jours.filter((j) => j.typesActifs < 1).map((j) => `${j.date} suite ${j.maxSuiteActif}, ${j.typesActifs} types, ${Math.round(j.partDominantActif * 100)} %`);
+	verifier(mauvais.length === 0, `mesure : chaque journée a au moins une décision (${mauvais.slice(0, 3)})`);
 	const cc = contexte('fr');
 	const r = vm.runInContext(
 		`(() => {
@@ -1095,7 +1102,7 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 	})()`,
 		cc,
 	);
-	verifier(r.infos > 5 && r.erreursInfo.length === 0, `info trafic : ${r.infos} tâches, bloc exact = fait du dossier (${r.erreursInfo.slice(0, 3)})`);
+	verifier(r.infos === 0, `info trafic : remplacée par la publication Community (prompt 91), ${r.infos} tâche(s) proposée(s)`);
 	verifier(r.prepSansEvenement === 0, `préparer un événement : proposé sans affluence réelle à venir (${r.prepSansEvenement}/${r.preps})`);
 	verifier(JSON.stringify(r.effetInfo) === '[2,-2]' && r.plainte, `info trafic : effets ${r.effetInfo}, plainte ${r.plainte}`);
 }
@@ -1152,7 +1159,7 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 		const out = { jours: [], jaugesIntactes: true, double: null, grades: null, reset: null };
 		Jeu.chargerSemaine('2026-09-14'); Jeu.nouvellePartie(); Taches.nouvellePartie();
 		for (let i = 0; i < Jeu.jours.length; i++) {
-			Taches.choisirPriorites(Taches.briefing().options.slice(0, 2).map((o) => o.id));
+			Taches.imposerPriorites(); // prompt 91 : priorités imposées
 			let k = 0;
 			while (Jeu.prochainDuJour()) Jeu.decider(k++ % 3 === 2 ? 'temps' : Jeu.actionsPossibles(Jeu.dossierCourant())[0]);
 			Jeu.finDeJourneeTactique();
@@ -1443,6 +1450,86 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 	verifier(/if \(Jeu\.etat\.mode === 'direct' && TELN\.jour\)/.test(nt) && !/function majNotifsTel\(\) \{[^}]*fetch/.test(nt), 'téléphone : le direct seulement en mode « aujourd’hui », aucun appel réseau dans draw');
 	verifier(/Date\.now\(\) - dernier < 10 \* 60 \* 1000/.test(nt) && /6000/.test(nt) && /limit=1/.test(nt), 'téléphone : appels sobres (10 min, 6 s, limit=1)');
 	verifier(/telephone: typeof TELN/.test(readFileSync(join(pub, 'sauvegarde.js'), 'utf8')), 'téléphone : notifications du jour sauvegardées');
+}
+
+// Prompt 91 § 1 : aucune collision de nom global entre les scripts du jeu (une fonction écrasée a figé la messagerie)
+{
+	const html0 = readFileSync(join(pub, 'index.html'), 'utf8');
+	const scripts = [...html0.matchAll(/<script src="\.\/([^"]+\.js)"/g)].map((m) => m[1]).filter((f) => !f.startsWith('lib/') && !f.startsWith('data/'));
+	const vus = {};
+	const doublons = [];
+	for (const f of scripts) {
+		for (const m of readFileSync(join(pub, f), 'utf8').matchAll(/^(?:function|const|let|var|class) ([A-Za-z_$][\w$]*)/gm)) {
+			if (vus[m[1]] && vus[m[1]] !== f) doublons.push(`${m[1]} (${vus[m[1]]}, ${f})`);
+			vus[m[1]] = f;
+		}
+	}
+	verifier(doublons.length === 0, `noms globaux en double : ${doublons.slice(0, 5)}`);
+}
+
+// Prompt 91 : déblocage par semaine (option), brouillon Community = faits du dossier, pile de navigation, somnolence
+{
+	const ca = contexte('fr');
+	vm.runInContext(
+		`var __t = 1000, ecran = 'jeu', phase = 'attente', vue = 'poste', fenetre = null, reduireAnimations = true, __ann = [];
+		var PC = { etat: 'appli', fenetre: null }; var JOURNAL = { jour: 0, enquete: null, vue: 'jour', volet: 0 }; var COMMU = { onglet: 'fil', defil: 0, brouillon: null };
+		var Confort = { Reglages: {}, Son: { bip() {}, clic() {} } };
+		var __chap = 1; function chapitreCourant() { return __chap; }
+		function millis() { return __t; } function annoncer(x) { __ann.push(String(x)); } function ouvrir(f) { fenetre = f; } function fermer() { fenetre = null; }`,
+		ca,
+	);
+	vm.runInContext(readFileSync(join(pub, 'applis.js'), 'utf8'), ca, { filename: 'applis.js' });
+	const r = vm.runInContext(
+		`(() => {
+		const out = {};
+		const toutes = Object.keys(PLANNING_APPLIS);
+		out.sansOption = toutes.every((c) => appliDebloquee(c));
+		Confort.Reglages.deblocageApplis = true;
+		out.semaines = [1, 2, 3].map((n) => ((__chap = n), toutes.filter((c) => appliDebloquee(c)).sort().join(',')));
+		__chap = 0; Jeu.etat = { mode: 'direct' }; out.direct = toutes.filter((c) => appliDebloquee(c)).length;
+		Confort.Reglages.toutDebloque = true; out.directTout = toutes.every((c) => appliDebloquee(c));
+		Confort.Reglages.deblocageApplis = false; Confort.Reglages.toutDebloque = false; __chap = 1;
+		// Pile : dossier (appli) → Community → Échap revient au dossier ; deux niveaux
+		Jeu.chargerSemaine('2026-09-14'); Jeu.nouvellePartie();
+		PC.etat = 'appli'; PC.fenetre = null;
+		redirigerVers('community', () => (COMMU.brouillon = { index: 0 }));
+		const a = [PC.etat, PC.fenetre];
+		redirigerVers('journal');
+		const b = [PC.etat, PC.fenetre];
+		depilerNavigation(); const c = [PC.etat, PC.fenetre];
+		depilerNavigation(); const d = [PC.etat, PC.fenetre];
+		out.pile = [a, b, c, d].map((x) => x.join('/')).join(' > ');
+		out.vide = depilerNavigation() === false;
+		return out;
+	})()`,
+		ca,
+	);
+	verifier(r.sansOption, 'déblocage : sans l\'option (défaut), toutes les applis sont ouvertes');
+	verifier(r.semaines[0] === 'signalements' && r.semaines[1] === 'community,corbeille,signalements' && r.semaines[2] === 'community,corbeille,patron,signalements', `déblocage par semaine : ${r.semaines.join(' | ')}`);
+	verifier(r.direct === 6 && r.directTout, `déblocage : temps réel = semaine 4 (${r.direct}) ; « tout débloqué » (${r.directTout})`);
+	verifier(r.pile === 'os/community > os/journal > os/community > appli/' && r.vide, `pile de navigation : ${r.pile}`);
+	// Brouillon Community : faits réels du dossier (ligne, cause, durée), publication sans effet de jauge
+	const cb = contexte('fr');
+	const b = vm.runInContext(
+		`(() => {
+		let i = -1;
+		for (const l of Jeu.semainesProposees().map((x) => x.lundi)) { Jeu.chargerSemaine(l); Jeu.nouvellePartie(); Taches.nouvellePartie(); i = Jeu.paquet.findIndex((d) => d.type === 'perturbation' && d.lignes && d.lignes.length); if (i >= 0) break; }
+		const d = Jeu.paquet[i];
+		const faits = [Taches.ligneDe(d), Taches.causeDe(d), Taches.dureeDe(d)].map(String);
+		const jauges = JSON.stringify(Jeu.jauges);
+		const p = Jeu.publierBrouillon(i);
+		const deux = Jeu.publierBrouillon(i);
+		return { faits, ligneOk: faits[0].includes(d.lignes[0]), causeOk: faits[1] === String(d.nature).split(',')[0].trim(), jaugesIntactes: JSON.stringify(Jeu.jauges) === jauges, publie: !!p && p.brouillon, une: deux === null, invente: faits.some((f) => /undefined|\\[À COMPLÉTER\\]/.test(f)) };
+	})()`,
+		cb,
+	);
+	verifier(b.ligneOk && b.causeOk && !b.invente, `brouillon : faits du dossier (${b.faits})`);
+	verifier(b.publie && b.une && b.jaugesIntactes, 'brouillon : publié une fois par dossier, sans effet de jauge');
+	const g = readFileSync(join(pub, 'game.js'), 'utf8');
+	verifier(/\(Jeu\.somnolenceElevee \? 1\.5 : 1\)/.test(g) && /Jeu\.DELAI_EQUIPE_MS \* \(Jeu\.somnolenceElevee \? 1\.5 : 1\)/.test(g), 'somnolence (option) : au-delà de 70, aggravation ×1,5 et équipes plus lentes');
+	const sx = readFileSync(join(pub, 'sieste.js'), 'utf8');
+	verifier(/q\.arrivee -= decal/.test(sx) && /sieste\.prevision/.test(sx) && /somnolenceNecessaire \? 2 : 1/.test(sx), 'somnolence : la sieste fait arriver les équipes et annonce le prochain signalement ; option ×2');
+	verifier(!/return tacheInfo\(r, n\)/.test(readFileSync(join(pub, 'taches.js'), 'utf8')), 'info trafic (prompt 88) remplacée par la publication Community');
 }
 
 // Service worker : chaque script de index.html est dans la liste hors ligne de sw.js

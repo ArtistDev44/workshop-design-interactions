@@ -37,7 +37,8 @@ function majSomnolence(dt, dMinutes) {
 	if (enSieste) SOMNO.v = Math.max(0, SOMNO.v - (dt / 1000) * R.recuperationParSeconde);
 	else {
 		const inactif = millis() - inactifDepuis > R.delaiInactifMs ? (dt / 1000) * R.parSecondeInactif : 0;
-		SOMNO.v = Math.min(R.forcee, SOMNO.v + (dMinutes / 60) * R.parHeureJeu + inactif);
+		const k = Confort.Reglages && Confort.Reglages.somnolenceNecessaire ? 2 : 1; // prompt 91 § 5 (option) : la fatigue monte deux fois plus vite — dormir chaque jour devient inévitable
+		SOMNO.v = Math.min(R.forcee, SOMNO.v + (dMinutes / 60) * R.parHeureJeu * k + inactif);
 		if (SOMNO.v >= R.forcee && peutDormir()) dormir(false);
 	}
 }
@@ -74,7 +75,27 @@ function reveiller() {
 		if (typeof ajouterFil === 'function') ajouterFil(m, b.expires ? 'courage' : 'rythme');
 		if (typeof notifier === 'function') notifier({ titre: t('sieste.bilanTitre'), extrait: t(m.cle, m.vars), icone: 'signalements', action: () => ouvrirSignalements() });
 	}
+	// Prompt 91 § 5 : la sieste n'est pas du temps perdu — les équipes en route sont arrivées, et le prochain signalement est annoncé
+	const maintenant = millis();
+	(Jeu.equipes || []).forEach((q) => {
+		if (!q.inutile && q.arrivee > maintenant) {
+			const decal = q.arrivee - maintenant;
+			q.arrivee -= decal;
+			q.finIntervention -= decal;
+			q.libre -= decal;
+		}
+	});
+	const prochain = Jeu.prochainDuJour ? Jeu.prochainDuJour() : null;
+	if (prochain && prochain.minute > Jeu.horloge.minutes) {
+		const txt = t('sieste.prevision', { type: t('enq.signalement.' + prochain.type), heure: Jeu.formaterHeure(prochain.minute) });
+		if (typeof ajouterFil === 'function') ajouterFil({ cle: 'sieste.prevision', vars: { type: t('enq.signalement.' + prochain.type), heure: Jeu.formaterHeure(prochain.minute) } }, 'rythme');
+		annoncer(txt);
+	}
 	if (phase === 'attente' && !(typeof reprendreActif === 'function' && reprendreActif()) && fileIncidents().length) entrerSelection();
+}
+/** Prompt 91 § 5 (option) : au-delà du seuil 70, la fatigue se paie — aggravation des retards ×1,5, équipes plus lentes */
+function majSeuilSomnolence() {
+	Jeu.somnolenceElevee = !!(Confort.Reglages && Confort.Reglages.somnolenceNecessaire) && SOMNO.v >= 70;
 }
 const dureeJeu = (min) => {
 	const m = Math.max(0, Math.round(min));
@@ -119,7 +140,7 @@ function dessinerSomnolence() {
 	textSize(16);
 	textAlign(LEFT, TOP);
 	fill('#FFFFFF');
-	text(t('sieste.jauge', { v }), z.x + 10, z.y + 4); // prompt 80 : un seul libellé (dans l'appli, rien sous 20 px)
+	text(t(Confort.Reglages.somnolenceNecessaire ? 'sieste.jaugeSeuil' : 'sieste.jauge', { v }) + (Confort.Reglages.somnolenceNecessaire && v >= 70 ? ' ⚠' : ''), z.x + 10, z.y + 4); // prompt 80 : un seul libellé ; prompt 91 : seuil 70 en texte
 	textStyle(NORMAL);
 	textAlign(LEFT, TOP);
 	boutons.push({ x: z.x, y: z.y, l: z.l, h: z.h, action: basculerSieste });

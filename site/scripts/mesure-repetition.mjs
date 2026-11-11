@@ -34,8 +34,9 @@ export function mesurer(langue = 'fr') {
 				jours.push(jour);
 				if (avecTaches) {
 					Taches.matin();
-					const b = Taches.briefing();
-					if (b) { Taches.choisirPriorites(b.options.slice(0, 2).map((o) => o.id)); jour.taches.push('briefing'); jour.textes.push(...b.options.map((o) => T('tache.prio.' + o.id, o.vars))); }
+					// Prompt 91 : priorités imposées par le patron (plus une tâche du joueur), lues dans la consigne du jour
+					const pr = Taches.prioritesDuJour(Jeu.jourCourant().date);
+					jour.textes.push(...pr.map((o) => T('tache.prio.' + o.id, o.vars)));
 				}
 			};
 			const fermer = () => {
@@ -64,6 +65,8 @@ export function mesurer(langue = 'fr') {
 						const l = Rythme.liaison(n, liaisonPrec); if (l) { liaisonPrec = l.cle; jour.textes.push(T(l.cle, l.vars)); }
 					}
 					fermer();
+					// Prompt 91 § 3 : publication Community depuis le dossier (retard, perturbation, météo, accident)
+					if (avecTaches && Jeu.categorie(d) && Jeu.categorie(d) !== 'affluence' && Jeu.publierBrouillon(n)) { Taches.noter('community', d.date); jour.taches.push('community'); }
 					if (avecTaches) {
 						const tache = Taches.apresDecision(r, n);
 						if (tache) { const res = Taches.resoudre(tache, Taches.bonneReponse(tache)); jour.taches.push(tache.type); jour.textes.push(...(res && res.textes ? res.textes : [])); }

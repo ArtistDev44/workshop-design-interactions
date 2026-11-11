@@ -9,11 +9,12 @@
  * Enregistré seulement en http(s), jamais en file:// (index.html).
  */
 /* précache:début (généré par scripts/generer-sw.mjs — ne pas modifier à la main) */
-const VERSION = 'nte-regulation-60c166d647';
+const VERSION = 'nte-regulation-fa7cd00a76';
 const ESSENTIELS = [
 	"./",
 	"./accessibilite.js",
 	"./apple-touch-icon.png",
+	"./applis.js",
 	"./assets/qr-edition.png",
 	"./assets/qr-pxe-nte001-g01-w01.png",
 	"./audio/CREDITS.md",
