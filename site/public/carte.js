@@ -10,7 +10,7 @@
  *   raccourcis Maj + 1/2/3/4 (police, ambulanciers, techniciens, pompiers).
  * Données réelles uniquement ; absent → « non renseigné ».
  */
-const SELECTION = { depuis: 0, paquet: null, arrivees: {}, traces: [], onglet: 'enquete', message: null, surbrillance: null, legendeRepliee: false };
+const SELECTION = { depuis: 0, paquet: null, arrivees: {}, onglet: 'enquete', message: null, surbrillance: null, legendeRepliee: false }; // prompt 73 : plus de carte ni de repères positionnés
 const compteurSemaine = () => ((Jeu.etat.semaine && Jeu.etat.semaine.difficulte && Jeu.etat.semaine.difficulte.compteur_s) || 30) * 1000;
 
 /** Dossiers arrivés (heure de jeu atteinte) et pas encore traités, dans l'ordre : la tête est le prochain à traiter */
@@ -23,7 +23,6 @@ function fileIncidents() {
 	if (SELECTION.paquet !== Jeu.paquet) {
 		SELECTION.paquet = Jeu.paquet;
 		SELECTION.arrivees = {};
-		SELECTION.traces = [];
 	}
 	const f = [];
 	for (let i = Jeu.index; i < Jeu.paquet.length; i++) {
@@ -184,11 +183,23 @@ function dessinerEquipesIncident(d, x, y, l) {
 		bouton(x + l - 228, yy + 8, 228, 44, t('carte.envoyer', { n: i + 1 }), () => envoyerEquipeIncident(cle), !dispo, !pert.includes(cle));
 		textAlign(LEFT, TOP);
 	});
+	// Prompt 73 : plus de pictogrammes qui se déplacent sur une carte — l'état des équipes engagées
+	// sur ce signalement s'affiche en texte, avec le temps restant (en route / sur place / retour)
+	const idx = Jeu.index;
+	const engagees = (Jeu.equipes || []).filter((q) => q.index === idx && !q.inutile && q.jourIndex === Jeu.jourIndex);
+	engagees.forEach((q, i) => {
+		const ph = Jeu.phaseEquipe(q, m);
+		const reste = Math.max(0, Math.ceil((ph === 'route' ? q.arrivee : ph === 'place' ? q.finIntervention : q.libre) - m) / 1000);
+		textFont(POLICE_DONNEES);
+		textSize(16);
+		fill(C.gris);
+		text(String(q.nom) + ' · ' + t('equipe.etat.' + ph, { s: reste }), x, y + 4 * 70 + 10 + i * 24, l, 22);
+	});
 	if (SELECTION.message && m - SELECTION.message.t < 5000) {
 		textFont(POLICE_DONNEES);
 		textSize(17);
 		fill(SELECTION.message.ok ? C.vert : C.orange);
-		text(String(SELECTION.message.texte), x, y + 4 * 70 + 4, l, 44);
+		text(String(SELECTION.message.texte), x, y + 4 * 70 + 10 + engagees.length * 24, l, 44);
 	}
 }
 function envoyerEquipeIncident(cle) {
@@ -208,83 +219,72 @@ function toucheEquipes() {
 	return true;
 }
 
-// ——— Carte : repères, file, équipes en mouvement, surbrillance (appelé avec la projection de la carte) ———
-function positionDossier(d, rang) {
-	const idx = Jeu.paquet.indexOf(d);
-	// Lieu réel seulement s'il est connu du joueur : dossier traité, ou dossier courant après consultation de la carte
-	const connu = d.lignes && d.lignes.length && (idx < Jeu.index || (idx === Jeu.index && enqueteDossier().revele.carte));
-	const c = connu ? centreLigne(d.lignes[0]) : null;
-	if (c) return { x: projection.x(c[0]), y: projection.y(c[1]), reseau: false };
-	const r = rang || 0; // signalements en file, lieu inconnu : rangés autour du centre « Réseau »
-	return { x: CARTE.x + CARTE.l / 2 + (r ? Math.cos(r * 1.3) * 46 : 0), y: CARTE.y + CARTE.h / 2 + (r ? Math.sin(r * 1.3) * 46 : 0), reseau: true };
-}
-function dessinerReperesCarte() {
-	if (ecran !== 'jeu' || !projection || !Jeu.paquet) return;
-	const m = millis();
-	const p = pulsationDouce(1.2);
-	// Équipes engagées : du centre de régulation vers le repère, puis retour
-	const base = { x: CARTE.x + CARTE.l / 2, y: CARTE.y + CARTE.h / 2 };
-	(Jeu.equipes || []).forEach((q) => {
-		const ph = Jeu.phaseEquipe(q, m);
-		if (ph === 'libre' || q.jourIndex !== Jeu.jourIndex) return;
-		const cible = positionDossier(Jeu.paquet[q.index]);
-		let k = ph === 'place' ? 1 : ph === 'route' ? constrain((m - q.depart) / (q.arrivee - q.depart), 0, 1) : 1 - constrain((m - q.finIntervention) / (q.libre - q.finIntervention), 0, 1);
-		if (reduireAnimations) k = ph === 'retour' ? 0 : 1;
-		const x = lerp(base.x, cible.x, k);
-		const y = lerp(base.y, cible.y, k);
-		noStroke();
-		fill(q.cle === 'police' ? '#3d8bff' : q.cle === 'ambulance' ? '#ffffff' : q.cle === 'pompiers' ? '#ff3b30' : '#ffc138');
-		rect(x - 7 + 14, y - 7, 14, 14);
-		fill(13, 12, 12);
-		rect(x - 3 + 14, y - 3, 6, 6);
-	});
-	// File d'attente (repères orange) puis incident courant (rouge, pulse)
+// ——— Prompt 73 : l'écran de jeu devient une LISTE DE SIGNALEMENTS (plus de carte géographique) ———
+/** Panneau de gauche : la file des incidents (actif + en attente) — type, lignes réelles, gravité, heure, expiration */
+function dessinerFileSignalements(zone, dActuel) {
 	const f = fileIncidents();
-	f.forEach((it, i) => {
-		if (i === 0 && phase !== 'selection' && !['decision', 'contradiction', 'conflit'].includes(phase)) return;
-		const pos = positionDossier(it.d, i);
+	noStroke();
+	fill(C.fond);
+	rect(zone.x, zone.y, zone.l, zone.h, 8);
+	textAlign(LEFT, TOP);
+	textFont(POLICE_TEXTE);
+	textStyle(BOLD);
+	textSize(26);
+	fill(C.texte);
+	text(t('signalements.titre'), zone.x + 20, zone.y + 18);
+	textStyle(NORMAL);
+	textFont(POLICE_DONNEES);
+	textSize(17);
+	fill(C.gris);
+	text(t('signalements.sousTitre', { n: f.length }), zone.x + 20, zone.y + 54);
+	if (!f.length) {
+		textFont(POLICE_TEXTE);
+		textSize(20);
+		fill(C.gris);
+		const prochain = Jeu.prochainDuJour ? Jeu.prochainDuJour() : null;
+		text(prochain ? t('signalements.prochain', { heure: Jeu.formaterHeure(prochain.minute) }) : t('signalements.aucun'), zone.x + 20, zone.y + 110, zone.l - 40, 120);
+		return;
+	}
+	const y0 = zone.y + 96;
+	const hh = 96;
+	f.slice(0, 8).forEach((it, i) => {
+		const y = y0 + i * (hh + 10);
 		const courant = i === 0;
-		const r = courant ? 12 + 6 * p : 9;
-		noFill();
-		stroke(courant ? C.rouge : C.orange);
-		strokeWeight(courant ? 4 : 3);
-		rect(pos.x - r, pos.y - r, r * 2, r * 2);
-		noStroke();
-		fill(courant ? C.rougeFonce : C.orange);
-		rect(pos.x - 5, pos.y - 5, 10, 10);
-		if (pos.reseau && courant) {
-			textFont(POLICE_DONNEES);
-			textSize(16);
-			fill(C.texte);
-			textAlign(CENTER, TOP);
-			text(t('carte.reseau'), pos.x, pos.y + r + 6);
-			textAlign(LEFT, TOP);
-		}
-	});
-	// Décisions récentes : vert (bon choix) ou orange (raté), puis fondu en 4 s
-	SELECTION.traces = SELECTION.traces.filter((tr) => m - tr.t < 4000);
-	SELECTION.traces.forEach((tr) => {
-		const a = reduireAnimations ? 1 : 1 - (m - tr.t) / 4000;
-		const c = color(tr.bon ? C.vert : C.orange);
-		c.setAlpha(255 * a);
-		noStroke();
-		fill(c);
-		rect(tr.x - 9, tr.y - 9, 18, 18);
+		const enSurbrillance = SELECTION.surbrillance && (it.d.lignes || []).includes(SELECTION.surbrillance);
+		fill(courant ? 'rgba(212,3,28,0.18)' : enSurbrillance ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.05)');
+		rect(zone.x + 12, y, zone.l - 24, hh);
+		fill(couleurGravite(Jeu.gravite(it.d)));
+		rect(zone.x + 12, y, 6, hh);
+		textFont(POLICE_TEXTE);
+		textSize(19);
+		fill(C.texte);
+		const lignes = (it.d.lignes || []).join(', ');
+		text(t('enq.signalement.' + it.d.type) + (lignes ? ' · ' + lignes : ''), zone.x + 30, y + 8, zone.l - 60, 26);
+		textFont(POLICE_DONNEES);
+		textSize(16);
+		fill(C.gris);
+		const detail = t('gravite.' + Jeu.gravite(it.d)) + ' · ' + Jeu.formaterHeure(it.d.minute) + (it.d.retard !== null && it.d.retard !== undefined ? ' · +' + it.d.retard + ' min' : '');
+		text(detail, zone.x + 30, y + 38, zone.l - 60, 22);
+		fill(courant ? C.rouge : C.orange);
+		text(t(courant ? 'carte.expireDans' : 'carte.attendDepuis', { s: Math.ceil((courant ? resteAvantExpiration(it) : millis() - it.depuis) / 1000) }), zone.x + 30, y + 62, zone.l - 60, 22);
+		boutons.push({
+			x: zone.x + 12,
+			y,
+			l: zone.l - 24,
+			h: hh,
+			action: () => {
+				if (courant && phase === 'selection') return selectionnerIncident();
+				annoncer(t('enq.signalement.' + it.d.type) + (lignes ? ' · ' + lignes : '') + ' · ' + detail);
+			},
+		});
 	});
 }
-/** Après une décision (appelée par sketch.js) : laisser une trace colorée à l'emplacement de l'incident */
-function traceDecision(resultat) {
-	if (!projection || !resultat) return;
-	const pos = positionDossier(resultat.dossier);
-	const e = (Jeu.evenementsJournee || [])[Jeu.evenementsJournee.length - 1];
-	SELECTION.traces.push({ x: pos.x, y: pos.y, bon: e ? Jeu.evaluer(e) === 'bon' : false, t: millis() });
-}
-/** Bandeau des équipes (en haut de la carte) : « Police 1/2 · … », orange à 0 */
+/** Bandeau des équipes (en bas de la file) : « Police 1/2 · … », orange à 0 */
 function dessinerBandeauEquipes() {
 	if (ecran !== 'jeu' || !Jeu.elementDebloque('equipes')) return;
 	const m = millis();
 	let x = CARTE.x + 12;
-	const y = CARTE.y + CARTE.h - 42; // en bas de la carte : le zoom occupe le coin haut droit
+	const y = CARTE.y + CARTE.h - 42; // en bas de la file des signalements (prompt 73 : plus de carte)
 	textFont(POLICE_DONNEES);
 	textSize(15);
 	textAlign(LEFT, TOP);

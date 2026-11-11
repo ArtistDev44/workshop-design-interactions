@@ -83,3 +83,4 @@ dossier à trancher sous pression. »*
 | 66 | `66-livre-aide.md` | Prompt 70 : le livre « Commande » devient « Aide » (objet, couverture pixel, textes FR + EN, guide) |
 | 67 | `67-demarrage-pc-chaque-jour.md` | Prompt 71 : démarrage du PC rejoué au début des jours 1 à 3 (après « JOUR n »), une fois par jour, temps suspendu, écourté si animations réduites |
 | 68 | `68-alertes-choix-reponses.md` | Prompt 72 : pour les alertes (météo, accident/malaise, affluence), 2 à 4 réponses rédigées pour la situation réelle, chacune mappée vers une action 1/2/3/0 ou un envoi d'équipe existant ; mélange reproductible par graine ; game.js inchangé |
+| 69 | `69-suppression-carte.md` | Prompt 73 : suppression de la carte géographique (aucune géométrie de ligne dans les sources) — écran de jeu en liste de signalements, appli renommée « Signalements » (FR/EN), équipes en état textuel avec temps restant ; game.js inchangé |

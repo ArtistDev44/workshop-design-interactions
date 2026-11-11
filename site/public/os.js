@@ -319,7 +319,7 @@ function dessinerFermerAppli() {
 // Le temps ne s'arrête pas pendant la lecture d'une app (comme les livres du prompt 20).
 // =====================================================================
 const ICONES_OS = [
-	{ cle: 'carte', nom: T('app.carte'), dessin: (x, y, s) => iconePixel(x, y, s, 'carte') }, // prompt 68 : la Carte est l'écran de jeu (l'appli Régulation n'existe plus)
+	{ cle: 'carte', nom: T('app.carte'), dessin: (x, y, s) => iconePixel(x, y, s, 'carte') }, // prompt 68/73 : l'appli « Signalements » est l'écran de jeu
 	{ cle: 'patron', nom: T('app.patron'), dessin: (x, y, s) => iconePixel(x, y, s, 'enveloppe') },
 	{ cle: 'community', nom: T('app.community'), dessin: (x, y, s) => iconePixel(x, y, s, 'bulle') },
 	{ cle: 'journal', nom: T('app.journal'), dessin: (x, y, s) => iconePixel(x, y, s, 'livre') },
@@ -369,16 +369,19 @@ function iconePixel(x, y, s, type) {
 		fill(DS.primaire);
 		for (let k = 0; k < 7; k++) rect(16 + k * 4, 26 + k * 3, 4, 4), rect(60 - k * 4, 26 + k * 3, 4, 4);
 	} else if (type === 'carte') {
+		// Prompt 73 : plus de carte géographique — glyphe « liste de signalements » (lignes + pastilles)
 		fill('#2b3a4a');
 		rect(10, 10, 60, 60);
-		fill(DS.info);
-		rect(10, 40, 60, 8); // la Loire
 		fill(DS.blanc50);
-		rect(36, 10, 4, 60);
-		rect(10, 24, 60, 3);
+		rect(16, 18, 48, 4);
+		rect(16, 30, 48, 4);
+		rect(16, 42, 48, 4);
+		rect(16, 54, 34, 4);
 		fill(DS.primaire);
-		rect(22, 28, 10, 10);
-		rect(50, 52, 8, 8);
+		rect(52, 14, 10, 10);
+		rect(52, 38, 10, 10);
+		fill(DS.alerte);
+		rect(52, 62, 10, 8);
 	} else if (type === 'bulle') {
 		fill(DS.blanc);
 		rect(10, 14, 60, 38);
@@ -642,24 +645,6 @@ function enqueteJournal(z, e, j) {
 	});
 }
 const signe = (v) => (v > 0 ? '+' + v : v < 0 ? '−' + Math.abs(v) : '0');
-
-// ——— Carte : position d'une ligne = centre réel de son tracé (data/lignes.json) ———
-const cacheCentres = new Map();
-function centreLigne(nom) {
-	if (cacheCentres.has(nom)) return cacheCentres.get(nom);
-	const l = Jeu.lignes && Jeu.lignes.lignes.find((x) => x.nom === nom);
-	let c = null;
-	if (l) {
-		let sx = 0;
-		let sy = 0;
-		let n = 0;
-		l.traces.forEach((t) => t.forEach((p) => ((sx += p[0]), (sy += p[1]), n++)));
-		c = [sx / n, sy / n];
-	}
-	cacheCentres.set(nom, c);
-	return c;
-}
-
 
 // =====================================================================
 // Prompt 36 — Corbeille (plaintes traitées) et app flottante « Indicateurs »
