@@ -82,3 +82,4 @@ dossier à trancher sous pression. »*
 | 65 | `65-sieste-paupieres.md` | Sieste : paupières en surcouche plein écran (tout le contenu caché), fermeture avec sursaut et ouverture avec clignement, fondu si animations réduites |
 | 66 | `66-livre-aide.md` | Prompt 70 : le livre « Commande » devient « Aide » (objet, couverture pixel, textes FR + EN, guide) |
 | 67 | `67-demarrage-pc-chaque-jour.md` | Prompt 71 : démarrage du PC rejoué au début des jours 1 à 3 (après « JOUR n »), une fois par jour, temps suspendu, écourté si animations réduites |
+| 68 | `68-alertes-choix-reponses.md` | Prompt 72 : alertes (météo, secours, affluence) — 2 ou 3 réponses rédigées sur les données réelles, chacune une action ou un envoi d'équipe, ordre mélangé par la graine, actions de base toujours disponibles |

@@ -83,12 +83,16 @@ function dessinerEnquete(d, x, base) {
 	textFont(POLICE_DONNEES);
 	textSize(17);
 	textLeading(24);
-	fill(C.gris);
-	text(t('enq.consigne'), x + 32, base.y + 126, l, 54);
+	// Prompt 72 : une alerte pose sa question (réponses rédigées en bas du panneau)
+	const alerte = phase === 'decision' && typeof reponsesAlerte === 'function' && reponsesAlerte().length > 0;
+	fill(alerte ? C.orange : C.gris);
+	if (alerte) textStyle(BOLD);
+	text(alerte ? t(Alertes.question(d)) + ' ' + t('alerte.consigne') : t('enq.consigne'), x + 32, base.y + 126, alerte ? l - 150 : l, 54); // l'alerte laisse la place au tampon
+	textStyle(NORMAL);
 	// Prompt 68 : onglets Enquête / Historique de la ligne / Équipes
 	dessinerOngletsIncident(x + 32, base.y + 182, l);
 	const y0 = base.y + 238;
-	const bas = phase === 'contradiction' ? 270 : 214; // les actions (ou la question de la contradiction) restent en bas
+	const bas = phase === 'contradiction' ? 270 : alerte ? hauteurReponsesAlerte() + 40 : 214; // les actions (ou la question de la contradiction, ou les réponses d'alerte et leur message) restent en bas
 	if (SELECTION.onglet === 'historique') return dessinerHistoriqueLigne(d, x + 32, y0, l, base.h - bas - (y0 - base.y));
 	if (SELECTION.onglet === 'equipes') return dessinerEquipesIncident(d, x + 32, y0, l);
 	const hRang = (base.h - bas - (y0 - base.y)) / SOURCES_ENQ.length;

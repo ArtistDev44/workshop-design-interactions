@@ -963,6 +963,8 @@ function dessinerDossier(d, meteo) {
 		});
 		return;
 	}
+	// Prompt 72 : une alerte (météo, secours, affluence) propose des réponses rédigées pour la situation
+	if (phase === 'decision' && reponsesAlerte().length) return dessinerReponsesAlerte(d, x, base);
 	// Actions : 3 actions + « ne rien faire » (Q5)
 	const actions = [
 		['1', t('action.devier'), 'devier'],
@@ -984,6 +986,117 @@ function dessinerDossier(d, meteo) {
 		// Prompt 50 : plus de flèches d'effet sous les boutons — les effets s'apprennent en jouant (journal, mail, rapport)
 	});
 	cibleGuide('actions', x + 32, base.y + base.h - 200, base.l - 64, 160); // prompt 37
+}
+
+// ——— Prompt 72 : réponses d'alerte (alertes.js) — chacune déclenche une action existante ou un envoi d'équipe ———
+const ALERTE = { d: null, liste: [], focus: 0 };
+const hauteurReponsesAlerte = () => reponsesAlerte().length * 62 + 2 + 22 + 2 * 50 + 4; // réponses + actions de base (2 × 2), calées en bas
+function reponsesAlerte() {
+	const d = Jeu.dossierCourant ? Jeu.dossierCourant() : null;
+	if (!d || ecran !== 'jeu') return [];
+	if (ALERTE.d !== d) {
+		ALERTE.d = d;
+		ALERTE.liste = Alertes.reponses(d, Jeu.index);
+		ALERTE.focus = 0;
+		ALERTE.annoncee = false;
+	}
+	return ALERTE.liste;
+}
+/** Libellé traduit, trous remplis avec les vraies valeurs (nom d'événement réel abrégé, jamais traduit) */
+function libelleReponse(r) {
+	const v = Object.assign({}, r.vars);
+	if (v.evenement && v.evenement.length > 34) v.evenement = v.evenement.slice(0, 33).trim() + '…';
+	return t(r.cle, v);
+}
+const toucheReponse = (r) => r.touche.replace('Maj', t('alerte.maj'));
+function equipeDejaEnvoyee(r) {
+	return !!r.cible.equipe && (Jeu.equipes || []).some((q) => q.index === Jeu.index && q.cle === r.cible.equipe);
+}
+function choisirReponse(i) {
+	const r = reponsesAlerte()[i];
+	if (!r || phase !== 'decision') return;
+	ALERTE.focus = i;
+	if (r.cible.action) return decider(r.cible.action);
+	envoyerEquipeIncident(r.cible.equipe); // même refus que le prompt 68 si plus d'effectif
+}
+/** Annonce (aria-live) de la question et des réponses, une fois par alerte, à l'entrée en décision */
+function annoncerAlerte(d) {
+	if (ALERTE.annoncee) return;
+	ALERTE.annoncee = true;
+	annoncer(t('alerte.annonce', { question: t(Alertes.question(d)), liste: ALERTE.liste.map((r) => toucheReponse(r) + ' ' + libelleReponse(r)).join(' ; ') }));
+}
+function dessinerReponsesAlerte(d, x, base) {
+	annoncerAlerte(d);
+	const rep = ALERTE.liste;
+	const l = base.l - 64;
+	const y0 = base.y + base.h - hauteurReponsesAlerte();
+	const bloquee = Jeu.actionBloquee ? Jeu.actionBloquee() : null;
+	// Message d'envoi ou de refus d'équipe (prompt 68), au-dessus des réponses
+	if (SELECTION.message && millis() - SELECTION.message.t < 5000) {
+		noStroke();
+		textFont(POLICE_DONNEES);
+		textSize(16);
+		textAlign(LEFT, BOTTOM);
+		fill(SELECTION.message.ok ? C.vert : C.orange);
+		text(String(SELECTION.message.texte), x + 32, y0 - 4);
+		textAlign(LEFT, TOP);
+	}
+	// Réponses rédigées : boutons-choix en toutes lettres (deux lignes au plus), touche à gauche
+	rep.forEach((r, i) => {
+		const by = y0 + i * 62;
+		const envoyee = equipeDejaEnvoyee(r);
+		const off = envoyee || (!!r.cible.action && r.cible.action === bloquee);
+		bouton(x + 32, by, l, 56, '', () => choisirReponse(i), off, true);
+		noStroke();
+		textFont(POLICE_DONNEES);
+		textStyle(BOLD);
+		textSize(17);
+		textAlign(CENTER, CENTER);
+		fill(off ? 'rgba(255,255,255,0.5)' : C.orange);
+		text(toucheReponse(r), x + 32 + 44, by + 28);
+		textStyle(NORMAL);
+		textFont(POLICE_TEXTE);
+		textSize(17);
+		textLeading(21);
+		textAlign(LEFT, CENTER);
+		fill(off ? 'rgba(255,255,255,0.5)' : '#FFFFFF');
+		const lib = libelleReponse(r) + (envoyee ? ' — ' + t('alerte.equipeEnvoyee') : '') + (r.cible.action && r.cible.action === bloquee ? t('dossier.indispo') : '');
+		text(lib, x + 32 + 92, by + 3, l - 108, 50);
+		if (i === ALERTE.focus) {
+			noFill();
+			stroke(C.orange);
+			strokeWeight(3);
+			rect(x + 32 - 5, by - 4, l + 10, 64);
+			noStroke();
+		}
+	});
+	// Actions de base, toujours disponibles (touches 1 / 2 / 3 / 0)
+	const yb = y0 + rep.length * 62 + 2;
+	textFont(POLICE_DONNEES);
+	textSize(15);
+	textAlign(LEFT, TOP);
+	fill(C.gris);
+	text(t('alerte.base'), x + 32, yb);
+	const lb = (l - 8) / 2;
+	[['1', 'devier'], ['2', 'retenir'], ['3', 'renfort'], ['0', 'rien']].forEach(([k, cle], i) => {
+		bouton(x + 32 + (i % 2) * (lb + 8), yb + 22 + Math.floor(i / 2) * 50, lb, 44, k + '  ' + t('action.' + cle) + (cle === bloquee ? t('dossier.indispo') : ''), () => decider(cle), cle === bloquee, true);
+	});
+	textAlign(LEFT, TOP);
+	cibleGuide('actions', x + 32, y0, l, yb + 116 - y0); // prompt 37
+	cibleGuide('alerte', x + 32, y0, l, rep.length * 62);
+}
+/** Clavier d'une alerte : ↑ ↓ / Tab parcourent les réponses, Entrée valide ; true si la touche est prise */
+function toucheAlerte() {
+	const rep = phase === 'decision' ? reponsesAlerte() : [];
+	if (!rep.length) return false;
+	const n = rep.length;
+	if (keyCode === UP_ARROW || keyCode === DOWN_ARROW || keyCode === TAB) {
+		ALERTE.focus = (ALERTE.focus + (keyCode === UP_ARROW || (keyCode === TAB && keyIsDown(SHIFT)) ? n - 1 : 1)) % n;
+		annoncer(toucheReponse(rep[ALERTE.focus]) + ' ' + libelleReponse(rep[ALERTE.focus]));
+		return true;
+	}
+	if (keyCode === ENTER || keyCode === RETURN) return choisirReponse(ALERTE.focus), true;
+	return false;
 }
 
 function choisirSource(cle) {
@@ -1488,6 +1601,8 @@ function keyPressed() {
 	}
 	// Au poste : Échap fait se lever (sauf à l'écran de fin)
 	if (keyCode === ESCAPE && !(ecran === 'jeu' && phase === 'fin')) return seLever(), false;
+	// Prompt 72 : réponses d'une alerte — ↑ ↓ / Tab les parcourent, Entrée valide (le focus « Quitter le PC » d'abord s'il est pris)
+	if (!focusQuitter && ecran === 'jeu' && toucheAlerte()) return false;
 	// Prompt 26 : Tab place le focus sur « Quitter le PC » (et l'en retire), Entrée l'active
 	if (keyCode === TAB) return basculerFocusQuitter(!focusQuitter), false;
 	if (focusQuitter && (keyCode === ENTER || keyCode === RETURN || key === ' ')) return quitterPC(), false;

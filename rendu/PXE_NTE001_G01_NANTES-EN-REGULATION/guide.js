@@ -60,11 +60,13 @@ const ETAPES_GUIDE = [
 	{ id: 'jauges', cible: () => (vue === 'poste' && PC.etat === 'appli' ? 'jauges' : vue === 'poste' ? 'iconeCarte' : 'ecranPC'), fait: () => phase === 'selection' || PHASES_DOSSIER.includes(phase) },
 	// Prompt 66 : étape dédiée au signalement (prendre le dossier lance le compteur)
 	{ id: 'prendre', cible: () => (vue === 'poste' && PC.etat === 'appli' ? 'actions' : vue === 'poste' ? 'iconeCarte' : 'ecranPC'), fait: () => PHASES_DOSSIER.includes(phase) || phase === 'narration' || (Jeu.historique || []).length > 0 },
-	{ id: 'actions', cible: () => (vue === 'poste' && PC.etat === 'appli' ? 'actions' : vue === 'poste' ? 'iconeCarte' : 'ecranPC'), fait: () => (Jeu.historique || []).length > 0 || phase === 'narration' },
+	// Prompt 72 : si le dossier est une alerte, l'étape pointe ses réponses rédigées
+	{ id: 'actions', cible: () => (vue === 'poste' && PC.etat === 'appli' ? (alerteEnCours() ? 'alerte' : 'actions') : vue === 'poste' ? 'iconeCarte' : 'ecranPC'), fait: () => (Jeu.historique || []).length > 0 || phase === 'narration' },
 	{ id: 'apps', cible: () => (vue !== 'poste' ? 'ecranPC' : PC.etat === 'appli' ? 'fermerAppli' : 'iconesOS'), fait: () => PC.etat === 'os' && (!!PC.fenetre || PC.flottant) },
 	{ id: 'quitter', cible: () => 'quitterPC', fait: () => vue === 'bureau' },
 	{ id: 'livre', cible: () => 'livreAide', fait: () => !!tutoriel || fenetre === 'livre-stress' || (typeof PIECE !== 'undefined' && !!PIECE.message) },
 ];
+const alerteEnCours = () => phase === 'decision' && typeof reponsesAlerte === 'function' && reponsesAlerte().length > 0;
 function demarrerGuide() {
 	GUIDE.actif = true;
 	GUIDE.etape = 0;
@@ -88,6 +90,7 @@ function texteEtapeGuide(e) {
 	if (c === 'ecranPC' && e.id !== 'installer' && e.id !== 'apps') return t('guide.retourPC');
 	if (c === 'iconeCarte') return t('guide.ouvrirCarte');
 	if (e.id === 'apps') return t(c === 'fermerAppli' ? 'guide.apps.fermer' : c === 'ecranPC' ? 'guide.retourPC' : 'guide.apps.ouvrir');
+	if (e.id === 'actions' && alerteEnCours()) return t('guide.alerte'); // prompt 72
 	return t('guide.' + e.id);
 }
 function etapeGuideSuivante() {
