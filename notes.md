@@ -204,3 +204,36 @@ données jouées sont les archives du dépôt (aucun réseau).
 
 **Limites connues :** les semaines archivées citent rarement une ligne, si bien que la radio des chauffeurs
 apparaît peu ; la variété reste bornée par les données réelles (aucun texte inventé pour combler).
+
+## Revue UX du 11/11/2026 (prompt 80)
+
+**Méthode.** Chromium 1920 × 1080 et portrait 412 × 915 (Playwright), FR et EN. Tour complet capturé écran par
+écran : menu principal → écran « JOUR n » → bureau → s'installer → RégulOS → explication du poste → liste des
+signalements → dossier → narration → applis Patron, Community, Journal, Indicateurs → aide (H) → sieste et réveil
+→ vue bureau levé. Puis semaines complètes jouées au clavier jusqu'au mail de fin et au bilan : semaine 1 FR
+(animations réduites), semaine 2 EN, semaine 3 EN, et après correction semaine 1 FR et semaine 3 EN ; aucune erreur
+console. Données : archives du dépôt (hors ligne).
+
+**Frictions trouvées** (après les prompts 72 à 79) :
+
+| Gravité | Écran | Friction | Correction |
+|---|---|---|---|
+| Bloquant | Écran de jeu, bandeau d'état | Dans l'appli, aucun texte ne descend sous 20 px (prompt 49) : les messages longs du bandeau (« SIGNALEMENT · … », « À VOUS · … ») débordaient sur la jauge de somnolence, illisible ; l'indicateur « Partie sauvegardée » était sous la jauge | `dd73c46` : messages raccourcis FR + EN, jauge en un seul libellé « Somnolence 42 · Z » (aide au survol), indicateur de sauvegarde entre les jauges et le dossier |
+| Confus | Écran de jeu, applis | Les notifications (prompt 77) couvraient les jauges, le compteur et le haut du dossier, ou le début des messages du patron, pendant 6 s à chaque arrivée | `ee6f913` : appli ou fenêtre ouverte → la dernière notification tient en une ligne dans la barre des tâches (+n), cliquable ; la pile en haut à droite reste pour le bureau RégulOS vide et la vue bureau |
+| Confus | Aide (H) | Les règles, allongées par les prompts 72 à 79, étaient coupées en bas ; les raccourcis ne citaient ni Z, ni Tab entre signalements actifs, ni ↑ ↓ dans la liste | `e087a00` : règles réécrites plus court, taille ajustée pour tenir en entier (≈ 20 px) ; raccourcis à jour |
+| Mineur | Aide (H) | Les codes couleur (rouge, orange, vert, bleu) n'étaient expliqués nulle part | `56dcfcc` : rouge = urgent, orange = attention, vert = bon choix, bleu = Community et somnolence (FR + EN) |
+
+**Checklist (§ 2).** Navigation : chaque appli a sa croix et « Fermer (Échap) », le PC « Quitter le PC (Échap) »,
+le logo de la barre des tâches ramène à l'accueil de RégulOS (prompt 75) ; Échap ferme toutes les fenêtres.
+Action en cours : signalement sélectionné encadré en rouge, actifs en rouge sombre avec leur compteur, appli
+ouverte soulignée dans la barre des tâches. Libellés : boutons et onglets nommés en toutes lettres, icônes de
+RégulOS sous-titrées, données réelles (« +12 min (réel) ») séparées des actions. Feedback : bip, deltas qui
+flottent sur les jauges, notifications, fil de la journée. Onboarding : tutoriel en 6 étapes, explication du poste,
+guide « Prendre en main » (somnolence, alertes). Bureau ↔ PC : chaque objet a une infobulle et un effet (le sablier
+a disparu au prompt 78). Mobile : liste en haut, dossier dessous, somnolence ≥ 44 px. Accessibilité : `aria-live`
+sur toutes les annonces ajoutées, animations réduites respectées, contraste du Pixel Design System.
+
+**Reste ouvert.** Test par un membre du groupe qui n'a jamais vu le jeu (tutoriel + première journée sans aide) :
+**à faire en salle**. En portrait mobile, le bureau RégulOS (hors appli de jeu) n'est pas recomposé (antérieur aux
+prompts 72 à 80). Le retard qui s'aggrave (prompt 79) ne se voit qu'en mode « aujourd'hui » (les archives n'ont pas
+de retard chiffré). Webcam et micro réels : à essayer en salle (prompts 54, 57, 67).
