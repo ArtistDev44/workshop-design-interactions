@@ -374,7 +374,7 @@ hideInToc: true
 
 <!--
 Une pièce vue depuis la chaise : baie sur la ville, la Loire, la grue Titan, la météo réelle à la fenêtre.
-On s'installe au PC, on se lève pour téléphoner, on finit la journée à l'horloge.
+On s'installe au PC, on se lève pour téléphoner, on finit la journée d'un geste (« Quitter la journée », Q) ou à l'horloge.
 -->
 
 ---

@@ -13,6 +13,7 @@ const DUREE_PAN_SORTIE = 800;
 const DUREE_FONDU_SORTIE = 600;
 const DUREE_NOIR_SORTIE = 1500;
 const MINUTES_NUIT = 21 * 60;
+const DELAI_SORTIE_AUTO = 8000; // prompt 94
 const CLE_SOIR_GUIDE = 'pxe-nte001:jeu:soir-vu';
 
 /** « Ranger le poste » : ferme le mail du soir sans passer au lendemain */
@@ -66,8 +67,11 @@ function majSoir() {
 	}
 	if (nuitInstallee() && !SOIR.annonce) {
 		SOIR.annonce = true;
+		SOIR.nuitDepuis = millis();
 		annoncer(t('soir.annonce'));
 	}
+	// Prompt 94 : sortie automatique peu après la nuit tombée (la flèche « Sortie » reste cliquable pendant ce délai)
+	if (SOIR.annonce && !SOIR.sortie && !enPause && !fenetre && millis() - (SOIR.nuitDepuis || 0) >= DELAI_SORTIE_AUTO) quitterBureau();
 	if (SOIR.sortie && millis() - SOIR.sortie >= dureePanSortie() + DUREE_FONDU_SORTIE + DUREE_NOIR_SORTIE) finirSoir();
 }
 const dureePanSortie = () => (reduireAnimations ? 0 : DUREE_PAN_SORTIE);

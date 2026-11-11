@@ -17,7 +17,7 @@ function dessinerBandeau() {
 	cibleGuide('jauges', z.x, z.y, z.l, z.h);
 	const jauges = Jeu.jauges || { fluidite: 50, reputation: 50, budget: 50 };
 	const aff = jaugesAffichees();
-	const lb = 420; // trois jauges, puis Aide et Recommencer à droite
+	const lb = 370; // trois jauges, puis Quitter la journée, Aide et Recommencer à droite (prompt 94 : 420 → 370)
 	['fluidite', 'reputation', 'budget'].forEach((cle, i) => {
 		const x = z.x + 16 + i * (lb + 24);
 		noStroke();
@@ -54,7 +54,7 @@ function dessinerBandeau() {
 	const crise = typeof Taches !== 'undefined' && Taches.crise() && !Taches.crise().resultat; // prompt 88 : cellule de crise du jour
 	// Prompt 93 : la ligne coupait l'heure quand elle était trop longue (texte en boîte, 2e ligne masquée) → l'heure
 	// reste entière à droite, le début se termine par « … » en fin de mot, la ligne complète s'affiche au survol
-	const lbandeau = z.l - (crise ? 730 : 460);
+	const lbandeau = z.l - (crise ? 940 : 670); // prompt 94 : place du bouton « Quitter la journée »
 	const complet = morceaux.join('  ·  ');
 	if (textWidth(complet) <= lbandeau) text(complet, z.x + 16, z.y + 48);
 	else {
@@ -70,19 +70,20 @@ function dessinerBandeau() {
 		const actif = Taches.criseActive();
 		noStroke();
 		fill(actif ? C.primaire : 'rgba(212,3,28,0.25)');
-		rect(z.x + z.l - 700, z.y + 42, 254, 32);
+		rect(z.x + z.l - 920, z.y + 42, 254, 32);
 		fill('#FFFFFF');
 		textFont(POLICE_TEXTE);
 		textStyle(BOLD);
 		textAlign(CENTER, CENTER);
 		ajusterTaille(t('crise.bandeau'), 236, 18, 14);
-		text(t('crise.bandeau'), z.x + z.l - 573, z.y + 58);
+		text(t('crise.bandeau'), z.x + z.l - 793, z.y + 58);
 		textStyle(NORMAL);
 		textAlign(LEFT, TOP);
 	}
 	// Aide et Recommencer (souris / tactile) — équivalents des touches H et R
-	bouton(z.x + z.l - 430, z.y + 18, 180, 48, t('accueil.aide'), () => ouvrir('aide'), false, true);
-	bouton(z.x + z.l - 240, z.y + 18, 226, 48, t('jeu.recommencer'), () => ouvrir('reset'), false, true);
+	bouton(z.x + z.l - 648, z.y + 18, 280, 48, t('quitter.bouton'), quitterJourneeRapide, false, false); // prompt 94 : toujours visible, touche Q
+	bouton(z.x + z.l - 358, z.y + 18, 128, 48, t('accueil.aide'), () => ouvrir('aide'), false, true);
+	bouton(z.x + z.l - 220, z.y + 18, 206, 48, t('jeu.recommencer'), () => ouvrir('reset'), false, true);
 	textAlign(LEFT, TOP);
 }
 
@@ -203,7 +204,9 @@ function dessinerPanneauSignalement(d, x, base) {
 		yr = Math.max(yr, yc + hc + 10);
 	}
 	if (phase === 'contradiction') return dessinerChoixSource(d, x + 32, yr, l);
+	ZONE_DEPOT = { x: x + 16, y: base.y + 60, l: l + 32, h: Math.max(80, yr - 70 - (base.y + 60)) }; // prompt 94 : le dossier, où déposer une carte
 	dessinerCartesReponses(d, x + 32, yr, l, Math.max(290, base.y + base.h - 16 - yr));
+	dessinerGlisser(); // prompt 94 : zone de dépôt, carte flottante, retour, frappe
 }
 function bloc(titre, lignes, x, y, l, couleur) {
 	noStroke();
@@ -266,9 +269,12 @@ function dessinerCartesReponses(d, x, y, l, h) {
 	const lc = (l - 16) / 2;
 	const hc = (h - 16) / 2;
 	const bloquee = Jeu.actionBloquee ? Jeu.actionBloquee() : null;
+	CARTES = []; // prompt 94 : rectangles des cartes, pour le glisser-déposer (glisser.js)
 	rs.forEach((r, i) => {
 		const cx = x + (i % 2) * (lc + 16);
 		const cy = y + Math.floor(i / 2) * (hc + 16);
+		if (r.cle !== bloquee) CARTES.push({ cle: r.cle, x: cx, y: cy, l: lc, h: hc, lib: String(r.lib), touche: TOUCHES_REPONSES[i] });
+		if (carteSaisie(r.cle)) return emplacementCarte({ x: cx, y: cy, l: lc, h: hc }); // la carte flotte : son emplacement en pointillés
 		const survol = mouseX >= cx && mouseX <= cx + lc && mouseY >= cy && mouseY <= cy + hc;
 		noStroke();
 		fill(survol ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.06)');

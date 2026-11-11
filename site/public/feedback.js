@@ -46,6 +46,13 @@ function jaugesAffichees() {
 }
 /** Delta flottant au-dessus d'une jauge (x, y : coin haut gauche de la barre, l : largeur) */
 function dessinerDeltasJauge(cle, x, y, l) {
+	// Prompt 94 : éclair bref (220 ms, une fois par changement) sur la barre de la jauge qui vient de bouger
+	const recent = JAUGES_AFF.deltas.filter((d) => d.jauge === cle && millis() - d.t < 220).pop();
+	if (recent && !reduireAnimations) {
+		noStroke();
+		fill(255, 255, 255, 130 * (1 - (millis() - recent.t) / 220));
+		rect(x, y, l, 16);
+	}
 	JAUGES_AFF.deltas
 		.filter((d) => d.jauge === cle)
 		.forEach((d, i) => {

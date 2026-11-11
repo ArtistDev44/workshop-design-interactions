@@ -1676,6 +1676,93 @@ for (const f of ['enquete.js', 'carte.js', 'journal.js']) verifier(!/\*\s*1\.05\
 	}
 }
 
+// Prompt 94 : prise en main — glisser-déposer (dépôt = décision, ailleurs = rien, clic = décision),
+// « Quitter la journée » (mail → soir → sortie, sans toucher aux jauges), clés FR + EN
+{
+	const cg = contexte('fr');
+	vm.runInContext(
+		`var ecran = 'jeu', phase = 'decision', vue = 'poste', fenetre = null, enPause = false, reduireAnimations = false;
+		var PC = { etat: 'appli' }, MOBILE = { actif: false }, ECRAN_POSTE = { x: 96, y: 40, l: 1728, h: 972 }, L = 1920, H = 1080;
+		var mouseX = 0, mouseY = 0, __t = 0, __decide = [], __ann = [];
+		var millis = () => __t, decider = (c) => __decide.push(c), annoncer = (x) => __ann.push(String(x)), constrain = (v, a, b) => Math.max(a, Math.min(b, v));
+		var Confort = { Son: { clic() {}, bip() {} } };
+		function ecranVers(x, y) { mouseX = ECRAN_POSTE.x + (x * ECRAN_POSTE.l) / L; mouseY = ECRAN_POSTE.y + (y * ECRAN_POSTE.h) / H; }`,
+		cg,
+	);
+	vm.runInContext(readFileSync(join(pub, 'glisser.js'), 'utf8'), cg, { filename: 'glisser.js' });
+	const g = vm.runInContext(
+		`(() => {
+		CARTES = [{ cle: 'renfort', x: 820, y: 640, l: 420, h: 140, lib: 'Renforcer', touche: '1' }, { cle: 'rien', x: 1260, y: 640, l: 420, h: 140, lib: 'Ne rien faire', touche: '4' }];
+		ZONE_DEPOT = { x: 810, y: 210, l: 900, h: 340 };
+		const r = {};
+		// glisser la carte 1 sur le dossier
+		ecranVers(900, 700); r.prise = debutGlisser(); ecranVers(1200, 380); relacherGlisser();
+		r.depot = __decide.join() === 'renfort';
+		// glisser ailleurs : aucun choix, retour en ressort, annonce
+		ecranVers(1300, 700); debutGlisser(); ecranVers(200, 900); relacherGlisser();
+		r.ailleurs = __decide.length === 1 && !!GLISSER.retour && /aucun choix/.test(__ann[__ann.length - 1]);
+		// simple clic : décide
+		ecranVers(1300, 700); debutGlisser(); ecranVers(1302, 702); relacherGlisser();
+		r.clic = __decide.join() === 'renfort,rien';
+		// hors décision ou au doigt : pas de prise
+		phase = 'narration'; ecranVers(900, 700); r.horsDecision = debutGlisser() === false; phase = 'decision';
+		MOBILE.actif = true; r.tactile = debutGlisser() === false; MOBILE.actif = false;
+		// poids : amplitude selon les deltas réels, coupée avec les animations réduites
+		r.amp = amplitudeDeltas([-12, 3, 0]) === 9 && amplitudeDeltas([6, 0, 0]) === 5 && amplitudeDeltas([1, 0, 0]) === 2 && amplitudeDeltas([0, 0, 0]) === 0;
+		reduireAnimations = true; SECOUSSE.amp = 0; secouer(9); r.reduit = decalageSecousse() === null;
+		return r;
+	})()`,
+		cg,
+	);
+	for (const [k, v] of Object.entries(g)) verifier(v === true, `glisser-déposer (prompt 94) : ${k}`);
+	// Quitter la journée : fin de service → mail → soir → sortie → lendemain, jauges intactes
+	const cq = contexte('fr');
+	vm.runInContext(
+		`var phase = 'attente', ecran = 'jeu', vue = 'poste', fenetre = null, enPause = false, enSieste = false, reveil = null, reduireAnimations = false, tutoriel = null;
+		var MENU = { actif: false }, PC = { fenetre: null }, CAMERA = { x: 0, y: 0 }, METEO_VISU = { nuit: 1 }, focusBureau = -1, OBJETS_BUREAU = [], PIECE = {};
+		var L = 1920, H = 1080, __t = 1000, __fen = [], __ann = [];
+		var millis = () => __t, constrain = (v, a, b) => Math.max(a, Math.min(b, v)), heureAffichee = () => ({ h: 20, m: 0 });
+		var seLever = () => { vue = 'bureau'; }, annoncer = (x) => __ann.push(String(x)), interaction = () => {}, ouvrir = (f) => { fenetre = f; __fen.push(f); };
+		var Confort = { Son: { bip: () => {}, musique: { attenuer: () => {} } } }, Sauvegarde = { auto: () => {} };
+		var dateLongue = (d) => d, localStorage = { getItem: () => null, setItem: () => {} };
+		var allerFin = () => { phase = 'fin'; }, lancerLicenciement = () => {};
+		var journeeSuivante = () => { Jeu.journeeSuivante(); phase = 'attente'; };`,
+		cq,
+	);
+	for (const f of ['soir.js', 'journee.js']) vm.runInContext(readFileSync(join(pub, f), 'utf8'), cq, { filename: f });
+	const q = vm.runInContext(
+		`(() => {
+		Jeu.chargerSemaine(Jeu.semainesProposees()[0].lundi); Jeu.nouvellePartie();
+		const r = {};
+		quitterJourneeRapide(); r.avantHeure = fenetre === 'partir'; fenetre = null;
+		while (Jeu.prochainDuJour()) Jeu.decider('renfort');
+		Jeu.horloge.minutes = Jeu.finJournee();
+		quitterJourneeRapide(); r.mail = phase === 'mail';
+		const jauges = JSON.stringify(Jeu.jauges), jour = Jeu.jourIndex;
+		quitterJourneeRapide(); r.soir = phase === 'soir';
+		quitterJourneeRapide(); r.sortie = !!SOIR.sortie && vue === 'bureau';
+		__t += 5000; majSoir();
+		r.lendemain = phase === 'attente' && Jeu.jourIndex === jour + 1;
+		r.jaugesIntactes = JSON.stringify(Jeu.jauges) === jauges;
+		// sortie automatique peu après la nuit (ranger le poste suffit)
+		phase = 'mail'; rangerPoste(); __t += 4100; majSoir(); r.nuit = SOIR.annonce && !SOIR.sortie;
+		__t += 8100; majSoir(); r.auto = !!SOIR.sortie;
+		r.toucheQ = /key === 'q' \\|\\| key === 'Q'/.test(${JSON.stringify(readFileSync(join(pub, 'journee.js'), 'utf8'))});
+		return r;
+	})()`,
+		cq,
+	);
+	for (const [k, v] of Object.entries(q)) verifier(v === true, `quitter la journée (prompt 94) : ${k}`);
+	const fr94 = contexte('fr');
+	const en94 = contexte('en');
+	for (const cle of ['quitter.bouton', 'quitter.range', 'glisser.deposer', 'glisser.annule']) {
+		const a = vm.runInContext(`t(${JSON.stringify(cle)}, { reponse: 'X' })`, fr94);
+		const b = vm.runInContext(`t(${JSON.stringify(cle)}, { reponse: 'X' })`, en94);
+		verifier(a !== '[À COMPLÉTER]' && b !== '[À COMPLÉTER]' && a !== b, `prompt 94 : clé ${cle} absente en FR ou en EN`);
+	}
+	verifier(/debutGlisser\(\)/.test(readFileSync(join(pub, 'sketch.js'), 'utf8')) && /relacherGlisser\(\)/.test(readFileSync(join(pub, 'micro.js'), 'utf8')), 'glisser-déposer : appui et relâchement branchés');
+}
+
 // Service worker : chaque script de index.html est dans la liste hors ligne de sw.js
 const html = readFileSync(join(pub, 'index.html'), 'utf8');
 const sw = readFileSync(join(pub, 'sw.js'), 'utf8');
