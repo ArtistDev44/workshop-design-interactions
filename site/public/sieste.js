@@ -101,7 +101,7 @@ function siesteExpiration(r) {
 }
 
 // ——— Jauge dans le bandeau d'état (texte + barre, cliquable, infobulle) ———
-const ZONE_SOMNO = { x: 1560, y: H - 40, l: 320, h: 36 };
+const ZONE_SOMNO = { x: 1556, y: H - 40, l: 340, h: 36 };
 function dessinerSomnolence() {
 	if (ecran !== 'jeu' || phase === 'fin') return;
 	const z = ZONE_SOMNO;
@@ -119,18 +119,13 @@ function dessinerSomnolence() {
 	textSize(16);
 	textAlign(LEFT, TOP);
 	fill('#FFFFFF');
-	text(t('sieste.jauge', { v }), z.x + 10, z.y + 4);
-	const pris = textWidth(t('sieste.jauge', { v })) + 24;
+	text(t('sieste.jauge', { v }), z.x + 10, z.y + 4); // prompt 80 : un seul libellé (dans l'appli, rien sous 20 px)
 	textStyle(NORMAL);
-	ajusterTaille(t('sieste.reposer'), z.l - pris - 10, 15, 11); // le second libellé tient dans la place restante
-	textAlign(RIGHT, TOP);
-	fill(C.orange);
-	text(t('sieste.reposer'), z.x + z.l - 10, z.y + 6);
 	textAlign(LEFT, TOP);
 	boutons.push({ x: z.x, y: z.y, l: z.l, h: z.h, action: basculerSieste });
 	cibleGuide('somnolence', z.x, z.y, z.l, z.h);
 	if (survol) {
-		// Ligne d'aide : à quoi sert la jauge, et le compromis de la sieste
+		// Ligne d'aide : à quoi sert la jauge (clic ou Z : se reposer), et le compromis de la sieste
 		const l = 620;
 		textFont(POLICE_DONNEES);
 		textSize(17);

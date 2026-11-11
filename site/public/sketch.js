@@ -426,7 +426,7 @@ function indicateurSauvegarde() {
 	textAlign(RIGHT, BOTTOM);
 	noStroke();
 	fill(C.gris);
-	text(s, L - 44, H - 14);
+	text(s, L - 44, DROITE.y + 128); // prompt 80 : entre les jauges et le dossier (le bas droit porte la somnolence)
 }
 
 function dessinerJeu() {
