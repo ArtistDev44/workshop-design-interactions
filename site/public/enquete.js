@@ -5,7 +5,18 @@
  * compteur ; les gestes dans la pièce révèlent aussi : téléphone → agenda, fenêtre → météo.
  * Rien n'est inventé : seule la mise en scène change ; game.js (effets, dés) est inchangé.
  */
-const ENQ = { dossier: -1, revele: {}, depuis: {} };
+// Prompt 77 : une enquête PAR DOSSIER (plusieurs signalements actifs en parallèle) — les sources révélées d'un
+// dossier restent révélées quand on passe à un autre puis qu'on y revient. Remis à zéro avec le paquet.
+const ENQ = { paquet: null, parDossier: new Map() };
+function enqueteDe(d) {
+	if (ENQ.paquet !== Jeu.paquet) {
+		ENQ.paquet = Jeu.paquet;
+		ENQ.parDossier = new Map();
+	}
+	if (!d) return { revele: {}, depuis: {} };
+	if (!ENQ.parDossier.has(d)) ENQ.parDossier.set(d, { revele: {}, depuis: {} });
+	return ENQ.parDossier.get(d);
+}
 const ENQ_COUT_MS = 4000;
 const SOURCES_ENQ = [
 	{ cle: 'lignes', touche: '5' },
@@ -15,17 +26,13 @@ const SOURCES_ENQ = [
 ];
 
 function enqueteDossier() {
-	if (ENQ.dossier !== Jeu.index) {
-		ENQ.dossier = Jeu.index;
-		ENQ.revele = {};
-		ENQ.depuis = {};
-	}
-	return ENQ;
+	return enqueteDe(Jeu.dossierCourant());
 }
 /** Un dossier est-il connu (lignes affichées) ? Les dossiers déjà traités le sont ; le courant si la source « Lignes » est consultée */
 function dossierConnu(i) {
 	if (i < Jeu.index) return true;
-	return i === Jeu.index && !!enqueteDossier().revele.lignes;
+	const d = (Jeu.paquet || [])[i];
+	return !!d && ENQ.parDossier.has(d) && !!ENQ.parDossier.get(d).revele.lignes; // prompt 77 : dossier actif dont la source « Lignes » est consultée
 }
 const enquetePossible = () => ecran === 'jeu' && (phase === 'decision' || phase === 'contradiction') && !!Jeu.dossierCourant();
 

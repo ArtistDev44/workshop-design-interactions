@@ -8,7 +8,7 @@
  */
 const JOURNEE = { finAnnoncee: false };
 const SABLIER = { x: 304, y: 170, l: 11, h: 19, actif: false, debut: 0, retourne: 0 };
-const SABLIER_VITESSE = 14; // le temps file 14 fois plus vite que l'attente accélérée (×30) tant que le sable coule
+const SABLIER_VITESSE = 4.2; // prompt 77 : ×4,2 sur l'attente accélérée (×100) = la même vitesse absolue qu'avant (14 × 30 = 420)
 
 // ——— Horloge : terminer la journée ———
 function clicHorloge() {

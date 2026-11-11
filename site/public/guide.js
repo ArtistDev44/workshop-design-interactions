@@ -91,7 +91,7 @@ function texteEtapeGuide(e) {
 	if (c === 'iconeSignalements') return t('guide.ouvrirSignalements');
 	if (e.id === 'apps') return t(c === 'fermerAppli' ? 'guide.apps.fermer' : c === 'ecranPC' ? 'guide.retourPC' : 'guide.apps.ouvrir');
 	if (e.id === 'actions' && alerteEnCours()) return t('guide.alerte'); // prompt 72
-	return t('guide.' + e.id);
+	return t('guide.' + e.id, { x: IMMERSION.compression }); // prompt 77 : « ×100 » suit la valeur réelle
 }
 function etapeGuideSuivante() {
 	GUIDE.etape++;
