@@ -2,7 +2,7 @@
 
 - **Date** : 11/11/2026, veille de la soutenance J3 (jeudi 12/11, 15:00).
 - **Évaluateur** : assistant IA (Claude), à la demande du groupe (prompt 83). C'est une **estimation interne** : elle ne remplace pas la note de l'équipe pédagogique.
-- **Méthode** : on applique le barème du livret, section 12 (« Notation individuelle »), critère par critère. Les preuves ont été rejouées le jour même sur `main` (commit `af2cd55`) :
+- **Méthode** : on applique le barème du livret, section 12 (« Notation individuelle »), critère par critère. Les preuves ont été rejouées le jour même sur `main` (commit `f696206`, prompt 93 inclus) :
   - `npm run build` ;
   - `npm test` ;
   - `git log` et `git shortlog` ;

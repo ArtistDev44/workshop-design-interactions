@@ -4,6 +4,7 @@ Règle : chaque push sur la branche main ajoute une entrée dans le tableau, la 
 
 | Date | Commit | Fichiers | Résumé |
 |---|---|---|---|
+| 2026-11-11 | ce commit | note-eval.md, journal.md | note-eval.md : commit de référence corrigé (f696206, prompt 93 inclus) |
 | 2026-11-11 | ce commit | note-eval.md, prompts/README.md, journal.md | Prompt 83 : note d'évaluation du livret confrontée au dépôt — projet 54/70, individuel démontrable 7/30, fourchette 12,2 à 16,8/20, 12 leviers priorisés avant la soutenance |
 | 2026-11-11 | ce commit | journal.md | Fusion dans main du prompt 93 (textes hors de leur case : détection et réparation) |
 | 2026-11-11 | ce commit (branche prompts/93-debordements-texte) | prompts/93-jeu-textes-hors-cadre-detection-reparation.md, prompts/README.md, journal.md | Nouveau prompt 93 : détecter et réparer les textes hors de leur case, sans régression |
