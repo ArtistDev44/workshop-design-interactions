@@ -52,7 +52,20 @@ function dessinerBandeau() {
 	fill(C.gris);
 	textAlign(LEFT, TOP);
 	const crise = typeof Taches !== 'undefined' && Taches.crise() && !Taches.crise().resultat; // prompt 88 : cellule de crise du jour
-	text(morceaux.join('  ·  '), z.x + 16, z.y + 48, z.l - (crise ? 730 : 460), 30);
+	// Prompt 93 : la ligne coupait l'heure quand elle était trop longue (texte en boîte, 2e ligne masquée) → l'heure
+	// reste entière à droite, le début se termine par « … » en fin de mot, la ligne complète s'affiche au survol
+	const lbandeau = z.l - (crise ? 730 : 460);
+	const complet = morceaux.join('  ·  ');
+	if (textWidth(complet) <= lbandeau) text(complet, z.x + 16, z.y + 48);
+	else {
+		const heure = morceaux[morceaux.length - 1];
+		const lh = textWidth(heure);
+		textAlign(RIGHT, TOP);
+		text(heure, z.x + 16 + lbandeau, z.y + 48);
+		textAlign(LEFT, TOP);
+		dessinerTexte(morceaux.slice(0, -1).join('  ·  ') + '  ·', z.x + 16, z.y + 48 - 3, lbandeau - lh - 12, { police: POLICE_DONNEES, taille: 16, couleur: C.gris, maxLignes: 1, interligne: 22 });
+		if (mouseX >= z.x + 16 && mouseX <= z.x + 16 + lbandeau && mouseY >= z.y + 44 && mouseY <= z.y + 72) BANDEAU.survol = complet;
+	}
 	if (crise) {
 		const actif = Taches.criseActive();
 		noStroke();
@@ -160,7 +173,7 @@ function dessinerPanneauSignalement(d, x, base) {
 			fill(C.gris);
 			text(t('trace.memoireTitre') + ' ' + mem.slice(-3).join(' · '), x + 372, y + 2, l - 340, 44);
 		}
-		corpsEnquete(d, x + 32, y + 60, l, base.y + base.h - 372 - (y + 60)); // prompt 92 : réponses remontées de 50 px quand « En savoir plus » est ouvert
+		corpsEnquete(d, x + 32, y + 60, l, base.y + base.h - 430 - (y + 60)); // prompt 93 : hauteur d'origine (le décalage du prompt 92 coupait l'explication des cartes de réponse)
 	} else {
 		y = bloc(t('bloc.passe'), [phraseSituation(d)], x + 32, y, l, C.accent);
 		y = bloc(t('bloc.pourquoi'), pucesImportance(d).map((p) => '• ' + p), x + 32, y, l, C.orange);
@@ -177,7 +190,7 @@ function dessinerPanneauSignalement(d, x, base) {
 		y += 56; // bas réel des blocs : le conseil et les cartes ne le chevauchent pas
 	}
 	// Conseil factuel (prompt 23), au-dessus des réponses ; il ne désigne jamais une réponse
-	let yr = base.y + base.h - (PLUS.ouvert ? 310 : 360);
+	let yr = base.y + base.h - 360;
 	const conseil = Jeu.conseil ? String(Jeu.conseil(d)) : '';
 	if (conseil) {
 		textFont(POLICE_DONNEES);
@@ -265,6 +278,7 @@ function dessinerCartesReponses(d, x, y, l, h) {
 		noFill();
 		rect(cx + 1, cy + 1, lc - 2, hc - 2);
 		noStroke();
+		zoneTexteDeclarer('carteReponse', cx, cy, lc, hc); // prompt 93
 		fill(C.primaire);
 		rect(cx, cy, 44, 40);
 		textAlign(CENTER, CENTER);

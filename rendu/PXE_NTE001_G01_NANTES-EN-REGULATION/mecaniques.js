@@ -235,7 +235,7 @@ function fenetrePalmares() {
 	textFont(POLICE_DONNEES);
 	textSize(18);
 	fill(C.gris);
-	text(t('palmares.aide'), x + 56, y + h - 110, l - 112 - 340, 70);
+	text(t('palmares.aide'), x + 56, y + h - 110, l - 112 - 340, 100); // prompt 93 : 70 → 100 px (le texte était coupé)
 	bouton(x + l - 56 - 300, y + h - 108, 300, 68, t('commun.fermer'), fermer);
 }
 

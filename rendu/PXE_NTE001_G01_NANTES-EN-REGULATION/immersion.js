@@ -893,7 +893,9 @@ function infobulle(texte, x, y) {
 	rect(x, y, l, 40);
 	fill('#FFFFFF');
 	textAlign(LEFT, CENTER);
+	zoneTexteDebut('infobulle', x, y, l, 40); // prompt 93
 	text(texte, x + 14, y + 20);
+	zoneTexteFin();
 }
 
 // =====================================================================

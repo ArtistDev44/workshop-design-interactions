@@ -130,6 +130,7 @@ function barreJours(z) {
 
 // ——— 2. Tuiles ———
 function tuileFond(x, y, l, h, titre) {
+	zoneTexteDeclarer('tuile', x, y, l, h); // prompt 93
 	noStroke();
 	fill(DS.blanc05);
 	rect(x, y, l, h);
@@ -171,7 +172,7 @@ function vueJour(z) {
 		const s = tu.signalements;
 		if (k === 'signalements') {
 			dsTitre(s.traites + '/' + s.recus, x + 12, y0 + 38, 36, DS.blanc, 'left');
-			dsTexte(t('journal.tuile.nonTraites', { n: s.nonTraites }), x + 12, y0 + 100, 15, s.nonTraites ? DS.alerte : DS.blanc75, 'left', l - 24);
+			dsTexte(t('journal.tuile.nonTraites', { n: s.nonTraites }), x + 12, y0 + 88, 15, s.nonTraites ? DS.alerte : DS.blanc75, 'left', l - 24);
 		} else if (k === 'bonnes') {
 			dsTitre(tu.bonnes.n + '/' + tu.bonnes.total, x + 12, y0 + 38, 36, DS.blanc, 'left');
 			fill(DS.blanc15);
@@ -261,6 +262,7 @@ function frise(z, y0) {
 	drawingContext.beginPath();
 	drawingContext.rect(z.x - 4, y0, z.l + 8, hz);
 	drawingContext.clip();
+	zoneTexteDebut('fileJournal', z.x - 4, y0, z.l + 8, hz, { clip: true }); // prompt 93 : zone défilante (ce qui en sort est masqué exprès)
 	let y = y0 - JOURNAL.defil;
 	liste.forEach((c, k) => {
 		const h = hs[k];
@@ -273,6 +275,7 @@ function frise(z, y0) {
 		}
 		y += h + 12;
 	});
+	zoneTexteFin();
 	drawingContext.restore();
 	// Barre de défilement DS
 	if (JOURNAL.defilMax > 0) {
@@ -284,6 +287,7 @@ function frise(z, y0) {
 	}
 }
 function cadreCarte(x, y, l, h, focus, liseré) {
+	zoneTexteDeclarer('carte', x, y, l, h); // prompt 93
 	noStroke();
 	fill(DS.blanc05);
 	rect(x, y, l, h);
@@ -438,7 +442,7 @@ function vueSemaine(z) {
 	const lc2 = z.l * 0.55;
 	tuileFond(z.x, yc, lc2, hc + 96, t('journal.courbeSemaine'));
 	const gx = z.x + 60;
-	const gl = lc2 - 80;
+	const gl = lc2 - 100; // prompt 93 : 80 → 100, l'étiquette du seuil (« 150 ») sortait de la tuile
 	const gy = yc + 34;
 	const pts = s.courbe;
 	const px = (i) => gx + (pts.length < 2 ? gl / 2 : (i * gl) / (pts.length - 1));

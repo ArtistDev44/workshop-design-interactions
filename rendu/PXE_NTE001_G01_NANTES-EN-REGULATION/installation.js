@@ -84,3 +84,14 @@ function actionDepuisUrl() {
 	if (action === 'nouvelle' && typeof allerChoixSemaine === 'function') allerChoixSemaine();
 	else if (action === 'reprendre' && typeof continuerPartie === 'function' && Sauvegarde.lister().length) continuerPartie();
 }
+
+// Prompt 93 : détecteur de textes hors cadre, outil de développement — chargé SEULEMENT avec ?audit=textes
+// (avant l'initialisation de p5, pour que l'enveloppe de text() soit prise par le mode global)
+if (typeof location !== 'undefined' && /[?&]audit=textes(&|$)/.test(location.search) && typeof document !== 'undefined') {
+	if (document.readyState === 'loading') document.write('<script src="./audit-textes.js"><\/script>');
+	else {
+		const s = document.createElement('script');
+		s.src = './audit-textes.js';
+		document.head.appendChild(s);
+	}
+}

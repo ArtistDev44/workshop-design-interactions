@@ -3,7 +3,7 @@
 // joue chaque semaine archivée de bout en bout avec les vraies fonctions de game.js et vérifie des
 // invariants : jauges bornées, avancée du paquet, journées, mails, bilan, sauvegarde / reprise,
 // reproductibilité, mécaniques du prompt 47. Aucune donnée inventée : seules les archives du dépôt.
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
@@ -1626,6 +1626,54 @@ for (const f of ['enquete.js', 'carte.js', 'journal.js']) verifier(!/\*\s*1\.05\
 	const en = readFileSync(join(pub, 'enquete.js'), 'utf8');
 	verifier(/toucheSourcesEnquete\(\)/.test(readFileSync(join(pub, 'sketch.js'), 'utf8')) && /molletteEnquete\(/.test(readFileSync(join(pub, 'sketch.js'), 'utf8')), 'sources : clavier et molette branchés');
 	verifier(/reduireAnimations \? 1/.test(en) && /reduireAnimations \|\|/.test(en), 'sources : fondu et défilement instantanés avec animations réduites');
+}
+
+// Prompt 93 : détecteur de textes hors cadre — inactif par défaut ; libellés longs réels qui doivent tenir ;
+// garde-fou contre les estimations « × 1,05 » et les nouveaux text() sans largeur dans les applis
+{
+	const html93 = readFileSync(join(pub, 'index.html'), 'utf8');
+	const inst93 = readFileSync(join(pub, 'installation.js'), 'utf8');
+	const sk93 = readFileSync(join(pub, 'sketch.js'), 'utf8');
+	verifier(!html93.includes('audit-textes.js') && /audit=textes/.test(inst93) && /function zoneTexteDebut\(\) \{\}/.test(sk93) && /function zoneTexteFin\(\) \{\}/.test(sk93) && /function zoneTexteDeclarer\(\) \{\}/.test(sk93), 'audit textes : chargé seulement avec ?audit=textes, cadres vides en jeu normal');
+	// Le module en mode « tête » : sans le paramètre, il ne fait rien (pas d'objet global, pas d'enveloppe)
+	const ca = vm.createContext({ location: { search: '' }, URLSearchParams, p5: { prototype: { text() {} } } });
+	ca.window = ca;
+	vm.runInContext(readFileSync(join(pub, 'audit-textes.js'), 'utf8'), ca, { filename: 'audit-textes.js' });
+	verifier(ca.AUDIT_TEXTES === undefined && ca.p5.prototype.registerMethod === undefined, 'audit textes : actif sans ?audit=textes');
+	const ca2 = vm.createContext({ location: { search: '?audit=textes' }, URLSearchParams, p5: { prototype: { text() {}, registerMethod() {} } }, addEventListener() {} });
+	ca2.window = ca2;
+	vm.runInContext(readFileSync(join(pub, 'audit-textes.js'), 'utf8'), ca2, { filename: 'audit-textes.js' });
+	verifier(ca2.AUDIT_TEXTES && typeof ca2.AUDIT_TEXTES.rapport === 'function' && typeof ca2.zoneTexteDebut === 'function' && ca2.AUDIT_TEXTES.etapes().length > 40, 'audit textes : module ou parcours incomplet avec ?audit=textes');
+	// Cas réels de libellés longs corrigés (JetBrains Mono : 0,6 em par caractère), en FR et en EN
+	for (const langue of ['fr', 'en']) {
+		const c93 = contexte(langue);
+		const r93 = vm.runInContext(
+			`(() => {
+			TexteUI.mesureur = (s, p, t) => [...String(s)].length * t * 0.6;
+			const n = (cle, taille, l) => TexteUI.couperLignes(t(cle), l, 'mono', taille).length;
+			return {
+				credits: n('param.musiqueCredits', 14, 1000 - 96),
+				palmares: (n('palmares.aide', 18, 1400 - 112 - 340) - 1) * 22.5 + 18,
+				contact: TexteUI.mesurer(t('histoire.patron'), 'mono', 22) <= 520 - 32 - 32 && TexteUI.mesurer(t('sms.camille'), 'mono', 22) <= 520 - 32 - 32,
+			};
+		})()`,
+			c93,
+		);
+		verifier(r93.credits === 1 && r93.palmares <= 100 && r93.contact, `libellés longs (${langue}) : ${JSON.stringify(r93)}`);
+	}
+	// Garde-fou : aucune estimation « textWidth(...) * 1.05 » ; text(x, y) sans largeur limité aux exceptions motivées
+	// (heures, chiffres, touches, titres courts centrés : comptage figé au prompt 93 — tout nouveau cas doit passer
+	// par dessinerTexte / ajusterTaille ou être ajouté ici avec sa raison)
+	const EXCEPTIONS_TEXTE = { 'community.js': 0, 'patron.js': 0, 'journal.js': 1, 'os.js': 0, 'donnees.js': 1, 'notifs-tel.js': 4, 'telephone.js': 4, 'telephone-main.js': 3, 'taches-ui.js': 3, 'applis.js': 0, 'multitache.js': 2, 'carte.js': 5, 'enquete.js': 0, 'panneau.js': 9 };
+	const reSans = /(^|[^a-zA-Z.])text\(([^,()]|\([^()]*\))*,([^,()]|\([^()]*\))*,([^,()]|\([^()]*\))*\);/gm;
+	for (const f of readdirSync(pub).filter((x) => x.endsWith('.js'))) {
+		const src = readFileSync(join(pub, f), 'utf8');
+		verifier(!/textWidth\([^;]*\)\s*\*\s*1\.05/.test(src), `${f} : estimation « textWidth × 1,05 » (prompt 93 : utiliser couperLignes)`);
+		if (f in EXCEPTIONS_TEXTE) {
+			const nb = (src.match(reSans) || []).length;
+			verifier(nb <= EXCEPTIONS_TEXTE[f], `${f} : ${nb} text() sans largeur (max ${EXCEPTIONS_TEXTE[f]}) — passer par dessinerTexte ou ajusterTaille`);
+		}
+	}
 }
 
 // Service worker : chaque script de index.html est dans la liste hors ligne de sw.js

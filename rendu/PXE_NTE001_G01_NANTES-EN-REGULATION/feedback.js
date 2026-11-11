@@ -64,7 +64,9 @@ function dessinerDeltasJauge(cle, x, y, l) {
 			rect(bx, y - 2 - monte, w, 26);
 			fill(c);
 			textAlign(CENTER, CENTER);
+			zoneTexteDebut('pastille', bx, y - 2 - monte, w, 26); // prompt 93 : la pastille est le cadre du delta (elle monte exprès)
 			text(txt, bx + w / 2, y + 11 - monte);
+			zoneTexteFin();
 			textAlign(LEFT, TOP);
 		});
 }
@@ -110,7 +112,9 @@ function dessinerTamponSignalement(x, y) {
 	textStyle(BOLD);
 	textSize(20);
 	textAlign(CENTER, CENTER);
+	zoneTexteDebut('tampon', -88, -20, 176, 40); // prompt 93 : cadre du tampon (repère tourné)
 	text(t('tampon.signalement'), 0, 1);
+	zoneTexteFin();
 	textStyle(NORMAL);
 	pop();
 	textAlign(LEFT, TOP);
