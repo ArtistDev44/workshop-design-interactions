@@ -1,0 +1,171 @@
+/* Thème « Pixel Design System » (prompt 39) appliqué à Slidev — fond #0D0C0C, primaire #D4031C, arrondi 0, unité 4 px */
+:root {
+	--ds-fond: #0d0c0c;
+	--ds-primaire: #d4031c;
+	--ds-blanc: #ffffff;
+	--ds-blanc75: rgba(255, 255, 255, 0.75);
+	--ds-blanc15: rgba(255, 255, 255, 0.15);
+	--ds-alerte: #ffc138;
+	--ds-succes: #00b74f;
+	--slidev-theme-primary: #d4031c;
+}
+.slidev-layout {
+	background: var(--ds-fond);
+	color: var(--ds-blanc);
+	font-family: 'JetBrains Mono', 'IBM Plex Mono', Menlo, Consolas, 'Courier New', monospace;
+	font-size: 1.05rem;
+	line-height: 1.55;
+	padding: 2.2rem 3rem;
+}
+.slidev-layout h1,
+.slidev-layout h2 {
+	font-family: 'Bitsy Pixels', 'JetBrains Mono', monospace;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
+	color: var(--ds-blanc);
+	border-left: 8px solid var(--ds-primaire);
+	padding-left: 0.6rem;
+	margin-bottom: 1rem;
+}
+.slidev-layout h1 {
+	font-size: 2rem;
+}
+.slidev-layout strong {
+	color: var(--ds-blanc);
+	background: rgba(212, 3, 28, 0.35);
+	padding: 0 0.2em;
+}
+.slidev-layout a {
+	color: var(--ds-blanc);
+	text-decoration: underline;
+	text-decoration-color: var(--ds-primaire);
+	text-underline-offset: 3px;
+}
+.slidev-layout a:focus-visible,
+button:focus-visible {
+	outline: 3px solid var(--ds-alerte);
+	outline-offset: 3px;
+}
+.slidev-layout li::marker {
+	color: var(--ds-primaire);
+}
+.slidev-layout blockquote {
+	border-left: 6px solid var(--ds-blanc15);
+	padding: 0.6rem 1rem;
+	background: rgba(255, 255, 255, 0.05);
+	font-style: italic;
+	color: var(--ds-blanc);
+}
+.slidev-layout code {
+	background: var(--ds-blanc15);
+	color: var(--ds-blanc);
+	border-radius: 0;
+	padding: 0 0.25em;
+}
+.slidev-layout.cover,
+.slidev-layout.section,
+.slidev-layout.end,
+.slidev-layout.statement,
+.slidev-layout.fact {
+	background: var(--ds-fond) linear-gradient(90deg, var(--ds-primaire) 0 12px, transparent 12px);
+}
+.slidev-layout.section h1,
+.slidev-layout.statement h1 {
+	font-size: 2.6rem;
+	border: 0;
+}
+.slidev-layout.fact h1 {
+	font-size: 4rem;
+	color: var(--ds-primaire);
+	border: 0;
+}
+.slidev-layout.quote blockquote {
+	font-size: 1.35rem;
+}
+.slidev-layout * {
+	border-radius: 0 !important;
+}
+/* Captures annotées : cadre DS, légende sous l'image */
+.capture {
+	position: absolute;
+	border: 2px solid var(--ds-blanc15);
+	background: #000;
+}
+.capture img {
+	display: block;
+	width: 100%;
+	height: auto;
+}
+.legende {
+	position: absolute;
+	font-size: 0.72rem;
+	color: var(--ds-blanc75);
+}
+.etiquette {
+	position: absolute;
+	font-size: 0.75rem;
+	font-weight: 700;
+	color: var(--ds-fond);
+	background: var(--ds-alerte);
+	padding: 1px 6px;
+	white-space: nowrap;
+}
+.chaine {
+	display: flex;
+	gap: 0.6rem;
+	align-items: center;
+	margin-top: 1.4rem;
+}
+.chaine div {
+	border: 2px solid var(--ds-blanc);
+	padding: 0.7rem 0.9rem;
+	text-align: center;
+	min-width: 9rem;
+}
+.chaine div:nth-child(odd):last-child {
+	background: var(--ds-primaire);
+	border-color: var(--ds-primaire);
+}
+.chaine span {
+	color: var(--ds-primaire);
+	font-weight: 700;
+	font-size: 1.4rem;
+}
+.sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+}
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		transition: none !important;
+		animation: none !important;
+	}
+}
+/* Sans thème Slidev : fond plein écran et listes du design system */
+#slide-content,
+.slidev-slide-content,
+.slidev-page {
+	background: var(--ds-fond);
+}
+.slidev-layout {
+	height: 100%;
+	box-sizing: border-box;
+}
+.slidev-layout ul {
+	list-style: square;
+	padding-left: 1.4rem;
+	margin: 0.4rem 0;
+}
+.slidev-layout li {
+	margin: 0.25rem 0;
+}
+.slidev-layout p {
+	margin: 0.4rem 0;
+}

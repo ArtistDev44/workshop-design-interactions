@@ -1548,6 +1548,9 @@ const TRADUCTIONS = {
 		"tel.n.pollens": "Pollens de {nom} : {etat}.",
 		"optjeu.npd": "Ne pas déranger (téléphone)",
 		"optjeu.npd.detail": "Le téléphone ne vibre plus et ne sonne plus ; seules les alertes passent. Les notifications restent dans le centre.",
+		"mp.presentation": "Présentation",
+		"mp.presentation.infobulle": "Ouvrir la présentation du projet en slides (nouvel onglet)",
+		"mp.presentation.annonce": "Ouverture de la présentation du projet.",
 	},
 	en: {
 		"charge.introuvable": "Week not found: offline reference week.",
@@ -3090,6 +3093,9 @@ const TRADUCTIONS = {
 		"tel.n.pollens": "{nom} pollen: {etat}.",
 		"optjeu.npd": "Do not disturb (phone)",
 		"optjeu.npd.detail": "The phone no longer vibrates or rings; only alerts get through. Notifications stay in the centre.",
+		"mp.presentation": "Presentation",
+		"mp.presentation.infobulle": "Open the project slides (new tab)",
+		"mp.presentation.annonce": "Opening the project presentation.",
 	},
 };
 

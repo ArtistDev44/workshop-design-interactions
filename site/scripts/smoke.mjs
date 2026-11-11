@@ -9,7 +9,7 @@
 //  4. si dist/ existe (après `npm run build`), que les pages (jeu, /cartel/, /making-of/), le manifest et les captures existent.
 // Le contenu des données n'est jamais affiché : seulement des noms de fichiers et des compteurs.
 import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs';
-import { join, dirname, extname } from 'node:path';
+import { join, dirname, extname, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
 
@@ -112,6 +112,18 @@ for (const f of sources) {
 	/const VERSION = 'nte-regulation-[0-9a-f]{10}'/.test(sw) ? ok() : echec('sw.js : VERSION non générée (lancer npm run sw ou npm run build)');
 	const liste = new Set([...sw.matchAll(/"(\.\/[^"]*)"/g)].map((x) => x[1]));
 	for (const ref of [...html.matchAll(/(?:src|href)="(\.\/[^"#?]+)"/g)].map((x) => x[1])) liste.has(ref) ? ok() : echec(`sw.js : ${ref} (index.html) absent du précache`);
+	// Prompt 82 : la présentation Slidev (public/presentation/) est entièrement en précache, hors ligne compris
+	const pres = join(pub, 'presentation');
+	if (!existsSync(join(pres, 'index.html'))) echec('presentation/index.html absent : lancer npm run build:slides');
+	else {
+		const lister = (d) => readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? lister(join(d, e.name)) : [join(d, e.name)]));
+		for (const f of lister(pres)) {
+			const ref = './' + relative(pub, f).split(sep).join('/');
+			liste.has(ref) ? ok() : echec(`sw.js : ${ref} (présentation) absent du précache`);
+		}
+		const ph = readFileSync(join(pres, 'index.html'), 'utf8');
+		/\/presentation\/assets\//.test(ph) ? ok() : echec('presentation : base /presentation/ absente du build Slidev');
+	}
 }
 
 // 4. Build (facultatif)

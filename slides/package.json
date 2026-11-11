@@ -1,0 +1,12 @@
+{
+  "name": "pxe-nte001-presentation",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "slidev slides.md",
+    "build": "slidev build slides.md --base /presentation/ --out ../site/public/presentation"
+  },
+  "devDependencies": {
+    "@slidev/cli": "^53.1.0"
+  }
+}
