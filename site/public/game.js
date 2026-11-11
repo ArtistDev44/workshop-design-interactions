@@ -258,6 +258,7 @@
 		Jeu.messagesPatron = []; // prompt 22 : app « Messages du patron »
 		Jeu.variantesDuJour = {}; // prompt 88
 		Jeu.taches = null; // prompt 88 : tâches de la partie (taches.js)
+		Jeu.jaugesDebutJour = {}; // prompt 89 : jauges au début de chaque journée (courbes du Journal)
 		Jeu.bonusEffectifs = {};
 		Jeu.allegementObjectif = 0;
 		Jeu.patronEnAttente = []; // prompt 86
@@ -336,6 +337,7 @@
 			defiChrono: !!Jeu.defiChrono, // prompt 87
 			variantesDuJour: Object.assign({}, Jeu.variantesDuJour), // prompt 88
 			taches: Jeu.taches ? JSON.parse(JSON.stringify(Jeu.taches)) : null,
+			jaugesDebutJour: JSON.parse(JSON.stringify(Jeu.jaugesDebutJour || {})), // prompt 89
 			bonusEffectifs: Object.assign({}, Jeu.bonusEffectifs || {}),
 			allegementObjectif: Jeu.allegementObjectif || 0,
 			postsJoueur: Jeu.postsJoueur || [], // prompt 85
@@ -381,7 +383,8 @@
 		Jeu.aggravationLignes = Object.assign({}, s.aggravationLignes || {}); // prompt 79
 		Jeu.statutPatron = Object.assign(nouveauStatut(), s.statutPatron || {}); // prompt 84 (ancienne sauvegarde : statut neuf)
 		Jeu.variantesDuJour = Object.assign({}, s.variantesDuJour || {}); // prompt 88
-		Jeu.taches = s.taches ? JSON.parse(JSON.stringify(s.taches)) : null; // ancienne sauvegarde : tâches recréées au besoin
+		Jeu.taches = s.taches ? JSON.parse(JSON.stringify(s.taches)) : null;
+		Jeu.jaugesDebutJour = JSON.parse(JSON.stringify(s.jaugesDebutJour || {})); // ancienne sauvegarde : déduit des événements // ancienne sauvegarde : tâches recréées au besoin
 		Jeu.bonusEffectifs = Object.assign({}, s.bonusEffectifs || {});
 		Jeu.allegementObjectif = s.allegementObjectif || 0;
 		Jeu.defiChrono = s.defiChrono === undefined ? true : !!s.defiChrono; // prompt 87 : ancienne sauvegarde = jouée avec chrono
@@ -813,6 +816,7 @@
 			Jeu.appliquerBlame(); // prompt 51 : départ anticipé la veille
 		}
 		Jeu.horloge.minutes = Jeu.debutJournee();
+		if (Jeu.jourCourant() && Jeu.jaugesDebutJour) Jeu.jaugesDebutJour[Jeu.jourCourant().date] = Object.assign({}, Jeu.jauges); // prompt 89
 		return Jeu.jourCourant();
 	};
 	Jeu.formaterHeure = function (minutes) {

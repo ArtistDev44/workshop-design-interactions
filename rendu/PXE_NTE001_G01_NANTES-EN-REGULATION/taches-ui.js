@@ -146,7 +146,6 @@ function texteDemande(r) {
 // ——— Clavier ———
 function toucheTaches() {
 	if (toucheOptionsJeu()) return true;
-	if (!fenetre && vue === 'poste' && PC.etat === 'appli' && PC.fenetre === 'journal' && (key === 'k' || key === 'K')) return basculerCarnetSemaine(), true;
 	if (fenetre !== 'tache') return false;
 	const tache = TACHE.courante;
 	if (!tache) return fermer(), true;
@@ -267,32 +266,7 @@ function tachesApresDecision(r) {
 	if (tache) TACHE.file.push(tache);
 }
 
-// ——— Carnet de la semaine (appli Journal, prompt 63) : une ligne par journée, fondée sur le rapport du soir ———
-function basculerCarnetSemaine() {
-	JOURNAL.carnet = !JOURNAL.carnet;
-	JOURNAL.enquete = null;
-	Confort.Son.clic();
-	annoncer(t(JOURNAL.carnet ? 'carnet.titre' : 'carnet.retour'));
-}
-function carnetSemaine(z) {
-	let y = z.y;
-	dsTitre(t('carnet.titre'), z.x, y, 24, DS.blanc, 'left');
-	dsBouton(z.x + z.l - 240, y - 4, 240, 40, t('carnet.retour') + ' (K)', basculerCarnetSemaine, 'contour');
-	y += 56;
-	const carnet = (Jeu.taches && Jeu.taches.carnet) || [];
-	if (!carnet.length) return dsTexte(t('carnet.vide'), z.x, y, 20, DS.blanc50, 'left', z.l);
-	carnet.forEach((c) => {
-		noStroke();
-		fill(c.crise ? DS.primaire : DS.info);
-		rect(z.x, y + 4, 6, 70);
-		const tete = t('carnet.ligne', { date: c.date.split('-').reverse().join('/'), fait: c.fait }) + (c.theme ? ' · ' + t('theme.' + c.theme) : '');
-		dsTexte(tete, z.x + 18, y, 19, DS.blanc, 'left', z.l - 30);
-		const prio = c.priorites && c.priorites.length ? t('carnet.prio', { liste: c.priorites.map((p) => t('tache.prio.' + p.id, p.vars) + ' (' + t('carnet.etat.' + p.etat) + ')').join(Langue.actuelle === 'fr' ? ' ; ' : '; ') }) : t('carnet.prioAucune');
-		const dem = c.demande ? ' · ' + t('carnet.demande', { demande: t('tache.demande.' + c.demande, Taches.R.demande), etat: t(c.accordee ? 'carnet.accordee' : 'carnet.refusee') }) : '';
-		dsTexte(prio + dem, z.x + 18, y + 30, 17, DS.blanc75, 'left', z.l - 30);
-		y += 92;
-	});
-}
+// Carnet de la semaine : affiché dans la vue Semaine de l'appli Journal (prompt 89, journal.js)
 
 /** Ouvre la prochaine tâche en file juste après une narration (avant de reprendre un autre signalement) */
 function ouvrirTacheEnFile(suite) {

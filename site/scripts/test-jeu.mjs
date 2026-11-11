@@ -25,7 +25,7 @@ function contexte(langue, stockage = new Map(), avecHistoire = false) {
 	ctx.window = ctx;
 	ctx.globalThis = ctx;
 	vm.createContext(ctx);
-	const fichiers = ['data/lignes.js', 'data/semaines.js', 'data/fallback.js', 'data/messages.js', 'data/reponses.js', 'i18n.js', 'game.js', 'rythme.js', 'taches.js']; // prompts 74 / 88 : logique pure de la couche d'affichage
+	const fichiers = ['data/lignes.js', 'data/semaines.js', 'data/fallback.js', 'data/messages.js', 'data/reponses.js', 'i18n.js', 'game.js', 'rythme.js', 'taches.js', 'journal-donnees.js']; // prompts 74 / 88 / 89 : logique pure de la couche d'affichage
 	if (avecHistoire) fichiers.push('confort.js', 'histoire.js'); // prompt 56 : progression et palmarès (localStorage)
 	for (const f of fichiers) {
 		vm.runInContext(readFileSync(join(pub, f), 'utf8'), ctx, { filename: f });
@@ -1252,6 +1252,65 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 	verifier(r.sauve, 'chaînes : la conséquence est gardée par la sauvegarde');
 	verifier(r.deblocage.police === 1 && r.deblocage.prevision && r.deblocage.sans[0] === 0 && !r.deblocage.sans[1], `déblocages : ${JSON.stringify(r.deblocage)}`);
 	verifier(r.arbitrage.date && r.arbitrage.date !== r.arbitrage.premier && r.arbitrage.date !== r.arbitrage.crise && (r.arbitrage.rendu === undefined || r.arbitrage.rendu === 1), `arbitrage : ${JSON.stringify(r.arbitrage)}`);
+}
+
+// Prompt 89 : données de l'appli Journal recalculées sur la partie réelle (tuiles, courbes, filtres, semaine, enquête, résumé)
+{
+	const cj = contexte('fr');
+	const r = vm.runInContext(
+		`(() => {
+		const out = { erreurs: [] };
+		Jeu.chargerSemaine('2026-10-12'); Jeu.nouvellePartie(); Taches.nouvellePartie();
+		for (let i = 0; i < 3; i++) {
+			let k = 0;
+			while (Jeu.prochainDuJour()) { const d = Jeu.prochainDuJour(); Jeu.horloge.minutes = Math.max(Jeu.horloge.minutes, d.minute); Jeu.decider(k++ % 4 === 3 ? 'temps' : Jeu.actionsPossibles(d)[k % 3]); }
+			Jeu.finDeJourneeTactique();
+			Jeu.journeeSuivante();
+		}
+		for (let i = 0; i < 3; i++) {
+			const j = Jeu.jours[i];
+			const ev = Jeu.evenementsJournee.filter((e) => e.jour === j.date);
+			const tu = JournalDonnees.tuiles(i);
+			if (tu.signalements.recus !== j.dossiers.length) out.erreurs.push(j.date + ' reçus ' + tu.signalements.recus + '/' + j.dossiers.length);
+			if (tu.signalements.nonTraites !== ev.filter((e) => e.cleAction === 'temps').length) out.erreurs.push(j.date + ' non traités');
+			if (tu.bonnes.n !== ev.filter((e) => Jeu.evaluer(e) === 'bon').length || tu.bonnes.total !== ev.length) out.erreurs.push(j.date + ' bonnes');
+			const o = Jeu.objectifsResultats.find((x) => x.jourIndex === i);
+			if (!tu.objectif || tu.objectif.atteint !== o.atteint) out.erreurs.push(j.date + ' objectif');
+			if (tu.equipes.total !== (Jeu.equipes || []).filter((q) => q.jour === j.date).length) out.erreurs.push(j.date + ' équipes');
+			// Courbes : un point au début, puis exactement les jauges après chaque événement réel
+			const pts = tu.jauges.points;
+			if (pts.length !== ev.length + 1 || ev.some((e, n) => JSON.stringify(pts[n + 1]) !== JSON.stringify(e.resultat.jaugesApres))) out.erreurs.push(j.date + ' courbes');
+			if (JSON.stringify(pts[0]) !== JSON.stringify(Jeu.jaugesDebutJour[j.date] || pts[0])) out.erreurs.push(j.date + ' début');
+			// Filtres : comptes et contenu
+			const cartes = JournalDonnees.cartes(i);
+			const rates = JournalDonnees.filtrer(cartes, 'rates');
+			if (rates.some((c) => !['rate', 'trop_tard'].includes(c.eval)) || rates.length !== ev.filter((e) => ['rate', 'trop_tard'].includes(Jeu.evaluer(e))).length) out.erreurs.push(j.date + ' filtre ratés');
+			if (JournalDonnees.compteurs(i).rates !== rates.length) out.erreurs.push(j.date + ' compteur ratés');
+			const heures = cartes.filter((c) => c.minute !== null).map((c) => c.minute);
+			if (heures.some((m, n) => n && m < heures[n - 1])) out.erreurs.push(j.date + ' frise non triée');
+		}
+		const sem = JournalDonnees.semaine();
+		if (sem.colonnes.length !== Jeu.jourIndex + 1) out.erreurs.push('semaine colonnes');
+		sem.colonnes.forEach((c) => { if (c.signalements !== JournalDonnees.tuiles(c.i).signalements.recus) out.erreurs.push('semaine ' + c.date); });
+		const fin0 = JournalDonnees.finJour(0);
+		if (JSON.stringify(fin0) !== JSON.stringify(Jeu.jaugesDebutJour[Jeu.jours[1].date])) out.erreurs.push('fin de journée');
+		// Enquête : barres = attendus, choix et meilleure repérés
+		const e = Jeu.evenementsJournee.find((x) => x.cleAction !== 'temps');
+		const f = JournalDonnees.enquete(e);
+		if (f.decision.barres.length !== Object.keys(e.attendus).length || f.decision.barres.some((b) => Math.abs(b.v - e.attendus[b.cle]) > 0.051)) out.erreurs.push('barres ≠ attendus');
+		if (f.decision.barres.filter((b) => b.choix).map((b) => b.cle).join() !== e.cleAction || f.decision.barres.filter((b) => b.meilleure).map((b) => b.cle).join() !== e.cleMeilleure) out.erreurs.push('choix / meilleure');
+		if (f.decision.barres.some((b) => Math.abs(b.v) > f.decision.echelle)) out.erreurs.push('échelle');
+		out.resume = JournalDonnees.resume(0);
+		out.lignesMail = Jeu.evenementsJournee.filter((x) => x.jour === Jeu.jours[0].date).length;
+		return out;
+	})()`,
+		cj,
+	);
+	verifier(r.erreurs.length === 0, `journal : ${r.erreurs.slice(0, 5)}`);
+	verifier(/^Nantes en régulation — journée du 12\/10\/2026/.test(r.resume) && r.resume.split('\n').filter((l) => l.startsWith('- ')).length === r.lignesMail && !/\[À COMPLÉTER\]|undefined/.test(r.resume), `journal : résumé copié (${r.resume.slice(0, 120)})`);
+	const sv = readFileSync(join(pub, 'sauvegarde.js'), 'utf8');
+	verifier(/journal: typeof JOURNAL[^\n]*vue: JOURNAL\.vue, jour: JOURNAL\.jour, filtre: JOURNAL\.filtre, defil/.test(sv) && /ui\.journal/.test(sv), 'journal : vue, jour, filtre et défilement sauvegardés');
+	verifier(!/function appJournal|function enqueteJournal/.test(readFileSync(join(pub, 'os.js'), 'utf8')), 'journal : ancien rendu retiré d’os.js');
 }
 
 // Service worker : chaque script de index.html est dans la liste hors ligne de sw.js

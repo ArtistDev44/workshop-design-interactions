@@ -1150,6 +1150,7 @@ function keyPressed() {
 	if (key === 'i' || key === 'I') return basculerIndicateurs(), false;
 	// Au poste, système du PC (bureau RégulOS) : Tab = icônes, Entrée = ouvrir, Échap = fermer l'app puis se lever
 	if (PC.etat !== 'appli') {
+		if (PC.etat === 'os' && typeof toucheJournal === 'function' && toucheJournal()) return false; // prompt 89 : jours, filtres, cartes, enquête (Échap revient)
 		if (keyCode === ESCAPE) PC.fenetre ? fermerFenetreApp() : seLever();
 		if (focusQuitter && (keyCode === ENTER || keyCode === RETURN || key === ' ')) return quitterPC(), false; // prompt 26
 		if (focusDemarrer && (keyCode === ENTER || keyCode === RETURN || key === ' ')) return basculerFocusDemarrer(false), retourAccueilPC(), false; // prompt 75
@@ -1250,6 +1251,7 @@ function mouseWheel(event) {
 	interaction();
 	if (molletteCommunity(event.delta)) return false; // prompt 85 : défilement du fil
 	if (mollettePatron(event.delta)) return false; // prompt 86 : historique du patron
+	if (molletteJournal(event.delta)) return false; // prompt 89 : frise du Journal
 	if (scrollSortiePC(event.delta)) return false;
 }
 
