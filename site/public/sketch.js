@@ -374,8 +374,7 @@ function decider(action) {
 	dernierResultat.contexteNarr = Rythme.contexteNarration(dernierResultat, Jeu.index - 1); // prompt 74 : phrase de contexte réelle
 	if (action !== 'temps') tachesApresDecision(dernierResultat); // prompt 88 : rotation des tâches
 	if (typeof tracerDecision === 'function') tracerDecision(dernierResultat); // prompt 89 bis : trace dans la file
-	const dj = dernierResultat.deltas.map((v, i) => t('jaugeTitre.' + ['fluidite', 'reputation', 'budget'][i]) + ' ' + (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v)).join(', ');
-	annoncer(t('annonce.decision', { titre: dernierResultat.narration.titre, texte: dernierResultat.narration.texte }) + ' ' + dj + '.'); // prompt 53 : variations annoncées
+	annoncer(t('annonce.decision', { titre: dernierResultat.narration.titre, texte: dernierResultat.narration.texte }) + ' ' + phraseEcarts(dernierResultat.deltas)); // prompt 53 ; prompt 184 : une phrase « fluidité en hausse, budget en baisse »
 	Confort.Son.clicAction(Jeu.familleDe ? Jeu.familleDe(action) : action); // prompt 44 § 4 : un clic de console par action ; prompt 89 bis : famille de la réponse (son distinct)
 	Confort.Son.jauges(dernierResultat.deltas); // § 5 : chute brutale ou remontée nette, audibles
 	if (typeof feedback === 'function') feedback(Juice.tierDeltas(dernierResultat.deltas)); // prompts 94 / 96 : tier selon l'effet réel (small / medium / large)
@@ -384,6 +383,14 @@ function decider(action) {
 	if (dernierResultat.contexteNarr) annoncer(t(dernierResultat.contexteNarr.cle, dernierResultat.contexteNarr.vars));
 	verifierSerie(); // prompt 74 : 2 bonnes ou 2 ratées d'affilée → mot du patron (sans effet sur les jauges)
 	Sauvegarde.auto(false); // prompt 33 : après chaque décision (l'annonce de la décision n'est pas écrasée)
+}
+
+/** Prompt 184 : sens des écarts en une phrase pour le lecteur d'écran (jauges inchangées omises) */
+function phraseEcarts(deltas) {
+	const p = ['fluidite', 'reputation', 'budget'].map((k, i) => [k, deltas[i]]).filter(([, v]) => v).map(([k, v]) => t(v > 0 ? 'annonce.hausse' : 'annonce.baisse', { jauge: t('jaugeTitre.' + k).toLowerCase() }));
+	if (!p.length) return t('narr.aucunEffet');
+	const phrase = p.join(', ');
+	return phrase.charAt(0).toUpperCase() + phrase.slice(1) + '.';
 }
 
 function continuer() {
@@ -799,27 +806,24 @@ function dessinerNarration() {
 	textSize(26);
 	text(r.narration.texte, z.x + 32, z.y + 190, z.l - 64, 260);
 
-	// Détail des effets : base + 1d6 et contexte (lisible pour la soutenance)
+	// Prompt 184 : plus de liste des écarts (« Fluidité −9 (dé : 3) », « Effets : … ») — les jauges du bandeau s'animent
+	// (segment vert / rouge, feedback.js) ; le détail chiffré reste dans l'appli Journal. Restent le contexte qui a
+	// renforcé l'effet, l'explication (pourquoi, meilleure réponse) et la phrase de contexte réelle.
 	textFont(POLICE_DONNEES);
 	textSize(18);
-	fill(C.gris);
-	const noms = [t('jaugeTitre.fluidite'), t('jaugeTitre.reputation'), t('jaugeTitre.budget')];
-	r.deltas.forEach((v, i) => {
-		const de = r.des[i] ? t('narration.de', { d: r.des[i] }) : '';
-		fill(v > 0 ? C.vert : v < 0 ? C.rouge : C.gris);
-		text(noms[i].padEnd(13, ' ') + (v > 0 ? '+' : '') + v + de, z.x + 32, z.y + 470 + i * 30);
-	});
 	const ctx = [r.contexte.meteo && t('ctx.meteo'), r.contexte.pointe && t('ctx.pointe'), r.contexte.affluence && t('ctx.affluence')].filter(Boolean);
 	fill(C.gris);
-	if (ctx.length) text(t('narration.contexte', { liste: ctx.join(', ') }), z.x + 32, z.y + 570);
+	if (ctx.length) text(t('narration.contexte', { liste: ctx.join(', ') }), z.x + 32, z.y + 470);
 	// Prompt 74 : une phrase de contexte tirée de la situation réelle (météo, heure, ligne, agenda)
 	// Prompt 87 : avant elle, l'explication — ce qui s'est passé, et pourquoi (ou quelle réponse convenait mieux)
-	const expl = explicationDecision(r).concat(r.contexteNarr ? [t(r.contexteNarr.cle, r.contexteNarr.vars)] : []);
+	const expl = explicationDecision(r, true).concat(r.contexteNarr ? [t(r.contexteNarr.cle, r.contexteNarr.vars)] : []);
+	push(); // textLeading est un état global de p5 : encadré
 	textFont(POLICE_TEXTE);
 	textSize(20);
 	textLeading(28);
 	fill(C.texte);
-	text(expl.join('\n'), z.x + 32, z.y + 612, z.l - 64, 150);
+	text(expl.join('\n'), z.x + 32, z.y + (ctx.length ? 512 : 470), z.l - 64, ctx.length ? 250 : 292);
+	pop();
 
 	// Suite automatique, ou Entrée / clic
 	// Prompt 131 : plus de suite automatique hors défi chrono — le joueur lit à son rythme (Entrée, clic ou « Suivant »)
