@@ -202,10 +202,4 @@ function toucheMecaniques() {
 	return false;
 }
 
-// ——— Rapport papier : profil de gestion ———
-function lignesRapportMecaniques() {
-	const g = Jeu.profilPartie();
-	return {
-		gestion: g ? t('rapport.gestion', { profil: t('profil.' + g.id), n: g.n, total: g.total, action: t('profilAction.' + g.id) }) : '',
-	};
-}
+// Rapport papier : profil de gestion — prompt 163 : texteProfilRapport (histoire.js), un seul profil

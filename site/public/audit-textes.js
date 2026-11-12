@@ -455,6 +455,8 @@
 		add('rapport de la veille', () => (H.raz(), (phase = 'attente'), (vue = 'bureau'), ouvrir('rapportVeille')));
 		add('fin de semaine · rapport', () => (H.raz(), allerFin()), 30);
 		add('fin de semaine · rapport ouvert', () => (fenetre === 'mailFin' && (fenetre = null), ouvrirRapport()), 20);
+		add('fin de semaine · rapport page 2', () => RAPPORT && fenetre === 'rapport' && changerPageRapport(1), 12); // prompt 163
+		add('fin de semaine · rapport page 3 (sources)', () => RAPPORT && fenetre === 'rapport' && changerPageRapport(1), 12); // prompt 163
 		['bonne', 'moyenne', 'mauvaise'].forEach((ty) => add('cinématique ' + ty, () => (H.raz(), lancerCinematique(ty, Object.assign({}, (RAPPORT && RAPPORT.bilan) || {}, { type: ty }))), 40));
 		add('licenciement · lettre', () => (H.raz(), (GAMEOVER = { debut: millis() - 5000, lettre: Jeu.lettreLicenciement(), vue: 'lettre', focus: 0 })), 20);
 		// Prompt 121 : signalement répondu avec une équipe en route — badge de statut, puis marqueur creux sur la carte

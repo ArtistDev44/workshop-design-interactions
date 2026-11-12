@@ -650,6 +650,7 @@
 		Jeu.majStatutPatron(); // prompt 84 : la décision a changé les jauges
 		// Prompt 79 : mauvaise réaction sur un retard → la ligne reste aggravée jusqu'au soir (malus : ceux qui existent déjà)
 		const ev = Jeu.evaluer(entree);
+		resultat.evaluation = ev; // prompt 163 : rang des décisions clés du rapport (bon / moyen / mauvais)
 		if (re !== null && (ev === 'rate' || ev === 'trop_tard') && d.lignes && d.lignes.length) {
 			const A = REGLAGES.aggravation;
 			d.lignes.forEach((l) => (Jeu.aggravationLignes[l] = Math.min(A.plafondDurable, (Jeu.aggravationLignes[l] || 0) + A.durable)));
@@ -727,10 +728,31 @@
 		},
 	};
 
+	/** Prompt 163 : évaluation d'une décision du bilan — gardée sur le résultat depuis le prompt 163, sinon relue dans le
+	 * journal (même objet), sinon « trop tard » pour le temps écoulé ; rang 0 bon, 1 moyen, 2 mauvais. */
+	const RANG_EVALUATION = { bon: 0, aucun_detour: 1, inconnu: 1, rate: 2, trop_tard: 2 };
+	function evaluationDe(r) {
+		if (r.evaluation && RANG_EVALUATION[r.evaluation] !== undefined) return r.evaluation;
+		const e = (Jeu.evenementsJournee || []).find((x) => x.resultat === r);
+		if (e) return Jeu.evaluer(e);
+		return r.action === 'temps' ? 'trop_tard' : 'inconnu';
+	}
+	Jeu.RANG_EVALUATION = RANG_EVALUATION;
+	/** Prompt 163 : seuils des fins, cités sur le rapport à côté du tampon */
+	Jeu.SEUILS_FIN = { bonne: 240, moyenne: 150 };
+	/** Prompt 163 : période en jj/mm (« du 14/09 au 20/09/2026 · 6 jours joués ») ; temps réel : l'horodatage tel quel */
+	Jeu.periodeTexte = function () {
+		const s = Jeu.etat && Jeu.etat.semaine;
+		if (!s) return (Jeu.etat && Jeu.etat.horodatage) || '';
+		const jm = (iso) => iso.split('-').reverse().slice(0, 2).join('/');
+		const joues = Math.min((Jeu.jours || []).length, (Jeu.jourIndex || 0) + 1);
+		return T('rapport.periodeSemaine', { debut: jm(s.lundi), fin: s.dimanche.split('-').reverse().join('/'), n: joues });
+	};
+
 	/** Fin déterminée par le score combiné (Q43, Q48) : bonne ≥ 240, moyenne ≥ 150, mauvaise < 150. */
 	Jeu.typeFin = function (score) {
 		const s = score === undefined ? Jeu.score() : score;
-		return s >= 240 ? 'bonne' : s >= 150 ? 'moyenne' : 'mauvaise';
+		return s >= Jeu.SEUILS_FIN.bonne ? 'bonne' : s >= Jeu.SEUILS_FIN.moyenne ? 'moyenne' : 'mauvaise';
 	};
 
 	/**
@@ -741,12 +763,18 @@
 		const type = Jeu.typeFin();
 		const decisions = (Jeu.historique || []).filter((h) => h.action);
 		const total = (r) => r.deltas.reduce((s, v) => s + v, 0);
-		const tries = decisions.slice().sort((a, b) => total(b) - total(a));
+		// Prompt 163 : rang d'abord selon l'évaluation (bon < moyen < mauvais), puis l'écart total des jauges —
+		// une décision jugée « bon choix » n'est plus montrée comme la pire parce qu'elle a coûté du budget
+		const rang = (r) => RANG_EVALUATION[evaluationDe(r)];
+		const tries = decisions.slice().sort((a, b) => rang(a) - rang(b) || total(b) - total(a));
 		const cles = [];
 		if (tries.length) cles.push(Object.assign({ qualite: 'meilleure' }, tries[0]));
-		if (tries.length > 1) cles.push(Object.assign({ qualite: 'pire' }, tries[tries.length - 1]));
+		if (tries.length > 1) {
+			const der = tries[tries.length - 1];
+			cles.push(Object.assign({ qualite: rang(der) === 0 ? 'moins bonne' : 'pire' }, der)); // toutes bonnes : « moins bonne », pas « pire »
+		}
 		decisions
-			.filter((d) => d.mauvaiseSource && !cles.includes(d))
+			.filter((d) => d.mauvaiseSource && !cles.some((c) => c.dossier === d.dossier && c.jour === d.jour && c.minuteSim === d.minuteSim))
 			.slice(0, 1)
 			.forEach((d) => cles.push(Object.assign({ qualite: 'mauvaise source' }, d)));
 		const retards = Jeu.paquet.filter((d) => d.retard !== null && d.retard !== undefined);
@@ -770,12 +798,15 @@
 				qualite: d.qualite,
 				titre: marquerFictif(d, d.narration.titre), // prompt 162
 				action: d.nomAction,
+				evaluation: evaluationDe(d), // prompt 163
 				deltas: d.deltas,
 			})),
 			faits: {
 				periode: Jeu.etat.semaine ? Jeu.etat.semaine.lundi + ' → ' + Jeu.etat.semaine.dimanche : Jeu.etat.horodatage || '',
+				periodeTexte: Jeu.periodeTexte(), // prompt 163 : jj/mm et jours joués
 				pireRetard: pire ? { ligne: (pire.lignes || []).join(', '), minutes: pire.retard } : null,
 				parType,
+				composition: Jeu.compositionDossiers(Jeu.paquet), // prompt 163 : composition honnête (prompt 162) sur le rapport
 			},
 		};
 	};
@@ -1052,7 +1083,7 @@
 		if (Jeu.defis && Jeu.defis.length) {
 			if (Jeu.jourIndex >= (Jeu.jours || []).length - 1) {
 				lignes.push(T('mail.defisBilan'));
-				Jeu.resultatsDefis().forEach((r) => lignes.push(T(r.tenu ? 'defi.tenu' : 'defi.rate', { defi: T('defi.' + r.id), valeur: r.valeur, bonus: T('delta', { jauge: LIBELLES_JAUGES[r.jauge], v: '+' + r.bonus }) })));
+				Jeu.resultatsDefis().forEach((r) => lignes.push(T(r.sansObjet ? 'defi.sansObjet' : r.tenu ? 'defi.tenu' : 'defi.rate', { defi: T('defi.' + r.id), valeur: r.valeur, bonus: T('delta', { jauge: LIBELLES_JAUGES[r.jauge], v: '+' + r.bonus }) })));
 			} else lignes.push(T('mail.defis', { liste: Jeu.defis.map((id) => T('defi.' + id)).join(' · ') }));
 		}
 		const style = Jeu.profilGestion(duJour.map((e) => e.famille || e.cleAction)); // prompt 47 : épilogue personnalisé ; prompt 87 : famille de la réponse
@@ -2108,7 +2139,7 @@
 		zero_expire: { jauge: 'reputation', valeur: () => (Jeu.historique || []).filter((h) => h.action === 'temps').length, tenu: (v) => v === 0 },
 		budget60: { jauge: 'budget', valeur: () => Jeu.jauges.budget, tenu: (v) => v >= 60 },
 		fluidite60: { jauge: 'fluidite', valeur: () => Jeu.jauges.fluidite, tenu: (v) => v >= 60 },
-		plaintes: { jauge: 'reputation', valeur: () => { const b = Jeu.bilanPlaintes(); return b.traitees + '/' + b.total; }, tenu: () => { const b = Jeu.bilanPlaintes(); return b.traitees === b.total; }, element: 'plaintes' },
+		plaintes: { jauge: 'reputation', valeur: () => { const b = Jeu.bilanPlaintes(); return b.traitees + '/' + b.total; }, tenu: () => { const b = Jeu.bilanPlaintes(); return b.traitees === b.total; }, sansObjet: () => !Jeu.bilanPlaintes().total, element: 'plaintes' }, // prompt 163 : 0/0 = sans objet, pas de bonus
 		equipes: { jauge: 'reputation', valeur: () => (Jeu.malus || {}).equipe_inutile || 0, tenu: (v) => v === 0, element: 'equipes' },
 	};
 	Jeu.DEFIS = Object.keys(DEFIS);
@@ -2123,7 +2154,8 @@
 		return (Jeu.defis || []).map((id) => {
 			const d = DEFIS[id];
 			const valeur = d.valeur();
-			return { id, jauge: d.jauge, valeur, tenu: !!d.tenu(valeur), bonus: Jeu.BONUS_DEFI };
+			const sansObjet = !!(d.sansObjet && d.sansObjet()); // prompt 163 : ni tenu ni manqué, aucun bonus
+			return { id, jauge: d.jauge, valeur, tenu: !sansObjet && !!d.tenu(valeur), sansObjet, bonus: sansObjet ? 0 : Jeu.BONUS_DEFI };
 		});
 	};
 	/** Bonus des défis tenus : +5 sur la jauge concernée, une seule fois, en fin de semaine (pas après une démission) */
@@ -2152,16 +2184,25 @@
 	// =====================================================================
 	// Prompt 56 — chiffres réels de la semaine et mail du patron du dernier soir
 	// =====================================================================
+	const FAMILLES = ['renfort', 'devier', 'retenir', 'rien']; // ordre des profils (pompier, stratège, discret, spectateur)
+	Jeu.FAMILLES = FAMILLES;
 	Jeu.statsSemaine = function () {
 		const dec = (Jeu.historique || []).filter((h) => h.action);
-		const parAction = { devier: 0, retenir: 0, renfort: 0, rien: 0, temps: 0 };
-		dec.forEach((h) => (parAction[h.action] = (parAction[h.action] || 0) + 1));
+		// Prompt 163 : réponses comptées par famille (celle de profilPartie), plus par les clés de l'ancien modèle à
+		// 4 actions — les réponses jouées sont « cat.id » depuis le prompt 87, l'ancien compte valait 0 partout
+		const parFamille = { renfort: 0, devier: 0, retenir: 0, rien: 0 };
+		let expires = 0;
+		dec.forEach((h) => {
+			if (h.action === 'temps') return expires++;
+			const f = h.famille || Jeu.familleDe(h.action);
+			parFamille[FAMILLES.includes(f) ? f : 'rien']++;
+		});
 		const durees = dec.filter((h) => typeof h.dureeMs === 'number');
 		return {
 			recus: (Jeu.paquet || []).length,
-			traites: dec.filter((h) => h.action !== 'temps').length,
-			expires: parAction.temps,
-			parAction,
+			traites: dec.length - expires,
+			expires,
+			parFamille,
 			tempsMoyen: durees.length ? Math.round(durees.reduce((s, h) => s + h.dureeMs, 0) / durees.length / 100) / 10 : null, // secondes, 1 décimale
 			sources: dec.reduce((s, h) => s + (h.sources || 0), 0),
 			ralentis: (Jeu.ralenti && Jeu.ralenti.utilises) || 0,
@@ -2171,11 +2212,24 @@
 			score: Jeu.score(),
 		};
 	};
+	/** Prompt 163 : un fait de la source pour le mail de fin de semaine — pire retard réel (temps réel), sinon la
+	 * première alerte météo, sinon le premier événement de l'agenda ; null si la semaine n'en a aucun. */
+	Jeu.faitSourceSemaine = function () {
+		const p = (Jeu.paquet || []).filter((d) => !estFictif(d) && !d.consequence);
+		const jm = (iso) => String(iso || '').split('-').reverse().join('/');
+		const r = p.filter((d) => typeof d.retard === 'number').sort((a, b) => b.retard - a.retard)[0];
+		if (r) return T('finSemaine.faitRetard', { min: r.retard, ligne: (r.lignes || []).join(', ') || '—' });
+		const m = p.find((d) => d.type === 'alerte météo');
+		if (m) return T('finSemaine.faitMeteo', { date: jm(m.date).slice(0, 5), heure: m.heure || '—', nature: String(m.natureAffichee || m.nature || '').split(',')[0].trim() || T('type.alerte météo'), valeur: m.valeur || '' });
+		const e = p.find((d) => d.type === 'événement' && nomEvenementDossier(d));
+		if (e) return T('finSemaine.faitAgenda', { date: jm(e.date).slice(0, 5), nom: nomEvenementDossier(e) });
+		return null;
+	};
 	/** Mail du patron du dernier soir : félicitations, avertissement ou rappel, avec 2 à 3 vrais chiffres */
 	Jeu.mailFinSemaine = function () {
 		const s = Jeu.statsSemaine();
 		const res = Jeu.defis ? Jeu.resultatsDefis() : [];
-		const rates = res.filter((r) => !r.tenu);
+		const rates = res.filter((r) => !r.tenu && !r.sansObjet);
 		const [ok, total] = s.objectifs.split('/').map(Number);
 		const basse = NOMS_JAUGES.slice().sort((a, b) => s.jauges[a] - s.jauges[b])[0];
 		const lignes = [T('finSemaine.intro', { score: s.score, traites: s.traites, recus: s.recus })];
@@ -2185,6 +2239,8 @@
 		if (rates.length) lignes.push(T('finSemaine.defisRates', { liste: rates.map((r) => T('defi.' + r.id)).join(', ') }));
 		else if (res.length) lignes.push(T('finSemaine.defisTenus'));
 		if (s.expires) lignes.push(T('finSemaine.expires', { n: s.expires }));
+		const fait = Jeu.faitSourceSemaine();
+		if (fait) lignes.push(fait); // prompt 163 : une donnée de la source dans le mail
 		return { objet: T(total && ok === total && !rates.length ? 'finSemaine.objetBravo' : 'finSemaine.objet'), lignes };
 	};
 

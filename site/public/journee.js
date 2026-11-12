@@ -151,7 +151,7 @@ function toucheJournee() {
 		if (keyCode === ENTER || keyCode === RETURN || keyCode === ESCAPE) fermerMailFin();
 		return true;
 	}
-	if (fenetre === 'rapport' && keyCode === TAB) return changerPageRapport(), true;
+	if (fenetre === 'rapport' && keyCode === TAB) return changerPageRapport(keyIsDown(SHIFT) ? -1 : 1), true; // prompt 163 : Maj + Tab recule
 	if (fenetre === 'cafe') return true; // prompt 52 : on boit, le clavier attend
 	if (fenetre === 'partir') {
 		if (keyCode === ESCAPE) fermer();
