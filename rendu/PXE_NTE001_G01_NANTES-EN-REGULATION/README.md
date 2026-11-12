@@ -7,6 +7,37 @@ En ligne : https://workshop-design-interactions.pages.dev/ (jeu) · https://work
 README au format du livret (« README minimal », 12 rubriques), réécrit au prompt 100 (12/11/2026) à partir des
 fichiers du dépôt ; les champs que seul le groupe peut remplir restent `[À COMPLÉTER]`.
 
+## Conformité au brief
+
+**Nantes en régulation répond point par point au livret PATRIMOINE.EXE · Nantes 001** : chaque obligation du
+projet final et chaque livrable de « Ce que chaque groupe remet » a sa preuve dans ce dossier. La chaîne demandée
+est tenue de bout en bout : **source réelle → grammaire écrite → système p5.js → œuvre jouable et exposable**.
+
+| Exigence du livret | Ce que nous avons fait | Preuve |
+|---|---|---|
+| Source patrimoniale identifiable et documentée | Le réseau Naolib de Nantes Métropole à travers ses données ouvertes (offre GTFS, perturbations datées, temps réel), avec la météo et la Loire | `source-sheet.md` / `.pdf` (contexte, provenance, droits, relevés, propriétés observables) |
+| Grammaire explicite, au moins une règle structurante | *Un fait daté de la source devient un dossier à trancher* ; fiche du livret remplie (7 champs), invariants, variables, espace génératif à graine fixe | `grammar.md` / `.pdf` |
+| Prototype fonctionnel lançable dans un navigateur | Double clic sur `index.html`, hors ligne compris ; en ligne sur https://workshop-design-interactions.pages.dev/ | `index.html` · rubrique « Lancer le projet » |
+| Au moins trois paramètres réellement opérants | Semaine rejouée, difficulté (signalements simultanés, aggravation, budget), mode en ligne / hors ligne, défi chrono | rubrique « Data / interaction » · tests `site/scripts/test-jeu.mjs` (3 semaines × 3 façons de jouer, test de difficulté) |
+| Itérations documentées | 151 prompts numérotés (01 à 160) exécutés un par un, revues UX et audits suivis de corrections, une ligne par push | dossier `prompts/` et `journal.md` du dépôt |
+| Test par un autre groupe | [À COMPLÉTER par le groupe : groupe testeur, 3 observations, décision prise] | — |
+| Documentation pour comprendre et relancer | README aux 12 rubriques du « README minimal » | ce fichier |
+| Une donnée ne devient intéressante qu'après un mapping | Retard ≥ 10 min, perturbation datée ou météo au-dessus du 95ᵉ centile → dossier ; réponse → effets sur 3 jauges selon le contexte | rubrique « Data / interaction » · `grammar.md` |
+| Œuvre générative, pas animation aléatoire | Invariants, variables et contraintes écrits ; dé 1d6 à graine fixe par semaine (même semaine, même partie) | `grammar.md` (« Espace génératif ») |
+| Accessibilité de l'interaction | Tout se joue au clavier, à la souris ou au toucher ; micro et webcam seulement en option et doublés ; pas de flash ; sons non indispensables ; tutoriel intégré | rubrique « Data / interaction » · audit des textes à 0 défaut (3 tailles d'écran, FR / EN) |
+| Webcam : présence et responsabilité | Images réduites à 48 × 27, jamais affichées, enregistrées ni envoyées ; webcam inactive tant que le joueur ne l’active pas dans les réglages, puis accord du navigateur | `webcam.js` |
+| Livrable : projet lançable | `index.html` + scripts + assets + `data/fallback.json` | ce dossier |
+| Livrable : fiche-source et grammaire | `.md` et `.pdf` | `source-sheet.pdf` · `grammar.pdf` |
+| Livrable : README | Concept, stack, lancement, mapping, fallback, contributions, IA, sources et droits | ce fichier |
+| Livrable : manifest | Métadonnées de l'édition (framework, édition, ville, dates, auteurs, source, stack, données, IA, licence) | `manifest.json` |
+| Livrable : cartel | 113 mots (80–120 demandés) + source + système + données | `cartel.md` · page https://workshop-design-interactions.pages.dev/cartel/ |
+| Livrable : captation | `hero.jpg`, `detail-01.jpg`, `process.jpg`, `thumb.jpg`, `demo.mp4` de 29 s (20–30 s demandées), vrai rendu du jeu | ce dossier |
+| Livrable : présentation | Diaporama de démonstration et de défense | https://workshop-design-interactions.pages.dev/presentation/ |
+| Structure de dossier recommandée | `PXE_NTE001_G01_NANTES-EN-REGULATION/` au nommage et au contenu du livret | ce dossier |
+
+Le livret le rappelle : *la complexité n'est pas un critère de qualité*. Les API, le temps réel et les options
+micro / webcam ne sont là que parce qu'ils servent la règle : rejouer de vrais faits du réseau, sans en inventer.
+
 ## Auteurs
 
 Mattéo Brevet, Guillaume Renoult (groupe G01) — noms du registre (`site/src/content/oeuvres/pxe-nte001-g01-w01.json`),
