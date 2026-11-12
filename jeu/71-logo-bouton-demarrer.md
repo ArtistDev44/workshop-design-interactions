@@ -31,3 +31,6 @@ survol et au focus : « Accueil de RégulOS (clic, ou Tab puis Entrée) », anno
 Le logo n'est plus le moniteur : c'est la **bulle-pin** (bulle « &#@! » à pointe de marqueur de carte, piste 2 de
 `logo/planche.html`). Même grille 24 × 20, même fonction `dessinerLogoPXE`, même test ; favicon et icônes de la
 webapp refaits avec la petite et la grande bulle.
+
+Prompt 151 : l'entrée « carte » du menu de l'appli garde le moniteur d'origine (`LOGO_MONITEUR`, 4e argument de
+`dessinerLogoPXE`).
