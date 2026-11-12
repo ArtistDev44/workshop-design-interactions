@@ -62,7 +62,7 @@ function fermerTache() {
 	if (suite) suite();
 }
 
-// ——— Fin de journée : rapport du soir avant le mail (appelée par terminerJournee) ; true = en attente ———
+// ——— Fin de journée : rapport du soir avant le soir (appelée par terminerJournee) ; true = en attente ———
 function tachesFinJournee() {
 	if (fenetre === 'tache') return true;
 	const rp = Taches.rapport();

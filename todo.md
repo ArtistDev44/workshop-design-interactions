@@ -27,8 +27,8 @@ Suivi rapide du protocole. Le détail de chaque journée est dans les phases ci-
 
 - [ ] Former le groupe (2 à 3 étudiants) et répartir les rôles
 - [ ] Choisir une seule source patrimoniale principale dans le corpus
-- [ ] Réserver l'identifiant d'œuvre : PXE-NTE001-G{groupe}-W{numéro}
-- [ ] Nommer le dossier de rendu : PXE_NTE001_G{nn}_NOM-PROJET
+- [x] Réserver l'identifiant d'œuvre : PXE-NTE001-G{groupe}-W{numéro} (fait : `PXE-NTE001-G01-W01` dans `site/src/content/oeuvres/` et `manifest.json`)
+- [x] Nommer le dossier de rendu : PXE_NTE001_G{nn}_NOM-PROJET (fait : `rendu/PXE_NTE001_G01_NANTES-EN-REGULATION/`)
 - [x] Créer la structure du livret : index.html, sketch.js, style.css, data/fallback.json, assets/, source-sheet, grammar — `site/public/`
 - [ ] Choisir une piste créative parmi les 25 du livret (ex. Weather Patterns, City DNA, From Hand to Algorithm) ou en proposer une
 - [x] Écrire la phrase-problématique en une phrase — `jeu/00-concept.md`
@@ -50,7 +50,7 @@ Fin J1 attendue : fiche-source / grammaire visuelle / sketch minimal / phrase-pr
 - [ ] Relire la chaîne source → règle → comportement et confirmer la direction
 - [ ] Poser l'architecture : variables, fonctions (une fonction = une idée formulable), boucles, random / noise, seed fixé pour l'archive
 - [ ] Choisir le régime temporel : statique généré / évolution lente / événement / interaction continue
-- [ ] Rendre au moins 3 paramètres réellement opérants (V1 fonctionnelle)
+- [x] Rendre au moins 3 paramètres réellement opérants (V1 fonctionnelle) (fait : semaine, difficulté, en ligne / hors ligne, défi chrono — vérifiés par `site/scripts/test-jeu.mjs`)
 - [ ] Tester en 1920×1080, pixelDensity(1), éviter de recréer de gros tableaux dans draw()
 - [ ] N'ajouter data / API / interaction que si le mapping est justifiable en une phrase ; sinon assumer un projet génératif
 - [x] Intégrer data ou interaction avec fallback local dans data/fallback.json (V2) — 6 cas dans `site/public/data/fallback.json`
@@ -71,7 +71,7 @@ Aucun travail obligatoire. Sauvegarde et relecture des notes possibles, rien de 
 - [ ] FREEZE FONCTIONNEL À MIDI — après midi : plus aucune réécriture de l'architecture
 - [ ] 13:00 Documentation : README complet (Auteurs, Source patrimoniale, Concept, Grammaire/règles, Stack, Data/interaction, Lancer le projet, Fallback/limites, Contributions, AI usage, Sources/droits)
 - [ ] Rédiger le cartel : 80 à 120 mots + source patrimoniale + système, au format du livret
-- [ ] Produire manifest.json (modèle du livret) et finaliser source-sheet et grammar
+- [x] Produire manifest.json (modèle du livret) et finaliser source-sheet et grammar (fait : `manifest.json`, `source-sheet.md` / `.pdf`, `grammar.md` / `.pdf` dans le dossier de rendu)
 - [x] Générer un QR code pointant vers le site web de l'œuvre (page en ligne de l'édition ou GitHub Pages du dépôt) — PNG régénérés vers l'URL canonique (commit dea5dc4 ; identiques octet pour octet à `qrencode` sur https://workshop-design-interactions.pages.dev/ et …/cartel/, vérifié le 12/11/2026) ; test au téléphone en salle : [À COMPLÉTER]
 - [ ] Intégrer le QR code au cartel / à l'affichage et tester le scan en conditions réelles
 - [x] 14:00 Installation + captation : hero.jpg, detail-01.jpg, process.jpg, demo.mp4 (20 à 30 s), thumb.jpg (fait au prompt 46 : `site/public/captures/`, vrai rendu)
@@ -92,17 +92,17 @@ jauges, UI, narration, fallback, raccourcis, paramètres, accessibilité).
 - [x] Compteur de temps par décision ; à 0, « ne rien faire » appliqué
 - [x] 3 jauges (fluidité, satisfaction, réputation) + fins multiples selon le bilan (fait ; depuis le prompt 22 le trio est fluidité, réputation, **budget**)
 - [x] `data/fallback.json` : 6 cas figés, mode hors ligne jouable
-- [x] Raccourcis clavier complets (`jeu/08-raccourcis.md`), reset `R`, test 1920×1080 — raccourcis et reset dans le code ; test 1920×1080 à refaire au preflight
+- [x] Raccourcis clavier complets (`jeu/174-raccourcis.md`, inventaire du prompt 174 ; `jeu/08-raccourcis.md` = historique), reset par « Recommencer » du menu du jeu (R ne recommence plus depuis le prompt 174 : ralenti seulement), test 1920×1080 — raccourcis et reset dans le code ; test 1920×1080 à refaire au preflight
 - [x] Accessibilité : `prefers-reduced-motion`, contraste, jouable sans souris et sans audio (fait : prompts 18, 48, 53 ; `prefers-reduced-motion`, contraste ≥ 4,5:1, clavier complet, jouable sans son)
 
 ## Contrôles qualité
 
 ### Obligatoires du livret
 
-- [ ] Source patrimoniale identifiable et documentée
+- [x] Source patrimoniale identifiable et documentée — `source-sheet.md` / `.pdf` (dossier de rendu)
 - [x] Grammaire explicite : au moins une règle structurante clairement formulée — `site/public/grammar.md`
 - [x] Prototype fonctionnel lançable dans un navigateur — `site/public/index.html`
-- [ ] Au moins 3 paramètres réellement opérants
+- [x] Au moins 3 paramètres réellement opérants — `site/scripts/test-jeu.mjs` (difficulté, semaines, hors ligne, défi chrono)
 - [ ] Test par un autre groupe + au moins une itération documentée
 - [ ] Documentation complète permettant de comprendre et relancer le projet
 
@@ -127,13 +127,13 @@ jauges, UI, narration, fallback, raccourcis, paramètres, accessibilité).
 
 ### Les 7 invariants du standard
 
-- [ ] Source réelle & provenance — source sheet
-- [ ] Grammaire explicite — grammar map
-- [ ] Système computationnel — code / logic
+- [x] Source réelle & provenance — source sheet (`source-sheet.md` / `.pdf`)
+- [x] Grammaire explicite — grammar map (`grammar.md` / `.pdf`)
+- [x] Système computationnel — code / logic (`site/public/`, p5.js)
 - [ ] Mapping perceptible — mapping sheet
-- [ ] Œuvre montrable — live / capture
+- [x] Œuvre montrable — live / capture (https://workshop-design-interactions.pages.dev/, `site/public/captures/`)
 - [ ] Robustesse & responsabilité — preflight
-- [ ] Archive relançable — archive package
+- [x] Archive relançable — archive package (`rendu/PXE_NTE001_G01_NANTES-EN-REGULATION/`, `index.html` hors ligne)
 
 ## Soutenance et évaluation
 
@@ -184,7 +184,7 @@ Vérifié par `ls` / `grep` dans le dépôt : seuls les éléments existants son
 ### Livrables manquants
 - [x] `manifest.json` au modèle du livret : `site/public/manifest.json` (prompt 46 ; `authors`, `license` et la licence Hub'Eau renseignés le 11/11/2026)
 - [ ] Cartel 80–120 mots : texte présent dans `site/src/content/oeuvres/pxe-nte001-g01-w01.json` (validé au build, affiché sur `/cartel/`) ; « satisfaction des usagers » remplacée par « budget » (prompt 46) — relecture finale par le groupe
-- [x] Captures : `site/public/captures/` — `hero.jpg`, `detail-01.jpg`, `process.jpg`, `thumb.jpg`, `demo.mp4` (28 s, refaite au prompt 59), issues du vrai rendu (prompt 46)
+- [x] Captures : `site/public/captures/` — `hero.jpg`, `detail-01.jpg`, `process.jpg`, `thumb.jpg`, `demo.mp4` (29 s, refaites le 12/11/2026, commit 812d094), issues du vrai rendu (prompt 46) ; `hero.jpg`, `detail-01.jpg` et `thumb.jpg` refaites le 12/11 au soir sur le jeu actuel) — à refaire ; trailer de 30 s : `captures/trailer.mp4` (prompt 187)
 - [ ] QR codes `site/public/assets/qr-*.png` : vérifiés identiques à ceux générés vers l'URL canonique (prompt 46) — reste à tester le scan en conditions réelles
 - [ ] Checklist de robustesse complète au preflight (refresh, sans API, 1920×1080, console)
 - [x] Version finale sauvegardée : `rendu/PXE_NTE001_G01_NANTES-EN-REGULATION/` (lancée hors ligne par `file://`, sans erreur ; prompt 46)

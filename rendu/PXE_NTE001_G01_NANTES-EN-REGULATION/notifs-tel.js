@@ -153,7 +153,7 @@ function panneauDecisionOuvert() {
 }
 /** Chaque image (draw) : arrivées spontanées. Aucun appel réseau ici. */
 function majNotifsTel() {
-	if (ecran !== 'jeu' || !Jeu.paquet || !Jeu.horloge || MENU.actif || ['fin', 'mail', 'soir'].includes(phase)) return;
+	if (ecran !== 'jeu' || !Jeu.paquet || !Jeu.horloge || MENU.actif || ['fin', 'soir'].includes(phase)) return;
 	// Mode « aujourd'hui » : les relevés en direct déjà chargés (au clic) deviennent des notifications d'ambiance datées de leur heure réelle
 	if (Jeu.etat.mode === 'direct' && TELN.jour)
 		Object.values(TELN.direct).forEach((d) => {

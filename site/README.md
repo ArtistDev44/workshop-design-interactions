@@ -20,8 +20,9 @@ Direction de l'édition : Kamel Ghabte.
 Le site **est** l'œuvre : le jeu p5.js « Nantes en régulation » (`public/index.html`) est servi
 à la racine. Les pages Astro de la vitrine (galerie, statistiques, méthode, `/donnees/`…) ont été
 retirées le 10/11/2026 quand le jeu est passé à la racine (voir `journal.md`). Il reste le
-registre machine-readable `src/content/oeuvres/*.json`, validé au build, d'où est générée la seule
-page Astro : **`/cartel/`**. Le tout rend lisible la chaîne **source → grammaire → système → œuvre**.
+registre machine-readable `src/content/oeuvres/*.json`, validé au build, d'où est générée la page
+Astro **`/cartel/`** ; la seconde page Astro, **`/making-of/`**, est générée depuis `prompts/README.md`
+(prompt 46). Le kit de presse (`public/kit-presse/`, prompt 188) est une page statique servie telle quelle. Le tout rend lisible la chaîne **source → grammaire → système → œuvre**.
 
 Une partie (une semaine rejouée) dure **10 à 20 minutes** ; le mode histoire (3 semaines), 30 à 45 minutes
 (durées visées par la conception, à confirmer par les tests humains). Public : 12 ans et plus.
@@ -149,6 +150,6 @@ Les décisions de jeu (Q1–Q61, `jeu/`) et les prompts ont été rédigés en a
 
 ## Livrables J3 (prompt 46)
 - Pages : le jeu (`/`), les cartels avec captation et QR codes (`/cartel/`), la chaîne des prompts générée depuis `prompts/README.md` (`/making-of/`).
-- `public/manifest.json` (modèle du livret), `public/captures/` (hero, detail-01, process, thumb, demo.mp4 de 29 s, issus du vrai rendu).
+- `public/manifest.json` (modèle du livret), `public/captures/` (hero, detail-01, process, thumb, demo.mp4 de 29 s, issus du vrai rendu ; `hero.jpg`, `detail-01.jpg` et `thumb.jpg` refaites le 12/11 au soir sur le jeu actuel), `public/captures/trailer.mp4` (trailer de 30 s, prompt 187, hors précache), kit de presse `/kit-presse/` (prompt 188).
 - Version figée : `rendu/PXE_NTE001_G01_NANTES-EN-REGULATION/` (à la racine du dépôt).
 - Ajouter une semaine, un message ou une traduction : `CONTRIBUTING.md` (racine).

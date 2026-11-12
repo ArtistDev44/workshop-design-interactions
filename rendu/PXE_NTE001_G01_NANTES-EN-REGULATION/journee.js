@@ -1,5 +1,6 @@
 /* Nantes en régulation — prompt 51 : finir sa journée à l'horloge, lumière de la pièce, ombres.
- * - À l'heure de fin, l'horloge s'arrête : un clic sur l'horloge murale termine la journée (mail du soir).
+ * - À l'heure de fin, l'horloge s'arrête : un clic sur l'horloge murale termine la journée (prompt 194 : directement
+ *   le soir ; le mail du soir est déposé, non lu, dans l'appli Mails).
  * - Avant l'heure : alerte « journée pas finie » ; partir quand même → dossiers restants réglés par la règle
  *   « non traité » (Q25), et le lendemain un mail du patron mis en avant retire de la réputation (game.js).
  * - Prompt 78 : faire passer le temps vite = la sieste (somnolence, sieste.js).
@@ -12,7 +13,6 @@ const JOURNEE = { finAnnoncee: false };
 function clicHorloge() {
 	interaction();
 	if (ecran !== 'jeu' || !Jeu.horloge || !Jeu.jourCourant || !Jeu.jourCourant()) return messagePiece('horloge', t('horloge.libre', { heure: texteHeure() }));
-	if (phase === 'mail') return messagePiece('horloge', t('horloge.mail'));
 	if (phase === 'soir') return messagePiece('horloge', t('soir.annonce')); // prompt 69
 	if (phase === 'fin') return;
 	if (Jeu.journeeFinie() && phase === 'attente') return terminerJournee();
@@ -27,18 +27,17 @@ function messagePiece(objet, texte) {
 	PIECE.message = { texte, objet, jusqua: millis() + 5000 };
 	annoncer(texte);
 }
-/** Fin normale : objectif du jour, mail du soir (comme avant le prompt 51, mais au clic sur l'horloge) */
+/** Fin normale : objectif du jour, puis directement le soir (prompt 194 : plus de passage par le mail plein écran du PC ;
+ * le mail du soir est déposé, non lu, dans l'appli Mails, et son contenu est annoncé aux lecteurs d'écran) */
 function terminerJournee() {
 	if (Jeu.finDeJourneeTactique) Jeu.finDeJourneeTactique();
-	if (Jeu.statutPatron && Jeu.statutPatron.licencie) return lancerLicenciement(); // prompt 84 : avant le mail du soir
-	if (typeof tachesFinJournee === 'function' && tachesFinJournee()) return; // prompt 88 : rapport du soir (puis récapitulatif), avant le mail
-	phase = 'mail';
+	if (Jeu.statutPatron && Jeu.statutPatron.licencie) return lancerLicenciement(); // prompt 84 : avant le soir
+	if (typeof tachesFinJournee === 'function' && tachesFinJournee()) return; // prompt 88 : rapport du soir (puis récapitulatif), avant le soir
 	enSieste = false;
 	JOURNEE.finAnnoncee = false;
-	Confort.Son.bip('mail');
-	Sauvegarde.auto(true);
-	const sc = Jeu.sceneDuSoir ? Jeu.mailDuJour().scene : null; // prompt 191 : le moment de la journée et le mot du patron, aussi pour les lecteurs d'écran
-	annoncer(t('horloge.fin') + (sc ? ' ' + (sc.fait ? String(sc.fait.texte) : t('mailf.fait.aucun')) + ' « ' + String(sc.patron) + ' »' : ''));
+	const m = Jeu.deposerMailDuSoir ? Jeu.deposerMailDuSoir() : null;
+	const sc = m ? Jeu.mailDuJour().scene : null; // prompt 191 : le moment de la journée et le mot du patron, aussi pour les lecteurs d'écran
+	rangerPoste(t('horloge.fin') + (sc ? ' ' + (sc.fait ? String(sc.fait.texte) : t('mailf.fait.aucun')) + ' « ' + String(sc.patron) + ' »' : ''));
 }
 function textePartir() {
 	return t('partir.texte', { n: Jeu.dossiersRestantsDuJour(), fin: Jeu.formaterHeure(Jeu.finJournee()), heure: texteHeure(), malus: Jeu.MALUS_DEPART });
@@ -74,17 +73,12 @@ function fenetrePartir() {
 }
 
 // ——— Prompt 94 : « Quitter la journée » (bouton du bandeau, touche Q) — avance l'étape de sortie en cours ———
-/** Fin de service atteinte → mail du soir ; mail → on range le poste ; soir → sortie du bureau (crépuscule sauté) ;
+/** Fin de service atteinte → le soir (comme un clic sur l'horloge, prompt 194) ; soir → sortie du bureau (crépuscule sauté) ;
  * avant l'heure → la fenêtre « partir quand même » (malus expliqué, prompt 51). Les jauges ne bougent pas ici. */
 function quitterJourneeRapide() {
 	if (ecran !== 'jeu' || !Jeu.horloge || !Jeu.jourCourant || !Jeu.jourCourant()) return false;
 	if (phase === 'fin' || (typeof CINE !== 'undefined' && CINE) || (typeof GAMEOVER !== 'undefined' && GAMEOVER)) return false;
 	if (typeof interaction === 'function') interaction();
-	if (phase === 'mail') {
-		rangerPoste();
-		annoncer(t('quitter.range'));
-		return true;
-	}
 	if (phase === 'soir') {
 		if (SOIR.sortie) return true;
 		if (vue === 'poste') seLever();

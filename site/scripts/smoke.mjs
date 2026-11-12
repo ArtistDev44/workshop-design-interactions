@@ -124,7 +124,8 @@ for (const f of sources) {
 		const kit = readFileSync(join(pub, 'kit-presse', 'index.html'), 'utf8');
 		const refs = [...kit.matchAll(/(?:src|href|poster)="([^"#:]+)"/g)].map((x) => x[1]);
 		for (const r of refs) existsSync(join(pub, 'kit-presse', r.endsWith('/') ? r + 'index.html' : r)) || r === '../presentation/' ? ok() : echec(`kit-presse/index.html : fichier référencé absent ${r}`);
-		/<html lang="fr">/.test(kit) && !/<script|https?:\/\/(?!workshop-design-interactions\.pages\.dev|github\.com\/ArtistDev44)/.test(kit) ? ok() : echec('kit-presse/index.html : lang="fr", sans script ni ressource externe');
+		// crédit exact de la musique du trailer (trailer/CREDITS.md) : lien vers le texte CC BY 4.0, pas une ressource chargée
+		/<html lang="fr">/.test(kit) && !/<script|https?:\/\/(?!workshop-design-interactions\.pages\.dev|github\.com\/ArtistDev44|creativecommons\.org\/licenses\/by\/4\.0\/)/.test(kit) ? ok() : echec('kit-presse/index.html : lang="fr", sans script ni ressource externe');
 		readFileSync(join(pub, 'kit-presse', 'communique-de-presse.md'), 'utf8') === readFileSync(join(pub, 'kit-presse', 'communique-de-presse.txt'), 'utf8') ? ok() : echec('kit-presse : communique-de-presse.md et .txt différents');
 	}
 	// Prompt 82 : la présentation Slidev (public/presentation/) est entièrement en précache, hors ligne compris

@@ -233,7 +233,7 @@
 	const OPAQUES = ['panneau', 'panneauDS'];
 	function caches() {
 		// les fenêtres modales (aide, mail, menu, pause…) recouvrent le fond exprès : seuls les panneaux non modaux comptent
-		if ((typeof fenetre !== 'undefined' && fenetre) || (typeof MENU !== 'undefined' && MENU.actif) || (typeof phase !== 'undefined' && (phase === 'mail' || phase === 'fin')) || (typeof enPause !== 'undefined' && enPause) || (typeof GAMEOVER !== 'undefined' && GAMEOVER) || (typeof CINE !== 'undefined' && CINE) || (typeof smsActif !== 'undefined' && smsActif)) return;
+		if ((typeof fenetre !== 'undefined' && fenetre) || (typeof MENU !== 'undefined' && MENU.actif) || (typeof phase !== 'undefined' && phase === 'fin') || (typeof enPause !== 'undefined' && enPause) || (typeof GAMEOVER !== 'undefined' && GAMEOVER) || (typeof CINE !== 'undefined' && CINE) || (typeof smsActif !== 'undefined' && smsActif)) return;
 		A.zonesImage
 			.filter((z) => OPAQUES.includes(z.nom) && z.ordre > 0)
 			.forEach((z) => {
@@ -461,7 +461,7 @@
 			['lignes', 'trafic', 'meteo', 'agenda'].forEach((c) => revelerSource(c, false));
 		}, 12);
 		// Fin de journée, soir, semaine, fins
-		add('mail du soir', () => (H.raz(), (PLUS.ouvert = false), H.poste(), (phase = 'mail')), 12);
+		add('mail du soir · Mails', () => (H.raz(), (PLUS.ouvert = false), H.poste(), Jeu.deposerMailDuSoir(), (PC.etat = 'os'), (PC.fenetre = 'patron'), (PATRON.ouvert = false), (PATRON.filtre = 'soirs')), 12); // prompt 194 : le mail du soir est dans l'appli Mails
 		add('soir · sortie', () => (H.raz(), (phase = 'soir'), (SOIR.debut = millis()), (vue = 'bureau')), 20);
 		add('rapport de la veille', () => (H.raz(), (phase = 'attente'), (vue = 'bureau'), ouvrir('rapportVeille')));
 		add('fin de semaine · rapport', () => (H.raz(), allerFin()), 30);
