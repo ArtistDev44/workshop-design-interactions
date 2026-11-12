@@ -2122,7 +2122,7 @@ for (const s of semaines) {
 // Prompt 161 : les textes décrivent le jeu qui tourne (prolonge le contrôle du prompt 131 sur sms.*) — pas de chrono par
 // défaut (prompt 87), équipes dès la semaine 1 (prompt 108), trois répliques (prompt 117), archives sans minutes de retard
 {
-	const PREFIXES = ['histoire.c', 'histoire.prochain', 'mp.mode.', 'mp.difficulte', 'mp.actifs.', 'poste.', 'sieste.', 'cafe.', 'stress.', 'credits.', 'fin.', 'guide.somnolence', 'tuto.', 'objet.micro.', 'webcam.', 'enq.revele.'];
+	const PREFIXES = ['histoire.c', 'histoire.prochain', 'mp.mode.', 'mp.difficulte', 'mp.actifs.', 'poste.', 'sieste.', 'cafe.', 'credits.', 'fin.', 'guide.somnolence', 'tuto.', 'objet.micro.', 'webcam.', 'enq.revele.'];
 	const PERIMEES = {
 		fr: [/15 secondes/i, /quatre répliques/i, /\b1 à 4\b/, /expirent sont perdus/i, /Nouveauté : vous pouvez envoyer des équipes/i, /un nouvel élément de jeu/i, /\bDévier\b|\bRetenir\b|Ne rien faire|ne rien faire/, /retards ×/, /chrono est long/i, /ne se met pas en pause/i, /ne dépend que de l'inactivité/i, /Révèle le retard/i],
 		en: [/15 seconds/i, /four replies/i, /\b1 to 4\b/, /expire are lost/i, /New this week: you can send/i, /new game element/i, /\bDivert\b|Hold at terminus|Do nothing|do nothing/, /delays ×/, /timer is long/i, /can.t be paused/i, /only depend on inactivity/i, /Reveals the delay/i],
@@ -2455,6 +2455,38 @@ for (const langue of ['fr', 'en']) {
 		for (const k of ['mp.credits.menu', 'pwa.installer', 'pwa.badge']) verifier(dico[k] === undefined, `prompt 171 : clé ${k} devenue inutile, à supprimer (${langue})`);
 		for (const k of ['mp.retour', 'param.retour', 'credits.retour']) verifier(!/[←‹›→]/.test(dico[k] || ''), `prompt 171 : flèche dans le libellé ${k} (${langue})`);
 	}
+}
+
+// Prompt 172 : aide illustrée (une vignette dessinée en code par carte de règle et par malus, équivalent texte dans
+// l'annonce de l'onglet) ; les livres du bureau ouvrent cette fenêtre, l'ancien livre « stress » et ses textes ont disparu
+{
+	const lire = (f) => readFileSync(join(pub, f), 'utf8');
+	const aide172 = lire('aide.js');
+	const imm172 = lire('immersion.js');
+	verifier(/function illustrationAide\(/.test(aide172) && /carteTexteAide\(t\('aide\.carte\.' \+ i\), p\[i\], i\)/.test(aide172) && /illustrationAide\(m\.id,/.test(aide172) && /miniJaugeAide\(/.test(aide172.slice(aide172.indexOf('function dessinerDemarrerAide'))), 'prompt 172 : une illustration par carte de règle, par malus et dans « Bien démarrer »');
+	verifier(!/loadImage|\.png|\.webp|\.svg/.test(aide172), 'prompt 172 : les illustrations de l\'aide sont dessinées en code, sans image');
+	// Chaque carte de règle (paragraphes 1 à 9 hors glossaire) et chaque malus a son dessin
+	const illus = aide172.slice(aide172.indexOf('function illustrationAide'), aide172.indexOf('// ——— Cartes'));
+	const ordre = JSON.parse(aide172.match(/const ORDRE_REGLES_AIDE = (\[[^\]]*\])/)[1]);
+	verifier(ordre.every((i) => new RegExp('cle === ' + i + '\\)').test(illus)), 'prompt 172 : une carte de règle sans illustration');
+	const c172 = contexte('fr');
+	const icones = vm.runInContext(aide172.match(/const ICONES_MALUS_AIDE = (\{[^}]*\})/)[1].replace(/^/, '(') + ')', vm.createContext({}));
+	const lucide172 = lire('icones-lucide.js');
+	verifier(vm.runInContext('Jeu.MALUS.map((m) => m.id)', c172).every((id) => icones[id] && lucide172.includes(icones[id])), 'prompt 172 : un malus sans icône (ICONES_MALUS_AIDE) ou icône absente de icones-lucide.js');
+	for (const nom of [...illus.matchAll(/iconeLucide\('([a-z0-9-]+)'/g)].map((x) => x[1])) verifier(new RegExp("['\"]?" + nom + "['\"]?: ").test(lucide172), `prompt 172 : icône Lucide « ${nom} » absente`);
+	// Équivalent texte : l'annonce de chaque onglet illustré, dans les deux langues
+	verifier(/annoncer\(annonceOngletAide\(i\)\)/.test(aide172) && /annoncer\(annonceOngletAide\(0\)\)/.test(aide172), 'prompt 172 : l\'annonce de l\'onglet ne dit plus les illustrations');
+	for (const langue of ['fr', 'en']) {
+		const dico = vm.runInContext(`TRADUCTIONS.${langue}`, c172);
+		for (const o of ['demarrer', 'regles', 'malus']) verifier(String(dico['aide.illus.' + o] || '').length > 40, `prompt 172 : équivalent texte aide.illus.${o} absent (${langue})`);
+		verifier(!Object.keys(dico).some((k) => /^stress\./.test(k)), `prompt 172 : textes de l'ancien livre encore présents (${langue})`);
+	}
+	// Les livres ouvrent l'aide ; plus de fenêtre « livre-stress » ; le guide et H pointent la même fenêtre
+	verifier(/if \(nom === 'aide' \|\| nom === 'stress'\) return ouvrir\('aide'\)/.test(imm172), 'prompt 172 : les livres du bureau doivent ouvrir la fenêtre d\'aide');
+	verifier(['immersion.js', 'sketch.js', 'guide.js', 'portrait.js', 'audit-textes.js'].every((f) => !/livre-stress|fenetreLivreStress|LIVRE_STRESS/.test(lire(f))), 'prompt 172 : référence à l\'ancien livre (livre-stress)');
+	verifier(/id: 'livre', cible: \(\) => 'livreAide', fait: \(\) => !!tutoriel \|\| fenetre === 'aide'/.test(lire('guide.js')), 'prompt 172 : l\'étape « livre » du guide doit se valider à l\'ouverture de l\'aide');
+	verifier(/function tempsSuspendu\(\) \{\n\treturn [^\n]*fenetre === 'aide'/.test(imm172), 'prompt 172 : le temps de jeu doit être suspendu pendant la lecture de l\'aide');
+	verifier(/fenetre === 'aide' && \(key === 't' \|\| key === 'T'\)\) return lancerTutoriel\(\)/.test(lire('sketch.js')) && /nom: 'aide'[^\n]*\n\t\{ nom: 'stress'/.test(imm172) && /function dessinerLivres/.test(imm172), 'prompt 172 : tutoriel (T) depuis l\'aide ou objets livres du décor disparus');
 }
 
 // Service worker : chaque script de index.html est dans la liste hors ligne de sw.js

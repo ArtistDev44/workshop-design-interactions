@@ -67,7 +67,7 @@ const ETAPES_GUIDE = [
 	{ id: 'actions', cible: () => (vue === 'poste' && PC.etat === 'appli' ? 'actions' : vue === 'poste' ? 'iconeSignalements' : 'ecranPC'), fait: () => (Jeu.historique || []).length > 0 || phase === 'narration' },
 	{ id: 'apps', cible: () => (vue !== 'poste' ? 'ecranPC' : 'iconesOS'), fait: () => PC.etat === 'os' && (!!PC.fenetre || PC.flottant) }, // prompt 103 : les autres applis sont dans le menu à gauche
 	{ id: 'quitter', cible: () => 'quitterPC', fait: () => vue === 'bureau' },
-	{ id: 'livre', cible: () => 'livreAide', fait: () => !!tutoriel || fenetre === 'livre-stress' || (typeof PIECE !== 'undefined' && !!PIECE.message) },
+	{ id: 'livre', cible: () => 'livreAide', fait: () => !!tutoriel || fenetre === 'aide' || (typeof PIECE !== 'undefined' && !!PIECE.message) },
 ];
 function demarrerGuide() {
 	GUIDE.actif = true;

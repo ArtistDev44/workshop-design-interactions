@@ -8,6 +8,11 @@
  *   4 Malus : nom, condition → conséquence.
  * Texte courant à 20 px au moins, interligne 1,4 : une rubrique trop longue se pagine, elle ne rétrécit jamais.
  * Clavier : ← → ou Tab (onglets), 1 à 4, ↑ ↓ (pages), T (tutoriel), H / ? / Échap (fermer, sketch.js).
+ *
+ * Prompt 172 : chaque carte de règle et chaque malus porte une illustration dessinée en code (illustrationAide) —
+ * les composants réels du jeu en réduction (jauge du bandeau, pin de la carte, jauge de somnolence, répliques) ou
+ * une icône Lucide ; aucune image. Leur équivalent texte est dit par l'annonce de l'onglet (aide.illus.*).
+ * La fenêtre s'ouvre aussi depuis les livres du bureau (immersion.js), à la place de l'ancien livre.
  */
 const AIDE = { onglet: 0, page: 0, pages: 1, debut: 0, vue: -9 };
 const ONGLETS_AIDE = ['demarrer', 'regles', 'raccourcis', 'malus'];
@@ -34,7 +39,12 @@ function changerOngletAide(i) {
 	AIDE.page = 0;
 	AIDE.debut = millis();
 	Confort.Son.bip('choix');
-	annoncer(t('aide.onglet.annonce', { n: i + 1, total: ONGLETS_AIDE.length, titre: t(LIBELLES_ONGLETS_AIDE[ONGLETS_AIDE[i]]) }));
+	annoncer(annonceOngletAide(i));
+}
+/** Annonce d'un onglet : son rang, son titre et l'équivalent texte de ses illustrations (prompt 172) */
+function annonceOngletAide(i) {
+	const cle = ONGLETS_AIDE[i];
+	return t('aide.onglet.annonce', { n: i + 1, total: ONGLETS_AIDE.length, titre: t(LIBELLES_ONGLETS_AIDE[cle]) }) + (ONGLETS_ILLUSTRES_AIDE.includes(cle) ? ' ' + t('aide.illus.' + cle) : '');
 }
 function pageAide(sens) {
 	const p = constrain(AIDE.page + sens, 0, AIDE.pages - 1);
@@ -71,13 +81,106 @@ function titreCarteAide(txt, x, y, l) {
 }
 const optionsTexteAide = (couleur, style) => ({ police: POLICE_TEXTE, taille: TEXTE_AIDE.taille, interligne: TEXTE_AIDE.interligne, couleur: couleur || DS.blanc75, style: style || NORMAL });
 
+// ——— Illustrations (prompt 172) : une vignette par carte, dessinée en code, jamais plus haute que la carte ———
+const ONGLETS_ILLUSTRES_AIDE = ['demarrer', 'regles', 'malus'];
+const VIGNETTE_AIDE = { l: 116, h: 84, ecart: 20 };
+const ICONES_MALUS_AIDE = { non_traite: 'inbox', sieste: 'moon', objectif_rate: 'flag', equipe_inutile: 'users', budget_epuise: 'wallet' };
+/** Jauge du bandeau en réduction : piste, remplissage à la couleur du seuil (vert, orange sous 40, rouge sous 20), repères 20 et 40 */
+function miniJaugeAide(x, y, l, h, v) {
+	noStroke();
+	fill(C.piste);
+	rect(x, y, l, h);
+	fill(v < 20 ? C.rougeFonce : v < 40 ? C.orange : C.vert);
+	rect(x, y, (l * v) / 100, h);
+	fill(255, 255, 255, 170);
+	[20, 40].forEach((s) => rect(x + (l * s) / 100 - 1, y - 2, 2, h + 4));
+}
+/** Pin d'alerte de la carte (ICONE_PIN, comme dessinerMarqueur) : taille et couleur selon la gravité, liseré blanc si élevée */
+function miniPinAide(x, y, g) {
+	const tm = g === 'elevee' ? 36 : g === 'moyenne' ? 28 : 20;
+	if (g === 'elevee') {
+		const blanc = { P: DS.blanc, W: DS.blanc };
+		for (let dx = -2; dx <= 2; dx += 2) for (let dy = -2; dy <= 2; dy += 2) if (dx || dy) dessinerIconePixel(ICONE_PIN, x + dx, y + dy, tm, blanc);
+	}
+	dessinerIconePixel(ICONE_PIN, x, y, tm, { P: couleurGravite(g), W: g === 'elevee' ? DS.blanc : DS.fond });
+}
+/** Vignette d'une carte : cle = rang du paragraphe de aide.texte (1 à 9) ou identifiant de malus */
+function illustrationAide(cle, x, y, l, h) {
+	const barre = (bx, by, bl, c) => (noStroke(), fill(c), rect(x + bx, y + by, bl, 6));
+	push();
+	noStroke();
+	fill(DS.blanc05);
+	rect(x, y, l, h);
+	noFill();
+	stroke(DS.blanc15);
+	strokeWeight(2);
+	rect(x + 1, y + 1, l - 2, h - 2);
+	noStroke();
+	if (ICONES_MALUS_AIDE[cle]) {
+		iconeLucide(ICONES_MALUS_AIDE[cle], x + (l - 32) / 2, y + (h - 32) / 2, 32, DS.erreurClair);
+	} else if (cle === 1) {
+		// Signalements : la carte (fleuve, ligne), deux pins à leur lieu
+		fill('rgba(56,96,255,0.55)');
+		rect(x + 8, y + 56, l - 16, 8);
+		fill(DS.blanc50);
+		for (let i = 0; i < 12; i++) rect(x + 10 + i * 8, y + 30 + Math.round(Math.sin(i / 2.2) * 5), 6, 2);
+		miniPinAide(x + 26, y + 10, 'moyenne');
+		miniPinAide(x + 78, y + 40, 'faible');
+	} else if (cle === 2) {
+		// Répondre : trois répliques, la touche à gauche ; celle du haut est choisie
+		for (let i = 0; i < 3; i++) {
+			fill(i === 0 ? DS.alerte : DS.blanc50);
+			rect(x + 12, y + 13 + i * 22, 14, 14);
+			fill(i === 0 ? DS.blanc : DS.blanc15);
+			rect(x + 34, y + 13 + i * 22, l - 46, 14);
+		}
+	} else if (cle === 3) {
+		// Gravité : les trois tailles du pin de la carte (élevée, moyenne, faible)
+		miniPinAide(x + 12, y + 24, 'elevee');
+		miniPinAide(x + 54, y + 30, 'moyenne');
+		miniPinAide(x + 86, y + 36, 'faible');
+	} else if (cle === 5) {
+		// Défi chrono : minuteur et compteur qui se vide
+		iconeLucide('timer', x + (l - 32) / 2, y + 12, 32, DS.alerte);
+		barre(14, 58, l - 28, C.piste);
+		barre(14, 58, (l - 28) * 0.4, DS.alerte);
+	} else if (cle === 6) {
+		// Somnolence : la jauge du poste (bleue, orange à 50, rouge à 80) sous une lune
+		iconeLucide('moon', x + (l - 32) / 2, y + 12, 32, DS.blanc);
+		barre(14, 58, l - 28, C.piste);
+		barre(14, 58, (l - 28) * 0.62, C.orange);
+	} else if (cle === 7) {
+		// Le patron surveille : œil, deux jauges trop basses
+		iconeLucide('eye', x + (l - 32) / 2, y + 10, 32, DS.blanc);
+		miniJaugeAide(x + 14, y + 52, l - 28, 6, 22);
+		miniJaugeAide(x + 14, y + 66, l - 28, 6, 14);
+	} else if (cle === 8) {
+		// Tâches du jour : deux priorités cochées, une à faire
+		for (let i = 0; i < 3; i++) {
+			if (i < 2) iconeLucide('check', x + 12, y + 10 + i * 22, 20, DS.succes);
+			else (noFill(), stroke(DS.blanc50), strokeWeight(2), rect(x + 15, y + 13 + i * 22, 14, 14), noStroke());
+			barre(40, 17 + i * 22, l - 54 - i * 10, i < 2 ? DS.blanc50 : DS.blanc);
+		}
+	} else if (cle === 9) {
+		// Comprendre une décision : la loupe, une jauge qui monte, une qui baisse
+		iconeLucide('search', x + 14, y + (h - 32) / 2, 32, DS.blanc);
+		iconeLucide('trending-up', x + 62, y + 16, 24, DS.succes);
+		iconeLucide('trending-down', x + 62, y + 46, 24, DS.erreurClair);
+	}
+	pop();
+}
+
 // ——— Cartes : { h(l) → hauteur, dessin(x, y, l) } ; placées en colonnes, puis en pages ———
-function carteTexteAide(titre, texte) {
+/** Carte de règle : titre, vignette à gauche (illus : rang du paragraphe), texte à droite */
+function carteTexteAide(titre, texte, illus) {
+	const V = VIGNETTE_AIDE;
+	const dx = illus ? V.l + V.ecart : 0;
 	return {
-		h: (l) => 42 + hauteurTexte(texte, l, optionsTexteAide()),
+		h: (l) => 42 + Math.max(illus ? V.h + 4 : 0, hauteurTexte(texte, l - dx, optionsTexteAide())),
 		dessin(x, y, l) {
 			titreCarteAide(titre, x, y, l);
-			dessinerTexte(texte, x, y + 42, l, optionsTexteAide());
+			if (illus) illustrationAide(illus, x, y + 46, V.l, V.h);
+			dessinerTexte(texte, x + dx, y + 42, l - dx, optionsTexteAide());
 		},
 	};
 }
@@ -96,6 +199,7 @@ function carteGlossaireAide(titre, texte) {
 		h: (l) => 42 + lignes.reduce((a, [, d]) => a + hl(d, l), 0),
 		dessin(x, y, l) {
 			let yy = y + titreCarteAide(titre, x, y, l);
+			iconeLucide('book-open', x + l - 24, y - 2, 24, DS.alerte); // prompt 172 : le glossaire garde toute sa largeur, l'illustration est dans le titre
 			lignes.forEach(([terme, d]) => {
 				dessinerTexte(terme, x, yy, lt - 16, optionsTexteAide(DS.blanc, BOLD));
 				dessinerTexte(d, x + lt, yy, l - lt, optionsTexteAide());
@@ -136,17 +240,19 @@ function carteRaccourcisAide(titre, lignes) {
 }
 function carteMalusAide(m) {
 	const txt = String(m.condition) + ' → ' + String(m.consequence);
+	const dx = 64 + VIGNETTE_AIDE.ecart; // prompt 172 : vignette (icône du malus) à gauche
 	return {
-		h: (l) => 34 + hauteurTexte(txt, l, optionsTexteAide()),
+		h: (l) => Math.max(64, 34 + hauteurTexte(txt, l - dx, optionsTexteAide())),
 		dessin(x, y, l) {
-			dessinerTexte(String(m.libelle), x, y, l, { police: POLICE_TEXTE, taille: 22, interligne: 30, couleur: DS.erreurClair, style: BOLD });
-			dessinerTexte(txt, x, y + 34, l, optionsTexteAide());
+			illustrationAide(m.id, x, y + 2, 64, 60);
+			dessinerTexte(String(m.libelle), x + dx, y, l - dx, { police: POLICE_TEXTE, taille: 22, interligne: 30, couleur: DS.erreurClair, style: BOLD });
+			dessinerTexte(txt, x + dx, y + 34, l - dx, optionsTexteAide());
 		},
 	};
 }
 function cartesAide(onglet) {
 	const p = paragraphesAide();
-	if (onglet === 'regles') return ORDRE_REGLES_AIDE.filter((i) => p[i]).map((i) => carteTexteAide(t('aide.carte.' + i), p[i])).concat(p[GLOSSAIRE_AIDE] ? [carteGlossaireAide(t('aide.carte.' + GLOSSAIRE_AIDE), p[GLOSSAIRE_AIDE])] : []);
+	if (onglet === 'regles') return ORDRE_REGLES_AIDE.filter((i) => p[i]).map((i) => carteTexteAide(t('aide.carte.' + i), p[i], i)).concat(p[GLOSSAIRE_AIDE] ? [carteGlossaireAide(t('aide.carte.' + GLOSSAIRE_AIDE), p[GLOSSAIRE_AIDE])] : []);
 	if (onglet === 'raccourcis')
 		return [
 			carteRaccourcisAide(t('aide.groupe.signalement'), [
@@ -212,6 +318,7 @@ function fenetreAide() {
 		AIDE.onglet = 0;
 		AIDE.page = 0;
 		AIDE.debut = millis();
+		annoncer(annonceOngletAide(0)); // prompt 172 : l'ouverture dit l'onglet et ses illustrations
 	}
 	AIDE.vue = frameCount;
 	dsPanneau(x, y, l, h, t('aide.titre'));
@@ -310,7 +417,12 @@ function dessinerDemarrerAide(x, y, l, h, portrait) {
 	});
 	[0, 20, 40, 100].forEach((v) => dsTexte(String(v), x + (lb * v) / 100 - (v === 100 ? 0 : 0), yy + 34, 20, DS.blanc75, v === 100 ? 'right' : 'left'));
 	yy += 84;
-	['fluidite', 'reputation', 'budget'].forEach((cle, i) => dsTexte('· ' + t('jaugeTitre.' + cle), x + i * Math.min(260, lb / 3), yy, 22, DS.blanc, 'left'));
+	// Prompt 172 : les trois jauges du bandeau en réduction, une dans chaque état (vert, orange, rouge)
+	const pas = Math.min(260, lb / 3);
+	['fluidite', 'reputation', 'budget'].forEach((cle, i) => {
+		dsTexte(t('jaugeTitre.' + cle), x + i * pas, yy, 22, DS.blanc, 'left');
+		miniJaugeAide(x + i * pas, yy + 38, pas - 40, 10, [72, 31, 12][i]);
+	});
 	// Le tutoriel
 	const tx = portrait ? x : x + lg + 64;
 	const ty = portrait ? yy + 70 : y;
