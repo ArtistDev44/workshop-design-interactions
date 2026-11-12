@@ -1285,11 +1285,7 @@ function keyPressed() {
 	} else if (phase === 'decision') {
 		if ((key === 'b' || key === 'B') && Jeu.dossierCourant() && peutPublierDossier(Jeu.dossierCourant())) return publierDepuisDossier(Jeu.dossierCourant()), false; // prompt 91 § 3
 		// Prompt 87 : 1 à 4 = cartes de réponse affichées ; 0 ou Espace = la réponse « attendre » ; E = En savoir plus
-		if (!toucheReponses() && (key === '0' || key === ' ')) {
-			const d0 = Jeu.dossierCourant();
-			const att = d0 && reponsesAffichees(d0).find((r) => Jeu.familleDe(r.cle) === 'rien');
-			if (att) decider(att.cle);
-		}
+		toucheReponses(); // prompt 117 : 1 à 3 = les répliques affichées (plus de raccourci caché « 0 = attendre »)
 	} else if (phase === 'contradiction') {
 		if (key === 'a' || key === 'A') choisirSource('a');
 		if (key === 'b' || key === 'B') choisirSource('b');

@@ -163,6 +163,7 @@
 		},
 		// Contradiction de sources (Q9, Q31) : mauvaise source = malus réputation + conséquence réelle
 		malusMauvaiseSource: -6,
+		malusClash: -8, // prompt 117 : clasher le plaignant (réputation, en plus de l'effet de « attendre »)
 		seuilCritique: 20, // Q46
 		// Prompt 79 — les retards s'aggravent avec le temps (calcul documenté, jamais une donnée inventée) :
 		// retard effectif = retard réel de la source + 1 min toutes les 2 minutes de jeu depuis l'arrivée du dossier
@@ -546,6 +547,8 @@
 	Jeu.decider = function (action, sourceChoisie) {
 		const d = Jeu.dossierCourant();
 		if (!d || Jeu.terminee) return null;
+		const clash = !!Jeu.clashSuivant; // prompt 117 : la réplique choisie était le clash (posé par l'affichage juste avant)
+		Jeu.clashSuivant = false;
 		if (d.retard !== null && d.retard !== undefined) d.retardFige = Jeu.retardEffectif(d); // prompt 79 : figé à la décision
 		const re = Jeu.retardEffectif(d);
 		const ctx = contexte(d);
@@ -591,19 +594,21 @@
 			deltas[1] = borner(deltas[1] + REGLAGES.malusMauvaiseSource); // malus de réputation (Q31)
 		}
 
+		if (clash) deltas[1] = borner(deltas[1] + REGLAGES.malusClash); // prompt 117
 		if (Jeu.modificateurActif && Jeu.modificateurActif() === 'meteo_aggravee') deltas = deltas.map((v) => borner(Math.round(v * 1.5))); // prompt 23 § 2.3
 		if (action === 'temps') Jeu.compterMalus('non_traite');
 		NOMS_JAUGES.forEach((k, i) => (Jeu.jauges[k] = Math.max(0, Math.min(100, Jeu.jauges[k] + deltas[i]))));
 		const resultat = {
 			dossier: d,
 			action,
-			nomAction: reponse ? T('rep.' + action) : action === 'temps' ? T('action.temps') : REGLAGES.effets[action].nom,
+			nomAction: clash ? T('rep.clash') : reponse ? T('rep.' + action) : action === 'temps' ? T('action.temps') : REGLAGES.effets[action].nom,
 			categorie: reponse ? Jeu.categorie(d) : null,
 			famille: reponse ? reponse.famille : action,
 			deltas,
 			des,
 			contexte: ctx,
 			mauvaiseSource,
+			clash,
 			communique: reponse ? !!reponse.communique : action !== 'temps' && !!(REGLAGES.effets[action] || {}).communique,
 		};
 		resultat.minuteSim = Jeu.horloge ? Math.floor(Jeu.horloge.minutes) : null; // heure de la partie (prompt 20)
@@ -619,6 +624,7 @@
 			resultat.aggravation = { lignes: d.lignes.slice(), plus: A.durable };
 		}
 		resultat.narration = Jeu.narrer(resultat);
+		if (clash) resultat.narration.texte = T('narr.avecClash', { texte: resultat.narration.texte, malus: REGLAGES.malusClash });
 		Jeu.historique.push(resultat);
 		Jeu.index++;
 		Jeu.terminee = Jeu.index >= Jeu.paquet.length;
@@ -915,6 +921,7 @@
 	Jeu.evaluer = function (e) {
 		// Codes (traduits à l'affichage par t('eval.' + code)) : 'bon', 'rate', 'aucun_detour', 'trop_tard'
 		if (e.cleAction === 'temps') return 'trop_tard';
+		if (e.resultat && e.resultat.clash) return 'rate'; // prompt 117 : clasher le plaignant n'est jamais la bonne réponse
 		if (e.categorie || String(e.cleAction).includes('.')) return e.attendus[e.cleAction] >= e.attendus[e.cleMeilleure] - 0.01 ? 'bon' : 'rate'; // prompt 87 : meilleure réponse de la même catégorie
 		const actions = ['devier', 'retenir', 'renfort'];
 		if (e.cleMeilleure === 'rien' || actions.every((a) => e.attendus[a] < 0)) return e.cleAction === 'rien' ? 'bon' : 'aucun_detour';
@@ -1288,6 +1295,14 @@
 		return s.replace(/\{(\w+)\}/g, (m, k) => (vars && vars[k] !== undefined ? String(vars[k]) : m));
 	};
 
+	/** Prompt 117 : meilleure réponse attendue pour ce dossier (même calcul que le Journal), lecture seule */
+	Jeu.meilleureReponse = function (d) {
+		const ctx = contexte(d);
+		const ev = Jeu.actionsPossibles(d);
+		const att = {};
+		ev.forEach((a) => (att[a] = somme(effetAttendu(a, d, ctx))));
+		return ev.slice().sort((a, b) => att[b] - att[a])[0];
+	};
 	/** Prompt 116 : variables d'une réplique au plaignant (lecture seule) — faits réels du dossier + pseudo du plaignant */
 	Jeu.variablesReplique = function (index) {
 		const d = (Jeu.paquet || [])[index];

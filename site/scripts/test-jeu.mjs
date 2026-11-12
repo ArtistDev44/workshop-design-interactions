@@ -1009,7 +1009,10 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 				Jeu.paquet.forEach((d, i) => {
 					Jeu.index = i;
 					const cat = Jeu.categorie(d);
-					const rs = reponsesAffichees(d);
+					const rs = reponsesDialogue(d); // prompt 117 : 3 répliques mélangées, dont 1 clash et la meilleure réponse
+					if (rs.length !== 3 || rs.filter((x) => x.clash).length !== 1 || !rs.some((x) => !x.clash && x.cle === Jeu.meilleureReponse(d))) out.vides.push('trio invalide ' + i);
+					out.ordres = out.ordres || new Set();
+					out.ordres.add(rs.findIndex((x) => x.clash));
 					const txts = repliquesDuDossier(rs, d);
 					if (txts.filter((x) => /@\\w/.test(x)).length > 1) out.vides.push('pseudo cité plusieurs fois');
 					rs.forEach((rp, k) => {
@@ -1021,10 +1024,19 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 				});
 			}
 			out.diff = Object.entries(out.parCat).filter(([, s]) => s.size < 2).map(([c]) => c);
-			return { n: out.n, vides: out.vides.slice(0, 3), diff: out.diff };
+			return { n: out.n, vides: out.vides.slice(0, 3), diff: out.diff, positionsClash: out.ordres.size };
 		})()`, cr);
 		verifier(r.n > 0 && !r.vides.length, `répliques (${lg}) : ${r.n} affichées, variables vides ${JSON.stringify(r.vides)}`);
 		verifier(!r.diff.length, `répliques (${lg}) : une seule formulation pour ${r.diff}`);
+		verifier(r.positionsClash >= 2, `répliques (${lg}) : le clash est toujours à la même place`);
+		// Prompt 117 : une décision « clash » = attendre + malus de réputation, comptée ratée
+		const cl = vm.runInContext(`(() => {
+			Jeu.chargerSemaine('2026-10-12'); Jeu.nouvellePartie(); Jeu.modificateur = null;
+			const d = Jeu.dossierCourant(); const c = reponsesDialogue(d).find((x) => x.clash);
+			Jeu.initialiserAlea(7, 0); const rep0 = Jeu.jauges.reputation; Jeu.clashSuivant = true; const r1 = Jeu.decider(c.cle);
+			return { clash: r1.clash, eval: Jeu.evaluer(Jeu.evenementsJournee[Jeu.evenementsJournee.length - 1]), dRep: r1.deltas[1] };
+		})()`, cr);
+		verifier(cl.clash === true && cl.eval === 'rate' && cl.dRep <= -8, `clash (${lg}) : ${JSON.stringify(cl)}`);
 	}
 }
 
@@ -1905,8 +1917,8 @@ for (const f of ['enquete.js', 'carte.js', 'journal.js']) verifier(!/\*\s*1\.05\
 // Prompt 97 (skill game-design-theory) : apprendre vite — l'aide H et le guide nomment les gestes (glisser / clic,
 // 1-4, Q) et les 3 jauges, et répondent à « pourquoi ma décision a raté ? » ; la difficulté est lisible avant de jouer
 for (const [langue, mots] of [
-	['fr', { glisser: /Glisser/, touches: /1 à 4/, q: /Quitter la journée/, jauges: /fluidité, réputation et budget/, rate: /Pourquoi une décision a raté/, guide: /répondez-lui/, diff: /Difficulté facile : budget 60 · 3 signalement/ }],
-	['en', { glisser: /Drag/, touches: /1 to 4/, q: /End the day/, jauges: /flow, reputation and budget/, rate: /Why did a decision fail/, guide: /then reply/, diff: /easy difficulty: budget 60 · 3 report/ }],
+	['fr', { glisser: /Glisser/, touches: /1 à 3/, q: /Quitter la journée/, jauges: /fluidité, réputation et budget/, rate: /Pourquoi une décision a raté/, guide: /répondez-lui/, diff: /Difficulté facile : budget 60 · 3 signalement/ }],
+	['en', { glisser: /Drag/, touches: /1 to 3/, q: /End the day/, jauges: /flow, reputation and budget/, rate: /Why did a decision fail/, guide: /then reply/, diff: /easy difficulty: budget 60 · 3 report/ }],
 ]) {
 	const c97 = contexte(langue);
 	const a = vm.runInContext(

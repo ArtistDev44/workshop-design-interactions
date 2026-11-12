@@ -184,8 +184,8 @@ function dessinerPanneauSignalement(d, x, base) {
 	textAlign(LEFT, TOP);
 	y += 48;
 	y = bulleDuPlaignant(d, x + 32, y, l);
-	// Répliques : en bas de la fenêtre (prompt 116 : + « Dites-m'en plus », qui ouvre l'enquête)
-	const rs = reponsesAffichees(d);
+	// Répliques : en bas de la fenêtre (prompt 116 : + « Dites-m'en plus » ; prompt 117 : 3 répliques mélangées dont un clash)
+	const rs = reponsesDialogue(d);
 	const hRep = 44 + (rs.length + 1) * 70;
 	const yr = base.y + base.h - 24 - hRep;
 	// Prompt 116 : « En savoir plus » devient la réplique « Dites-m'en plus » (dernière de la liste) ; plus de bouton en double
@@ -211,7 +211,7 @@ function dessinerPanneauSignalement(d, x, base) {
 		dsTexte(TOUCHES_REPONSES[i], x + 54, ry + 18, 20, DS.fond, 'center');
 		const rep = repliquesDuDossier(rs, d)[i];
 		dessinerTexte('« ' + rep + ' »', x + 92, ry + 6, l - 76, { taille: 20, couleur: off ? C.gris : C.texte, maxLignes: 2, interligne: 25 });
-		if (!off) boutons.push({ x: x + 32, y: ry, l, h: 62, action: () => decider(r.cle) });
+		if (!off) boutons.push({ x: x + 32, y: ry, l, h: 62, action: () => choisirReplique(r) });
 		if (i === 0) cibleGuide('actions', x + 32, yr + 36, l, rs.length * 70);
 	});
 	// « Dites-m'en plus » : pas une décision — ouvre / referme les sources de l'enquête (comme E)
@@ -243,15 +243,16 @@ function repliqueDe(r, d, sansAuteur) {
 	const vars = Object.assign({}, Jeu.variablesReplique ? Jeu.variablesReplique(Jeu.index) : {});
 	if (sansAuteur) delete vars.auteur; // le pseudo n'est cité qu'une fois par dossier
 	const ok = [];
+	const prefixe = r.clash ? 'clash.' + (Jeu.categorie(d) || 'autre') : 'repl.' + r.cle; // prompt 117
 	for (let k = 1; k <= 3; k++) {
-		const cle = 'repl.' + r.cle + '.' + k;
+		const cle = prefixe + '.' + k;
 		if (TRADUCTIONS.fr[cle] === undefined) continue;
 		const brut = String(t(cle));
 		if ((brut.match(/\{(\w+)\}/g) || []).every((m) => vars[m.slice(1, -1)] !== undefined && vars[m.slice(1, -1)] !== '')) ok.push(brut);
 	}
-	if (!ok.length) return sansAuteur ? tSi('repl.' + r.cle, String(r.lib)) : repliqueDe(r, d, true);
+	if (!ok.length) return sansAuteur ? (r.clash ? t('clash.autre.1') : tSi('repl.' + r.cle, String(r.lib))) : repliqueDe(r, d, true);
 	let h = Jeu.index * 7;
-	for (const c of String(r.cle)) h = (h * 31 + c.charCodeAt(0)) % 1000003;
+	for (const c of String(r.cle) + (r.clash ? '!' : '')) h = (h * 31 + c.charCodeAt(0)) % 1000003;
 	return ok[h % ok.length].replace(/\{(\w+)\}/g, (m, k) => String(vars[k]));
 }
 /** Prompt 102 : bulle de dialogue — la plainte écrite par le groupe (data/messages.json) que les faits réels du
@@ -330,13 +331,37 @@ function dessinerChoixSource(d, x, y, l) {
 }
 
 // ——— Cartes de réponse : libellé, explication, tendance des effets, coût, équipe liée ———
-const TOUCHES_REPONSES = ['1', '2', '3', '4'];
+const TOUCHES_REPONSES = ['1', '2', '3']; // prompt 117 : trois répliques
 function reponsesAffichees(d) {
 	const cat = Jeu.categorie(d);
 	const rs = Jeu.reponsesDe(d);
 	if (rs) return rs.map((r) => ({ cle: cat + '.' + r.id, lib: t('rep.' + cat + '.' + r.id), expl: t('repx.' + cat + '.' + r.id), equipe: r.equipe || null }));
 	// Repli (dossier sans catégorie) : la table Q57–Q60 et ses descriptions en langage métier (prompt 74)
 	return ['devier', 'retenir', 'renfort', 'rien'].map((a) => ({ cle: a, lib: t('action.' + a), expl: t('action.desc.' + a), equipe: null }));
+}
+/** Prompt 117 : les trois répliques du dialogue — la meilleure réponse, une autre réponse de la catégorie, et le clash
+ * (réponse « attendre » + malus de réputation, game.js) — dans un ordre mélangé, déterministe pour le dossier */
+const PERMUTATIONS_3 = [[0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0]];
+function reponsesDialogue(d) {
+	const tout = reponsesAffichees(d);
+	if (!tout.length) return [];
+	const idx = Math.max(0, Jeu.paquet ? Jeu.paquet.indexOf(d) : 0);
+	const best = Jeu.meilleureReponse ? Jeu.meilleureReponse(d) : tout[0].cle;
+	const a = tout.find((r) => r.cle === best) || tout[0];
+	const rien = (r) => Jeu.familleDe(r.cle) === 'rien';
+	let autres = tout.filter((r) => r !== a && !rien(r));
+	if (!autres.length) autres = tout.filter((r) => r !== a);
+	const b = autres[(idx * 3) % autres.length];
+	const attendre = tout.find(rien) || tout[tout.length - 1];
+	const c = Object.assign({}, attendre, { clash: true });
+	const trio = [a, b, c];
+	return PERMUTATIONS_3[(idx * 5 + 2) % 6].map((k) => trio[k]);
+}
+/** Choisir une réplique (clic ou touche) : le clash est signalé au moteur juste avant la décision */
+function choisirReplique(r) {
+	Jeu.clashSuivant = !!r.clash;
+	decider(r.cle);
+	Jeu.clashSuivant = false;
 }
 /** Tendance honnête d'un effet attendu : signe et ordre de grandeur */
 function tendance(v) {
@@ -413,8 +438,8 @@ function toucheReponses() {
 	const i = TOUCHES_REPONSES.indexOf(key);
 	const d = Jeu.dossierCourant();
 	if (i < 0 || !d) return false;
-	const r = reponsesAffichees(d)[i];
-	if (r) decider(r.cle);
+	const r = reponsesDialogue(d)[i]; // prompt 117 : les 3 répliques affichées, dans leur ordre
+	if (r) choisirReplique(r);
 	return !!r;
 }
 
