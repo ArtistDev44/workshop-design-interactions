@@ -307,7 +307,6 @@
 		Jeu.objectifsResultats = [];
 		Jeu.modificateur = null;
 		Jeu.paliersBudget = {};
-		Jeu.carnet = ''; // prompt 47 : journal de bord (notes libres du joueur)
 		Jeu.inspection = null; // prompt 47 : inspection surprise de la semaine
 		Jeu.agendaPrevenus = {}; // prompt 47 : jours où le patron a déjà prévenu d'un afflux
 		Jeu.demission = false; // prompt 47 : fin « démission »
@@ -374,7 +373,6 @@
 			allegementObjectif: Jeu.allegementObjectif || 0,
 			postsJoueur: Jeu.postsJoueur || [], // prompt 85
 			patronEnAttente: Jeu.patronEnAttente || [], // prompt 86 : messages émis pendant la panne
-			carnet: Jeu.carnet || '',
 			inspection: Jeu.inspection,
 			agendaPrevenus: Object.assign({}, Jeu.agendaPrevenus),
 			depart: Jeu.depart,
@@ -400,7 +398,6 @@
 		Jeu.initialiserAlea(s.graine, s.tirages);
 		['historique', 'evenementsJournee', 'messagesPatron', 'commentaires', 'objectifsResultats'].forEach((k) => (Jeu[k] = s[k] || []));
 		['nonLus', 'alertesJauges', 'malus', 'paliersBudget', 'agendaPrevenus'].forEach((k) => (Jeu[k] = s[k] || {}));
-		Jeu.carnet = typeof s.carnet === 'string' ? s.carnet.slice(0, Jeu.CARNET_MAX) : ''; // prompt 47
 		Jeu.inspection = s.inspection || null;
 		Jeu.depart = s.depart || null; // prompt 51
 		Jeu.blame = s.blame || null;
@@ -416,6 +413,7 @@
 		Jeu.statutPatron = Object.assign(nouveauStatut(), s.statutPatron || {}); // prompt 84 (ancienne sauvegarde : statut neuf)
 		Jeu.variantesDuJour = Object.assign({}, s.variantesDuJour || {}); // prompt 88
 		Jeu.taches = s.taches ? JSON.parse(JSON.stringify(s.taches)) : null;
+		if (Jeu.taches) delete Jeu.taches.carnet; // prompt 142 : une sauvegarde d'avant ne restaure plus de carnet
 		Jeu.jaugesDebutJour = JSON.parse(JSON.stringify(s.jaugesDebutJour || {})); // ancienne sauvegarde : déduit des événements // ancienne sauvegarde : tâches recréées au besoin
 		Jeu.bonusEffectifs = Object.assign({}, s.bonusEffectifs || {});
 		Jeu.allegementObjectif = s.allegementObjectif || 0;
@@ -1956,7 +1954,6 @@
 	// Prompt 47 — profils de gestion, inspection surprise, agenda anticipé, démission
 	// Uniquement à partir des décisions réelles de la partie et des données réelles de la semaine.
 	// =====================================================================
-	Jeu.CARNET_MAX = 2000; // caractères du journal de bord
 
 	/** Profil de gestion d'après les actions jouées (clés : renfort, devier, retenir, rien, temps) ; null si aucune */
 	const PROFILS = { renfort: 'pompier', devier: 'stratege', retenir: 'discret', rien: 'spectateur', temps: 'spectateur' };

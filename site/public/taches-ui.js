@@ -28,7 +28,7 @@ function marquerIntroTache(type) {
 
 /** Chaque image (draw) : ouvre la tâche attendue quand le joueur est disponible (pas pendant un signalement) */
 function verifierTaches() {
-	if (MENU.actif || ecran !== 'jeu' || fenetre || smsActif || tutoriel || TRANSITION_JOUR || enPause || (typeof CARNET !== 'undefined' && CARNET.ouvert)) return false;
+	if (MENU.actif || ecran !== 'jeu' || fenetre || smsActif || tutoriel || TRANSITION_JOUR || enPause) return false;
 	if (!['attente', 'selection'].includes(phase) || vue !== 'poste' || PC.etat !== 'appli' || (typeof pcDemarre === 'function' && pcDemarre())) return false;
 	if (typeof CINE !== 'undefined' && CINE) return false;
 	if (typeof FIL !== 'undefined' && !FIL.explicationVue) return false; // l'explication du poste passe d'abord
@@ -266,8 +266,6 @@ function tachesApresDecision(r) {
 	if (tache) TACHE.file.push(tache);
 }
 
-// Carnet de la semaine : affiché dans la vue Semaine de l'appli Journal (prompt 89, journal.js)
-
 /** Ouvre la prochaine tâche en file juste après une narration (avant de reprendre un autre signalement) */
 function ouvrirTacheEnFile(suite) {
 	if (!TACHE.file.length || fenetre || ecran !== 'jeu') return false;
@@ -420,7 +418,7 @@ function corpsRecap(d, x, y, l) {
 	textSize(20);
 	(d.rapport && d.rapport.priorites ? d.rapport.priorites : []).forEach((p) => {
 		fill(p.etat === 'tenue' ? C.vert : p.etat === 'manquee' ? C.orange : C.gris);
-		text((p.etat === 'tenue' ? '✓ ' : p.etat === 'manquee' ? '✗ ' : '· ') + t('tache.prio.' + p.id, p.vars) + ' — ' + t('carnet.etat.' + p.etat), x, y, l, 28);
+		text((p.etat === 'tenue' ? '✓ ' : p.etat === 'manquee' ? '✗ ' : '· ') + t('tache.prio.' + p.id, p.vars) + ' — ' + t('tache.etat.' + p.etat), x, y, l, 28);
 		y += 30;
 	});
 	fill(C.texte);

@@ -542,7 +542,7 @@ function illustrationTutoriel(n, x, y, l, h) {
 			px(2, 2 + i * 3.4, v, 2, c);
 		});
 	} else if (n === 2) {
-		// Carte : fleuve, ligne, deux repères (l'un « à préciser » en pointillés)
+		// Carte : fleuve, ligne, deux repères (l'un en pointillés : sans lieu connu, prompt 147)
 		px(0, 7, 27, 2, '#9db7c9');
 		for (let i = 0; i < 22; i++) px(2 + i, 3 + Math.round(Math.sin(i / 3) * 1.5), 1, 1, encre);
 		px(12, 1, 3, 3, rouge);
@@ -703,7 +703,6 @@ const TOUTES_ENTREES_PAUSE = [
 	{ cle: 'menu.reprendre', icone: 'lecture', action: () => fermer() },
 	{ cle: 'accueil.parametres', icone: 'reglages', action: () => (fenetre = 'parametres') },
 	{ cle: 'mp.aide', icone: 'aide', action: () => (fenetre = 'aide') }, // prompt 122 : « Aide et tutoriel »
-	{ cle: 'menu.carnet', icone: 'carnet', action: () => (fermer(), ouvrirCarnet()) }, // prompt 47 : journal de bord (J)
 	{ cle: 'quitter.bouton', icone: 'retour', visible: journeeQuittable, action: () => (fermer(), quitterJourneeRapide()) },
 	{ cle: 'jeu.recommencer', icone: 'plus', visible: () => ecran === 'jeu', action: () => (fenetre = 'reset') },
 	{ cle: 'menu.menuPrincipal', icone: 'menu', action: () => quitterPartie() },

@@ -76,7 +76,7 @@
 			const f = typeof fenetre !== 'undefined' && fenetre ? ' fenetre:' + fenetre : '';
 			if (typeof MENU !== 'undefined' && MENU.actif) return 'menu:' + MENU.ecran + f;
 			const p = [ecran, phase, vue];
-			if (typeof PC !== 'undefined') p.push(PC.etat === 'appli' ? 'appli' + (PLUS && PLUS.ouvert ? ':plus:' + SELECTION.onglet : '') : 'os:' + (PC.fenetre || 'bureau') + (PC.fenetre === 'journal' && typeof JOURNAL !== 'undefined' ? ':' + JOURNAL.vue + (JOURNAL.enquete !== null ? ':enquete' + JOURNAL.volet : '') : ''));
+			if (typeof PC !== 'undefined') p.push(PC.etat === 'appli' ? 'appli' + (PLUS && PLUS.ouvert ? ':plus:' + SELECTION.onglet : '') : 'os:' + (PC.fenetre || 'bureau') + (PC.fenetre === 'journal' && typeof JOURNAL !== 'undefined' ? ':jour' + (JOURNAL.enquete !== null ? ':enquete' + JOURNAL.volet : '') : ''));
 			if (typeof smsActif !== 'undefined' && smsActif) p.push('sms');
 			return p.join(' ') + f;
 		} catch (e) {
@@ -385,7 +385,6 @@
 		add('partie semaine 1 · bureau', () => (H.partie(0), (vue = 'bureau')), 20);
 		add('poste · RégulOS', () => (H.poste(), (PC.etat = 'os'), (PC.fenetre = null)));
 		['patron', 'community', 'journal', 'indicateurs', 'donnees', 'corbeille'].forEach((a) => add('appli ' + a, () => (H.poste(), (PC.etat = 'os'), (PC.fenetre = a))));
-		add('Journal · semaine', () => (H.poste(), (PC.etat = 'os'), (PC.fenetre = 'journal'), (JOURNAL.vue = 'semaine')));
 		add('Signalements · file', () => H.poste());
 		add('Signalements · équipes engagées (prompt 114)', () => (H.poste(), ['police', 'techniciens', 'ambulance'].forEach((c) => Jeu.envoyerEquipe(Jeu.index, c, typeof tempsCarte === 'function' ? tempsCarte() : millis()))));
 		// Un signalement de chaque type, sources révélées, onglets

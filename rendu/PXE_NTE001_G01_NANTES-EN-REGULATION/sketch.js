@@ -225,8 +225,9 @@ function draw() {
 			indicateurSauvegarde(); // prompt 33
 			// Prompt 93 : ligne complète du bandeau ; prompt 98 : infobulle après 350 ms de survol (validations : tooltip-no-delay)
 			if (BANDEAU.survol !== BANDEAU.survolPrec) (BANDEAU.survolPrec = BANDEAU.survol), (BANDEAU.survolDepuis = millis());
-			if (BANDEAU.survol && millis() - BANDEAU.survolDepuis >= 350) infobulle(BANDEAU.survol, Math.min(BANDEAU.x + 16, L - 28 - textWidth(BANDEAU.survol)), BANDEAU.y + BANDEAU.h + 4);
+			if (BANDEAU.survol && millis() - BANDEAU.survolDepuis >= 350) infobulle(BANDEAU.survol, Math.min(BANDEAU.survolX ? BANDEAU.survolX - textWidth(BANDEAU.survol) - 28 : BANDEAU.x + 16, L - 28 - textWidth(BANDEAU.survol)), BANDEAU.y + BANDEAU.h + 4); // prompt 144 : sous la date quand c'est elle
 			BANDEAU.survol = null;
+			BANDEAU.survolX = null;
 		}
 		if (enPause) dessinerPause();
 		// Prompt 105 : plein écran — plus de barre de titre ni de croix (Échap, « Quitter la journée », « Quitter le PC »)
@@ -450,7 +451,7 @@ function fenetreReprise() {
 // Écran de jeu (Q1–Q10, Q29, Q30, Q45)
 // =====================================================================
 // Prompt 87 : deux colonnes sous un bandeau fin (BANDEAU et PANNEAU : panneau.js) — liste à gauche, signalement à droite
-const FILE_SIG = { x: 40, y: 132, l: 700, h: 900 };
+const FILE_SIG = { x: 40, y: 92, l: 700, h: 940 }; // prompt 145 : bandeau d'une ligne, le contenu monte de 40 px
 
 function dossierCourant() {
 	return Jeu.dossierCourant ? Jeu.dossierCourant() : null;
@@ -478,7 +479,6 @@ function indicateurSauvegarde() {
 	noStroke();
 	fill(C.gris);
 	const zc = typeof CARTE !== 'undefined' && (CARTE.zoneLibre || CARTE.zone) ? CARTE.zoneLibre || CARTE.zone : FILE_SIG; // prompt 114 : partie libre de la carte
-	if (zc.l < 900) return; // carte resserrée (dossier ouvert) : la case « Lieu à préciser » occupe le bas, l'indicateur se tait
 	text(couperLargeurCarte(s, zc.l - 32, 20), zc.x + zc.l - 16, zc.y + zc.h - 212); // prompt 114 : au-dessus des boutons de zoom (les notifications occupent le haut) // prompt 114 : sous le zoom et la légende ; correctif : en haut à droite de la carte, sous le zoom (H_PLATEAU n'existe plus depuis le prompt 108 — l'erreur figeait l'écran)
 }
 
@@ -1099,7 +1099,7 @@ function dateLongue(iso) {
 // Entrées : souris, touch, clavier (raccourcis complets, 08-raccourcis)
 // =====================================================================
 function mousePressed() {
-	if (Sauvegarde.dialogueOuvert || CARNET.ouvert) return; // prompt 33 : clics destinés à la boîte d'import HTML
+	if (Sauvegarde.dialogueOuvert) return; // prompt 33 : clics destinés à la boîte d'import HTML
 	if (arreterDemo()) return; // prompt 48
 	Confort.Son.demarrer();
 	interaction();
@@ -1132,7 +1132,7 @@ function basculerPleinEcran() {
 }
 function keyPressed() {
 	// Prompt 33 : boîte d'import ouverte (champ texte, fichier) → le clavier lui appartient
-	if (Sauvegarde.dialogueOuvert || CARNET.ouvert) return;
+	if (Sauvegarde.dialogueOuvert) return;
 	if (arreterDemo()) return false; // prompt 48 : une touche arrête la démo automatique
 	if (CINE) return toucheCinematique(), false; // prompt 41
 	if (GAMEOVER) return toucheGameOver(), false; // prompt 84
@@ -1353,7 +1353,7 @@ function mouseMoved() {
 // Touch basique (Q32) : un appui = un clic sur les boutons
 function touchStarted(e) {
 	if (horsCanevas(e)) return; // prompt 60 : un bouton HTML (avis portrait, boîtes) garde son comportement normal
-	if (Sauvegarde.dialogueOuvert || CARNET.ouvert) return;
+	if (Sauvegarde.dialogueOuvert) return;
 	if (MOBILE.actif) return (PORTRAIT.actif ? portraitDebut(e) : toucherDebut()), false; // prompt 60 : sur téléphone, le clic part au relâchement (swipe, appui long) ; 60b : portrait
 	sourisDansCanevas = false; // au doigt, pas de caméra (la position du dernier appui resterait « collée »)
 	Confort.Son.demarrer();

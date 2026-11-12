@@ -1177,7 +1177,8 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 				if (!Jeu.jours[Jeu.jourIndex + 1]) break;
 				Jeu.journeeSuivante(); Taches.matin();
 			}
-			out.carnet = Math.max(out.carnet, Jeu.taches.carnet.length);
+			out.carnet = Math.max(out.carnet, Object.values(Jeu.taches.jours).filter((x) => x.rapport).length); // prompt 142 : plus de carnet, un rapport par journée
+			out.sansCarnet = !('carnet' in Jeu.taches);
 		}
 		// Demande accordée (réputation ≥ 50) : +5 de budget le lendemain matin ; refusée sous 50
 		Jeu.chargerSemaine('2026-11-02'); Jeu.nouvellePartie(); Taches.nouvellePartie();
@@ -1202,12 +1203,12 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 		cb,
 	);
 	verifier(r.erreursOpt.length === 0, `briefing : options sans fait réel ou en nombre incorrect (${r.erreursOpt.slice(0, 4)})`);
-	verifier(r.carnet >= 6, `carnet : une ligne par journée (${r.carnet})`);
+	verifier(r.carnet >= 6 && r.sansCarnet, `rapport du soir : un par journée, sans carnet (prompt 142) (${r.carnet})`);
 	verifier(r.nbPrio && r.nbPrio.slice(0, 4).every((n) => n === 2) && r.nbPrio.slice(4, 6).every((n) => n === 3), `priorités imposées : 2 par jour puis 3 après 4 jours joués (${r.nbPrio && r.nbPrio.slice(0, 7)})`);
 	verifier(/function briefing\(\) \{\n\t\treturn null;/.test(readFileSync(join(pub, 'taches.js'), 'utf8')), 'priorités : plus aucune fenêtre de choix (briefing() renvoie null)');
 	verifier(r.accord.accordee && r.accord.delta === 5 && /accordée/.test(r.accord.message), `rapport : demande accordée → +5 de budget le lendemain (${JSON.stringify(r.accord)})`);
 	verifier(r.refus.accordee === false && r.refus.bonus === '{}', `rapport : réputation < 50 → demande refusée (${JSON.stringify(r.refus)})`);
-	verifier(r.sauve, 'sauvegarde : les tâches de la partie (priorités, rapport, carnet) sont restaurées');
+	verifier(r.sauve, 'sauvegarde : les tâches de la partie (priorités, rapport) sont restaurées');
 }
 
 // Prompt 88 lot C : rotation des tâches, info trafic fondée sur le dossier réel, préparation seulement si l'agenda l'annonce
@@ -1439,9 +1440,9 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 			if (tu.bonnes.n !== ev.filter((e) => Jeu.evaluer(e) === 'bon').length || tu.bonnes.total !== ev.length) out.erreurs.push(j.date + ' bonnes');
 			const o = Jeu.objectifsResultats.find((x) => x.jourIndex === i);
 			if (!tu.objectif || tu.objectif.atteint !== o.atteint) out.erreurs.push(j.date + ' objectif');
-			if (tu.equipes.total !== (Jeu.equipes || []).filter((q) => q.jour === j.date).length) out.erreurs.push(j.date + ' équipes');
+			if (tu.equipes || tu.theme !== undefined || tu.jauges.points) out.erreurs.push(j.date + ' tuiles retirées encore calculées (prompt 141)');
 			// Courbes : un point au début, puis exactement les jauges après chaque événement réel
-			const pts = tu.jauges.points;
+			const pts = JournalDonnees.courbes(j.date);
 			if (pts.length !== ev.length + 1 || ev.some((e, n) => JSON.stringify(pts[n + 1]) !== JSON.stringify(e.resultat.jaugesApres))) out.erreurs.push(j.date + ' courbes');
 			if (JSON.stringify(pts[0]) !== JSON.stringify(Jeu.jaugesDebutJour[j.date] || pts[0])) out.erreurs.push(j.date + ' début');
 			// Filtres : comptes et contenu
@@ -1452,11 +1453,7 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 			const heures = cartes.filter((c) => c.minute !== null).map((c) => c.minute);
 			if (heures.some((m, n) => n && m < heures[n - 1])) out.erreurs.push(j.date + ' frise non triée');
 		}
-		const sem = JournalDonnees.semaine();
-		if (sem.colonnes.length !== Jeu.jourIndex + 1) out.erreurs.push('semaine colonnes');
-		sem.colonnes.forEach((c) => { if (c.signalements !== JournalDonnees.tuiles(c.i).signalements.recus) out.erreurs.push('semaine ' + c.date); });
-		const fin0 = JournalDonnees.finJour(0);
-		if (JSON.stringify(fin0) !== JSON.stringify(Jeu.jaugesDebutJour[Jeu.jours[1].date])) out.erreurs.push('fin de journée');
+		if (JournalDonnees.semaine || JournalDonnees.FILTRES.includes('notes') || JournalDonnees.cartes(0).some((c) => c.sorte === 'note')) out.erreurs.push('vue Semaine ou notes encore là (prompts 140 / 142)');
 		// Enquête : barres = attendus, choix et meilleure repérés
 		const e = Jeu.evenementsJournee.find((x) => x.cleAction !== 'temps');
 		const f = JournalDonnees.enquete(e);
@@ -1472,7 +1469,7 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 	verifier(r.erreurs.length === 0, `journal : ${r.erreurs.slice(0, 5)}`);
 	verifier(/^Nantes en régulation — journée du 12\/10\/2026/.test(r.resume) && r.resume.split('\n').filter((l) => l.startsWith('- ')).length === r.lignesMail && !/\[À COMPLÉTER\]|undefined/.test(r.resume), `journal : résumé copié (${r.resume.slice(0, 120)})`);
 	const sv = readFileSync(join(pub, 'sauvegarde.js'), 'utf8');
-	verifier(/journal: typeof JOURNAL[^\n]*vue: JOURNAL\.vue, jour: JOURNAL\.jour, filtre: JOURNAL\.filtre, defil/.test(sv) && /ui\.journal/.test(sv), 'journal : vue, jour, filtre et défilement sauvegardés');
+	verifier(/journal: typeof JOURNAL[^\n]*\{ jour: JOURNAL\.jour, filtre: JOURNAL\.filtre, defil/.test(sv) && /ui\.journal/.test(sv), 'journal : jour, filtre et défilement sauvegardés (prompt 140 : plus de vue)');
 	verifier(!/function appJournal|function enqueteJournal/.test(readFileSync(join(pub, 'os.js'), 'utf8')), 'journal : ancien rendu retiré d’os.js');
 }
 

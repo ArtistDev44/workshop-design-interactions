@@ -5,7 +5,7 @@
  *   là où le joueur la met. Les signalements sont à leur lieu réel (jamais inventé) :
  *     · ligne(s) citée(s) par le dossier → un point du tracé GTFS de la ligne (choisi de façon déterministe) ;
  *     · événement de l'agenda → le lieu géocodé (data/lieux.json, OpenStreetMap via Nominatim) ;
- *     · alerte météo → toute la métropole ; sinon → case « Lieu à préciser ».
+ *     · alerte météo → toute la métropole ; sinon → marqueurs regroupés sans libellé en bas à gauche (prompt 147).
  * - Prompt 108 : panneau des équipes à droite (x 1576 → 1880) ; une pastille par équipe ; glisser une pastille
  *   disponible sur N'IMPORTE QUEL marqueur (ou sur la fenêtre du dossier ouvert) = Jeu.envoyerEquipe. Clic sur une
  *   pastille puis sur un marqueur = même chose ; Maj + 1–4 envoient au dossier ouvert.
@@ -22,9 +22,9 @@ Jeu.incidentsFictifs = (() => {
 })();
 Jeu.plateauEquipesVisible = true; // prompt 103 : le panneau des équipes dit les effectifs (pas de doublon chez le patron)
 const CARTE = { zone: null, vue: null, cible: null, marqueurs: [], arrivees: {}, jeton: null, jetonChoisi: null, retour: null, jetons: [], depots: [], suivis: [], pan: null, centreSur: null, ligneSurvol: null, survolFrame: 0, controles: [] };
-const MENU_APP = { x: 40, y: 132, l: 128, h: 900 }; // prompt 103 : colonne du menu
-const ZONE_CARTE = { x: 184, y: 132, l: 1376, h: 900 }; // prompt 108 : la carte laisse la droite aux équipes
-const PANNEAU_EQUIPES = { x: 1576, y: 132, l: 304, h: 900 };
+const MENU_APP = { x: 40, y: 92, l: 128, h: 940 }; // prompt 103 : colonne du menu
+const ZONE_CARTE = { x: 184, y: 92, l: 1376, h: 940 }; // prompt 108 : la carte laisse la droite aux équipes
+const PANNEAU_EQUIPES = { x: 1576, y: 92, l: 304, h: 940 };
 const FENETRE_DIALOGUE = { l: 820, h: 868 }; // prompt 107 : fenêtre flottante du plaignant
 const ZONE_CARTE_PLEINE = ZONE_CARTE; // compatibilité (portrait, indicateur de sauvegarde)
 const PHASES_DOSSIER_CARTE = ['decision', 'contradiction', 'conflit', 'narration'];
@@ -79,8 +79,7 @@ function texteLieu(lieu, d) {
 	if (lieu.sorte === 'ligne') return lieu.lignes.map((l) => t('sujet.ligne', { ligne: l.nom })).join(', ');
 	if (lieu.sorte === 'metropole') return t('carte.metropole');
 	if (lieu.sorte === 'lieu') return lieu.nom;
-	const v = lieuEvenement(d);
-	return t('carte.lieuAPreciser') + (v ? ' · ' + v : '');
+	return lieuEvenement(d) || ''; // prompt 147 : jamais « Lieu à préciser » ; le nom cité par la source s'il existe
 }
 
 // ——— Vue : centre et échelle, interactifs (prompt 106) ———
@@ -235,22 +234,25 @@ function dessinerCarteAlertes() {
 		CARTE.survolFrame = frameCount;
 		CARTE.ligneSurvol = ligneSous(pr, mouseX, mouseY);
 	}
-	// Case « Lieu à préciser » (dans la partie libre de la carte, prompt 114)
+	// Signalements sans lieu connu (dans la partie libre de la carte, prompt 114) — prompt 147 : regroupés en bas à
+	// gauche, sur un fond discret, SANS libellé ; leur infobulle dit l'heure, le type et la gravité
 	const zl = zoneLibreCarte();
 	const sans = CARTE.marqueurs.filter((m) => !m.lieu.pt).concat(CARTE.suivis.filter((m) => !m.lieu.pt)); // prompt 121 : en attente, sans lieu connu
 	if (sans.length) {
-		const lc = Math.min(zl.l - 32, 32 + sans.length * 44 + 220);
-		const yc = z.y + z.h - 76;
+		const parLigne = Math.max(1, Math.floor((zl.l - 112) / 44)); // la colonne des boutons de zoom reste libre
+		const lignes = Math.ceil(sans.length / parLigne);
+		const lc = 16 + Math.min(sans.length, parLigne) * 44;
+		const hc = 16 + lignes * 44;
+		const yc = z.y + z.h - 16 - hc;
 		fill(13, 12, 12, 230);
-		rect(zl.x + 16, yc, lc, 60);
+		rect(zl.x + 16, yc, lc, hc);
 		stroke(DS.blanc15);
 		strokeWeight(1);
 		noFill();
-		rect(zl.x + 16, yc, lc, 60);
+		rect(zl.x + 16, yc, lc, hc);
 		noStroke();
-		dsTexte(t('carte.lieuAPreciser'), zl.x + 32, yc + 18, 16, DS.blanc75, 'left');
 		sans.forEach((m, i) => {
-			Object.assign(m, { x: zl.x + 32 + 210 + i * 44, y: yc + 16 });
+			Object.assign(m, { x: zl.x + 32 + (i % parLigne) * 44, y: yc + 16 + Math.floor(i / parLigne) * 44 });
 			if (m.equipes) dessinerMarqueurSuivi(m);
 			else dessinerMarqueur(m);
 		});
@@ -269,7 +271,7 @@ function dessinerCarteAlertes() {
 	const sv = CARTE.marqueurs.find((m) => m.survol) || (phase === 'selection' ? CARTE.marqueurs[SELECTION.focus] : null);
 	const svAtt = CARTE.suivis.find((m) => m.survol);
 	if (svAtt) infobulleCarte(texteSuivi(svAtt), svAtt.x + 14, svAtt.y);
-	else if (sv && sv.x !== undefined) infobulleCarte(Jeu.formaterHeure(sv.it.d.minute) + ' · ' + t('enq.signalement.' + sv.it.d.type) + ' · ' + t('carte.gravite', { g: t('gravite.' + Jeu.gravite(sv.it.d)) }) + ' · ' + texteLieu(sv.lieu, sv.it.d), sv.x + 14, sv.y); // prompt 133 : gravité écrite
+	else if (sv && sv.x !== undefined) infobulleCarte(Jeu.formaterHeure(sv.it.d.minute) + ' · ' + t('enq.signalement.' + sv.it.d.type) + ' · ' + t('carte.gravite', { g: t('gravite.' + Jeu.gravite(sv.it.d)) }) + (texteLieu(sv.lieu, sv.it.d) ? ' · ' + texteLieu(sv.lieu, sv.it.d) : ''), sv.x + 14, sv.y); // prompt 133 : gravité écrite
 	else if (CARTE.centreSurvol) infobulleCarte(CARTE.centreSurvol, mouseX, mouseY - 10);
 	else if (CARTE.ligneSurvol && dansZone({ x: mouseX, y: mouseY }, z)) infobulleCarte(t('sujet.ligne', { ligne: CARTE.ligneSurvol.nom }) + ' · ' + CARTE.ligneSurvol.libelle, mouseX, mouseY - 10);
 	if (f.length && CARTE.marqueurs[0].x !== undefined) cibleGuide('fileSignalements', CARTE.marqueurs[0].x - 8, CARTE.marqueurs[0].y - 8, 44, 44);
@@ -328,25 +330,36 @@ function ligneSous(pr, mx, my) {
 /** Boutons + / − / Recentrer (bas droite de la carte), zoom et légende des trajets */
 function dessinerControlesCarte(z) {
 	const x = z.x + z.l - 64;
-	let y = z.y + z.h - 196 - (CARTE.marqueurs.some((m) => !m.lieu.pt) && z.l < 900 ? 84 : 0); // au-dessus de « Lieu à préciser » si la place manque
+	let y = z.y + z.h - 196; // prompt 147 : plus de place réservée à la case « Lieu à préciser »
+	// Prompt 146 : « Recentrer » devient le 3e bouton carré blanc 48 × 48 (pictogramme carré), libellé en infobulle
+	let infobulle = null;
 	[
 		['+', () => zoomer(1.4)],
 		['−', () => zoomer(1 / 1.4)],
-	].forEach(([lib, action]) => {
+		['□', recentrer, t('carte.recentrer')],
+	].forEach(([lib, action, titre]) => {
 		const sv = mouseX >= x && mouseX <= x + 48 && mouseY >= y && mouseY <= y + 48;
 		noStroke();
 		fill(sv ? DS.blanc75 : DS.blanc);
 		rect(x, y, 48, 48);
-		dsTexte(lib, x + 24, y + 10, 24, DS.fond, 'center');
-		boutons.push({ x, y, l: 48, h: 48, action });
+		if (lib === '□') {
+			// carré dessiné (pas de glyphe : rendu identique quelle que soit la police)
+			noFill();
+			stroke(DS.fond);
+			strokeWeight(3);
+			rect(x + 15, y + 15, 18, 18);
+			noStroke();
+		} else dsTexte(lib, x + 24, y + 10, 24, DS.fond, 'center');
+		boutons.push({ x, y, l: 48, h: 48, action, titre });
 		CARTE.controles.push({ x, y, l: 48, h: 48 });
+		if (sv && titre) {
+			textFont(DS.policeTexte);
+			textSize(16);
+			infobulle = [titre, x - 8 - (textWidth(titre) + 20) / 2, y + 49]; // à gauche du bouton, sans couvrir « − »
+		}
 		y += 56;
 	});
-	textFont(DS.policeTexte);
-	textSize(20);
-	const lr = textWidth(t('carte.recentrer')) + 64;
-	dsBouton(z.x + z.l - 16 - lr, y, lr, 48, t('carte.recentrer'), recentrer, 'contour');
-	CARTE.controles.push({ x: z.x + z.l - 16 - lr, y, l: lr, h: 48 });
+	if (infobulle) infobulleCarte(...infobulle);
 	// zoom et légende : sous la ligne d'état (y + 64), à droite de la partie libre
 	dsTexte(t('carte.niveauZoom', { z: (CARTE.vue.ech / CARTE.ech0).toFixed(1).replace('.', ',') }), z.x + z.l - 16, z.y + 64, 16, DS.blanc50, 'right');
 	if ((Jeu.equipes || []).some((q) => !q.inutile && Jeu.phaseEquipe(q, tempsCarte()) !== 'libre')) dsTexte(couperLargeurCarte(t('carte.volOiseau'), z.l - 32, 20), z.x + z.l - 16, z.y + 92, 16, DS.blanc50, 'right');
@@ -379,19 +392,18 @@ function dessinerMarqueur(m) {
 	m.survol = mouseX >= x - 6 && mouseX <= x + 34 && mouseY >= y - 6 && mouseY <= y + 34;
 	noStroke();
 	// Prompt 133 : la gravité est doublée par la taille (élevée 36 px avec liseré blanc, moyenne 28, faible 20),
-	// jamais par la seule couleur ; le carré reste centré sur la même position
+	// jamais par la seule couleur ; le marqueur reste centré sur la même position
+	// Prompt 152 : le carré devient le pin d'alerte « ! » de logo/planche.html (ICONE_PIN, ds.js), mêmes tailles
 	const g = Jeu.gravite(d);
 	const tm = g === 'elevee' ? 36 : g === 'moyenne' ? 28 : 20;
 	const xm = x + 14 - tm / 2;
 	const ym = y + 14 - tm / 2;
 	if (g === 'elevee') {
-		fill(DS.blanc);
-		rect(xm - 3, ym - 3, tm + 6, tm + 6);
+		// liseré blanc de 3 px : la silhouette du pin, décalée dans les huit directions
+		const blanc = { P: DS.blanc, W: DS.blanc };
+		for (let dx = -3; dx <= 3; dx += 3) for (let dy = -3; dy <= 3; dy += 3) if (dx || dy) dessinerIconePixel(ICONE_PIN, xm + dx, ym + dy, tm, blanc);
 	}
-	fill(couleurGravite(g));
-	rect(xm, ym, tm, tm);
-	fill(g === 'elevee' ? DS.blanc : DS.fond);
-	rect(x + 10, y + 10, 8, 8);
+	dessinerIconePixel(ICONE_PIN, xm, ym, tm, { P: couleurGravite(g), W: g === 'elevee' ? DS.blanc : DS.fond });
 	if (m.courant || m.actif || (phase === 'selection' && m.r === SELECTION.focus)) {
 		noFill();
 		stroke(m.courant ? DS.primaire : DS.blanc);

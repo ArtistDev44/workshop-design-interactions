@@ -644,13 +644,14 @@ function dessinerIndicateurs() {
 		const v = Jeu.jauges[k];
 		const ly = y + 62 + i * 74;
 		dsTexte(t('jaugeTitre.' + k), x + 18, ly, 20, DS.blanc, 'left');
-		dsTexte(v + ' / 100', x + I.l - 18, ly, 20, DS.blanc, 'right');
 		fill(DS.blanc15);
 		rect(x + 18, ly + 32, I.l - 36, 14);
 		fill(couleurJauge(v));
 		rect(x + 18, ly + 32, ((I.l - 36) * v) / 100, 14);
+		// Prompt 143 : plus de « v / 100 » ; barre blanche de seuil sur la seule jauge objectif du jour, libellée dessous
+		if (dessinerSeuilObjectif(k, x + 18, ly + 32, I.l - 36, 14)) dsTexte('| ' + texteSeuilObjectif(k), x + I.l - 120, ly + 3, 15, DS.blanc, 'right'); // libellé sur la ligne du titre, avant le delta
 		const d = dernier && dernier.deltas ? dernier.deltas[k] : null;
-		if (d) dsTexte((d > 0 ? '▲ +' : '▼ ') + d, x + I.l - 132, ly, 16, d > 0 ? DS.succes : DS.alerte, 'right');
+		if (d) dsTexte((d > 0 ? '▲ +' : '▼ ') + d, x + I.l - 18, ly, 16, d > 0 ? DS.succes : DS.alerte, 'right');
 	});
 	// Replié : « Détails » (clic / toucher, V) ; déplié par le bouton : « Masquer les détails » en bas
 	// Bouton à la même place dans les deux états (le survol déplie sans le déplacer sous la souris)

@@ -6,89 +6,134 @@
  * et la TENDANCE honnête de ses effets dans le contexte réel (signe et ordre de grandeur, pas la valeur exacte).
  * Rien n'est inventé : chaque phrase est construite sur les champs réels ; absent → « non renseigné ».
  */
-const BANDEAU = { x: 40, y: 36, l: 1840, h: 84 };
-const PANNEAU = { x: 756, y: 132, l: 1124, h: 900 };
+const BANDEAU = { x: 40, y: 36, l: 1520, h: 44 }; // prompts 144 / 145 : une ligne de 44 px, s'arrête au-dessus de la colonne des équipes
+const DATE_COIN = { x: 1576, y: 36, l: 304, h: 44 }; // prompt 144 : date et heure en haut à droite de l'écran
+const BANDEAU_TOUT = { x: 40, y: 36, l: 1840, h: 44 }; // bandeau + date (recadrage portrait)
+const PANNEAU = { x: 756, y: 92, l: 1124, h: 940 };
 const PLUS = { ouvert: false };
 
-// ——— Bandeau fin : jauges (ligne 1), objectif · équipes · horloge (ligne 2) ; plus de boutons (prompt 124) ———
+// ——— Bandeau fin : jauges compactes · priorités et objectif, sur une ligne (prompts 144 / 145) ; date et heure en coin ———
+/** Prompt 143 : seuil de l'objectif du jour (ex. réputation ≥ 60) — null si la jauge n'est pas l'objectif */
+function seuilObjectif(cle) {
+	const o = Jeu.objectifDuJour ? Jeu.objectifDuJour() : null;
+	if (!o || o.jauge !== cle || typeof o.seuil !== 'number') return null;
+	return constrain(o.seuil - (Jeu.allegementObjectif || 0), 0, 100);
+}
+const texteSeuilObjectif = (cle) => t('jauge.seuilObjectif', { seuil: seuilObjectif(cle) });
+/** Barre blanche verticale (liseré sombre : lisible sur la piste comme sur le remplissage), dépasse la piste de 5 px
+ * en haut et en bas, plus haute que les repères 20 / 40 ; rien sur une jauge sans objectif. Renvoie vrai si dessinée. */
+function dessinerSeuilObjectif(cle, bx, by, bl, bh) {
+	const s = seuilObjectif(cle);
+	if (s === null) return false;
+	const sx = Math.round(bx + (bl * s) / 100);
+	noStroke();
+	fill('#0D0C0C');
+	rect(sx - 3, by - 6, 6, bh + 12);
+	fill('#FFFFFF');
+	rect(sx - 1, by - 5, 2, bh + 10);
+	return true;
+}
 function dessinerBandeau() {
+	// Prompts 144 et 145 : UNE ligne de 44 px (au lieu de deux lignes, 84 px) — trois jauges compactes (barre de 10 px
+	// à la hauteur du texte), puis « Priorités · Objectif » en un seul élément ; la date et l'heure du jeu sont sorties
+	// du bandeau, dans le coin supérieur droit de l'écran (dessinerDateCoin)
 	const z = BANDEAU;
 	panneau(z.x, z.y, z.l, z.h);
 	cibleGuide('jauges', z.x, z.y, z.l, z.h);
-	const jauges = Jeu.jauges || { fluidite: 50, reputation: 50, budget: 50 };
 	const aff = jaugesAffichees();
 	const mobileMenu = typeof MOBILE !== 'undefined' && MOBILE.actif; // prompt 124 : bouton ≡ (menu) au toucher seulement
-	const lb = mobileMenu ? 556 : 580; // prompt 124 : les trois jauges prennent la largeur des boutons supprimés (370 → 580)
-	['fluidite', 'reputation', 'budget'].forEach((cle, i) => {
-		const x = z.x + 16 + i * (lb + 24);
+	const cy = z.y + z.h / 2;
+	const hb = 10;
+	const by = cy - hb / 2;
+	const lbar = 88;
+	let x = z.x + 16;
+	['fluidite', 'reputation', 'budget'].forEach((cle) => {
 		noStroke();
 		textFont(POLICE_TEXTE);
-		textAlign(LEFT, TOP);
-		textSize(18);
+		textAlign(LEFT, CENTER);
+		textSize(16);
 		fill(C.texte);
-		text(t('jaugeTitre.' + cle) + ' ' + Math.round(jauges[cle]), x, z.y + 8);
-		const bx = x + 230;
-		const bl = lb - 230;
+		const lib = t('jaugeTitre.' + cle); // prompt 143 : plus de valeur chiffrée, la barre suffit
+		text(lib, x, cy);
+		const bx = x + textWidth(lib) + 8;
 		fill(C.piste);
-		rect(bx, z.y + 14, bl, 16);
+		rect(bx, by, lbar, hb);
 		const va = aff[cle];
 		const c = color(va < 20 ? C.rougeFonce : va < 40 ? C.orange : C.vert);
 		if (va < 20) c.setAlpha(255 * opaciteCritique());
 		fill(c);
-		rect(bx, z.y + 14, (bl * constrain(va, 0, 100)) / 100, 16);
+		rect(bx, by, (lbar * constrain(va, 0, 100)) / 100, hb);
 		fill(255, 255, 255, 170);
-		[20, 40].forEach((s) => rect(bx + (bl * s) / 100 - 1, z.y + 10, 2, 24)); // seuils réels
-		dessinerDeltasJauge(cle, bx, z.y + 14, bl);
+		[20, 40].forEach((s) => rect(bx + (lbar * s) / 100 - 1, by - 3, 2, hb + 6)); // seuils réels
+		if (dessinerSeuilObjectif(cle, bx, by, lbar, hb) && mouseX >= bx - 4 && mouseX <= bx + lbar + 4 && mouseY >= z.y && mouseY <= z.y + z.h) BANDEAU.survol = texteSeuilObjectif(cle); // prompt 143
+		dessinerDeltasJauge(cle, bx, by, lbar, hb);
+		x = bx + lbar + 18;
 	});
-	// Ligne 2 : objectif du jour, équipes disponibles, date et heure du jeu
+	// Priorités et objectif du jour fusionnés (prompt 144) ; thème du jour et « hors ligne » à la suite
 	const o = Jeu.objectifDuJour ? Jeu.objectifDuJour() : null;
-	// Prompt 133 : la disponibilité des équipes n'est plus répétée ici (elle est dans le panneau Équipes, à droite)
-	const h = heureAffichee();
-	const th = typeof Taches !== 'undefined' && Jeu.jourCourant() ? Taches.theme(Jeu.jourCourant().date) : null; // prompt 88 : thème du jour
-	const pj = typeof Taches !== 'undefined' && Jeu.jourCourant() ? Taches.prioritesDuJour(Jeu.jourCourant().date) : [];
-	const gr = pj.length ? t('bandeau.priorites', { liste: pj.map((p) => t('tache.prioCourt.' + p.id, p.vars)).join(' · ') }) : ''; // prompt 91 § 4 : priorités imposées (le grade reste dans Indicateurs)
-	const morceaux = [gr, th && th !== 'ordinaire' ? t('theme.' + th) : '', o ? t('bandeau.objectifCourt', { libelle: String(o.libelle), v: Math.round(Jeu.jauges[o.jauge]) }) : '', t('temps.' + vitesseTemps()) + ' ' + String(h.h).padStart(2, '0') + ':' + String(h.m).padStart(2, '0') + (Jeu.etat.horsLigne ? ' · ' + t('jeu.horsLigne') : '')].filter(Boolean); // prompt 95 : état de la vitesse du temps devant l'heure
-	textFont(POLICE_DONNEES);
-	textSize(16);
-	fill(C.gris);
-	textAlign(LEFT, TOP);
+	const jc = Jeu.jourCourant ? Jeu.jourCourant() : null;
+	const th = typeof Taches !== 'undefined' && jc ? Taches.theme(jc.date) : null; // prompt 88 : thème du jour
+	const pj = typeof Taches !== 'undefined' && jc ? Taches.prioritesDuJour(jc.date) : [];
+	const morceaux = [pj.length ? t('bandeau.priorites', { liste: pj.map((p) => t('tache.prioCourt.' + p.id, p.vars)).join(' · ') }) : '', o ? t('bandeau.objectifCourt', { libelle: t('jaugeTitre.' + o.jauge).toLowerCase() + ' ≥ ' + seuilObjectif(o.jauge) }) + ' ' + (Jeu.jauges[o.jauge] >= seuilObjectif(o.jauge) ? '✓' : '✗') : '', th && th !== 'ordinaire' ? t('theme.' + th) : '', Jeu.etat && Jeu.etat.horsLigne ? t('jeu.horsLigne') : ''].filter(Boolean);
 	const crise = typeof Taches !== 'undefined' && Taches.crise() && !Taches.crise().resultat; // prompt 88 : cellule de crise du jour
-	// Prompt 93 : la ligne coupait l'heure quand elle était trop longue (texte en boîte, 2e ligne masquée) → l'heure
-	// reste entière à droite, le début se termine par « … » en fin de mot, la ligne complète s'affiche au survol
-	const lbandeau = z.l - 32 - (mobileMenu ? 70 : 0) - (crise ? 270 : 0); // prompt 124 : la place des trois boutons est rendue à la ligne // prompt 94 : place du bouton « Quitter la journée »
-	const complet = morceaux.join('  ·  ');
-	const heureBandeau = morceaux[morceaux.length - 1];
-	if (textWidth(complet) <= lbandeau) {
-		text(complet, z.x + 16, z.y + 48);
-		const xh = z.x + 16 + textWidth(complet) - textWidth(heureBandeau);
-		if (mouseX >= xh && mouseX <= xh + textWidth(heureBandeau) && mouseY >= z.y + 44 && mouseY <= z.y + 72) BANDEAU.survol = t('temps.explication'); // prompt 95
-	} else {
-		const heure = morceaux[morceaux.length - 1];
-		const lh = textWidth(heure);
-		textAlign(RIGHT, TOP);
-		text(heure, z.x + 16 + lbandeau, z.y + 48);
-		textAlign(LEFT, TOP);
-		dessinerTexte(morceaux.slice(0, -1).join('  ·  ') + '  ·', z.x + 16, z.y + 48 - 3, lbandeau - lh - 12, { police: POLICE_DONNEES, taille: 16, couleur: C.gris, maxLignes: 1, interligne: 22 });
-		if (mouseX >= z.x + 16 && mouseX <= z.x + 16 + lbandeau && mouseY >= z.y + 44 && mouseY <= z.y + 72) BANDEAU.survol = mouseX >= z.x + 16 + lbandeau - lh ? t('temps.explication') : complet; // prompt 95 : l'heure explique la vitesse du temps
+	const xt = x;
+	const lt = z.x + z.l - 16 - (mobileMenu ? 60 : 0) - (crise ? 266 : 0) - xt;
+	const complet = morceaux.join(' · ');
+	if (complet && lt > 40) {
+		// Prompt 93 : trop long → « … » en fin de mot, la ligne complète au survol
+		textFont(POLICE_DONNEES);
+		textSize(15);
+		const tronque = textWidth(complet) > lt;
+		dessinerTexte(complet, xt, cy - 10, lt, { police: POLICE_DONNEES, taille: 15, couleur: C.gris, maxLignes: 1, interligne: 22 });
+		if (tronque && mouseX >= xt && mouseX <= xt + lt && mouseY >= z.y && mouseY <= z.y + z.h) BANDEAU.survol = complet;
 	}
 	if (crise) {
 		const actif = Taches.criseActive();
 		noStroke();
 		fill(actif ? C.primaire : primaireRGBA(0.25)); // prompt 115
-		rect(z.x + z.l - 270 - (mobileMenu ? 70 : 0), z.y + 42, 254, 32);
+		rect(z.x + z.l - 266 - (mobileMenu ? 60 : 0), z.y + 6, 254, 32);
 		fill('#FFFFFF');
 		textFont(POLICE_TEXTE);
 		textStyle(BOLD);
 		textAlign(CENTER, CENTER);
 		ajusterTaille(t('crise.bandeau'), 236, 18, 14);
-		text(t('crise.bandeau'), z.x + z.l - 143 - (mobileMenu ? 70 : 0), z.y + 58);
+		text(t('crise.bandeau'), z.x + z.l - 139 - (mobileMenu ? 60 : 0), cy);
 		textStyle(NORMAL);
-		textAlign(LEFT, TOP);
 	}
 	// Prompt 124 : plus de boutons dans le bandeau (Quitter la journée, Aide, Recommencer) — touches Q, H et R
 	// inchangées ; à la souris et au toucher, ces actions sont dans le menu (Échap, ou le bouton ≡ en mode mobile)
-	if (typeof MOBILE !== 'undefined' && MOBILE.actif) bouton(z.x + z.l - 70, z.y + 14, 56, 56, '≡', () => ouvrir('menu'), false, true);
+	if (mobileMenu) bouton(z.x + z.l - 52, z.y, 48, 44, '≡', () => ouvrir('menu'), false, true);
 	textAlign(LEFT, TOP);
+	dessinerDateCoin();
+}
+/** Prompt 144 : date du jour et heure du jeu (▶ / ▶▶ / pause), seul endroit de l'écran de jeu qui les affiche —
+ * coin supérieur droit, au-dessus de la colonne des équipes ; survol → explication de la vitesse du temps */
+function dessinerDateCoin() {
+	const z = DATE_COIN;
+	panneau(z.x, z.y, z.l, z.h);
+	const jc = Jeu.jourCourant ? Jeu.jourCourant() : null;
+	const h = heureAffichee();
+	const heure = t('temps.' + vitesseTemps()) + ' ' + String(h.h).padStart(2, '0') + ':' + String(h.m).padStart(2, '0'); // prompt 95 : état de la vitesse du temps devant l'heure
+	// La taille réelle peut être relevée (texte ≥ 20 px dans l'appli, prompt 103) : on mesure, puis on prend le format
+	// de date le plus complet qui tient à côté de l'heure (« lun. 14 sept. », sinon « 14 sept. », sinon « 14/09 »)
+	noStroke();
+	fill(C.texte);
+	textFont(POLICE_DONNEES);
+	textSize(17);
+	const lh = textWidth(heure);
+	textFont(POLICE_TEXTE);
+	textSize(17);
+	const formats = [{ weekday: 'short', day: 'numeric', month: 'short' }, { day: 'numeric', month: 'short' }, { day: '2-digit', month: '2-digit' }];
+	const dates = jc ? formats.map((f) => t('bandeau.dateJour', { date: new Date(jc.date + 'T12:00:00Z').toLocaleDateString(localeActive(), Object.assign({ timeZone: 'UTC' }, f)) })) : [''];
+	const date = dates.find((d) => textWidth(d) + lh + 12 <= z.l - 24) || dates[dates.length - 1];
+	textAlign(LEFT, CENTER);
+	text(date, z.x + 12, z.y + z.h / 2);
+	textFont(POLICE_DONNEES);
+	textSize(17);
+	textAlign(RIGHT, CENTER);
+	text(heure, z.x + z.l - 12, z.y + z.h / 2);
+	textAlign(LEFT, TOP);
+	if (mouseX >= z.x && mouseX <= z.x + z.l && mouseY >= z.y && mouseY <= z.y + z.h) (BANDEAU.survol = t('temps.explication')), (BANDEAU.survolX = z.x + z.l);
 }
 
 // ——— Bloc 1 : une phrase sur les données réelles ———
@@ -144,7 +189,7 @@ function savoirs(d) {
  * croix la réduisent (le signalement reste ouvert, un clic sur son marqueur la rouvre). */
 const DIALOGUE = { reduit: false, index: null };
 function positionnerDialogue() {
-	const z = typeof ZONE_CARTE !== 'undefined' ? ZONE_CARTE : { x: 184, y: 132, l: 1376, h: 900 };
+	const z = typeof ZONE_CARTE !== 'undefined' ? ZONE_CARTE : { x: 184, y: 92, l: 1376, h: 940 };
 	const F = typeof FENETRE_DIALOGUE !== 'undefined' ? FENETRE_DIALOGUE : { l: 820, h: 868 };
 	if (DIALOGUE.index !== Jeu.index) (DIALOGUE.index = Jeu.index), (DIALOGUE.reduit = false);
 	const m = typeof CARTE !== 'undefined' ? CARTE.marqueurs.find((k) => k.courant && k.x !== undefined) : null;

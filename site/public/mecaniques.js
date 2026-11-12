@@ -1,19 +1,19 @@
-/* Nantes en régulation — prompt 47 : inspection surprise, journal de bord, fin « démission », palmarès.
+/* Nantes en régulation — prompt 47 : inspection surprise, fin « démission », palmarès (prompt 142 : journal de bord retiré).
  * La logique (profils, choix de la décision inspectée, agenda, démission) est dans game.js ; ici, l'interface.
  * Tout part des décisions réelles de la partie : aucun fait inventé.
  */
 
 // ——— Boucle : appelée à chaque image par draw() ———
 function verifierMecaniques() {
-	if (MENU.actif || ecran !== 'jeu' || phase !== 'attente' || fenetre || smsActif || tutoriel || TRANSITION_JOUR || enPause || CARNET.ouvert) return;
+	if (MENU.actif || ecran !== 'jeu' || phase !== 'attente' || fenetre || smsActif || tutoriel || TRANSITION_JOUR || enPause) return;
 	if (typeof CINE !== 'undefined' && CINE) return;
 	if (verifierBlame()) return; // prompt 51 : le mail du patron passe avant tout
 	const i = Jeu.inspection && !Jeu.inspection.reponse ? Jeu.inspection : Jeu.preparerInspection();
 	if (i && !i.reponse) ouvrirInspection();
 }
-/** Le temps s'arrête pendant l'inspection et quand le journal de bord est ouvert */
+/** Le temps s'arrête pendant l'inspection et les fenêtres de mécanique */
 function mecaniquesSuspendentTemps() {
-	return fenetre === 'inspection' || fenetre === 'tache' || fenetre === 'demission' || fenetre === 'partir' || fenetre === 'blame' || fenetre === 'cafe' || CARNET.ouvert;
+	return fenetre === 'inspection' || fenetre === 'tache' || fenetre === 'demission' || fenetre === 'partir' || fenetre === 'blame' || fenetre === 'cafe';
 }
 
 // ——— Inspection surprise (une fois par semaine) ———
@@ -79,65 +79,6 @@ function fermerInspection() {
 	if (Jeu.inspection && !Jeu.inspection.reponse) return; // il faut répondre au directeur
 	fermer();
 	Sauvegarde.auto(false);
-}
-
-// ——— Journal de bord : boîte HTML (vraie zone de texte, accessible), sauvegardée avec la partie ———
-const CARNET = { ouvert: false, focusAvant: null, racine: null };
-function ouvrirCarnet() {
-	if (CARNET.ouvert || ecran !== 'jeu' || !Jeu.paquet) return;
-	CARNET.ouvert = true;
-	CARNET.focusAvant = document.activeElement;
-	const el = (tag, attrs, texte) => {
-		const e = document.createElement(tag);
-		Object.keys(attrs || {}).forEach((k) => e.setAttribute(k, attrs[k]));
-		if (texte !== undefined) e.textContent = texte;
-		return e;
-	};
-	const fond = el('div', { class: 'sv-fond' });
-	const boite = el('div', { class: 'sv-dialogue', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'cb-titre' });
-	boite.appendChild(el('h2', { id: 'cb-titre' }, t('carnet.titre')));
-	boite.appendChild(el('p', { id: 'cb-aide' }, t('carnet.aide')));
-	const lz = el('label', { for: 'cb-texte' }, t('carnet.label', { jour: Jeu.jourIndex + 1 }));
-	const zone = el('textarea', { id: 'cb-texte', rows: '9', maxlength: String(Jeu.CARNET_MAX), 'aria-describedby': 'cb-aide cb-compte' });
-	zone.value = Jeu.carnet || '';
-	const compte = el('p', { id: 'cb-compte', class: 'cb-compte', 'aria-live': 'polite' });
-	const maj = () => {
-		Jeu.carnet = zone.value.slice(0, Jeu.CARNET_MAX);
-		compte.textContent = t('carnet.compte', { n: Jeu.carnet.length, max: Jeu.CARNET_MAX });
-	};
-	zone.addEventListener('input', maj);
-	maj();
-	const actions = el('div', { class: 'sv-actions' });
-	const ok = el('button', { type: 'button', class: 'sv-bouton' }, t('carnet.fermer'));
-	ok.addEventListener('click', fermerCarnet);
-	actions.appendChild(ok);
-	[lz, zone, compte, actions].forEach((e) => boite.appendChild(e));
-	boite.addEventListener('keydown', (ev) => {
-		ev.stopPropagation(); // les touches tapées restent dans la boîte (sinon Échap rouvrirait le menu du jeu)
-		if (ev.key === 'Escape') {
-			ev.preventDefault();
-			fermerCarnet();
-		} else if (ev.key === 'Tab') {
-			const f = [zone, ok];
-			const n = f.indexOf(document.activeElement);
-			if (ev.shiftKey && n <= 0) (ev.preventDefault(), ok.focus());
-			else if (!ev.shiftKey && n === f.length - 1) (ev.preventDefault(), zone.focus());
-		}
-	});
-	fond.appendChild(boite);
-	document.body.appendChild(fond);
-	CARNET.racine = fond;
-	zone.focus();
-	annoncer(t('carnet.titre'));
-}
-function fermerCarnet() {
-	if (!CARNET.ouvert) return;
-	if (CARNET.racine) CARNET.racine.remove();
-	CARNET.racine = null;
-	CARNET.ouvert = false;
-	if (CARNET.focusAvant && CARNET.focusAvant.focus) CARNET.focusAvant.focus();
-	Sauvegarde.auto(false);
-	annoncer(t('carnet.enregistre'));
 }
 
 // ——— Fin « démission » : les trois jauges sous 20 → rendre son badge ———
@@ -257,17 +198,14 @@ function toucheMecaniques() {
 		return true;
 	}
 	if (fenetre || smsActif || MENU.actif || ecran !== 'jeu' || phase === 'fin') return false;
-	if (key === 'j' || key === 'J') return ouvrirCarnet(), true;
 	if ((key === 'd' || key === 'D') && Jeu.peutDemissionner()) return ouvrir('demission'), true;
 	return false;
 }
 
-// ——— Rapport papier : profil de gestion et journal de bord ———
+// ——— Rapport papier : profil de gestion ———
 function lignesRapportMecaniques() {
 	const g = Jeu.profilPartie();
-	const carnet = String(Jeu.carnet || '').replace(/\s+/g, ' ').trim();
 	return {
 		gestion: g ? t('rapport.gestion', { profil: t('profil.' + g.id), n: g.n, total: g.total, action: t('profilAction.' + g.id) }) : '',
-		carnet: carnet ? t('rapport.carnet', { texte: carnet.length > 220 ? carnet.slice(0, 217) + '…' : carnet }) : '',
 	};
 }
