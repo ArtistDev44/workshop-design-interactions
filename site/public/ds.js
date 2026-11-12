@@ -8,7 +8,11 @@
  */
 const DS = {
 	fond: '#0D0C0C',
-	primaire: '#D4031C',
+	// Couleur d'accent (prompt 176) : valeurs de la palette par défaut, recalculées par Theme.appliquer() (theme.js)
+	primaire: '#D4031C', // aplat : bouton principal, sélection, piste active
+	surPrimaire: '#FFFFFF', // texte posé sur l'aplat (blanc ou sombre, choisi par accentDerive)
+	primaireTrait: '#D4031C', // trait / liseré / focus sur fond sombre (≥ 3:1)
+	primaireTexte: '#E04A5C', // texte / lien sur fond sombre (≥ 4,5:1)
 	blanc: '#FFFFFF',
 	blanc75: 'rgba(255,255,255,0.75)',
 	blanc50: 'rgba(255,255,255,0.50)',
@@ -130,7 +134,7 @@ function dsBouton(x, y, l, h, label, action, variante, desactive, sansChevron) {
 	variante = variante || 'primaire';
 	const survol = !desactive && mouseX >= x && mouseX <= x + l && mouseY >= y && mouseY <= y + h;
 	const v = {
-		primaire: { fond: DS.primaire, texte: DS.blanc, bord: null },
+		primaire: { fond: DS.primaire, texte: DS.surPrimaire, bord: null },
 		secondaire: { fond: DS.blanc, texte: DS.fond, bord: null },
 		contour: { fond: null, texte: DS.blanc, bord: DS.blanc },
 		fantome: { fond: survol ? DS.blanc15 : null, texte: DS.blanc, bord: null },

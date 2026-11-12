@@ -399,7 +399,7 @@ function dessinerMarqueur(m) {
 	dessinerIconePixel(ICONE_PIN, xm, ym, tm, { P: couleurGravite(g), W: g === 'elevee' ? DS.blanc : DS.fond });
 	if (m.courant || m.actif || (phase === 'selection' && m.r === SELECTION.focus)) {
 		noFill();
-		stroke(m.courant ? DS.primaire : DS.blanc);
+		stroke(m.courant ? DS.primaireTrait : DS.blanc);
 		strokeWeight(3);
 		if (!m.courant && !m.actif) drawingContext.setLineDash([4, 4]);
 		rect(x - 5, y - 5, 38, 38);

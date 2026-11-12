@@ -271,7 +271,7 @@ function dessinerDemarrage() {
 	background(DS.fond);
 	if (tB < 1200) {
 		const lignes = [0, 1, 2, 3, 4].map((n) => t('os.bios.' + n));
-		lignes.slice(0, 1 + Math.floor(tB / 220)).forEach((l, i) => dsTexte(l, 80, 80 + i * 44, 26, i === 0 ? DS.primaire : DS.blanc75, 'left'));
+		lignes.slice(0, 1 + Math.floor(tB / 220)).forEach((l, i) => dsTexte(l, 80, 80 + i * 44, 26, i === 0 ? DS.primaireTexte : DS.blanc75, 'left'));
 	} else if (tB < DUREE_DEMARRAGE - 500) {
 		// Logo du système fictif + titre pixel + barre de progression
 		// Prompt 152 : l'écran de régulation de logo/planche.html (pin sur l'écran, Loire en escalier), 16 × 16 à l'échelle 8
@@ -329,12 +329,12 @@ function dessinerFermerAppli() {
 	const survol = mouseX >= x && mouseX <= x + 40 && mouseY >= y && mouseY <= y + 28;
 	fill(survol ? DS.primaire : DS.fond);
 	rect(x, y, 40, 28);
-	stroke(survol ? DS.primaire : DS.blanc);
+	stroke(survol ? DS.primaireTrait : DS.blanc);
 	strokeWeight(2);
 	noFill();
 	rect(x + 1, y + 1, 38, 26);
 	noStroke();
-	iconeLucide('x', x + 10, y + 4, 20, DS.blanc); // prompt 170 : croix Lucide
+	iconeLucide('x', x + 10, y + 4, 20, survol ? DS.surPrimaire : DS.blanc); // prompt 170 : croix Lucide
 	boutons.push({ x: x - 12, y: 0, l: 58, h: 52, action: fermerAppli }); // prompt 98 : zone de clic ≥ 44 px (le dessin reste 40 × 28)
 	cibleGuide('fermerAppli', x, y, 40, 28); // prompt 37
 }

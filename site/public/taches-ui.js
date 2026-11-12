@@ -241,7 +241,7 @@ function corpsRapport(rp, x, y, l) {
 		textFont(POLICE_DONNEES);
 		textStyle(BOLD);
 		textSize(18);
-		fill(TACHE.groupe === g ? C.accent : C.gris);
+		fill(TACHE.groupe === g ? C.primaireTexte : C.gris);
 		text(titre.toUpperCase() + (TACHE.groupe === g ? '  ◀' : ''), x, y);
 		textStyle(NORMAL);
 		y += 30;
@@ -279,7 +279,7 @@ function corpsInfo(tache, x, y, l) {
 		textFont(POLICE_DONNEES);
 		textStyle(BOLD);
 		textSize(17);
-		fill(actif ? C.accent : C.gris);
+		fill(actif ? C.primaireTexte : C.gris);
 		text(t('tache.info.bloc.' + b.id).toUpperCase() + (actif ? '  ◀' : ''), x, y + 14);
 		textStyle(NORMAL);
 		const lb = (l - 220 - 2 * 10) / 3;
@@ -394,7 +394,7 @@ function corpsRecap(d, x, y, l) {
 		const bas = Taches.R.grades[g.i];
 		fill(C.piste);
 		rect(x + 260, y + 36, l - 260, 10);
-		fill(C.accent);
+		fill(C.primaireTrait); // barre de progression : couleur d'accent (prompt 176)
 		rect(x + 260, y + 36, ((l - 260) * (g.xp - bas)) / (g.prochain - bas), 10);
 	}
 	if (rc.monte) {

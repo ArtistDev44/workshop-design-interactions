@@ -2611,6 +2611,46 @@ for (const langue of ['fr', 'en']) {
 	}
 }
 
+// Prompt 176 : la couleur d'accent choisie s'applique partout — une seule source (DS, theme.js), contraste calculé
+{
+	const lire176 = (f) => readFileSync(join(pub, f), 'utf8');
+	const th = lire176('theme.js');
+	const c = { DS: { fond: '#0D0C0C' }, C: {}, MENU_C: {}, document: { documentElement: { style: { setProperty: () => {} } } }, localStorage: { getItem: () => null, setItem: () => {} }, location: { search: '' } };
+	vm.createContext(c);
+	vm.runInContext(th + ';globalThis.T = { PALETTES_COULEUR, Theme, accentDerive, rapportContraste, primaireRGBA };', c);
+	const { PALETTES_COULEUR: pal, accentDerive: derive, rapportContraste: rc } = c.T;
+	verifier(Math.abs(rc('#FFFFFF', '#000000') - 21) < 1e-9 && Math.abs(rc('#FFFFFF', '#D4031C') - 5.48) < 0.01, 'prompt 176 : rapportContraste doit suivre la formule WCAG');
+	verifier(pal.length >= 6, 'prompt 176 : au moins six accents proposés');
+	for (const p of pal) {
+		const d = derive(p.hex);
+		verifier(d.fond === p.hex && (d.texte === '#FFFFFF' || d.texte === '#0D0C0C'), `prompt 176 : ${p.id} — texte sur l'accent blanc ou sombre`);
+		verifier(rc(d.texte, p.hex) >= 4.5, `prompt 176 : ${p.id} — texte sur l'accent sous 4,5:1 (${rc(d.texte, p.hex).toFixed(2)})`);
+		for (const fond of ['#0D0C0C', '#171616']) {
+			verifier(rc(d.trait, fond) >= 3, `prompt 176 : ${p.id} — accent en trait sous 3:1 sur ${fond} (${rc(d.trait, fond).toFixed(2)})`);
+			verifier(rc(d.texteSurFond, fond) >= 4.5, `prompt 176 : ${p.id} — accent en texte sous 4,5:1 sur ${fond} (${rc(d.texteSurFond, fond).toFixed(2)})`);
+		}
+		c.T.Theme.appliquer(p.id, true);
+		verifier(c.DS.primaire === p.hex && c.DS.surPrimaire === d.texte && c.DS.primaireTrait === d.trait && c.DS.primaireTexte === d.texteSurFond, `prompt 176 : ${p.id} — Theme.appliquer doit écrire les quatre usages dans DS`);
+		verifier(c.T.primaireRGBA(0.5) === `rgba(${parseInt(p.hex.slice(1, 3), 16)},${parseInt(p.hex.slice(3, 5), 16)},${parseInt(p.hex.slice(5, 7), 16)},0.5)`, `prompt 176 : ${p.id} — version translucide de l'accent`);
+	}
+	// Un accent clair prend un texte sombre ; un accent trop sombre est éclairci pour l'usage en trait
+	verifier(derive('#FFC138').texte === '#0D0C0C' && rc(derive('#FFC138').texte, '#FFC138') >= 4.5, 'prompt 176 : un accent clair doit porter du texte sombre');
+	verifier(derive('#3A0A66').trait !== '#3A0A66' && rc(derive('#3A0A66').trait, '#171616') >= 3 && derive('#D4031C').trait === '#D4031C', 'prompt 176 : un accent trop sombre doit être éclairci en trait, un accent suffisant rester intact');
+	// Valeurs par défaut de ds.js = dérivées de la palette par défaut (jamais désynchronisées)
+	const ds176 = lire176('ds.js');
+	const d0 = derive(pal[0].hex);
+	verifier(ds176.includes(`primaire: '${d0.fond}'`) && ds176.includes(`surPrimaire: '${d0.texte}'`) && ds176.includes(`primaireTrait: '${d0.trait}'`) && ds176.includes(`primaireTexte: '${d0.texteSurFond}'`), 'prompt 176 : les valeurs par défaut de DS doivent être celles de la palette par défaut');
+	verifier(/texte: DS\.surPrimaire/.test(ds176), 'prompt 176 : le bouton principal écrit avec DS.surPrimaire');
+	// Une seule source : C et MENU_C relisent DS, plus aucune copie de l'hexadécimal ni affectation depuis theme.js
+	verifier(/get primaire\(\) \{\s*return DS\.primaire;/.test(lire176('sketch.js')) && /get bleu\(\) \{\s*return DS\.primaire;/.test(lire176('menu.js')), 'prompt 176 : C.primaire et MENU_C.bleu doivent relire DS.primaire');
+	verifier(!/C\.primaire = |MENU_C\.bleu = /.test(th), 'prompt 176 : theme.js n\'écrit que dans DS');
+	// Plus d'accent en dur pour focus / sélection / mise en avant dans les fichiers repris
+	const interdits = { 'carte.js': /rgba\(212,3,28|rgba\(255,193,56/, 'guide.js': /#FFC138/i, 'glisser.js': /rgba\(255,193,56|C\.orange/, 'notifs-tel.js': /#ffc138/i, 'soir.js': /#FFC138|255, 193, 56/i, 'menu.js': /#D4031C/i, 'sketch.js': /primaire: '#/ };
+	for (const [f, re] of Object.entries(interdits)) verifier(!re.test(lire176(f)), `prompt 176 : ${f} garde une couleur d'accent en dur (${re})`);
+	// Traits et textes posés sur le fond sombre : jamais l'aplat brut
+	for (const f of ['menu.js', 'carte.js', 'os.js', 'community.js', 'gameover.js', 'bureau.js', 'carte-alertes.js', 'sketch.js']) verifier(!/stroke\([^)\n]*(?:DS|C)\.primaire\b(?!Trait)|stroke\([^)\n]*MENU_C\.bleu/.test(lire176(f).replace(/primaire(Trait|Texte)/g, 'P$1')), `prompt 176 : ${f} — un trait d'accent doit lire primaireTrait`);
+}
+
 // Service worker : chaque script de index.html est dans la liste hors ligne de sw.js
 const html = readFileSync(join(pub, 'index.html'), 'utf8');
 const sw = readFileSync(join(pub, 'sw.js'), 'utf8');

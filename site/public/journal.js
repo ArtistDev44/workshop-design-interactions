@@ -574,7 +574,7 @@ function afficherZoneCopie(txt) {
 		z.style.cssText = 'width:100%;height:40vh;background:#1d1b1b;color:#fff;border:1px solid rgba(255,255,255,.3);font:15px monospace';
 		const f = document.createElement('button');
 		f.textContent = t('commun.fermer');
-		f.style.cssText = 'margin-top:8px;min-height:44px;padding:0 16px;background:var(--primaire, #D4031C);color:#fff;border:0;font:16px monospace';
+		f.style.cssText = 'margin-top:8px;min-height:44px;padding:0 16px;background:var(--primaire);color:var(--sur-primaire, #fff);border:0;font:16px monospace';
 		f.onclick = () => b.remove();
 		z.onkeydown = (ev) => ev.key === 'Escape' && b.remove();
 		b.append(p, z, f);

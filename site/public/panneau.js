@@ -92,7 +92,7 @@ function dessinerBandeau() {
 		noStroke();
 		fill(actif ? C.primaire : primaireRGBA(0.25)); // prompt 115
 		rect(z.x + z.l - 266 - (mobileMenu ? 60 : 0), z.y + 6, 254, 32);
-		fill('#FFFFFF');
+		fill(actif ? C.surPrimaire : '#FFFFFF');
 		textFont(POLICE_TEXTE);
 		textStyle(BOLD);
 		textAlign(CENTER, CENTER);

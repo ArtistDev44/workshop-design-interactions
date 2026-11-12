@@ -28,7 +28,10 @@ function ouvrirLivrables() {
 const MENU_C = {
 	nuit: '#0D0C0C', // Background du Pixel DS (prompt 39)
 	encre: '#0D0C0C', // Secondary-Foreground
-	bleu: '#D4031C', // Primary du Pixel DS (nom de clé conservé)
+	// Couleur d'accent (nom de clé historique) : relue dans DS, jamais copiée (prompt 176)
+	get bleu() {
+		return DS.primaire;
+	},
 	blanc: '#ffffff',
 	doux: 'rgba(255,255,255,0.75)', // White 75
 };
@@ -183,7 +186,7 @@ function carteMenu(x, y, l, h, titre, sous, action, sel, icone) {
 	if (sel) {
 		// focus clavier : contour bleu extérieur, en plus de la carte blanche
 		noFill();
-		stroke(MENU_C.bleu);
+		stroke(DS.primaireTrait);
 		strokeWeight(4);
 		rect(x - 6, y - 6, l + 12, h + 12);
 		noStroke();
@@ -283,7 +286,7 @@ function boutonInstaller(x, y, c, focus) {
 	if (survol || focus) {
 		// même double bordure que bouton() au survol ; rouge au focus clavier, comme les autres éléments du menu
 		noFill();
-		stroke(focus ? MENU_C.bleu : '#FFFFFF');
+		stroke(focus ? DS.primaireTrait : '#FFFFFF');
 		strokeWeight(focus ? 4 : 2);
 		rect(x - 6, y - 6, c + 12, c + 12);
 	}
@@ -344,7 +347,7 @@ function boutonIcone(x, y, l, h, icone, libelle, action, focus) {
 	textStyle(NORMAL);
 	if (focus) {
 		noFill();
-		stroke(MENU_C.bleu);
+		stroke(DS.primaireTrait);
 		strokeWeight(4);
 		rect(x - 6, y - 6, l + 12, h + 12);
 		noStroke();
@@ -456,7 +459,7 @@ function fenetrePartage() {
 	bouton(x + l - 48 - 260, y + h - 96, 260, 60, t('mp.partager.fermer'), fermer, false, PARTAGE.focus !== OPTIONS_PARTAGE.length);
 	if (PARTAGE.focus === OPTIONS_PARTAGE.length) {
 		noFill();
-		stroke(MENU_C.bleu);
+		stroke(DS.primaireTrait);
 		strokeWeight(4);
 		rect(x + l - 48 - 260 - 6, y + h - 96 - 6, 272, 72);
 		noStroke();
@@ -549,7 +552,7 @@ function dessinerChoixSemaine() {
 		}
 		if (sel) {
 			noFill();
-			stroke(MENU_C.bleu);
+			stroke(DS.primaireTrait);
 			strokeWeight(4);
 			rect(x - 6, y - 6, lc + 12, hc + 12);
 			noStroke();
