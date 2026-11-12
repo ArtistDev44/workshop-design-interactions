@@ -142,6 +142,14 @@ if (existsSync(dist)) {
 		if (existsSync(join(dist, page))) ok();
 		else echec(`dist/${page} absent : relancer npm run build`);
 	}
+	// Making-of : chaque fichier de prompt est listé avec son label « fait par … » (prompts/auteurs.json)
+	const mo = join(dist, 'making-of/index.html');
+	if (existsSync(mo)) {
+		const h = readFileSync(mo, 'utf8');
+		const fichiers = readdirSync(join(racine, '../prompts')).filter((f) => /^\d{2,3}-.+\.md$/.test(f));
+		for (const f of fichiers) h.includes(`>${f}</code>`) ? ok() : echec(`making-of : ${f} absent (ligne du tableau prompts/README.md mal formée ?)`);
+		(h.match(/fait par (Guillaume|Mattéo)/g) || []).length === fichiers.length ? ok() : echec('making-of : un prompt sans label « fait par … » (relancer npm run auteurs)');
+	}
 }
 
 if (erreurs.length) {

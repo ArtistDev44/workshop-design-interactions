@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "astro dev",
     "messages": "node scripts/generer-messages.mjs",
+    "auteurs": "node scripts/auteurs-prompts.mjs",
     "prebuild": "node scripts/generer-messages.mjs && node scripts/construire-slides.mjs && node scripts/generer-sw.mjs",
     "build": "astro build",
     "preview": "astro preview",

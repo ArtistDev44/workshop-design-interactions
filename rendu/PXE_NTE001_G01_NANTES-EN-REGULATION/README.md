@@ -78,7 +78,9 @@ Bitsy Pixels si installée.
 
 [À COMPLÉTER par le groupe : contributions nominatives et précises de chaque membre — pas de passager invisible.]
 Trace observable (`git shortlog -sn --all`, 12/11/2026) : ArtistDev44 223 commits, matteobvt49-code 103,
-Vibe Nuage Agent 62 (compte d'agent IA), Skyfe 30 — correspondance compte → personne : [À COMPLÉTER].
+Vibe Nuage Agent 62 (compte d'agent IA), Skyfe 30. Comptes rattachés par le groupe (12/11/2026) :
+ArtistDev44, Vibe Nuage Agent et Skyfe → Guillaume ; matteobvt49-code → Mattéo. Prompts par auteur (création du
+fichier dans git) : Guillaume 90, Mattéo 13 — détail sur https://workshop-design-interactions.pages.dev/making-of/.
 
 ## AI usage
 
