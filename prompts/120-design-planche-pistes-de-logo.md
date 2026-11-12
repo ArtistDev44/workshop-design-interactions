@@ -7,7 +7,7 @@ Demande d'origine (12/11/2026) :
 
 ## À produire
 
-Une page autonome `site/public/logo/planche.html` (aucune image ni appel externe, polices du site) qui montre :
+Une page autonome `logo/planche.html` (dossier `logo/` à la racine) (aucune image ni appel externe, polices du site) qui montre :
 
 - le **logo actuel** (`LOGO_PXE`, ds.js) en référence ;
 - **piste 1, le pin d'alerte** : marqueur de carte avec « ! » ;
