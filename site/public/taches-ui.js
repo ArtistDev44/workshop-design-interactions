@@ -145,7 +145,6 @@ function texteDemande(r) {
 
 // ——— Clavier ———
 function toucheTaches() {
-	if (toucheOptionsJeu()) return true;
 	if (fenetre !== 'tache') return false;
 	const tache = TACHE.courante;
 	if (!tache) return fermer(), true;
@@ -465,17 +464,12 @@ function corpsArbitrage(tache, x, y, l) {
 	return y;
 }
 
-// ——— Lot F : options soumises au groupe (Paramètres → G), désactivées par défaut ———
+// ——— Lot F : options soumises au groupe (Paramètres → section « Avancé », parametres.js), désactivées par défaut ———
 const OPTIONS_JEU = ['chaines', 'deblocages', 'arbitrage', 'traceDossier', 'pressionVisible', 'deVisible', 'eclairageJauges', 'npd', 'deblocageApplis', 'toutDebloque', 'somnolenceNecessaire']; // prompt 89 bis : 4 options (§ 6) ; prompt 90 : Ne pas déranger ; prompt 91 : § 7
 let confirmerRemiseCarriere = 0;
-function ouvrirOptionsJeu() {
-	confirmerRemiseCarriere = 0;
-	ouvrir('optionsJeu');
-	annoncer(t('optjeu.titre') + '. ' + t('optjeu.note'));
-}
 function basculerOptionJeu(nom) {
 	Confort.Reglages.basculer(nom);
-	annoncer(t('optjeu.' + nom) + ' : ' + t(Confort.Reglages[nom] ? 'commun.oui' : 'commun.non') + (OPTIONS_JEU.indexOf(nom) < 3 ? '. ' + t('optjeu.prochaine') : '.'));
+	annoncer(t('optjeu.' + nom) + ' : ' + t(Confort.Reglages[nom] ? 'commun.active' : 'commun.desactive') + (OPTIONS_JEU.indexOf(nom) < 3 ? '. ' + t('optjeu.prochaine') : '.'));
 }
 function remettreCarriere() {
 	if (!confirmerRemiseCarriere || millis() - confirmerRemiseCarriere > 5000) {
@@ -486,79 +480,4 @@ function remettreCarriere() {
 	Taches.reinitialiserCarriere();
 	annoncer(t('optjeu.remise'));
 	Confort.Son.bip('choix');
-}
-const OPTJEU = { focus: 0 };
-function fenetreOptionsJeu() {
-	const l = DS.fenetre.large; // prompt 173 (était 1500)
-	const h = 1050;
-	const x = (L - l) / 2;
-	const y = (H - h) / 2;
-	panneau(x, y, l, h, C.accent);
-	noStroke();
-	dsTitre(t('optjeu.titre').toUpperCase(), x + 48, y + 30, 36, C.texte, 'left');
-	const R = Confort.Reglages;
-	const items = OPTIONS_JEU.concat(['carriere']);
-	const lc = (l - 96 - 24) / 2;
-	const hc = 134; // prompt 173 : fenêtre large (1280 au lieu de 1500) → colonnes plus étroites, détail sur 4 lignes
-	const lb = 120; // bouton oui / non
-	const lt = lc - 16 - lb - 32; // largeur du texte à gauche du bouton
-	items.forEach((nom, i) => {
-		const cx = x + 48 + (i % 2) * (lc + 24);
-		const cy = y + 92 + Math.floor(i / 2) * (hc + 8);
-		const focus = OPTJEU.focus === i;
-		noStroke();
-		fill(focus ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.04)');
-		rect(cx, cy, lc, hc);
-		if (focus) {
-			noFill();
-			stroke(C.accent);
-			strokeWeight(3);
-			rect(cx, cy, lc, hc);
-			noStroke();
-		}
-		textAlign(LEFT, TOP);
-		textFont(POLICE_TEXTE);
-		textSize(21);
-		fill(C.texte);
-		const titre = nom === 'carriere' ? t('optjeu.carriere', { grade: t('grade.' + Taches.grade().i), xp: Taches.grade().xp }) : t('optjeu.' + nom);
-		const libelle = (i < 9 ? i + 1 + '  ' : '') + titre;
-		const ltitre = nom === 'carriere' ? lc - 32 : lt;
-		ajusterTaille(libelle, ltitre, 21, 15);
-		text(libelle, cx + 16, cy + 10, ltitre + 8, 30);
-		push(); // interligne local (textLeading est un état global de p5)
-		textFont(POLICE_DONNEES);
-		textSize(15);
-		textLeading(19);
-		fill(C.gris);
-		if (nom !== 'carriere') text(t('optjeu.' + nom + '.detail'), cx + 16, cy + 44, lt, 80);
-		pop();
-		if (nom === 'carriere') bouton(cx + 16, cy + 50, 300, 64, t(confirmerRemiseCarriere && millis() - confirmerRemiseCarriere < 5000 ? 'optjeu.confirmerBouton' : 'optjeu.remettre'), remettreCarriere, false, true);
-		else bouton(cx + lc - 16 - lb, cy + 35, lb, 64, t(R[nom] ? 'commun.oui' : 'commun.non'), () => ((OPTJEU.focus = i), basculerOptionJeu(nom)), false, !R[nom]);
-	});
-	textAlign(LEFT, TOP);
-	textFont(POLICE_DONNEES);
-	textSize(16);
-	fill(C.gris);
-	push();
-	textLeading(22);
-	text(t('optjeu.note'), x + 48, y + h - 92, l - 400, 70);
-	pop();
-	bouton(x + l - 48 - 240, y + h - 96, 240, 64, t('param.retour'), () => ouvrir('parametres'));
-}
-function toucheOptionsJeu() {
-	if (fenetre !== 'optionsJeu') return false;
-	const items = OPTIONS_JEU.concat(['carriere']);
-	const activer = (i) => (items[i] === 'carriere' ? remettreCarriere() : basculerOptionJeu(items[i]));
-	const n = ['1', '2', '3', '4', '5', '6', '7', '8', '9'].indexOf(key);
-	if (n >= 0 && n < items.length) return (OPTJEU.focus = n), activer(n), true;
-	const pas = { [UP_ARROW]: -2, [DOWN_ARROW]: 2, [LEFT_ARROW]: -1, [RIGHT_ARROW]: 1 }[keyCode];
-	if (pas) {
-		OPTJEU.focus = constrain(OPTJEU.focus + pas, 0, items.length - 1);
-		const nom = items[OPTJEU.focus];
-		annoncer(nom === 'carriere' ? t('optjeu.remettre') : t('optjeu.' + nom) + ' : ' + t(Confort.Reglages[nom] ? 'commun.oui' : 'commun.non') + '. ' + t('optjeu.' + nom + '.detail'));
-		return true;
-	}
-	if (keyCode === ENTER || keyCode === RETURN || key === ' ') return activer(OPTJEU.focus), true;
-	if (keyCode === ESCAPE) ouvrir('parametres');
-	return true;
 }

@@ -375,7 +375,7 @@
 		add('menu autorisations · tout autorisé', () => (AUTOR.etat = { son: 'autorise', micro: 'autorise', camera: 'autorise' }));
 		[0, 1, 2].forEach((c) => add('menu semaines ' + c, () => (H.raz(), (MENU.actif = true), (MENU.ecran = 'semaines'), (MENU.choixSemaine = c))));
 		// Prompt 171 : l'aide ne s'ouvre plus depuis le menu titre (elle est auditée en partie, plus bas) ; + explication d'installation
-		['parametres', 'optionsJeu', 'accessibilite', 'palmares', 'partage', 'installation'].forEach((f) => add('menu fenêtre ' + f, () => (H.raz(), (MENU.actif = true), (MENU.ecran = 'titre'), ouvrir(f))));
+		['parametres', 'palmares', 'partage', 'installation'].forEach((f) => add('menu fenêtre ' + f, () => (H.raz(), (MENU.actif = true), (MENU.ecran = 'titre'), ouvrir(f))));
 		add('menu titre · focus installer', () => (H.raz(), (MENU.actif = true), (MENU.ecran = 'titre'), (MENU.choix = entreesMenu().length + EXTRAS_MENU.length - 1)));
 		add('menu titre · retour au premier choix', () => (MENU.choix = 0), 2);
 		// Prompt 123 : les onglets de l'aide (la fenêtre s'ouvre sur le premier), page 2 des règles comprise ; prompt 171 : ouverte en partie, au poste
@@ -384,6 +384,13 @@
 		add('aide · règles 2', () => pageAide(1), 16);
 		add('aide · raccourcis', () => changerOngletAide(2), 16);
 		add('aide · malus', () => changerOngletAide(3), 16);
+		// Prompt 175 : les quatre sections de la fenêtre des paramètres (page 2 de « Avancé » comprise), focus clavier compris
+		add('paramètres · écran', () => (H.raz(), H.poste(), ouvrirParametres(0)), 12);
+		add('paramètres · son', () => (ouvrirParametres(1), (PARAM.focus = 1)), 12);
+		add('paramètres · accessibilité', () => (ouvrirParametres(2), (PARAM.focus = 5)), 12);
+		add('paramètres · avancé', () => ouvrirParametres(3), 12);
+		add('paramètres · avancé 2', () => pageParam(1), 12);
+		add('paramètres · fermés', () => fermer(), 2);
 		// Partie : bureau, poste, applis
 		add('partie semaine 1 · bureau', () => (H.partie(0), (vue = 'bureau')), 20);
 		add('poste · RégulOS', () => (H.poste(), (PC.etat = 'os'), (PC.fenetre = null)));
@@ -419,7 +426,7 @@
 			}, 12);
 		});
 		// Fenêtres en partie
-		['aide', 'parametres', 'optionsJeu', 'reset', 'menu', 'demission', 'cafe', 'partir'].forEach((f) => add('fenêtre ' + f, () => (H.raz(), H.poste(), ouvrir(f))));
+		['aide', 'parametres', 'reset', 'menu', 'demission', 'cafe', 'partir'].forEach((f) => add('fenêtre ' + f, () => (H.raz(), H.poste(), ouvrir(f))));
 		add('pause', () => (H.raz(), H.poste(), (enPause = true)));
 		add('téléphone', () => {
 			H.raz();

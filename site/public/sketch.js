@@ -58,7 +58,7 @@ function appliquerReglages() {
 }
 
 // ——— Confort (prompt 18) : fenêtres, pause, meilleur bilan ———
-let fenetre = null; // null | 'aide' | 'reset' | 'parametres'
+let fenetre = null; // null | 'aide' | 'reset' | 'parametres' (une seule fenêtre à onglets, parametres.js)
 let enPause = false;
 let debutPause = 0;
 let bilanFin = null; // { meilleur, record, ancien } calculé à la fin de partie
@@ -418,8 +418,6 @@ const FERMETURE_FOND = {
 	palmares: fermer,
 	menu: fermer,
 	telephone: fermer,
-	accessibilite: () => (fenetre = 'parametres'), // Échap revient aux paramètres
-	optionsJeu: () => ouvrir('parametres'),
 };
 let ZONE_FENETRE = null; // rectangle de la fenêtre dessinée à cette image (premier panneau), null hors fenêtre
 let FENETRE_EN_DESSIN = false;
@@ -1154,16 +1152,29 @@ function basculerSon() {
 	Confort.Reglages.basculer('son');
 }
 
-/** Prompt 133 : plein écran du document (1920×1080 du brief sans barres du navigateur) */
-function basculerPleinEcran() {
-	const doc = document;
+/** Prompt 133 : plein écran du document (1920×1080 du brief sans barres du navigateur).
+ * Prompt 175 : une seule logique pour la touche F et l'interrupteur des paramètres ; l'état affiché est l'état RÉEL
+ * (document.fullscreenElement, ou plein écran du navigateur ouvert par F11), jamais un réglage mémorisé — le
+ * navigateur exige un geste. L'annonce part de l'événement « fullscreenchange » (sortie par Échap comprise). */
+const pleinEcranPossible = () => typeof document !== 'undefined' && !!(document.documentElement && document.documentElement.requestFullscreen && document.exitFullscreen) && document.fullscreenEnabled !== false;
+/** Plein écran ouvert par le navigateur (F11) : la page ne peut pas en sortir elle-même */
+function pleinEcranNavigateur() {
 	try {
-		if (doc.fullscreenElement) doc.exitFullscreen();
-		else if (doc.documentElement.requestFullscreen) doc.documentElement.requestFullscreen().catch(() => {});
-		else return;
-		annoncer(t(doc.fullscreenElement ? 'pleinEcran.sortie' : 'pleinEcran.entree'));
+		return !document.fullscreenElement && typeof matchMedia === 'function' && matchMedia('(display-mode: fullscreen)').matches;
+	} catch (e) {
+		return false;
+	}
+}
+const pleinEcranActif = () => typeof document !== 'undefined' && (!!document.fullscreenElement || pleinEcranNavigateur());
+function basculerPleinEcran() {
+	if (!pleinEcranPossible()) return;
+	try {
+		if (document.fullscreenElement) document.exitFullscreen();
+		else if (pleinEcranNavigateur()) annoncer(t('pleinEcran.f11'));
+		else document.documentElement.requestFullscreen().catch(() => {});
 	} catch (e) {}
 }
+if (typeof document !== 'undefined' && document.addEventListener) document.addEventListener('fullscreenchange', () => annoncer(t(document.fullscreenElement ? 'pleinEcran.entree' : 'pleinEcran.sortie')));
 function keyPressed() {
 	// Prompt 33 : boîte d'import ouverte (champ texte, fichier) → le clavier lui appartient
 	if (Sauvegarde.dialogueOuvert) return;
@@ -1200,7 +1211,7 @@ function keyPressed() {
 	// Langue (prompt 24) : L bascule partout, sans toucher à la partie
 	if (key === 'l' || key === 'L') return Langue.suivante(), false;
 	// Prompt 47 : inspection, démission, palmarès ; J = journal de bord, D = rendre son badge
-	if (toucheDeblocage() || toucheTelephone() || toucheTaches() || toucheMecaniques() || toucheAccessibilite() || toucheJournee()) return false; // prompts 47, 48 et 51
+	if (toucheDeblocage() || toucheParametres() || toucheTelephone() || toucheTaches() || toucheMecaniques() || toucheJournee()) return false; // prompts 47 et 51 ; prompt 175 : la fenêtre des paramètres capte le clavier (Tab, flèches, Entrée, Espace)
 	if (typeof toucheCarte === 'function' && toucheCarte()) return false; // prompt 102 : Échap annule un jeton d'équipe choisi
 	// Fenêtres ouvertes : elles captent le clavier
 	if (fenetre) {
@@ -1230,18 +1241,6 @@ function keyPressed() {
 		if (fenetre === 'reprise') {
 			if (keyCode === ENTER || keyCode === RETURN) reprendreSemaineChoisie();
 			if (key === 'n' || key === 'N') lancerNouvellePartie();
-		}
-		if (fenetre === 'parametres') {
-			const cles = { 1: 'son', 2: 'horsLigneForce', 3: 'reduireAnimations', 4: 'contrasteRenforce', 0: 'defiChrono' }; // prompt 87 : 0 = défi chrono
-			if (cles[key]) basculerReglage(cles[key]);
-			if (key === '8') musiqueSuivante(); // prompt 44
-			if (key === 'c' || key === 'C') Theme.suivante(keyIsDown(SHIFT) ? -1 : 1); // prompt 115 : couleur principale
-			if (key === '9') return ouvrirAccessibilite(), false; // prompt 48
-			if (key === 'g' || key === 'G') return ouvrirOptionsJeu(), false; // prompt 88
-			if (key === '5') Sauvegarde.exporter(); // prompt 33
-			if (key === '6') Sauvegarde.copier();
-			if (key === '7') return Sauvegarde.ouvrirImport(), false;
-			if (keyCode === ENTER || keyCode === RETURN) fermer();
 		}
 		return false;
 	}
@@ -1437,11 +1436,9 @@ function contenuFenetre() {
 	if (fenetre === 'mailFin') return fenetreMailFin(); // prompt 56
 	if (fenetre === 'inspection') return fenetreInspection(); // prompt 47
 	if (fenetre === 'tache') return fenetreTache(); // prompt 88
-	if (fenetre === 'optionsJeu') return fenetreOptionsJeu(); // prompt 88 (lot F)
 	if (fenetre === 'deblocage') return fenetreDeblocage(); // prompt 91
 	if (fenetre === 'demission') return fenetreDemission(); // prompt 47
 	if (fenetre === 'palmares') return fenetrePalmares(); // prompt 47
-	if (fenetre === 'accessibilite') return fenetreAccessibilite(); // prompt 48
 	if (fenetre === 'partir') return fenetrePartir(); // prompt 51
 	if (fenetre === 'blame') return fenetreBlame(); // prompt 51
 	if (fenetre === 'poste') return fenetrePoste(); // prompt 74
@@ -1449,7 +1446,7 @@ function contenuFenetre() {
 	if (fenetre === 'installation') return fenetreInstallation(); // prompt 171
 	if (fenetre === 'aide') return fenetreAide();
 	if (fenetre === 'reset') return fenetreReset();
-	if (fenetre === 'parametres') return fenetreParametres();
+	if (fenetre === 'parametres') return fenetreParametres(); // prompt 175 : parametres.js
 	if (fenetre === 'reprise') return fenetreReprise();
 	if (fenetre === 'menu') return fenetreMenu();
 	if (fenetre === 'telephone') return fenetreTelephone(); // prompt 38
@@ -1479,10 +1476,10 @@ function fenetreReset() {
 }
 
 /** Prompt 44 : morceau suivant (mémorisé), joué tout de suite si le son est actif */
-function musiqueSuivante() {
+function musiqueSuivante(sens) {
 	const liste = Confort.Son.musique.pistes();
 	const i = liste.indexOf(Confort.Reglages.musique || 'coquillage');
-	const suivante = liste[(i + 1) % liste.length];
+	const suivante = liste[(i + (sens || 1) + liste.length) % liste.length];
 	Confort.Son.demarrer();
 	Confort.Son.musique.changer(suivante);
 	annoncer(t('param.musique') + ' : ' + t('musique.' + suivante));
@@ -1500,128 +1497,7 @@ function basculerReglage(nom) {
 	}
 }
 
-function fenetreParametres() {
-	const l = DS.fenetre.moyenne; // prompt 173 (était 1000)
-	const h = 1052; // prompt 33 : + section « Progression » ; prompt 44 : + « Musique » ; prompt 48 : + « Accessibilité »
-	const x = (L - l) / 2;
-	const y = (H - h) / 2;
-	panneau(x, y, l, h, C.accent);
-	textAlign(LEFT, TOP);
-	noStroke();
-	fill(C.accent);
-	textFont(POLICE_TEXTE);
-	textStyle(BOLD);
-	textSize(40);
-	text(t('param.titre'), x + 48, y + 36);
-	textStyle(NORMAL);
-	const R = Confort.Reglages;
-	const lignes = [
-		['1', t('param.son'), 'son'],
-		['2', t('param.horsLigne'), 'horsLigneForce'],
-		['3', t('param.animations'), 'reduireAnimations'],
-		['4', t('param.contraste'), 'contrasteRenforce'],
-		['0', t('param.defiChrono'), 'defiChrono'], // prompt 87 : compteur, ralenti, expiration (prochaine partie)
-	];
-	lignes.forEach(([k, lib, nom], i) => {
-		const ly = y + 120 + i * 72; // prompt 115 : rangées de 72 px pour la couleur principale
-		textFont(POLICE_TEXTE);
-		ajusterTaille(lib, 490, 26);
-		fill(C.texte);
-		textAlign(LEFT, CENTER);
-		text(lib, x + 48, ly + 36);
-		textFont(POLICE_DONNEES);
-		textSize(18);
-		fill(C.gris);
-		text(t('param.touche', { k }), x + 560, ly + 36);
-		bouton(x + l - 248, ly + 6, 200, 60, t(R[nom] ? 'commun.oui' : 'commun.non'), () => basculerReglage(nom), false, !R[nom]);
-	});
-	textAlign(LEFT, TOP);
-	textFont(POLICE_DONNEES);
-	textSize(16);
-	fill(C.gris);
-	text(t('param.note'), x + 48, y + h - 104, l - 360, 60);
-	// Langue (prompt 24) : même sélecteur qu'à l'accueil, touche L
-	textFont(POLICE_TEXTE);
-	textSize(26);
-	fill(C.texte);
-	textAlign(LEFT, CENTER);
-	text(t('langue.titre'), x + 48, y + 120 + 5 * 72 + 36);
-	textFont(POLICE_DONNEES);
-	textSize(18);
-	fill(C.gris);
-	text(t('param.touche', { k: 'L' }), x + 560, y + 120 + 5 * 72 + 36);
-	textAlign(LEFT, TOP);
-	selecteurLangue(x + l - 48, y + 120 + 5 * 72 + 10);
-	// Prompt 44 : choix de la musique (morceaux originaux, chiptune), touche 8
-	const ym = y + 120 + 6 * 72;
-	textFont(POLICE_TEXTE);
-	textSize(26);
-	fill(C.texte);
-	textAlign(LEFT, CENTER);
-	text(t('param.musique'), x + 48, ym + 36);
-	textFont(POLICE_DONNEES);
-	textSize(18);
-	fill(C.gris);
-	text(t('param.touche', { k: '8' }), x + 500, ym + 36);
-	bouton(x + l - 48 - 340, ym + 8, 340, 56, // prompt 98 : 280 → 340, le titre du morceau tient sans passer sous 14 px
-		 '♪ ' + t('musique.' + (Confort.Reglages.musique || 'coquillage')), musiqueSuivante, false, true);
-	textFont(POLICE_DONNEES);
-	textSize(14);
-	fill(C.gris);
-	textAlign(LEFT, TOP);
-	text(t('param.musiqueCredits'), x + 48, ym + 70, l - 96, 24); // crédits des morceaux CC0 ; prompt 93 : largeur libre sous le bouton, libellé court
-	if (mouseX >= x + 48 && mouseX <= x + l - 48 && mouseY >= ym + 66 && mouseY <= ym + 92) infobulle(t('param.musiqueCreditsLong'), x + 48, ym + 96);
-	// Prompt 33 : Progression — exporter (fichier), copier (presse-papiers), importer (fichier ou texte collé)
-	const yp = y + 120 + 7 * 72 + 16;
-	textFont(POLICE_TEXTE);
-	textSize(26);
-	fill(C.texte);
-	textAlign(LEFT, CENTER);
-	text(t('parametres.progression'), x + 48, yp + 36);
-	const lbp = 200;
-	bouton(x + l - 48 - 3 * lbp - 32, yp + 8, lbp, 56, t('parametres.exporter'), () => Sauvegarde.exporter(), false, true);
-	bouton(x + l - 48 - 2 * lbp - 16, yp + 8, lbp, 56, t('parametres.copier'), () => Sauvegarde.copier(), false, true);
-	bouton(x + l - 48 - lbp, yp + 8, lbp, 56, t('parametres.importer'), () => Sauvegarde.ouvrirImport(), false, true);
-	// Prompt 48 : accessibilité (daltonisme, taille du texte, lecture facile) et reprise sur un autre appareil
-	const ya = yp + 72;
-	textFont(POLICE_TEXTE);
-	textSize(26);
-	fill(C.texte);
-	textAlign(LEFT, CENTER);
-	text(t('acc.titre'), x + 48, ya + 36);
-	textFont(POLICE_DONNEES);
-	textSize(18);
-	fill(C.gris);
-	text(t('param.touche', { k: '9' }), x + 560, ya + 36);
-	bouton(x + l - 48 - 280, ya + 8, 280, 56, t('acc.ouvrir'), ouvrirAccessibilite, false, true);
-	// Prompt 88 : options de jeu soumises au groupe (chaînes, déblocages, arbitrage) et remise à zéro de la progression
-	const yo = ya + 72;
-	textFont(POLICE_TEXTE);
-	textSize(26);
-	fill(C.texte);
-	textAlign(LEFT, CENTER);
-	text(t('optjeu.titre'), x + 48, yo + 36);
-	textFont(POLICE_DONNEES);
-	textSize(18);
-	fill(C.gris);
-	text(t('param.touche', { k: 'G' }), x + 560, yo + 36);
-	bouton(x + l - 48 - 280, yo + 8, 280, 56, t('optjeu.ouvrir'), ouvrirOptionsJeu, false, true);
-	// Prompt 115 : couleur principale du design system (6 palettes), touche C
-	const yc = yo + 72;
-	textFont(POLICE_TEXTE);
-	textSize(26);
-	fill(C.texte);
-	textAlign(LEFT, CENTER);
-	text(t('couleur.titre'), x + 48, yc + 36);
-	textFont(POLICE_DONNEES);
-	textSize(18);
-	fill(C.gris);
-	text(t('param.touche', { k: 'C' }), x + 440, yc + 36);
-	textAlign(LEFT, TOP);
-	selecteurCouleur(x + l - 48, yc + 10);
-	textAlign(LEFT, TOP);
-	bouton(x + l - 288, y + h - 104, 240, 64, t('param.retour'), fermer);
-}
+// Prompt 175 : la fenêtre des paramètres (quatre sections à onglets) est dans parametres.js
 
 /** Sélecteur de langue (prompt 24) : un bouton par entrée de LANGUES, aligné à droite sur xDroite ; touche L partout */
 function selecteurLangue(xDroite, y, h) {

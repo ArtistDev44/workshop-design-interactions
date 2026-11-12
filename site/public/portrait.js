@@ -48,7 +48,7 @@ function region(src, dx, dy, dl, defile) {
 }
 // Prompt 173 : les fenêtres n'ont plus que trois largeurs (DS.fenetre) ; le cadrage portrait = largeur + 40 px
 const CADRE_FENETRE = { etroite: DS.fenetre.etroite + 40, moyenne: DS.fenetre.moyenne + 40, large: DS.fenetre.large + 40 };
-const LARGEUR_FENETRE = { menu: CADRE_FENETRE.etroite, partage: CADRE_FENETRE.moyenne, installation: CADRE_FENETRE.moyenne, parametres: CADRE_FENETRE.moyenne, demission: CADRE_FENETRE.moyenne, partir: CADRE_FENETRE.moyenne, reset: CADRE_FENETRE.moyenne, reprise: CADRE_FENETRE.moyenne, deblocage: CADRE_FENETRE.moyenne }; // prompt 88 ; les autres : large
+const LARGEUR_FENETRE = { menu: CADRE_FENETRE.etroite, partage: CADRE_FENETRE.moyenne, installation: CADRE_FENETRE.moyenne, demission: CADRE_FENETRE.moyenne, partir: CADRE_FENETRE.moyenne, reset: CADRE_FENETRE.moyenne, reprise: CADRE_FENETRE.moyenne, deblocage: CADRE_FENETRE.moyenne }; // prompt 88 ; les autres : large
 
 function scenePortrait() {
 	if (typeof CINE !== 'undefined' && CINE) return 'plein';

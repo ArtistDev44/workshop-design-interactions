@@ -205,20 +205,30 @@ function contenuCentreNotifications(e, pret) {
 	const lo = (l - 32 - (onglets.length - 1) * 6) / onglets.length;
 	onglets.forEach((o, i) => bouton(x + 16 + i * (lo + 6), e.y + 170, lo, 48, t('tel.onglet.' + o), () => ((TELN.onglet = o), (TELN.focus = 0), annoncer(t('tel.onglet.' + o))), false, TELN.onglet !== o));
 	const yc = e.y + 232;
-	const hc = e.h - 232 - 130;
+	const hc = e.h - 232 - 130 - 28; // prompt 175 : 28 px rendus au nom du réglage « Ne pas déranger », au-dessus de son interrupteur
 	if (TELN.onglet === 'agenda') contenuAgendaTel(x, yc, l, hc);
 	else if (TELN.onglet === 'direct') contenuDirectTel(x, yc, l, hc);
 	else contenuGroupesTel(x, yc, l, hc);
 	if (pret) {
-		// Prompt 170 : la lune (Lucide) remplace le glyphe « ☾ » — des espaces lui réservent sa place devant le libellé
-		const libNpd = (Confort.Reglages.npd ? '\u2003\u2009' : '') + t('tel.npd') + ' : ' + t(Confort.Reglages.npd ? 'commun.oui' : 'commun.non');
-		bouton(x + 16, e.y + e.h - 112, (l - 40) / 2, 56, libNpd, basculerNpd, false, !Confort.Reglages.npd);
-		if (Confort.Reglages.npd) {
-			textStyle(BOLD); // même police, même taille que le libellé que bouton() vient de dessiner
-			const ti = textSize();
-			iconeLucide('moon', x + 16 + (l - 40) / 4 - textWidth(libNpd) / 2, e.y + e.h - 84 - ti / 2, ti, '#ffffff');
-			textStyle(NORMAL);
-		}
+		// Prompt 175 : « Ne pas déranger » = interrupteur du DS (« Activé » / « Désactivé »), plus de bouton « oui / non » ;
+		// la lune (Lucide, prompt 170) précède le nom du réglage
+		// Le nom du réglage (lune + « Ne pas déranger ») est écrit au-dessus de l'interrupteur : la demi-largeur de
+		// l'écran ne tient pas le nom et l'état sur une ligne
+		const lw = (l - 40) / 2;
+		const y0 = e.y + e.h - 112;
+		const npd = !!Confort.Reglages.npd;
+		dsInterrupteur(x + 16 + dsLargeurInterrupteur(npd), y0 + 6, npd, basculerNpd);
+		iconeLucide('moon', x + 16, y0 - 22, 20, '#ffffff');
+		noStroke();
+		fill('#ffffff');
+		textFont(POLICE_TEXTE);
+		textStyle(NORMAL);
+		textAlign(LEFT, CENTER);
+		zoneTexteDebut('npdTel', x + 42, y0 - 24, lw - 26, 24);
+		ajusterTaille(t('tel.npd'), lw - 26, 18, 14);
+		text(t('tel.npd'), x + 42, y0 - 13);
+		zoneTexteFin();
+		textAlign(LEFT, TOP);
 		bouton(x + 24 + (l - 40) / 2, e.y + e.h - 112, (l - 40) / 2, 56, t('commun.fermer'), fermer);
 	}
 }
@@ -379,7 +389,7 @@ function contenuDirectTel(x, y0, l, h) {
 // ——— Actions ———
 function basculerNpd() {
 	Confort.Reglages.basculer('npd');
-	annoncer(t('tel.npd') + ' : ' + t(Confort.Reglages.npd ? 'commun.oui' : 'commun.non'));
+	annoncer(t('tel.npd') + ' : ' + t(Confort.Reglages.npd ? 'commun.active' : 'commun.desactive'));
 }
 function ignorerNotifTel(n) {
 	n.ignoree = true;
