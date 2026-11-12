@@ -1,8 +1,10 @@
 <!doctype html>
 <!-- Nantes en régulation — gabarit de l'image Open Graph (1200 × 630), rendu par site/scripts/og-image.mjs.
-     Tout ce qui est dessiné vient du dépôt : tracés réels des lignes Naolib et de la Loire (data/lignes.json,
-     Open Data Nantes Métropole, Licence Ouverte), trois dossiers réels du repli (data/fallback.json), logo
-     bulle-pin (favicon.svg), couleurs du Pixel Design System, police JetBrains Mono auto-hébergée. -->
+     L'image reprend le style graphique du jeu : la pièce en pixel art (bureau, baie sur la Loire, grue Titan,
+     horloge, clavier, téléphone) est le VRAI décor du jeu, capturé par og-image.mjs (tampon 480 × 270 de
+     bureau.js) et agrandi × 3 sans lissage. L'écran du PC affiche le titre. Tout le reste vient du dépôt :
+     tracés réels des lignes Naolib et de la Loire (data/lignes.json, Open Data Nantes Métropole, Licence
+     Ouverte), logo bulle-pin (favicon.svg), couleurs du Pixel Design System, police JetBrains Mono. -->
 <html lang="fr">
 	<head>
 		<meta charset="utf-8" />
@@ -17,17 +19,20 @@
 		<script>
 			const W = 1200, H = 630;
 			const ROUGE = '#D4031C', FOND = '#0D0C0C', BLANC = '#FFFFFF';
+			const K = 3; // un pixel du décor = 3 px de l'image
+			const CADRE = { x: 40, y: 18, l: W / K, h: H / K }; // partie du décor (480 × 270) gardée
+			const ECRAN = { x: 156, y: 46, l: 168, h: 94 }; // ECRAN_PC de bureau.js
 			const cv = document.getElementById('og');
 			const g = cv.getContext('2d');
+			const toile = (l, h) => Object.assign(document.createElement('canvas'), { width: l, height: h });
 
-			/** Texte « pixel » : rendu petit, seuillé (pas d'anticrénelage), puis agrandi sans lissage */
-			function textePixel(txt, x, y, taillePx, echelle, couleur) {
-				const c = document.createElement('canvas');
-				const k = c.getContext('2d');
+			/** Texte « pixel » (comme dsTitre, ds.js) : rendu petit, seuillé, à agrandir sans lissage */
+			function textePixel(txt, taillePx, couleur) {
+				const c = toile(1, 1);
+				const k = c.getContext('2d', { willReadFrequently: true });
 				k.font = `800 ${taillePx}px "JetBrains Mono"`;
-				const l = Math.ceil(k.measureText(txt).width) + 4;
-				c.width = l;
-				c.height = taillePx + 6;
+				c.width = Math.ceil(k.measureText(txt).width) + 4;
+				c.height = Math.ceil(taillePx * 1.3) + 2;
 				k.font = `800 ${taillePx}px "JetBrains Mono"`;
 				k.textBaseline = 'top';
 				k.fillStyle = '#fff';
@@ -39,163 +44,112 @@
 					im.data[i] = r; im.data[i + 1] = v; im.data[i + 2] = b; im.data[i + 3] = plein ? 255 : 0;
 				}
 				k.putImageData(im, 0, 0);
-				g.imageSmoothingEnabled = false;
-				g.drawImage(c, x, y, c.width * echelle, c.height * echelle);
-				return c.width * echelle;
+				return c;
 			}
-			/** Logo bulle-pin (favicon.svg), 16 × 16 pixels */
-			function logo(x, y, p) {
-				const r = (a, b, l, h, c) => ((g.fillStyle = c), g.fillRect(x + a * p, y + b * p, l * p, h * p));
+			/** Logo bulle-pin (favicon.svg), 16 × 15 pixels de côté p */
+			function logo(k, x, y, p) {
+				const r = (a, b, l, h, c) => ((k.fillStyle = c), k.fillRect(x + a * p, y + b * p, l * p, h * p));
 				[[1, 1, 14, 1], [0, 2, 16, 8], [1, 10, 14, 1], [4, 11, 8, 1], [5, 12, 6, 1], [6, 13, 4, 1], [7, 14, 2, 1]].forEach((q) => r(...q, ROUGE));
 				[[3, 5, 2, 2], [7, 5, 2, 2], [11, 5, 2, 2]].forEach((q) => r(...q, BLANC));
 			}
 
-			async function dessiner() {
+			/** Contenu de l'écran du PC, dessiné à la résolution du décor (168 × 94) puis agrandi × 3 */
+			function ecranPC(L) {
+				const c = toile(ECRAN.l, ECRAN.h);
+				const k = c.getContext('2d');
+				k.fillStyle = FOND;
+				k.fillRect(0, 0, c.width, c.height);
+				// Carte réelle du réseau, en veilleuse derrière le titre
+				const centre = [-1.556, 47.216];
+				const kx = Math.cos((centre[1] * Math.PI) / 180);
+				const ech = 1500;
+				const px = ([lon, lat]) => [c.width * 0.62 + (lon - centre[0]) * kx * ech, c.height / 2 - (lat - centre[1]) * ech];
+				const chemin = (pts) => {
+					k.beginPath();
+					pts.forEach((p, i) => { const [a, b] = px(p); i ? k.lineTo(a, b) : k.moveTo(a, b); });
+				};
+				k.fillStyle = '#14273c';
+				L.eau.forEach((poly) => { chemin(poly); k.closePath(); k.fill(); });
+				L.lignes.slice().sort((a, b) => (a.type === 0) - (b.type === 0)).forEach((ln) => {
+					const tram = ln.type === 0;
+					k.strokeStyle = tram ? ln.couleur || BLANC : BLANC;
+					k.globalAlpha = tram ? 1 : 0.1;
+					k.lineWidth = 1;
+					ln.traces.forEach((t) => { chemin(t); k.stroke(); });
+				});
+				k.globalAlpha = 1;
+				// Voile : la gauche sombre pour le titre
+				const gr = k.createLinearGradient(0, 0, c.width, 0);
+				gr.addColorStop(0, 'rgba(13,12,12,0.9)');
+				gr.addColorStop(0.55, 'rgba(13,12,12,0.6)');
+				gr.addColorStop(1, 'rgba(13,12,12,0.1)');
+				k.fillStyle = gr;
+				k.fillRect(0, 0, c.width, c.height);
+				// Titre en pixels, avec un liseré sombre pour rester net sur la carte
+				k.imageSmoothingEnabled = false;
+				[['NANTES EN', 22], ['RÉGULATION', 47]].forEach(([txt, y]) => {
+					const ombre = textePixel(txt, 24, '0D0C0C');
+					[[-1, 0], [1, 0], [0, -1], [0, 1], [1, 1]].forEach(([dx, dy]) => k.drawImage(ombre, 7 + dx, y + dy));
+					k.drawImage(textePixel(txt, 24, 'FFFFFF'), 7, y);
+				});
+				k.fillStyle = ROUGE;
+				k.fillRect(9, 79, 30, 2);
+				// Pastille d'incidents en attente, au coin de l'écran (comme en jeu)
+				k.fillRect(c.width - 17, 5, 11, 11);
+				return c;
+			}
+
+			async function dessiner(pieceURL) {
 				await document.fonts.load('800 20px "JetBrains Mono"');
 				await document.fonts.load('400 20px "JetBrains Mono"');
 				const L = await (await fetch('../public/data/lignes.json')).json();
-				const F = await (await fetch('../public/data/fallback.json')).json();
+				const piece = new Image();
+				piece.src = pieceURL;
+				await piece.decode();
 
-				g.fillStyle = FOND;
-				g.fillRect(0, 0, W, H);
+				// ——— Le décor du jeu, plein cadre ———
+				g.imageSmoothingEnabled = false;
+				g.drawImage(piece, CADRE.x, CADRE.y, CADRE.l, CADRE.h, 0, 0, W, H);
 
-				// ——— Carte réelle : centre-ville de Nantes, cadré à droite ———
-				const centre = [-1.556, 47.214];
-				const kx = Math.cos((centre[1] * Math.PI) / 180);
-				const ech = 5200; // px par degré de longitude corrigé
-				const px = ([lon, lat]) => [800 + (lon - centre[0]) * kx * ech, 330 - (lat - centre[1]) * ech];
-				const chemin = (pts) => {
-					g.beginPath();
-					pts.forEach((p, i) => { const [a, b] = px(p); i ? g.lineTo(a, b) : g.moveTo(a, b); });
-				};
-				// Loire et cours d'eau
-				g.fillStyle = '#16304d';
-				L.eau.forEach((poly) => { chemin(poly); g.closePath(); g.fill(); });
-				// Lignes : bus en fin, tram et busway (type 0) épais et lumineux
-				const lignes = L.lignes.slice().sort((a, b) => (a.type === 0) - (b.type === 0));
-				lignes.forEach((ln) => {
-					const tram = ln.type === 0;
-					g.strokeStyle = tram ? ln.couleur || BLANC : 'rgba(255,255,255,0.16)';
-					g.lineWidth = tram ? 3 : 1;
-					g.shadowColor = tram ? ln.couleur || BLANC : 'transparent';
-					g.shadowBlur = tram ? 14 : 0;
-					g.globalAlpha = tram ? 0.9 : 1;
-					ln.traces.forEach((t) => { chemin(t); g.stroke(); });
-				});
-				g.shadowBlur = 0;
-				g.globalAlpha = 1;
-
-				// Voile : la gauche sombre pour le titre, bords en vignette
-				let gr = g.createLinearGradient(0, 0, W, 0);
-				gr.addColorStop(0, 'rgba(13,12,12,1)');
-				gr.addColorStop(0.36, 'rgba(13,12,12,0.94)');
-				gr.addColorStop(0.62, 'rgba(13,12,12,0.25)');
-				gr.addColorStop(1, 'rgba(13,12,12,0.55)');
-				g.fillStyle = gr;
-				g.fillRect(0, 0, W, H);
-				gr = g.createRadialGradient(820, 320, 120, 820, 320, 620);
-				gr.addColorStop(0, 'rgba(212,3,28,0.10)');
-				gr.addColorStop(1, 'rgba(212,3,28,0)');
-				g.fillStyle = gr;
-				g.fillRect(0, 0, W, H);
-
-				// ——— Alertes : pins bulle-pin avec ondes, posés sur des tracés réels ———
-				const pins = [[-1.5536, 47.2172], [-1.5905, 47.2265], [-1.5215, 47.2098]];
-				pins.forEach((p, i) => {
-					const [a, b] = px(p);
-					[46, 32, 20].forEach((r, k) => {
-						g.strokeStyle = `rgba(212,3,28,${0.18 + k * 0.2})`;
-						g.lineWidth = 2;
-						g.beginPath();
-						g.arc(a, b, r + (i === 0 ? 10 : 0), 0, Math.PI * 2);
-						g.stroke();
-					});
-					g.shadowColor = ROUGE;
-					g.shadowBlur = 24;
-					logo(a - 16 * (i === 0 ? 2.5 : 2) / 2, b - 15 * (i === 0 ? 2.5 : 2), i === 0 ? 2.5 : 2);
-					g.shadowBlur = 0;
-				});
-
-				// ——— Dossiers réels (repli : semaine du 12 au 18/10/2026) ———
-				const dossiers = F.dossiers.filter((d) => d.type === 'perturbation').slice(0, 3);
-				const fmt = (iso) => iso.split('-').reverse().slice(0, 2).join('/');
-				dossiers.forEach((d, i) => {
-					const x = 800 + i * 14, y = 404 + i * 58, l = 352, h = 50;
-					g.fillStyle = 'rgba(13,12,12,0.92)';
-					g.fillRect(x, y, l, h);
-					g.strokeStyle = 'rgba(255,255,255,0.25)';
-					g.lineWidth = 1;
-					g.strokeRect(x + 0.5, y + 0.5, l - 1, h - 1);
-					g.fillStyle = ROUGE;
-					g.fillRect(x, y, 6, h);
-					g.font = '700 13px "JetBrains Mono"';
-					g.fillStyle = '#FFC138';
-					g.fillText('⚠ ' + String(d.type).toUpperCase() + ' · ' + fmt(d.date) + '/2026', x + 18, y + 19);
-					g.font = '400 15px "JetBrains Mono"';
-					g.fillStyle = BLANC;
-					let t = String(d.texte_source || d.nature);
-					while (g.measureText(t).width > l - 36) t = t.slice(0, -2) + '…';
-					g.fillText(t, x + 18, y + 39);
-				});
-
-				// ——— Titre ———
-				logo(64, 58, 5);
+				// ——— L'écran du PC ———
+				const ex = (ECRAN.x - CADRE.x) * K, ey = (ECRAN.y - CADRE.y) * K;
+				g.drawImage(ecranPC(L), ex, ey, ECRAN.l * K, ECRAN.h * K);
+				g.imageSmoothingEnabled = true;
+				logo(g, ex + 27, ey + 22, 2);
 				g.font = '700 15px "JetBrains Mono"';
-				g.fillStyle = 'rgba(255,255,255,0.75)';
-				g.fillText('PATRIMOINE.EXE · NTE001', 160, 86);
-				g.fillStyle = ROUGE;
-				g.fillText('SALLE DE RÉGULATION · NANTES', 160, 108);
-				g.shadowColor = 'rgba(212,3,28,0.55)';
-				g.shadowBlur = 0;
-				textePixel('NANTES EN', 58, 160, 16, 5.6, 'FFFFFF');
-				textePixel('RÉGULATION', 58, 262, 16, 5.6, 'FFFFFF');
-				g.fillStyle = ROUGE;
-				g.fillRect(64, 374, 120, 6);
-
-				g.font = '400 21px "JetBrains Mono"';
 				g.fillStyle = BLANC;
-				g.fillText('Une semaine réelle du réseau nantais.', 64, 420);
-				g.fillText('Chaque incident devient un dossier.', 64, 450);
-				g.font = '700 21px "JetBrains Mono"';
-				g.fillStyle = ROUGE;
-				g.fillText('À vous de trancher.', 64, 480);
+				g.fillText('PATRIMOINE.EXE · NTE001', ex + 72, ey + 43);
+				g.textAlign = 'center';
+				g.fillText('3', ex + (ECRAN.l - 11.5) * K, ey + 37);
+				g.textAlign = 'left';
+				g.font = '400 15px "JetBrains Mono"';
+				g.fillText('Une semaine réelle du réseau nantais.', ex + 27, ey + 266);
 
-				// Jauges du jeu : fluidité, réputation, budget (sans chiffre, barre blanche d'objectif)
-				[['Fluidité', 0.72, '#00B74F'], ['Réputation', 0.46, '#FFC138'], ['Budget', 0.17, '#D10B00']].forEach(([nom, v, c], i) => {
-					const x = 64 + i * 232, y = 520;
-					g.font = '700 14px "JetBrains Mono"';
-					g.fillStyle = 'rgba(255,255,255,0.85)';
-					g.fillText(nom.toUpperCase(), x, y);
-					g.fillStyle = 'rgba(255,255,255,0.15)';
-					g.fillRect(x, y + 10, 200, 10);
-					g.fillStyle = c;
-					g.fillRect(x, y + 10, 200 * v, 10);
-					if (i === 1) {
-						g.fillStyle = FOND;
-						g.fillRect(x + 120 - 3, y + 4, 6, 22);
-						g.fillStyle = BLANC;
-						g.fillRect(x + 120 - 1, y + 5, 2, 20);
-					}
+				// ——— Alertes sur la ville, derrière la baie ———
+				[[150, 208], [888, 238]].forEach(([x, y]) => {
+					g.fillStyle = 'rgba(13,12,12,0.35)';
+					g.fillRect(x + K, y + K, 16 * K, 11 * K);
+					logo(g, x, y, K);
 				});
 
-				// Pied
-				g.fillStyle = 'rgba(255,255,255,0.12)';
-				g.fillRect(0, 582, W, 1);
-				g.font = '400 14px "JetBrains Mono"';
-				g.fillStyle = 'rgba(255,255,255,0.75)';
-				g.fillText('ESD Nantes · B3 Design · 2026 — jeu en pixel art, jouable en ligne et hors ligne', 64, 611);
+				// ——— Accroche, posée sur le plateau ———
+				g.font = '400 21px "JetBrains Mono"';
+				g.fillStyle = FOND;
+				g.fillText('Chaque incident', 44, 532);
+				g.fillText('devient un dossier.', 44, 561);
+				g.font = '800 21px "JetBrains Mono"';
+				g.fillStyle = '#B80218';
+				g.fillText('À vous de trancher.', 44, 596);
+				g.font = '700 15px "JetBrains Mono"';
+				g.fillStyle = FOND;
 				g.textAlign = 'right';
-				g.fillText('Données réelles : Naolib · Open-Meteo · Hub’Eau', W - 32, 611);
+				g.fillText('ESD Nantes · B3 Design · 2026', W - 32, 430);
 				g.textAlign = 'left';
 
-				// Cadre et lignes de balayage discrètes (écran de régulation)
-				g.fillStyle = 'rgba(0,0,0,0.12)';
-				for (let y = 0; y < H; y += 3) g.fillRect(0, y, W, 1);
 				g.fillStyle = ROUGE;
 				g.fillRect(0, 0, W, 6);
 				document.title = 'pret';
 			}
-			dessiner();
 		</script>
 	</body>
 </html>
