@@ -12,6 +12,14 @@
  * - Prompt 109 : les équipes partent de leur centre d'intervention réel (data/lieux.json), avancent vers le lieu
  *   (tracé à vol d'oiseau, en pointillés, partie parcourue pleine), restent sur place, puis rentrent.
  */
+Jeu.incidentsFictifs = (() => {
+	// prompt 119 : incidents inventés rares, marqués « Fictif » ; ?fictifs=0 les retire
+	try {
+		return new URLSearchParams(location.search).get('fictifs') !== '0';
+	} catch (e) {
+		return true;
+	}
+})();
 Jeu.plateauEquipesVisible = true; // prompt 103 : le panneau des équipes dit les effectifs (pas de doublon chez le patron)
 const CARTE = { zone: null, vue: null, cible: null, marqueurs: [], arrivees: {}, jeton: null, jetonChoisi: null, retour: null, jetons: [], depots: [], pan: null, centreSur: null, ligneSurvol: null, survolFrame: 0, controles: [] };
 const MENU_APP = { x: 40, y: 132, l: 128, h: 900 }; // prompt 103 : colonne du menu

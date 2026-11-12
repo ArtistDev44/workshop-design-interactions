@@ -387,6 +387,7 @@
 			[0, 'événement'],
 			[0, 'alerte météo'],
 			[2, 'perturbation'],
+			[0, 'incident fictif'], // prompt 119
 		].forEach(([s, ty]) => {
 			add('dossier ' + ty, () => {
 				H.partie(s);

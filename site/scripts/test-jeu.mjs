@@ -251,14 +251,14 @@ const sv = vm.runInContext(
 	const delta = Jeu.plaintes.reduce((s, p) => s + (p.suivis || []).reduce((t, x) => t + x.delta, 0), 0);
 	Jeu.horloge.minutes = Jeu.debutJournee(); const avant = Jeu.majSuivis();
 	Jeu.horloge.minutes = 99999; const livres = Jeu.majSuivis(); const encore = Jeu.majSuivis();
-	return { a, b, nbs, total, delta, avant, livres, encore, rep: Jeu.jauges.reputation - rep0, comm: Jeu.commentaires.filter((c) => c.suivi).map((c) => String(c.texte)) };
+	return { a, b, nbs, total, delta, avant, livres, encore, rep: Jeu.jauges.reputation - rep0, comm: Jeu.commentaires.filter((c) => c.suivi).map((c) => String(c.texte)), rel: Jeu.plaintes.reduce((s, p) => s + (p.relances || []).length, 0) };
 	})()`,
 	fr,
 );
 verifier(JSON.stringify(sv.a) === JSON.stringify(sv.b) && sv.a.length > 0, 'réactions : tirage non reproductible ou aucune plainte');
 verifier(sv.nbs.every((n) => n >= 0 && n <= 3), `réactions : plus de 3 pour une réponse (${sv.nbs})`);
 verifier(sv.livres + sv.avant === sv.total && sv.encore === 0, `réactions : ${sv.avant} + ${sv.livres} livrées sur ${sv.total}, ${sv.encore} en double`);
-verifier(sv.comm.length === sv.total && sv.comm.every((x) => x && !x.includes('[À COMPLÉTER]') && !x.includes('« »')), 'réactions : texte manquant ou vide');
+verifier(sv.comm.length + sv.rel === sv.total && sv.comm.every((x) => x && !x.includes('[À COMPLÉTER]') && !x.includes('« »')), 'réactions : texte manquant ou vide (réactions publiques + relances privées du prompt 85)');
 
 // Prompt 68 : gravité, pertinence, équipes limitées (effectif, cycle, refus, remise à zéro, effet hors sujet, sauvegarde)
 const eq = vm.runInContext(
@@ -1009,7 +1009,10 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 				Jeu.paquet.forEach((d, i) => {
 					Jeu.index = i;
 					const cat = Jeu.categorie(d);
-					const rs = reponsesAffichees(d);
+					const rs = reponsesDialogue(d); // prompt 117 : 3 répliques mélangées, dont 1 clash et la meilleure réponse
+					if (rs.length !== 3 || rs.filter((x) => x.clash).length !== 1 || !rs.some((x) => !x.clash && x.cle === Jeu.meilleureReponse(d))) out.vides.push('trio invalide ' + i);
+					out.ordres = out.ordres || new Set();
+					out.ordres.add(rs.findIndex((x) => x.clash));
 					const txts = repliquesDuDossier(rs, d);
 					if (txts.filter((x) => /@\\w/.test(x)).length > 1) out.vides.push('pseudo cité plusieurs fois');
 					rs.forEach((rp, k) => {
@@ -1021,11 +1024,57 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 				});
 			}
 			out.diff = Object.entries(out.parCat).filter(([, s]) => s.size < 2).map(([c]) => c);
-			return { n: out.n, vides: out.vides.slice(0, 3), diff: out.diff };
+			return { n: out.n, vides: out.vides.slice(0, 3), diff: out.diff, positionsClash: out.ordres.size };
 		})()`, cr);
 		verifier(r.n > 0 && !r.vides.length, `répliques (${lg}) : ${r.n} affichées, variables vides ${JSON.stringify(r.vides)}`);
 		verifier(!r.diff.length, `répliques (${lg}) : une seule formulation pour ${r.diff}`);
+		verifier(r.positionsClash >= 2, `répliques (${lg}) : le clash est toujours à la même place`);
+		// Prompt 117 : une décision « clash » = attendre + malus de réputation, comptée ratée
+		const cl = vm.runInContext(`(() => {
+			Jeu.chargerSemaine('2026-10-12'); Jeu.nouvellePartie(); Jeu.modificateur = null;
+			const d = Jeu.dossierCourant(); const c = reponsesDialogue(d).find((x) => x.clash);
+			Jeu.initialiserAlea(7, 0); const rep0 = Jeu.jauges.reputation; Jeu.clashSuivant = true; const r1 = Jeu.decider(c.cle);
+			return { clash: r1.clash, eval: Jeu.evaluer(Jeu.evenementsJournee[Jeu.evenementsJournee.length - 1]), dRep: r1.deltas[1] };
+		})()`, cr);
+		verifier(cl.clash === true && cl.eval === 'rate' && cl.dRep <= -8, `clash (${lg}) : ${JSON.stringify(cl)}`);
 	}
+}
+
+// Prompt 118 : plaintes agressives — FR et EN, aucun gros mot en clair (masqués par des symboles), conditions réelles, ≈ 1 sur 3
+{
+	const c118 = contexte('fr');
+	const r = vm.runInContext(`(() => {
+		const ag = Jeu.MESSAGES.plaintes.filter((p) => p.ton === 'agressif');
+		const textes = ag.flatMap((p) => [p.texte.fr, p.texte.en || '']);
+		const clair = /\\b(merde|putain|connard|connasse|enculé|salope|bordel|foutre|fuck|shit|bastard|bitch|asshole|crap|damn)\\b/i;
+		const out = { n: ag.length, sansEn: ag.filter((p) => !p.texte.en).map((p) => p.id), enClair: textes.filter((x) => clair.test(x)), sansSymbole: ag.filter((p) => !/[@#$%&!]{2,}/.test(p.texte.fr)).map((p) => p.id), agressifs: 0, total: 0 };
+		for (const sem of ['2026-09-14', '2026-10-12', '2026-11-02']) {
+			Jeu.chargerSemaine(sem); Jeu.nouvellePartie();
+			Jeu.paquet.forEach((d, i) => { const pl = Jeu.plaignantPour(i); if (pl) { out.total++; if (pl.ton === 'agressif') out.agressifs++; } });
+		}
+		return out;
+	})()`, c118);
+	verifier(r.n >= 6 && !r.sansEn.length && !r.enClair.length && !r.sansSymbole.length, `plaintes agressives : ${JSON.stringify(r)}`);
+	verifier(r.agressifs > 0 && r.agressifs < r.total, `plaintes agressives : ${r.agressifs} sur ${r.total} plaignants (ni aucune, ni toutes)`);
+}
+
+// Prompt 119 : incidents inventés — au plus un par semaine, marqués fictifs, sur une ligne réelle, catégorie « securite »,
+// témoin trouvé ; désactivés (tests de règles) → paquet inchangé
+{
+	const c119 = contexte('fr');
+	const r = vm.runInContext(`(() => {
+		const out = [];
+		for (const sem of ['2026-09-14', '2026-10-12', '2026-11-02']) {
+			Jeu.incidentsFictifs = false; Jeu.chargerSemaine(sem); Jeu.nouvellePartie(); const sans = Jeu.paquet.length;
+			Jeu.incidentsFictifs = true; Jeu.chargerSemaine(sem); Jeu.nouvellePartie();
+			const f = Jeu.paquet.filter((d) => d.fictif);
+			const d = f[0];
+			out.push({ sans, avec: Jeu.paquet.length, n: f.length, ok: !!d && d.type === 'incident fictif' && /fictif/i.test(d.source) && Jeu.lignes.lignes.some((l) => l.nom === d.lignes[0]) && Jeu.categorie(d) === 'securite' && Jeu.gravite(d) === 'elevee' && Jeu.equipesPertinentes(d).includes('police') && !!Jeu.plaignantPour(Jeu.paquet.indexOf(d)) });
+		}
+		Jeu.incidentsFictifs = false;
+		return out;
+	})()`, c119);
+	verifier(r.every((x) => x.n === 1 && x.avec === x.sans + 1 && x.ok), `incidents fictifs : ${JSON.stringify(r)}`);
 }
 
 // Prompt 88 : aucun texte identique deux fois dans une même journée (mesure du § 0, FR et EN), variantes reproductibles
@@ -1905,8 +1954,8 @@ for (const f of ['enquete.js', 'carte.js', 'journal.js']) verifier(!/\*\s*1\.05\
 // Prompt 97 (skill game-design-theory) : apprendre vite — l'aide H et le guide nomment les gestes (glisser / clic,
 // 1-4, Q) et les 3 jauges, et répondent à « pourquoi ma décision a raté ? » ; la difficulté est lisible avant de jouer
 for (const [langue, mots] of [
-	['fr', { glisser: /Glisser/, touches: /1 à 4/, q: /Quitter la journée/, jauges: /fluidité, réputation et budget/, rate: /Pourquoi une décision a raté/, guide: /répondez-lui/, diff: /Difficulté facile : budget 60 · 3 signalement/ }],
-	['en', { glisser: /Drag/, touches: /1 to 4/, q: /End the day/, jauges: /flow, reputation and budget/, rate: /Why did a decision fail/, guide: /then reply/, diff: /easy difficulty: budget 60 · 3 report/ }],
+	['fr', { glisser: /Glisser/, touches: /1 à 3/, q: /Quitter la journée/, jauges: /fluidité, réputation et budget/, rate: /Pourquoi une décision a raté/, guide: /répondez-lui/, diff: /Difficulté facile : budget 60 · 3 signalement/ }],
+	['en', { glisser: /Drag/, touches: /1 to 3/, q: /End the day/, jauges: /flow, reputation and budget/, rate: /Why did a decision fail/, guide: /then reply/, diff: /easy difficulty: budget 60 · 3 report/ }],
 ]) {
 	const c97 = contexte(langue);
 	const a = vm.runInContext(

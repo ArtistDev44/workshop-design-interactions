@@ -426,6 +426,87 @@
 				],
 				"famille": "rien"
 			}
+		],
+		"securite": [
+			{
+				"id": "intervenir",
+				"libelle": {
+					"fr": "Intervenir",
+					"en": "Intervene"
+				},
+				"explication": {
+					"fr": "Envoie la police sur place et prévient le conducteur.",
+					"en": "Sends the police and alerts the driver."
+				},
+				"base": [
+					0,
+					8,
+					-5
+				],
+				"situations": [
+					"pointe"
+				],
+				"famille": "renfort",
+				"equipe": "police"
+			},
+			{
+				"id": "calmer",
+				"libelle": {
+					"fr": "Calmer la situation",
+					"en": "Calm the situation"
+				},
+				"explication": {
+					"fr": "Le conducteur et le témoin sont guidés pour garder leurs distances en attendant les secours.",
+					"en": "The driver and the witness are guided to keep their distance until help arrives."
+				},
+				"base": [
+					0,
+					5,
+					0
+				],
+				"situations": [
+					"calme"
+				],
+				"famille": "retenir"
+			},
+			{
+				"id": "arreter",
+				"libelle": {
+					"fr": "Arrêter le véhicule",
+					"en": "Stop the vehicle"
+				},
+				"explication": {
+					"fr": "Le véhicule s'arrête à l'arrêt suivant, portes ouvertes ; la ligne est ralentie.",
+					"en": "The vehicle stops at the next stop, doors open; the line slows down."
+				},
+				"base": [
+					-4,
+					6,
+					0
+				],
+				"situations": [
+					"meteo+pointe"
+				],
+				"famille": "devier"
+			},
+			{
+				"id": "attendre",
+				"libelle": {
+					"fr": "Attendre plus d'informations",
+					"en": "Wait for more information"
+				},
+				"explication": {
+					"fr": "Aucune action tant que la situation n'est pas confirmée.",
+					"en": "No action until the situation is confirmed."
+				},
+				"base": [
+					0,
+					-6,
+					0
+				],
+				"situations": [],
+				"famille": "rien"
+			}
 		]
 	}
 }

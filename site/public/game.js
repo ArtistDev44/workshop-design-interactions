@@ -163,6 +163,7 @@
 		},
 		// Contradiction de sources (Q9, Q31) : mauvaise source = malus réputation + conséquence réelle
 		malusMauvaiseSource: -6,
+		malusClash: -8, // prompt 117 : clasher le plaignant (réputation, en plus de l'effet de « attendre »)
 		seuilCritique: 20, // Q46
 		// Prompt 79 — les retards s'aggravent avec le temps (calcul documenté, jamais une donnée inventée) :
 		// retard effectif = retard réel de la source + 1 min toutes les 2 minutes de jeu depuis l'arrivée du dossier
@@ -241,8 +242,39 @@
 			paquet = base.concat(evts);
 		}
 		paquet = paquet.slice(0, REGLAGES.dossiersParPartie);
+		const fictif = Jeu.incidentsFictifs ? incidentFictif(etat, paquet) : null; // prompt 119 : au plus un par semaine, marqué fictif
+		if (fictif) paquet = paquet.concat([fictif]);
 		paquet.sort((a, b) => (a.date + (a.heure || '')).localeCompare(b.date + (b.heure || '')));
 		return paquet.map((d) => Object.assign({}, d, { contradiction: detecterContradiction(d) }));
+	}
+
+	/* Prompt 119 — exception assumée à « aucune donnée inventée » (décision du groupe) : un incident INVENTÉ, rare
+	 * (au plus un par semaine), pour pimenter le rythme. Toujours marqué fictif (fictif: true, source « Scénario du
+	 * jeu (fictif) ») ; jour, heure (9 h–19 h) et ligne réelle (GTFS) tirés par hachage de la graine — aucun dé. Activé
+	 * seulement par l'affichage (Jeu.incidentsFictifs, désactivable avec ?fictifs=0) : les tests de règles n'en ont pas. */
+	function incidentFictif(etat, paquet) {
+		const graine = String((etat.semaine && etat.semaine.lundi) || etat.seed || 'partie');
+		let h = 0;
+		for (const c of graine) h = (h * 31 + c.charCodeAt(0)) % 1000003;
+		const dates = [...new Set(paquet.map((d) => d.date))].sort();
+		const lignes = Jeu.lignes && Jeu.lignes.lignes ? Jeu.lignes.lignes.filter((l) => l.traces && l.traces.length && (l.type === 0 || l.type === 3)) : [];
+		if (!dates.length || !lignes.length) return null;
+		const sorte = h % 2 ? 'agression' : 'vol';
+		const ligne = lignes[(h >> 3) % lignes.length].nom;
+		const heure = String(9 + ((h >> 5) % 10)).padStart(2, '0') + ':' + String(((h >> 7) % 4) * 15).padStart(2, '0');
+		const nature = sorte === 'agression' ? T('fictif.nature.agression') : T('fictif.nature.vol');
+		return {
+			date: dates[(h >> 2) % dates.length],
+			heure,
+			type: 'incident fictif',
+			nature: sorte === 'agression' ? 'agression en cours' : 'vol à main armée',
+			natureAffichee: nature,
+			lignes: [String(ligne)],
+			retard: null,
+			source: 'Scénario du jeu (fictif)',
+			texte_source: (sorte === 'agression' ? 'Agression en cours signalée à bord' : 'Vol à main armée signalé à un arrêt') + ', ligne ' + ligne + ' — incident fictif',
+			fictif: true,
+		};
 	}
 
 	/* Démarre une partie sur l'état chargé (semaine, direct ou hors ligne). */
@@ -460,6 +492,7 @@
 	/** Catégorie calculée sur les champs réels (sans tirage) : la plus grave l'emporte */
 	Jeu.categorie = function (d) {
 		if (!d) return null;
+		if (d.fictif || d.type === 'incident fictif') return 'securite'; // prompt 119
 		const m = Jeu.meteoDuJour(d.date) || {};
 		if (MOTS_ACCIDENT.test(String(d.texte_source || '') + ' ' + String(d.nature || ''))) return 'accident';
 		if (d.type === 'alerte météo' || (m.pluie_mm || 0) >= 10 || (m.rafales_max || 0) >= 60) return 'meteo';
@@ -546,6 +579,8 @@
 	Jeu.decider = function (action, sourceChoisie) {
 		const d = Jeu.dossierCourant();
 		if (!d || Jeu.terminee) return null;
+		const clash = !!Jeu.clashSuivant; // prompt 117 : la réplique choisie était le clash (posé par l'affichage juste avant)
+		Jeu.clashSuivant = false;
 		if (d.retard !== null && d.retard !== undefined) d.retardFige = Jeu.retardEffectif(d); // prompt 79 : figé à la décision
 		const re = Jeu.retardEffectif(d);
 		const ctx = contexte(d);
@@ -591,19 +626,21 @@
 			deltas[1] = borner(deltas[1] + REGLAGES.malusMauvaiseSource); // malus de réputation (Q31)
 		}
 
+		if (clash) deltas[1] = borner(deltas[1] + REGLAGES.malusClash); // prompt 117
 		if (Jeu.modificateurActif && Jeu.modificateurActif() === 'meteo_aggravee') deltas = deltas.map((v) => borner(Math.round(v * 1.5))); // prompt 23 § 2.3
 		if (action === 'temps') Jeu.compterMalus('non_traite');
 		NOMS_JAUGES.forEach((k, i) => (Jeu.jauges[k] = Math.max(0, Math.min(100, Jeu.jauges[k] + deltas[i]))));
 		const resultat = {
 			dossier: d,
 			action,
-			nomAction: reponse ? T('rep.' + action) : action === 'temps' ? T('action.temps') : REGLAGES.effets[action].nom,
+			nomAction: clash ? T('rep.clash') : reponse ? T('rep.' + action) : action === 'temps' ? T('action.temps') : REGLAGES.effets[action].nom,
 			categorie: reponse ? Jeu.categorie(d) : null,
 			famille: reponse ? reponse.famille : action,
 			deltas,
 			des,
 			contexte: ctx,
 			mauvaiseSource,
+			clash,
 			communique: reponse ? !!reponse.communique : action !== 'temps' && !!(REGLAGES.effets[action] || {}).communique,
 		};
 		resultat.minuteSim = Jeu.horloge ? Math.floor(Jeu.horloge.minutes) : null; // heure de la partie (prompt 20)
@@ -619,6 +656,7 @@
 			resultat.aggravation = { lignes: d.lignes.slice(), plus: A.durable };
 		}
 		resultat.narration = Jeu.narrer(resultat);
+		if (clash) resultat.narration.texte = T('narr.avecClash', { texte: resultat.narration.texte, malus: REGLAGES.malusClash });
 		Jeu.historique.push(resultat);
 		Jeu.index++;
 		Jeu.terminee = Jeu.index >= Jeu.paquet.length;
@@ -915,6 +953,7 @@
 	Jeu.evaluer = function (e) {
 		// Codes (traduits à l'affichage par t('eval.' + code)) : 'bon', 'rate', 'aucun_detour', 'trop_tard'
 		if (e.cleAction === 'temps') return 'trop_tard';
+		if (e.resultat && e.resultat.clash) return 'rate'; // prompt 117 : clasher le plaignant n'est jamais la bonne réponse
 		if (e.categorie || String(e.cleAction).includes('.')) return e.attendus[e.cleAction] >= e.attendus[e.cleMeilleure] - 0.01 ? 'bon' : 'rate'; // prompt 87 : meilleure réponse de la même catégorie
 		const actions = ['devier', 'retenir', 'renfort'];
 		if (e.cleMeilleure === 'rien' || actions.every((a) => e.attendus[a] < 0)) return e.cleAction === 'rien' ? 'bon' : 'aucun_detour';
@@ -1281,6 +1320,14 @@
 	}
 	const specificite = (p) => Object.keys(p.condition || {}).filter((k) => !(k === 'type' && p.condition.type === '*')).length;
 
+	/** Prompt 118 : environ 1 dossier sur 3 a un plaignant au ton agressif (si une plainte agressive correspond) ;
+	 * choix déterministe par numéro de dossier, sans dé */
+	function choisirSelonTon(meilleures, index) {
+		const agressif = (index * 7 + 3) % 3 === 0;
+		const pool = meilleures.filter((p) => (p.ton === 'agressif') === agressif);
+		const liste = pool.length ? pool : meilleures.filter((p) => p.ton !== 'agressif').length ? meilleures.filter((p) => p.ton !== 'agressif') : meilleures;
+		return liste[index % liste.length];
+	}
 	/** Texte d'une plainte ou d'une réponse dans la langue active (repli : français), variables remplies */
 	Jeu.texteMessage = function (champ, vars) {
 		const langue = typeof Langue !== 'undefined' ? Langue.actuelle : 'fr'; // const de i18n.js (pas une propriété de window)
@@ -1288,6 +1335,14 @@
 		return s.replace(/\{(\w+)\}/g, (m, k) => (vars && vars[k] !== undefined ? String(vars[k]) : m));
 	};
 
+	/** Prompt 117 : meilleure réponse attendue pour ce dossier (même calcul que le Journal), lecture seule */
+	Jeu.meilleureReponse = function (d) {
+		const ctx = contexte(d);
+		const ev = Jeu.actionsPossibles(d);
+		const att = {};
+		ev.forEach((a) => (att[a] = somme(effetAttendu(a, d, ctx))));
+		return ev.slice().sort((a, b) => att[b] - att[a])[0];
+	};
 	/** Prompt 116 : variables d'une réplique au plaignant (lecture seule) — faits réels du dossier + pseudo du plaignant */
 	Jeu.variablesReplique = function (index) {
 		const d = (Jeu.paquet || [])[index];
@@ -1304,14 +1359,13 @@
 		const d = (Jeu.paquet || [])[index];
 		if (!d || !Jeu.MESSAGES) return null;
 		const deja = (Jeu.plaintes || []).find((p) => p.index === index);
-		if (deja) return { id: deja.id, auteur: deja.auteur, texte: Jeu.texteMessage(deja.def.texte, deja.vars) };
+		if (deja) return { id: deja.id, auteur: deja.auteur, texte: Jeu.texteMessage(deja.def.texte, deja.vars), ton: deja.def.ton || 'normal' };
 		const vars = variablesDossier(d);
 		const candidates = (Jeu.MESSAGES.plaintes || []).filter((p) => plainteCorrespond(p, d, vars));
 		if (!candidates.length) return null;
 		const max = Math.max(...candidates.map(specificite));
-		const meilleures = candidates.filter((p) => specificite(p) === max);
-		const def = meilleures[index % meilleures.length];
-		return { id: def.id, auteur: def.auteur || '@usager_44', texte: Jeu.texteMessage(def.texte, vars) };
+		const def = choisirSelonTon(candidates.filter((p) => specificite(p) === max), index);
+		return { id: def.id, auteur: def.auteur || '@usager_44', texte: Jeu.texteMessage(def.texte, vars), ton: def.ton || 'normal' };
 	};
 	/** À la présentation d'un dossier : au plus une plainte, la plus spécifique parmi celles qui correspondent */
 	Jeu.declencherPlainte = function (index) {
@@ -1325,8 +1379,7 @@
 		const neuves = candidates.filter((p) => !dejaVues.has(p.id));
 		const pool = neuves.length ? neuves : candidates;
 		const max = Math.max(...pool.map(specificite));
-		const meilleures = pool.filter((p) => specificite(p) === max);
-		const def = meilleures[index % meilleures.length]; // déterministe : ne touche pas au tirage des dés
+		const def = choisirSelonTon(pool.filter((p) => specificite(p) === max), index); // déterministe : ne touche pas au tirage des dés
 		const plainte = { id: def.id, def, vars, index, heure: maintenantSim(), auteur: def.auteur || '@usager_44', reponse: null };
 		Jeu.plaintes.push(plainte);
 		Jeu.nonLus.community++;
@@ -1586,6 +1639,7 @@
 		if (d.type === 'perturbation') ['techniciens', 'police'].forEach((x) => p.add(x));
 		if (d.type === 'événement') p.add('police');
 		if (d.type === 'alerte météo') ['pompiers', 'techniciens'].forEach((x) => p.add(x));
+		if (d.type === 'incident fictif') ['police'].concat(/agression/.test(String(d.nature)) ? ['ambulance'] : []).forEach((x) => p.add(x)); // prompt 119
 		if (MOTS_SECOURS.test(String(d.texte_source || '') + ' ' + String(d.nature || ''))) ['ambulance', 'police'].forEach((x) => p.add(x));
 		return Jeu.TYPES_EQUIPES.filter((x) => p.has(x));
 	};
@@ -1593,7 +1647,7 @@
 	Jeu.gravite = function (d) {
 		if (!d) return 'faible';
 		const re = Jeu.retardEffectif(d); // prompt 79 : la gravité suit le retard effectif
-		if ((re !== null && re >= 20) || d.type === 'alerte météo') return 'elevee';
+		if ((re !== null && re >= 20) || d.type === 'alerte météo' || d.type === 'incident fictif') return 'elevee'; // prompt 119 : incident fictif = gravité élevée
 		if ((re !== null && re >= 10) || d.type === 'événement' || d.affluence) return 'moyenne';
 		return 'faible';
 	};
