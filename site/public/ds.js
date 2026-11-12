@@ -220,13 +220,23 @@ const LOGO_PXE = [
 	[15, 8, 2, 1, '#ffffff'],
 	[19, 8, 1, 1, '#ffffff'],
 ];
-/** Dessine le logo en pixel art : (x, y) coin haut gauche, « taille » = hauteur en px (largeur 24/20 × taille) ;
- * l'échelle est arrondie à l'entier pour des pixels nets (crisp). */
-function dessinerLogoPXE(x, y, taille) {
+// Prompt 151 : le moniteur d'origine (prompt 75) reste l'icône de l'appli « carte » dans le menu de l'appli de jeu.
+const LOGO_MONITEUR = [
+	[1, 1, 22, 14, '#ffffff'], // moniteur
+	[3, 3, 18, 10, '#d4031c'], // écran rouge
+	[4, 9, 16, 1, '#ffffff'], // ligne de bus
+	[6, 7, 3, 3, '#00ca64'], // fenêtre (arrêt desservi)
+	[15, 7, 3, 3, '#ffffff'], // fenêtre
+	[11, 15, 2, 3, '#ffffff'], // pied
+	[7, 18, 10, 1, '#ffffff'], // socle
+];
+/** Dessine un logo en pixel art : (x, y) coin haut gauche, « taille » = hauteur en px (largeur 24/20 × taille) ;
+ * l'échelle est arrondie à l'entier pour des pixels nets (crisp). « formes » : LOGO_PXE par défaut. */
+function dessinerLogoPXE(x, y, taille, formes) {
 	const k = Math.max(1, Math.floor(taille / 20));
 	noStroke();
-	LOGO_PXE.forEach(([rx, ry, rl, rh, c]) => {
-		fill(c === '#d4031c' ? DS.primaire : c); // prompt 115 : la bulle du logo prend la couleur principale
+	(formes || LOGO_PXE).forEach(([rx, ry, rl, rh, c]) => {
+		fill(c === '#d4031c' ? DS.primaire : c); // prompt 115 : le rouge du logo prend la couleur principale
 		rect(Math.round(x) + rx * k, Math.round(y) + ry * k, rl * k, rh * k);
 	});
 	return { l: 24 * k, h: 20 * k };

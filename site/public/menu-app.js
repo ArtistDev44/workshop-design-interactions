@@ -53,7 +53,7 @@ function dessinerMenuApp() {
 		else {
 			push();
 			if (verrou) drawingContext.globalAlpha = 0.4;
-			if (cle === 'signalements' && typeof dessinerLogoPXE === 'function') dessinerLogoPXE(r.x + (r.l - 56) / 2, r.y + 12, 56);
+			if (cle === 'signalements' && typeof dessinerLogoPXE === 'function') dessinerLogoPXE(r.x + (r.l - 56) / 2, r.y + 12, 56, typeof LOGO_MONITEUR !== 'undefined' ? LOGO_MONITEUR : null); // prompt 151 : moniteur d'origine
 			else ic.dessin(r.x + (r.l - 80 * 0.7) / 2 + (typeof decalTremble === 'function' ? decalTremble(cle) : 0), r.y + 10, 0.7);
 			pop();
 			dsTexte(couperLargeurCarte(lib, r.l - 8, 20), r.x + r.l / 2, r.y + 76, 16, actif ? DS.blanc : DS.blanc75, 'center'); // 16 px demandés, 20 px rendus dans l'appli (taille minimale)
