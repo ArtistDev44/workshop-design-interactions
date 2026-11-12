@@ -58,13 +58,14 @@ function entreesMenu() {
 				total: recente.etat.complet.paquet.length,
 				heure: String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'),
 			}),
-			action: () => continuerPartie(),
+			action: () => avantDeJouer(continuerPartie), // prompt 110 : autorisations avant de jouer
 		});
 	}
 	e.push({ cle: 'palmares', icone: 'trophee', action: () => ouvrir('palmares') }); // prompt 47
 	e.push({ cle: 'parametres', icone: 'reglages', action: () => ouvrir('parametres') });
 	e.push({ cle: 'aide', icone: 'aide', action: () => ouvrir('aide') });
 	e.push({ cle: 'tutoriel', icone: 'livre', action: () => lancerTutoriel() });
+	e.push({ cle: 'credits.menu', icone: 'menu', action: () => ouvrirCredits() }); // clé mp.credits.menu (mp.credits = les noms du pied de page) // prompt 113 : équipe, licence, usage de l'IA
 	return e;
 }
 function allerChoixSemaine() {
@@ -85,7 +86,8 @@ function lancerDepuisMenu() {
 		choixAccueil = optionsAccueil().findIndex((o) => o.lundi === lundi);
 	} else choixAccueil = optionsAccueil().findIndex((o) => o.type === 'direct');
 	if (choixAccueil < 0) return;
-	lancerPartie(); // sauvegarde existante → fenêtre « Reprendre / Nouvelle partie » (prompt 33)
+	const c = choixAccueil;
+	avantDeJouer(() => ((choixAccueil = c), lancerPartie())); // prompt 110 : micro, caméra et son demandés avant la partie ; sauvegarde existante → fenêtre « Reprendre / Nouvelle partie » (prompt 33)
 }
 
 // ——— Dessin ———
@@ -242,6 +244,8 @@ function carteMenu(x, y, l, h, titre, sous, action, sel, icone) {
 function dessinerMenuPrincipal() {
 	fondMenu();
 	if (MENU.ecran === 'semaines') return dessinerChoixSemaine();
+	if (MENU.ecran === 'autorisations') return dessinerAutorisations(); // prompt 110
+	if (MENU.ecran === 'credits') return dessinerCredits(); // prompt 113
 	const k = reduireAnimations ? 1 : easeOut(constrain((millis() - MENU.debut) / 500, 0, 1));
 	const x0 = 160 - (1 - k) * 40;
 	noStroke();
@@ -258,10 +262,11 @@ function dessinerMenuPrincipal() {
 	const e = entreesMenu();
 	if (MENU.choix >= e.length + EXTRAS_MENU.length) MENU.choix = 0;
 	let yc = 370; // prompt 81 : cartes empilées (écart 12 à 6 entrées) — le pied de page a une ligne de plus
+	const compact = e.length > 6; // prompt 113 : + « Crédits » — cartes resserrées pour tenir au-dessus du pied de page
 	e.forEach((it, i) => {
-		const h = it.sous ? 104 : 84;
+		const h = it.sous ? (compact ? 92 : 104) : compact ? 72 : 84;
 		carteMenu(x0, yc, 620, h, t('mp.' + it.cle), it.sous, it.action, i === MENU.choix, it.icone);
-		yc += h + (e.length > 5 ? 12 : 30);
+		yc += h + (compact ? 10 : e.length > 5 ? 12 : 30);
 	});
 	selecteurLangue(L - 80, 56);
 	// Prompt 65 : installation de la webapp (seulement si le navigateur la propose) ; mention une fois installée
@@ -294,13 +299,24 @@ const EXTRAS_MENU = [
 ];
 const focusExtra = (n, cle) => MENU.choix - n === EXTRAS_MENU.findIndex((x) => x.cle === cle);
 function piedCredits(x, y, n) {
-	const credits = t('mp.credits') + ' · ';
+	const credits = t('mp.credits');
 	textFont(POLICE_DONNEES);
 	textSize(18);
 	textAlign(LEFT, BOTTOM);
-	fill(MENU_C.doux);
+	// Prompt 113 : les noms mènent à l'écran « Crédits » (lien souligné)
+	const cw = textWidth(credits);
+	const survolC = mouseX >= x && mouseX <= x + cw && mouseY >= y - 30 && mouseY <= y + 6;
+	fill(MENU_C.blanc);
 	text(credits, x, y);
-	const lx = x + textWidth(credits);
+	stroke(MENU_C.blanc);
+	strokeWeight(survolC ? 3 : 1);
+	line(x, y + 2, x + cw, y + 2);
+	noStroke();
+	boutons.push({ x: x - 8, y: y - 34, l: cw + 16, h: 46, action: () => ouvrirCredits() });
+	if (survolC) infobulle(t('mp.credits.infobulle'), x, y - 76);
+	fill(MENU_C.doux);
+	text(' · ', x + cw, y);
+	const lx = x + cw + textWidth(' · ');
 	const lib = t('mp.licence');
 	const lw = textWidth(lib);
 	const survol = mouseX >= lx && mouseX <= lx + lw && mouseY >= y - 30 && mouseY <= y + 6;
@@ -594,6 +610,8 @@ function dessinerChoixSemaine() {
 
 /** Clavier du menu principal ; renvoie true si la touche a été traitée */
 function toucheMenu() {
+	if (MENU.ecran === 'autorisations') return toucheAutorisations(); // prompt 110
+	if (MENU.ecran === 'credits') return toucheCredits(); // prompt 113
 	if (MENU.ecran === 'semaines') {
 		const n = modesNouvellePartie().length;
 		if (keyCode === LEFT_ARROW || keyCode === UP_ARROW || (keyCode === TAB && keyIsDown(SHIFT))) MENU.choixSemaine = (MENU.choixSemaine + n - 1) % n;
@@ -611,7 +629,7 @@ function toucheMenu() {
 	if (keyCode === UP_ARROW || (keyCode === TAB && keyIsDown(SHIFT))) MENU.choix = (MENU.choix + n - 1) % n;
 	else if (keyCode === DOWN_ARROW || keyCode === TAB) MENU.choix = (MENU.choix + 1) % n;
 	else if (keyCode === ENTER || keyCode === RETURN || key === ' ') choisi().action();
-	else if ((key === 'c' || key === 'C') && e.some((x) => x.cle === 'reprendre')) continuerPartie();
+	else if ((key === 'c' || key === 'C') && e.some((x) => x.cle === 'reprendre')) avantDeJouer(continuerPartie);
 	else if (key === 'h' || key === 'H' || key === '?') ouvrir('aide');
 	if (keyCode === UP_ARROW || keyCode === DOWN_ARROW || keyCode === TAB) annoncer(t('mp.' + choisi().cle));
 	return true;

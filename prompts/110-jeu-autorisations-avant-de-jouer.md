@@ -36,8 +36,9 @@ Premier des prompts 110 → 113.
   modules `micro.js` et `webcam.js` gardent leur propre ouverture au geste.
 - **Réglages :**
   - micro autorisé → `Confort.Reglages.micro` reste ou passe à `true` ;
-  - caméra autorisée → `Confort.Reglages.webcam = true`. Vérifier que cela n'allume pas la webcam seul :
-    elle ne s'active qu'au clic ou par l'option ;
+  - caméra autorisée → `Confort.Reglages.webcam` **reste inchangé**. Ce réglage rallume la webcam au premier
+    geste des sessions suivantes (`webcam.js`) : la passer à `true` ici l'allumerait sans clic. La webcam reste
+    donc opt-in, au clic ou par l'option, et elle ne redemande plus la permission ;
   - son coupé dans les réglages → la ligne Son l'indique et propose de le rallumer.
 - **Refus :** le jeu reste entièrement jouable. Le message dit ce qui ne marchera pas : « Sans micro, le café
   se calme seul ». Aucune relance insistante.

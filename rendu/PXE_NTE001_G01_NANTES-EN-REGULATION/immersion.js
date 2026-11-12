@@ -143,6 +143,8 @@ function demarrerJournee() {
 
 // ——— Prompt 43 : transition entre journées — fond noir, « JOUR n — SEMAINE n » et la date, centrés ———
 const DUREE_TRANSITION_JOUR = 5200; // prompt 95 : 2,8 → 5,2 s pour lire l'explication de la journée (Entrée / clic passent)
+const DUREE_TRANSITION_INTRO = 1500; // prompt 112 : jour 1 de la toute première partie — titre et date seulement, le téléphone suit
+const dureeTransition = () => (TRANSITION_JOUR && TRANSITION_JOUR.duree) || DUREE_TRANSITION_JOUR;
 /** Prompt 95 : « lundi 14 septembre » */
 function jourDate(iso) {
 	if (!iso) return '';
@@ -183,7 +185,8 @@ function annoncerJournee() {
 	const cle = (Jeu.etat.semaine ? Jeu.etat.semaine.lundi : Jeu.etat.mode) + '|' + Jeu.jourIndex;
 	if (cle === derniereJourneeAnnoncee) return; // pas deux fois pour la même journée (intro SMS)
 	derniereJourneeAnnoncee = cle;
-	TRANSITION_JOUR = { debut: millis(), jour: Jeu.jourIndex + 1, semaine: typeof chapitreCourant === 'function' ? chapitreCourant() : 0, date: j.date };
+	const intro = !introVue && Jeu.jourIndex === 0; // prompt 112 : la conversation avec Camille suit aussitôt
+	TRANSITION_JOUR = { debut: millis(), jour: Jeu.jourIndex + 1, semaine: typeof chapitreCourant === 'function' ? chapitreCourant() : 0, date: j.date, duree: intro ? DUREE_TRANSITION_INTRO : DUREE_TRANSITION_JOUR, court: intro };
 	annoncer(texteTransitionJour() + ' — ' + jourDate(j.date) + '. ' + lignesTransitionJour().join(' '));
 }
 /** Prompt 95 : titre juste — histoire « JOUR n/N — SEMAINE s », archive « JOUR n/N », direct « JOUR n — TEMPS RÉEL » */
@@ -194,7 +197,7 @@ function texteTransitionJour() {
 	return T0.semaine ? t('transition.jour', { j: T0.jour + '/' + N, s: T0.semaine }) : t('transition.jourArchive', { j: T0.jour, n: N });
 }
 function resteTransitionJour() {
-	return TRANSITION_JOUR ? Math.max(0, DUREE_TRANSITION_JOUR - (millis() - TRANSITION_JOUR.debut)) : 0;
+	return TRANSITION_JOUR ? Math.max(0, dureeTransition() - (millis() - TRANSITION_JOUR.debut)) : 0;
 }
 function passerTransitionJour() {
 	TRANSITION_JOUR = null;
@@ -202,8 +205,9 @@ function passerTransitionJour() {
 function dessinerTransitionJour() {
 	if (!TRANSITION_JOUR) return false;
 	const u = millis() - TRANSITION_JOUR.debut;
-	if (u >= DUREE_TRANSITION_JOUR) return (TRANSITION_JOUR = null), false;
-	const a = reduireAnimations ? 1 : u < 300 ? u / 300 : u > DUREE_TRANSITION_JOUR - 500 ? (DUREE_TRANSITION_JOUR - u) / 500 : 1;
+	const D = dureeTransition();
+	if (u >= D) return (TRANSITION_JOUR = null), false;
+	const a = reduireAnimations ? 1 : u < 300 ? u / 300 : u > D - 500 ? (D - u) / 500 : 1;
 	boutons = [{ x: 0, y: 0, l: L, h: H, action: passerTransitionJour }];
 	noStroke();
 	fill(0, 0, 0, 255 * a);
@@ -217,6 +221,8 @@ function dessinerTransitionJour() {
 		fill('rgba(255,255,255,0.75)');
 		text(jourDate(TRANSITION_JOUR.date), L / 2, H / 2 - 120);
 		// Prompt 95 : ce que sera la journée (signalements prévus, service, rythme du temps, comment finir)
+		// Prompt 112 : transition courte de l'intro → titre et date seuls (l'explication reste annoncée, et le tutoriel la reprend)
+		if (TRANSITION_JOUR.court) return true;
 		let yl = H / 2 - 40;
 		lignesTransitionJour().forEach((ln) => {
 			yl += dessinerTexte(ln, L / 2 - 560, yl, 1120, { taille: 22, couleur: '#FFFFFF', align: 'center', interligne: 32 }).h + 6;
@@ -502,6 +508,79 @@ function fermerTutoriel() {
 	} catch (e) {}
 	interaction();
 }
+/** Prompt 112 : clic sur la barre de progression */
+function allerEtapeTutoriel(i) {
+	if (!tutoriel || i === tutoriel.etape || i < 0 || i >= ETAPES_TUTORIEL) return;
+	tutoriel.sens = i > tutoriel.etape ? 1 : -1;
+	tutoriel.etape = i;
+	tutoriel.tourne = millis();
+	Confort.Son.bip('choix');
+	annoncerEtapeTutoriel();
+}
+/** Prompt 112 : petit schéma pixel de chaque étape (page gauche du livre), sans image ni capture */
+function illustrationTutoriel(n, x, y, l, h) {
+	const encre = '#1c2f52';
+	const rouge = DS.primaire;
+	const vert = '#0a7d3e';
+	const orange = '#b35c00';
+	const papier = '#e6dcc4';
+	const u = Math.min(l / 27, h / 12); // grille de pixels
+	const ox = x;
+	const oy = y + (h - 12 * u) / 2;
+	const px = (cx, cy, cl, ch, c) => (fill(c), rect(ox + cx * u, oy + cy * u, cl * u, ch * u));
+	noStroke();
+	px(0, 0, 27, 12, papier);
+	if (n === 1) {
+		// Trois jauges : verte, orange, rouge
+		[[vert, 18], [orange, 11], [rouge, 5]].forEach(([c, v], i) => {
+			px(2, 2 + i * 3.4, 23, 2, '#cfc3a6');
+			px(2, 2 + i * 3.4, v, 2, c);
+		});
+	} else if (n === 2) {
+		// Carte : fleuve, ligne, deux repères (l'un « à préciser » en pointillés)
+		px(0, 7, 27, 2, '#9db7c9');
+		for (let i = 0; i < 22; i++) px(2 + i, 3 + Math.round(Math.sin(i / 3) * 1.5), 1, 1, encre);
+		px(12, 1, 3, 3, rouge);
+		px(13, 4, 1, 2, rouge);
+		for (let i = 0; i < 4; i++) px(20 + (i % 2) * 2, 9 + Math.floor(i / 2) * 2, 1, 1, encre);
+	} else if (n === 3) {
+		// Bulle du plaignant puis deux répliques
+		px(2, 1, 15, 4, '#ffffff');
+		px(4, 5, 2, 1, '#ffffff');
+		px(3, 2, 10, 1, encre);
+		px(3, 3, 7, 1, encre);
+		px(10, 7, 15, 2, encre);
+		px(10, 10, 15, 1.4, '#b8ab8e');
+		px(8, 7, 1, 2, rouge);
+	} else if (n === 4) {
+		// Centre (carré), tracé pointillé puis plein, pastille d'équipe, repère
+		px(1, 8, 3, 3, encre);
+		for (let i = 0; i < 9; i++) px(5 + i, 8 - i * 0.6, 1, 1, encre);
+		for (let i = 0; i < 9; i += 2) px(14 + i, 2.6 - i * 0.1, 1, 1, '#8a7c60');
+		px(13, 1.6, 2.4, 2.4, '#1f6feb');
+		px(23, 0.5, 3, 3, rouge);
+	} else if (n === 5) {
+		// Menu à gauche avec badges rouges, zone de contenu
+		for (let i = 0; i < 4; i++) {
+			px(2, 1 + i * 2.7, 4, 2, i === 0 ? encre : '#b8ab8e');
+			if (i === 1 || i === 2) px(5.4, 0.6 + i * 2.7, 1.6, 1.4, rouge);
+		}
+		px(9, 1, 16, 10, '#ffffff');
+		px(10, 2, 9, 1, encre);
+		px(10, 4, 13, 1, '#b8ab8e');
+		px(10, 6, 11, 1, '#b8ab8e');
+	} else {
+		// Lune, horloge, flèche « Sortie »
+		px(3, 1, 4, 4, '#f2c94c');
+		px(4.5, 1, 3, 3, papier);
+		px(11, 2, 5, 5, '#ffffff');
+		px(13, 3, 1, 2, encre);
+		px(13, 4, 2, 1, encre);
+		px(19, 7, 6, 2, rouge);
+		px(19, 6, 1, 4, rouge);
+		px(18, 7.5, 1, 1, rouge);
+	}
+}
 function etapeSuivante() {
 	if (!tutoriel) return;
 	if (tutoriel.etape >= ETAPES_TUTORIEL - 1) return fermerTutoriel();
@@ -535,9 +614,13 @@ function dessinerTutoriel() {
 		textSize(20);
 		fill('#6b5d45');
 		text(t('tuto.etape', { n, total: ETAPES_TUTORIEL }), g.x, g.y);
+		// Prompt 112 : barre de progression cliquable (aller directement à une étape)
 		for (let i = 0; i < ETAPES_TUTORIEL; i++) {
-			fill(i <= tutoriel.etape ? '#1c2f52' : '#d9cfb8');
-			rect(g.x + i * 30, g.y + 40, 20, 8, 4);
+			const bx = g.x + i * 44;
+			const survol = mouseX >= bx - 6 && mouseX <= bx + 38 && mouseY >= g.y + 26 && mouseY <= g.y + 70;
+			fill(i <= tutoriel.etape ? '#1c2f52' : survol ? '#b8ab8e' : '#d9cfb8');
+			rect(bx, g.y + 40, 32, 12, 4);
+			boutons.push({ x: bx - 6, y: g.y + 26, l: 44, h: 44, action: () => allerEtapeTutoriel(i) });
 		}
 		fill('#1c2f52');
 		textFont(POLICE_TEXTE);
@@ -546,13 +629,24 @@ function dessinerTutoriel() {
 		textLeading(56);
 		text(t('tuto.' + n + '.titre'), g.x, g.y + 90, g.l, 200);
 		textStyle(NORMAL);
+		illustrationTutoriel(n, g.x, g.y + 236, g.l, g.h - 236 - 84); // prompt 112 : schéma de l'étape, dessiné par le code
 		textSize(19);
 		fill('#6b5d45');
 		text(t('tuto.pied'), g.x, g.y + g.h - 60, g.l, 60);
 		fill('#1c2733');
 		textSize(23);
 		textLeading(34);
-		text(t('tuto.' + n + '.texte'), d.x, d.y, d.l, d.h);
+		text(t('tuto.' + n + '.texte'), d.x, d.y, d.l, d.h - 110);
+		// Prompt 112 : les touches de l'étape, à part, en police de données
+		noStroke();
+		fill('#e6dcc4');
+		rect(d.x, d.y + d.h - 96, d.l, 96);
+		textFont(POLICE_DONNEES);
+		textSize(19);
+		textLeading(28);
+		fill('#3d3426');
+		text(t('tuto.' + n + '.touches'), d.x + 16, d.y + d.h - 84, d.l - 32, 76);
+		textFont(POLICE_TEXTE);
 		textLeading(30);
 		pageQuiTourne(livre, tutoriel.tourne, tutoriel.sens);
 	}

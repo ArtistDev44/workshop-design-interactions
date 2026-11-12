@@ -100,7 +100,8 @@ function lancerConversation(conv) {
 	smsActif = true;
 	smsIndex = 0;
 	leverTelephone();
-	const attente = typeof resteTransitionJour === 'function' ? resteTransitionJour() : 0;
+	// Prompt 112 : le téléphone se lève pendant le fondu de sortie de la transition (400 ms avant sa fin), sans l'attendre
+	const attente = typeof resteTransitionJour === 'function' ? Math.max(0, resteTransitionJour() - 400) : 0;
 	TEL_MAIN.debut += attente; // prompt 43 : le téléphone attend la fin de l'écran « Jour n »
 	convDepuis = millis() + attente;
 	annoncer(String(conv.contact) + ' : ' + String(conv.messages[0].texte));

@@ -232,11 +232,7 @@ function draw() {
 		sortirFenetreAppli(n0);
 		// Prompt 105 : plus de barre des tâches sous l'appli
 	} else dessinerOS();
-	// Prompt 77 : notifications en haut à droite de l'écran du PC ; prompt 80 : appli ou fenêtre ouverte → bandeau compact
-	// dans la barre des tâches (les jauges, le dossier et le contenu des applis ne sont plus masqués)
-	if (PC.etat === 'appli' || integree) dessinerNotifications(1556, 140); // prompt 105 : en haut à droite de la carte (plus de barre des tâches)
-	else if (PC.etat === 'os' && PC.fenetre) dessinerNotificationBarre();
-	else if (PC.etat === 'os') dessinerNotifications(L, 16);
+	// Prompt 111 : plus de cartes de notification sur l'écran du PC — badges rouges chiffrés dans le menu à gauche
 	dessinerIndicateurs(); // prompt 36 : app flottante, au premier plan
 	sourisRestaurer();
 	espaceDessin = 'ecran';
@@ -245,7 +241,7 @@ function draw() {
 	const secousse = d0.x || d0.y ? d0 : null;
 	if (secousse) push(), translate(secousse.x, secousse.y);
 	composerVue();
-	if (vue === 'bureau' && !fenetre) dessinerNotifications(L - 24, 24, 0.9); // prompt 77 : PC « fermé » (vue bureau) : notifications sur la vue
+	if (vue === 'bureau' && !fenetre) badgeEcranBureau(); // prompt 111 : PC « fermé » : un seul badge, le total, au coin de l'écran
 	if (secousse) pop();
 	dessinerBoost(); // prompt 52 : cœur, pulsation rouge, lignes de vitesse, flou
 	dessinerMicro(); // prompt 54 : oscilloscope et mesures pendant l'appui
@@ -1246,6 +1242,7 @@ function keyPressed() {
 			} else if (!recul && PC.selection === n - 1) basculerFocusQuitter(true);
 			else if (recul && PC.selection === 0) basculerFocusDemarrer(true);
 			else PC.selection = (PC.selection + (recul ? n - 1 : 1)) % n;
+			if (typeof MENU_FOCUS !== 'undefined' && MENU_FOCUS.actif && !focusQuitter && !focusDemarrer && typeof libelleEntreeMenu === 'function') annoncer(libelleEntreeMenu(ICONES_OS[PC.selection].cle)); // prompt 111 : libellé + badge
 			return false;
 		}
 		if (keyCode === ENTER || keyCode === RETURN || (key === ' ' && !PC.fenetre)) ouvrirIconeOS(PC.selection);

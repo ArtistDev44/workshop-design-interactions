@@ -1064,3 +1064,33 @@ button:focus-visible {
 .slidev-layout a.bouton-ds:active {
 	transform: translateY(1px);
 }
+
+/* Prompt 113 · L'équipe : deux portraits pixel en fenêtres du DS */
+.equipe-grille {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 260px));
+	justify-content: center;
+	gap: 56px;
+	margin-top: 8px;
+}
+.equipe-carte {
+	margin: 0;
+}
+.equipe-carte img {
+	display: block;
+	width: 100%;
+	aspect-ratio: 1;
+	image-rendering: pixelated;
+}
+.equipe-carte figcaption {
+	padding: 10px 12px;
+	font-weight: 700;
+	text-align: center;
+	color: var(--ds-blanc);
+	border-top: 2px solid var(--ds-blanc15);
+}
+.equipe-pied {
+	margin-top: 20px;
+	text-align: center;
+	color: var(--ds-blanc75);
+}

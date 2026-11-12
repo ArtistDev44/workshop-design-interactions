@@ -420,6 +420,33 @@ Cinquième acte. On lance le jeu en direct si le temps le permet ; sinon, la vid
 -->
 
 ---
+title: L'équipe
+level: 2
+class: diapo-equipe
+---
+
+<h1>L'équipe</h1>
+
+<div class="equipe-grille">
+  <figure v-click class="fenetre equipe-carte">
+    <header class="fenetre-barre"><span>Portrait</span><span class="fenetre-boutons" aria-hidden="true"><i></i><i></i></span></header>
+    <img src="/img/equipe/matteo-pp.webp" alt="Portrait de Mattéo Brevet" />
+    <figcaption>Mattéo Brevet</figcaption>
+  </figure>
+  <figure v-click class="fenetre equipe-carte">
+    <header class="fenetre-barre"><span>Portrait</span><span class="fenetre-boutons" aria-hidden="true"><i></i><i></i></span></header>
+    <img src="/img/equipe/guillaume-pp.webp" alt="Portrait de Guillaume Renoult" />
+    <figcaption>Guillaume Renoult</figcaption>
+  </figure>
+</div>
+
+<p class="equipe-pied">Atelier ESD Nantes · B3 Design · novembre 2026</p>
+
+<!--
+Nous deux. Les mêmes portraits sont dans l'écran « Crédits » du jeu (menu principal).
+-->
+
+---
 routeAlias: livrables
 title: Livrables & crédits
 level: 2
@@ -443,7 +470,7 @@ class: diapo-livrables
     <div><dt>Musiques</dt><dd>libres <strong>CC0</strong> : Komiku, Loyalty Freak Music — <code>audio/CREDITS.md</code></dd></div>
     <div><dt>Données</dt><dd>Nantes Métropole, Naolib, Open-Meteo, Hub'Eau</dd></div>
     <div><dt>Outils</dt><dd>p5.js, Web Audio, Astro, Slidev</dd></div>
-    <div><dt>IA</dt><dd>réalisé avec un assistant IA à partir de prompts écrits par le groupe (<code>prompts/</code>) ; part humaine et relecture : [À COMPLÉTER]</dd></div>
+    <div><dt>IA</dt><dd>écrit par des assistants IA — Claude Code (Anthropic), ponctuellement Mistral Vibe — à partir des prompts rédigés et relus par le groupe (<code>prompts/</code>, <a href="/making-of/">/making-of/</a>) ; part humaine détaillée : [À COMPLÉTER]</dd></div>
   </dl>
 </aside>
 </div>
