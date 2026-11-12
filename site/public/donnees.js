@@ -1,4 +1,4 @@
-/* Nantes en régulation — prompt 61 : appli « Données » de RégulOS (plein écran sur l'écran du PC).
+/* Nantes en régulation — prompt 61 : appli « Données » de RégulOS (prompt 183 : vue de l'appli principale seulement).
  * Montre les données réellement utilisées par la partie, selon le mode (même convention que la météo du
  * prompt 49) : partie en direct → valeurs du moment ; semaine passée / hors ligne → archives de la semaine.
  * Chaque bloc : nom, valeur réelle, « en direct » / « archive du … » / « hors ligne → repli local », source,
@@ -42,7 +42,7 @@ function iconeDonnees(x, y, s) {
 }
 
 function ouvrirDonnees() {
-	if (PC.etat === 'appli') PC.etat = 'os';
+	PC.etat = 'os';
 	PC.fenetre = 'donnees';
 	const d = dateTelephone();
 	if (Jeu.etat && Jeu.etat.mode === 'direct') chargerNotifications(d); // agenda du jour (cache, délai 6 s, repli)
@@ -130,63 +130,9 @@ function blocsDonnees() {
 	return b;
 }
 
-/** Appli plein écran (sur tout l'écran du PC, barre des tâches comprise), fermeture par la croix ou Échap */
+/** Vue « Données » de l'appli principale (prompt 103 ; prompt 183 : plus de version plein écran hors de l'appli) */
 function dessinerAppliDonnees(z) {
-	if (z) return dessinerBlocsDonnees(z); // prompt 103 : vue intégrée de l'appli principale (sans bandeau rouge ni croix)
-	noStroke();
-	fill(DS.fond);
-	rect(0, 0, L, H);
-	fill(DS.primaire);
-	rect(0, 0, L, 72);
-	dsTitre(t('app.titre.donnees'), 28, 18, 32, DS.blanc, 'left');
-	noStroke();
-	textFont(POLICE_DONNEES);
-	textSize(22);
-	textAlign(RIGHT, CENTER);
-	fill('#ffffff');
-	text(modeDonnees() === 'direct' ? t('donnees.mode.direct') : t('donnees.mode.archive'), L - 110, 36);
-	// Croix de fermeture
-	const cx = L - 62;
-	const survol = mouseX >= cx && mouseX <= cx + 44 && mouseY >= 14 && mouseY <= 58;
-	fill(survol ? DS.fond : DS.primaire);
-	stroke(DS.blanc);
-	strokeWeight(3);
-	rect(cx, 14, 44, 44);
-	line(cx + 13, 27, cx + 31, 45);
-	line(cx + 31, 27, cx + 13, 45);
-	noStroke();
-	boutons.push({ x: cx, y: 14, l: 44, h: 44, action: fermerFenetreApp });
-	cibleGuide('fermerDonnees', cx, 14, 44, 44);
-	textAlign(LEFT, TOP);
-	textFont(POLICE_TEXTE);
-	textSize(20);
-	fill(DS.blanc75);
-	text(t('donnees.intro'), 28, 88, L - 56, 60);
-	// Blocs : deux colonnes
-	const blocs = blocsDonnees();
-	const bl = (L - 28 * 3) / 2;
-	const bh = (H - 160 - 28 * 2) / 2;
-	blocs.forEach((b, i) => {
-		const x = 28 + (i % 2) * (bl + 28);
-		const y = 150 + Math.floor(i / 2) * (bh + 28);
-		dsPanneau(x, y, bl, bh, b.titre);
-		noStroke();
-		textAlign(LEFT, TOP);
-		textFont(POLICE_DONNEES);
-		textSize(20);
-		fill(b.statut === t('donnees.repli') ? DS.alerte : DS.succes);
-		text(b.statut, x + 24, y + 70, bl - 48, 30);
-		textFont(POLICE_TEXTE);
-		textSize(21);
-		textLeading(26); // 7 jours de météo tiennent dans le bloc
-		fill(DS.blanc);
-		text(b.lignes.join('\n'), x + 24, y + 106, bl - 48, bh - 222);
-		textFont(POLICE_DONNEES);
-		textSize(20);
-		fill(DS.blanc75);
-		text(t('donnees.source', { source: b.source, licence: b.licence }), x + 24, y + bh - 118, bl - 48, 56);
-		dsBouton(x + 24, y + bh - 60, 360, 44, t('donnees.ouvrir'), () => ouvrirLienApi(b.url), 'contour');
-	});
+	dessinerBlocsDonnees(z);
 }
 /** Prompt 103 : les mêmes blocs dans une zone (une ligne d'intro, mode en texte secondaire, 2 × 2 blocs) */
 function dessinerBlocsDonnees(z) {

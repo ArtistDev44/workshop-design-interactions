@@ -127,14 +127,6 @@ function dessinerWebcamPoste(g) {
 	const mainVue = CAM.active && millis() - MAIN.vue < 1000; // prompt 67 : témoin vert quand une main est reconnue
 	px(g, mainVue ? '#00e070' : CAM.active ? '#ff3b30' : '#3a2020', x + 10, y + 2, 1, 1); // LED : allumée tant que la webcam est active
 }
-/** Indicateur « CAM » dans la barre des tâches de RégulOS (après les icônes) */
-function indicateurWebcamBarre(x, y) {
-	if (!CAM.active) return;
-	noStroke();
-	fill('#ff3b30');
-	circle(x + 8, y + 16, 14);
-	dsTexte(t('webcam.barre'), x + 24, y + 4, 20, DS.blanc, 'left');
-}
 // Réglage « Webcam » mémorisé : la caméra se rallume au premier geste du joueur (jamais au chargement)
 ['pointerdown', 'keydown'].forEach((ev) =>
 	document.addEventListener(

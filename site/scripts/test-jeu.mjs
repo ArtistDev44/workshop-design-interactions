@@ -450,9 +450,9 @@ for (const [nom, ctx] of [['fr', contexte('fr')], ['en', contexte('en')]]) {
 			TRANSITION_JOUR = null;
 			majDemarrageJour();
 			const demarre = PC.etat === 'demarrage';
-			PC.etat = 'os';
+			PC.etat = 'appli'; // prompt 183 : le démarrage mène à l'appli principale
 			demarrageDuJour(); majDemarrageJour(); // même journée (reprise, retour au poste) : pas de replay
-			jours.push({ eteintPendantTransition, attendTransition, demarre, replay: PC.etat !== 'os' });
+			jours.push({ eteintPendantTransition, attendTransition, demarre, replay: PC.etat !== 'appli' });
 			if (!Jeu.jours[Jeu.jourIndex + 1]) break;
 			Jeu.journeeSuivante();
 		} while (true);
@@ -583,7 +583,7 @@ for (const [nom, ctx] of [['fr', contexte('fr')], ['en', contexte('en')]]) {
 	const os = readFileSync(join(pub, 'os.js'), 'utf8');
 	// Prompt 151 : l'appli « carte » du menu garde le moniteur d'origine
 	verifier(/const LOGO_MONITEUR = \[/.test(ds) && /dessinerLogoPXE\([^;]*LOGO_MONITEUR/.test(readFileSync(join(pub, 'menu-app.js'), 'utf8')), 'logo : l\'appli carte doit garder le moniteur (LOGO_MONITEUR)');
-	verifier(/dessinerLogoPXE\(/.test(os) && !/dsTitre\('REGUL'/.test(os) && !/rect\(8, tb \+ 10, 140/.test(os), 'logo : le carré rouge « REGUL » doit être remplacé par le logo');
+	verifier(!/dsTitre\('REGUL'/.test(os) && !/rect\(8, tb \+ 10, 140/.test(os), 'logo : le carré rouge « REGUL » ne doit pas revenir'); // prompt 183 : plus de barre des tâches ni de bouton Démarrer — le logo reste dans le menu de l'appli
 }
 
 // Prompt 76 : la journée commence à 8 h 00 (fin toujours à 20 h), aucun dossier avant 8 h, anciennes sauvegardes recalées
@@ -2039,7 +2039,7 @@ verifier(/aide\.k\.glisserTouche/.test(readFileSync(join(pub, 'aide.js'), 'utf8'
 	const sk98 = readFileSync(join(pub, 'sketch.js'), 'utf8');
 	verifier(/while \(textSize\(\) > 14 && textWidth\(label\)/.test(sk98), 'bouton() ne doit pas réduire un libellé sous 14 px');
 	verifier(/millis\(\) - BANDEAU\.survolDepuis >= 350/.test(sk98), 'infobulle du bandeau : délai de 350 ms');
-	verifier(/boutons\.push\(\{ x: x - 12, y: 0, l: 58, h: 52, action: fermerAppli \}\)/.test(readFileSync(join(pub, 'os.js'), 'utf8')) && /y: z\.y - 18, l: z\.l, h: z\.h \+ 18, action: basculerSieste/.test(readFileSync(join(pub, 'sieste.js'), 'utf8')), 'zones de clic ≥ 44 px : ✕ des applis et somnolence');
+	verifier(/y: z\.y - 18, l: z\.l, h: z\.h \+ 18, action: basculerSieste/.test(readFileSync(join(pub, 'sieste.js'), 'utf8')), 'zones de clic ≥ 44 px : somnolence (prompt 183 : plus de ✕ d\'appli)');
 }
 
 // Prompt 130 : l'évaluation suit le besoin des jauges — jouer toujours une réponse jugée « bonne » ne mène plus au
@@ -2522,7 +2522,7 @@ for (const langue of ['fr', 'en']) {
 			nbFenetres++;
 			verifier(/^DS\.fenetre\.(etroite|moyenne|large)$/.test(larg[1]), `prompt 173 : ${f} ${m[1]} — largeur « ${larg[1]} » hors des trois tailles du DS`);
 		}
-	verifier(nbFenetres >= 18, `prompt 173 : seulement ${nbFenetres} fenêtres relevées (≥ 18 attendues)`); // prompt 175 : trois fenêtres de réglages fondues en une (21 → 19) ; prompt 178 : plus de fenêtre « reprise » (19 → 18)
+	verifier(nbFenetres >= 17, `prompt 173 : seulement ${nbFenetres} fenêtres relevées (≥ 17 attendues)`); // prompt 183 : plus de fenêtre d'intro d'appli (18 → 17) ; // prompt 175 : trois fenêtres de réglages fondues en une (21 → 19) ; prompt 178 : plus de fenêtre « reprise » (19 → 18)
 	// Clic sur le fond : point unique dans mousePressed, listes explicites, aucune fenêtre dans les deux à la fois
 	verifier(/\tif \(clicFondFenetre\(\)\) return;/.test(sk173.match(/function mousePressed\(\) \{[\s\S]*?\n\}/)[0]), 'prompt 173 : mousePressed ne passe plus par clicFondFenetre()');
 	const bloquantes = vm.runInNewContext(sk173.match(/const FENETRES_BLOQUANTES = (\[[^\]]*\]);/)[1]);
@@ -2566,7 +2566,7 @@ for (const langue of ['fr', 'en']) {
 		verifier(!/commun\.(oui|non)'|param\.touche|acc\.reprise|qr-edition/.test(src), `prompt 175 : ${f} emploie encore « oui / non », « touche {k} » ou la reprise sur un autre appareil`);
 		verifier(!/fenetre = 'accessibilite'|ouvrir\('optionsJeu'\)|ouvrir\('accessibilite'\)/.test(src), `prompt 175 : ${f} ouvre encore une fenêtre supprimée`);
 	}
-	verifier(/toucheDeblocage\(\) \|\| toucheParametres\(\)/.test(lire175('sketch.js')) && /keyCode === TAB \|\| keyCode === UP_ARROW \|\| keyCode === DOWN_ARROW/.test(pa) && /keyCode === ENTER \|\| keyCode === RETURN \|\| key === ' '/.test(pa), 'prompt 175 : navigation des paramètres par Tab / flèches et Entrée / Espace');
+	verifier(/if \(toucheParametres\(\) \|\| toucheTelephone\(\)/.test(lire175('sketch.js')) && /keyCode === TAB \|\| keyCode === UP_ARROW \|\| keyCode === DOWN_ARROW/.test(pa) && /keyCode === ENTER \|\| keyCode === RETURN \|\| key === ' '/.test(pa), 'prompt 175 : navigation des paramètres par Tab / flèches et Entrée / Espace');
 	verifier(!/key === '\d'/.test(pa.match(/function toucheParametres\(\) \{[\s\S]*?\n\}/)[0]), 'prompt 175 : plus de raccourci chiffré dans les paramètres');
 	// Tous les réglages mémorisés restent accessibles dans la fenêtre (inventaire : DEFAUTS de confort.js)
 	const cf = lire175('confort.js');
@@ -2983,7 +2983,7 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 			function sAsseoir() { __actions.push('sAsseoir'); if (vue === 'bureau') vue = 'poste'; } function seLever() { __actions.push('seLever'); if (vue === 'poste') { vue = 'bureau'; PC.fenetre = null; } }
 			function quitterPC() { seLever(); } function ouvrirObjetBureau(n) { __actions.push('objet:' + n); if (n === 'aide') fenetre = 'aide'; }
 			function fileIncidents() { return __file; } const ENTREES_MENU = ['signalements', 'patron', 'community', 'journal', 'donnees']; function appliDebloquee() { return true; }
-			function ouvrirEntreeMenu(k) { __actions.push('menu:' + k); PC.etat = 'os'; PC.fenetre = k; } function pcDemarre() { return PC.etat === 'demarrage'; }`,
+			function ouvrirEntreeMenu(k) { __actions.push('menu:' + k); PC.etat = 'os'; PC.fenetre = k; } function versAppliPrincipale() { PC.fenetre = null; PC.etat = 'appli'; } function pcDemarre() { return PC.etat === 'demarrage'; }`,
 			c,
 		);
 		vm.runInContext(lire181('guide.js'), c);
@@ -2991,11 +2991,12 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 		vm.runInContext(
 			`function __dessiner() {
 				ciblesGuide = {}; frameCount++; __t += 100;
+				if (PC.etat === 'demarrage' && (PC.images = (PC.images || 0) + 1) > 5) versAppliPrincipale(); // prompt 183 : la fin du démarrage mène à l'appli principale
 				const pose = (nom, espace) => { espaceDessin = espace; cibleGuide(nom, 100, 100, 200, 100); espaceDessin = 'ecran'; };
 				if (vue === 'bureau') ['ecranPC', 'livreAide'].forEach((n) => pose(n, 'ecran'));
 				if (vue === 'poste') pose('quitterPC', 'ecran');
 				if (vue === 'poste' && PC.etat === 'appli') { ['jauges', 'somnolence', 'iconesOS'].forEach((n) => pose(n, 'pc')); if (__file.length) pose('fileSignalements', 'pc'); if (PHASES_DOSSIER.includes(phase)) pose('actions', 'pc'); }
-				if (vue === 'poste' && PC.etat === 'os') { pose('iconesOS', 'pc'); if (!PC.fenetre) pose('iconeSignalements', 'pc'); }
+				if (vue === 'poste' && PC.etat === 'os') ['jauges', 'iconesOS'].forEach((n) => pose(n, 'pc')); // prompt 183 : une autre appli en vue intégrée (bandeau + menu) ; plus de bureau d'icônes
 			}
 			function __afficher() { __dessiner(); const e = ETAPES_GUIDE[GUIDE.etape]; const z = e && cibleReelle(e.cible()); GUIDE.image = frameCount; GUIDE.trou = z ? { x: z.x - 10, y: z.y - 10, l: z.l + 20, h: z.h + 20 } : null; GUIDE.zones = [{ x: 1300, y: 900, l: 300, h: 48 }]; }
 			function __touche(k, code, bas) { key = k; keyCode = code; __bas = bas || []; return toucheGuide(); }`,
@@ -3005,7 +3006,7 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	};
 	// 1. Chaque étape a une cible relevée par le jeu et une issue ; depuis n'importe quelle vue, la cible redevient
 	//    atteignable (le guide ramène la vue), l'étape attend le jeu (temps non suspendu) ou elle est déclarée faite
-	const DEPARTS = ["vue = 'bureau'", "vue = 'poste'; PC.etat = 'appli'", "vue = 'poste'; PC.etat = 'os'; PC.fenetre = 'journal'", "vue = 'poste'; PC.etat = 'os'; PC.fenetre = null", "vue = 'poste'; PC.etat = 'appli'; phase = 'decision'; __file = [{}]"];
+	const DEPARTS = ["vue = 'bureau'", "vue = 'poste'; PC.etat = 'appli'", "vue = 'poste'; PC.etat = 'os'; PC.fenetre = 'journal'", "vue = 'poste'; PC.etat = 'demarrage'", "vue = 'poste'; PC.etat = 'appli'; phase = 'decision'; __file = [{}]"];
 	const nbEtapes = vm.runInContext('ETAPES_GUIDE.length', ctx181());
 	verifier(nbEtapes >= 6, `prompt 181 : étapes du guide introuvables (${nbEtapes})`);
 	for (let i = 0; i < nbEtapes; i++) {
@@ -3139,6 +3140,45 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	verifier(ex(`__actions.join() === 'sAsseoir'`), 'prompt 182 : au bureau, la molette vers le haut installe au PC, même avec un dossier ouvert');
 	verifier(ex(`vue = 'bureau'; pointeurEcranPC(960, 400).x < -1000 && !appliInteractive()`) && ex(`vue = 'zoom-avant'; pointeurEcranPC(960, 400).x < -1000`), 'prompt 182 : hors du poste (bureau, zoom), le pointeur doit être hors de l\'écran du PC');
 	verifier(ex(`vue = 'poste'; const __p = pointeurEcranPC(96 + 864, 40 + 486); Math.round(__p.x) === 960 && Math.round(__p.y) === 540`), 'prompt 182 : au poste, le pointeur doit être ramené dans le repère 1920×1080 de l\'écran');
+}
+
+// Prompt 183 : plus de bureau d'icônes RégulOS — le PC mène directement à l'appli principale ; plus de fenêtre
+// d'introduction d'appli, plus de bouton « Pause » ni de texte d'objectif dans l'appli (le bandeau garde l'objectif)
+{
+	const lire183 = (f) => readFileSync(join(pub, f), 'utf8');
+	const os = lire183('os.js');
+	const sk = lire183('sketch.js');
+	const ma = lire183('menu-app.js');
+	const tous = readdirSync(pub).filter((f) => f.endsWith('.js') && f !== 'sw.js' && f !== 'i18n.js').map(lire183).join('\n');
+	for (const mort of ['GRILLE_OS', 'BARRE_OS', 'retourAccueilPC', 'dessinerBoutonDemarrer', 'focusDemarrer', 'dessinerBarreTaches', 'dessinerFenetreApp', 'dessinerFermerAppli', 'CLE_INTRO_APPLIS', 'fenetreDeblocage', 'verifierDeblocages', "'iconeSignalements'"]) verifier(!tous.includes(mort), `prompt 183 : « ${mort} » (bureau d'icônes / intro d'appli) ne doit plus exister`);
+	verifier(/if \(tB >= DUREE_DEMARRAGE\) versAppliPrincipale\(\)/.test(os) && !/PC\.etat = 'os';\n\tPC\.fenetre = null/.test(tous), 'prompt 183 : la fin du démarrage doit mener à l\'appli principale, jamais à un bureau sans fenêtre');
+	verifier(/function dessinerOS\(\) \{\n\tif \(PC\.etat === 'demarrage'\) return dessinerDemarrage\(\);\n\tbackground\('#050607'\);\n\tif \(PC\.etat !== 'eteint'\) versAppliPrincipale\(\);[^\n]*\n\}/.test(os), 'prompt 183 : dessinerOS ne doit plus dessiner que le PC éteint et le démarrage');
+	verifier(/function fermerFenetreApp\(\) \{\n\tversAppliPrincipale\(\);\n\}/.test(os), 'prompt 183 : fermer une appli doit ramener à l\'appli principale');
+	verifier(!/fenetre === 'deblocage'|'deblocage'/.test(sk) && !/deblocage:/.test(lire183('portrait.js')) && !/ouvrir\('deblocage'\)/.test(tous), 'prompt 183 : la fenêtre d\'introduction d\'appli (« deblocage ») doit avoir disparu partout');
+	verifier(!/pause\.pause/.test(tous) && /if \(key === 'p' \|\| key === 'P'\) return basculerPause\(\), false;/.test(sk), 'prompt 183 : plus de bouton « Pause » dans l\'appli ; la touche P reste');
+	verifier(!/fil\.objectif/.test(tous) && /bandeau\.objectifCourt/.test(lire183('panneau.js')), 'prompt 183 : plus de texte d\'objectif dans l\'appli ; le bandeau garde l\'objectif');
+	verifier(/if \(keyCode === TAB\) return ecran === 'jeu' && phase !== 'fin' \? tabMenuApp\(\) : basculerFocusQuitter\(!focusQuitter\), false;/.test(sk) && /if \(MENU_FOCUS\.actif && ecran === 'jeu' && \(keyCode === ENTER \|\| keyCode === RETURN \|\| key === ' '\)\) return ouvrirEntreeMenu\(ICONES_OS\[PC\.selection\]\.cle\), false;/.test(sk), 'prompt 183 : depuis la carte, Tab doit parcourir le menu d\'applis et Entrée ouvrir l\'entrée focalisée');
+	// Cycle de Tab (modèle) : aucun focus → entrées du menu sauf l'active → « Quitter le PC » → aucun focus
+	const c = vm.createContext({});
+	vm.runInContext(
+		`var PC = { etat: 'appli', fenetre: null, selection: 0 }, focusQuitter = false, __bas = false, __annonces = [], ecran = 'jeu', phase = 'attente';
+		const SHIFT = 16; function keyIsDown() { return __bas; } function annoncer(x) { __annonces.push(x); } function basculerFocusQuitter(a) { focusQuitter = a; }
+		const ICONES_OS = ['signalements', 'patron', 'community', 'journal', 'donnees'].map((cle) => ({ cle })); function libelleEntreeMenu(k) { return k; }`,
+		c,
+	);
+	vm.runInContext(ma.slice(ma.indexOf('const VUES_APP'), ma.indexOf('function dessinerMenuApp')) + ma.slice(ma.indexOf('function tabMenuApp'), ma.indexOf('/** Contenu de la vue intégrée')), c);
+	const tour = (n) => vm.runInContext(`(() => { const r = []; for (let i = 0; i < ${n}; i++) { tabMenuApp(); r.push(focusQuitter ? 'quitter' : MENU_FOCUS.actif ? ICONES_OS[PC.selection].cle : '-'); } return r.join(' '); })()`, c);
+	verifier(tour(6) === 'patron community journal donnees quitter -', `prompt 183 : cycle de Tab depuis la carte inattendu (${tour(0)})`);
+	vm.runInContext("PC.etat = 'os'; PC.fenetre = 'journal'", c);
+	verifier(tour(6) === 'signalements patron community donnees quitter -', 'prompt 183 : depuis une autre appli, Tab doit proposer la carte et sauter l\'appli affichée');
+	vm.runInContext('__bas = true', c);
+	verifier(tour(2) === 'quitter donnees', 'prompt 183 : Maj + Tab doit parcourir le menu dans l\'autre sens');
+	const c183 = contexte('fr');
+	for (const langue of ['fr', 'en']) {
+		const dico = vm.runInContext(`TRADUCTIONS.${langue}`, c183);
+		const restes = Object.keys(dico).filter((k) => /^(applis\.intro\.|os\.demarrer|app\.titre\.|os\.aideClavier$|os\.jauges$|pause\.pause$|fil\.objectif|guide\.ouvrirSignalements$|guide\.apps\.fermer$|app\.bureau$|applis\.nouvelle$)/.test(k));
+		verifier(!restes.length, `prompt 183 : clés orphelines (${langue}) : ${restes.join(', ')}`);
+	}
 }
 
 if (erreurs.length) {

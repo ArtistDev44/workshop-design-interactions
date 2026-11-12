@@ -2,7 +2,7 @@
  * Principe : RECOMPOSITION. Le jeu continue de dessiner en 1920×1080 (ordinateur et paysage inchangés) ; en
  * portrait, un second canevas 1080×1920 recompose, à chaque image, des régions de cette image empilées :
  *   appli Signalements : jauges (fixes) / liste des signalements + lignes, dossier avec sources, compteur et actions (défilables,
- *     défilement automatique vers le dossier à son arrivée) / barre des tâches et « Se lever » (fixes) ;
+ *     défilement automatique vers le dossier à son arrivée) / « Se lever » (fixe) ;
  *   fenêtres : recadrées à leur largeur ; téléphone et tasse en main : recadrés sur l'objet ; menu : sa colonne ;
  *   bureau : la pièce en haut, et tous les objets en grosses cibles tactiles en dessous (≥ 96 px).
  * Les touchers sont reconvertis vers les coordonnées 1920×1080 avant d'appeler les gestionnaires du jeu.
@@ -48,7 +48,7 @@ function region(src, dx, dy, dl, defile) {
 }
 // Prompt 173 : les fenêtres n'ont plus que trois largeurs (DS.fenetre) ; le cadrage portrait = largeur + 40 px
 const CADRE_FENETRE = { etroite: DS.fenetre.etroite + 40, moyenne: DS.fenetre.moyenne + 40, large: DS.fenetre.large + 40 };
-const LARGEUR_FENETRE = { menu: CADRE_FENETRE.etroite, partage: CADRE_FENETRE.moyenne, installation: CADRE_FENETRE.moyenne, demission: CADRE_FENETRE.moyenne, partir: CADRE_FENETRE.moyenne, reset: CADRE_FENETRE.moyenne, deblocage: CADRE_FENETRE.moyenne }; // prompt 88 ; les autres : large
+const LARGEUR_FENETRE = { menu: CADRE_FENETRE.etroite, partage: CADRE_FENETRE.moyenne, installation: CADRE_FENETRE.moyenne, demission: CADRE_FENETRE.moyenne, partir: CADRE_FENETRE.moyenne, reset: CADRE_FENETRE.moyenne }; // prompt 88 ; les autres : large
 
 function scenePortrait() {
 	if (typeof CINE !== 'undefined' && CINE) return 'plein';
@@ -58,7 +58,6 @@ function scenePortrait() {
 	if (MENU.actif) return 'menu';
 	if (vue === 'poste' && PC.etat === 'appli' && ecran === 'jeu') return 'appli';
 	if (vue === 'poste' && typeof vueIntegree === 'function' && vueIntegree()) return 'vueApp'; // prompt 103 : vue intégrée de l'appli
-	if (vue === 'poste' && PC.etat === 'os' && (PC.fenetre === 'community' || PC.fenetre === 'patron') && ecran === 'jeu') return 'community'; // prompts 85 / 86 : une colonne
 	if (vue === 'bureau' && ecran === 'jeu' && !TRANSITION_JOUR) return 'bureau';
 	return 'plein';
 }
@@ -78,7 +77,6 @@ function composerPortrait() {
 		region(appliVersImage(ZONE_VUE), 20, 12 + hj + 8, PL - 40, true);
 		region(appliVersImage(MENU_BAS), 0, PH - 150, PL);
 	}
-	else if (scene === 'community') region(pcVersImage({ x: FENETRE_APP.x, y: FENETRE_APP.y, l: 924, h: FENETRE_APP.h }), 0, 160, PL); // prompt 85 : colonne de 860 px, onglets en bas
 	else if (scene === 'main') region({ x: 880, y: 0, l: 780, h: H }, 0, 200, PL);
 	else if (scene === 'rapport') region({ x: 420, y: 0, l: 1420, h: H }, 0, (PH - (H * PL) / 1420) / 2, PL);
 	else if (scene === 'fenetre') {
@@ -124,7 +122,7 @@ function composerPortrait() {
 	}
 }
 
-/** Appli Signalements : jauges fixes, puis liste des signalements + lignes et dossier (défilables), barre des tâches + « Se lever » fixes */
+/** Appli Signalements : jauges fixes, puis liste des signalements + lignes et dossier (défilables), « Se lever » fixe */
 function regionsAppli() {
 	const hj = region(appliVersImage(BANDEAU_TOUT), 20, 12, PL - 40); // prompt 87 : bandeau fin
 	const hs = region(appliVersImage(ZONE_SOMNO), (PL - 600) / 2, 12 + hj + 8, 600); // prompt 78 : somnolence (≥ 44 px)
@@ -154,7 +152,6 @@ function regionsAppli() {
 		if (Math.abs(PORTRAIT.cible - PORTRAIT.defil) < 1) (PORTRAIT.defil = PORTRAIT.cible), (PORTRAIT.cible = null);
 	}
 	PORTRAIT.defil = constrain(PORTRAIT.defil, 0, PORTRAIT.defilMax);
-	region(pcVersImage({ x: 0, y: H - BARRE_OS, l: L, h: BARRE_OS }), 20, PH - 182, PL - 40);
 	PORTRAIT.boutons.push({ x: 20, y: PH - 110, l: PL - 40, h: 96, texte: t('portrait.seLever'), action: quitterPC, primaire: false, desactive: !!raisonRetenuAuPC() }); // prompt 182 : estompé tant qu'un choix attend (le toucher annonce la raison)
 }
 /** Bureau : tous les objets de la pièce en grosses cibles (2 colonnes), plus « S'installer au PC » */

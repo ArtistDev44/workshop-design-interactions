@@ -76,7 +76,7 @@
 			const f = typeof fenetre !== 'undefined' && fenetre ? ' fenetre:' + fenetre : '';
 			if (typeof MENU !== 'undefined' && MENU.actif) return 'menu:' + MENU.ecran + f;
 			const p = [ecran, phase, vue];
-			if (typeof PC !== 'undefined') p.push(PC.etat === 'appli' ? 'appli' + (PLUS && PLUS.ouvert ? ':plus:' + SELECTION.onglet : '') : 'os:' + (PC.fenetre || 'bureau') + (PC.fenetre === 'journal' && typeof JOURNAL !== 'undefined' ? ':jour' + (JOURNAL.enquete !== null ? ':enquete' + JOURNAL.volet : '') : ''));
+			if (typeof PC !== 'undefined') p.push(PC.etat === 'appli' ? 'appli' + (PLUS && PLUS.ouvert ? ':plus:' + SELECTION.onglet : '') : 'vue:' + (PC.fenetre || PC.etat) + (PC.fenetre === 'journal' && typeof JOURNAL !== 'undefined' ? ':jour' + (JOURNAL.enquete !== null ? ':enquete' + JOURNAL.volet : '') : ''));
 			if (typeof smsActif !== 'undefined' && smsActif) p.push('sms');
 			return p.join(' ') + f;
 		} catch (e) {
@@ -393,8 +393,10 @@
 		add('paramètres · fermés', () => fermer(), 2);
 		// Partie : bureau, poste, applis
 		add('partie semaine 1 · bureau', () => (H.partie(0), (vue = 'bureau')), 20);
-		add('poste · RégulOS', () => (H.poste(), (PC.etat = 'os'), (PC.fenetre = null)));
-		['patron', 'community', 'journal', 'indicateurs', 'donnees', 'corbeille'].forEach((a) => add('appli ' + a, () => (H.poste(), (PC.etat = 'os'), (PC.fenetre = a))));
+		// Prompt 183 : plus de bureau d'icônes — les applis sont des vues de l'appli principale ; Indicateurs = panneau flottant (I)
+		['patron', 'community', 'journal', 'donnees', 'corbeille'].forEach((a) => add('appli ' + a, () => (H.poste(), (PC.etat = 'os'), (PC.fenetre = a))));
+		add('appli indicateurs', () => (H.poste(), (PC.flottant = true), (INDIC.deplie = true)));
+		add('appli indicateurs · fermée', () => ((PC.flottant = false), (INDIC.deplie = false)), 2);
 		add('Signalements · file', () => H.poste());
 		add('Signalements · équipes engagées (prompt 114)', () => (H.poste(), ['police', 'techniciens', 'ambulance'].forEach((c) => Jeu.envoyerEquipe(Jeu.index, c, typeof tempsCarte === 'function' ? tempsCarte() : millis()))));
 		// Un signalement de chaque type, sources révélées, onglets
@@ -437,7 +439,6 @@
 			leverTelephone();
 		}, 70);
 		add('SMS', () => (H.raz(), (smsActif = true)), 20);
-		add('déblocage d\'appli', () => (H.raz(), H.poste(), (PC.etat = 'os'), (APPLIS.intro = 'community'), ouvrir('deblocage')));
 		// Cas extrêmes : jauges, budget, retards, lignes multiples
 		add('jauges extrêmes', () => {
 			H.raz();
