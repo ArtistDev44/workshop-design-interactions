@@ -1,6 +1,7 @@
 /* Nantes en régulation — menu principal modernisé (prompt 35).
- * Écran titre plein écran affiché AVANT le bureau : Nouvelle partie, Reprendre, Paramètres, Aide et tutoriel,
- * langue. « Nouvelle partie » ouvre le choix de la semaine (l'ancien accueil du PC, sorti de l'écran).
+ * Écran titre plein écran affiché AVANT le bureau : Nouvelle partie, Reprendre, Palmarès, Paramètres ; en haut, le
+ * logo à gauche, la langue et l'installation à droite (prompt 171 : plus d'entrée « Aide et tutoriel » ni
+ * « Crédits » — l'aide s'ouvre en partie, les crédits par les noms du pied de page). « Nouvelle partie » ouvre le choix de la semaine (l'ancien accueil du PC, sorti de l'écran).
  * Fond : la pièce du bureau floutée et assombrie. Tout est dessiné par le code, textes via t().
  * Dès qu'une partie démarre ou reprend (ecran === 'jeu'), le menu se ferme et l'on arrive au bureau.
  */
@@ -69,8 +70,7 @@ function entreesMenu() {
 	}
 	e.push({ cle: 'palmares', icone: 'trophee', action: () => ouvrir('palmares') }); // prompt 47
 	e.push({ cle: 'parametres', icone: 'reglages', action: () => ouvrir('parametres') });
-	e.push({ cle: 'aide', icone: 'aide', action: () => ouvrir('aide') }); // prompt 122 : « Aide et tutoriel » — le tutoriel se lance depuis l'aide (T)
-	e.push({ cle: 'credits.menu', icone: 'menu', action: () => ouvrirCredits() }); // clé mp.credits.menu (mp.credits = les noms du pied de page) // prompt 113 : équipe, licence, usage de l'IA
+	// Prompt 171 : plus d'entrée « Aide et tutoriel » (l'aide s'ouvre en partie : H, menu pause) ni « Crédits » (les noms du pied de page y mènent)
 	return e;
 }
 function allerChoixSemaine() {
@@ -198,16 +198,20 @@ function dessinerMenuPrincipal() {
 	const k = reduireAnimations ? 1 : easeOut(constrain((millis() - MENU.debut) / 500, 0, 1));
 	const x0 = 160 - (1 - k) * 40;
 	noStroke();
-	textAlign(LEFT, TOP);
-	textFont(POLICE_DONNEES);
-	textSize(20);
-	fill(MENU_C.doux);
-	text('PXE-NTE001-G01-W01', x0, 120);
+	// Prompt 171 : ligne du haut — le logo à gauche, la langue et l'installation à droite : même y, même hauteur,
+	// même marge au bord (HAUT_MENU) ; plus de mention de code projet « PXE-… ». En portrait mobile, la colonne recadrée
+	// commence après le logo (portrait.js) : il n'y est pas dessiné, pour ne pas apparaître coupé.
+	if (!(typeof PORTRAIT !== 'undefined' && PORTRAIT.actif)) dessinerLogoPXE(HAUT_MENU.marge, HAUT_MENU.y, HAUT_MENU.h);
 	dsTitre(t('accueil.titre'), x0, 160, 88, MENU_C.blanc, 'left'); // titre au style pixel (Bitsy Pixels)
 	noStroke();
+	textAlign(LEFT, TOP);
+	textFont(POLICE_DONNEES);
 	textSize(28);
+	push(); // l'interligne de p5 est un état global (valeur + drapeau « fixé ») : push / pop le rend tel quel aux écrans suivants
+	textLeading(40); // prompt 171 : interligne ≈ 1,45 × le corps (échelle du DS), 2 lignes au plus en FR comme en EN
 	fill(MENU_C.doux);
-	text(t('accueil.sousTitre'), x0, 276, 900, 80);
+	text(t('accueil.sousTitre'), x0, 276, 900, 84);
+	pop();
 	const e = entreesMenu();
 	if (MENU.choix >= e.length + EXTRAS_MENU.length) MENU.choix = 0;
 	// Prompt 120 : pile calculée dans l'espace disponible (sous-titre du jeu → pied de page, 16 px de marge) :
@@ -223,17 +227,11 @@ function dessinerMenuPrincipal() {
 		carteMenu(x0, yc, 620, hs[i], t('mp.' + it.cle), it.sous, it.action, i === MENU.choix, it.icone);
 		yc += hs[i] + ecart;
 	});
-	selecteurLangue(L - 80, 56);
-	// Prompt 65 : installation de la webapp (seulement si le navigateur la propose) ; mention une fois installée
-	if (installationPossible()) bouton(L - 80 - 420, 130, 420, 64, t('pwa.installer'), installerApplication, false, true);
-	else if (estInstallee()) {
-		textAlign(RIGHT, TOP);
-		textFont(POLICE_DONNEES);
-		textSize(18);
-		fill(MENU_C.doux);
-		text(t('pwa.badge'), L - 80, 130);
-		textAlign(LEFT, TOP);
-	}
+	// Prompt 171 : FR / EN puis l'icône « télécharger » (installer le jeu, prompt 65), bord droit à la marge
+	const avecInstaller = EXTRAS_MENU.some((x) => x.cle === 'installer'); // pas en exposition (prompt 160)
+	const xi = L - HAUT_MENU.marge - HAUT_MENU.h;
+	selecteurLangue(avecInstaller ? xi : L - HAUT_MENU.marge + 8, HAUT_MENU.y, HAUT_MENU.h); // selecteurLangue laisse 8 px à droite du dernier bouton
+	if (avecInstaller) boutonInstaller(xi, HAUT_MENU.y, HAUT_MENU.h, focusExtra(e.length, 'installer'));
 	textAlign(LEFT, BOTTOM);
 	textFont(POLICE_DONNEES);
 	textSize(18);
@@ -270,7 +268,36 @@ const EXTRAS_MENU = typeof EXPO !== 'undefined' && EXPO.actif ? [] : [
 	{ cle: 'depot', action: () => ouvrirLien(DEPOT_URL) },
 	{ cle: 'partager', action: () => ouvrirPartage() },
 	{ cle: 'presentation', action: () => ouvrirPresentation() }, // page /presentation/ (diaporama Slidev, prompt 82)
+	{ cle: 'installer', action: () => installerJeu() }, // prompt 171 : icône « télécharger » en haut à droite, dernière avant de reboucler sur « Nouvelle partie »
 ];
+/** Prompt 171 : ligne du haut de l'écran titre (logo à gauche, langue + installation à droite) */
+const HAUT_MENU = { y: 56, h: 60, marge: 80 };
+/** Prompt 171 : bouton carré à icône « télécharger » (style contour des boutons de langue) — installe le jeu ;
+ * l'icône n'est jamais seule : infobulle au survol et au focus, annonce « Installer le jeu » au clavier */
+function boutonInstaller(x, y, c, focus) {
+	const survol = mouseX >= x && mouseX <= x + c && mouseY >= y && mouseY <= y + c;
+	fill(survol || focus ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.05)');
+	stroke('#FFFFFF');
+	strokeWeight(2);
+	rect(x + 1, y + 1, c - 2, c - 2);
+	if (survol || focus) {
+		// même double bordure que bouton() au survol ; rouge au focus clavier, comme les autres éléments du menu
+		noFill();
+		stroke(focus ? MENU_C.bleu : '#FFFFFF');
+		strokeWeight(focus ? 4 : 2);
+		rect(x - 6, y - 6, c + 12, c + 12);
+	}
+	noStroke();
+	iconeLucide('download', x + (c - 32) / 2, y + (c - 32) / 2, 32, '#FFFFFF');
+	boutons.push({ x, y, l: c, h: c, action: installerJeu });
+	if (survol || focus) {
+		const bulle = t('mp.installer');
+		textFont(POLICE_DONNEES);
+		textSize(18);
+		infobulle(bulle, x + c - (textWidth(bulle) + 28), y + c + 14); // sous le bouton, alignée sur le bord droit
+		textAlign(LEFT, TOP);
+	}
+}
 const focusExtra = (n, cle) => MENU.choix - n === EXTRAS_MENU.findIndex((x) => x.cle === cle);
 function piedCredits(x, y, n) {
 	const credits = t('mp.credits');
@@ -497,8 +524,11 @@ function dessinerChoixSemaine() {
 	textAlign(LEFT, TOP);
 	textFont(POLICE_TEXTE);
 	textSize(26);
+	push(); // interligne : état global de p5, rendu tel quel par pop()
+	textLeading(36); // prompt 171 : même interligne (≈ 1,4 × le corps) que le texte sous le titre du menu ; sans lui, l'interligne hérité (26 px) serrait les deux lignes
 	fill(MENU_C.doux);
-	text(t('mp.mode.sous'), 160, 186, 1500, 60);
+	text(t('mp.mode.sous'), 160, 186, 1500, 76);
+	pop();
 	const lc = 780;
 	const hc = 400;
 	modes.forEach((o, i) => {
@@ -589,7 +619,7 @@ function toucheMenu() {
 	else if (keyCode === DOWN_ARROW || keyCode === TAB) MENU.choix = (MENU.choix + 1) % n;
 	else if (keyCode === ENTER || keyCode === RETURN || key === ' ') choisi().action();
 	else if ((key === 'c' || key === 'C') && e.some((x) => x.cle === 'reprendre')) avantDeJouer(continuerPartie);
-	else if (key === 'h' || key === 'H' || key === '?') ouvrir('aide');
+	// Prompt 171 : plus de raccourci H au menu titre (l'aide s'ouvre en partie)
 	if (keyCode === UP_ARROW || keyCode === DOWN_ARROW || keyCode === TAB) annoncer(t('mp.' + choisi().cle));
 	return true;
 }

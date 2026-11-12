@@ -88,8 +88,9 @@ function dsTexte(txt, x, y, taille, couleur, align, largeur) {
 	else text(txt, x, y);
 }
 
-/** Bouton du design system. variante : 'primaire' | 'secondaire' | 'contour' | 'fantome' */
-function dsBouton(x, y, l, h, label, action, variante, desactive) {
+/** Bouton du design system. variante : 'primaire' | 'secondaire' | 'contour' | 'fantome' ;
+ * sansChevron : libellé seul, sans le « › » final (prompt 171 : boutons « Retour ») */
+function dsBouton(x, y, l, h, label, action, variante, desactive, sansChevron) {
 	variante = variante || 'primaire';
 	const survol = !desactive && mouseX >= x && mouseX <= x + l && mouseY >= y && mouseY <= y + h;
 	const v = {
@@ -131,11 +132,12 @@ function dsBouton(x, y, l, h, label, action, variante, desactive) {
 	textFont(DS.policeTexte);
 	let taille = Math.min(24, h * 0.38);
 	textSize(taille);
-	while (taille > 18 && textWidth(label + '  ›') > l - 24) textSize(--taille); // prompt 66 : le libellé reste dans le bouton
+	const libelle = sansChevron ? label : label + '  ›';
+	while (taille > 18 && textWidth(libelle) > l - 24) textSize(--taille); // prompt 66 : le libellé reste dans le bouton
 	fill(desactive ? DS.blanc50 : v.texte);
 	textAlign(CENTER, CENTER);
 	zoneTexteDebut('bouton', x, y, l, h); // prompt 93
-	text(label + '  ›', x + l / 2, y + h / 2);
+	text(libelle, x + l / 2, y + h / 2);
 	zoneTexteFin();
 	if (!desactive) boutons.push({ x, y, l, h, action });
 }
