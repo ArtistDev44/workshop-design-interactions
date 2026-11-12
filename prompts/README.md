@@ -228,6 +228,7 @@ Preuves dans le code (grep ; 14–34 relevées au prompt 33, revérifiées et co
 | 137 | `137-ux-questionner-informations.md` | Skill de projet **UX `ux-questionner-informations`** et revue de **chaque information** du jeu (≈ 310 questionnées, 41 P1) : `ux-informations-2026-11-12.md` + 4 volets | ✅ fusionné dans main (revue seule, aucun changement du jeu) |
 | 138 | `138-jeu-livrables-lien-clics.md` | Jeu : le bouton « Livrables » ouvre `presentation/#/livrables?clicks=5` (diapositive entièrement dévoilée) | ✅ fusionné dans main |
 | 143 | `143-jeu-main-telephone-pixel-art.md` | Jeu : la **main qui tient le téléphone** redessinée en pixel art (grille de 15 px, palette de la tasse en main) | ✅ fusionné dans main |
+| 150 | `150-jeu-logo-bulle-pin.md` | Jeu : le **logo bulle-pin** (piste 2 de `logo/planche.html`) remplace le moniteur : `LOGO_PXE`, écran de chargement, favicon, icônes de la webapp | ✅ fusionné dans main |
 
 > **Audit des textes (prompt 93)** : avant chaque fusion qui touche à l'interface, relancer `index.html?audit=textes&parcours=1` (1920×1080, 1366×768, mobile portrait) et garder 0 défaut A à D — voir `jeu/89-textes-hors-cadre.md` et `CONTRIBUTING.md`.
 

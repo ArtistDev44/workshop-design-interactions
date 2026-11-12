@@ -26,3 +26,8 @@ survol et au focus : « Accueil de RégulOS (clic, ou Tab puis Entrée) », anno
 - `npm test` : formes du bouton = rectangles du SVG du chargement ; plus de carré rouge « REGUL ».
 - Chromium 1920 × 1080 FR / EN et portrait 412 × 915 : logo net, focus visible après Tab Tab, Entrée → accueil
   de RégulOS, aucune erreur console.
+
+## Mise à jour (prompt 150)
+Le logo n'est plus le moniteur : c'est la **bulle-pin** (bulle « &#@! » à pointe de marqueur de carte, piste 2 de
+`logo/planche.html`). Même grille 24 × 20, même fonction `dessinerLogoPXE`, même test ; favicon et icônes de la
+webapp refaits avec la petite et la grande bulle.
