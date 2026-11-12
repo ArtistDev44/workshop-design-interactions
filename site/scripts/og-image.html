@@ -1,0 +1,201 @@
+<!doctype html>
+<!-- Nantes en régulation — gabarit de l'image Open Graph (1200 × 630), rendu par site/scripts/og-image.mjs.
+     Tout ce qui est dessiné vient du dépôt : tracés réels des lignes Naolib et de la Loire (data/lignes.json,
+     Open Data Nantes Métropole, Licence Ouverte), trois dossiers réels du repli (data/fallback.json), logo
+     bulle-pin (favicon.svg), couleurs du Pixel Design System, police JetBrains Mono auto-hébergée. -->
+<html lang="fr">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="stylesheet" href="../public/fonts.css" />
+		<style>
+			html, body { margin: 0; background: #0d0c0c; }
+			canvas { display: block; }
+		</style>
+	</head>
+	<body>
+		<canvas id="og" width="1200" height="630"></canvas>
+		<script>
+			const W = 1200, H = 630;
+			const ROUGE = '#D4031C', FOND = '#0D0C0C', BLANC = '#FFFFFF';
+			const cv = document.getElementById('og');
+			const g = cv.getContext('2d');
+
+			/** Texte « pixel » : rendu petit, seuillé (pas d'anticrénelage), puis agrandi sans lissage */
+			function textePixel(txt, x, y, taillePx, echelle, couleur) {
+				const c = document.createElement('canvas');
+				const k = c.getContext('2d');
+				k.font = `800 ${taillePx}px "JetBrains Mono"`;
+				const l = Math.ceil(k.measureText(txt).width) + 4;
+				c.width = l;
+				c.height = taillePx + 6;
+				k.font = `800 ${taillePx}px "JetBrains Mono"`;
+				k.textBaseline = 'top';
+				k.fillStyle = '#fff';
+				k.fillText(txt, 2, 2);
+				const im = k.getImageData(0, 0, c.width, c.height);
+				const [r, v, b] = couleur.match(/\w\w/g).map((h) => parseInt(h, 16));
+				for (let i = 0; i < im.data.length; i += 4) {
+					const plein = im.data[i + 3] > 110;
+					im.data[i] = r; im.data[i + 1] = v; im.data[i + 2] = b; im.data[i + 3] = plein ? 255 : 0;
+				}
+				k.putImageData(im, 0, 0);
+				g.imageSmoothingEnabled = false;
+				g.drawImage(c, x, y, c.width * echelle, c.height * echelle);
+				return c.width * echelle;
+			}
+			/** Logo bulle-pin (favicon.svg), 16 × 16 pixels */
+			function logo(x, y, p) {
+				const r = (a, b, l, h, c) => ((g.fillStyle = c), g.fillRect(x + a * p, y + b * p, l * p, h * p));
+				[[1, 1, 14, 1], [0, 2, 16, 8], [1, 10, 14, 1], [4, 11, 8, 1], [5, 12, 6, 1], [6, 13, 4, 1], [7, 14, 2, 1]].forEach((q) => r(...q, ROUGE));
+				[[3, 5, 2, 2], [7, 5, 2, 2], [11, 5, 2, 2]].forEach((q) => r(...q, BLANC));
+			}
+
+			async function dessiner() {
+				await document.fonts.load('800 20px "JetBrains Mono"');
+				await document.fonts.load('400 20px "JetBrains Mono"');
+				const L = await (await fetch('../public/data/lignes.json')).json();
+				const F = await (await fetch('../public/data/fallback.json')).json();
+
+				g.fillStyle = FOND;
+				g.fillRect(0, 0, W, H);
+
+				// ——— Carte réelle : centre-ville de Nantes, cadré à droite ———
+				const centre = [-1.556, 47.214];
+				const kx = Math.cos((centre[1] * Math.PI) / 180);
+				const ech = 5200; // px par degré de longitude corrigé
+				const px = ([lon, lat]) => [800 + (lon - centre[0]) * kx * ech, 330 - (lat - centre[1]) * ech];
+				const chemin = (pts) => {
+					g.beginPath();
+					pts.forEach((p, i) => { const [a, b] = px(p); i ? g.lineTo(a, b) : g.moveTo(a, b); });
+				};
+				// Loire et cours d'eau
+				g.fillStyle = '#16304d';
+				L.eau.forEach((poly) => { chemin(poly); g.closePath(); g.fill(); });
+				// Lignes : bus en fin, tram et busway (type 0) épais et lumineux
+				const lignes = L.lignes.slice().sort((a, b) => (a.type === 0) - (b.type === 0));
+				lignes.forEach((ln) => {
+					const tram = ln.type === 0;
+					g.strokeStyle = tram ? ln.couleur || BLANC : 'rgba(255,255,255,0.16)';
+					g.lineWidth = tram ? 3 : 1;
+					g.shadowColor = tram ? ln.couleur || BLANC : 'transparent';
+					g.shadowBlur = tram ? 14 : 0;
+					g.globalAlpha = tram ? 0.9 : 1;
+					ln.traces.forEach((t) => { chemin(t); g.stroke(); });
+				});
+				g.shadowBlur = 0;
+				g.globalAlpha = 1;
+
+				// Voile : la gauche sombre pour le titre, bords en vignette
+				let gr = g.createLinearGradient(0, 0, W, 0);
+				gr.addColorStop(0, 'rgba(13,12,12,1)');
+				gr.addColorStop(0.36, 'rgba(13,12,12,0.94)');
+				gr.addColorStop(0.62, 'rgba(13,12,12,0.25)');
+				gr.addColorStop(1, 'rgba(13,12,12,0.55)');
+				g.fillStyle = gr;
+				g.fillRect(0, 0, W, H);
+				gr = g.createRadialGradient(820, 320, 120, 820, 320, 620);
+				gr.addColorStop(0, 'rgba(212,3,28,0.10)');
+				gr.addColorStop(1, 'rgba(212,3,28,0)');
+				g.fillStyle = gr;
+				g.fillRect(0, 0, W, H);
+
+				// ——— Alertes : pins bulle-pin avec ondes, posés sur des tracés réels ———
+				const pins = [[-1.5536, 47.2172], [-1.5905, 47.2265], [-1.5215, 47.2098]];
+				pins.forEach((p, i) => {
+					const [a, b] = px(p);
+					[46, 32, 20].forEach((r, k) => {
+						g.strokeStyle = `rgba(212,3,28,${0.18 + k * 0.2})`;
+						g.lineWidth = 2;
+						g.beginPath();
+						g.arc(a, b, r + (i === 0 ? 10 : 0), 0, Math.PI * 2);
+						g.stroke();
+					});
+					g.shadowColor = ROUGE;
+					g.shadowBlur = 24;
+					logo(a - 16 * (i === 0 ? 2.5 : 2) / 2, b - 15 * (i === 0 ? 2.5 : 2), i === 0 ? 2.5 : 2);
+					g.shadowBlur = 0;
+				});
+
+				// ——— Dossiers réels (repli : semaine du 12 au 18/10/2026) ———
+				const dossiers = F.dossiers.filter((d) => d.type === 'perturbation').slice(0, 3);
+				const fmt = (iso) => iso.split('-').reverse().slice(0, 2).join('/');
+				dossiers.forEach((d, i) => {
+					const x = 800 + i * 14, y = 404 + i * 58, l = 352, h = 50;
+					g.fillStyle = 'rgba(13,12,12,0.92)';
+					g.fillRect(x, y, l, h);
+					g.strokeStyle = 'rgba(255,255,255,0.25)';
+					g.lineWidth = 1;
+					g.strokeRect(x + 0.5, y + 0.5, l - 1, h - 1);
+					g.fillStyle = ROUGE;
+					g.fillRect(x, y, 6, h);
+					g.font = '700 13px "JetBrains Mono"';
+					g.fillStyle = '#FFC138';
+					g.fillText('⚠ ' + String(d.type).toUpperCase() + ' · ' + fmt(d.date) + '/2026', x + 18, y + 19);
+					g.font = '400 15px "JetBrains Mono"';
+					g.fillStyle = BLANC;
+					let t = String(d.texte_source || d.nature);
+					while (g.measureText(t).width > l - 36) t = t.slice(0, -2) + '…';
+					g.fillText(t, x + 18, y + 39);
+				});
+
+				// ——— Titre ———
+				logo(64, 58, 5);
+				g.font = '700 15px "JetBrains Mono"';
+				g.fillStyle = 'rgba(255,255,255,0.75)';
+				g.fillText('PATRIMOINE.EXE · NTE001', 160, 86);
+				g.fillStyle = ROUGE;
+				g.fillText('SALLE DE RÉGULATION · NANTES', 160, 108);
+				g.shadowColor = 'rgba(212,3,28,0.55)';
+				g.shadowBlur = 0;
+				textePixel('NANTES EN', 58, 160, 16, 5.6, 'FFFFFF');
+				textePixel('RÉGULATION', 58, 262, 16, 5.6, 'FFFFFF');
+				g.fillStyle = ROUGE;
+				g.fillRect(64, 374, 120, 6);
+
+				g.font = '400 21px "JetBrains Mono"';
+				g.fillStyle = BLANC;
+				g.fillText('Une semaine réelle du réseau nantais.', 64, 420);
+				g.fillText('Chaque incident devient un dossier.', 64, 450);
+				g.font = '700 21px "JetBrains Mono"';
+				g.fillStyle = ROUGE;
+				g.fillText('À vous de trancher.', 64, 480);
+
+				// Jauges du jeu : fluidité, réputation, budget (sans chiffre, barre blanche d'objectif)
+				[['Fluidité', 0.72, '#00B74F'], ['Réputation', 0.46, '#FFC138'], ['Budget', 0.17, '#D10B00']].forEach(([nom, v, c], i) => {
+					const x = 64 + i * 232, y = 520;
+					g.font = '700 14px "JetBrains Mono"';
+					g.fillStyle = 'rgba(255,255,255,0.85)';
+					g.fillText(nom.toUpperCase(), x, y);
+					g.fillStyle = 'rgba(255,255,255,0.15)';
+					g.fillRect(x, y + 10, 200, 10);
+					g.fillStyle = c;
+					g.fillRect(x, y + 10, 200 * v, 10);
+					if (i === 1) {
+						g.fillStyle = FOND;
+						g.fillRect(x + 120 - 3, y + 4, 6, 22);
+						g.fillStyle = BLANC;
+						g.fillRect(x + 120 - 1, y + 5, 2, 20);
+					}
+				});
+
+				// Pied
+				g.fillStyle = 'rgba(255,255,255,0.12)';
+				g.fillRect(0, 582, W, 1);
+				g.font = '400 14px "JetBrains Mono"';
+				g.fillStyle = 'rgba(255,255,255,0.75)';
+				g.fillText('ESD Nantes · B3 Design · 2026 — jeu en pixel art, jouable en ligne et hors ligne', 64, 611);
+				g.textAlign = 'right';
+				g.fillText('Données réelles : Naolib · Open-Meteo · Hub’Eau', W - 32, 611);
+				g.textAlign = 'left';
+
+				// Cadre et lignes de balayage discrètes (écran de régulation)
+				g.fillStyle = 'rgba(0,0,0,0.12)';
+				for (let y = 0; y < H; y += 3) g.fillRect(0, y, W, 1);
+				g.fillStyle = ROUGE;
+				g.fillRect(0, 0, W, 6);
+				document.title = 'pret';
+			}
+			dessiner();
+		</script>
+	</body>
+</html>
