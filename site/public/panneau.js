@@ -11,6 +11,26 @@ const PANNEAU = { x: 756, y: 132, l: 1124, h: 900 };
 const PLUS = { ouvert: false };
 
 // ——— Bandeau fin : jauges (ligne 1), objectif · équipes · horloge (ligne 2) ; plus de boutons (prompt 124) ———
+/** Prompt 143 : seuil de l'objectif du jour (ex. réputation ≥ 60) — null si la jauge n'est pas l'objectif */
+function seuilObjectif(cle) {
+	const o = Jeu.objectifDuJour ? Jeu.objectifDuJour() : null;
+	if (!o || o.jauge !== cle || typeof o.seuil !== 'number') return null;
+	return constrain(o.seuil - (Jeu.allegementObjectif || 0), 0, 100);
+}
+const texteSeuilObjectif = (cle) => t('jauge.seuilObjectif', { seuil: seuilObjectif(cle) });
+/** Barre blanche verticale (liseré sombre : lisible sur la piste comme sur le remplissage), dépasse la piste de 5 px
+ * en haut et en bas, plus haute que les repères 20 / 40 ; rien sur une jauge sans objectif. Renvoie vrai si dessinée. */
+function dessinerSeuilObjectif(cle, bx, by, bl, bh) {
+	const s = seuilObjectif(cle);
+	if (s === null) return false;
+	const sx = Math.round(bx + (bl * s) / 100);
+	noStroke();
+	fill('#0D0C0C');
+	rect(sx - 3, by - 6, 6, bh + 12);
+	fill('#FFFFFF');
+	rect(sx - 1, by - 5, 2, bh + 10);
+	return true;
+}
 function dessinerBandeau() {
 	const z = BANDEAU;
 	panneau(z.x, z.y, z.l, z.h);
@@ -26,7 +46,7 @@ function dessinerBandeau() {
 		textAlign(LEFT, TOP);
 		textSize(18);
 		fill(C.texte);
-		text(t('jaugeTitre.' + cle) + ' ' + Math.round(jauges[cle]), x, z.y + 8);
+		text(t('jaugeTitre.' + cle), x, z.y + 8); // prompt 143 : plus de valeur chiffrée, la barre suffit
 		const bx = x + 230;
 		const bl = lb - 230;
 		fill(C.piste);
@@ -38,6 +58,7 @@ function dessinerBandeau() {
 		rect(bx, z.y + 14, (bl * constrain(va, 0, 100)) / 100, 16);
 		fill(255, 255, 255, 170);
 		[20, 40].forEach((s) => rect(bx + (bl * s) / 100 - 1, z.y + 10, 2, 24)); // seuils réels
+		if (dessinerSeuilObjectif(cle, bx, z.y + 14, bl, 16) && mouseX >= bx && mouseX <= bx + bl && mouseY >= z.y + 6 && mouseY <= z.y + 38) BANDEAU.survol = texteSeuilObjectif(cle); // prompt 143
 		dessinerDeltasJauge(cle, bx, z.y + 14, bl);
 	});
 	// Ligne 2 : objectif du jour, équipes disponibles, date et heure du jeu
@@ -47,7 +68,7 @@ function dessinerBandeau() {
 	const th = typeof Taches !== 'undefined' && Jeu.jourCourant() ? Taches.theme(Jeu.jourCourant().date) : null; // prompt 88 : thème du jour
 	const pj = typeof Taches !== 'undefined' && Jeu.jourCourant() ? Taches.prioritesDuJour(Jeu.jourCourant().date) : [];
 	const gr = pj.length ? t('bandeau.priorites', { liste: pj.map((p) => t('tache.prioCourt.' + p.id, p.vars)).join(' · ') }) : ''; // prompt 91 § 4 : priorités imposées (le grade reste dans Indicateurs)
-	const morceaux = [gr, th && th !== 'ordinaire' ? t('theme.' + th) : '', o ? t('bandeau.objectifCourt', { libelle: String(o.libelle), v: Math.round(Jeu.jauges[o.jauge]) }) : '', t('temps.' + vitesseTemps()) + ' ' + String(h.h).padStart(2, '0') + ':' + String(h.m).padStart(2, '0') + (Jeu.etat.horsLigne ? ' · ' + t('jeu.horsLigne') : '')].filter(Boolean); // prompt 95 : état de la vitesse du temps devant l'heure
+	const morceaux = [gr, th && th !== 'ordinaire' ? t('theme.' + th) : '', o ? t('bandeau.objectifCourt', { libelle: String(o.libelle) }) : '', t('temps.' + vitesseTemps()) + ' ' + String(h.h).padStart(2, '0') + ':' + String(h.m).padStart(2, '0') + (Jeu.etat.horsLigne ? ' · ' + t('jeu.horsLigne') : '')].filter(Boolean); // prompt 95 : état de la vitesse du temps devant l'heure
 	textFont(POLICE_DONNEES);
 	textSize(16);
 	fill(C.gris);
