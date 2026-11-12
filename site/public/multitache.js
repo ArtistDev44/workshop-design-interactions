@@ -212,7 +212,7 @@ function majNotifications() {
 	}
 	if (nb.plaintes > V.plaintes) {
 		const p = Jeu.plaintes[nb.plaintes - 1];
-		notifier({ titre: t('notif.plainte'), extrait: extrait(p && p.def ? Jeu.texteMessage(p.def.texte, p.vars) : '', 70), icone: 'community', action: () => ouvrirAppliNotif('community') });
+		notifier({ titre: t('notif.plainte'), extrait: extrait(p && p.def ? Jeu.textePlainte(p) : '', 70), icone: 'community', action: () => ouvrirAppliNotif('community') });
 	}
 	Object.assign(V, nb);
 	// Fin d'intervention : passage « sur place » → « retour » observé pendant la partie

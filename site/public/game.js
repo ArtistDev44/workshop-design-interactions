@@ -768,7 +768,7 @@
 			mauvaisesSources: decisions.filter((d) => d.mauvaiseSource).length,
 			decisionsCles: cles.map((d) => ({
 				qualite: d.qualite,
-				titre: d.narration.titre,
+				titre: marquerFictif(d, d.narration.titre), // prompt 162
 				action: d.nomAction,
 				deltas: d.deltas,
 			})),
@@ -929,8 +929,10 @@
 	};
 
 	/** Événement externe réel du dossier (nature, météo, affluence) — jamais inventé */
+	/** Prompt 162 : nom d'un événement de l'agenda (« Nom — Lieu »), sinon sa nature (catégorie brute) */
+	const nomEvenementDossier = (d) => String(d.texte_source || '').split(' — ')[0].trim() || String(d.nature || '').split(',')[0].trim();
 	function externe(d, ctx) {
-		let e = d.type === 'événement' ? T('ext.affluence', { nature: String(d.nature).split(',')[0] }) : d.type === 'ligne en difficulté' ? T('ext.retard') : d.nature;
+		let e = d.type === 'événement' ? T('ext.affluence', { nature: nomEvenementDossier(d) }) : d.type === 'ligne en difficulté' ? T('ext.retard') : d.natureAffichee || d.nature; // prompt 162 : nature du fictif traduite
 		if (ctx.meteo && d.type !== 'alerte météo') e = T('ext.meteo', { e });
 		return e;
 	}
@@ -953,7 +955,7 @@
 			heure: r.minuteSim === null ? '' : String(Math.floor(r.minuteSim / 60) % 24).padStart(2, '0') + ':' + String(Math.floor(r.minuteSim) % 60).padStart(2, '0'),
 			ligne: d.lignes && d.lignes.length ? d.lignes.join(', ') : null,
 			externe: externe(d, ctx),
-			externeCourt: d.type === 'événement' ? String(d.nature).split(',')[0] : d.type === 'ligne en difficulté' ? T('ext.retard') : d.nature,
+			externeCourt: d.type === 'événement' ? nomEvenementDossier(d) : d.type === 'ligne en difficulté' ? T('ext.retard') : d.natureAffichee || d.nature,
 			retard: d.retard === undefined ? null : d.retard,
 			retardEffectif: Jeu.retardEffectif(d), // prompt 79
 			action: r.action === 'temps' ? null : r.nomAction,
@@ -970,6 +972,7 @@
 			valeurBasse: Math.round((r.jaugesAvant || Jeu.jauges)[NOMS_JAUGES[poids.indexOf(Math.max(...poids))]]),
 			resultat: r,
 			index: Jeu.index, // prompt 85 : rang du dossier dans le paquet (post du compte social)
+			fictif: estFictif(d), // prompt 162 : la trace garde l'étiquette « Fictif »
 		};
 		Jeu.evenementsJournee.push(entree);
 		Jeu.reagirApps(entree);
@@ -989,7 +992,7 @@
 	};
 
 	Jeu.ligneMail = function (e) {
-		const sujet = e.ligne ? T('sujet.ligne', { ligne: e.ligne }) : T('sujet.reseau');
+		const sujet = marquerFictif(e, e.ligne ? T('sujet.ligne', { ligne: e.ligne }) : T('sujet.reseau')); // prompt 162
 		const retard = e.retard !== null ? T('mail.retard', { retard: e.retardEffectif !== undefined && e.retardEffectif !== null ? e.retardEffectif : e.retard }) : ''; // prompt 79 : retard qui a compté
 		const ev = Jeu.evaluer(e);
 		const suite =
@@ -1092,8 +1095,22 @@
 		const o = Jeu.objectifDuJour();
 		const mo = Jeu.modificateur;
 		const m = mo ? (mo.actionBloquee ? T('patron.modBloque', { libelle: mo.libelle, action: REGLAGES.effets[mo.actionBloquee].nom }) : T('patron.mod', { libelle: mo.libelle })) : '';
-		return T('patron.consigne', { n, date: j ? j.date.split('-').reverse().join('/') : '', objectif: o.libelle, budget: Jeu.jauges.budget, mod: m });
+		return T('patron.consigne', { n, parts: Jeu.compositionDossiers(j ? j.dossiers : []), date: j ? j.date.split('-').reverse().join('/') : '', objectif: o.libelle, budget: Jeu.jauges.budget, mod: m });
 	}
+	/** Prompt 162 : composition d'une liste de dossiers dite honnêtement — « réel » réservé aux faits de la source
+	 * (perturbations, retards, alertes météo) ; l'agenda (affluence supposée), l'incident fictif et les conséquences de
+	 * jeu comptés à part ; seules les parts non nulles. Texte différé (suit la langue). */
+	Jeu.compositionDossiers = function (dossiers) {
+		const n = { reelles: 0, meteo: 0, agenda: 0, fictif: 0, chaine: 0 };
+		(dossiers || []).forEach((d) => {
+			if (estFictif(d)) n.fictif++;
+			else if (d.consequence) n.chaine++;
+			else if (d.type === 'événement') n.agenda++;
+			else if (d.type === 'alerte météo') n.meteo++;
+			else n.reelles++;
+		});
+		return Liste(Object.keys(n).filter((k) => n[k]).map((k) => T('compo.' + k, { n: n[k] })), ', ');
+	};
 
 	/** Prompt 86 : message typé (consigne, alerte, conseil, budget, reproche, equipes, info) avec ses valeurs réelles
 	 * au moment de l'envoi (meta). Pendant la panne de messagerie (prompt 23), il attend et arrive « en retard ». */
@@ -1268,12 +1285,12 @@
 
 	Jeu.commenter = function (sorte, sujet, retard, equipe, index) {
 		const n = Jeu.commentaires.length;
-		const texte = T('com.' + sorte + '.' + (n % COMMENTAIRES[sorte]), {
+		const texte = marquerFictif(index !== undefined && Jeu.paquet ? Jeu.paquet[index] : null, T('com.' + sorte + '.' + (n % COMMENTAIRES[sorte]), {
 			sujet,
 			retard: retard !== null && retard !== undefined ? ' (+' + retard + ' min)' : '',
 			heure: maintenantSim(),
 			equipe: equipe || '',
-		});
+		})); // prompt 162 : commentaire sur un dossier fictif marqué
 		const delta = DELTA_REPUTATION[sorte];
 		Jeu.commentaires.push({ heure: maintenantSim(), auteur: PSEUDOS[n % PSEUDOS.length], texte, delta, index, jour: Jeu.jourIndex }); // prompt 85 : rattaché au post du dossier
 		Jeu.nonLus.community++;
@@ -1285,8 +1302,8 @@
 		const sujet = e.ligne ? T('sujet.ligne', { ligne: e.ligne }) : e.externeCourt || e.externe;
 		const ev = Jeu.evaluer(e);
 		Jeu.commenter(ev === 'bon' ? 'bon' : 'mauvais', sujet, e.retard, undefined, e.index);
-		if (ev === 'rate') Jeu.messagePatron(T(Jeu.variante('patron.rate', 'rate|' + e.index), { sujet, action: e.action, meilleure: e.meilleureAction }), 'reproche', { index: e.index, jour: e.jour, ligne: e.ligne, action: e.cleAction, meilleure: e.cleMeilleure });
-		if (ev === 'trop_tard') Jeu.messagePatron(T('patron.tropTard', { sujet }), 'reproche', { index: e.index, jour: e.jour, ligne: e.ligne, action: 'temps', meilleure: e.cleMeilleure });
+		if (ev === 'rate') Jeu.messagePatron(marquerFictif(e, T(Jeu.variante('patron.rate', 'rate|' + e.index), { sujet, action: e.action, meilleure: e.meilleureAction })), 'reproche', { index: e.index, jour: e.jour, ligne: e.ligne, action: e.cleAction, meilleure: e.cleMeilleure });
+		if (ev === 'trop_tard') Jeu.messagePatron(marquerFictif(e, T('patron.tropTard', { sujet })), 'reproche', { index: e.index, jour: e.jour, ligne: e.ligne, action: 'temps', meilleure: e.cleMeilleure });
 		Jeu.verifierAlertesPatron();
 	};
 
@@ -1330,6 +1347,7 @@
 		if (d.lignes && d.lignes.length) v.ligne = d.lignes.join(', ');
 		if (d.retard !== null && d.retard !== undefined) v.retard = d.retard;
 		if (d.nature) v.nature = String(d.nature).split(',')[0].trim();
+		if (d.type === 'événement') v.nom = nomEvenementDossier(d); // prompt 162 : le nom de l'événement, pas sa catégorie d'agenda
 		return v;
 	}
 	function variablesUtilisees(p) {
@@ -1363,6 +1381,8 @@
 		return s.replace(/\{(\w+)\}/g, (m, k) => (vars && vars[k] !== undefined ? String(vars[k]) : m));
 	};
 
+	/** Prompt 162 : texte d'une plainte reçue, marqué « Fictif · » si elle porte sur le dossier fictif */
+	Jeu.textePlainte = (p) => String(marquerFictif(p && Jeu.paquet ? Jeu.paquet[p.index] : null, Jeu.texteMessage(p.def.texte, p.vars)));
 	/** Prompt 117 : meilleure réponse attendue pour ce dossier (même calcul que le Journal), lecture seule */
 	Jeu.meilleureReponse = function (d) {
 		// Prompt 130 : la meilleure réponse au sens de l'évaluation — effets pondérés par le besoin des jauges actuelles
@@ -1554,7 +1574,7 @@
 				index: e.index !== undefined ? e.index : Jeu.paquet.indexOf(d),
 				jour: e.jour,
 				heure: e.heure,
-				texte: T(e.cleAction === 'temps' ? 'post.tropTard' : 'post.action', { sujet: sujetDe(d), retard: e.retard !== null ? T('post.retard', { retard: e.retard }) : '', action: e.action || '' }),
+				texte: marquerFictif(d, T(e.cleAction === 'temps' ? 'post.tropTard' : 'post.action', { sujet: sujetDe(d), retard: e.retard !== null ? T('post.retard', { retard: e.retard }) : '', action: e.action || '' })), // prompt 162
 				likes: Math.round((LIKES_EVAL[ev] || 10) * (Jeu.jauges.reputation / 50)),
 				photo: Jeu.sujetPhoto(d),
 				date: d.date,
@@ -1617,7 +1637,7 @@
 		plainte.transmise = true;
 		plainte.statut = 'transmise';
 		plainte.jourStatut = Jeu.jourIndex;
-		Jeu.messagePatron(T('patron.transfert', { auteur: plainte.auteur, texte: { toString: () => Jeu.texteMessage(plainte.def.texte, plainte.vars) } }));
+		Jeu.messagePatron(T('patron.transfert', { auteur: plainte.auteur, texte: { toString: () => Jeu.textePlainte(plainte) } }));
 		return true;
 	};
 

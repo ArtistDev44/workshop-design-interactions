@@ -116,7 +116,7 @@ function interagirPiece(nom) {
 		texte = j ? t('piece.tasse.jour', { heure, n: j.dossiers.length }) : t('piece.tasse.libre', { heure });
 	} else if (nom === 'dossiers') {
 		const j = ecran === 'jeu' && Jeu.jourCourant ? Jeu.jourCourant() : null;
-		texte = j ? t('piece.dossiers.jour', { n: j.dossiers.length, date: j.date.split('-').reverse().join('/') }) : t('piece.dossiers.libre');
+		texte = j ? t('piece.dossiers.jour', { n: j.dossiers.length, parts: Jeu.compositionDossiers(j.dossiers), date: j.date.split('-').reverse().join('/') }) : t('piece.dossiers.libre');
 	}
 	PIECE.message = { texte, objet: nom, jusqua: millis() + 5000 };
 	dernierRenduBureau = 0; // la pièce est redessinée tout de suite (lampe, store)
@@ -169,7 +169,7 @@ function lignesTransitionJour() {
 	const T0 = TRANSITION_JOUR;
 	const j = Jeu.jours && Jeu.jours[T0.jour - 1];
 	const l = [];
-	if (j) l.push(t('transition.prevus', { n: j.dossiers.length }));
+	if (j) l.push(t('transition.prevus', { n: j.dossiers.length, parts: Jeu.compositionDossiers(j.dossiers) })); // prompt 162 : « réel » réservé aux faits de la source
 	l.push(t('transition.service', { debut: Jeu.formaterHeure(Jeu.debutJournee ? Jeu.debutJournee() : 480), fin: Jeu.formaterHeure(Jeu.finJournee()) }));
 	l.push(t('transition.rythme'));
 	l.push(t('transition.finir'));

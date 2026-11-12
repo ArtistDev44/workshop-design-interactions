@@ -339,7 +339,7 @@ const Taches = (() => {
 	/** Faits marquants proposés : tirés du journal réel de la journée (meilleure et pire décision, événement, non traité) */
 	function faitsDuJour(date) {
 		const ev = (Jeu.evenementsJournee || []).filter((e) => e.jour === date);
-		const sujet = (e) => (e.ligne ? t('dossier.ligne', { lignes: e.ligne }) : String(e.externeCourt || ''));
+		const sujet = (e) => marquerFictif(e, e.ligne ? t('dossier.ligne', { lignes: e.ligne }) : String(e.externeCourt || '')); // prompt 162 : le fait marquant garde « Fictif »
 		const faits = [];
 		const bon = ev.find((e) => e.cleAction !== 'temps' && Jeu.evaluer(e) === 'bon');
 		if (bon) faits.push({ id: 'bon', texte: t('tache.fait.bon', { heure: bon.heure || '—', sujet: sujet(bon), action: String(bon.action) }) });
@@ -445,7 +445,7 @@ const Taches = (() => {
 	// ——— Rédiger l'info trafic (§ 1) : 4 blocs, chacun 3 propositions dont 1 exacte, tirées des dossiers réels ———
 	const FAMILLES_ALT = ['devier', 'retenir', 'renfort', 'rien'];
 	function causeDe(d) {
-		if (d.type === 'ligne en difficulté') return t('tache.cause.retard');
+		if (d.type === 'ligne en difficulté') return t(Jeu.retardEffectif(d) !== null && Jeu.retardEffectif(d) !== undefined ? 'tache.cause.retard' : 'tache.cause.retardSignale'); // prompt 162 : « mesuré » seulement si un retard est connu
 		if (d.type === 'événement') return t('tache.cause.affluence', { nom: nomEvenement(d) });
 		if (d.type === 'alerte météo') return t('tache.cause.meteo', { nature: d.nature });
 		return String(d.nature || '').split(',')[0].trim() || t('carte.nonRenseigne');
@@ -474,7 +474,7 @@ const Taches = (() => {
 			bloc('duree', dureeDe(d, r), [10, 20, 30, 45].map((m) => t('tache.info.duree', { min: m })).concat([t('tache.info.dureeInconnue')]), 'info-duree|' + n),
 			bloc('alternative', t('tache.alt.' + famille), FAMILLES_ALT.map((f) => t('tache.alt.' + f)), 'info-alt|' + n),
 		];
-		return { type: 'info', index: n, date: d.date, sujet: d.lignes && d.lignes.length ? t('dossier.ligne', { lignes: d.lignes.join(', ') }) : causeDe(d), action: String(r.nomAction || ''), blocs };
+		return { type: 'info', index: n, date: d.date, sujet: String(marquerFictif(d, d.lignes && d.lignes.length ? t('dossier.ligne', { lignes: d.lignes.join(', ') }) : causeDe(d))), action: String(r.nomAction || ''), blocs };
 	}
 
 	// ——— Préparer un événement (§ 1) : l'agenda annonce un événement et son affluence n'est pas encore arrivée ———
