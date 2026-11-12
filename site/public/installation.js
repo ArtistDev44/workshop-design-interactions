@@ -105,3 +105,34 @@ if (typeof location !== 'undefined' && typeof document !== 'undefined') {
 		}
 	}
 }
+
+// ——— Prompt 117 : filet en cas d'erreur de rendu ———
+// Une exception dans draw() arrête la boucle de p5 : l'écran reste figé pour de bon (bug H_PLATEAU du 12/11).
+// Après une erreur, si p5 ne dessine plus rien pendant 2 s (frameCount figé), message sobre puis rechargement au
+// bout de 3 s. Au plus un rechargement par minute (sessionStorage), pour ne jamais boucler. Une promesse rejetée
+// (réseau, API) ne déclenche rien : elle n'arrête pas le rendu.
+(function filetErreur() {
+	const CLE = 'pxe-nte001-filet';
+	let surveille = false;
+	window.addEventListener('error', () => {
+		if (surveille) return;
+		surveille = true;
+		const f0 = window.frameCount;
+		setTimeout(() => {
+			surveille = false;
+			if (document.hidden || window.frameCount !== f0) return; // le rendu continue (ou onglet masqué : rAF suspendu)
+			try {
+				if (Date.now() - Number(sessionStorage.getItem(CLE) || 0) < 60000) return; // déjà relancé il y a moins d'une minute
+				sessionStorage.setItem(CLE, String(Date.now()));
+			} catch (e) {
+				return; // sans stockage, pas de garde-fou contre une boucle : on ne recharge pas
+			}
+			const m = document.createElement('div');
+			m.id = 'filet-erreur';
+			m.setAttribute('role', 'alert');
+			m.textContent = typeof t === 'function' ? t('filet.message') : 'Petit souci d’affichage : on relance le jeu…';
+			document.body.appendChild(m);
+			setTimeout(() => location.reload(), 3000);
+		}, 2000);
+	});
+})();

@@ -1951,6 +1951,22 @@ for (const s of semaines) {
 	verifier(reste === vm.runInContext('Jeu.REGLAGES.community.delaiMs', f116), `prompt 116 : une plainte datée du futur doit repartir du délai complet (${reste})`);
 }
 
+// Prompt 117 : mode exposition — expo.js chargé en premier (la purge précède toute lecture du stockage), réglages et
+// langue gardés, sauvegardes et tutoriel effacés ; filet de rechargement après une erreur qui fige le rendu
+{
+	const html117 = readFileSync(join(pub, 'index.html'), 'utf8');
+	const premier = (html117.match(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/i) || [])[1];
+	verifier(premier === './expo.js', `prompt 117 : expo.js doit être le premier script (${premier})`);
+	const st = new Map([['pxe-nte001:jeu:reglages', '{}'], ['pxe-nte001-langue', 'en'], ['pxe-nte001-tutoriel-vu', 'oui'], ['pxe-nte001-partie-2026-09-14', '{}'], ['autre-site', 'x']]);
+	const ls = { getItem: (k) => (st.has(k) ? st.get(k) : null), setItem: (k, v) => st.set(k, String(v)), removeItem: (k) => st.delete(k), key: (i) => [...st.keys()][i] };
+	const c117 = { localStorage: new Proxy(ls, { ownKeys: () => [...st.keys()], getOwnPropertyDescriptor: (o, k) => (st.has(k) ? { enumerable: true, configurable: true, value: st.get(k) } : Reflect.getOwnPropertyDescriptor(o, k)) }), location: { search: '?expo=1', hash: '' }, URLSearchParams, Date, window: { addEventListener: () => {} }, setInterval: () => 0, document: {} };
+	c117.window = Object.assign(c117.window, c117);
+	vm.createContext(c117);
+	vm.runInContext(readFileSync(join(pub, 'expo.js'), 'utf8') + ';globalThis.__E = EXPO;', c117);
+	verifier(c117.__E.actif && [...st.keys()].sort().join(',') === 'autre-site,pxe-nte001-langue,pxe-nte001:jeu:reglages', `prompt 117 : purge du mode exposition (${[...st.keys()].join(',')})`);
+	verifier(/filetErreur/.test(readFileSync(join(pub, 'installation.js'), 'utf8')) && /sessionStorage\.setItem\(CLE/.test(readFileSync(join(pub, 'installation.js'), 'utf8')), 'prompt 117 : filet de rechargement (une fois par minute au plus)');
+}
+
 // Service worker : chaque script de index.html est dans la liste hors ligne de sw.js
 const html = readFileSync(join(pub, 'index.html'), 'utf8');
 const sw = readFileSync(join(pub, 'sw.js'), 'utf8');

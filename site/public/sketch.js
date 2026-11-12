@@ -321,6 +321,7 @@ function lancerNouvellePartie() {
 		nouvellePartieRythme(); // prompt 74 : ordre d'arrivée tiré par la graine, fil de la journée remis à zéro
 		demarrerJournee(); // journée 1, 8h00 (prompt 76), en attente du premier incident
 		const ch = chapitreCourant();
+		if (typeof EXPO !== 'undefined' && EXPO.actif) return expoAuPoste(); // prompt 117 : exposition, droit à la carte
 		if (!introVue) lancerIntroSMS(); // § 2 : une seule fois, pas sur « Rejouer »
 		else if (ch) conversationChapitre(ch); // prompt 41 : le patron présente la semaine et son nouvel élément
 		else if (!tutorielVu() && !optionGuide()) lancerTutoriel(); // prompt 34 (pas si le guide « Prendre en main » est choisi)

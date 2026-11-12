@@ -62,6 +62,7 @@ Bitsy Pixels si installée.
 - Sans rien installer : double clic sur `index.html` (polices système en `file://`, données locales).
 - Serveur local : `python3 -m http.server` dans ce dossier, puis http://localhost:8000/.
 - Depuis le dépôt : `cd site && npm install && npm run build && npm test`, puis `npm run preview`.
+- Exposition : ajouter `?expo=1` à l'adresse (purge du visiteur précédent, arrivée directe sur la carte, retour à l'écran titre après 90 s sans geste).
 
 ## Fallback / limites connues
 
