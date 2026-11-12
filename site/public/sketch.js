@@ -1119,6 +1119,8 @@ function mousePressed() {
 	if (arreterDemo()) return; // prompt 48
 	Confort.Son.demarrer();
 	interaction();
+	if (typeof GUIDE !== 'undefined') GUIDE.clavier = false; // prompt 181 : le contour de focus clavier du guide s'efface à la souris
+	if (typeof guideBloque === 'function' && guideBloque(mouseX, mouseY)) return rappelerConsigneGuide(); // prompt 181 : guide contraignant — hors de la cible, le clic est ignoré
 	if (typeof debutJeton === 'function' && debutJeton()) return; // prompt 102 : jeton d'équipe saisi (glisser-déposer)
 	if (typeof debutGlisser === 'function' && debutGlisser()) return; // prompt 94 : une carte de réponse est saisie (clic ou glisser-déposer)
 	for (let i = boutons.length - 1; i >= 0; i--) {
@@ -1169,6 +1171,7 @@ function keyPressed() {
 	if (TRANSITION_JOUR && (keyCode === ENTER || keyCode === RETURN || key === ' ' || keyCode === ESCAPE)) return passerTransitionJour(), false; // prompt 43
 	Confort.Son.demarrer(); // l'audio ne peut démarrer qu'après un geste du joueur
 	interaction();
+	if (typeof guideFiltre === 'function' && guideFiltre() && toucheGuide()) return false; // prompt 181 : guide contraignant — liste blanche de touches (guide.js)
 	// Intro SMS (§ 2) : clic / Entrée pour avancer
 	if (smsActif) {
 		if (keyCode === ENTER || keyCode === RETURN || key === ' ') avancerConversation(); // prompt 42
@@ -1352,6 +1355,7 @@ function keyPressed() {
 // Prompt 26 : au poste, la molette fait quitter le PC (anti-rebond dans bureau.js) ; ailleurs, scroll normal
 function mouseWheel(event) {
 	interaction();
+	if (typeof guideBloque === 'function' && guideBloque(mouseX, mouseY)) return rappelerConsigneGuide(), false; // prompt 181 : molette hors de la cible du guide
 	if (typeof molletteCarte === 'function' && molletteCarte(event.delta)) return false; // prompt 106 : zoom de la carte
 	if (molletteCommunity(event.delta)) return false; // prompt 85 : défilement du fil
 	if (mollettePatron(event.delta)) return false; // prompt 86 : historique du patron
