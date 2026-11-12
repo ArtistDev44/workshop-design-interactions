@@ -183,6 +183,7 @@ const COUCHES_PIECE = [
 		dessin: (g) => {
 			dessinerPlateau(g);
 			dessinerPC(g);
+			if (typeof dessinerPostIt === 'function') dessinerPostIt(g); // prompt 104 : post-it au pied de l'écran
 			dessinerWebcamPoste(g); // prompt 57
 			dessinerLumiere(g);
 		},
@@ -637,19 +638,30 @@ function dessinerObjetsDuFond(g) {
 		if (y > 198 && y < 219 && (y - 199) % 5 < 3) for (let k = -demi + 4; k < demi - 6; k += 7 + t * 2) px(g, '#4a5058', 240 + k, y, 5 + t * 2, 1);
 	}
 	ombreTramee(g, 176, 222, 128, 3, 90);
+	// Prompt 104 : chaque objet du plateau n'arrive qu'au fil des journées jouées (progression-bureau.js)
+	const pose = (cle) => (typeof poseObjet === 'function' ? poseObjet(cle) : 0);
+	const present = (cle) => typeof objetPresent !== 'function' || objetPresent(cle);
 	// Pile de dossiers (droite, au fond)
-	ombreObjet(g, 391, 175, 42); // prompt 51
-	for (let i = 0; i < 4; i++) boite(g, 392 + (i % 2), 172 - i * 3, 40, 2, i % 2 ? '#dfe7ef' : '#ffffff', '#ffffff', '#9aa8b6'); // chemises claires (prompt 32)
-	px(g, P.rouge, 418, 163, 8, 1);
-	// Petite plante grasse (gauche, au fond)
-	ombreObjet(g, 70, 174, 15); // prompt 51
-	boite(g, 70, 164, 14, 10, '#e8e9ea', '#ffffff', '#c3c7cb');
-	dessinerMicroPoste(g); // prompt 54 : micro du poste, entre la tasse et le clavier
-	feuillage(g, 77, 158, 6);
+	if (present('dossiers')) {
+		const dy = pose('dossiers');
+		ombreObjet(g, 391, 175, 42); // prompt 51
+		for (let i = 0; i < 4; i++) boite(g, 392 + (i % 2), 172 - i * 3 + dy, 40, 2, i % 2 ? '#dfe7ef' : '#ffffff', '#ffffff', '#9aa8b6'); // chemises claires (prompt 32)
+		px(g, P.rouge, 418, 163 + dy, 8, 1);
+	}
+	// Petite plante grasse (gauche, au fond) — elle grandit après 10 journées
+	if (present('plante')) {
+		const dy = pose('plante');
+		ombreObjet(g, 70, 174, 15); // prompt 51
+		boite(g, 70, 164 + dy, 14, 10, '#e8e9ea', '#ffffff', '#c3c7cb');
+		feuillage(g, 77, 158 + dy, 6);
+		if (present('planteGrande')) feuillage(g, 79, 151 + dy + pose('planteGrande'), 4);
+	}
+	if (present('micro')) dessinerMicroPoste(g); // prompt 54 : micro du poste, entre la tasse et le clavier
+	if (typeof dessinerCadreDos === 'function') dessinerCadreDos(g); // prompt 104
 }
 function dessinerObjetsProches(g) {
 	dessinerSourisPerspective(g, 336, 204);
-	dessinerTasseThe(g); // tasse de café (prompt 52), vapeur
+	if (typeof objetPresent !== 'function' || objetPresent('tasse')) dessinerTasseThe(g); // tasse de café (prompt 52), vapeur — prompt 104 : à partir du 2e jour
 	dessinerTelephonePerspective(g, 376, 194); // prompt 34 : smartphone récent, en perspective
 	if (typeof dessinerLivres === 'function') dessinerLivres(g);
 	if (typeof dessinerFeuilleRapport === 'function') dessinerFeuilleRapport(g); // prompt 41

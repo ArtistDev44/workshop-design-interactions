@@ -426,7 +426,7 @@ function carteNote(c, x, y, l, focus) {
 	cadreCarte(x, y, l, 84, focus, DS.blanc50);
 	dsTexte(t('journal.noteTitre'), x + 20, y + 8, 14, DS.blanc75, 'left');
 	dsTexte(c.texte ? court(c.texte.replace(/\s+/g, ' '), 120) : t('journal.noteVide'), x + 20, y + 32, 16, c.texte ? DS.blanc : DS.blanc50, 'left', l - 300);
-	dsBouton(x + l - 260, y + 20, 246, 44, t('journal.ecrireNote') + ' (J)', ouvrirCarnet, 'contour');
+	dsBouton(x + l - 300, y + 20, 286, 44, t('journal.ecrireNote') + ' (J)', ouvrirCarnet, 'contour'); // prompt 103 : 20 px rendus dans l'appli
 }
 function ouvrirAppPC(nom) {
 	if (typeof ouvrirFenetreApp === 'function') ouvrirFenetreApp(nom);
@@ -459,15 +459,16 @@ function vueSemaine(z) {
 	const lc = (z.l - (n - 1) * 10) / n;
 	s.colonnes.forEach((c) => {
 		const x = z.x + c.i * (lc + 10);
-		tuileFond(x, y0, lc, 160, nomJour(c.i) + ' · ' + dateCourte(c.date));
+		// prompt 103 : vue intégrée = texte rendu à 20 px au moins → lignes espacées de 26 px
+		tuileFond(x, y0, lc, 172, nomJour(c.i) + ' · ' + dateCourte(c.date));
 		if (c.theme) dsTexte(t('theme.' + c.theme), x + 12, y0 + 32, 14, DS.blanc75, 'left', lc - 24);
-		dsTexte(t('journal.sem.signalements', { n: c.signalements }), x + 12, y0 + 54, 14, DS.blanc, 'left', lc - 24);
-		dsTexte(t('journal.sem.bons', { n: c.bons, total: c.total }), x + 12, y0 + 74, 14, DS.blanc, 'left', lc - 24);
-		dsTexte(c.objectif ? (c.objectif.enCours ? '• ' + t('journal.enCours') : (c.objectif.atteint ? '✓ ' : '✗ ') + t(c.objectif.atteint ? 'journal.atteint' : 'journal.rate')) : '—', x + 12, y0 + 94, 14, c.objectif && !c.objectif.enCours ? (c.objectif.atteint ? DS.succesClair : DS.erreurClair) : DS.blanc75, 'left');
+		dsTexte(t('journal.sem.signalements', { n: c.signalements }), x + 12, y0 + 58, 14, DS.blanc, 'left', lc - 24);
+		dsTexte(t('journal.sem.bons', { n: c.bons, total: c.total }), x + 12, y0 + 84, 14, DS.blanc, 'left', lc - 24);
+		dsTexte(c.objectif ? (c.objectif.enCours ? '• ' + t('journal.enCours') : (c.objectif.atteint ? '✓ ' : '✗ ') + t(c.objectif.atteint ? 'journal.atteint' : 'journal.rate')) : '—', x + 12, y0 + 110, 14, c.objectif && !c.objectif.enCours ? (c.objectif.atteint ? DS.succesClair : DS.erreurClair) : DS.blanc75, 'left');
 		// Jauges de fin de journée : les chiffres seuls (prompt 101 : les barres doublaient ces chiffres ; la courbe
 		// de la semaine, en dessous, garde l'évolution visuelle)
-		if (c.fin) dsTexte(DS_JAUGES.map(([k, lettre]) => lettre + ' ' + c.fin[k]).join('  '), x + 12, y0 + 124, 14, DS.blanc75, 'left', lc - 24);
-		boutons.push({ x, y: y0, l: lc, h: 160, action: () => choisirJourJournal(c.i) });
+		if (c.fin) dsTexte(DS_JAUGES.map(([k, lettre]) => lettre + ' ' + c.fin[k]).join('  '), x + 12, y0 + 138, 14, DS.blanc75, 'left', lc - 24);
+		boutons.push({ x, y: y0, l: lc, h: 172, action: () => choisirJourJournal(c.i) });
 	});
 	(Jeu.jours || []).forEach((j, i) => {
 		if (i <= Jeu.jourIndex) return;
@@ -477,10 +478,10 @@ function vueSemaine(z) {
 		dsTexte(t('journal.aVenir'), x + 12, y0 + 54, 14, DS.blanc50, 'left', lc - 24);
 	});
 	// Courbe de la semaine : 3 jauges + score (0–300), seuils des fins 150 et 240 en pointillés
-	const yc = y0 + 178;
+	const yc = y0 + 190;
 	const hc = 140;
 	const lc2 = z.l * 0.55;
-	tuileFond(z.x, yc, lc2, hc + 96, t('journal.courbeSemaine'));
+	tuileFond(z.x, yc, lc2, hc + 108, t('journal.courbeSemaine'));
 	const gx = z.x + 60;
 	const gl = lc2 - 100; // prompt 93 : 80 → 100, l'étiquette du seuil (« 150 ») sortait de la tuile
 	const gy = yc + 34;
@@ -512,7 +513,7 @@ function vueSemaine(z) {
 	// Décisions clés et carnet de la semaine
 	const xd = z.x + lc2 + 16;
 	const ld = z.l - lc2 - 16;
-	tuileFond(xd, yc, ld, hc + 96, t('journal.decisionsCles'));
+	tuileFond(xd, yc, ld, hc + 108, t('journal.decisionsCles'));
 	let yy = yc + 34;
 	if (!s.decisionsCles.length) dsTexte(nonRenseigne(), xd + 12, yy, 15, DS.blanc50, 'left');
 	s.decisionsCles.forEach((d) => {

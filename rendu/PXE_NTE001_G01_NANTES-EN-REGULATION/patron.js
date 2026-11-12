@@ -173,6 +173,11 @@ function appPatron(z) {
 	PATRON.repetes = new Map([...repetes.values()].map((r) => [r.m, r.n]));
 	liste.forEach((m) => {
 		if (m === cachee) return;
+		if (consigne && m === consigne) {
+			// prompt 103 : la consigne du jour est déjà épinglée en haut — pas de seconde carte identique
+			if (!m.lu && !panne) (m.lu = true), (m.luA = Jeu.horloge ? Jeu.formaterHeure(Jeu.horloge.minutes) : '');
+			return;
+		}
 		if (m._doublon) {
 			if (!m.lu && !panne) (m.lu = true), (m.luA = Jeu.horloge ? Jeu.formaterHeure(Jeu.horloge.minutes) : ''); // compté dans la carte « ×N »
 			return;

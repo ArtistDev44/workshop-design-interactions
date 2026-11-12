@@ -39,19 +39,19 @@ let derniereImage = 0;
 // Objets cliquables du bureau (coordonnées pixel art, voir bureau.js)
 const OBJETS_BUREAU = [
 	{ nom: 'ecran', label: T('objet.ecran') },
-	{ nom: 'aide', label: T('objet.aide'), x: 58, y: 190, l: 50, h: 9 }, // prompt 34 : remplace le livre « tuto »
-	{ nom: 'stress', label: T('objet.stress'), x: 62, y: 180, l: 44, h: 9 },
+	{ nom: 'aide', label: T('objet.aide'), x: 58, y: 190, l: 50, h: 9, visible: () => typeof objetPresent !== 'function' || objetPresent('aide') }, // prompt 34 : remplace le livre « tuto » ; prompt 104 : au fil des journées
+	{ nom: 'stress', label: T('objet.stress'), x: 62, y: 180, l: 44, h: 9, visible: () => typeof objetPresent !== 'function' || objetPresent('stress') },
 	// Prompt 29 : objets de la pièce (micro-interactions, sans effet sur les jauges ni pause)
 	{ nom: 'lampe', piece: true, label: T('piece.lampe'), infobulle: T('piece.lampe.survol'), x: 410, y: 86, l: 16, h: 14 }, // prompt 31 : applique murale (recalée pour le plein écran)
-	{ nom: 'plante', piece: true, label: T('piece.plante'), infobulle: T('piece.plante.survol'), x: 69, y: 153, l: 16, h: 21 },
-	{ nom: 'tasse', piece: true, label: T('piece.tasse'), infobulle: T('piece.tasse.survol'), x: 118, y: 178, l: 22, h: 28 },
+	{ nom: 'plante', piece: true, label: T('piece.plante'), infobulle: T('piece.plante.survol'), x: 69, y: 153, l: 16, h: 21, visible: () => typeof objetPresent !== 'function' || objetPresent('plante') },
+	{ nom: 'tasse', piece: true, label: T('piece.tasse'), infobulle: T('piece.tasse.survol'), x: 118, y: 178, l: 22, h: 28, visible: () => typeof objetPresent !== 'function' || objetPresent('tasse') },
 	{ nom: 'rapport', label: T('objet.rapport'), infobulle: T('objet.rapport.survol'), x: 272, y: 178, l: 58, h: 20, visible: () => !!RAPPORT || !!rapportVeille() }, // prompt 41 ; prompt 89 bis : le rapport de la veille reste sur le bureau : posée entre le pied de l'écran et le clavier
 	{ nom: 'telephone', label: T('objet.telephone'), infobulle: { toString: () => t('objet.telephone.survol') + (typeof telNonLues === 'function' && telNonLues() ? ' · ' + t('tel.nonLues', { n: telNonLues() }) : '') }, x: 364, y: 192, l: 26, h: 32 }, // prompt 38
-	{ nom: 'dossiers', piece: true, label: T('piece.dossiers'), infobulle: T('piece.dossiers.survol'), x: 390, y: 160, l: 44, h: 15 },
+	{ nom: 'dossiers', piece: true, label: T('piece.dossiers'), infobulle: T('piece.dossiers.survol'), x: 390, y: 160, l: 44, h: 15, visible: () => typeof objetPresent !== 'function' || objetPresent('dossiers') },
 	{ nom: 'fenetre', piece: true, label: T('piece.fenetre'), infobulle: T('piece.fenetre.survol'), x: 334, y: 14, l: 64, h: 96 }, // prompt 31 : la baie s'arrête au pan de mur
 	{ nom: 'horloge', label: T('objet.horloge'), infobulle: T('objet.horloge.survol'), x: 404, y: 30, l: 28, h: 29 }, // prompt 51 : finir sa journée
 	{ nom: 'webcam', label: T('objet.webcam'), infobulle: T('objet.webcam.survol'), x: 234, y: 39, l: 13, h: 8 }, // prompt 57 : webcam posée sur l'écran
-	{ nom: 'micro', label: T('objet.micro'), infobulle: T('objet.micro.survol'), x: 150, y: 170, l: 12, h: 24 }, // prompt 54 : micro du poste (appui maintenu)
+	{ nom: 'micro', label: T('objet.micro'), infobulle: T('objet.micro.survol'), x: 150, y: 170, l: 12, h: 24, visible: () => typeof objetPresent !== 'function' || objetPresent('micro') }, // prompt 54 : micro du poste (appui maintenu) ; prompt 104
 	{ nom: 'sortie', label: T('soir.sortie'), infobulle: T('soir.infobulle'), x: 41, y: 92, l: 34, h: 56, visible: () => typeof sortieVisible === 'function' && sortieVisible() }, // prompt 69 : flèche du soir (soir.js)
 ];
 
@@ -795,6 +795,7 @@ function dessinerLivres(g) {
 	const leve = (o) => (vue === 'bureau' && objetSurvol === o.nom ? (reduireAnimations ? 1 : 2) : 0);
 	const lc = leve(t);
 	const ls = leve(s);
+	if (typeof objetPresent === 'function' && !objetPresent('aide')) return; // prompt 104 : les livres arrivent au fil des journées
 	ombreObjet(g, t.x, t.y + t.h, t.l + lc); // prompt 51 : ombre portée des livres (même trame que le téléphone)
 	// Livre « Aide » (dessous, prompt 70 : ex-« Commande ») : couverture marine, liseré doré, marque-page qui se balance
 	const yc = t.y - lc;
@@ -803,7 +804,8 @@ function dessinerLivres(g) {
 	textePixel(g, 'AIDE', t.x + 18, yc + 2, '#fff8e6'); // prompt 70 : titre centré sur la couverture
 	const balance = Math.round(Math.sin(tps / 650) * 1);
 	px(g, '#b3261e', t.x + t.l - 8 + balance, yc + t.h, 2, 4);
-	// Livre « stress » (dessus)
+	// Livre « stress » (dessus) — prompt 104 : à partir de la 5e journée
+	if (typeof objetPresent === 'function' && !objetPresent('stress')) return;
 	if (ls) ombreTramee(g, s.x, s.y + s.h - lc, s.l, 1, 90); // livre du dessus soulevé : ombre sur l'autre livre
 	const ys = s.y - ls - lc; // posé sur l'autre : il suit aussi le soulèvement du livre du dessous
 	boite(g, s.x, ys, s.l, s.h, '#3f7a43', '#5f9e4f', '#2f5d3a');

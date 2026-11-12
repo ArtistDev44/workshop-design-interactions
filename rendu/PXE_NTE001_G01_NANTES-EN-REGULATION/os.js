@@ -46,6 +46,7 @@ function majDemarrageJour() {
 const pcDemarre = () => PC.etat === 'demarrage';
 
 function ouvrirAppli() {
+	PC.fenetre = null; // prompt 103 : la carte est la vue d'accueil de l'appli principale
 	if (PC.etat !== 'os') return;
 	PC.etat = 'appli';
 	Confort.Son.bip('choix');
@@ -98,12 +99,13 @@ function dessinerOS() {
 		return;
 	}
 	if (PC.etat === 'demarrage') return dessinerDemarrage();
-	if (PC.fenetre === 'donnees') return dessinerAppliDonnees(); // prompt 61 : plein écran, barre des tâches comprise
+	if (PC.fenetre === 'donnees' && !(typeof vueIntegree === 'function' && vueIntegree())) return dessinerAppliDonnees(); // prompt 61 : plein écran hors partie ; en partie, vue intégrée (prompt 103)
 	drawingContext.imageSmoothingEnabled = false;
 	image(fondOS(), 0, 0, L, H);
 	drawingContext.imageSmoothingEnabled = true;
 	// Icônes du bureau (2 colonnes × 4) — prompt 36 : agrandies (icône 108 px au lieu de 80, libellé 22 px)
 	ICONES_OS.forEach((ic, i) => {
+		if (ic.cle !== 'signalements' && ecran === 'jeu') return; // prompt 103 : une seule appli sur le bureau (les autres sont dans son menu)
 		const g = GRILLE_OS;
 		const x = g.x + Math.floor(i / g.lignes) * (g.l + g.ecart);
 		const y = g.y + (i % g.lignes) * (g.h + g.ecart);
@@ -134,8 +136,8 @@ function dessinerOS() {
 		if (b) dsBadge(x + g.l - 34, y + 20, b, ic.cle === 'indicateurs' ? 'succes' : 'erreur');
 	});
 	dessinerBulleVerrou(); // prompt 91 § 2
-	// Fenêtre d'application ouverte (prompt 22)
-	if (PC.fenetre) dessinerFenetreApp();
+	// Fenêtre d'application ouverte (prompt 22) — hors partie seulement ; en partie, vue intégrée (prompt 103, sketch.js)
+	if (PC.fenetre && !(typeof vueIntegree === 'function' && vueIntegree())) dessinerFenetreApp();
 	dessinerBarreTaches();
 }
 
@@ -200,7 +202,7 @@ function dessinerBarreTaches() {
 	fill(DS.blanc15);
 	rect(0, tb, L, 2);
 	dessinerBoutonDemarrer(tb); // prompt 75 : le logo du chargement à la place du carré rouge « REGUL »
-	const barre = ICONES_OS.filter((ic) => ic.cle !== 'corbeille' && appliDebloquee(ic.cle)); // prompt 91 § 2 : la barre ne montre que les applis débloquées
+	const barre = ICONES_OS.filter((ic) => ic.cle === 'signalements' || (ecran !== 'jeu' && appliDebloquee(ic.cle))); // prompt 103 : l'appli principale seule (prompt 91 § 2 hors partie)
 	barre.forEach((ic) => {
 		const i = ICONES_OS.indexOf(ic);
 		const k = barre.indexOf(ic);
@@ -218,9 +220,12 @@ function dessinerBarreTaches() {
 		if (b) dsBadge(x + 68, tb + 10, b, 'erreur');
 	});
 	const hA = heureAffichee();
-	dsTexte(String(hA.h).padStart(2, '0') + ':' + String(hA.m).padStart(2, '0'), L - 24, tb + 24, 28, DS.blanc, 'right');
+	const bandeauVisible = ecran === 'jeu' && (PC.etat === 'appli' || (typeof vueIntegree === 'function' && vueIntegree())); // prompt 103 : heure et jauges sont dans le bandeau
+	if (!bandeauVisible) dsTexte(String(hA.h).padStart(2, '0') + ':' + String(hA.m).padStart(2, '0'), L - 24, tb + 24, 28, DS.blanc, 'right');
 	indicateurWebcamBarre(700, tb + 22); // prompt 57 : « CAM » + point rouge tant que la webcam est active
-	if (Jeu.jauges && ecran === 'jeu') dsTexte(t('os.jauges', { b: Jeu.jauges.budget, r: Jeu.jauges.reputation, f: Jeu.jauges.fluidite }), L - 130, tb + 28, 20, DS.blanc75, 'right');
+	if (bandeauVisible) {
+		// prompt 103 : rien de plus (bandeau visible)
+	} else if (Jeu.jauges && ecran === 'jeu') dsTexte(t('os.jauges', { b: Jeu.jauges.budget, r: Jeu.jauges.reputation, f: Jeu.jauges.fluidite }), L - 130, tb + 28, 20, DS.blanc75, 'right');
 	else dsTexte(t('os.aideClavier'), 790, tb + 28, 18, DS.blanc50, 'left');
 }
 
@@ -355,8 +360,7 @@ const ICONES_OS = [
 	{ cle: 'patron', nom: T('app.patron'), dessin: (x, y, s) => iconePixel(x, y, s, 'enveloppe') },
 	{ cle: 'community', nom: T('app.community'), dessin: (x, y, s) => iconePixel(x, y, s, 'bulle') },
 	{ cle: 'journal', nom: T('app.journal'), dessin: (x, y, s) => iconePixel(x, y, s, 'livre') },
-	{ cle: 'indicateurs', nom: T('app.indicateurs'), dessin: (x, y, s) => iconeIndicateurs(x, y, s || 1) }, // prompt 36
-	{ cle: 'corbeille', nom: T('app.corbeille'), dessin: (x, y, s) => iconeCorbeille(x, y, s) },
+	// Prompt 103 : Indicateurs (jauges déjà dans le bandeau) et Corbeille (décorative) retirés du PC
 ];
 
 function ouvrirIconeOS(i) {
@@ -367,13 +371,15 @@ function ouvrirIconeOS(i) {
 	if (cle === 'indicateurs') return basculerIndicateurs(); // prompt 36 : app flottante
 	if (cle === 'donnees') return ouvrirDonnees(); // prompt 61 : appli plein écran
 	if (PC.etat === 'appli') PC.etat = 'os';
-	PC.fenetre = PC.fenetre === cle ? null : cle; // re-cliquer l'icône active referme l'app
+	PC.fenetre = typeof vueIntegree === 'function' && ecran === 'jeu' ? cle : PC.fenetre === cle ? null : cle; // prompt 103 : dans l'appli, le menu ne referme pas la vue
 	PC.message = '';
 	if (PC.fenetre && Jeu.nonLus && Jeu.nonLus[cle] !== undefined) Jeu.nonLus[cle] = 0;
 	Confort.Son.bip('choix');
 }
 function fermerFenetreApp() {
+	const integree = typeof vueIntegree === 'function' && vueIntegree();
 	PC.fenetre = null;
+	if (integree) PC.etat = 'appli'; // prompt 103 : Échap revient à la carte
 }
 function badgeIcone(cle) {
 	if (cle === 'signalements') return typeof incidentActif === 'function' && (incidentActif() || phase === 'mail') ? '!' : ''; // prompt 68
