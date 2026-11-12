@@ -40,7 +40,7 @@ const LIENS_CREDITS = [
 ].filter((b) => b.cle === 'retour' || typeof EXPO === 'undefined' || !EXPO.actif); // prompt 160 : en exposition, seul « Retour »
 
 // ——— Prompt 120 : fenêtres du Pixel DS (comme la diapositive « L'équipe ») et lignes libellé / valeur ———
-const LIGNES_LICENCE = ['code', 'donnees', 'lieux', 'biblio', 'musiques'];
+const LIGNES_LICENCE = ['code', 'donnees', 'lieux', 'biblio', 'icones', 'musiques']; // prompt 170 : icônes Lucide
 const LIGNES_IA = ['outils', 'methode', 'donnees', 'visuels', 'humain'];
 const BARRE_FEN = 40;
 /** Fenêtre du DS : fond, bordure blanc 15 %, barre de titre en capitales et deux carrés pixel */

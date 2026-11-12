@@ -22,20 +22,10 @@ const blocDeplie = (m) => !BLOCS_PLIABLES.includes(typeDe(m)) || !aUnBloc(m) || 
 const typeDe = (m) => (Jeu.TYPES_MESSAGES.includes(m.type) ? m.type : 'info');
 const enPanne = () => !!(Jeu.modificateurActif && Jeu.modificateurActif() === 'panne_messagerie');
 
-/** Pictogramme pixel original 16 × 16 (agrandi ×2) pour chaque type ; aucun emoji système */
-const PICTOS = {
-	consigne: ['..######..', '.#......#.', '.#.####.#.', '.#......#.', '.#.####.#.', '.#......#.', '.#.###..#.', '.########.'],
-	alerte: ['....##....', '...####...', '...#..#...', '..#.##.#..', '..#.##.#..', '.#......#.', '.#..##..#.', '##########'],
-	conseil: ['...####...', '..#....#..', '.#......#.', '.#......#.', '..#....#..', '...####...', '...####...', '....##....'],
-	budget: ['..######..', '.#......#.', '#...##...#', '#..#..#..#', '#...##...#', '#..#..#..#', '.#......#.', '..######..'],
-	reproche: ['########..', '#......#..', '#.####.#..', '#......###', '#.##.##..#', '#...#....#', '#..#.##..#', '##########'],
-	equipes: ['...####...', '..#....#..', '.########.', '#.#.##.#.#', '##########', '#........#', '##.####.##', '.##....##.'],
-	info: ['.########.', '#........#', '#.######.#', '#........#', '#.####...#', '#........#', '.###.#####', '...##.....'],
-};
+/** Prompt 170 : pictogramme Lucide 24 px pour chaque type de message (icones-lucide.js) ; aucun emoji système */
+const PICTOS = { consigne: 'clipboard-list', alerte: 'triangle-alert', conseil: 'lightbulb', budget: 'coins', reproche: 'message-square-warning', equipes: 'users', info: 'message-square' };
 function picto(type, x, y, c) {
-	noStroke();
-	fill(c);
-	(PICTOS[type] || PICTOS.info).forEach((ligne, j) => [...ligne].forEach((v, i) => v === '#' && rect(x + i * 2.6, y + j * 3, 2.6, 3)));
+	iconeLucide(PICTOS[type] || PICTOS.info, x + 1, y, 24, c);
 }
 /** Avatar original du patron : buste stylisé, cravate, sans visage réaliste */
 function avatarPatron(x, y, s) {

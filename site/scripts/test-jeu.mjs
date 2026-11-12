@@ -2359,6 +2359,72 @@ for (const langue of ['fr', 'en']) {
 	verifier(/rapport page 3/.test(readFileSync(join(pub, 'audit-textes.js'), 'utf8')), 'prompt 163 : audit des textes sans la page 3 du rapport');
 }
 
+// Prompt 170 : icônes Lucide embarquées (aucun CDN, aucune dépendance) — table de tracés copiés, licence ISC,
+// iconeLucide robuste (nom inconnu → rien, un seul avertissement), tous les noms employés par le jeu existent
+{
+	const src170 = readFileSync(join(pub, 'icones-lucide.js'), 'utf8');
+	const avertis = [];
+	const appels = [];
+	class Path2D {
+		constructor(d) {
+			this.d = d;
+		}
+		arc() {}
+		ellipse() {}
+		moveTo() {}
+		lineTo() {}
+		rect() {}
+		closePath() {}
+	}
+	const dc = { fillStyle: '#123456', save: () => appels.push('save'), restore: () => appels.push('restore'), translate: (x, y) => appels.push(['translate', x, y]), scale: (k) => appels.push(['scale', k]), setLineDash: () => {}, stroke: () => appels.push('stroke'), fill: () => appels.push('fill') };
+	const c170 = { console: { warn: (m) => avertis.push(m) }, Path2D, drawingContext: dc, color: (v) => ({ toString: () => 'rgba(' + v + ')' }) };
+	vm.createContext(c170);
+	vm.runInContext(src170, c170, { filename: 'icones-lucide.js' });
+	const noms = vm.runInContext('Object.keys(LUCIDE)', c170);
+	verifier(noms.length >= 40, `prompt 170 : ${noms.length} icônes Lucide seulement`);
+	verifier(/ISC License/.test(src170) && /Lucide Icons and Contributors/.test(src170), 'prompt 170 : licence ISC absente de l’en-tête de icones-lucide.js');
+	const lic = join(pub, 'licences', 'lucide-LICENSE.txt');
+	verifier(existsSync(lic) && /^ISC License/.test(readFileSync(lic, 'utf8')) && /Cole Bemis/.test(readFileSync(lic, 'utf8')), 'prompt 170 : licences/lucide-LICENSE.txt absente ou incomplète');
+	verifier(vm.runInContext(`Object.values(LUCIDE).every((els) => els.length && els.every(([b, a]) => ['path', 'circle', 'rect', 'line', 'ellipse', 'polyline', 'polygon'].includes(b) && (b !== 'path' || /^[Mm]/.test(a.d))))`, c170), 'prompt 170 : élément SVG non pris en charge dans la table');
+	verifier(vm.runInContext(`Object.entries(LUCIDE_ALIAS).every(([a, n]) => !LUCIDE[a] && LUCIDE[n])`, c170), 'prompt 170 : alias Lucide vers une icône absente');
+	for (const n of ['download', 'settings', 'play', 'rotate-ccw', 'help-circle', 'x', 'check', 'chevron-left', 'chevron-right', 'arrow-left', 'mail', 'inbox', 'list', 'layout-grid', 'volume-2', 'volume-x', 'maximize', 'minimize', 'monitor', 'bell', 'moon', 'clock', 'triangle-alert', 'info', 'pause', 'home', 'map-pin', 'book-open', 'users', 'message-square', 'share-2', 'presentation', 'file-text', 'trash-2', 'bar-chart-3', 'database', 'sliders-horizontal', 'accessibility', 'save', 'calendar', 'search', 'plus', 'minus'])
+		verifier(vm.runInContext(`lucideExiste(${JSON.stringify(n)})`, c170), `prompt 170 : icône ${n} absente (prompts 171, 175, 185, 186)`);
+	// Dessin : état du canvas sauvé puis rendu, échelle taille / 24, couleur donnée ou remplissage courant
+	const ok = vm.runInContext(`iconeLucide('settings', 10, 20, 48, '#ff0000')`, c170);
+	verifier(ok === true && appels[0] === 'save' && appels[appels.length - 1] === 'restore' && appels.some((a) => a[0] === 'scale' && a[1] === 2) && appels.some((a) => a[0] === 'translate' && a[1] === 10 && a[2] === 20) && appels.filter((a) => a === 'stroke').length === 2 && dc.strokeStyle === '#ff0000' && dc.lineWidth === 2 && dc.lineCap === 'round', `prompt 170 : iconeLucide dessine mal ${JSON.stringify(appels)}`);
+	dc.fillStyle = '#abcdef';
+	vm.runInContext(`iconeLucide('help-circle', 0, 0, 24)`, c170);
+	verifier(dc.strokeStyle === '#abcdef', 'prompt 170 : couleur omise ≠ remplissage courant (couleur du texte)');
+	vm.runInContext(`iconeLucide('x', 0, 0, 24, 255)`, c170);
+	verifier(dc.strokeStyle === 'rgba(255)', 'prompt 170 : couleur p5 non convertie');
+	appels.length = 0;
+	const ko = vm.runInContext(`[iconeLucide('pas-une-icone', 0, 0, 24, '#fff'), iconeLucide('pas-une-icone', 0, 0, 24, '#fff'), iconeLucide(undefined, 0, 0), iconeLucide('constructor', 0, 0)]`, c170);
+	verifier(ko.every((v) => v === false) && appels.length === 0 && avertis.filter((m) => /pas-une-icone/.test(m)).length === 1, `prompt 170 : nom inconnu mal géré ${JSON.stringify(ko)} ${avertis.length} avertissement(s)`);
+	// Chaque nom employé par le jeu existe dans la table (appels directs et tables menu / Mails / téléphone)
+	const jeux = readdirSync(pub).filter((f) => f.endsWith('.js') && f !== 'sw.js' && f !== 'icones-lucide.js');
+	let employes = 0;
+	for (const f of jeux) {
+		const js = readFileSync(join(pub, f), 'utf8');
+		const cites = [...js.matchAll(/iconeLucide\(\s*'([^']+)'/g)].map((m) => m[1]);
+		for (const m of js.matchAll(/const (?:ICONES_MENU|PICTOS|ICONES_TEL) = \{([^}]*)\}/g)) cites.push(...[...m[1].matchAll(/: '([^']+)'/g)].map((x) => x[1]));
+		for (const n of cites) (employes++, verifier(vm.runInContext(`lucideExiste(${JSON.stringify(n)})`, c170), `prompt 170 : ${f} emploie l'icône inconnue « ${n} »`));
+	}
+	verifier(employes >= 30, `prompt 170 : ${employes} icônes Lucide employées seulement (menu, Mails, téléphone)`);
+	const menu170 = readFileSync(join(pub, 'menu.js'), 'utf8');
+	verifier(/iconeLucide\(ICONES_MENU\[type\]/.test(menu170) && !/strokeWeight\(5\)/.test(menu170) && /github: \[/.test(menu170), 'prompt 170 : iconeMenu ne passe pas par Lucide (ou le logo du dépôt a disparu)');
+	verifier(!/text\('✕'/.test(readFileSync(join(pub, 'notifs-tel.js'), 'utf8')) && !/'☾ '/.test(readFileSync(join(pub, 'notifs-tel.js'), 'utf8')) && !/'□'/.test(readFileSync(join(pub, 'carte-alertes.js'), 'utf8')), 'prompt 170 : glyphe texte encore employé comme icône de bouton');
+	// Hors ligne : aucun CDN, aucune dépendance ajoutée ; crédit dans le jeu (FR + EN) et dans le cartel
+	const html170 = readFileSync(join(pub, 'index.html'), 'utf8');
+	verifier(/<script src="\.\/icones-lucide\.js">/.test(html170) && !/unpkg|jsdelivr|cdnjs/.test(html170), 'prompt 170 : icones-lucide.js absent de index.html ou CDN présent');
+	verifier(Object.keys(JSON.parse(readFileSync(join(pub, '..', 'package.json'), 'utf8')).dependencies).join() === 'astro', 'prompt 170 : dépendance ajoutée à package.json');
+	for (const langue of ['fr', 'en']) {
+		const dico = vm.runInContext(`TRADUCTIONS[${JSON.stringify(langue)}]`, contexte(langue));
+		verifier(/Lucide/.test(dico['credits.lic.icones.v'] || '') && /ISC/.test(dico['credits.lic.icones.v'] || '') && dico['credits.lic.icones'], `prompt 170 : crédit Lucide absent des Crédits (${langue})`);
+		for (const k of ['carte.zoomer', 'carte.dezoomer']) verifier(typeof dico[k] === 'string' && dico[k].length > 0, `prompt 170 : clé ${k} absente (${langue})`);
+	}
+	verifier(/'icones'/.test(readFileSync(join(pub, 'credits.js'), 'utf8')) && /lucide\.dev/.test(readFileSync(join(pub, '..', 'src', 'pages', 'cartel.astro'), 'utf8')), 'prompt 170 : Lucide non crédité (credits.js, cartel)');
+}
+
 // Service worker : chaque script de index.html est dans la liste hors ligne de sw.js
 const html = readFileSync(join(pub, 'index.html'), 'utf8');
 const sw = readFileSync(join(pub, 'sw.js'), 'utf8');

@@ -333,11 +333,8 @@ function dessinerFermerAppli() {
 	strokeWeight(2);
 	noFill();
 	rect(x + 1, y + 1, 38, 26);
-	stroke(DS.blanc);
-	strokeWeight(3);
-	line(x + 14, y + 8, x + 26, y + 20);
-	line(x + 26, y + 8, x + 14, y + 20);
 	noStroke();
+	iconeLucide('x', x + 10, y + 4, 20, DS.blanc); // prompt 170 : croix Lucide
 	boutons.push({ x: x - 12, y: 0, l: 58, h: 52, action: fermerAppli }); // prompt 98 : zone de clic ≥ 44 px (le dessin reste 40 × 28)
 	cibleGuide('fermerAppli', x, y, 40, 28); // prompt 37
 }
