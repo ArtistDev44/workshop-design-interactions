@@ -42,3 +42,27 @@ Date : 12/11/2026. Une branche par prompt, au nom du fichier du prompt.
 - **Inchangé :** touche H, touche T depuis l'aide, livre « Aide » de la bibliothèque, guide de prise en main.
 - **Vérifié :** captures du menu (1366×768) et de l'aide (1920×1080), `npm run build`, `npm test`, audit des
   textes à 1920×1080 : 0 défaut.
+
+## 123 — L'aide revue pour être lisible
+
+- **Nouveau fichier `site/public/aide.js`** (chargé après `sketch.js`) : `fenetreAide` quitte `sketch.js`.
+- **Quatre onglets** (fenêtre du Pixel DS, onglet actif blanc à liseré primaire et double bordure) :
+  1. **Bien démarrer** : l'objectif à 26 px, la légende des seuils (rouge 0–20, orange 20–40, vert 40–100),
+     puis le tutoriel — ses 6 titres de pages réels et le bouton primaire « Lancer le tutoriel (T) » ;
+  2. **Règles** : les paragraphes de `aide.texte` (texte inchangé) en cartes titrées sur deux colonnes,
+     paginées (2 pages à 1920×1080) ; le glossaire en lignes terme / définition ;
+  3. **Raccourcis** : quatre groupes (Signalement, Équipes et carte, Bureau, Général), la touche dans une
+     capsule ;
+  4. **Malus** : nom, puis condition → conséquence.
+- **Lisibilité :** texte courant à 20 px, interligne 28 px ; plus aucune taille ajustée vers le bas pour le
+  texte courant (avant : jusqu'à 13 px). Lignes de 66 signes environ.
+  - L'amorce d'un paragraphe qui répète le titre de sa carte (« Gravité : », « Glossaire — ») est retirée
+    à l'affichage seulement.
+- **Navigation :** clic, ← → ou Tab, touches 1 à 4 ; ↑ ↓ ou les flèches du pied pour les pages ; T lance le
+  tutoriel ; H, ? ou Échap ferment. Onglet et page annoncés (`aria-live`). Entrée douce (220 ms), absente si
+  les animations sont réduites. La fenêtre rouvre toujours sur le premier onglet.
+- **Portrait mobile :** fenêtre de 1260 px, une colonne, onglets de 96 px de haut.
+- **Tests :** 10 paragraphes de règles en FR et en EN, un titre par carte, `aide.js` chargé, texte à 20 px.
+  Cinq étapes ajoutées au parcours de l'audit des textes (les quatre onglets et la page 2 des règles).
+- **Écart avec le prompt :** les corps des cartes ne sont pas recopiés dans de nouvelles clés ; ils restent
+  dans `aide.texte` (une seule source, déjà traduite et testée).
