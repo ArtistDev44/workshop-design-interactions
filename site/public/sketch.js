@@ -271,6 +271,7 @@ function draw() {
 	}
 	dessinerGuide(); // prompt 37 : flèches « Prendre en main »
 	dessinerTutoriel(); // prompt 34 : par-dessus l'écran et les fenêtres
+	if (typeof dessinerRespirationSoir === 'function') dessinerRespirationSoir(); // prompt 191 : « Fin de journée. », passable
 	dessinerNoirSoir(); // prompt 69 : fondu et écran noir de la sortie
 	dessinerTransitionJour(); // prompt 43 : écran noir entre les journées, au-dessus de tout
 	dessinerClignement(); // prompt 21 § 2 : par-dessus tout, purement visuel (n'intercepte aucune entrée)

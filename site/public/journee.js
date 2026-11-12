@@ -37,7 +37,8 @@ function terminerJournee() {
 	JOURNEE.finAnnoncee = false;
 	Confort.Son.bip('mail');
 	Sauvegarde.auto(true);
-	annoncer(t('horloge.fin'));
+	const sc = Jeu.sceneDuSoir ? Jeu.mailDuJour().scene : null; // prompt 191 : le moment de la journée et le mot du patron, aussi pour les lecteurs d'écran
+	annoncer(t('horloge.fin') + (sc ? ' ' + (sc.fait ? String(sc.fait.texte) : t('mailf.fait.aucun')) + ' « ' + String(sc.patron) + ' »' : ''));
 }
 function textePartir() {
 	return t('partir.texte', { n: Jeu.dossiersRestantsDuJour(), fin: Jeu.formaterHeure(Jeu.finJournee()), heure: texteHeure(), malus: Jeu.MALUS_DEPART });
@@ -182,12 +183,14 @@ function finJourneeAtteinte() {
 // ——— Lumière de la pièce : jour / nuit, stores, lampe ; l'écran éclaire le bureau dans le noir ———
 const ECLAIRAGE = { v: null, t: 0 };
 /** Lumière de la pièce entre 0 (noir) et 1 : jour (atténué par les stores) + lampe + un peu de lumière ambiante */
+/** Prompt 191 : la lampe s'allume d'elle-même pendant que la nuit tombe (soir.js : lampeAllumee) */
+const lampeJour = () => (typeof lampeAllumee === 'function' ? lampeAllumee() : PIECE.lampe);
 function lumiereCible() {
 	const nuit = METEO_VISU.nuit === null ? facteurNuit() : METEO_VISU.nuit;
 	const jour = (1 - nuit) * (PIECE.store ? 0.35 : 1);
 	const ville = phase === 'soir' ? 0.3 : 0.12; // prompt 69 : le soir, plafonnier éteint, la ville éclaire la pièce (lisible)
 	const baisse = typeof Traces !== 'undefined' ? Traces.baisseLumiere() : 0; // prompt 89 bis (option) : la salle s'assombrit quand des jauges passent sous 40
-	return constrain(ville + jour * 0.8 + (PIECE.lampe ? 0.45 : 0) - baisse, 0, 1);
+	return constrain(ville + jour * 0.8 + (lampeJour() ? 0.45 : 0) - baisse, 0, 1);
 }
 function lumierePiece() {
 	const cible = lumiereCible();
@@ -217,7 +220,7 @@ function dessinerEclairage(g) {
 		g.fill(170, 205, 255, Math.round((nuit - 0.15) * 40 * veille));
 		g.rect(ECRAN_PC.x - 4, ECRAN_PC.y - 4, ECRAN_PC.l + 8, ECRAN_PC.h + 8); // lueur autour de l'écran
 	}
-	if (PIECE.lampe && nuit > 0.1) {
+	if (lampeJour() && nuit > 0.1) {
 		// Sous l'applique allumée, le mur reste éclairé
 		const lampe = OBJETS_BUREAU.find((o) => o.nom === 'lampe');
 		g.fill(255, 226, 160, Math.round(nuit * 60));
@@ -227,8 +230,8 @@ function dessinerEclairage(g) {
 /** Ombre portée commune (livres, plante, dossiers, tasse) : même trame que le téléphone et la souris.
  * Plus marquée sous la lampe ; plus diffuse (plus large, plus claire) stores baissés. */
 function ombreObjet(g, x, y, l) {
-	const diffuse = PIECE.store && !PIECE.lampe;
-	const alpha = PIECE.lampe ? 115 : diffuse ? 60 : 90;
+	const diffuse = PIECE.store && !lampeJour();
+	const alpha = lampeJour() ? 115 : diffuse ? 60 : 90;
 	ombreTramee(g, x + 1, y, l, diffuse ? 3 : 2, alpha);
 }
 

@@ -388,7 +388,7 @@ for (const [nom, ctx] of [['fr', contexte('fr')], ['en', contexte('en')]]) {
 		const jauges = JSON.stringify(Jeu.jauges);
 		rangerPoste();
 		res.soir = phase === 'soir' && __leve === 1 && vue === 'bureau' && !enSieste && PC.fenetre === null && __saves === 1;
-		__t = 2000; majSoir(); res.mi = Jeu.horloge.minutes > Jeu.finJournee() && Jeu.horloge.minutes < 21 * 60 && !sortieVisible();
+		__t = 1000; majSoir(); res.mi = Jeu.horloge.minutes > Jeu.finJournee() && Jeu.horloge.minutes < 21 * 60 && !sortieVisible();
 		__t = 4100; majSoir(); res.h21 = Jeu.horloge.minutes === 21 * 60 && sortieVisible() && __annonces.some((a) => a.includes('sortie est à gauche'));
 		res.nuit = nuitSoir() === 1;
 		res.reglesIntactes = JSON.stringify(Jeu.jauges) === jauges; // le soir ne touche à aucune jauge
@@ -3500,6 +3500,115 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 		const manque = bases.flatMap((b) => [b, b + '.v1', b + '.v2']).concat('camille.meteo.reponse').filter((k) => !dico[k]);
 		verifier(!manque.length, `prompt 189 : clés manquantes (${langue}) : ${manque.join(', ')}`);
 	}
+}
+
+// Prompt 191 : le mail du soir comme scène (fait marquant tiré d'un dossier joué, phrase du patron à trois niveaux,
+// bilan compact dessous), respiration « Fin de journée. » ≤ 3 s et passable, accroche météo du matin (donnée du jour)
+{
+	const c = contexte('fr');
+	const r = vm.runInContext(
+		`(() => {
+		Jeu.chargerSemaine(Jeu.semainesProposees()[0].lundi);
+		Jeu.nouvellePartie();
+		const out = { jours: [], erreurs: [] };
+		const choix = ['renfort', 'rien', 'devier', 'retenir'];
+		for (let jour = 0; jour < 2 && !Jeu.terminee; jour++) {
+			let i = 0;
+			while (Jeu.prochainDuJour()) {
+				const d = Jeu.prochainDuJour();
+				if (Jeu.conflit && Jeu.conflit()) Jeu.choisirPriorite('a');
+				Jeu.decider(choix[i++ % choix.length], d.contradiction ? d.contradiction.bonne : undefined);
+			}
+			Jeu.finDeJourneeTactique();
+			const j = Jeu.jourCourant();
+			const duJour = Jeu.evenementsJournee.filter((e) => e.jour === j.date);
+			const m = Jeu.mailDuJour();
+			const sc = m.scene;
+			if (!sc || !sc.patron) out.erreurs.push('scène absente');
+			else {
+				if (duJour.length && (!sc.fait || !duJour.includes(sc.fait.evenement))) out.erreurs.push('fait marquant hors des dossiers joués ce jour');
+				if (sc.fait) {
+					const e = sc.fait.evenement, txt = String(sc.fait.texte);
+					if (!txt.includes(e.heure) || !txt.includes(e.externe) || (e.cleAction !== 'temps' && !txt.includes(e.action))) out.erreurs.push('fait sans heure / nature / décision : ' + txt);
+					if (e.ligne && !txt.includes(String(e.ligne))) out.erreurs.push('fait sans ligne : ' + txt);
+					if (txt.includes('{') || txt.includes('[À COMPLÉTER]')) out.erreurs.push('gabarit non rempli : ' + txt);
+					const chiffres = (txt.match(/\\d+/g) || []).filter((n) => !(e.heure + ' ' + (e.ligne || '') + ' ' + e.externe + ' ' + e.action + ' ' + e.meilleureAction + ' ' + e.retard + ' ' + e.retardEffectif).includes(n));
+					if (chiffres.length) out.erreurs.push('chiffre non issu du dossier : ' + chiffres.join(','));
+				}
+				if (String(Jeu.mailDuJour().scene.patron) !== String(sc.patron)) out.erreurs.push('tirage du patron non déterministe');
+				if (m.lignes.length < 2) out.erreurs.push('bilan chiffré absent');
+			}
+			out.jours.push({ n: duJour.length, niveau: sc && sc.niveau });
+			if (!Jeu.jours[Jeu.jourIndex + 1]) break;
+			Jeu.journeeSuivante();
+		}
+		// Niveaux : seuils sur la part de « bon choix ! »
+		const faux = (ev) => ({ cleAction: 'x', resultat: {}, heure: '09:00' });
+		const sauve = Jeu.evaluer;
+		const niv = (bons, total) => { let k = 0; Jeu.evaluer = () => (k++ < bons ? 'bon' : 'rate'); const n = Jeu.niveauPatronDuJour(Array.from({ length: total }, faux)); return n; };
+		out.niveaux = [niv(3, 3), niv(1, 2), niv(0, 3), Jeu.niveauPatronDuJour([])].join(',');
+		Jeu.evaluer = sauve;
+		out.cles = ['satisfait', 'neutre', 'inquiet'].map((n) => { Jeu.jourIndex = 0; return String(T('mailf.patron.' + n)); });
+		// Accroche météo : seulement avec la donnée du jour
+		const j0 = Jeu.jours[0];
+		const met = (Jeu.etat.semaine.meteo || []).find((x) => x.date === j0.date);
+		const acc = Jeu.accrocheMeteo(j0.date);
+		out.meteoOk = met ? !!acc && String(acc).includes(String(met.temp_max).replace('.', ',')) : acc === null;
+		out.meteoAbsente = Jeu.accrocheMeteo('1999-01-01') === null;
+		return out;
+	})()`,
+		c,
+	);
+	verifier(!r.erreurs.length, `prompt 191 : mail du soir : ${r.erreurs.join(' | ')}`);
+	verifier(r.jours.length === 2, `prompt 191 : deux journées jouées (${r.jours.length})`);
+	verifier(r.niveaux === 'satisfait,neutre,inquiet,neutre', `prompt 191 : niveaux du patron (${r.niveaux})`);
+	verifier(new Set(r.cles).size === 3 && r.cles.every((x) => x && !x.startsWith('mailf.')), 'prompt 191 : trois phrases du patron distinctes');
+	verifier(r.meteoOk && r.meteoAbsente, `prompt 191 : accroche météo du jour (présente ${r.meteoOk}, absente sans donnée ${r.meteoAbsente})`);
+	for (const langue of ['fr', 'en']) {
+		const dico = vm.runInContext(`TRADUCTIONS.${langue}`, c);
+		const cles = ['satisfait', 'neutre', 'inquiet'].flatMap((n) => ['', '.v1', '.v2'].map((v) => `mailf.patron.${n}${v}`)).concat('mailf.fait.titre', 'mailf.fait.bon', 'mailf.fait.rate', 'mailf.fait.tropTard', 'mailf.fait.aucun', 'mailf.bilan', 'soir.respiration', 'transition.meteo');
+		const manque = cles.filter((k) => !dico[k]);
+		verifier(!manque.length, `prompt 191 : clés manquantes (${langue}) : ${manque.join(', ')}`);
+	}
+	// Respiration : ≤ 3 s, passable (clic, Entrée, Espace), temps suspendu, nuit directe en animations réduites
+	const soir = readFileSync(join(pub, 'soir.js'), 'utf8');
+	const duree = Number((soir.match(/const DUREE_RESPIRATION = (\d+);/) || [])[1]);
+	verifier(duree > 0 && duree <= 3000, `prompt 191 : respiration ≤ 3 s (${duree} ms)`);
+	verifier(/action: passerRespiration/.test(soir) && /respirationSoir\(\) && [^\n]*keyCode === ENTER[^\n]*key === ' '[^\n]*passerRespiration\(\)/.test(soir), 'prompt 191 : respiration passable au clic, à Entrée et à Espace');
+	verifier(/reduireAnimations \? 1 :/.test(soir.slice(soir.indexOf('function dessinerRespirationSoir'))), 'prompt 191 : animations réduites → pas de fondu progressif');
+	verifier(/dessinerRespirationSoir\(\)/.test(readFileSync(join(pub, 'sketch.js'), 'utf8')), 'prompt 191 : respiration dessinée');
+	const cr = contexte('fr');
+	vm.runInContext(
+		`var phase = 'mail', ecran = 'jeu', vue = 'bureau', fenetre = null, enPause = false, enSieste = false, reveil = null, reduireAnimations = false, smsActif = false;
+		var MENU = { actif: false }, PC = { fenetre: null }, CAMERA = { x: 0, y: 0 }, METEO_VISU = { nuit: 1 }, PIECE = { lampe: false }, focusBureau = -1, OBJETS_BUREAU = [];
+		var L = 1920, H = 1080, __t = 0, ENTER = 13, RETURN = 13, ESCAPE = 27, keyCode = 0, key = '', __annonces = [];
+		var millis = () => __t, constrain = (v, a, b) => Math.max(a, Math.min(b, v));
+		var seLever = () => {}, annoncer = (x) => __annonces.push(String(x)), interaction = () => {};
+		var Confort = { Son: { bip: () => {}, musique: { attenuer: () => {} } } }, Sauvegarde = { auto: () => {} };`,
+		cr,
+	);
+	vm.runInContext(soir, cr, { filename: 'soir.js' });
+	const rr = vm.runInContext(
+		`(() => {
+		Jeu.chargerSemaine(Jeu.semainesProposees()[0].lundi); Jeu.nouvellePartie();
+		const o = {};
+		rangerPoste();
+		o.debut = respirationSoir() && !lampeAllumee() && __annonces.includes('Fin de journée.');
+		__t = 1500; o.lampe = lampeAllumee() && respirationSoir() && !sortieVisible();
+		__t = 3001; o.finie = !respirationSoir();
+		phase = 'mail'; __t = 5000; rangerPoste(); __t = 5200;
+		keyCode = 0; key = ' '; o.espace = toucheSoir() === true && !respirationSoir() && sortieVisible();
+		phase = 'mail'; __t = 9000; rangerPoste(); keyCode = 13; key = 'Enter'; toucheSoir(); o.entree = !respirationSoir() && !SOIR.sortie;
+		phase = 'mail'; __t = 12000; rangerPoste(); passerRespiration(); o.clic = !respirationSoir();
+		phase = 'mail'; reduireAnimations = true; __t = 15000; rangerPoste(); o.reduit = nuitSoir() === 1 && lampeAllumee() && respirationSoir();
+		return o;
+	})()`,
+		cr,
+	);
+	for (const [k, v] of Object.entries(rr)) verifier(v === true, `prompt 191 : respiration ${k} = ${v}`);
+	const imm = readFileSync(join(pub, 'immersion.js'), 'utf8');
+	verifier(/function tempsSuspendu\(\) \{\n\treturn [^\n]*phase === 'soir'[^\n]*\n\}/.test(imm), 'prompt 191 : tempsSuspendu() reste un return sur une ligne et suspend le soir');
+	verifier(/Jeu\.accrocheMeteo\(j\.date\)/.test(imm.slice(imm.indexOf('function lignesTransitionJour'))), 'prompt 191 : accroche météo sur l\'écran « Jour N »');
 }
 
 if (erreurs.length) {
