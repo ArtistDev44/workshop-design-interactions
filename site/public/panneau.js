@@ -184,19 +184,14 @@ function dessinerPanneauSignalement(d, x, base) {
 	textAlign(LEFT, TOP);
 	y += 48;
 	y = bulleDuPlaignant(d, x + 32, y, l);
-	// Répliques : en bas de la fenêtre
+	// Répliques : en bas de la fenêtre (prompt 116 : + « Dites-m'en plus », qui ouvre l'enquête)
 	const rs = reponsesAffichees(d);
-	const hRep = 44 + rs.length * 70;
+	const hRep = 44 + (rs.length + 1) * 70;
 	const yr = base.y + base.h - 24 - hRep;
-	if (PLUS.ouvert) {
-		bouton(x + 32, y, 320, 52, t('plus.fermer'), basculerPlus, false, true);
-		textAlign(LEFT, TOP);
-		corpsEnquete(d, x + 32, y + 60, l, Math.max(120, yr - 16 - (y + 60)));
-	} else {
-		bouton(x + 32, y, 320, 52, t('plus.ouvrir'), basculerPlus, false, true);
-		textAlign(LEFT, TOP);
-		cibleGuide('sources', x + 32, y, 320, 52);
-		if (peutPublierDossier(d)) bouton(x + 372, y, Math.min(400, l - 340), 52, '→ ' + t('applis.publier') + ' (B)', () => publierDepuisDossier(d), false, true);
+	// Prompt 116 : « En savoir plus » devient la réplique « Dites-m'en plus » (dernière de la liste) ; plus de bouton en double
+	if (PLUS.ouvert) corpsEnquete(d, x + 32, y, l, Math.max(120, yr - 16 - y));
+	else if (peutPublierDossier(d)) {
+		bouton(x + 32, y, Math.min(400, l), 52, '→ ' + t('applis.publier') + ' (B)', () => publierDepuisDossier(d), false, true);
 		textAlign(LEFT, TOP);
 	}
 	if (phase === 'contradiction') return dessinerChoixSource(d, x + 32, yr, l);
@@ -214,11 +209,50 @@ function dessinerPanneauSignalement(d, x, base) {
 		fill(off ? DS.blanc15 : DS.blanc);
 		rect(x + 32, ry, 44, 62);
 		dsTexte(TOUCHES_REPONSES[i], x + 54, ry + 18, 20, DS.fond, 'center');
-		const rep = tSi('repl.' + r.cle, String(r.lib));
+		const rep = repliquesDuDossier(rs, d)[i];
 		dessinerTexte('« ' + rep + ' »', x + 92, ry + 6, l - 76, { taille: 20, couleur: off ? C.gris : C.texte, maxLignes: 2, interligne: 25 });
 		if (!off) boutons.push({ x: x + 32, y: ry, l, h: 62, action: () => decider(r.cle) });
 		if (i === 0) cibleGuide('actions', x + 32, yr + 36, l, rs.length * 70);
 	});
+	// « Dites-m'en plus » : pas une décision — ouvre / referme les sources de l'enquête (comme E)
+	const py = yr + 36 + rs.length * 70;
+	const survolP = mouseX >= x + 32 && mouseX <= x + 32 + l && mouseY >= py && mouseY <= py + 62;
+	noStroke();
+	fill(survolP ? DS.blanc15 : DS.blanc05);
+	rect(x + 32, py, l, 62);
+	fill(DS.blanc15);
+	rect(x + 32, py, 44, 62);
+	dsTexte('E', x + 54, py + 18, 20, DS.blanc, 'center');
+	dessinerTexte('« ' + t(PLUS.ouvert ? 'dialogue.plusFerme' : 'dialogue.plus') + ' »', x + 92, py + 6, l - 76, { taille: 20, couleur: C.texte, maxLignes: 1, interligne: 25 });
+	dsTexte(t('dialogue.plusAide'), x + 92, py + 34, 16, DS.blanc50, 'left');
+	boutons.push({ x: x + 32, y: py, l, h: 62, action: basculerPlus });
+	cibleGuide('sources', x + 32, py, l, 62);
+}
+/** Prompt 116 : les répliques d'un dossier, le pseudo du plaignant cité une seule fois */
+function repliquesDuDossier(rs, d) {
+	let cite = false;
+	return rs.map((r) => {
+		const txt = repliqueDe(r, d, cite);
+		if (!cite && /@\w/.test(txt)) cite = true;
+		return txt;
+	});
+}
+/** Prompt 116 : une des trois variantes de la réplique, choisie de façon déterministe (dossier + réponse), parmi
+ * celles dont toutes les variables sont connues pour ce dossier ; repli : réplique unique (prompt 107), puis libellé */
+function repliqueDe(r, d, sansAuteur) {
+	const vars = Object.assign({}, Jeu.variablesReplique ? Jeu.variablesReplique(Jeu.index) : {});
+	if (sansAuteur) delete vars.auteur; // le pseudo n'est cité qu'une fois par dossier
+	const ok = [];
+	for (let k = 1; k <= 3; k++) {
+		const cle = 'repl.' + r.cle + '.' + k;
+		if (TRADUCTIONS.fr[cle] === undefined) continue;
+		const brut = String(t(cle));
+		if ((brut.match(/\{(\w+)\}/g) || []).every((m) => vars[m.slice(1, -1)] !== undefined && vars[m.slice(1, -1)] !== '')) ok.push(brut);
+	}
+	if (!ok.length) return sansAuteur ? tSi('repl.' + r.cle, String(r.lib)) : repliqueDe(r, d, true);
+	let h = Jeu.index * 7;
+	for (const c of String(r.cle)) h = (h * 31 + c.charCodeAt(0)) % 1000003;
+	return ok[h % ok.length].replace(/\{(\w+)\}/g, (m, k) => String(vars[k]));
 }
 /** Prompt 102 : bulle de dialogue — la plainte écrite par le groupe (data/messages.json) que les faits réels du
  * dossier déclenchent (Jeu.plaignantPour, sans effet de bord), sinon la source réelle ; dessous, le fait réel. */
