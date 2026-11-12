@@ -456,7 +456,7 @@ function dessinerFenetreApp() {
 	noStroke();
 	boutons.push({ x: cx, y: cy, l: 36, h: 36, action: fermerFenetreApp });
 	if (Jeu.nonLus && Jeu.nonLus[PC.fenetre] !== undefined) Jeu.nonLus[PC.fenetre] = 0; // lu
-	const zone = { x: f.x + 24, y: f.y + 76, l: f.l - 48, h: f.h - 170 };
+	const zone = { x: f.x + 48, y: f.y + 96, l: f.l - 96, h: f.h - 96 - 48 }; // prompt 101 b : marges d'air (48 px), plus de bouton Fermer en bas
 	if (!Jeu.paquet || ecran !== 'jeu') {
 		dsTexte(t('app.aucunePartie'), zone.x, zone.y, 22, DS.blanc75, 'left', zone.l);
 		dsBouton(zone.x, zone.y + 80, 340, 60, t('menu.menuPrincipal'), ouvrirMenuPrincipal); // prompt 36
@@ -464,7 +464,7 @@ function dessinerFenetreApp() {
 	else if (PC.fenetre === 'patron') appPatron(zone);
 	else if (PC.fenetre === 'community') appCommunity(zone);
 	else if (PC.fenetre === 'journal') appJournal(zone);
-	dsBouton(f.x + f.l - 260, f.y + f.h - 80, 236, 56, t('commun.fermer'), fermerFenetreApp, 'contour');
+	// Prompt 101 b : le bouton « Fermer (Échap) » du bas doublait la croix du titre (Échap ferme toujours)
 }
 
 function derniers(liste, n) {

@@ -177,7 +177,7 @@ function dessinerCompteSocial(z) {
 	dessinerBanniere(z.x, z.y, lp, 52); // prompt 101 : bannière plus basse
 	avatarCompte(z.x + 16, z.y + 40, 64);
 	dsTexte(t('commu.nom'), z.x + 96, z.y + 76, 20, DS.blanc, 'left');
-	dsTexte('@regul.nte · ' + t('commu.reseau'), z.x + 96, z.y + 102, 18, DS.blanc50, 'left');
+	dsTexte(t('commu.reseau'), z.x + 96, z.y + 102, 18, DS.blanc50, 'left'); // prompt 101 b : @regul.nte est déjà dans le titre
 	textFont(DS.policeTexte);
 	textSize(20);
 	const wn = textWidth(t('commu.nom'));
@@ -326,16 +326,14 @@ function carteDePost(p, x, y, l, rang) {
 	const hc = Math.max(176, hTexte);
 	const arrivee = reduireAnimations ? 0 : Math.max(0, 8 - (millis() - (p._vu || (p._vu = millis()))) / 25);
 	noStroke();
-	fill(DS.blanc05);
-	stroke(DS.blanc15);
-	strokeWeight(2);
+	fill(DS.blanc05); // prompt 101 b : fond seul, sans cadre
 	rect(x, y + arrivee, l, hc);
 	noStroke();
 	zoneTexteDeclarer('post', x, y + arrivee, l, hc); // prompt 93
 	dessinerPhoto(p.photo, x + 12, y + 12 + arrivee, 260, 152, (m.pluie_mm || 0) >= 1 || p.photo.pluie, nuitDe(p.minute));
-	avatarCompte(x + 288, y + 12, 28);
-	dsTexte(t('commu.nom') + ' · ' + (p.sorte === 'archive' ? t('commu.archive', { date: p.date.split('-').reverse().join('/') }) : p.heure + (p.sorte === 'joueur' ? ' · ' + t('commu.votrePost') : '')), x + 326, y + 16, 18, DS.blanc50, 'left', lt - 40);
-	dsTexte(String(p.texte), x + 288, y + 50, 20, DS.blanc, 'left', lt);
+	// Prompt 101 b : chaque post est publié par le compte lui-même — l'avatar et le nom répétés partent, l'heure reste
+	dsTexte(p.sorte === 'archive' ? t('commu.archive', { date: p.date.split('-').reverse().join('/') }) : p.heure + (p.sorte === 'joueur' ? ' · ' + t('commu.votrePost') : ''), x + 288, y + 16, 18, DS.blanc50, 'left', lt);
+	dsTexte(String(p.texte), x + 288, y + 48, 20, DS.blanc, 'left', lt);
 	dsTexte('♥ ' + p.likes + '   ' + (comms.length ? t('commu.nbComm', { n: comms.length }) : ''), x + 288, y + hc - 34, 18, DS.blanc75, 'left');
 	if (p.index !== undefined && p.sorte !== 'archive' && typeof voirDossierDepuis === 'function') {
 		// Prompt 91 § 3 : retour croisé vers le dossier (Échap revient ici)
@@ -366,7 +364,7 @@ function carteDePost(p, x, y, l, rang) {
 		boutons.push({ x: x + 40, y: yy - 12, l: textWidth(lien) + 16, h: 44, action: () => (ouvert ? COMMU.deplies.delete(p.index) : COMMU.deplies.add(p.index), annoncer(lien)) });
 		yy += 36;
 	}
-	return yy - y + 16;
+	return yy - y + 28; // prompt 101 b : 28 px d'air entre deux posts
 }
 /** Commentaires d'un post : plaintes publiques (avec réponse ou « Répondre »), commentaires, réactions en chaîne */
 function commentairesDuPost(index) {
