@@ -1225,7 +1225,7 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 	const r = vm.runInContext(
 		`(() => {
 		const out = { sansOption: 0, chaines: [], erreurs: [], sauve: null, deblocage: null, arbitrage: null };
-		const pire = (d) => { const ks = Jeu.actionsPossibles(d); return ks.map((k) => [k, Jeu.effetsAttendus(k, d).reduce((a, b) => a + b, 0)]).sort((a, b) => a[1] - b[1])[0][0]; };
+		const pire = (d) => { const ks = Jeu.actionsPossibles(d); const p = Jeu.poidsBesoin(Jeu.jauges); return ks.map((k) => [k, Jeu.effetsAttendus(k, d).reduce((a, v, i) => a + v * p[i], 0)]).sort((a, b) => a[1] - b[1])[0][0]; }; // prompt 115 : la pire réponse au sens de l'évaluation pondérée
 		const jouer = (opts) => {
 			Jeu.chargerSemaine('2026-09-14'); Jeu.nouvellePartie(); Taches.nouvellePartie(opts);
 			let n = 0, garde = 0;
@@ -1907,6 +1907,34 @@ verifier(/aide\.k\.glisserTouche/.test(readFileSync(join(pub, 'sketch.js'), 'utf
 	verifier(/while \(textSize\(\) > 14 && textWidth\(label\)/.test(sk98), 'bouton() ne doit pas réduire un libellé sous 14 px');
 	verifier(/millis\(\) - BANDEAU\.survolDepuis >= 350/.test(sk98), 'infobulle du bandeau : délai de 350 ms');
 	verifier(/boutons\.push\(\{ x: x - 12, y: 0, l: 58, h: 52, action: fermerAppli \}\)/.test(readFileSync(join(pub, 'os.js'), 'utf8')) && /y: z\.y - 18, l: z\.l, h: z\.h \+ 18, action: basculerSieste/.test(readFileSync(join(pub, 'sieste.js'), 'utf8')), 'zones de clic ≥ 44 px : ✕ des applis et somnolence');
+}
+
+// Prompt 115 : l'évaluation suit le besoin des jauges — jouer toujours une réponse jugée « bonne » ne mène plus au
+// licenciement (avant : fluidité vidée par « attendre », licenciement au 10e–14e dossier) et finit au moins « moyenne »
+for (const s of semaines) {
+	const c114 = contexte('fr');
+	const r114 = vm.runInContext(
+		`(() => {
+		Jeu.chargerSemaine(${JSON.stringify(s)});
+		Jeu.nouvellePartie();
+		let n = 0; let bons = 0; let licencie = null;
+		while (!Jeu.terminee && n++ < 200) {
+			const d = Jeu.prochainDuJour();
+			if (!d) { Jeu.finDeJourneeTactique(); if (!Jeu.jours[Jeu.jourIndex + 1]) break; Jeu.journeeSuivante(); continue; }
+			if (Jeu.conflit && Jeu.conflit()) Jeu.choisirPriorite('a');
+			const cle = Jeu.reponsesConseillees(d)[0];
+			Jeu.decider(cle, d.contradiction ? d.contradiction.bonne : undefined);
+			const e = Jeu.evenementsJournee[Jeu.evenementsJournee.length - 1];
+			if (Jeu.evaluer(e) === 'bon') bons++;
+			if (Jeu.statutPatron && Jeu.statutPatron.licencie && !licencie) licencie = Jeu.statutPatron.licencie.cause;
+		}
+		return { bons, total: Jeu.paquet.length, licencie, score: Jeu.score() };
+	})()`,
+		c114,
+	);
+	verifier(!r114.licencie, `prompt 115 : suivre l'évaluation mène au licenciement (${s}, ${r114.licencie})`);
+	verifier(r114.bons === r114.total, `prompt 115 : une réponse conseillée doit être évaluée « bon » (${s} : ${r114.bons}/${r114.total})`);
+	verifier(r114.score >= 180, `prompt 115 : suivre l'évaluation doit finir au moins « moyenne » (${s} : ${r114.score})`);
 }
 
 // Service worker : chaque script de index.html est dans la liste hors ligne de sw.js

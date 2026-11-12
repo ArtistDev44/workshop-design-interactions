@@ -186,7 +186,7 @@ function dessinerPanneauSignalement(d, x, base) {
 	y = bulleDuPlaignant(d, x + 32, y, l);
 	// Répliques : en bas de la fenêtre
 	const rs = reponsesAffichees(d);
-	const hRep = 44 + rs.length * 70;
+	const hRep = 44 + rs.length * PAS_REPONSE; // prompt 115 : une ligne de plus par réponse (tendance)
 	const yr = base.y + base.h - 24 - hRep;
 	if (PLUS.ouvert) {
 		bouton(x + 32, y, 320, 52, t('plus.fermer'), basculerPlus, false, true);
@@ -204,21 +204,44 @@ function dessinerPanneauSignalement(d, x, base) {
 	ZONE_DEPOT = null;
 	dsTexte(t('dialogue.titre'), x + 32, yr, 18, DS.blanc75, 'left');
 	const bloquee = Jeu.actionBloquee ? Jeu.actionBloquee() : null;
+	// Prompt 115 : tendance des 3 jauges à droite de chaque réplique (symbole + couleur, jamais la couleur seule) ;
+	// option « Pression visible » : pastille « conseillé » sur la ou les réponses que l'évaluation jugerait bonnes
+	const conseillees = typeof Traces !== 'undefined' && Traces.option('pressionVisible') && Jeu.reponsesConseillees ? Jeu.reponsesConseillees(d) : [];
 	rs.forEach((r, i) => {
-		const ry = yr + 36 + i * 70;
+		const ry = yr + 36 + i * PAS_REPONSE;
 		const off = r.cle === bloquee;
-		const survol = !off && mouseX >= x + 32 && mouseX <= x + 32 + l && mouseY >= ry && mouseY <= ry + 62;
+		const survol = !off && mouseX >= x + 32 && mouseX <= x + 32 + l && mouseY >= ry && mouseY <= ry + H_REPONSE;
 		noStroke();
 		fill(survol ? DS.blanc15 : DS.blanc05);
-		rect(x + 32, ry, l, 62);
+		rect(x + 32, ry, l, H_REPONSE);
 		fill(off ? DS.blanc15 : DS.blanc);
-		rect(x + 32, ry, 44, 62);
-		dsTexte(TOUCHES_REPONSES[i], x + 54, ry + 18, 20, DS.fond, 'center');
+		rect(x + 32, ry, 44, H_REPONSE);
+		dsTexte(TOUCHES_REPONSES[i], x + 54, ry + 29, 20, DS.fond, 'center');
 		const rep = tSi('repl.' + r.cle, String(r.lib));
 		dessinerTexte('« ' + rep + ' »', x + 92, ry + 6, l - 76, { taille: 20, couleur: off ? C.gris : C.texte, maxLignes: 2, interligne: 25 });
-		if (!off) boutons.push({ x: x + 32, y: ry, l, h: 62, action: () => decider(r.cle) });
-		if (i === 0) cibleGuide('actions', x + 32, yr + 36, l, rs.length * 70);
+		dessinerTendanceReponse(r.cle, d, x + 92, ry + 58, conseillees.includes(r.cle)); // sous la réplique
+		if (!off) boutons.push({ x: x + 32, y: ry, l, h: H_REPONSE, action: () => decider(r.cle) });
+		if (i === 0) cibleGuide('actions', x + 32, yr + 36, l, rs.length * PAS_REPONSE);
 	});
+}
+/** Prompt 115 : tendance d'une réponse sur les 3 jauges — « Flu. ▲ » en vert, « ≈ » en gris, « ▼ » en orange ; le
+ * symbole porte le sens, la couleur le double. Pastille « conseillé » en option (Pression visible). */
+/** Prompt 115 : hauteur d'une ligne de réponse (2 lignes de réplique + la tendance) et pas entre deux lignes */
+const H_REPONSE = 84;
+const PAS_REPONSE = 92;
+function dessinerTendanceReponse(cle, d, x, y, conseillee) {
+	const e = Jeu.effetsAttendus(cle, d);
+	let xx = x;
+	['fluidite', 'reputation', 'budget'].forEach((k, j) => {
+		const sym = tendance(e[j]);
+		const lib = t('jaugeCourt.' + k);
+		dsTexte(lib, xx, y, 16, C.gris, 'left');
+		xx += textWidth(lib) + 6;
+		dsTexte(sym, xx, y, 16, sym === '≈' ? C.gris : sym.includes('▲') ? C.vert : C.orange, 'left');
+		xx += textWidth(sym) + 18;
+	});
+	if (conseillee) dsTexte('✓ ' + t('rep.conseillee'), xx + 8, y, 16, C.vert, 'left');
+	zoneTexteDeclarer('tendanceReponse', x, y, xx - x, 22); // prompt 93 : audit des textes
 }
 /** Prompt 102 : bulle de dialogue — la plainte écrite par le groupe (data/messages.json) que les faits réels du
  * dossier déclenchent (Jeu.plaignantPour, sans effet de bord), sinon la source réelle ; dessous, le fait réel. */
@@ -394,7 +417,9 @@ function explicationDecision(r) {
 	const des = typeof Traces !== 'undefined' && Traces.option('deVisible') ? Traces.texteDes(r) : null; // option : le dé réellement tiré
 	if (des) lignes.push(des);
 	const sit = e.categorie ? Jeu.situation(r.dossier) : null;
-	const pourquoi = sit ? sit.split('+').map((s) => t(RAISONS[s] || 'raison.calme')).join(', ') : '';
+	let pourquoi = sit ? sit.split('+').map((s) => t(RAISONS[s] || 'raison.calme')).join(', ') : '';
+	// Prompt 115 : le conseil suit aussi la jauge en manque — le dire quand elle est basse (sous 45)
+	if (e.jaugeBasse && e.valeurBasse !== undefined && e.valeurBasse < 45) pourquoi = t('raison.besoin', { jauge: t('jaugeTitre.' + e.jaugeBasse), v: e.valeurBasse }) + (pourquoi ? ', ' + pourquoi : '');
 	const ev = Jeu.evaluer(e);
 	if (ev === 'bon') lignes.push(t('retour.bon', { pourquoi: pourquoi || t('raison.calme') }));
 	else if (e.cleAction === 'temps') lignes.push(t('retour.tard', { meilleure: String(e.meilleureAction) }));
