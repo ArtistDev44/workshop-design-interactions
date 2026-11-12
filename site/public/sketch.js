@@ -1126,6 +1126,7 @@ function mousePressed() {
 	if (typeof guideBloque === 'function' && guideBloque(mouseX, mouseY)) return rappelerConsigneGuide(); // prompt 181 : guide contraignant — hors de la cible, le clic est ignoré
 	if (typeof debutJeton === 'function' && debutJeton()) return; // prompt 102 : jeton d'équipe saisi (glisser-déposer)
 	if (typeof debutGlisser === 'function' && debutGlisser()) return; // prompt 94 : une carte de réponse est saisie (clic ou glisser-déposer)
+	if (typeof PATRON !== 'undefined' && PATRON.zoneFocus === 'barre') PATRON.zoneFocus = null; // prompt 195 : un clic hors du champ quitte la recherche de Mails (le champ, cliqué, la reprend)
 	for (let i = boutons.length - 1; i >= 0; i--) {
 		const b = boutons[i];
 		if (mouseX >= b.x && mouseX <= b.x + b.l && mouseY >= b.y && mouseY <= b.y + b.h) {
@@ -1183,6 +1184,7 @@ function keyPressed() {
 	Confort.Son.demarrer(); // l'audio ne peut démarrer qu'après un geste du joueur
 	interaction();
 	if (typeof guideFiltre === 'function' && guideFiltre() && toucheGuide()) return false; // prompt 181 : guide contraignant — liste blanche de touches (guide.js)
+	if (!smsActif && !tutoriel && typeof saisieRechercheMails === 'function' && saisieRechercheMails()) return false; // prompt 195 : le champ de recherche de Mails a le focus — la frappe lui appartient (aucune lettre n'atteint les raccourcis)
 	// Intro SMS (§ 2) : clic / Entrée pour avancer
 	if (smsActif) {
 		if (keyCode === ENTER || keyCode === RETURN || key === ' ') avancerConversation(); // prompt 42

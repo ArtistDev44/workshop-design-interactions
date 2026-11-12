@@ -3249,6 +3249,85 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	verifier(/iconeLucide\('mail'/.test(pj) && /'inbox'/.test(pj) && /primaireRGBA\(0\.16\)/.test(pj), 'prompt 185 : icônes Lucide et accent du DS');
 }
 
+// Prompt 195 : Mails ressemble à une vraie messagerie — barre d'outils (recherche, Répondre, Archiver, Marquer comme
+// non lu, Voir le dossier), pastille d'initiales, groupes par jour de jeu, état vide, archivage mémorisé (m.archive)
+{
+	const pj = readFileSync(join(pub, 'patron.js'), 'utf8');
+	const c = vm.createContext({});
+	vm.runInContext(
+		`var PC = { etat: 'os', fenetre: 'patron' }, __ann = [], reduireAnimations = false;
+		const Confort = { Son: { clic() {}, bip() {} } }; function annoncer(x) { __ann.push(x); } function millis() { return 0; }
+		function t(k, p) { return p ? k + JSON.stringify(p) : k; } function dateLongue(iso) { return 'lundi ' + iso; } function constrain(v, a, b) { return Math.max(a, Math.min(b, v)); }
+		var Jeu = { TYPES_MESSAGES: ['consigne', 'alerte', 'conseil', 'budget', 'reproche', 'equipes', 'info', 'soir'], jourCourant: () => ({ date: '2026-09-14' }), horloge: { minutes: 600 }, formaterHeure: () => '10:00', modificateurActif: () => null, messagesPatron: [] };
+		Jeu.messagesPatron.push(
+			{ type: 'consigne', jour: '2026-09-10', heure: '08:00', texte: 'Gardez la réputation', meta: { jauge: 'reputation' }, lu: true },
+			{ type: 'info', jour: '2026-09-13', heure: '17:40', texte: 'Bonne journée hier', meta: {}, lu: true },
+			{ type: 'reproche', jour: '2026-09-14', heure: '09:14', texte: 'Décision coûteuse', meta: { index: 0 }, lu: false },
+			{ type: 'alerte', jour: '2026-09-14', heure: '09:40', texte: 'La fluidité baisse', meta: { jauge: 'fluidite', v: 28, seuil: 30 }, lu: false });`,
+		c,
+	);
+	vm.runInContext(pj.slice(pj.indexOf('const PATRON')), c);
+	const r = vm.runInContext(
+		`(() => {
+		const r = {}, M = Jeu.messagesPatron;
+		r.init = [initiales('Direction de la régulation'), initiales('Traffic control management'), initiales('Vous'), initiales('')].join(',');
+		r.jours = rangeesMails(listeMails().liste).map((x) => (x.m ? x.m.heure : x.jour)).join(',');
+		PATRON.recherche = 'FLUIDITE';
+		r.rech = listeMails().liste.map((m) => m.heure).join(',');
+		PATRON.recherche = 'mail.de';
+		r.rechDe = listeMails().liste.length;
+		PATRON.recherche = 'zzz';
+		r.rechVide = listeMails().liste.length + ' ' + annonceMail(null);
+		PATRON.recherche = '';
+		r.icones = actionsMails(M[2]).map((a) => a.icone + (a.actif ? '+' : '-')).join(',');
+		r.iconesInfo = actionsMails(M[1]).map((a) => a.icone + (a.actif ? '+' : '-')).join(',');
+		r.nl0 = mailsNonLus();
+		archiverMail(M[3]);
+		r.arch = [M[3].archive, mailsDuFiltre('tout').includes(M[3]), mailsDuFiltre('alertes').length, mailsDuFiltre('archives').length, compteursMails('tout').nl, mailsNonLus()].join(',');
+		const copie = JSON.parse(JSON.stringify(M)); // la sauvegarde sérialise Jeu.messagesPatron tel quel
+		r.sauve = copie[3].archive === true && copie[2].archive === undefined;
+		r.iconeArch = actionsMails(M[3])[1].icone;
+		archiverMail(M[3]);
+		r.desarch = M[3].archive === undefined && mailsDuFiltre('archives').length === 0;
+		PATRON.filtre = 'archives';
+		r.vide = listeMails().liste.length + ' ' + annonceMail(null);
+		PATRON.filtre = 'tout';
+		listeMails();
+		marquerLu(M[2]);
+		marquerNonLu(M[2]);
+		marquerLu(M[2]);
+		r.nonLu = M[2].lu;
+		ouvrirMail(M[2], true);
+		marquerLu(M[2]);
+		r.relu = M[2].lu;
+		repondreRapide(M[2], 'corrige');
+		r.rep = M[2].reponse + ' ' + M[2].reponseA + ' ' + actionsMails(M[2])[0].actif;
+		return r;
+	})()`,
+		c,
+	);
+	verifier(r.init === 'DR,TM,V,?', `prompt 195 : initiales de l'expéditeur (${r.init})`);
+	verifier(r.jours === 'patron.jour.aujourdhui,09:40,09:14,patron.jour.hier,17:40,Lundi 2026-09-10,08:00', `prompt 195 : groupes par jour de jeu (Aujourd'hui, Hier, date) (${r.jours})`);
+	verifier(r.rech === '09:40' && r.rechDe === 4 && r.rechVide === '0 patron.videRecherche{"q":"zzz"}', `prompt 195 : recherche sans casse ni accents sur texte / expéditeur, état vide annoncé (${r.rech} / ${r.rechDe} / ${r.rechVide})`);
+	verifier(r.icones === 'reply+,archive+,mail-,external-link+' && r.iconesInfo === 'reply+,archive+,mail+', `prompt 195 : actions de la barre (Voir le dossier seulement si le mail en cite un) (${r.icones} / ${r.iconesInfo})`);
+	verifier(r.nl0 === 2 && r.arch === 'true,false,0,1,1,1' && r.sauve && r.iconeArch === 'inbox' && r.desarch, `prompt 195 : archiver déplace dans « Archives », hors compteurs et badge, mémorisé dans la sauvegarde (${r.arch})`);
+	verifier(r.vide.startsWith('0 patron.vide{'), `prompt 195 : dossier vide annoncé (${r.vide})`);
+	verifier(r.nonLu === false && r.relu === true, 'prompt 195 : « Marquer comme non lu » tient jusqu\'à la prochaine ouverture du mail');
+	verifier(r.rep === 'corrige 10:00 false', `prompt 195 : réponse rapide datée (heure de jeu), plus proposée ensuite (${r.rep})`);
+	verifier(/function etatVide[\s\S]{0,200}iconeLucide\('inbox'/.test(pj) && /function reponseCitee/.test(pj) && /function zoneRepondre/.test(pj) && /pastilleInitiales\(t\('mail\.de'\)/.test(pj), 'prompt 195 : état vide « inbox », réponse citée, zone Répondre, pastille d\'initiales');
+	verifier(!/\b(lu|archive|reponse)\b[^\n]*Jeu\.(jauges|score)/.test(pj), 'prompt 195 : archiver / non lu / répondre sans effet de jeu');
+	verifier(/messagesPatron: Jeu\.messagesPatron,/.test(readFileSync(join(pub, 'game.js'), 'utf8')), 'prompt 195 : Jeu.instantane sauve les mails tels quels (archive comprise)');
+	const sk = readFileSync(join(pub, 'sketch.js'), 'utf8');
+	verifier(/toucheGuide\(\)\) return false;[^\n]*\n\tif \(!smsActif && !tutoriel && typeof saisieRechercheMails === 'function' && saisieRechercheMails\(\)\) return false;/.test(sk) && /rechercheMailsActive\(\)\)\) return;/.test(readFileSync(join(pub, 'micro.js'), 'utf8')), 'prompt 195 : la frappe dans la recherche de Mails passe avant les raccourcis (M compris)');
+	for (const langue of ['fr', 'en']) {
+		const dico = vm.runInContext(`TRADUCTIONS.${langue}`, contexte(langue));
+		const cles = ['patron.filtre.archives', 'patron.categories', 'patron.recherche', 'patron.recherche.effacer', 'patron.recherche.resultats', 'patron.action.repondre', 'patron.action.archiver', 'patron.action.desarchiver', 'patron.action.nonLu', 'patron.archive', 'patron.desarchive', 'patron.marqueNonLu', 'patron.indisponible', 'patron.vide', 'patron.videRecherche', 'patron.jour.aujourdhui', 'patron.jour.hier', 'patron.de', 'patron.a', 'patron.aDe', 'patron.vous', 'patron.repondreA', 'patron.reponses', 'patron.citation', 'patron.zone.barre'];
+		const manquantes = cles.filter((k) => !dico[k]);
+		verifier(!manquantes.length, `prompt 195 : clés manquantes (${langue}) : ${manquantes.join(', ')}`);
+		verifier(!('app.pasMessage' in dico) && !('patron.role' in dico), `prompt 195 : clés orphelines (${langue})`);
+	}
+}
+
 // Prompt 174 : raccourcis — l'onglet Raccourcis de l'aide (RACCOURCIS_AIDE) ne cite que des touches lues par le code,
 // aucune clé aide.k.* orpheline ; plus de touche pour les actions rares (R = recommencer, B = publier, S = sortie,
 // J = journal du game over) ; Ctrl / Cmd / Alt et les champs de saisie laissés au navigateur ; menu du jeu = pause
