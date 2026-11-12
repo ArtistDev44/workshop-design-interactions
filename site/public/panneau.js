@@ -114,18 +114,24 @@ function dessinerDateCoin() {
 	const jc = Jeu.jourCourant ? Jeu.jourCourant() : null;
 	const h = heureAffichee();
 	const heure = t('temps.' + vitesseTemps()) + ' ' + String(h.h).padStart(2, '0') + ':' + String(h.m).padStart(2, '0'); // prompt 95 : état de la vitesse du temps devant l'heure
-	const date = jc ? t('bandeau.dateJour', { date: new Date(jc.date + 'T12:00:00Z').toLocaleDateString(localeActive(), { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }) }) : '';
+	// La taille réelle peut être relevée (texte ≥ 20 px dans l'appli, prompt 103) : on mesure, puis on prend le format
+	// de date le plus complet qui tient à côté de l'heure (« lun. 14 sept. », sinon « 14 sept. », sinon « 14/09 »)
 	noStroke();
-	textFont(POLICE_DONNEES);
-	textAlign(RIGHT, CENTER);
 	fill(C.texte);
-	ajusterTaille(heure, 130, 18, 13);
+	textFont(POLICE_DONNEES);
+	textSize(17);
 	const lh = textWidth(heure);
-	text(heure, z.x + z.l - 14, z.y + z.h / 2);
 	textFont(POLICE_TEXTE);
+	textSize(17);
+	const formats = [{ weekday: 'short', day: 'numeric', month: 'short' }, { day: 'numeric', month: 'short' }, { day: '2-digit', month: '2-digit' }];
+	const dates = jc ? formats.map((f) => t('bandeau.dateJour', { date: new Date(jc.date + 'T12:00:00Z').toLocaleDateString(localeActive(), Object.assign({ timeZone: 'UTC' }, f)) })) : [''];
+	const date = dates.find((d) => textWidth(d) + lh + 12 <= z.l - 24) || dates[dates.length - 1];
 	textAlign(LEFT, CENTER);
-	ajusterTaille(date, z.l - 42 - lh, 17, 12);
-	text(date, z.x + 14, z.y + z.h / 2);
+	text(date, z.x + 12, z.y + z.h / 2);
+	textFont(POLICE_DONNEES);
+	textSize(17);
+	textAlign(RIGHT, CENTER);
+	text(heure, z.x + z.l - 12, z.y + z.h / 2);
 	textAlign(LEFT, TOP);
 	if (mouseX >= z.x && mouseX <= z.x + z.l && mouseY >= z.y && mouseY <= z.y + z.h) (BANDEAU.survol = t('temps.explication')), (BANDEAU.survolX = z.x + z.l);
 }
