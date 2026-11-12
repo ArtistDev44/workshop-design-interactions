@@ -1176,6 +1176,7 @@ function keyPressed() {
 		if (fenetre === 'telephone' && (keyCode === ENTER || keyCode === RETURN)) return fermer(), false; // prompt 38
 		if (fenetre === 'poste' && (keyCode === ENTER || keyCode === RETURN || key === ' ')) return fermer(), false; // prompt 74
 		if (fenetre === 'partage' && keyCode !== ESCAPE) return touchePartage(), false; // prompt 81
+		if (fenetre === 'installation' && (keyCode === ENTER || keyCode === RETURN || key === ' ')) return fermer(), false; // prompt 171
 		if (fenetre === 'rapport' && (keyCode === ENTER || keyCode === RETURN)) return actionRapport(), false; // prompt 41
 		if (fenetre === 'rapportVeille' && (keyCode === ENTER || keyCode === RETURN || keyCode === ESCAPE)) return fermer(), false; // prompt 89 bis
 		if (fenetre === 'menu') {
@@ -1403,6 +1404,7 @@ function dessinerFenetre() {
 	if (fenetre === 'blame') return fenetreBlame(); // prompt 51
 	if (fenetre === 'poste') return fenetrePoste(); // prompt 74
 	if (fenetre === 'partage') return fenetrePartage(); // prompt 81
+	if (fenetre === 'installation') return fenetreInstallation(); // prompt 171
 	if (fenetre === 'aide') return fenetreAide();
 	if (fenetre === 'reset') return fenetreReset();
 	if (fenetre === 'parametres') return fenetreParametres();
@@ -1581,10 +1583,10 @@ function fenetreParametres() {
 }
 
 /** Sélecteur de langue (prompt 24) : un bouton par entrée de LANGUES, aligné à droite sur xDroite ; touche L partout */
-function selecteurLangue(xDroite, y) {
+function selecteurLangue(xDroite, y, h) {
 	const lb = 84;
 	LANGUES.forEach((lg, i) => {
 		const x = xDroite - (LANGUES.length - i) * (lb + 8);
-		bouton(x, y, lb, 52, lg.code.toUpperCase(), () => Langue.changer(lg.code), false, lg.code !== Langue.actuelle);
+		bouton(x, y, lb, h || 52, lg.code.toUpperCase(), () => Langue.changer(lg.code), false, lg.code !== Langue.actuelle);
 	});
 }

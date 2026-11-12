@@ -172,7 +172,7 @@ function dessinerCredits() {
 	LIENS_CREDITS.forEach((b, i) => {
 		const retour = b.cle === 'retour';
 		const bx = retour ? L - 120 - lb : x0 + i * (lb + 16);
-		dsBouton(bx, yb, lb, 64, t('credits.' + b.cle), b.action, retour ? 'secondaire' : 'contour');
+		dsBouton(bx, yb, lb, 64, t('credits.' + b.cle), b.action, retour ? 'secondaire' : 'contour', false, retour); // prompt 171 : « Retour » sans flèche
 		if (CREDITS.choix === i) {
 			noFill();
 			stroke(DS.blanc);

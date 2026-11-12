@@ -2425,6 +2425,38 @@ for (const langue of ['fr', 'en']) {
 	verifier(/'icones'/.test(readFileSync(join(pub, 'credits.js'), 'utf8')) && /lucide\.dev/.test(readFileSync(join(pub, '..', 'src', 'pages', 'cartel.astro'), 'utf8')), 'prompt 170 : Lucide non crédité (credits.js, cartel)');
 }
 
+// Prompt 171 : menu principal épuré — plus d'entrée « Aide et tutoriel » ni « Crédits », plus de mention « PXE- »,
+// logo et bloc langue + installation sur la même ligne, « Retour » sans flèche, interlignage du sous-titre
+{
+	const lire = (f) => readFileSync(join(pub, f), 'utf8');
+	const menu171 = lire('menu.js');
+	const entrees = menu171.slice(menu171.indexOf('function entreesMenu'), menu171.indexOf('function allerChoixSemaine'));
+	verifier(!/cle: 'aide'/.test(entrees) && !/credits\.menu/.test(menu171) && !/ouvrirCredits/.test(entrees), 'prompt 171 : « Aide et tutoriel » ou « Crédits » encore dans les entrées du menu principal');
+	verifier(!/ouvrir\('aide'\)/.test(menu171), 'prompt 171 : l\'aide s\'ouvre encore depuis le menu titre (entrée ou raccourci H)');
+	verifier(/ouvrirCredits\(\)/.test(menu171.slice(menu171.indexOf('function piedCredits'), menu171.indexOf('function boutonIcone'))) && /function dessinerCredits/.test(lire('credits.js')), 'prompt 171 : les noms du pied de page ne mènent plus aux Crédits');
+	verifier(/mp\.aide/.test(lire('immersion.js')) && (lire('sketch.js').match(/ouvrir\('aide'\)/g) || []).length >= 2 && /function fenetreAide/.test(lire('aide.js')), 'prompt 171 : l\'aide doit rester atteignable en partie (H, menu pause)');
+	verifier(!/PXE-NTE001/.test(menu171) && /dessinerLogoPXE\(HAUT_MENU\.marge, HAUT_MENU\.y, HAUT_MENU\.h\)/.test(menu171) && /const JEU = 'PXE-NTE001-G01-W01'/.test(lire('sauvegarde.js')), 'prompt 171 : mention « PXE- » encore affichée au menu (ou clé de stockage renommée)');
+	verifier(/const HAUT_MENU = \{ y: 56, h: 60, marge: 80 \}/.test(menu171) && /selecteurLangue\([^;]*HAUT_MENU\.y, HAUT_MENU\.h\)/.test(menu171) && /boutonInstaller\(xi, HAUT_MENU\.y, HAUT_MENU\.h/.test(menu171), 'prompt 171 : logo, langue et installation ne partagent plus y, hauteur et marge');
+	verifier(/iconeLucide\('download'/.test(menu171) && /infobulle\(bulle/.test(menu171.slice(menu171.indexOf('function boutonInstaller'))) && /cle: 'installer', action: \(\) => installerJeu\(\)/.test(menu171), 'prompt 171 : icône « télécharger » absente, sans infobulle ou hors du parcours clavier');
+	const inst171 = lire('installation.js');
+	verifier(/function installerJeu\(\) \{[^}]*installationPossible\(\)\) return installerApplication\(\);[^}]*ouvrirInstallation\(\);/.test(inst171) && /fenetre === 'installation'\) return fenetreInstallation\(\)/.test(lire('sketch.js')), 'prompt 171 : l\'icône doit installer le jeu (beforeinstallprompt) ou ouvrir l\'explication');
+	// Comportement : avec une invitation du navigateur, elle est jouée ; sans, la fenêtre d'explication s'ouvre
+	{
+		const c = vm.createContext({ window: { addEventListener() {} }, navigator: {}, matchMedia: () => ({ matches: false }), ouvertes: [], annonces: [] });
+		vm.runInContext(inst171.slice(0, inst171.indexOf('// ——— Service worker')) + "\nfunction ouvrir(n) { ouvertes.push(n); } function annoncer(s) { annonces.push(s); } function t(k) { return k; }", c);
+		vm.runInContext("installerJeu(); var sans = ouvertes.join(); var joue = 0; PWA.invite = { prompt() { joue++; }, userChoice: Promise.resolve({ outcome: 'accepted' }) }; installerJeu();", c);
+		verifier(vm.runInContext("sans === 'installation' && joue === 1 && ouvertes.length === 1 && /pwa\\.aide\\.titre/.test(annonces[0])", c), 'prompt 171 : installerJeu ne joue pas l\'invitation ou n\'ouvre pas l\'explication');
+	}
+	verifier(/textLeading\(40\)/.test(menu171) && /textLeading\(interligneAvant\)/.test(menu171), 'prompt 171 : interlignage du sous-titre du menu (≈ 1,4 × 28 px) non fixé ou non rendu');
+	verifier(/sansChevron \? label : label \+ '  ›'/.test(lire('ds.js')) && /'contour', false, retour\)/.test(lire('credits.js')) && !/[←‹]/.test(menu171.slice(menu171.indexOf('function dessinerChoixSemaine'), menu171.indexOf('function toucheMenu'))), 'prompt 171 : flèche encore présente sur un bouton « Retour » du menu');
+	for (const langue of ['fr', 'en']) {
+		const dico = vm.runInContext(`TRADUCTIONS[${JSON.stringify(langue)}]`, contexte(langue));
+		for (const k of ['mp.installer', 'pwa.aide.titre', 'pwa.aide.intro', 'pwa.aide.ordinateur.k', 'pwa.aide.ordinateur', 'pwa.aide.android.k', 'pwa.aide.android', 'pwa.aide.ios.k', 'pwa.aide.ios', 'pwa.aide.horsLigne', 'pwa.aide.dejaInstalle', 'mp.aide', 'mp.credits']) verifier(typeof dico[k] === 'string' && dico[k].length > 0, `prompt 171 : clé ${k} absente (${langue})`);
+		for (const k of ['mp.credits.menu', 'pwa.installer', 'pwa.badge']) verifier(dico[k] === undefined, `prompt 171 : clé ${k} devenue inutile, à supprimer (${langue})`);
+		for (const k of ['mp.retour', 'param.retour', 'credits.retour']) verifier(!/[←‹›→]/.test(dico[k] || ''), `prompt 171 : flèche dans le libellé ${k} (${langue})`);
+	}
+}
+
 // Service worker : chaque script de index.html est dans la liste hors ligne de sw.js
 const html = readFileSync(join(pub, 'index.html'), 'utf8');
 const sw = readFileSync(join(pub, 'sw.js'), 'utf8');
