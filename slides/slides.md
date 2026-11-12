@@ -182,7 +182,7 @@ class: diapo-seuil
 </div>
 
 <!--
-Le seuil est l'invariant central de la grammaire. Il vient du flux temps réel (GTFS-RT).
+Le seuil vient du flux temps réel (GTFS-RT) : il ne joue qu'en mode « aujourd'hui ». Les archives ne donnent pas de minutes ; dans une semaine rejouée, ce sont les perturbations datées, la météo extrême et l'agenda (affluence supposée) qui font les dossiers.
 [click] En dessous, le réseau absorbe ; au-dessus, c'est au régulateur de décider.
 -->
 

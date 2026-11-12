@@ -593,6 +593,7 @@
 
 		if (Jeu.modificateurActif && Jeu.modificateurActif() === 'meteo_aggravee') deltas = deltas.map((v) => borner(Math.round(v * 1.5))); // prompt 23 § 2.3
 		if (action === 'temps') Jeu.compterMalus('non_traite');
+		const jaugesAvant = Object.assign({}, Jeu.jauges); // prompt 115 : l'évaluation pondère selon les jauges d'avant la décision
 		NOMS_JAUGES.forEach((k, i) => (Jeu.jauges[k] = Math.max(0, Math.min(100, Jeu.jauges[k] + deltas[i]))));
 		const resultat = {
 			dossier: d,
@@ -609,6 +610,7 @@
 		resultat.minuteSim = Jeu.horloge ? Math.floor(Jeu.horloge.minutes) : null; // heure de la partie (prompt 20)
 		resultat.jour = d.date;
 		resultat.jaugesApres = Object.assign({}, Jeu.jauges); // prompt 48 : courbes du rapport
+		resultat.jaugesAvant = jaugesAvant; // prompt 115
 		const entree = Jeu.journaliser(resultat, ctx);
 		Jeu.majStatutPatron(); // prompt 84 : la décision a changé les jauges
 		// Prompt 79 : mauvaise réaction sur un retard → la ligne reste aggravée jusqu'au soir (malus : ceux qui existent déjà)
@@ -871,6 +873,22 @@
 		});
 	}
 	const somme = (t) => t.reduce((a, b) => a + b, 0);
+	/** Prompt 115 : poids d'une jauge = ce qui lui manque, (100 − v) / 50, borné à [0,25 ; 2] — une jauge basse compte double */
+	Jeu.poidsBesoin = (j) => NOMS_JAUGES.map((k) => Math.max(0.25, Math.min(2, (100 - (j && j[k] !== undefined ? j[k] : 50)) / 50)));
+	const ponderer = (effets, poids) => effets.reduce((a, v, i) => a + v * poids[i], 0);
+	/** Prompt 115 : tolérance (points pondérés) sous laquelle une réponse vaut la meilleure */
+	const TOLERANCE_BON = 1;
+	/** Prompt 115 : réponses que l'évaluation jugerait bonnes MAINTENANT (aide à la décision, en option) */
+	Jeu.reponsesConseillees = function (d) {
+		if (!d) return [];
+		const poids = Jeu.poidsBesoin(Jeu.jauges);
+		const ctx = contexte(d);
+		const v = {};
+		const as = Jeu.actionsPossibles(d);
+		as.forEach((a) => (v[a] = ponderer(effetAttendu(a, d, ctx), poids)));
+		const max = Math.max(...as.map((a) => v[a]));
+		return as.filter((a) => v[a] >= max - TOLERANCE_BON);
+	};
 
 	/** Événement externe réel du dossier (nature, météo, affluence) — jamais inventé */
 	function externe(d, ctx) {
@@ -884,7 +902,12 @@
 		const attendus = {};
 		const evaluees = Jeu.actionsPossibles(d); // prompt 87 : réponses de la catégorie, ou la table Q57–Q60 en repli
 		evaluees.forEach((a) => (attendus[a] = somme(effetAttendu(a, d, ctx))));
-		const meilleure = evaluees.slice().sort((a, b) => attendus[b] - attendus[a])[0];
+		// Prompt 115 : la meilleure réponse est jugée sur l'effet PONDÉRÉ par le besoin de chaque jauge (avant la décision),
+		// pas sur la somme brute — sinon « attendre » (budget +, fluidité −) gagnait partout où c'est calme et menait au licenciement
+		const poids = Jeu.poidsBesoin(r.jaugesAvant || Jeu.jauges);
+		const attendusPonderes = {};
+		evaluees.forEach((a) => (attendusPonderes[a] = ponderer(effetAttendu(a, d, ctx), poids)));
+		const meilleure = evaluees.slice().sort((a, b) => attendusPonderes[b] - attendusPonderes[a])[0];
 		const deltas = {};
 		NOMS_JAUGES.forEach((k, i) => (deltas[k] = r.deltas[i]));
 		const entree = {
@@ -903,6 +926,10 @@
 			famille: r.famille || r.action,
 			cleMeilleure: meilleure,
 			attendus,
+			attendusPonderes, // prompt 115
+			poids, // prompt 115 : [fluidité, réputation, budget] au moment du choix
+			jaugeBasse: NOMS_JAUGES[poids.indexOf(Math.max(...poids))], // prompt 115 : la jauge la plus en manque (raison du conseil)
+			valeurBasse: Math.round((r.jaugesAvant || Jeu.jauges)[NOMS_JAUGES[poids.indexOf(Math.max(...poids))]]),
 			resultat: r,
 			index: Jeu.index, // prompt 85 : rang du dossier dans le paquet (post du compte social)
 		};
@@ -915,7 +942,8 @@
 	Jeu.evaluer = function (e) {
 		// Codes (traduits à l'affichage par t('eval.' + code)) : 'bon', 'rate', 'aucun_detour', 'trop_tard'
 		if (e.cleAction === 'temps') return 'trop_tard';
-		if (e.categorie || String(e.cleAction).includes('.')) return e.attendus[e.cleAction] >= e.attendus[e.cleMeilleure] - 0.01 ? 'bon' : 'rate'; // prompt 87 : meilleure réponse de la même catégorie
+		if ((e.categorie || String(e.cleAction).includes('.')) && e.attendusPonderes && e.attendusPonderes[e.cleAction] !== undefined) return e.attendusPonderes[e.cleAction] >= e.attendusPonderes[e.cleMeilleure] - TOLERANCE_BON ? 'bon' : 'rate'; // prompt 115 : pondéré par le besoin des jauges
+		if (e.categorie || String(e.cleAction).includes('.')) return e.attendus[e.cleAction] >= e.attendus[e.cleMeilleure] - 0.01 ? 'bon' : 'rate'; // prompt 87 : meilleure réponse de la même catégorie (anciennes sauvegardes)
 		const actions = ['devier', 'retenir', 'renfort'];
 		if (e.cleMeilleure === 'rien' || actions.every((a) => e.attendus[a] < 0)) return e.cleAction === 'rien' ? 'bon' : 'aucun_detour';
 		return e.attendus[e.cleAction] >= e.attendus[e.cleMeilleure] - 0.01 ? 'bon' : 'rate';
@@ -1329,12 +1357,12 @@
 
 	// Prompt 79 — délai de réponse Community (REGLAGES.community) : répondre vite évite la dégradation
 	/** Millisecondes restantes avant que la plainte s'envenime (le délai démarre à sa première vue par majPlaintes) */
-	Jeu.resteReponse = (p, maintenant) => (p.depuis === undefined ? REGLAGES.community.delaiMs : Math.max(0, REGLAGES.community.delaiMs - (maintenant - p.depuis)));
+	Jeu.resteReponse = (p, maintenant) => (p.depuis === undefined || p.depuis > maintenant ? REGLAGES.community.delaiMs : Math.max(0, REGLAGES.community.delaiMs - (maintenant - p.depuis)));
 	/** À chaque image : les plaintes sans réponse à l'expiration s'enveniment (malus d'un mauvais commentaire, prompt 22) */
 	Jeu.majPlaintes = function (maintenant) {
 		const expirees = [];
 		Jeu.plaintesEnAttente().forEach((p) => {
-			if (p.depuis === undefined) p.depuis = maintenant;
+			if (p.depuis === undefined || p.depuis > maintenant) p.depuis = maintenant; // prompt 116 : horloge remise à zéro (rechargement) → le délai repart
 			if (maintenant - p.depuis < REGLAGES.community.delaiMs) return;
 			p.expiree = true;
 			p.statut = 'expire';

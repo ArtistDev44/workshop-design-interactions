@@ -186,7 +186,11 @@ function dessinerPanneauSignalement(d, x, base) {
 	y = bulleDuPlaignant(d, x + 32, y, l);
 	// Répliques : en bas de la fenêtre
 	const rs = reponsesAffichees(d);
-	const hRep = 44 + rs.length * PAS_REPONSE; // prompt 115 : une ligne de plus par réponse (tendance)
+	// Prompt 115 : une ligne de plus par réponse (tendance) — sauf sources ouvertes (« En savoir plus ») : lignes compactes
+	const compact = PLUS.ouvert;
+	const hL = compact ? 62 : H_REPONSE;
+	const pas = compact ? 70 : PAS_REPONSE;
+	const hRep = 44 + rs.length * pas;
 	const yr = base.y + base.h - 24 - hRep;
 	if (PLUS.ouvert) {
 		bouton(x + 32, y, 320, 52, t('plus.fermer'), basculerPlus, false, true);
@@ -208,20 +212,20 @@ function dessinerPanneauSignalement(d, x, base) {
 	// option « Pression visible » : pastille « conseillé » sur la ou les réponses que l'évaluation jugerait bonnes
 	const conseillees = typeof Traces !== 'undefined' && Traces.option('pressionVisible') && Jeu.reponsesConseillees ? Jeu.reponsesConseillees(d) : [];
 	rs.forEach((r, i) => {
-		const ry = yr + 36 + i * PAS_REPONSE;
+		const ry = yr + 36 + i * pas;
 		const off = r.cle === bloquee;
-		const survol = !off && mouseX >= x + 32 && mouseX <= x + 32 + l && mouseY >= ry && mouseY <= ry + H_REPONSE;
+		const survol = !off && mouseX >= x + 32 && mouseX <= x + 32 + l && mouseY >= ry && mouseY <= ry + hL;
 		noStroke();
 		fill(survol ? DS.blanc15 : DS.blanc05);
-		rect(x + 32, ry, l, H_REPONSE);
+		rect(x + 32, ry, l, hL);
 		fill(off ? DS.blanc15 : DS.blanc);
-		rect(x + 32, ry, 44, H_REPONSE);
-		dsTexte(TOUCHES_REPONSES[i], x + 54, ry + 29, 20, DS.fond, 'center');
+		rect(x + 32, ry, 44, hL);
+		dsTexte(TOUCHES_REPONSES[i], x + 54, ry + (hL - 26) / 2, 20, DS.fond, 'center');
 		const rep = tSi('repl.' + r.cle, String(r.lib));
 		dessinerTexte('« ' + rep + ' »', x + 92, ry + 6, l - 76, { taille: 20, couleur: off ? C.gris : C.texte, maxLignes: 2, interligne: 25 });
-		dessinerTendanceReponse(r.cle, d, x + 92, ry + 58, conseillees.includes(r.cle)); // sous la réplique
-		if (!off) boutons.push({ x: x + 32, y: ry, l, h: H_REPONSE, action: () => decider(r.cle) });
-		if (i === 0) cibleGuide('actions', x + 32, yr + 36, l, rs.length * PAS_REPONSE);
+		if (!compact) dessinerTendanceReponse(r.cle, d, x + 92, ry + 58, conseillees.includes(r.cle)); // sous la réplique
+		if (!off) boutons.push({ x: x + 32, y: ry, l, h: hL, action: () => decider(r.cle) });
+		if (i === 0) cibleGuide('actions', x + 32, yr + 36, l, rs.length * pas);
 	});
 }
 /** Prompt 115 : tendance d'une réponse sur les 3 jauges — « Flu. ▲ » en vert, « ≈ » en gris, « ▼ » en orange ; le

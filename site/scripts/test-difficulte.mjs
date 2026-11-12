@@ -1,3 +1,6 @@
+// OBSOLÈTE (prompt 119, 12/11/2026) : ce script joue l'ancienne table devier / retenir / renfort / rien, remplacée au
+// prompt 87 par les réponses par catégorie (data/reponses.json). L'équilibrage est désormais contrôlé dans
+// scripts/test-jeu.mjs (prompt 115 : suivre l'évaluation mène à une bonne fin, sans licenciement, sur les 3 semaines).
 // Test de difficulté (10/11/2026) : simule 4 profils de joueur sur les 3 semaines réelles, dans Chromium (Playwright,
 // hors dépendances du site). Lancer le site en local (python3 -m http.server 8765 dans site/public), puis :
 // node test-difficulte.mjs   (base.mjs : ouverture de la page, voir jeu/36-tests-difficulte.md). Résultats : jeu/36.

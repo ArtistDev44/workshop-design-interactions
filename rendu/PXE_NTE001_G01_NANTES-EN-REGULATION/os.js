@@ -30,7 +30,7 @@ function demarrageDuJour() {
 	const cle = cleJourPC();
 	if (JOUR_PC.fait === cle) return; // déjà démarré aujourd'hui : pas de replay
 	JOUR_PC.fait = cle;
-	if (Jeu.jourIndex >= JOURS_DEMARRAGE) return;
+	if (Jeu.jourIndex >= JOURS_DEMARRAGE || (typeof EXPO !== 'undefined' && EXPO.actif)) return; // prompt 117 : pas de redémarrage en exposition
 	JOUR_PC.attendu = true;
 	PC.fenetre = null;
 	PC.etat = 'eteint';

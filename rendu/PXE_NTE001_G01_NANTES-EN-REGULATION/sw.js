@@ -9,7 +9,7 @@
  * Enregistré seulement en http(s), jamais en file:// (index.html).
  */
 /* précache:début (généré par scripts/generer-sw.mjs — ne pas modifier à la main) */
-const VERSION = 'nte-regulation-dce8511dc7';
+const VERSION = 'nte-regulation-3443406a76';
 const ESSENTIELS = [
 	"./",
 	"./accessibilite.js",
@@ -76,6 +76,7 @@ const ESSENTIELS = [
 	"./donnees.js",
 	"./ds.js",
 	"./enquete.js",
+	"./expo.js",
 	"./favicon.ico",
 	"./favicon.svg",
 	"./feedback.js",

@@ -8,7 +8,7 @@
   "groupe": "G01",
   "statut": "STUDENT",
   "source": {
-    "titre": "Réseau de transports collectifs Naolib — flux temps réel GTFS-RT (retards, alertes) et météo Open-Meteo",
+    "titre": "Réseau de transports collectifs Naolib — offre, perturbations et temps réel (Open Data Nantes Métropole) ; météo Open-Meteo",
     "lieu": "Nantes Métropole",
     "type": "Données ouvertes temps réel",
     "url": "https://data.nantesmetropole.fr/explore/dataset/244400404_reseau-transports-collectifs-naolib/",
@@ -16,9 +16,9 @@
     "droits": "Licence Ouverte (Nantes Métropole) ; Open-Meteo : CC BY 4.0 (vérifié le 2026-11-10 sur open-meteo.com/en/licence)"
   },
   "grammaire": {
-    "regle": "Un retard réel d'au moins 10 minutes sur une ligne, une perturbation datée des archives ou une alerte météo extrême par rapport à la normale de la semaine devient un dossier à trancher.",
+    "regle": "Un fait daté de la source — perturbation du réseau, météo extrême de la semaine, événement de l'agenda — devient un dossier à trancher. En temps réel, un retard mesuré d'au moins 10 minutes en devient un aussi.",
     "invariants": [
-      "Seuil de retard : 10 minutes",
+      "Seuil de retard en temps réel : 10 minutes",
       "4 réponses par catégorie de dossier, dont « attendre » (prompt 87)",
       "3 jauges : fluidité du réseau, réputation de la salle de contrôle, budget",
       "Aucun événement inventé"
@@ -50,7 +50,7 @@
   "datasets": [
     "244400404_reseau-transports-collectifs-naolib"
   ],
-  "cartel": "Nantes en régulation place le visiteur dans une salle de contrôle des transports en commun nantais. Il y rejoue une semaine réelle du réseau de tram et de bus : chaque incident tiré des données réelles, un retard d'au moins dix minutes ou une alerte météo, devient un dossier à trancher pendant que le retard s'aggrave. Quatre réponses adaptées à la situation sont possibles, dont attendre. Chaque décision modifie trois jauges, la fluidité du réseau, la réputation de la salle de contrôle et le budget, selon le contexte météo et l'heure. Aucun événement n'est inventé : tous les dossiers viennent des données réelles de la semaine.",
+  "cartel": "Nantes en régulation place le visiteur dans une salle de contrôle des transports en commun nantais. Il y rejoue une semaine réelle du réseau de tram et de bus : chaque fait daté de la source, une perturbation, une météo extrême ou un événement de l'agenda, devient un dossier à trancher ; en temps réel, un retard mesuré d'au moins dix minutes aussi. Quatre réponses adaptées à la situation sont possibles, dont attendre. Chaque décision modifie trois jauges, la fluidité du réseau, la réputation de la salle de contrôle et le budget, selon le contexte météo et l'heure. Aucun événement n'est inventé ; seule l'affluence qu'un événement provoque est une hypothèse du jeu.",
   "assets": {},
   "lien_oeuvre": "index.html"
 }

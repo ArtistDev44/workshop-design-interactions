@@ -59,7 +59,7 @@ const ETAPES_GUIDE = [
 	{ id: 'installer', cible: () => 'ecranPC', fait: () => vue === 'poste' },
 	{ id: 'jauges', cible: () => (vue === 'poste' && PC.etat === 'appli' ? 'jauges' : vue === 'poste' ? 'iconeSignalements' : 'ecranPC'), fait: () => phase === 'selection' || PHASES_DOSSIER.includes(phase) },
 	// Prompt 78 : la somnolence et le compromis de la sieste (validée en se reposant, ou après 10 s de lecture)
-	{ id: 'somnolence', cible: () => (vue === 'poste' && PC.etat === 'appli' ? 'somnolence' : vue === 'poste' ? 'iconeSignalements' : 'ecranPC'), fait: () => enSieste || (vue === 'poste' && PC.etat === 'appli' && millis() - GUIDE.debutEtape > 10000) },
+	{ id: 'somnolence', cible: () => (vue === 'poste' && PC.etat === 'appli' ? 'somnolence' : vue === 'poste' ? 'iconeSignalements' : 'ecranPC'), fait: () => enSieste || (vue === 'poste' && PC.etat === 'appli' && millis() - GUIDE.debutEtape > (typeof EXPO !== 'undefined' && EXPO.actif ? 3000 : 10000)) },
 	// Prompt 66 : étape dédiée au signalement (prendre le dossier lance le compteur)
 	{ id: 'prendre', cible: () => (vue === 'poste' && PC.etat === 'appli' ? 'fileSignalements' : vue === 'poste' ? 'iconeSignalements' : 'ecranPC'), fait: () => PHASES_DOSSIER.includes(phase) || phase === 'narration' || (Jeu.historique || []).length > 0 },
 	{ id: 'actions', cible: () => (vue === 'poste' && PC.etat === 'appli' ? 'actions' : vue === 'poste' ? 'iconeSignalements' : 'ecranPC'), fait: () => (Jeu.historique || []).length > 0 || phase === 'narration' },
@@ -166,6 +166,14 @@ function dessinerGuide() {
 	strokeWeight(4);
 	rect(c.x - 10, c.y - 10, c.l + 20, c.h + 20);
 	noStroke();
+	// Prompt 116 : dossier ou conséquences ouverts → la bulle va sur la carte, à gauche, jamais sur le plaignant ni les répliques
+	const fenetreDossier = vue === 'poste' && PC.etat === 'appli' && (PHASES_DOSSIER.includes(phase) || phase === 'narration');
+	if (fenetreDossier) {
+		if (aGauche) flecheGuide(c.x - 14 - rebond, constrain(c.y + c.h / 2, 120, H - 120), 'droite');
+		else flecheGuide(cx, py, versBas);
+		const cibleAGauche = c.x + c.l < 420; // menu de gauche : la bulle passe dessous, sans le cacher
+		return bulleGuide(texte, 0, cibleAGauche ? constrain(c.y + c.h + 200, 260, H - 110) : constrain(c.y + c.h / 2, 260, H - 260), false, 24, true);
+	}
 	if (aGauche) {
 		const px = c.x - 14 - rebond;
 		const pyG = constrain(c.y + c.h / 2, 120, H - 120);
