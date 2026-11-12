@@ -39,7 +39,7 @@ function chapitreCourant() {
 Jeu.elementDebloque = function (nom) {
 	const ch = chapitreCourant();
 	if (!ch) return true;
-	if (nom === 'equipes') return ch >= 2;
+	if (nom === 'equipes') return true; // prompt 108 : les équipes sont le geste principal de l'appli, dès la semaine 1 (avant : chapitre 2)
 	if (nom === 'crise') return ch >= 3;
 	return true;
 };

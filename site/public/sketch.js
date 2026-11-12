@@ -497,7 +497,9 @@ function dessinerJeu() {
 	dessinerBandeau();
 	dessinerCarteAlertes(); // prompt 102 : la carte des alertes réelles remplace la liste (prompt 73)
 	if (phase === 'selection') return; // prompt 102 : cliquer un marqueur prend le signalement (plus d'étape « Prendre »)
-	else if (phase === 'narration') dessinerNarration();
+	positionnerDialogue(); // prompt 107 : le dossier s'ouvre dans une fenêtre flottante sur la carte
+	if (DIALOGUE.reduit && (phase === 'decision' || phase === 'contradiction') && d) return dessinerOngletDialogue(d);
+	if (phase === 'narration') dessinerNarration();
 	else if (phase === 'conflit') dessinerConflit();
 	else dessinerDossier(d, meteo);
 }
@@ -506,7 +508,8 @@ function dessinerJeu() {
 function dessinerJeuAttente() {
 	dessinerBandeau();
 	dessinerCarteAlertes(); // prompt 102 : carte pleine largeur entre deux signalements
-	if (phase === 'mail') dessinerAttente(), dessinerMail(); // fin de journée : panneau du mail inchangé
+	if (phase === 'mail' || enSieste) Object.assign(PANNEAU, { x: ZONE_CARTE.x + (ZONE_CARTE.l - FENETRE_DIALOGUE.l) / 2, y: ZONE_CARTE.y + 16, l: FENETRE_DIALOGUE.l, h: FENETRE_DIALOGUE.h }); // prompt 107
+	if (phase === 'mail') dessinerMail(); // fin de journée : le mail couvre tout l'écran (prompt 107 : plus de panneau d'attente caché dessous)
 	else if (enSieste) dessinerAttente(); // sieste : le panneau d'attente dit qu'on dort
 }
 
@@ -1094,6 +1097,7 @@ function mousePressed() {
 			return;
 		}
 	}
+	if (typeof debutPanCarte === 'function') debutPanCarte(); // prompt 106 : glisser la carte
 }
 
 function basculerSon() {
@@ -1305,6 +1309,7 @@ function keyPressed() {
 // Prompt 26 : au poste, la molette fait quitter le PC (anti-rebond dans bureau.js) ; ailleurs, scroll normal
 function mouseWheel(event) {
 	interaction();
+	if (typeof molletteCarte === 'function' && molletteCarte(event.delta)) return false; // prompt 106 : zoom de la carte
 	if (molletteCommunity(event.delta)) return false; // prompt 85 : défilement du fil
 	if (mollettePatron(event.delta)) return false; // prompt 86 : historique du patron
 	if (molletteJournal(event.delta)) return false; // prompt 89 : frise du Journal

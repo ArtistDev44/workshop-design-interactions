@@ -258,7 +258,7 @@ function dessinerNotifications(xDroite, y0, echelle) {
 	if (!liste.length) return;
 	const k = echelle || 1;
 	const l = 460 * k;
-	const h = 96 * k;
+	const h = 128 * k; // prompt 107 : trois lignes d'extrait lisibles même à 20 px (taille minimale dans l'appli)
 	liste
 		.slice()
 		.reverse()
@@ -288,9 +288,9 @@ function dessinerNotifications(xDroite, y0, echelle) {
 			text(extrait(n.titre, 30), x + 100 * k, y + 14 * k, l - 116 * k, 26 * k);
 			textStyle(NORMAL);
 			textSize(17 * k);
-			textLeading(21 * k);
+			textLeading(25 * k);
 			fill(DS.blanc75);
-			text(n.extrait, x + 100 * k, y + 44 * k, l - 116 * k, 44 * k);
+			text(n.extrait, x + 100 * k, y + 44 * k, l - 116 * k, 78 * k);
 			boutons.push({ x, y, l, h, action: () => ((n.t = -Infinity), n.action && n.action()) });
 		});
 }

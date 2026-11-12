@@ -9,7 +9,7 @@
  * Enregistré seulement en http(s), jamais en file:// (index.html).
  */
 /* précache:début (généré par scripts/generer-sw.mjs — ne pas modifier à la main) */
-const VERSION = 'nte-regulation-ae11f139f3';
+const VERSION = 'nte-regulation-14761e5061';
 const ESSENTIELS = [
 	"./",
 	"./accessibilite.js",
@@ -55,6 +55,8 @@ const ESSENTIELS = [
 	"./data/fallback/244400404_patrimoine-arbore-nantes-metropole.json",
 	"./data/fallback/323266205_alerte-pollens-nantes.json",
 	"./data/fallback/323266205_indice-atmo-nantes-metropole.json",
+	"./data/lieux.js",
+	"./data/lieux.json",
 	"./data/lignes.js",
 	"./data/lignes.json",
 	"./data/loire.js",
