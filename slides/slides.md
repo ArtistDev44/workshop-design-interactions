@@ -11,6 +11,7 @@ htmlAttrs:
   lang: fr
 lang: fr
 colorSchema: dark
+favicon: /favicon.svg
 aspectRatio: 16/9
 canvasWidth: 980
 highlighter: shiki

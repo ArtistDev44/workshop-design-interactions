@@ -20,6 +20,7 @@ const titre = 'Cartels — PATRIMOINE.EXE · NTE001';
 		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 		<link rel="canonical" href="https://workshop-design-interactions.pages.dev/cartel/" />
 		<meta name="theme-color" content="#0d0c0c" />
+		<link rel="stylesheet" href="/fonts.css" />
 		<meta property="og:type" content="article" />
 		<meta property="og:title" content={titre} />
 		<meta property="og:description" content="Cartels des œuvres de l'édition PATRIMOINE.EXE · NTE001, générés depuis le registre." />
@@ -29,14 +30,15 @@ const titre = 'Cartels — PATRIMOINE.EXE · NTE001';
 		<style>
 			:root { color-scheme: light; --texte: #000000; --fond: #ffffff; --lien: #005ae1; --trait: #5c5c5c; }
 			* { box-sizing: border-box; }
-			body { margin: 0; background: var(--fond); color: var(--texte); font: 1.0625rem/1.55 system-ui, sans-serif; }
+			body { margin: 0; background: var(--fond); color: var(--texte); font: 1.0625rem/1.55 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace; } /* Pixel DS §1.3 */
 			main { max-width: 46rem; margin: 0 auto; padding: 2rem 1rem 4rem; }
 			a { color: var(--lien); }
 			a:focus-visible { outline: 3px solid var(--texte); outline-offset: 2px; }
 			article { border-top: 2px solid var(--texte); padding-top: 1rem; margin-top: 2rem; }
+			h1, h2, h3 { font-family: 'Bitsy Pixels', 'JetBrains Mono', ui-monospace, monospace; } /* Pixel DS §1.3 : titres en Bitsy Pixels */
 			h1 { font-size: 1.75rem; line-height: 1.2; }
 			h2 { font-size: 1.375rem; margin: 0 0 .25rem; }
-			.id { font-family: ui-monospace, monospace; font-size: .9375rem; color: var(--trait); margin: 0; }
+			.id { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: .9375rem; color: var(--trait); margin: 0; }
 			dl { display: grid; grid-template-columns: max-content 1fr; gap: .25rem 1rem; }
 			dt { font-weight: 600; }
 			dd { margin: 0; overflow-wrap: anywhere; }
