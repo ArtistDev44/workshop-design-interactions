@@ -141,8 +141,9 @@ function demarrerJournee() {
 }
 
 // ——— Prompt 43 : transition entre journées — fond noir, « JOUR n — SEMAINE n » et la date, centrés ———
-const DUREE_TRANSITION_JOUR = 5200; // prompt 95 : 2,8 → 5,2 s pour lire l'explication de la journée (Entrée / clic passent)
-const DUREE_TRANSITION_INTRO = 1500; // prompt 112 : jour 1 de la toute première partie — titre et date seulement, le téléphone suit
+// Prompt 180 : plus de temps pour lire — le texte est pleinement lisible de 0,3 s à D − 0,5 s (hors fondus) ; clic, Entrée ou Espace passent
+const DUREE_TRANSITION_JOUR = 9000; // prompt 95 : 2,8 → 5,2 s ; prompt 180 : 5,2 → 9 s (titre, date et 4 à 5 lignes d'explication)
+const DUREE_TRANSITION_INTRO = 4300; // prompt 112 : jour 1 de la toute première partie — titre et date seulement ; prompt 180 : 1,5 → 4,3 s (≈ 3,5 s lisibles)
 const dureeTransition = () => (TRANSITION_JOUR && TRANSITION_JOUR.duree) || DUREE_TRANSITION_JOUR;
 /** Prompt 95 : « lundi 14 septembre » */
 function jourDate(iso) {
