@@ -25,7 +25,7 @@ supplémentaire. Un mapping justifié avant une API.
 
 - `todo.md` — protocole des 3 jours, jalons, checklist de robustesse et barème.
 - `contexte/` — livret étudiant, framework PATRIMOINE.EXE, règles de travail.
-- `prompts/` — 102 prompts numérotés (01 à 99, deux prompts 33, deux prompts 89 et deux prompts 94) pour créer le site Astro.js et le jeu p5.js ; statut ✅ / ◻ dans `prompts/README.md`.
+- `prompts/` — 103 prompts numérotés (01 à 100, deux prompts 33, deux prompts 89 et deux prompts 94) pour créer le site Astro.js et le jeu p5.js ; statut ✅ / ◻ dans `prompts/README.md`.
 - `journal.md` — journal des pushes (une ligne par push, la plus récente en tête).
 - `notes.md` — cette page wiki, les liens des API et les pistes d'animation.
 
@@ -79,6 +79,47 @@ Le site est statique et doit rester fluide sans API distante. Trois leviers, dan
 3. **View Transitions API** d'Astro (`<ViewTransitions />`) pour des changements de page fluides entre la galerie et les cartels.
 
 Contraintes d'accessibilité (prompts 04 et 12) : toujours respecter `prefers-reduced-motion` (désactiver ou réduire les animations), jamais d'animation flashante ni d'effet stroboscopique, durées courtes et easing doux. Une animation doit rendre la chaîne source → grammaire → système → œuvre plus lisible, jamais l'inverse.
+
+## Vérification intégrale du 12/11/2026 (prompt 100)
+
+Jour J3, avant le freeze de midi. Seul ce qui a été exécuté et observé est coché ; ✅ conforme, ⚠️ partiel, ◻ à la charge du groupe.
+
+### 1. Conformité au brief (livret « Cours étudiant B3 Design », sections « Votre projet final », « Livrables », « Notation »)
+
+| Exigence | Preuve | Statut |
+|---|---|---|
+| Source patrimoniale identifiable et documentée | `source-sheet.md` / `.pdf` : contexte, URL, date d'accès, droits, relevés, 3 propriétés, 1 propriété écartée (placeholder contradictoire retiré) | ✅ |
+| Grammaire explicite | `grammar.md` : règle structurante + **7 champs de la fiche du livret ajoutés** (primitives, relations, invariants, variables, temps, déclencheur, limites) + espace génératif (graine) ; `grammar.pdf` régénéré | ✅ |
+| Test de qualité de la grammaire (reconstruction sans la source) | fiche lisible seule, valeurs chiffrées tirées de `game.js` ; non testé sur une personne | ⚠️ |
+| Prototype lançable | `rendu/…/index.html` en `file://` : partie lancée, 15 dossiers, 0 erreur console (Chromium) ; URL canonique en ligne | ✅ |
+| ≥ 3 paramètres opérants | semaine, difficulté, en ligne / hors ligne, défi chrono ; **nouveau test** : budget, aggravation et signalements simultanés ordonnés par niveau (`test-jeu.mjs`) | ✅ |
+| Test par un autre groupe + itération | aucune trace écrite (`todo.md` l. 57 non coché) | ◻ |
+| Documentation pour relancer | README de `rendu/` **réécrit aux 12 rubriques du livret** (il reprenait le README du site) | ✅ (rubriques) / ◻ (contributions, part humaine IA) |
+| Génératif : invariants, variables, plages, cohérence | section « Espace génératif » de `grammar.md` (graine `graineDe`, Q35) | ✅ |
+| Accessibilité de l'interaction | micro et webcam doublés au clavier/souris, pas de flash (≤ 3/s), son non indispensable, contraste calculé | ✅ |
+| Webcam : responsabilité | `webcam.js` : 48 × 27 px, jamais affichée, enregistrée ni envoyée ; activée par un geste | ✅ |
+| Cartel 80–120 mots + source + système | 106 mots ; Système, Données et chaîne ajoutés au `cartel.md` de `rendu/` ; registre aligné (4 réponses, perturbations datées) | ✅ |
+| Manifest | `manifest.json` : JSON valide, 16 champs de l'édition, auteurs, sources et droits ; `ai_usage` avec part humaine `[À COMPLÉTER]` | ⚠️ |
+| Captation | `hero.jpg`, `detail-01.jpg`, `process.jpg` 1920×1080, `thumb.jpg` 640×360, `demo.mp4` **28 s** H.264 1280×720 (`ffprobe`) | ✅ |
+| Structure de dossier recommandée | `rendu/PXE_NTE001_G01_NANTES-EN-REGULATION/` **resynchronisé** avec `site/public/` (polices, correctifs du jour) | ✅ |
+| Présentation | `/presentation/` (Slidev, 17 slides), hors ligne, 0 erreur console | ✅ |
+| Évaluation /70 + /30 | `note-eval.md` mis à jour (preuves du 12/11, score inchangé) ; fiche individuelle de chaque étudiant à remplir | ◻ |
+
+### 2. Fonctionnement, données, accessibilité, documentation
+- [x] `npm run build` + `npm test` : smoke 353 + jeu 536 contrôles verts (dont le nouveau test de difficulté).
+- [x] Parcours Chromium, audit des textes, contrastes, liens, secrets, poids, doc ↔ code : voir le check-up du même jour
+  (prompt 59) ci-dessous — 0 erreur console, 0 défaut A–D, 0 lien cassé.
+- [x] Données : repli `data/fallback.json` = 6 dossiers réels (semaine du 12/10/2026, préparée le 10/11) ; appels
+  API au lancement seulement, échecs hors ligne rattrapés par le repli.
+- [x] QR codes : identiques octet pour octet à `qrencode` sur l'URL canonique et `/cartel/` → mentions
+  « à régénérer » retirées de `site/README.md` et `todo.md`.
+
+### 3. Ce que seul le groupe peut faire avant la soutenance
+1. **Test croisé silencieux** (30–60 s, un autre groupe, 3 observations) et une itération qui en découle, à consigner.
+2. **Contributions nominatives** et rôles (README de `rendu/`, correspondance compte git → personne, dont « Skyfe »).
+3. **AI usage** : ce qui a été relu, réécrit et testé par le groupe (README, `manifest.json`).
+4. **Fiche individuelle** du livret (3 contributions, une décision de design, une décision technique, une difficulté, IA).
+5. Relecture du cartel ; test des QR codes au téléphone ; fichier `BitsyPixels.woff2` si la police doit être embarquée.
 
 ## Check-up du 12/11/2026 (prompt 59, réexécution après les prompts 92 à 99 et les polices du DS)
 

@@ -16,10 +16,10 @@
     "droits": "Licence Ouverte (Nantes Métropole) ; Open-Meteo : CC BY 4.0 (vérifié le 2026-11-10 sur open-meteo.com/en/licence)"
   },
   "grammaire": {
-    "regle": "Un retard réel d'au moins 10 minutes sur une ligne, ou une alerte météo extrême par rapport à la normale de la semaine, devient un dossier à trancher.",
+    "regle": "Un retard réel d'au moins 10 minutes sur une ligne, une perturbation datée des archives ou une alerte météo extrême par rapport à la normale de la semaine devient un dossier à trancher.",
     "invariants": [
       "Seuil de retard : 10 minutes",
-      "3 actions + « ne rien faire »",
+      "4 réponses par catégorie de dossier, dont « attendre » (prompt 87)",
       "3 jauges : fluidité du réseau, réputation de la salle de contrôle, budget",
       "Aucun événement inventé"
     ],

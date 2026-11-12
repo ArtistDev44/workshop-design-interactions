@@ -125,6 +125,23 @@ for (const lundi of semaines) {
 	verifier(jouer(contexte('fr'), lundi, SUITES[0]).score === jouer(contexte('fr'), lundi, SUITES[0]).score, `${lundi} : deux parties identiques divergent`);
 }
 
+// Prompt 100 : la difficulté est un paramètre réellement opérant (livret : ≥ 3 paramètres) — budget de départ
+// et vitesse d'aggravation d'un même retard changent avec le niveau (hors défi chrono)
+const diff = vm.runInContext(
+	`(() => { Jeu.chargerSemaine(${JSON.stringify(semaines[0])}); const out = {};
+	for (const niveau of ['facile', 'normale', 'difficile']) {
+		Jeu.etat.semaine.difficulte = Object.assign({}, Jeu.etat.semaine.difficulte, { niveau });
+		Jeu.defiChrono = false; Jeu.nouvellePartie();
+		const d = { retard: 12, minute: 600 };
+		out[niveau] = { budget: Jeu.jauges.budget, retard: Jeu.retardEffectif(d, 600 + 20), actifs: Jeu.difficulte().actifs };
+	}
+	return out; })()`,
+	fr,
+);
+verifier(diff.facile.budget > diff.normale.budget && diff.normale.budget > diff.difficile.budget, `difficulté : budget de départ non ordonné ${JSON.stringify(diff)}`);
+verifier(diff.facile.retard < diff.normale.retard && diff.normale.retard < diff.difficile.retard, `difficulté : aggravation non ordonnée ${JSON.stringify(diff)}`);
+verifier(diff.facile.actifs > diff.normale.actifs && diff.normale.actifs > diff.difficile.actifs, `difficulté : signalements simultanés non ordonnés ${JSON.stringify(diff)}`);
+
 // Agenda anticipé : les fiches « fourre-tout » (tous types cochés) ne déclenchent rien
 const affl = vm.runInContext(
 	`(() => { Jeu.chargerSemaine('2026-10-12'); Jeu.nouvellePartie();

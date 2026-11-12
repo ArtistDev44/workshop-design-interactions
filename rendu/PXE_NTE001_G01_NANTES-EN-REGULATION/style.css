@@ -5,7 +5,13 @@ body {
 	height: 100%;
 	background: #0c1016; /* prompt 27 : sombre dès le premier affichage, même teinte que le fond autour de la pièce */
 	color: #ffffff;
-	font-family: Inter, system-ui, sans-serif;
+	font-family: 'JetBrains Mono', ui-monospace, Menlo, Consolas, 'Courier New', monospace; /* Pixel DS §1.3 : paragraphes en JetBrains Mono (fonts.css) */
+}
+/* Pixel DS §1.3 : titres en « Bitsy Pixels » (police pixel, fonts.css) */
+h1,
+h2,
+h3 {
+	font-family: 'Bitsy Pixels', 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
 }
 #scene {
 	width: 100vw;

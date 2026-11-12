@@ -111,7 +111,7 @@ Wi-Fi coupé sur la machine d'exposition.
   qrencode -o public/assets/qr-pxe-nte001-g01-w01.png -s 20 -m 2 -l M "https://workshop-design-interactions.pages.dev/cartel/"
   ```
 
-  ⚠ Les PNG actuels datent du prompt 13 (10/11/2026) et ont été générés avec l'ancienne adresse GitHub Pages (404) : **à régénérer** avec ces commandes, puis à tester avec un téléphone en conditions réelles avant l'exposition.
+  Les PNG actuels pointent vers l'URL canonique (régénérés au commit dea5dc4 ; identiques octet pour octet à la sortie de ces commandes, vérifié le 12/11/2026). Reste à les tester avec un téléphone en conditions réelles avant l'exposition.
 
 ## Coquille Astro (choix du prompt 33)
 

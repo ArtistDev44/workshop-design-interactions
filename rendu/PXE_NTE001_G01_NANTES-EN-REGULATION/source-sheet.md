@@ -13,7 +13,7 @@ Format du livret (fiche-source V1). Contexte et propriétés observables remplis
 | Droits / licence | Licence Ouverte (Nantes Métropole) ; Open-Meteo : CC BY 4.0 (Attribution 4.0 International), vérifié sur https://open-meteo.com/en/licence le 2026-11-10 — attribution requise avec lien près des données affichées (le jeu cite « Open-Meteo » à l'accueil et au bilan) |
 | Relevés | Tracés de 96 lignes (data/lignes.json), 3 semaines d'archives (data/semaines/), flux GTFS-RT décodé (mode « aujourd'hui ») |
 | 3 propriétés observables | 1. le **retard en minutes par ligne** (GTFS-RT, seuil de 10 min) ; 2. les **perturbations datées** du changelog GTFS (nature : travaux, manifestation, mouvement social, événement), souvent sans ligne ni durée ; 3. le **contexte du jour** : météo journalière (températures, pluie, rafales, archive Open-Meteo) et événements de l'agenda (type, lieu). |
-| 1 propriété volontairement écartée | Confirmée par le groupe (11/11/2026) : les **alertes de service** du flux GTFS-RT (« alerts », déclaré dans `gtfsrt.js` mais non exploité) — le jeu ne garde que les retards mesurés (« trip updates »), pour que chaque dossier repose sur un chiffre et non sur un message rédigé. `[À COMPLÉTER]` : confirmation du groupe. |
+| 1 propriété volontairement écartée | Confirmée par le groupe (11/11/2026) : les **alertes de service** du flux GTFS-RT (« alerts », déclaré dans `gtfsrt.js` mais non exploité) — le jeu ne garde que les retards mesurés (« trip updates »), pour que chaque dossier repose sur un chiffre et non sur un message rédigé. |
 
 Limite assumée : le changelog GTFS ne donne ni durée de retard ni toujours la ligne : les dossiers
 d'archive n'affichent que ce que dit la source. Seul le mode « aujourd'hui » (GTFS-RT) donne des
