@@ -207,7 +207,8 @@ function majNotifications() {
 	}
 	if (nb.commentaires > V.commentaires) {
 		const c = Jeu.commentaires[nb.commentaires - 1];
-		notifier({ titre: t('notif.community'), extrait: extrait(c && (c.texte !== undefined ? (c.auteur ? c.auteur + ' : ' : '') + c.texte : c), 70), icone: 'community', action: () => ouvrirAppliNotif('community') });
+		notifier({ titre: t(c && c.retour ? 'notif.retour' : 'notif.community'), extrait: extrait(c && (c.texte !== undefined ? (c.auteur ? c.auteur + ' : ' : '') + c.texte : c), 70), icone: 'community', action: () => ouvrirAppliNotif('community') });
+		if (c && c.retour) annoncer(t('annonce.retour', { auteur: String(c.auteur), texte: String(c.texte) })); // prompt 121 : le signalement est terminé
 	}
 	if (nb.plaintes > V.plaintes) {
 		const p = Jeu.plaintes[nb.plaintes - 1];

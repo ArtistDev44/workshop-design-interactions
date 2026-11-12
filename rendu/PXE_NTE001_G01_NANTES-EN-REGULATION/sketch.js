@@ -761,6 +761,26 @@ function dessinerNarration() {
 	textFont(POLICE_DONNEES);
 	textSize(18);
 	text(t('narration.entete', { ton: t('ton.nom.' + r.narration.ton) }), z.x + 32, z.y + 32);
+	// Prompt 121 : statut du signalement — clos (aucune équipe) ou en attente du retour du plaignant (équipe envoyée)
+	const iSig = Jeu.paquet.indexOf(r.dossier);
+	const stSig = iSig >= 0 && Jeu.statutSignalement ? Jeu.statutSignalement(iSig) : null;
+	if (stSig && stSig !== 'ouvert') {
+		const eqSig = (Jeu.equipes || []).filter((q) => q.index === iSig && !q.inutile).map((q) => String(q.nom)).join(', ');
+		const libSig = t('sig.statut.' + stSig, { equipe: eqSig });
+		textSize(18);
+		const lSig = Math.min(z.l - 420, textWidth(libSig) + 28);
+		noFill();
+		stroke(stSig === 'attente' ? C.orange : C.gris);
+		strokeWeight(2);
+		rect(z.x + z.l - 32 - lSig, z.y + 24, lSig, 34);
+		noStroke();
+		fill(stSig === 'attente' ? C.orange : C.gris);
+		textAlign(CENTER, CENTER);
+		ajusterTaille(libSig, lSig - 20, 18, 14);
+		zoneTexteDeclarer('statutSignalement', z.x + z.l - 32 - lSig + 10, z.y + 28, lSig - 20, 26);
+		text(libSig, z.x + z.l - 32 - lSig / 2, z.y + 41);
+		textAlign(LEFT, TOP);
+	}
 	fill(C.texte);
 	textFont(POLICE_TEXTE);
 	textStyle(BOLD);

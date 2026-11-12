@@ -282,7 +282,7 @@ const eq = vm.runInContext(
 	const amb = Jeu.equipes[0];
 	const rep0 = Jeu.jauges.reputation;
 	Jeu.majEquipes(t0 + 20001);
-	const gain = Jeu.jauges.reputation - rep0 - 1; // − commentaire « équipe » (+1)
+	const gain = Jeu.jauges.reputation - rep0; // prompt 121 : plus de commentaire à l'arrivée (le retour du plaignant vient à la fin de l'intervention)
 	// Sauvegarde / reprise : le cycle continue
 	const snap = JSON.parse(JSON.stringify(Jeu.instantane(t0 + 30000)));
 	// Remise à zéro le matin
@@ -303,6 +303,49 @@ verifier(eq.libreAvant === 0 && eq.libreApres === 1, `équipes : retour après r
 verifier(eq.pert === true ? eq.gain === eq.eff : eq.gain === Math.round(eq.eff / 2), `équipes : effet ${eq.gain} (pertinente : ${eq.pert}, plein : ${eq.eff})`);
 verifier(eq.snapPhase, 'équipes : la sauvegarde ne garde pas le cycle');
 verifier(eq.policeAvant === 1 && eq.policeMatin === 2, `équipes : effectifs non remis à zéro le matin (${eq.policeAvant} → ${eq.policeMatin})`);
+
+// Prompt 121 : sans équipe → clos ; avec équipe → en attente jusqu'à la fin de l'intervention, puis retour du plaignant
+{
+	const r = vm.runInContext(
+		`(() => {
+		Jeu.chargerSemaine('2026-10-12'); Jeu.nouvellePartie(); Jeu.jauges.budget = 100; Jeu.jauges.reputation = 50;
+		Jeu.elementDebloque = () => true;
+		const T0 = 5000000;
+		const ouvert = Jeu.statutSignalement(0);
+		const e = Jeu.envoyerEquipe(0, 'techniciens', T0);
+		const q = Jeu.equipes[0];
+		Jeu.index = 2; // le joueur a répondu aux dossiers 0 (avec équipe) et 1 (sans équipe)
+		const clos = Jeu.statutSignalement(1);
+		const attente = Jeu.statutSignalement(0);
+		const nAtt = Jeu.signalementsEnAttente().length;
+		Jeu.majEquipes(q.arrivee + 1);
+		const surPlace = Jeu.statutSignalement(0);
+		const n0 = Jeu.commentaires.length; const rep0 = Jeu.jauges.reputation;
+		Jeu.majEquipes(q.finIntervention + 1);
+		const termine = Jeu.statutSignalement(0);
+		const gainRep = Jeu.jauges.reputation - rep0;
+		const c = Jeu.commentaires[Jeu.commentaires.length - 1];
+		const pl = Jeu.plaignantPour(0);
+		Jeu.majEquipes(q.finIntervention + 5000);
+		const unSeul = Jeu.commentaires.length - n0;
+		// équipe inutile : envoyée après la réponse, le signalement reste clos
+		const inutile = Jeu.envoyerEquipe(1, 'police', T0 + 200000);
+		Jeu.majEquipes(T0 + 900000);
+		// reprise : aucun remerciement en double, et une ancienne sauvegarde (sans drapeau) non plus
+		const snap = JSON.parse(JSON.stringify(Jeu.instantane(T0 + 900000)));
+		snap.equipes.forEach((x) => delete x.remercie);
+		const nAvant = Jeu.commentaires.length;
+		Jeu.restaurerInstantane(snap, T0 + 900000); Jeu.index = 2; Jeu.majEquipes(T0 + 2000000);
+		return { ouvert, ok: e.ok, clos, attente, nAtt, surPlace, termine, retour: !!(c && c.retour), auteur: c && c.auteur, attendu: pl ? pl.auteur : null, texte: c && String(c.texte), index: c && c.index, gainRep, unSeul, inutileOk: inutile.ok, closApres: Jeu.statutSignalement(1), doublon: Jeu.commentaires.length - nAvant, fin: Jeu.signalementsEnAttente().length };
+		})()`,
+		contexte('fr'),
+	);
+	verifier(r.ouvert === 'ouvert' && r.ok && r.clos === 'clos', `retour : sans équipe ${r.clos} (attendu clos), avant réponse ${r.ouvert}`);
+	verifier(r.attente === 'attente' && r.nAtt === 1 && r.surPlace === 'attente', `retour : avec équipe ${r.attente}, sur place ${r.surPlace}, en attente ${r.nAtt}`);
+	verifier(r.termine === 'termine' && r.retour && r.index === 0 && r.unSeul === 1 && r.gainRep === 1, `retour : fin ${r.termine}, ${r.unSeul} retour(s), réputation +${r.gainRep}`);
+	verifier((!r.attendu || r.auteur === r.attendu) && r.texte && !r.texte.includes('{') && !r.texte.includes('[À COMPLÉTER]'), `retour : auteur ${r.auteur} (plaignant ${r.attendu}), texte « ${r.texte} »`);
+	verifier(r.inutileOk === false && r.closApres === 'clos' && r.doublon === 0 && r.fin === 0, `retour : équipe inutile ${r.closApres}, doublon à la reprise ${r.doublon}, encore en attente ${r.fin}`);
+}
 
 // Prompt 69 : fin de journée — phase « soir », nuit à 21 h, sortie → lendemain 8 h (prompt 76 ; ou bilan le dernier jour)
 {
