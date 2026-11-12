@@ -9,8 +9,13 @@ const depot = 'https://github.com/ArtistDev44/workshop-design-interactions/blob/
 const prompts = md
 	.split('\n')
 	.map((l) => l.split('|').map((c) => c.trim()))
-	.filter((c) => c.length === 6 && /^\d{2}$/.test(c[1]) && /\.md`$/.test(c[2]))
+	.filter((c) => c.length === 6 && /^\d{2,3}$/.test(c[1]) && /\.md`$/.test(c[2]))
 	.map((c) => ({ n: c[1], fichier: c[2].replace(/`/g, ''), objectif: c[3], statut: c[4] }));
+// Qui a fait chaque prompt : prompts/auteurs.json, généré depuis git par `npm run auteurs` (ajout du fichier)
+const auteurs = JSON.parse(readFileSync(resolve(process.cwd(), '../prompts/auteurs.json'), 'utf8'));
+prompts.forEach((p) => (p.auteur = auteurs[p.fichier] || null));
+const recap = ['Guillaume', 'Mattéo'].map((nom) => ({ nom, n: prompts.filter((p) => p.auteur === nom).length }));
+const nonAttribues = prompts.filter((p) => !p.auteur).length;
 // Étape de la chaîne source → grammaire → système → œuvre, déduite du numéro (voir prompts/README.md)
 const etape = (n, f) => {
 	const k = Number(n);
@@ -60,6 +65,13 @@ const description = `Les ${prompts.length} prompts qui ont construit l'œuvre, d
 			h2 { font-size: 1.375rem; border-top: 2px solid var(--texte); padding-top: 1rem; margin-top: 2.5rem; }
 			nav ol { display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; padding: 0; list-style: none; }
 			ol.prompts { padding: 0; list-style: none; }
+			.recap { display: flex; flex-wrap: wrap; gap: .75rem; padding: 0; list-style: none; margin: 1.5rem 0; }
+			.recap li { border: 2px solid var(--texte); padding: .75rem 1rem; min-width: 12rem; }
+			.recap strong { display: block; font-size: 1.5rem; }
+			.recap .barre { display: block; height: .5rem; background: #d6d6d6; margin-top: .5rem; }
+			.recap .barre span { display: block; height: 100%; background: var(--texte); }
+			.auteur { display: inline-block; font-size: .8125rem; font-weight: 700; padding: .05rem .5rem; margin-left: .5rem; border: 1px solid var(--texte); vertical-align: middle; }
+			.auteur.matteo { background: #000000; color: #ffffff; }
 			ol.prompts li { display: grid; grid-template-columns: 3rem 1fr; gap: .25rem 1rem; padding: .75rem 0; border-bottom: 1px solid #d6d6d6; }
 			.n { font-family: 'JetBrains Mono', ui-monospace, monospace; font-weight: 700; }
 			.statut { font-size: .9375rem; color: var(--trait); }
@@ -72,6 +84,18 @@ const description = `Les ${prompts.length} prompts qui ont construit l'œuvre, d
 			<p><a href="/">← Jouer à « Nantes en régulation »</a> · <a href="/cartel/">Cartel</a> · <a href="/presentation/">Présentation</a></p>
 			<h1>Making-of : la chaîne des prompts</h1>
 			<p>{description} Chaque prompt est une étape vérifiable, exécutée avec un assistant IA puis contrôlée (build, smoke test, essai du jeu). Liste générée au build depuis <code>prompts/README.md</code>.</p>
+			<h2 id="qui" style="border-top: 0; margin-top: 1.5rem; padding-top: 0;">Qui a fait quoi</h2>
+			<ul class="recap" aria-labelledby="qui">
+				{recap.map((r) => (
+					<li>
+						{r.nom}
+						<strong>{r.n} prompts</strong>
+						{Math.round((100 * r.n) / prompts.length)} % de la chaîne
+						<span class="barre" aria-hidden="true"><span style={`width: ${(100 * r.n) / prompts.length}%`} /></span>
+					</li>
+				))}
+			</ul>
+			<p class="statut">Attribution : compte git qui a ajouté le fichier du prompt (ArtistDev44, l'agent « Vibe Nuage Agent » et Skyfe pour Guillaume ; matteobvt49-code pour Mattéo).{nonAttribues > 0 && ` ${nonAttribues} prompt(s) pas encore attribué(s).`}</p>
 			<nav aria-label="Étapes de la chaîne">
 				<ol>{etapes.map((e) => <li><a href={'#' + e.id}>{e.titre}</a> ({prompts.filter((p) => etape(p.n, p.fichier) === e.id).length})</li>)}</ol>
 			</nav>
@@ -85,6 +109,7 @@ const description = `Les ${prompts.length} prompts qui ont construit l'œuvre, d
 								<span class="n">{p.n}</span>
 								<div>
 									<a href={depot + p.fichier}><code>{p.fichier}</code></a>
+									{p.auteur && <span class={p.auteur === 'Mattéo' ? 'auteur matteo' : 'auteur'}>fait par {p.auteur}</span>}
 									<div set:html={enLigne(p.objectif)} />
 									<div class="statut" set:html={'Statut : ' + enLigne(p.statut)} />
 								</div>
