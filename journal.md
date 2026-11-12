@@ -4,6 +4,7 @@ Règle : chaque push sur la branche main ajoute une entrée dans le tableau, la 
 
 | Date | Commit | Fichiers | Résumé |
 |---|---|---|---|
+| 2026-11-12 | ce commit | prompts/120 (nouveau), prompts/README.md, site/public/logo/planche.html (nouveau) | Prompt 120 : planche de comparaison des 4 pistes de logo (pin d'alerte, bulle-pin recommandée, écran de régulation, logotype pixel) avec le logo actuel en référence, 3 tailles, fond sombre et clair, 6 palettes |
 | 2026-11-12 | ce commit | journal.md | Fusion dans main des prompts 117 à 119 (clash, plaignants désagréables, incidents inventés marqués Fictif), sans conflit ; build + tests verts |
 | 2026-11-12 | ce commit | prompts/117-119 (nouveaux), site/public/{game,panneau,sketch,carte-alertes,i18n,audit-textes}.js, data/messages.json/.js, data/reponses.json/.js, scripts/test-jeu.mjs (+ copie rendu/), jeu/117-119-clash-plaignants-incidents.md | Prompts 117 à 119 rédigés puis exécutés : 3 répliques mélangées et indiscernables dont un clash insolent (attendre + réputation −8, compté raté) ; 8 plaintes au ton agressif (≈ 1 sur 3, mots masqués &#@!, conditions réelles) ; incidents inventés rares (agression, vol à main armée, 1 par semaine au plus, toujours marqués « Fictif », ligne réelle, catégorie securite, ?fictifs=0). Build, tests (510 + 565), audit textes 0 défaut |
 | 2026-11-12 | ce commit | journal.md | Fusion dans main du prompt 116 (réponses au plaignant diversifiées), sans conflit ; build + tests verts |
