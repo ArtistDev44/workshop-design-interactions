@@ -21,10 +21,10 @@ blanc 15 %, fond `DS.fond`). Quatre onglets, dans cet ordre :
 
 1. **Bien démarrer** — l'objectif en trois lignes (jauges, score), puis le bouton primaire
    « Lancer le tutoriel (T) ».
-2. **Règles** — le texte actuel découpé en **cartes titrées** (une clé i18n par carte, FR + EN) :
-   Signalements · Répondre · Gravité et retard · Équipes · Somnolence et défi chrono · Le patron ·
-   Tâches du jour · Comprendre une décision. Le glossaire devient une carte à part, en lignes
-   libellé / définition.
+2. **Règles** — le texte actuel (`aide.texte`, inchangé) découpé par paragraphe en **cartes titrées** (un
+   titre i18n par carte, `aide.carte.0` à `9`, FR + EN) : Signalements · Répondre · Gravité et retard ·
+   Le patron · Tâches du jour · Défi chrono · Somnolence · Comprendre une décision. Le glossaire devient une
+   carte à part, en lignes terme / définition.
 3. **Raccourcis** — regroupés par contexte, avec un sous-titre : Signalement · Équipes et carte · Bureau ·
    Général. La touche est dans une **capsule** (cadre, police des données).
 4. **Malus** — une ligne par malus : nom, condition → conséquence.
@@ -39,7 +39,7 @@ blanc 15 %, fond `DS.fond`). Quatre onglets, dans cet ordre :
 
 ## 4. Navigation
 
-- Onglets : clic, ← → ou Tab ; touches 1 à 4. L'onglet actif a le liseré primaire et la double bordure au
+- Onglets : clic, ← → ou Tab ; touches 1 à 4 ; ↑ ↓ changent de page. L'onglet actif a le liseré primaire et la double bordure au
   focus clavier.
 - H, ? ou Échap ferment ; T lance le tutoriel depuis n'importe quel onglet.
 - L'onglet ouvert est annoncé (`aria-live`) avec son titre.

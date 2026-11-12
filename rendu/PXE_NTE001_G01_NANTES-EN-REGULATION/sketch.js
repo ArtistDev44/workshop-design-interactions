@@ -1175,6 +1175,7 @@ function keyPressed() {
 	// Fenêtres ouvertes : elles captent le clavier
 	if (fenetre) {
 		if (keyCode === ESCAPE || (fenetre === 'aide' && (key === 'h' || key === 'H' || key === '?'))) return fermer(), false;
+		if (fenetre === 'aide' && toucheAide()) return false; // prompt 123 : onglets (← → Tab, 1 à 4) et pages (↑ ↓)
 		if (fenetre === 'aide' && (key === 't' || key === 'T')) return lancerTutoriel(), false; // prompt 34
 		if (fenetre === 'telephone' && (keyCode === ENTER || keyCode === RETURN)) return fermer(), false; // prompt 38
 		if (fenetre === 'poste' && (keyCode === ENTER || keyCode === RETURN || key === ' ')) return fermer(), false; // prompt 74
@@ -1414,102 +1415,7 @@ function dessinerFenetre() {
 	if (fenetre === 'telephone') return fenetreTelephone(); // prompt 38
 }
 
-function fenetreAide() {
-	// Prompt 66 : aide réorganisée — tous les raccourcis lisibles (≥ 18 px), règles de base complètes (jauges,
-	// seuils, compteur, dé, score) puis la Carte et les équipes ; malus sous les raccourcis.
-	const l = 1720;
-	const h = 1040;
-	const x = (L - l) / 2;
-	const y = (H - h) / 2;
-	panneau(x, y, l, h, C.accent);
-	textAlign(LEFT, TOP);
-	noStroke();
-	fill(C.accent);
-	textFont(POLICE_TEXTE);
-	textStyle(BOLD);
-	textSize(36);
-	text(t('aide.titre'), x + 48, y + 30);
-	textStyle(NORMAL);
-	const raccourcis = [
-		[t('aide.k.entreeTouche'), t('aide.k.entree')],
-		['5 6 7 8', t('aide.k.sources')],
-		[t('aide.k.actionsTouche'), t('aide.k.actions')], // prompt 87 : réponses de la catégorie
-		[t('aide.k.glisserTouche'), t('aide.k.glisser')], // prompts 94 / 97
-		[t('aide.k.quitterJourneeTouche'), t('aide.k.quitterJournee')], // prompts 94 / 97
-		[t('aide.k.rienTouche'), t('aide.k.rien')],
-		['A / B', t('aide.k.ab')],
-		[t('aide.k.majTouche'), t('aide.k.equipes')],
-		['R', t('aide.k.reset')],
-		['P', t('aide.k.pause')],
-		['M', t('aide.k.son')],
-		[t('aide.k.aideTouche'), t('aide.k.aide')],
-		['T', t('aide.k.tuto')],
-		['L · F', t('aide.k.langue')], // prompt 133 : F = plein écran
-		['Tab', t('aide.k.objets')],
-		['← → ↑ ↓', t('aide.k.regarder')],
-		[t('aide.k.quitterTouche'), t('aide.k.quitter')],
-		['↑ ↓', t('aide.k.semaine')],
-		['Z', t('aide.k.sieste')], // prompt 80 : touches ajoutées par les prompts 72 à 79
-	];
-	textSize(24);
-	fill(C.texte);
-	textStyle(BOLD);
-	text(t('aide.raccourcis'), x + 48, y + 96);
-	textStyle(NORMAL);
-	raccourcis.forEach(([k, d], i) => {
-		textFont(POLICE_DONNEES);
-		ajusterTaille(k, 196, 20);
-		fill(C.accent);
-		text(k, x + 48, y + 136 + i * 31);
-		textFont(POLICE_TEXTE);
-		ajusterTaille(d, 580, 20, 14); // prompt 98 : 14 px au minimum
-		fill(C.texte);
-		text(d, x + 260, y + 136 + i * 31);
-	});
-	// Malus (prompt 23 § 4), sous les raccourcis
-	if (Jeu.MALUS) {
-		const ym = y + 136 + raccourcis.length * 31 + 18;
-		textFont(POLICE_TEXTE);
-		textSize(24);
-		textStyle(BOLD);
-		fill(C.texte);
-		text(t('aide.malus'), x + 48, ym);
-		Jeu.MALUS.forEach((m, i) => {
-			const yy = ym + 38 + i * 50;
-			textStyle(BOLD);
-			ajusterTaille(String(m.libelle), 780, 18);
-			fill(C.rouge);
-			text(m.libelle, x + 48, yy);
-			textStyle(NORMAL);
-			const txt = m.condition + ' → ' + m.consequence;
-			ajusterTaille(txt, 790, 18);
-			fill(C.gris);
-			text(txt, x + 48, yy + 23);
-		});
-	}
-	// Règles (00-concept, 03-actions, 04-jauges) puis la Carte (prompt 68)
-	const rx = x + 900;
-	const rl = l - (rx - x) - 48;
-	textSize(24);
-	textStyle(BOLD);
-	fill(C.texte);
-	text(t('aide.regles'), rx, y + 96);
-	textStyle(NORMAL);
-	// Prompt 80 : le texte des règles s'est allongé (prompts 72 à 79) — la taille s'ajuste pour qu'il tienne en entier
-	const regles = t('aide.texte');
-	let ts = 19;
-	for (; ts > 13; ts--) {
-		textSize(ts);
-		const lignes = regles.split('\n').reduce((n, par) => n + Math.max(1, Math.ceil((textWidth(par) * 1.08) / rl)), 0);
-		if (lignes * Math.round(ts * 1.4) <= 820) break;
-	}
-	textLeading(Math.round(ts * 1.4));
-	text(regles, rx, y + 136, rl, 820);
-	textLeading(textSize() * 1.25);
-	// Prompt 122 : le tutoriel se lance d'ici (bouton primaire) — seul chemin depuis le menu « Aide et tutoriel »
-	bouton(x + l - 288, y + h - 92, 240, 60, t('commun.fermer'), fermer, false, true);
-	bouton(x + l - 288 - 400, y + h - 92, 380, 60, t('tuto.relancer'), lancerTutoriel);
-}
+// Prompt 123 : la fenêtre d'aide (onglets, cartes, pagination) est dans aide.js
 
 function fenetreReset() {
 	const l = 760;

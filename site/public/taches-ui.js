@@ -524,6 +524,7 @@ function fenetreOptionsJeu() {
 		text((i < 9 ? i + 1 + '  ' : '') + titre, cx + 16, cy + 12, lc - 230, 30);
 		textFont(POLICE_DONNEES);
 		textSize(15);
+		textLeading(19); // prompt 123 : interligne fixé ici (il dépendait de la dernière fenêtre dessinée, l'ancienne aide le remettait à zéro)
 		fill(C.gris);
 		if (nom !== 'carriere') text(t('optjeu.' + nom + '.detail'), cx + 16, cy + 46, lc - 230, 72);
 		if (nom === 'carriere') bouton(cx + lc - 16 - 260, cy + 30, 260, 64, t(confirmerRemiseCarriere && millis() - confirmerRemiseCarriere < 5000 ? 'optjeu.confirmerBouton' : 'optjeu.remettre'), remettreCarriere, false, true);

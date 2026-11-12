@@ -304,6 +304,18 @@ verifier(eq.pert === true ? eq.gain === eq.eff : eq.gain === Math.round(eq.eff /
 verifier(eq.snapPhase, 'équipes : la sauvegarde ne garde pas le cycle');
 verifier(eq.policeAvant === 1 && eq.policeMatin === 2, `équipes : effectifs non remis à zéro le matin (${eq.policeAvant} → ${eq.policeMatin})`);
 
+// Prompt 123 : l'aide en onglets — 10 paragraphes de règles (FR et EN), un titre par carte, aide.js chargé
+for (const [nom, ctx] of [['fr', contexte('fr')], ['en', contexte('en')]]) {
+	const r = vm.runInContext(`({ n: t('aide.texte').split('\\n\\n').length, titres: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => t('aide.carte.' + i)), autres: ['aide.onglet.demarrer', 'aide.onglet.annonce', 'aide.page', 'aide.clavier', 'aide.tuto.titre', 'aide.tuto.texte', 'aide.groupe.signalement', 'aide.groupe.equipes', 'aide.groupe.bureau', 'aide.groupe.general'].map((k) => t(k)) })`, ctx);
+	verifier(r.n === 10, `aide (${nom}) : ${r.n} paragraphes de règles au lieu de 10 (les cartes de aide.js suivent cet ordre)`);
+	verifier(r.titres.concat(r.autres).every((x) => x && !/^aide\./.test(x) && !x.includes('[À COMPLÉTER]')), `aide (${nom}) : titre ou libellé manquant`);
+}
+{
+	const aide = readFileSync(join(pub, 'aide.js'), 'utf8');
+	verifier(/<script src="\.\/aide\.js"><\/script>/.test(readFileSync(join(pub, 'index.html'), 'utf8')) && /function fenetreAide\(/.test(aide) && !/function fenetreAide\(/.test(readFileSync(join(pub, 'sketch.js'), 'utf8')), 'aide : aide.js non chargé, ou fenetreAide en double');
+	verifier(/taille: 20/.test(aide) && !/for \(; ts > 13/.test(aide), 'aide : le texte courant doit rester à 20 px (pagination, pas de rétrécissement)');
+}
+
 // Prompt 121 : sans équipe → clos ; avec équipe → en attente jusqu'à la fin de l'intervention, puis retour du plaignant
 {
 	const r = vm.runInContext(
@@ -2009,7 +2021,7 @@ for (const [langue, mots] of [
 	for (const [k, re] of Object.entries(mots)) verifier(re.test(k === 'guide' ? a.guide : k === 'diff' ? a.diff : tout), `aide / guide (prompt 97, ${langue}) : « ${k} » absent`);
 	verifier(!/briefing du matin|morning briefing|info trafic \(4 blocs|traffic info \(4 exact/.test(a.texte), `aide (prompt 97, ${langue}) : décrit encore le briefing ou l'info trafic retirés au prompt 91`);
 }
-verifier(/aide\.k\.glisserTouche/.test(readFileSync(join(pub, 'sketch.js'), 'utf8')) && /texteDifficulteChapitre/.test(readFileSync(join(pub, 'menu.js'), 'utf8')), 'prompt 97 : aide (glisser, Q) et difficulté du mode histoire affichées');
+verifier(/aide\.k\.glisserTouche/.test(readFileSync(join(pub, 'aide.js'), 'utf8')) && /texteDifficulteChapitre/.test(readFileSync(join(pub, 'menu.js'), 'utf8')), 'prompt 97 : aide (glisser, Q) et difficulté du mode histoire affichées');
 
 // Prompt 98 (skill game-ui-design, validations.md) : aucun texte fixe sous 14 px, boutons qui ne rétrécissent pas
 // sous 14 px, zones de clic élargies (✕ des applis, somnolence), infobulle du bandeau temporisée (350 ms)
