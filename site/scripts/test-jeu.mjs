@@ -2427,6 +2427,16 @@ for (const langue of ['fr', 'en']) {
 	verifier(/'icones'/.test(readFileSync(join(pub, 'credits.js'), 'utf8')) && /lucide\.dev/.test(readFileSync(join(pub, '..', 'src', 'pages', 'cartel.astro'), 'utf8')), 'prompt 170 : Lucide non crédité (credits.js, cartel)');
 }
 
+// Prompt 180 : écrans « Jour N sur N » — au moins 3,5 s de texte pleinement lisible (hors fondus 0,3 s + 0,5 s), passables
+{
+	const im180 = readFileSync(join(pub, 'immersion.js'), 'utf8');
+	const d = (nom) => Number((im180.match(new RegExp('const ' + nom + ' = (\\d+);')) || [])[1]);
+	verifier(d('DUREE_TRANSITION_INTRO') - 800 >= 3500, 'prompt 180 : transition du premier jour lisible moins de 3,5 s');
+	verifier(d('DUREE_TRANSITION_JOUR') - 800 >= 8000, 'prompt 180 : transition de journée (avec explication) lisible moins de 8 s');
+	verifier(/boutons = \[\{ x: 0, y: 0, l: L, h: H, action: passerTransitionJour \}\]/.test(im180) && /TRANSITION_JOUR && \(keyCode === ENTER \|\| keyCode === RETURN \|\| key === ' '/.test(readFileSync(join(pub, 'sketch.js'), 'utf8')), 'prompt 180 : la transition ne se passe plus au clic, à Entrée ou à Espace');
+	verifier(/TRANSITION_JOUR/.test((im180.match(/function tempsSuspendu\(\) \{\n[^\n]*/) || [''])[0]), 'prompt 180 : le temps de jeu n\'est plus suspendu pendant la transition');
+}
+
 // Prompt 171 : menu principal épuré — plus d'entrée « Aide et tutoriel » ni « Crédits », plus de mention « PXE- »,
 // logo et bloc langue + installation sur la même ligne, « Retour » sans flèche, interlignage du sous-titre
 {
