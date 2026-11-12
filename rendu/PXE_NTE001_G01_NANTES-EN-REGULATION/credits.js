@@ -1,6 +1,6 @@
 /* Nantes en régulation — prompt 113 : écran « Crédits » du menu principal (MENU.ecran = 'credits').
  * L'équipe (portraits fournis par le groupe, ./assets/credits/), la licence (d'après LICENSE et audio/CREDITS.md)
- * et l'usage de l'IA (d'après l'historique du dépôt). Dessiné par le code avec le Pixel DS (prompt 114 : fenêtres et
+ * et l'usage de l'IA (d'après l'historique du dépôt). Dessiné par le code avec le Pixel DS (prompt 117 : fenêtres et
  * lignes libellé / valeur) ; aucun fait inventé :
  * ce que le dépôt ne dit pas reste « [À COMPLÉTER] ». Échap / « Retour » ramènent au menu.
  */
@@ -39,7 +39,7 @@ const LIENS_CREDITS = [
 	{ cle: 'retour', action: fermerCredits },
 ];
 
-// ——— Prompt 114 : fenêtres du Pixel DS (comme la diapositive « L'équipe ») et lignes libellé / valeur ———
+// ——— Prompt 117 : fenêtres du Pixel DS (comme la diapositive « L'équipe ») et lignes libellé / valeur ———
 const LIGNES_LICENCE = ['code', 'donnees', 'lieux', 'biblio', 'musiques'];
 const LIGNES_IA = ['outils', 'methode', 'donnees', 'visuels', 'humain'];
 const BARRE_FEN = 40;

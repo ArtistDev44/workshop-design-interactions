@@ -142,9 +142,9 @@ branche `jeu/110-113-autorisations-badges-intro-credits`.
 - Reste à faire par le groupe : un essai avec un vrai micro et une vraie webcam (Chrome, Firefox, Safari), et
   les champs [À COMPLÉTER] ci-dessus.
 
-## 114 — Écran Crédits redessiné, aucun texte coupé dans le menu
+## 117 — Écran Crédits redessiné, aucun texte coupé dans le menu
 
-Prompt `prompts/114-jeu-credits-design-menu-sans-texte-coupe.md`, branche `jeu/114-credits-design-menu-sans-texte-coupe`.
+Prompt `prompts/117-jeu-credits-design-menu-sans-texte-coupe.md`, branche `jeu/117-credits-design-menu-sans-texte-coupe`.
 
 - **Texte coupé trouvé** (captures 1920×1080, avec une sauvegarde) :
   - le sous-titre de « Reprendre la partie (C) » passait sur deux lignes dans une boîte de 40 px ;

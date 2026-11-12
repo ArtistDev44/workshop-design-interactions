@@ -1,4 +1,4 @@
-# Prompt 114 — Jeu « Nantes en régulation » : nouveau design de l'écran Crédits, aucun texte coupé dans le menu
+# Prompt 117 — Jeu « Nantes en régulation » : nouveau design de l'écran Crédits, aucun texte coupé dans le menu
 
 Demande d'origine (12/11/2026) :
 
@@ -65,5 +65,5 @@ Suite du prompt 113. Le contenu reste factuel : rien d'ajouté sans source, inco
 
 - Captures avant/après du menu (1920 / 1366, FR / EN, avec et sans sauvegarde) et de l'écran Crédits.
 - `npm run build`, `npm test`, audit des textes à 0 défaut aux 3 tailles.
-- Copie dans `rendu/`, ajout au rapport `jeu/110-113-autorisations-badges-intro-credits.md` (section 114),
+- Copie dans `rendu/`, ajout au rapport `jeu/110-113-autorisations-badges-intro-credits.md` (section 117),
   `prompts/README.md`, `journal.md`, `npm run auteurs`.
