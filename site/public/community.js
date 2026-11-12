@@ -426,7 +426,7 @@ function blocPlainteSociale(pl, x, y, l, prive) {
 	dsTexte(pl.auteur + ' · ' + pl.heure, x + 34, yy + 4, 18, DS.blanc50, 'left');
 	const attente = pl.reponse === null && !pl.expiree && !pl.transmise;
 	if (attente) {
-		const reste = Jeu.resteReponse(pl, millis());
+		const reste = Jeu.resteReponse(pl, typeof tempsPlaintes === 'function' ? tempsPlaintes() : millis());
 		dsTexte(t('plainte.delai', { s: Math.ceil(reste / 1000) }), x + l - 8, yy + 4, 18, reste < 30000 ? DS.alerte : DS.blanc75, 'right');
 	}
 	dsTexte(Jeu.texteMessage(pl.def.texte, pl.vars), x + 34, yy + 30, 20, DS.blanc, 'left', l - 60);

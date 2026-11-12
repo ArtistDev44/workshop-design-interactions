@@ -375,6 +375,12 @@
 		add('menu autorisations · tout autorisé', () => (AUTOR.etat = { son: 'autorise', micro: 'autorise', camera: 'autorise' }));
 		[0, 1, 2].forEach((c) => add('menu semaines ' + c, () => (H.raz(), (MENU.actif = true), (MENU.ecran = 'semaines'), (MENU.choixSemaine = c))));
 		['parametres', 'aide', 'optionsJeu', 'accessibilite', 'palmares', 'partage'].forEach((f) => add('menu fenêtre ' + f, () => (H.raz(), (MENU.actif = true), (MENU.ecran = 'titre'), ouvrir(f))));
+		// Prompt 123 : les onglets de l'aide (la fenêtre s'ouvre sur le premier), page 2 des règles comprise
+		add('aide · bien démarrer', () => (H.raz(), (MENU.actif = true), (MENU.ecran = 'titre'), ouvrir('aide')), 16);
+		add('aide · règles 1', () => changerOngletAide(1), 16);
+		add('aide · règles 2', () => pageAide(1), 16);
+		add('aide · raccourcis', () => changerOngletAide(2), 16);
+		add('aide · malus', () => changerOngletAide(3), 16);
 		// Partie : bureau, poste, applis
 		add('partie semaine 1 · bureau', () => (H.partie(0), (vue = 'bureau')), 20);
 		add('poste · RégulOS', () => (H.poste(), (PC.etat = 'os'), (PC.fenetre = null)));
@@ -452,6 +458,19 @@
 		add('fin de semaine · rapport ouvert', () => (fenetre === 'mailFin' && (fenetre = null), ouvrirRapport()), 20);
 		['bonne', 'moyenne', 'mauvaise'].forEach((ty) => add('cinématique ' + ty, () => (H.raz(), lancerCinematique(ty, Object.assign({}, (RAPPORT && RAPPORT.bilan) || {}, { type: ty }))), 40));
 		add('licenciement · lettre', () => (H.raz(), (GAMEOVER = { debut: millis() - 5000, lettre: Jeu.lettreLicenciement(), vue: 'lettre', focus: 0 })), 20);
+		// Prompt 121 : signalement répondu avec une équipe en route — badge de statut, puis marqueur creux sur la carte
+		add('retour · dossier', () => {
+			H.partie(2);
+			H.poste();
+			if (H.dossierDeType('perturbation')) setTimeout(H.prendre, 0);
+		}, 20);
+		add('retour · conséquences, en attente', () => {
+			if (phase === 'contradiction') choisirSource('a');
+			Jeu.envoyerEquipe(Jeu.index, 'techniciens', typeof tempsCarte === 'function' ? tempsCarte() : millis());
+			const d = Jeu.dossierCourant();
+			if (d && phase === 'decision') decider(Jeu.actionsPossibles(d)[0]);
+		}, 12);
+		add('retour · marqueur en attente', () => continuer(), 12);
 		add('licenciement · journal', () => GAMEOVER && (GAMEOVER.vue = 'journal'), 20);
 		add('retour menu', () => (H.raz(), (MENU.actif = true), (MENU.ecran = 'titre')));
 		return E;

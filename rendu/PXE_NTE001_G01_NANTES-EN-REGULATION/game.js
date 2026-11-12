@@ -410,7 +410,7 @@
 		Jeu.plaintes = (s.plaintes || [])
 			.map((p) => Object.assign({}, p, { def: Jeu.MESSAGES.plaintes.find((x) => x.id === p.id), depuis: p.depuis === undefined || p.depuis === null ? undefined : p.depuis + maintenant }))
 			.filter((p) => p.def); // une plainte retirée de messages.json depuis la sauvegarde est ignorée
-		Jeu.equipes = (s.equipes || []).map((q) => Object.assign({}, q, { depart: q.depart + maintenant, arrivee: q.arrivee + maintenant, finIntervention: (q.finIntervention === undefined ? q.arrivee : q.finIntervention) + maintenant, libre: (q.libre === undefined ? q.arrivee : q.libre) + maintenant }));
+		Jeu.equipes = (s.equipes || []).map((q) => Object.assign({}, q, { depart: q.depart + maintenant, arrivee: q.arrivee + maintenant, finIntervention: (q.finIntervention === undefined ? q.arrivee : q.finIntervention) + maintenant, libre: (q.libre === undefined ? q.arrivee : q.libre) + maintenant, remercie: q.remercie === undefined ? q.arrivee_sim !== null : q.remercie })); // prompt 121 : ancienne sauvegarde → pas de remerciement en double
 		Jeu.refusEquipes = s.refusEquipes || 0;
 		Jeu.aggravationLignes = Object.assign({}, s.aggravationLignes || {}); // prompt 79
 		Jeu.statutPatron = Object.assign(nouveauStatut(), s.statutPatron || {}); // prompt 84 (ancienne sauvegarde : statut neuf)
@@ -629,6 +629,7 @@
 		if (clash) deltas[1] = borner(deltas[1] + REGLAGES.malusClash); // prompt 117
 		if (Jeu.modificateurActif && Jeu.modificateurActif() === 'meteo_aggravee') deltas = deltas.map((v) => borner(Math.round(v * 1.5))); // prompt 23 § 2.3
 		if (action === 'temps') Jeu.compterMalus('non_traite');
+		const jaugesAvant = Object.assign({}, Jeu.jauges); // prompt 130 : l'évaluation pondère selon les jauges d'avant la décision
 		NOMS_JAUGES.forEach((k, i) => (Jeu.jauges[k] = Math.max(0, Math.min(100, Jeu.jauges[k] + deltas[i]))));
 		const resultat = {
 			dossier: d,
@@ -646,6 +647,7 @@
 		resultat.minuteSim = Jeu.horloge ? Math.floor(Jeu.horloge.minutes) : null; // heure de la partie (prompt 20)
 		resultat.jour = d.date;
 		resultat.jaugesApres = Object.assign({}, Jeu.jauges); // prompt 48 : courbes du rapport
+		resultat.jaugesAvant = jaugesAvant; // prompt 130
 		const entree = Jeu.journaliser(resultat, ctx);
 		Jeu.majStatutPatron(); // prompt 84 : la décision a changé les jauges
 		// Prompt 79 : mauvaise réaction sur un retard → la ligne reste aggravée jusqu'au soir (malus : ceux qui existent déjà)
@@ -842,6 +844,8 @@
 		return d && j && d.date === j.date ? d : null;
 	};
 	Jeu.journeeSuivante = function () {
+		// Prompt 121 : les interventions déjà sur place la veille au soir reçoivent leur retour avant le matin
+		Jeu.signalementsEnAttente().forEach((s) => s.equipes.every((q) => q.arrivee_sim !== null) && Jeu.retourPlaignant(s.index));
 		Jeu.jourIndex++;
 		Jeu.variantesDuJour = {}; // prompt 88 : les variantes repartent chaque matin
 		Jeu.alertesJauges = {};
@@ -909,6 +913,22 @@
 		});
 	}
 	const somme = (t) => t.reduce((a, b) => a + b, 0);
+	/** Prompt 130 : poids d'une jauge = ce qui lui manque, (100 − v) / 50, borné à [0,25 ; 2] — une jauge basse compte double */
+	Jeu.poidsBesoin = (j) => NOMS_JAUGES.map((k) => Math.max(0.25, Math.min(2, (100 - (j && j[k] !== undefined ? j[k] : 50)) / 50)));
+	const ponderer = (effets, poids) => effets.reduce((a, v, i) => a + v * poids[i], 0);
+	/** Prompt 130 : tolérance (points pondérés) sous laquelle une réponse vaut la meilleure */
+	const TOLERANCE_BON = 1;
+	/** Prompt 130 : réponses que l'évaluation jugerait bonnes MAINTENANT (aide à la décision, en option) */
+	Jeu.reponsesConseillees = function (d) {
+		if (!d) return [];
+		const poids = Jeu.poidsBesoin(Jeu.jauges);
+		const ctx = contexte(d);
+		const v = {};
+		const as = Jeu.actionsPossibles(d);
+		as.forEach((a) => (v[a] = ponderer(effetAttendu(a, d, ctx), poids)));
+		const max = Math.max(...as.map((a) => v[a]));
+		return as.filter((a) => v[a] >= max - TOLERANCE_BON);
+	};
 
 	/** Événement externe réel du dossier (nature, météo, affluence) — jamais inventé */
 	function externe(d, ctx) {
@@ -922,7 +942,12 @@
 		const attendus = {};
 		const evaluees = Jeu.actionsPossibles(d); // prompt 87 : réponses de la catégorie, ou la table Q57–Q60 en repli
 		evaluees.forEach((a) => (attendus[a] = somme(effetAttendu(a, d, ctx))));
-		const meilleure = evaluees.slice().sort((a, b) => attendus[b] - attendus[a])[0];
+		// Prompt 130 : la meilleure réponse est jugée sur l'effet PONDÉRÉ par le besoin de chaque jauge (avant la décision),
+		// pas sur la somme brute — sinon « attendre » (budget +, fluidité −) gagnait partout où c'est calme et menait au licenciement
+		const poids = Jeu.poidsBesoin(r.jaugesAvant || Jeu.jauges);
+		const attendusPonderes = {};
+		evaluees.forEach((a) => (attendusPonderes[a] = ponderer(effetAttendu(a, d, ctx), poids)));
+		const meilleure = evaluees.slice().sort((a, b) => attendusPonderes[b] - attendusPonderes[a])[0];
 		const deltas = {};
 		NOMS_JAUGES.forEach((k, i) => (deltas[k] = r.deltas[i]));
 		const entree = {
@@ -941,6 +966,10 @@
 			famille: r.famille || r.action,
 			cleMeilleure: meilleure,
 			attendus,
+			attendusPonderes, // prompt 130
+			poids, // prompt 130 : [fluidité, réputation, budget] au moment du choix
+			jaugeBasse: NOMS_JAUGES[poids.indexOf(Math.max(...poids))], // prompt 130 : la jauge la plus en manque (raison du conseil)
+			valeurBasse: Math.round((r.jaugesAvant || Jeu.jauges)[NOMS_JAUGES[poids.indexOf(Math.max(...poids))]]),
 			resultat: r,
 			index: Jeu.index, // prompt 85 : rang du dossier dans le paquet (post du compte social)
 		};
@@ -954,7 +983,8 @@
 		// Codes (traduits à l'affichage par t('eval.' + code)) : 'bon', 'rate', 'aucun_detour', 'trop_tard'
 		if (e.cleAction === 'temps') return 'trop_tard';
 		if (e.resultat && e.resultat.clash) return 'rate'; // prompt 117 : clasher le plaignant n'est jamais la bonne réponse
-		if (e.categorie || String(e.cleAction).includes('.')) return e.attendus[e.cleAction] >= e.attendus[e.cleMeilleure] - 0.01 ? 'bon' : 'rate'; // prompt 87 : meilleure réponse de la même catégorie
+		if ((e.categorie || String(e.cleAction).includes('.')) && e.attendusPonderes && e.attendusPonderes[e.cleAction] !== undefined) return e.attendusPonderes[e.cleAction] >= e.attendusPonderes[e.cleMeilleure] - TOLERANCE_BON ? 'bon' : 'rate'; // prompt 130 : pondéré par le besoin des jauges
+		if (e.categorie || String(e.cleAction).includes('.')) return e.attendus[e.cleAction] >= e.attendus[e.cleMeilleure] - 0.01 ? 'bon' : 'rate'; // prompt 87 : meilleure réponse de la même catégorie (anciennes sauvegardes)
 		const actions = ['devier', 'retenir', 'renfort'];
 		if (e.cleMeilleure === 'rien' || actions.every((a) => e.attendus[a] < 0)) return e.cleAction === 'rien' ? 'bon' : 'aucun_detour';
 		return e.attendus[e.cleAction] >= e.attendus[e.cleMeilleure] - 0.01 ? 'bon' : 'rate';
@@ -1235,7 +1265,7 @@
 
 	// Commentaires nantais : modèles courts remplis avec les données réelles du dossier (pseudonymes fictifs)
 	const PSEUDOS = ['@usager_44', '@nantaise_du_tram', '@velo_et_bus', '@ile_de_nantes', '@quai_de_la_fosse', '@chantenay_matin'];
-	const COMMENTAIRES = { bon: 3, mauvais: 3, equipe: 1 }; // nombre de modèles par sorte (textes : i18n.js, clés com.<sorte>.<n>)
+	const COMMENTAIRES = { bon: 3, mauvais: 3 }; // nombre de modèles par sorte (textes : i18n.js, clés com.<sorte>.<n>)
 	const DELTA_REPUTATION = { bon: 2, mauvais: -3, equipe: 1 };
 
 	Jeu.commenter = function (sorte, sujet, retard, equipe, index) {
@@ -1337,10 +1367,12 @@
 
 	/** Prompt 117 : meilleure réponse attendue pour ce dossier (même calcul que le Journal), lecture seule */
 	Jeu.meilleureReponse = function (d) {
+		// Prompt 130 : la meilleure réponse au sens de l'évaluation — effets pondérés par le besoin des jauges actuelles
 		const ctx = contexte(d);
 		const ev = Jeu.actionsPossibles(d);
+		const poids = Jeu.poidsBesoin(Jeu.jauges);
 		const att = {};
-		ev.forEach((a) => (att[a] = somme(effetAttendu(a, d, ctx))));
+		ev.forEach((a) => (att[a] = ponderer(effetAttendu(a, d, ctx), poids)));
 		return ev.slice().sort((a, b) => att[b] - att[a])[0];
 	};
 	/** Prompt 116 : variables d'une réplique au plaignant (lecture seule) — faits réels du dossier + pseudo du plaignant */
@@ -1391,12 +1423,12 @@
 
 	// Prompt 79 — délai de réponse Community (REGLAGES.community) : répondre vite évite la dégradation
 	/** Millisecondes restantes avant que la plainte s'envenime (le délai démarre à sa première vue par majPlaintes) */
-	Jeu.resteReponse = (p, maintenant) => (p.depuis === undefined ? REGLAGES.community.delaiMs : Math.max(0, REGLAGES.community.delaiMs - (maintenant - p.depuis)));
+	Jeu.resteReponse = (p, maintenant) => (p.depuis === undefined || p.depuis > maintenant ? REGLAGES.community.delaiMs : Math.max(0, REGLAGES.community.delaiMs - (maintenant - p.depuis)));
 	/** À chaque image : les plaintes sans réponse à l'expiration s'enveniment (malus d'un mauvais commentaire, prompt 22) */
 	Jeu.majPlaintes = function (maintenant) {
 		const expirees = [];
 		Jeu.plaintesEnAttente().forEach((p) => {
-			if (p.depuis === undefined) p.depuis = maintenant;
+			if (p.depuis === undefined || p.depuis > maintenant) p.depuis = maintenant; // prompt 131 : horloge remise à zéro (rechargement) → le délai repart
 			if (maintenant - p.depuis < REGLAGES.community.delaiMs) return;
 			p.expiree = true;
 			p.statut = 'expire';
@@ -1677,7 +1709,7 @@
 		const pertinente = Jeu.equipesPertinentes(d).includes(cle);
 		const arrivee = maintenant + Jeu.DELAI_EQUIPE_MS * (Jeu.somnolenceElevee ? 1.5 : 1); // prompt 91 (option) : fatigué, on coordonne moins vite
 		const finIntervention = arrivee + REGLAGES.equipes[cle].duree;
-		Jeu.equipes.push({ index, cle, nom: q.nom, cout: q.cout, depart: maintenant, arrivee, finIntervention, libre: finIntervention + Jeu.RETOUR_EQUIPE_MS, heure: maintenantSim(), arrivee_sim: null, jour: d.date, jourIndex: Jeu.jourIndex, pertinente, sujet });
+		Jeu.equipes.push({ index, cle, nom: q.nom, cout: q.cout, depart: maintenant, arrivee, finIntervention, libre: finIntervention + Jeu.RETOUR_EQUIPE_MS, heure: maintenantSim(), arrivee_sim: null, jour: d.date, jourIndex: Jeu.jourIndex, pertinente, sujet, remercie: false });
 		return { ok: true, message: T(pertinente ? 'equipe.enRoute' : 'equipe.enRouteHorsSujet', { nom: q.nom, cout: q.cout }) };
 	};
 
@@ -1689,8 +1721,53 @@
 				const effets = {};
 				Object.entries(EQUIPES[q.cle].effets).forEach(([k, v]) => (effets[k] = q.pertinente === false ? Math.round(v / 2) : v));
 				Jeu.appliquerDeltas(effets);
-				Jeu.commenter('equipe', q.sujet, null, q.nom, q.index);
 			}
+		});
+		Jeu.majRetours(maintenant); // prompt 121 : le plaignant remercie quand l'intervention est finie
+	};
+
+	// ——— Prompt 121 : statut d'un signalement après la réponse du joueur ———
+	// clos (aucune équipe utile) · attente (équipe envoyée, intervention pas finie) · termine (retour du plaignant reçu)
+	const RETOURS_MERCI = 3; // variantes retour.merci.<n> (i18n.js)
+	const equipesUtiles = (index) => (Jeu.equipes || []).filter((q) => q.index === index && !q.inutile);
+	/** Lecture seule : 'ouvert' tant que le joueur n'a pas répondu, puis 'clos', 'attente' ou 'termine' */
+	Jeu.statutSignalement = function (index) {
+		if (index >= Jeu.index) return 'ouvert';
+		const eq = equipesUtiles(index);
+		if (!eq.length) return 'clos';
+		return eq.every((q) => q.remercie) ? 'termine' : 'attente';
+	};
+	/** Signalements répondus dont on attend encore le retour du plaignant : [{ index, d, equipes }] */
+	Jeu.signalementsEnAttente = function () {
+		const vus = new Set();
+		const out = [];
+		(Jeu.equipes || []).forEach((q) => {
+			if (q.inutile || q.remercie || q.index >= Jeu.index || vus.has(q.index)) return;
+			vus.add(q.index);
+			out.push({ index: q.index, d: Jeu.paquet[q.index], equipes: equipesUtiles(q.index) });
+		});
+		return out;
+	};
+	/** Le plaignant du dossier remercie pour l'intervention : un seul retour par signalement, +1 de réputation par équipe */
+	Jeu.retourPlaignant = function (index) {
+		const eq = equipesUtiles(index).filter((q) => !q.remercie);
+		if (!eq.length) return null;
+		eq.forEach((q) => (q.remercie = true));
+		const pl = Jeu.plaignantPour ? Jeu.plaignantPour(index) : null;
+		const n = Jeu.commentaires.length;
+		const auteur = pl && pl.auteur ? pl.auteur : PSEUDOS[n % PSEUDOS.length];
+		const texte = T('retour.merci.' + (index % RETOURS_MERCI), { equipe: eq.map((q) => String(q.nom)).join(', '), sujet: eq[0].sujet });
+		const delta = DELTA_REPUTATION.equipe * eq.length;
+		const c = { heure: maintenantSim(), auteur, texte, delta, index, jour: Jeu.jourIndex, retour: true };
+		Jeu.commentaires.push(c);
+		Jeu.nonLus.community++;
+		Jeu.appliquerDeltas({ reputation: delta });
+		return c;
+	};
+	/** À chaque image (et à la fin de la journée) : retour dès que le joueur a répondu et que toutes les équipes ont fini */
+	Jeu.majRetours = function (maintenant) {
+		Jeu.signalementsEnAttente().forEach((s) => {
+			if (s.equipes.every((q) => q.arrivee_sim !== null && maintenant >= q.finIntervention)) Jeu.retourPlaignant(s.index);
 		});
 	};
 	/** Message du patron au début de chaque journée : effectifs réels (remis à zéro chaque matin) */

@@ -1,5 +1,5 @@
 /* Nantes en régulation — menu principal modernisé (prompt 35).
- * Écran titre plein écran affiché AVANT le bureau : Nouvelle partie, Reprendre, Paramètres, Aide, Tutoriel,
+ * Écran titre plein écran affiché AVANT le bureau : Nouvelle partie, Reprendre, Paramètres, Aide et tutoriel,
  * langue. « Nouvelle partie » ouvre le choix de la semaine (l'ancien accueil du PC, sorti de l'écran).
  * Fond : la pièce du bureau floutée et assombrie. Tout est dessiné par le code, textes via t().
  * Dès qu'une partie démarre ou reprend (ecran === 'jeu'), le menu se ferme et l'on arrive au bureau.
@@ -63,8 +63,7 @@ function entreesMenu() {
 	}
 	e.push({ cle: 'palmares', icone: 'trophee', action: () => ouvrir('palmares') }); // prompt 47
 	e.push({ cle: 'parametres', icone: 'reglages', action: () => ouvrir('parametres') });
-	e.push({ cle: 'aide', icone: 'aide', action: () => ouvrir('aide') });
-	e.push({ cle: 'tutoriel', icone: 'livre', action: () => lancerTutoriel() });
+	e.push({ cle: 'aide', icone: 'aide', action: () => ouvrir('aide') }); // prompt 122 : « Aide et tutoriel » — le tutoriel se lance depuis l'aide (T)
 	e.push({ cle: 'credits.menu', icone: 'menu', action: () => ouvrirCredits() }); // clé mp.credits.menu (mp.credits = les noms du pied de page) // prompt 113 : équipe, licence, usage de l'IA
 	return e;
 }
@@ -224,12 +223,13 @@ function carteMenu(x, y, l, h, titre, sous, action, sel, icone) {
 	text(titre, tx, sous ? y + h / 2 + 4 : y + h / 2);
 	textStyle(NORMAL);
 	if (sous) {
+		// Prompt 120 : une seule ligne, taille ajustée à la largeur (18 → 14 px) — plus jamais de 2e ligne masquée
 		textAlign(LEFT, TOP);
 		textFont(POLICE_DONNEES);
-		textSize(18);
+		ajusterTaille(sous, l - (tx - x) - 24, 18, 14);
 		fill(actif ? 'rgba(13,12,12,0.75)' : MENU_C.doux);
-		textLeading(22);
-		text(sous, tx, y + h / 2 + 8, l - (tx - x) - 24, 48);
+		zoneTexteDeclarer('sousTitreMenu', tx, y + h / 2 + 10, l - (tx - x) - 24, 24);
+		text(sous, tx, y + h / 2 + 10);
 	}
 	boutons.push({ x, y, l, h, action });
 	if (sel) {
@@ -262,12 +262,18 @@ function dessinerMenuPrincipal() {
 	text(t('accueil.sousTitre'), x0, 276, 900, 80);
 	const e = entreesMenu();
 	if (MENU.choix >= e.length + EXTRAS_MENU.length) MENU.choix = 0;
-	let yc = 370; // prompt 81 : cartes empilées (écart 12 à 6 entrées) — le pied de page a une ligne de plus
-	const compact = e.length > 6; // prompt 113 : + « Crédits » — cartes resserrées pour tenir au-dessus du pied de page
+	// Prompt 120 : pile calculée dans l'espace disponible (sous-titre du jeu → pied de page, 16 px de marge) :
+	// cartes normales si elles tiennent, sinon compactes ; l'écart se répartit (6 px au moins, 30 au plus)
+	let yc = 370;
+	const basPile = H - 74 - 16; // prompt 125 : le pied de page n'a plus qu'une ligne (nos noms, à H − 40) ; 16 px de marge
+	const hauteurs = (c) => e.map((it) => (it.sous ? (c ? 92 : 104) : c ? 72 : 84));
+	const somme = (hs) => hs.reduce((a, b) => a + b, 0);
+	let hs = hauteurs(false);
+	if (somme(hs) + 12 * (e.length - 1) > basPile - yc) hs = hauteurs(true);
+	const ecart = constrain((basPile - yc - somme(hs)) / Math.max(1, e.length - 1), 6, 30);
 	e.forEach((it, i) => {
-		const h = it.sous ? (compact ? 104 : 116) : compact ? 72 : 84; // prompt 114 : deux lignes de sous-titre (date · dossier · sauvegarde) sans coupure
-		carteMenu(x0, yc, 620, h, t('mp.' + it.cle), it.sous, it.action, i === MENU.choix, it.icone);
-		yc += h + (compact ? 10 : e.length > 5 ? 12 : 30);
+		carteMenu(x0, yc, 620, hs[i], t('mp.' + it.cle), it.sous, it.action, i === MENU.choix, it.icone);
+		yc += hs[i] + ecart;
 	});
 	selecteurLangue(L - 80, 56);
 	// Prompt 65 : installation de la webapp (seulement si le navigateur la propose) ; mention une fois installée
@@ -284,19 +290,18 @@ function dessinerMenuPrincipal() {
 	textFont(POLICE_DONNEES);
 	textSize(18);
 	fill(MENU_C.doux);
-	text(t('mp.clavier'), x0, H - 100);
-	text(t('mp.sources'), x0, H - 70);
+	// Prompt 124 : plus de ligne d'aide clavier sous les cartes (elle nuisait à l'immersion)
+	// Prompt 125 : plus de ligne « Données réelles… » ni de lien de licence ici — tout est dans l'écran Crédits
 	piedCredits(x0, H - 40, e.length);
 	blocPartage(e.length);
 }
 
-// ——— Prompt 81 : crédits, licence MIT, dépôt et partage (écran titre uniquement) ———
-/** Éléments focalisables après les cartes du menu (↑ ↓ / Tab) : dépôt, partager, licence */
+// ——— Prompt 81 : crédits, dépôt et partage (écran titre uniquement) ; prompt 125 : la licence est dans les Crédits ———
+/** Éléments focalisables après les cartes du menu (↑ ↓ / Tab) : dépôt, partager, présentation (prompt 125 : plus de licence) */
 const EXTRAS_MENU = [
 	{ cle: 'depot', action: () => ouvrirLien(DEPOT_URL) },
 	{ cle: 'partager', action: () => ouvrirPartage() },
 	{ cle: 'presentation', action: () => ouvrirPresentation() }, // page /presentation/ (diaporama Slidev, prompt 82)
-	{ cle: 'licence', action: () => ouvrirLien(LICENCE_URL) },
 ];
 const focusExtra = (n, cle) => MENU.choix - n === EXTRAS_MENU.findIndex((x) => x.cle === cle);
 function piedCredits(x, y, n) {
@@ -315,27 +320,6 @@ function piedCredits(x, y, n) {
 	noStroke();
 	boutons.push({ x: x - 8, y: y - 34, l: cw + 16, h: 46, action: () => ouvrirCredits() });
 	if (survolC) infobulle(t('mp.credits.infobulle'), x, y - 76);
-	fill(MENU_C.doux);
-	text(' · ', x + cw, y);
-	const lx = x + cw + textWidth(' · ');
-	const lib = t('mp.licence');
-	const lw = textWidth(lib);
-	const survol = mouseX >= lx && mouseX <= lx + lw && mouseY >= y - 30 && mouseY <= y + 6;
-	fill(MENU_C.blanc);
-	text(lib, lx, y);
-	stroke(MENU_C.blanc);
-	strokeWeight(survol || focusExtra(n, 'licence') ? 3 : 1);
-	line(lx, y + 2, lx + lw, y + 2); // lien souligné
-	noStroke();
-	if (focusExtra(n, 'licence')) {
-		noFill();
-		stroke(MENU_C.bleu);
-		strokeWeight(3);
-		rect(lx - 8, y - 32, lw + 16, 42);
-		noStroke();
-	}
-	boutons.push({ x: lx - 8, y: y - 34, l: lw + 16, h: 46, action: () => ouvrirLien(LICENCE_URL) });
-	if (survol) infobulle(t('mp.licence.infobulle'), lx, y - 76);
 }
 /** Bouton à icône du bloc bas droite (style des cartes du menu, focus en double bordure) */
 function boutonIcone(x, y, l, h, icone, libelle, action, focus) {

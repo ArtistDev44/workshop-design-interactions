@@ -10,14 +10,15 @@ const BANDEAU = { x: 40, y: 36, l: 1840, h: 84 };
 const PANNEAU = { x: 756, y: 132, l: 1124, h: 900 };
 const PLUS = { ouvert: false };
 
-// ——— Bandeau fin : jauges (ligne 1), objectif · équipes · horloge (ligne 2), Aide et Recommencer à droite ———
+// ——— Bandeau fin : jauges (ligne 1), objectif · équipes · horloge (ligne 2) ; plus de boutons (prompt 124) ———
 function dessinerBandeau() {
 	const z = BANDEAU;
 	panneau(z.x, z.y, z.l, z.h);
 	cibleGuide('jauges', z.x, z.y, z.l, z.h);
 	const jauges = Jeu.jauges || { fluidite: 50, reputation: 50, budget: 50 };
 	const aff = jaugesAffichees();
-	const lb = 370; // trois jauges, puis Quitter la journée, Aide et Recommencer à droite (prompt 94 : 420 → 370)
+	const mobileMenu = typeof MOBILE !== 'undefined' && MOBILE.actif; // prompt 124 : bouton ≡ (menu) au toucher seulement
+	const lb = mobileMenu ? 556 : 580; // prompt 124 : les trois jauges prennent la largeur des boutons supprimés (370 → 580)
 	['fluidite', 'reputation', 'budget'].forEach((cle, i) => {
 		const x = z.x + 16 + i * (lb + 24);
 		noStroke();
@@ -41,12 +42,12 @@ function dessinerBandeau() {
 	});
 	// Ligne 2 : objectif du jour, équipes disponibles, date et heure du jeu
 	const o = Jeu.objectifDuJour ? Jeu.objectifDuJour() : null;
-	const eq = Jeu.elementDebloque('equipes') ? Jeu.TYPES_EQUIPES.map((k) => String(Jeu.EQUIPES[k].nom) + ' ' + Jeu.equipesDisponibles(k, (typeof tempsEquipes === 'function' ? tempsEquipes() : millis())) + '/' + Jeu.REGLAGES.equipes[k].effectif).join(' · ') : '';
+	// Prompt 133 : la disponibilité des équipes n'est plus répétée ici (elle est dans le panneau Équipes, à droite)
 	const h = heureAffichee();
 	const th = typeof Taches !== 'undefined' && Jeu.jourCourant() ? Taches.theme(Jeu.jourCourant().date) : null; // prompt 88 : thème du jour
 	const pj = typeof Taches !== 'undefined' && Jeu.jourCourant() ? Taches.prioritesDuJour(Jeu.jourCourant().date) : [];
 	const gr = pj.length ? t('bandeau.priorites', { liste: pj.map((p) => t('tache.prioCourt.' + p.id, p.vars)).join(' · ') }) : ''; // prompt 91 § 4 : priorités imposées (le grade reste dans Indicateurs)
-	const morceaux = [gr, th && th !== 'ordinaire' ? t('theme.' + th) : '', o ? t('bandeau.objectifCourt', { libelle: String(o.libelle), v: Math.round(Jeu.jauges[o.jauge]) }) : '', eq, t('temps.' + vitesseTemps()) + ' ' + String(h.h).padStart(2, '0') + ':' + String(h.m).padStart(2, '0') + (Jeu.etat.horsLigne ? ' · ' + t('jeu.horsLigne') : '')].filter(Boolean); // prompt 95 : état de la vitesse du temps devant l'heure
+	const morceaux = [gr, th && th !== 'ordinaire' ? t('theme.' + th) : '', o ? t('bandeau.objectifCourt', { libelle: String(o.libelle), v: Math.round(Jeu.jauges[o.jauge]) }) : '', t('temps.' + vitesseTemps()) + ' ' + String(h.h).padStart(2, '0') + ':' + String(h.m).padStart(2, '0') + (Jeu.etat.horsLigne ? ' · ' + t('jeu.horsLigne') : '')].filter(Boolean); // prompt 95 : état de la vitesse du temps devant l'heure
 	textFont(POLICE_DONNEES);
 	textSize(16);
 	fill(C.gris);
@@ -54,7 +55,7 @@ function dessinerBandeau() {
 	const crise = typeof Taches !== 'undefined' && Taches.crise() && !Taches.crise().resultat; // prompt 88 : cellule de crise du jour
 	// Prompt 93 : la ligne coupait l'heure quand elle était trop longue (texte en boîte, 2e ligne masquée) → l'heure
 	// reste entière à droite, le début se termine par « … » en fin de mot, la ligne complète s'affiche au survol
-	const lbandeau = z.l - (crise ? 940 : 670); // prompt 94 : place du bouton « Quitter la journée »
+	const lbandeau = z.l - 32 - (mobileMenu ? 70 : 0) - (crise ? 270 : 0); // prompt 124 : la place des trois boutons est rendue à la ligne // prompt 94 : place du bouton « Quitter la journée »
 	const complet = morceaux.join('  ·  ');
 	const heureBandeau = morceaux[morceaux.length - 1];
 	if (textWidth(complet) <= lbandeau) {
@@ -74,21 +75,19 @@ function dessinerBandeau() {
 		const actif = Taches.criseActive();
 		noStroke();
 		fill(actif ? C.primaire : primaireRGBA(0.25)); // prompt 115
-		rect(z.x + z.l - 920, z.y + 42, 254, 32);
+		rect(z.x + z.l - 270 - (mobileMenu ? 70 : 0), z.y + 42, 254, 32);
 		fill('#FFFFFF');
 		textFont(POLICE_TEXTE);
 		textStyle(BOLD);
 		textAlign(CENTER, CENTER);
 		ajusterTaille(t('crise.bandeau'), 236, 18, 14);
-		text(t('crise.bandeau'), z.x + z.l - 793, z.y + 58);
+		text(t('crise.bandeau'), z.x + z.l - 143 - (mobileMenu ? 70 : 0), z.y + 58);
 		textStyle(NORMAL);
 		textAlign(LEFT, TOP);
 	}
-	// Aide et Recommencer (souris / tactile) — équivalents des touches H et R
-	bouton(z.x + z.l - 648, z.y + 14, 280, 56, t('quitter.bouton'), quitterJourneeRapide, false, false); // prompt 94 : toujours visible, touche Q
-	bouton(z.x + z.l - 358, z.y + 14, 128, 56, t('accueil.aide'), () => ouvrir('aide'), false, true);
-	bouton(z.x + z.l - 220, z.y + 14, 206, 56, // prompt 98 : boutons du bandeau 48 → 56 px (≈ 45 px à l'écran)
-		 t('jeu.recommencer'), () => ouvrir('reset'), false, true);
+	// Prompt 124 : plus de boutons dans le bandeau (Quitter la journée, Aide, Recommencer) — touches Q, H et R
+	// inchangées ; à la souris et au toucher, ces actions sont dans le menu (Échap, ou le bouton ≡ en mode mobile)
+	if (typeof MOBILE !== 'undefined' && MOBILE.actif) bouton(z.x + z.l - 70, z.y + 14, 56, 56, '≡', () => ouvrir('menu'), false, true);
 	textAlign(LEFT, TOP);
 }
 
@@ -186,7 +185,11 @@ function dessinerPanneauSignalement(d, x, base) {
 	y = bulleDuPlaignant(d, x + 32, y, l);
 	// Répliques : en bas de la fenêtre (prompt 116 : + « Dites-m'en plus » ; prompt 117 : 3 répliques mélangées dont un clash)
 	const rs = reponsesDialogue(d);
-	const hRep = 44 + (rs.length + 1) * 70;
+	// Prompt 130 : une ligne de plus par réplique (tendance des jauges) — sauf sources ouvertes : lignes compactes
+	const compact = PLUS.ouvert;
+	const hL = compact ? 62 : H_REPONSE;
+	const pas = compact ? 70 : PAS_REPONSE;
+	const hRep = 44 + rs.length * pas + 70;
 	const yr = base.y + base.h - 24 - hRep;
 	// Prompt 116 : « En savoir plus » devient la réplique « Dites-m'en plus » (dernière de la liste) ; plus de bouton en double
 	if (PLUS.ouvert) corpsEnquete(d, x + 32, y, l, Math.max(120, yr - 16 - y));
@@ -199,23 +202,27 @@ function dessinerPanneauSignalement(d, x, base) {
 	ZONE_DEPOT = null;
 	dsTexte(t('dialogue.titre'), x + 32, yr, 18, DS.blanc75, 'left');
 	const bloquee = Jeu.actionBloquee ? Jeu.actionBloquee() : null;
+	// Prompt 130 : tendance des 3 jauges sous chaque réplique (symbole + couleur, jamais la couleur seule) ;
+	// option « Pression visible » : pastille « conseillé » sur la ou les réponses que l'évaluation jugerait bonnes
+	const conseillees = typeof Traces !== 'undefined' && Traces.option('pressionVisible') && Jeu.reponsesConseillees ? Jeu.reponsesConseillees(d) : [];
 	rs.forEach((r, i) => {
-		const ry = yr + 36 + i * 70;
+		const ry = yr + 36 + i * pas;
 		const off = r.cle === bloquee;
-		const survol = !off && mouseX >= x + 32 && mouseX <= x + 32 + l && mouseY >= ry && mouseY <= ry + 62;
+		const survol = !off && mouseX >= x + 32 && mouseX <= x + 32 + l && mouseY >= ry && mouseY <= ry + hL;
 		noStroke();
 		fill(survol ? DS.blanc15 : DS.blanc05);
-		rect(x + 32, ry, l, 62);
+		rect(x + 32, ry, l, hL);
 		fill(off ? DS.blanc15 : DS.blanc);
-		rect(x + 32, ry, 44, 62);
-		dsTexte(TOUCHES_REPONSES[i], x + 54, ry + 18, 20, DS.fond, 'center');
+		rect(x + 32, ry, 44, hL);
+		dsTexte(TOUCHES_REPONSES[i], x + 54, ry + (hL - 26) / 2, 20, DS.fond, 'center');
 		const rep = repliquesDuDossier(rs, d)[i];
 		dessinerTexte('« ' + rep + ' »', x + 92, ry + 6, l - 76, { taille: 20, couleur: off ? C.gris : C.texte, maxLignes: 2, interligne: 25 });
-		if (!off) boutons.push({ x: x + 32, y: ry, l, h: 62, action: () => choisirReplique(r) });
-		if (i === 0) cibleGuide('actions', x + 32, yr + 36, l, rs.length * 70);
+		if (!compact) dessinerTendanceReponse(r, d, x + 92, ry + 58, !r.clash && conseillees.includes(r.cle)); // sous la réplique
+		if (!off) boutons.push({ x: x + 32, y: ry, l, h: hL, action: () => choisirReplique(r) });
+		if (i === 0) cibleGuide('actions', x + 32, yr + 36, l, rs.length * pas);
 	});
 	// « Dites-m'en plus » : pas une décision — ouvre / referme les sources de l'enquête (comme E)
-	const py = yr + 36 + rs.length * 70;
+	const py = yr + 36 + rs.length * pas;
 	const survolP = mouseX >= x + 32 && mouseX <= x + 32 + l && mouseY >= py && mouseY <= py + 62;
 	noStroke();
 	fill(survolP ? DS.blanc15 : DS.blanc05);
@@ -254,6 +261,27 @@ function repliqueDe(r, d, sansAuteur) {
 	let h = Jeu.index * 7;
 	for (const c of String(r.cle) + (r.clash ? '!' : '')) h = (h * 31 + c.charCodeAt(0)) % 1000003;
 	return ok[h % ok.length].replace(/\{(\w+)\}/g, (m, k) => String(vars[k]));
+}
+/** Prompt 130 : hauteur d'une ligne de réponse (2 lignes de réplique + la tendance) et pas entre deux lignes */
+const H_REPONSE = 84;
+const PAS_REPONSE = 92;
+/** Prompt 130 : tendance d'une réplique sur les 3 jauges — « Flu. ▲ » en vert, « ≈ » en gris, « ▼ » en orange ; le
+ * symbole porte le sens, la couleur le double. Le clash (prompt 117) compte son malus de réputation : la tendance
+ * reste honnête. Pastille « conseillé » en option (Pression visible). */
+function dessinerTendanceReponse(r, d, x, y, conseillee) {
+	const e = Jeu.effetsAttendus(r.cle, d).slice();
+	if (r.clash) e[1] += Jeu.REGLAGES.malusClash || 0;
+	let xx = x;
+	['fluidite', 'reputation', 'budget'].forEach((k, j) => {
+		const sym = tendance(e[j]);
+		const lib = t('jaugeCourt.' + k);
+		dsTexte(lib, xx, y, 16, C.gris, 'left');
+		xx += textWidth(lib) + 6;
+		dsTexte(sym, xx, y, 16, sym === '≈' ? C.gris : sym.includes('▲') ? C.vert : C.orange, 'left');
+		xx += textWidth(sym) + 18;
+	});
+	if (conseillee) dsTexte('✓ ' + t('rep.conseillee'), xx + 8, y, 16, C.vert, 'left');
+	zoneTexteDeclarer('tendanceReponse', x, y, xx - x, 22); // prompt 93 : audit des textes
 }
 /** Prompt 102 : bulle de dialogue — la plainte écrite par le groupe (data/messages.json) que les faits réels du
  * dossier déclenchent (Jeu.plaignantPour, sans effet de bord), sinon la source réelle ; dessous, le fait réel. */
@@ -468,7 +496,9 @@ function explicationDecision(r) {
 	const des = typeof Traces !== 'undefined' && Traces.option('deVisible') ? Traces.texteDes(r) : null; // option : le dé réellement tiré
 	if (des) lignes.push(des);
 	const sit = e.categorie ? Jeu.situation(r.dossier) : null;
-	const pourquoi = sit ? sit.split('+').map((s) => t(RAISONS[s] || 'raison.calme')).join(', ') : '';
+	let pourquoi = sit ? sit.split('+').map((s) => t(RAISONS[s] || 'raison.calme')).join(', ') : '';
+	// Prompt 130 : le conseil suit aussi la jauge en manque — le dire quand elle est basse (sous 45)
+	if (e.jaugeBasse && e.valeurBasse !== undefined && e.valeurBasse < 45) pourquoi = t('raison.besoin', { jauge: t('jaugeTitre.' + e.jaugeBasse), v: e.valeurBasse }) + (pourquoi ? ', ' + pourquoi : '');
 	const ev = Jeu.evaluer(e);
 	if (ev === 'bon') lignes.push(t('retour.bon', { pourquoi: pourquoi || t('raison.calme') }));
 	else if (e.cleAction === 'temps') lignes.push(t('retour.tard', { meilleure: String(e.meilleureAction) }));

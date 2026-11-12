@@ -23,14 +23,15 @@ Fiche complète (contexte, provenance, droits, relevés, propriétés observable
 ## Concept
 
 Le visiteur prend un poste dans une salle de contrôle des transports nantais et rejoue une semaine réelle du
-réseau : chaque retard d'au moins 10 minutes, perturbation datée ou alerte météo extrême de la source devient un
-dossier à trancher pendant que le retard s'aggrave. Ses réponses font bouger trois jauges (fluidité,
-réputation, budget). Aucun événement n'est inventé. Cartel de 106 mots : `cartel.md`.
+réseau : chaque fait daté de la source (perturbation, météo extrême, événement de l'agenda) devient un dossier à
+trancher ; en temps réel, un retard mesuré d'au moins 10 minutes aussi, et il s'aggrave tant qu'il attend. Ses
+réponses font bouger trois jauges (fluidité, réputation, budget). Hormis au plus un incident fictif par semaine,
+marqué « Fictif », aucun événement n'est inventé ; l'affluence attribuée à un événement est une hypothèse du jeu. Cartel de 113 mots : `cartel.md`.
 
 ## Grammaire / règles
 
-Règle structurante : *un fait réel de la source au-delà d'un seuil devient un dossier ; tant qu'il n'est pas
-traité, il s'aggrave.* Fiche de grammaire du livret (primitives, relations, invariants, variables, temps,
+Règle structurante : *un fait daté de la source devient un dossier à trancher ; en temps réel, un retard mesuré
+d'au moins 10 minutes aussi (les archives ne donnent pas de minutes).* Fiche de grammaire du livret (primitives, relations, invariants, variables, temps,
 déclencheur, limites) et espace génératif (graine fixe par semaine) : `grammar.md` / `grammar.pdf`. Décisions
 verrouillées Q1–Q61 et leurs exceptions documentées : dossier `jeu/` du dépôt.
 
@@ -62,6 +63,7 @@ Bitsy Pixels si installée.
 - Sans rien installer : double clic sur `index.html` (polices système en `file://`, données locales).
 - Serveur local : `python3 -m http.server` dans ce dossier, puis http://localhost:8000/.
 - Depuis le dépôt : `cd site && npm install && npm run build && npm test`, puis `npm run preview`.
+- Exposition : ajouter `?expo=1` à l'adresse (purge du visiteur précédent, arrivée directe sur la carte, retour à l'écran titre après 90 s sans geste).
 
 ## Fallback / limites connues
 

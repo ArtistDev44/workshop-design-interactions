@@ -71,7 +71,7 @@ let phase = 'decision'; // 'conflit' | 'contradiction' | 'decision' | 'narration
 let sourceChoisie = null; // 'a' | 'b' quand le dossier contient une contradiction (Q9)
 let dernierResultat = null;
 let debutNarration = 0;
-const DUREE_NARRATION = 6000;
+const DUREE_NARRATION = 10000; // prompt 131 : défi chrono seulement (6 s → 10 s) ; sinon pas de suite automatique
 let arriveeDossier = 0; // millis() d'arrivée du dossier (glissement, Q10)
 let debutCompteur = 0;
 let boutons = []; // zones cliquables recalculées à chaque image
@@ -280,23 +280,19 @@ let curseurMain = false;
 // Prompt 59 : l'ancien écran d'accueil du PC (dessinerAccueil, hors parcours depuis le prompt 35) et le résumé des
 // effets sous les actions (effetsResumes, retiré au prompt 50) ont été supprimés : ils n'étaient plus appelés.
 
-/** Prompt 43 : bandeau d'état en bas de l'écran du jeu — ce qu'il faut faire maintenant */
+/** Prompt 43 : état du jeu — ce qu'il faut faire maintenant. Prompt 124 : ce texte n'est plus affiché (il nuisait à
+ * l'immersion) ; il reste annoncé aux lecteurs d'écran à chaque changement d'état (aria-live). */
+let dernierEtatAnnonce = '';
 function bandeauEtat() {
 	if (ecran !== 'jeu') return;
 	const cle = { attente: 'attente', reveil: 'attente', selection: 'selection', decision: 'decision', contradiction: 'contradiction', conflit: 'conflit', narration: 'narration', mail: 'mail', soir: 'soir', fin: 'fin' }[phase];
 	if (!cle) return;
-	const txt = phase === 'attente' && Jeu.journeeFinie && Jeu.journeeFinie() ? t('etat.finJournee', { fin: Jeu.formaterHeure(Jeu.finJournee()) }) : t('etat.' + cle + (cle === 'decision' && Jeu.defiChrono ? 'Chrono' : ''), { x: IMMERSION.compression }); // prompt 51 ; prompt 87 : consigne du défi chrono
-	const urgent = ['decision', 'contradiction', 'conflit'].includes(phase);
-	noStroke();
-	fill(urgent ? C.primaire : 'rgba(255,255,255,0.08)');
-	rect(40, H - 38, 1500, 32);
-	fill('#ffffff');
-	textFont(POLICE_TEXTE);
-	textStyle(BOLD);
-	ajusterTaille(txt, 1470, 18);
-	textAlign(LEFT, CENTER);
-	text(txt, 54, H - 22);
-	textStyle(NORMAL);
+	const fin = phase === 'attente' && Jeu.journeeFinie && Jeu.journeeFinie();
+	const id = fin ? 'finJournee' : cle + (cle === 'decision' && Jeu.defiChrono ? 'Chrono' : '');
+	if (id !== dernierEtatAnnonce) {
+		dernierEtatAnnonce = id;
+		if (!fenetre && !tutoriel) annoncer(fin ? t('etat.finJournee', { fin: Jeu.formaterHeure(Jeu.finJournee()) }) : t('etat.' + id, { x: IMMERSION.compression }));
+	}
 	dessinerSomnolence(); // prompt 78 : jauge de somnolence, cliquable (se reposer)
 	dessinerStatutPatron(); // prompt 84 : pastille « Sous surveillance » / « Dernier avertissement »
 }
@@ -322,6 +318,7 @@ function lancerNouvellePartie() {
 		nouvellePartieRythme(); // prompt 74 : ordre d'arrivée tiré par la graine, fil de la journée remis à zéro
 		demarrerJournee(); // journée 1, 8h00 (prompt 76), en attente du premier incident
 		const ch = chapitreCourant();
+		if (typeof EXPO !== 'undefined' && EXPO.actif) return expoAuPoste(); // prompt 132 : exposition, droit à la carte
 		if (!introVue) lancerIntroSMS(); // § 2 : une seule fois, pas sur « Rejouer »
 		else if (ch) conversationChapitre(ch); // prompt 41 : le patron présente la semaine et son nouvel élément
 		else if (!tutorielVu() && !optionGuide()) lancerTutoriel(); // prompt 34 (pas si le guide « Prendre en main » est choisi)
@@ -474,7 +471,7 @@ function indicateurSauvegarde() {
 	const messageFile = SELECTION.message && millis() - SELECTION.message.t < 5000; // le message de la file (bas) a la priorité
 	// Prompt 102 : « reste de la journée » dans la ligne d'état de la carte (carte-alertes.js) ; plus de doublon ici
 	const s = Sauvegarde.texteIndicateur();
-	if (!s) return;
+	if (!s || phase === 'narration') return; // prompt 131 : il chevauchait le titre de la narration
 	textFont(POLICE_DONNEES);
 	textSize(16);
 	textAlign(RIGHT, BOTTOM);
@@ -682,7 +679,7 @@ function dessinerDossier(d, meteo) {
 let dernierRetardAnnonce = { d: null, v: null };
 function majRetardsEtCommunity() {
 	if (ecran !== 'jeu' || !Jeu.paquet || phase === 'fin' || enPause || tempsSuspendu()) return;
-	(Jeu.majPlaintes ? Jeu.majPlaintes(millis()) : []).forEach((p) => {
+	(Jeu.majPlaintes ? Jeu.majPlaintes(tempsPlaintes()) : []).forEach((p) => {
 		annoncer(t('community.envenimeAnnonce', { auteur: p.auteur }));
 		Confort.Son.bip('alerte');
 	});
@@ -761,6 +758,26 @@ function dessinerNarration() {
 	textFont(POLICE_DONNEES);
 	textSize(18);
 	text(t('narration.entete', { ton: t('ton.nom.' + r.narration.ton) }), z.x + 32, z.y + 32);
+	// Prompt 121 : statut du signalement — clos (aucune équipe) ou en attente du retour du plaignant (équipe envoyée)
+	const iSig = Jeu.paquet.indexOf(r.dossier);
+	const stSig = iSig >= 0 && Jeu.statutSignalement ? Jeu.statutSignalement(iSig) : null;
+	if (stSig && stSig !== 'ouvert') {
+		const eqSig = (Jeu.equipes || []).filter((q) => q.index === iSig && !q.inutile).map((q) => String(q.nom)).join(', ');
+		const libSig = t('sig.statut.' + stSig, { equipe: eqSig });
+		textSize(18);
+		const lSig = Math.min(z.l - 420, textWidth(libSig) + 28);
+		noFill();
+		stroke(stSig === 'attente' ? C.orange : C.gris);
+		strokeWeight(2);
+		rect(z.x + z.l - 32 - lSig, z.y + 24, lSig, 34);
+		noStroke();
+		fill(stSig === 'attente' ? C.orange : C.gris);
+		textAlign(CENTER, CENTER);
+		ajusterTaille(libSig, lSig - 20, 18, 14);
+		zoneTexteDeclarer('statutSignalement', z.x + z.l - 32 - lSig + 10, z.y + 28, lSig - 20, 26);
+		text(libSig, z.x + z.l - 32 - lSig / 2, z.y + 41);
+		textAlign(LEFT, TOP);
+	}
 	fill(C.texte);
 	textFont(POLICE_TEXTE);
 	textStyle(BOLD);
@@ -793,15 +810,19 @@ function dessinerNarration() {
 	text(expl.join('\n'), z.x + 32, z.y + 612, z.l - 64, 150);
 
 	// Suite automatique, ou Entrée / clic
-	const tA = constrain((millis() - debutNarration) / DUREE_NARRATION, 0, 1);
-	fill(C.piste);
-	rect(z.x + 32, z.y + z.h - 140, z.l - 64, 6, 3);
-	fill(couleurTon);
-	rect(z.x + 32, z.y + z.h - 140, (z.l - 64) * tA, 6, 3);
+	// Prompt 131 : plus de suite automatique hors défi chrono — le joueur lit à son rythme (Entrée, clic ou « Suivant »)
+	const auto = !!Jeu.defiChrono;
+	const tA = auto ? constrain((millis() - debutNarration) / DUREE_NARRATION, 0, 1) : 0;
+	if (auto) {
+		fill(C.piste);
+		rect(z.x + 32, z.y + z.h - 140, z.l - 64, 6, 3);
+		fill(couleurTon);
+		rect(z.x + 32, z.y + z.h - 140, (z.l - 64) * tA, 6, 3);
+	}
 	const lb = (z.l - 64 - 16) * 0.68;
 	bouton(z.x + 32, z.y + z.h - 112, lb, 72, t(Jeu.terminee ? 'narration.bilan' : 'narration.suivant'), continuer);
 	bouton(z.x + 48 + lb, z.y + z.h - 112, z.l - 64 - 16 - lb, 72, t(enPause ? 'pause.reprendre' : 'pause.pause'), basculerPause, false, true);
-	if (tA >= 1 && !enPause && !fenetre) continuer();
+	if (auto && tA >= 1 && !enPause && !fenetre) continuer();
 }
 
 // ——— Écran de fin (Q47–Q55) : 3 fins, bilan détaillé, décor selon la fin (Q53) ———
@@ -1099,6 +1120,16 @@ function basculerSon() {
 	Confort.Reglages.basculer('son');
 }
 
+/** Prompt 133 : plein écran du document (1920×1080 du brief sans barres du navigateur) */
+function basculerPleinEcran() {
+	const doc = document;
+	try {
+		if (doc.fullscreenElement) doc.exitFullscreen();
+		else if (doc.documentElement.requestFullscreen) doc.documentElement.requestFullscreen().catch(() => {});
+		else return;
+		annoncer(t(doc.fullscreenElement ? 'pleinEcran.sortie' : 'pleinEcran.entree'));
+	} catch (e) {}
+}
 function keyPressed() {
 	// Prompt 33 : boîte d'import ouverte (champ texte, fichier) → le clavier lui appartient
 	if (Sauvegarde.dialogueOuvert || CARNET.ouvert) return;
@@ -1130,6 +1161,8 @@ function keyPressed() {
 	if ((key === 'g' || key === 'G') && GUIDE.actif && !MENU.actif) return arreterGuide(), false;
 	// Prompt 34 : le tutoriel capte le clavier (L reste disponible pour changer de langue)
 	if (tutoriel && !(key === 'l' || key === 'L')) return toucheTutoriel(), false;
+	// Prompt 133 : F = plein écran (entrée / sortie), partout hors saisie ; rien si l'API est absente
+	if ((key === 'f' || key === 'F') && !keyIsDown(CONTROL) && !keyIsDown(91)) return basculerPleinEcran(), false;
 	// Langue (prompt 24) : L bascule partout, sans toucher à la partie
 	if (key === 'l' || key === 'L') return Langue.suivante(), false;
 	// Prompt 47 : inspection, démission, palmarès ; J = journal de bord, D = rendre son badge
@@ -1138,6 +1171,7 @@ function keyPressed() {
 	// Fenêtres ouvertes : elles captent le clavier
 	if (fenetre) {
 		if (keyCode === ESCAPE || (fenetre === 'aide' && (key === 'h' || key === 'H' || key === '?'))) return fermer(), false;
+		if (fenetre === 'aide' && toucheAide()) return false; // prompt 123 : onglets (← → Tab, 1 à 4) et pages (↑ ↓)
 		if (fenetre === 'aide' && (key === 't' || key === 'T')) return lancerTutoriel(), false; // prompt 34
 		if (fenetre === 'telephone' && (keyCode === ENTER || keyCode === RETURN)) return fermer(), false; // prompt 38
 		if (fenetre === 'poste' && (keyCode === ENTER || keyCode === RETURN || key === ' ')) return fermer(), false; // prompt 74
@@ -1146,6 +1180,7 @@ function keyPressed() {
 		if (fenetre === 'rapportVeille' && (keyCode === ENTER || keyCode === RETURN || keyCode === ESCAPE)) return fermer(), false; // prompt 89 bis
 		if (fenetre === 'menu') {
 			// Prompt 35 : menu Échap modernisé — ↑ ↓ / Tab pour choisir, Entrée pour valider
+			const ENTREES_PAUSE = entreesPause(); // prompt 124
 			const n = ENTREES_PAUSE.length;
 			if (keyCode === UP_ARROW || (keyCode === TAB && keyIsDown(SHIFT))) choixPause = (choixPause + n - 1) % n;
 			else if (keyCode === DOWN_ARROW || keyCode === TAB) choixPause = (choixPause + 1) % n;
@@ -1377,101 +1412,7 @@ function dessinerFenetre() {
 	if (fenetre === 'telephone') return fenetreTelephone(); // prompt 38
 }
 
-function fenetreAide() {
-	// Prompt 66 : aide réorganisée — tous les raccourcis lisibles (≥ 18 px), règles de base complètes (jauges,
-	// seuils, compteur, dé, score) puis la Carte et les équipes ; malus sous les raccourcis.
-	const l = 1720;
-	const h = 1040;
-	const x = (L - l) / 2;
-	const y = (H - h) / 2;
-	panneau(x, y, l, h, C.accent);
-	textAlign(LEFT, TOP);
-	noStroke();
-	fill(C.accent);
-	textFont(POLICE_TEXTE);
-	textStyle(BOLD);
-	textSize(36);
-	text(t('aide.titre'), x + 48, y + 30);
-	textStyle(NORMAL);
-	const raccourcis = [
-		[t('aide.k.entreeTouche'), t('aide.k.entree')],
-		['5 6 7 8', t('aide.k.sources')],
-		[t('aide.k.actionsTouche'), t('aide.k.actions')], // prompt 87 : réponses de la catégorie
-		[t('aide.k.glisserTouche'), t('aide.k.glisser')], // prompts 94 / 97
-		[t('aide.k.quitterJourneeTouche'), t('aide.k.quitterJournee')], // prompts 94 / 97
-		[t('aide.k.rienTouche'), t('aide.k.rien')],
-		['A / B', t('aide.k.ab')],
-		[t('aide.k.majTouche'), t('aide.k.equipes')],
-		['R', t('aide.k.reset')],
-		['P', t('aide.k.pause')],
-		['M', t('aide.k.son')],
-		[t('aide.k.aideTouche'), t('aide.k.aide')],
-		['T', t('aide.k.tuto')],
-		['L', t('aide.k.langue')],
-		['Tab', t('aide.k.objets')],
-		['← → ↑ ↓', t('aide.k.regarder')],
-		[t('aide.k.quitterTouche'), t('aide.k.quitter')],
-		['↑ ↓', t('aide.k.semaine')],
-		['Z', t('aide.k.sieste')], // prompt 80 : touches ajoutées par les prompts 72 à 79
-	];
-	textSize(24);
-	fill(C.texte);
-	textStyle(BOLD);
-	text(t('aide.raccourcis'), x + 48, y + 96);
-	textStyle(NORMAL);
-	raccourcis.forEach(([k, d], i) => {
-		textFont(POLICE_DONNEES);
-		ajusterTaille(k, 196, 20);
-		fill(C.accent);
-		text(k, x + 48, y + 136 + i * 31);
-		textFont(POLICE_TEXTE);
-		ajusterTaille(d, 580, 20, 14); // prompt 98 : 14 px au minimum
-		fill(C.texte);
-		text(d, x + 260, y + 136 + i * 31);
-	});
-	// Malus (prompt 23 § 4), sous les raccourcis
-	if (Jeu.MALUS) {
-		const ym = y + 136 + raccourcis.length * 31 + 18;
-		textFont(POLICE_TEXTE);
-		textSize(24);
-		textStyle(BOLD);
-		fill(C.texte);
-		text(t('aide.malus'), x + 48, ym);
-		Jeu.MALUS.forEach((m, i) => {
-			const yy = ym + 38 + i * 50;
-			textStyle(BOLD);
-			ajusterTaille(String(m.libelle), 780, 18);
-			fill(C.rouge);
-			text(m.libelle, x + 48, yy);
-			textStyle(NORMAL);
-			const txt = m.condition + ' → ' + m.consequence;
-			ajusterTaille(txt, 790, 18);
-			fill(C.gris);
-			text(txt, x + 48, yy + 23);
-		});
-	}
-	// Règles (00-concept, 03-actions, 04-jauges) puis la Carte (prompt 68)
-	const rx = x + 900;
-	const rl = l - (rx - x) - 48;
-	textSize(24);
-	textStyle(BOLD);
-	fill(C.texte);
-	text(t('aide.regles'), rx, y + 96);
-	textStyle(NORMAL);
-	// Prompt 80 : le texte des règles s'est allongé (prompts 72 à 79) — la taille s'ajuste pour qu'il tienne en entier
-	const regles = t('aide.texte');
-	let ts = 19;
-	for (; ts > 13; ts--) {
-		textSize(ts);
-		const lignes = regles.split('\n').reduce((n, par) => n + Math.max(1, Math.ceil((textWidth(par) * 1.08) / rl)), 0);
-		if (lignes * Math.round(ts * 1.4) <= 820) break;
-	}
-	textLeading(Math.round(ts * 1.4));
-	text(regles, rx, y + 136, rl, 820);
-	textLeading(textSize() * 1.25);
-	bouton(x + l - 288, y + h - 92, 240, 60, t('commun.fermer'), fermer);
-	bouton(x + l - 288 - 300, y + h - 92, 280, 60, t('tuto.relancer'), lancerTutoriel, false, true); // prompt 34
-}
+// Prompt 123 : la fenêtre d'aide (onglets, cartes, pagination) est dans aide.js
 
 function fenetreReset() {
 	const l = 760;

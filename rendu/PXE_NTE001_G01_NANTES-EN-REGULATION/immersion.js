@@ -212,6 +212,7 @@ function dessinerTransitionJour() {
 	noStroke();
 	fill(0, 0, 0, 255 * a);
 	rect(0, 0, L, H);
+	zoneTexteDeclarer('transitionJour', 0, 0, L, H); // prompt 120 : écran plein cadre, conteneur de ses textes (audit)
 	if (a > 0.6) {
 		dsTitre(texteTransitionJour(), L / 2, H / 2 - 220, 72, '#ffffff', 'center'); // prompt 95 : remonté pour l'explication
 		noStroke();
@@ -224,10 +225,11 @@ function dessinerTransitionJour() {
 		// Prompt 112 : transition courte de l'intro → titre et date seuls (l'explication reste annoncée, et le tutoriel la reprend)
 		if (TRANSITION_JOUR.court) return true;
 		let yl = H / 2 - 40;
+		const lt = Math.min(1120, L - 80); // prompt 120 : en portrait (L = 1080), les lignes restent dans l'écran
 		lignesTransitionJour().forEach((ln) => {
-			yl += dessinerTexte(ln, L / 2 - 560, yl, 1120, { taille: 22, couleur: '#FFFFFF', align: 'center', interligne: 32 }).h + 6;
+			yl += dessinerTexte(ln, L / 2 - lt / 2, yl, lt, { taille: 22, couleur: '#FFFFFF', align: 'center', interligne: 32 }).h + 6;
 		});
-		dessinerTexte(t('transition.passer'), L / 2 - 560, yl + 18, 1120, { taille: 18, couleur: 'rgba(255,255,255,0.75)', align: 'center', maxLignes: 1 });
+		dessinerTexte(t('transition.passer'), L / 2 - lt / 2, yl + 18, lt, { taille: 18, couleur: 'rgba(255,255,255,0.75)', align: 'center', maxLignes: 1 });
 	}
 	return true;
 }
@@ -253,8 +255,10 @@ function tempsCompresse() {
 // Prompt 95 : horloge des équipes (ms) — avance avec le temps de JEU (×1, ×100 en temps accéléré, 0 quand il est
 // suspendu). 1 000 ms = 1 minute de jeu au rythme normal : « 20 s » d'avant deviennent 20 min de jeu, qui ne filent plus
 // pendant la lecture d'un signalement. game.js reçoit cette valeur comme « maintenant » (API inchangée).
-const TEMPS_EQUIPES = { ms: 0 };
+const TEMPS_EQUIPES = { ms: 0, actif: 0 };
 const tempsEquipes = () => TEMPS_EQUIPES.ms;
+/** Prompt 131 : ms réelles de jeu actif — une plainte n'expire plus pendant la lecture d'un signalement */
+const tempsPlaintes = () => TEMPS_EQUIPES.actif;
 /** État de la vitesse du temps : 'pause' | 'normal' | 'accelere' */
 function vitesseTemps() {
 	if (ecran !== 'jeu' || !Jeu.horloge || tempsSuspendu()) return 'pause';
@@ -267,6 +271,7 @@ function avancerTemps() {
 	if (tempsSuspendu()) return; // prompt 34 / 43 : tutoriel et transition suspendent le temps
 	const vitesse = IMMERSION.minutesParSeconde * (tempsCompresse() ? IMMERSION.compression : 1) * (typeof Juice !== 'undefined' ? Juice.echelleTemps(maintenant) : 1); // prompt 78 : sieste ×100 ; prompt 96 : hit-stop (horloge seule, entrées libres)
 	TEMPS_EQUIPES.ms += dt * (vitesse / IMMERSION.minutesParSeconde); // prompt 95 (le hit-stop la ralentit aussi)
+	TEMPS_EQUIPES.actif += dt; // prompt 131 : temps réel de jeu ACTIF (×1, arrêté quand le temps est suspendu) — délai des plaintes
 	const avant = Jeu.horloge.minutes;
 	Jeu.horloge.minutes += (dt / 1000) * vitesse;
 	// Prompt 78 : l'horloge ne dépasse pas la fin de journée tant que des signalements restent (sieste ×100)
@@ -692,16 +697,23 @@ function dessinerSMS() {
 // ——— Fenêtres du bureau : menu Échap (§ 1) et livre « stress » (§ 7) ———
 // Prompt 35 : menu Échap modernisé (même style que le menu principal)
 let choixPause = 0;
-const ENTREES_PAUSE = [
+// Prompt 124 : « Quitter la journée » et « Recommencer » ne sont plus dans le bandeau — ils sont ici (souris, toucher)
+const journeeQuittable = () => ecran === 'jeu' && !!Jeu.horloge && !!(Jeu.jourCourant && Jeu.jourCourant()) && phase !== 'fin';
+const TOUTES_ENTREES_PAUSE = [
 	{ cle: 'menu.reprendre', icone: 'lecture', action: () => fermer() },
 	{ cle: 'accueil.parametres', icone: 'reglages', action: () => (fenetre = 'parametres') },
-	{ cle: 'accueil.aide', icone: 'aide', action: () => (fenetre = 'aide') },
+	{ cle: 'mp.aide', icone: 'aide', action: () => (fenetre = 'aide') }, // prompt 122 : « Aide et tutoriel »
 	{ cle: 'menu.carnet', icone: 'carnet', action: () => (fermer(), ouvrirCarnet()) }, // prompt 47 : journal de bord (J)
+	{ cle: 'quitter.bouton', icone: 'retour', visible: journeeQuittable, action: () => (fermer(), quitterJourneeRapide()) },
+	{ cle: 'jeu.recommencer', icone: 'plus', visible: () => ecran === 'jeu', action: () => (fenetre = 'reset') },
 	{ cle: 'menu.menuPrincipal', icone: 'menu', action: () => quitterPartie() },
 ];
+const entreesPause = () => TOUTES_ENTREES_PAUSE.filter((e) => !e.visible || e.visible());
 function fenetreMenu() {
 	const l = 700;
-	const h = 200 + ENTREES_PAUSE.length * 112;
+	const ENTREES_PAUSE = entreesPause();
+	const h = 160 + ENTREES_PAUSE.length * 112;
+	if (choixPause >= ENTREES_PAUSE.length) choixPause = 0;
 	const x = (L - l) / 2;
 	const y = (H - h) / 2;
 	noStroke();
@@ -1171,8 +1183,10 @@ function fenetrePoste() {
 	textSize(24);
 	text(t('poste.decisions'), x + 56, y + 262);
 	textStyle(NORMAL);
-	[['1', 'devier'], ['2', 'retenir'], ['3', 'renfort'], ['0', 'rien'], [t('alerte.maj') + ' + 1–4', 'equipes']].forEach(([k, a], i) => {
-		const yy = y + 310 + i * 62;
+	// Prompt 131 : les gestes réels du jeu (carte, répliques 1 à 4, équipes glissées, menu à gauche), plus l'ancienne table Q5–Q7
+	['carte', 'repondre', 'equipes', 'menu'].forEach((g, i) => {
+		const k = t('poste.geste.' + g + '.k');
+		const yy = y + 310 + i * 72;
 		textFont(POLICE_DONNEES);
 		textStyle(BOLD);
 		textSize(22);
@@ -1183,7 +1197,7 @@ function fenetrePoste() {
 		textSize(21);
 		textLeading(27);
 		fill(C.texte);
-		text(t('action.desc.' + a), x + 230, yy, l - 290, 58);
+		text(t('poste.geste.' + g), x + 230, yy, l - 290, 66);
 	});
 	textSize(20);
 	textLeading(28);

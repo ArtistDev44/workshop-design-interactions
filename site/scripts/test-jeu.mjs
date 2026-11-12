@@ -282,7 +282,7 @@ const eq = vm.runInContext(
 	const amb = Jeu.equipes[0];
 	const rep0 = Jeu.jauges.reputation;
 	Jeu.majEquipes(t0 + 20001);
-	const gain = Jeu.jauges.reputation - rep0 - 1; // − commentaire « équipe » (+1)
+	const gain = Jeu.jauges.reputation - rep0; // prompt 121 : plus de commentaire à l'arrivée (le retour du plaignant vient à la fin de l'intervention)
 	// Sauvegarde / reprise : le cycle continue
 	const snap = JSON.parse(JSON.stringify(Jeu.instantane(t0 + 30000)));
 	// Remise à zéro le matin
@@ -303,6 +303,61 @@ verifier(eq.libreAvant === 0 && eq.libreApres === 1, `équipes : retour après r
 verifier(eq.pert === true ? eq.gain === eq.eff : eq.gain === Math.round(eq.eff / 2), `équipes : effet ${eq.gain} (pertinente : ${eq.pert}, plein : ${eq.eff})`);
 verifier(eq.snapPhase, 'équipes : la sauvegarde ne garde pas le cycle');
 verifier(eq.policeAvant === 1 && eq.policeMatin === 2, `équipes : effectifs non remis à zéro le matin (${eq.policeAvant} → ${eq.policeMatin})`);
+
+// Prompt 123 : l'aide en onglets — 10 paragraphes de règles (FR et EN), un titre par carte, aide.js chargé
+for (const [nom, ctx] of [['fr', contexte('fr')], ['en', contexte('en')]]) {
+	const r = vm.runInContext(`({ n: t('aide.texte').split('\\n\\n').length, titres: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => t('aide.carte.' + i)), autres: ['aide.onglet.demarrer', 'aide.onglet.annonce', 'aide.page', 'aide.clavier', 'aide.tuto.titre', 'aide.tuto.texte', 'aide.groupe.signalement', 'aide.groupe.equipes', 'aide.groupe.bureau', 'aide.groupe.general'].map((k) => t(k)) })`, ctx);
+	verifier(r.n === 10, `aide (${nom}) : ${r.n} paragraphes de règles au lieu de 10 (les cartes de aide.js suivent cet ordre)`);
+	verifier(r.titres.concat(r.autres).every((x) => x && !/^aide\./.test(x) && !x.includes('[À COMPLÉTER]')), `aide (${nom}) : titre ou libellé manquant`);
+}
+{
+	const aide = readFileSync(join(pub, 'aide.js'), 'utf8');
+	verifier(/<script src="\.\/aide\.js"><\/script>/.test(readFileSync(join(pub, 'index.html'), 'utf8')) && /function fenetreAide\(/.test(aide) && !/function fenetreAide\(/.test(readFileSync(join(pub, 'sketch.js'), 'utf8')), 'aide : aide.js non chargé, ou fenetreAide en double');
+	verifier(/taille: 20/.test(aide) && !/for \(; ts > 13/.test(aide), 'aide : le texte courant doit rester à 20 px (pagination, pas de rétrécissement)');
+}
+
+// Prompt 121 : sans équipe → clos ; avec équipe → en attente jusqu'à la fin de l'intervention, puis retour du plaignant
+{
+	const r = vm.runInContext(
+		`(() => {
+		Jeu.chargerSemaine('2026-10-12'); Jeu.nouvellePartie(); Jeu.jauges.budget = 100; Jeu.jauges.reputation = 50;
+		Jeu.elementDebloque = () => true;
+		const T0 = 5000000;
+		const ouvert = Jeu.statutSignalement(0);
+		const e = Jeu.envoyerEquipe(0, 'techniciens', T0);
+		const q = Jeu.equipes[0];
+		Jeu.index = 2; // le joueur a répondu aux dossiers 0 (avec équipe) et 1 (sans équipe)
+		const clos = Jeu.statutSignalement(1);
+		const attente = Jeu.statutSignalement(0);
+		const nAtt = Jeu.signalementsEnAttente().length;
+		Jeu.majEquipes(q.arrivee + 1);
+		const surPlace = Jeu.statutSignalement(0);
+		const n0 = Jeu.commentaires.length; const rep0 = Jeu.jauges.reputation;
+		Jeu.majEquipes(q.finIntervention + 1);
+		const termine = Jeu.statutSignalement(0);
+		const gainRep = Jeu.jauges.reputation - rep0;
+		const c = Jeu.commentaires[Jeu.commentaires.length - 1];
+		const pl = Jeu.plaignantPour(0);
+		Jeu.majEquipes(q.finIntervention + 5000);
+		const unSeul = Jeu.commentaires.length - n0;
+		// équipe inutile : envoyée après la réponse, le signalement reste clos
+		const inutile = Jeu.envoyerEquipe(1, 'police', T0 + 200000);
+		Jeu.majEquipes(T0 + 900000);
+		// reprise : aucun remerciement en double, et une ancienne sauvegarde (sans drapeau) non plus
+		const snap = JSON.parse(JSON.stringify(Jeu.instantane(T0 + 900000)));
+		snap.equipes.forEach((x) => delete x.remercie);
+		const nAvant = Jeu.commentaires.length;
+		Jeu.restaurerInstantane(snap, T0 + 900000); Jeu.index = 2; Jeu.majEquipes(T0 + 2000000);
+		return { ouvert, ok: e.ok, clos, attente, nAtt, surPlace, termine, retour: !!(c && c.retour), auteur: c && c.auteur, attendu: pl ? pl.auteur : null, texte: c && String(c.texte), index: c && c.index, gainRep, unSeul, inutileOk: inutile.ok, closApres: Jeu.statutSignalement(1), doublon: Jeu.commentaires.length - nAvant, fin: Jeu.signalementsEnAttente().length };
+		})()`,
+		contexte('fr'),
+	);
+	verifier(r.ouvert === 'ouvert' && r.ok && r.clos === 'clos', `retour : sans équipe ${r.clos} (attendu clos), avant réponse ${r.ouvert}`);
+	verifier(r.attente === 'attente' && r.nAtt === 1 && r.surPlace === 'attente', `retour : avec équipe ${r.attente}, sur place ${r.surPlace}, en attente ${r.nAtt}`);
+	verifier(r.termine === 'termine' && r.retour && r.index === 0 && r.unSeul === 1 && r.gainRep === 1, `retour : fin ${r.termine}, ${r.unSeul} retour(s), réputation +${r.gainRep}`);
+	verifier((!r.attendu || r.auteur === r.attendu) && r.texte && !r.texte.includes('{') && !r.texte.includes('[À COMPLÉTER]'), `retour : auteur ${r.auteur} (plaignant ${r.attendu}), texte « ${r.texte} »`);
+	verifier(r.inutileOk === false && r.closApres === 'clos' && r.doublon === 0 && r.fin === 0, `retour : équipe inutile ${r.closApres}, doublon à la reprise ${r.doublon}, encore en attente ${r.fin}`);
+}
 
 // Prompt 69 : fin de journée — phase « soir », nuit à 21 h, sortie → lendemain 8 h (prompt 76 ; ou bilan le dernier jour)
 {
@@ -742,10 +797,12 @@ verifier(eq.policeAvant === 1 && eq.policeMatin === 2, `équipes : effectifs non
 	verifier(/const DEPOT_URL = 'https:\/\/github\.com\/ArtistDev44\/workshop-design-interactions';/.test(menu) && /const URL_JEU = 'https:\/\/workshop-design-interactions\.pages\.dev\/';/.test(menu), 'menu : constantes DEPOT_URL et URL_JEU');
 	verifier((menu.match(/workshop-design-interactions\.pages\.dev/g) || []).length === 1 && (menu.match(/github\.com/g) || []).length === 1 && !/workshop-design-interactions\.pages\.dev|github\.com\/ArtistDev44/.test(autres), 'menu : les URL du jeu et du dépôt ne doivent être écrites qu\'une fois');
 	verifier(/window\.open\(url, '_blank', 'noopener'\)/.test(menu) && /navigator\.clipboard/.test(menu) && /execCommand\('copy'\)/.test(menu), 'menu : liens en nouvel onglet noopener, copie avec repli');
-	const cles = ['mp.partager', 'mp.partager.texte', 'mp.partager.fermer', 'mp.partager.copier', 'mp.partager.copie', 'mp.partager.x', 'mp.partager.facebook', 'mp.partager.linkedin', 'mp.partager.mastodon', 'mp.depot', 'mp.credits', 'mp.licence'];
+	const cles = ['mp.partager', 'mp.partager.texte', 'mp.partager.fermer', 'mp.partager.copier', 'mp.partager.copie', 'mp.partager.x', 'mp.partager.facebook', 'mp.partager.linkedin', 'mp.partager.mastodon', 'mp.depot', 'mp.credits']; // prompt 125 : plus de lien de licence sur le menu (il est dans les Crédits)
 	const manque = vm.runInContext(`${JSON.stringify(cles)}.filter((k) => !TRADUCTIONS.fr[k] || !TRADUCTIONS.en[k])`, fr);
 	verifier(manque.length === 0, `menu : clés manquantes ${manque}`);
 	verifier(vm.runInContext("TRADUCTIONS.fr['mp.credits'] === 'Mattéo Brevet & Guillaume Renoult'", fr), 'menu : crédits');
+	verifier(!/mp\.licence|mp\.sources|mp\.clavier/.test(menu) && !/cle: 'licence'/.test(menu.slice(menu.indexOf('const EXTRAS_MENU'), menu.indexOf('const focusExtra'))) && /LICENCE_URL/.test(readFileSync(join(pub, 'credits.js'), 'utf8')), 'prompt 125 : pied du menu réduit aux noms, licence dans les Crédits');
+	verifier(vm.runInContext("['mp.clavier', 'mp.sources', 'mp.licence', 'mp.licence.infobulle'].every((k) => !TRADUCTIONS.fr[k] && !TRADUCTIONS.en[k]) && /Naolib/.test(TRADUCTIONS.fr['credits.lic.donnees.v']) && /Naolib/.test(TRADUCTIONS.en['credits.lic.donnees.v'])", fr), 'prompt 125 : clés du pied de page supprimées, Naolib cité dans les Crédits');
 	const lic = readFileSync(join(pub, '..', '..', 'LICENSE'), 'utf8');
 	verifier(/MIT License/.test(lic) && /Copyright \(c\) 2026 Mattéo Brevet & Guillaume Renoult/.test(lic) && /THE SOFTWARE IS PROVIDED "AS IS"/.test(lic) && /Nantes en régulation/.test(lic) && !/À COMPLÉTER/.test(lic), 'LICENSE : texte MIT complet, crédits, en-tête conservé');
 	verifier(!/ouvrirPartage|fenetrePartage/.test(readFileSync(join(pub, 'immersion.js'), 'utf8')), 'menu : le partage reste sur l\'écran titre (pas dans le menu Échap)');
@@ -1302,7 +1359,7 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 	const r = vm.runInContext(
 		`(() => {
 		const out = { sansOption: 0, chaines: [], erreurs: [], sauve: null, deblocage: null, arbitrage: null };
-		const pire = (d) => { const ks = Jeu.actionsPossibles(d); return ks.map((k) => [k, Jeu.effetsAttendus(k, d).reduce((a, b) => a + b, 0)]).sort((a, b) => a[1] - b[1])[0][0]; };
+		const pire = (d) => { const ks = Jeu.actionsPossibles(d); const p = Jeu.poidsBesoin(Jeu.jauges); return ks.map((k) => [k, Jeu.effetsAttendus(k, d).reduce((a, v, i) => a + v * p[i], 0)]).sort((a, b) => a[1] - b[1])[0][0]; }; // prompt 130 : la pire réponse au sens de l'évaluation pondérée
 		const jouer = (opts) => {
 			Jeu.chargerSemaine('2026-09-14'); Jeu.nouvellePartie(); Taches.nouvellePartie(opts);
 			let n = 0, garde = 0;
@@ -1888,7 +1945,7 @@ for (const f of ['enquete.js', 'carte.js', 'journal.js']) verifier(!/\*\s*1\.05\
 		TRANSITION_JOUR.semaine = 0;
 		const l = lignesTransitionJour().join(' | ');
 		r.prevus = l.includes(Jeu.jours[0].dossiers.length + ' signalement');
-		r.service = l.includes('8h00') && l.includes('20h00') && /Quitter la journée/.test(l);
+		r.service = l.includes('8h00') && l.includes('20h00') && /touche Q/.test(l);
 		r.courte = Jeu.jours.length < 7 ? /aucun événement réel le dimanche 20 septembre/.test(l) : true;
 		TRANSITION_JOUR.jour = 2; r.courteUneFois = !/aucun événement réel/.test(lignesTransitionJour().join(' '));
 		// Équipes : 20 minutes de jeu (1 000 ms de l'horloge des équipes = 1 min de jeu au rythme normal)
@@ -1966,7 +2023,7 @@ for (const [langue, mots] of [
 	for (const [k, re] of Object.entries(mots)) verifier(re.test(k === 'guide' ? a.guide : k === 'diff' ? a.diff : tout), `aide / guide (prompt 97, ${langue}) : « ${k} » absent`);
 	verifier(!/briefing du matin|morning briefing|info trafic \(4 blocs|traffic info \(4 exact/.test(a.texte), `aide (prompt 97, ${langue}) : décrit encore le briefing ou l'info trafic retirés au prompt 91`);
 }
-verifier(/aide\.k\.glisserTouche/.test(readFileSync(join(pub, 'sketch.js'), 'utf8')) && /texteDifficulteChapitre/.test(readFileSync(join(pub, 'menu.js'), 'utf8')), 'prompt 97 : aide (glisser, Q) et difficulté du mode histoire affichées');
+verifier(/aide\.k\.glisserTouche/.test(readFileSync(join(pub, 'aide.js'), 'utf8')) && /texteDifficulteChapitre/.test(readFileSync(join(pub, 'menu.js'), 'utf8')), 'prompt 97 : aide (glisser, Q) et difficulté du mode histoire affichées');
 
 // Prompt 98 (skill game-ui-design, validations.md) : aucun texte fixe sous 14 px, boutons qui ne rétrécissent pas
 // sous 14 px, zones de clic élargies (✕ des applis, somnolence), infobulle du bandeau temporisée (350 ms)
@@ -1984,6 +2041,83 @@ verifier(/aide\.k\.glisserTouche/.test(readFileSync(join(pub, 'sketch.js'), 'utf
 	verifier(/while \(textSize\(\) > 14 && textWidth\(label\)/.test(sk98), 'bouton() ne doit pas réduire un libellé sous 14 px');
 	verifier(/millis\(\) - BANDEAU\.survolDepuis >= 350/.test(sk98), 'infobulle du bandeau : délai de 350 ms');
 	verifier(/boutons\.push\(\{ x: x - 12, y: 0, l: 58, h: 52, action: fermerAppli \}\)/.test(readFileSync(join(pub, 'os.js'), 'utf8')) && /y: z\.y - 18, l: z\.l, h: z\.h \+ 18, action: basculerSieste/.test(readFileSync(join(pub, 'sieste.js'), 'utf8')), 'zones de clic ≥ 44 px : ✕ des applis et somnolence');
+}
+
+// Prompt 130 : l'évaluation suit le besoin des jauges — jouer toujours une réponse jugée « bonne » ne mène plus au
+// licenciement (avant : fluidité vidée par « attendre », licenciement au 10e–14e dossier) et finit au moins « moyenne »
+for (const s of semaines) {
+	const c114 = contexte('fr');
+	const r114 = vm.runInContext(
+		`(() => {
+		Jeu.chargerSemaine(${JSON.stringify(s)});
+		Jeu.nouvellePartie();
+		let n = 0; let bons = 0; let licencie = null;
+		while (!Jeu.terminee && n++ < 200) {
+			const d = Jeu.prochainDuJour();
+			if (!d) { Jeu.finDeJourneeTactique(); if (!Jeu.jours[Jeu.jourIndex + 1]) break; Jeu.journeeSuivante(); continue; }
+			if (Jeu.conflit && Jeu.conflit()) Jeu.choisirPriorite('a');
+			const cle = Jeu.reponsesConseillees(d)[0];
+			Jeu.decider(cle, d.contradiction ? d.contradiction.bonne : undefined);
+			const e = Jeu.evenementsJournee[Jeu.evenementsJournee.length - 1];
+			if (Jeu.evaluer(e) === 'bon') bons++;
+			if (Jeu.statutPatron && Jeu.statutPatron.licencie && !licencie) licencie = Jeu.statutPatron.licencie.cause;
+		}
+		return { bons, total: Jeu.paquet.length, licencie, score: Jeu.score() };
+	})()`,
+		c114,
+	);
+	verifier(!r114.licencie, `prompt 130 : suivre l'évaluation mène au licenciement (${s}, ${r114.licencie})`);
+	verifier(r114.bons === r114.total, `prompt 130 : une réponse conseillée doit être évaluée « bon » (${s} : ${r114.bons}/${r114.total})`);
+	verifier(r114.score >= 180, `prompt 130 : suivre l'évaluation doit finir au moins « moyenne » (${s} : ${r114.score})`);
+}
+
+// Prompt 131 : l'intro décrit le jeu actuel (pas de chrono par défaut, la sieste est une mécanique), la narration ne
+// passe plus seule hors défi chrono, et le délai des plaintes Community suit le temps de jeu actif
+{
+	const f116 = contexte('fr');
+	const e116 = contexte('en');
+	const sms = (c) => vm.runInContext(`[0, 1, 2, 3, 4, 5].map((i) => t('sms.' + i)).join(' ')`, c);
+	verifier(!/chrono tourne|pas de sieste/i.test(sms(f116)) && !/clock is ticking|no napping/i.test(sms(e116)), 'prompt 131 : les SMS d\'intro parlent encore de chrono ou interdisent la sieste');
+	const sk116 = readFileSync(join(pub, 'sketch.js'), 'utf8');
+	verifier(/if \(auto && tA >= 1/.test(sk116) && /const auto = !!Jeu\.defiChrono/.test(sk116), 'prompt 131 : la narration ne doit passer seule qu\'en défi chrono');
+	verifier(/majPlaintes\(tempsPlaintes\(\)\)/.test(sk116) && /resteReponse\(pl, typeof tempsPlaintes/.test(readFileSync(join(pub, 'community.js'), 'utf8')), 'prompt 131 : délai des plaintes en temps de jeu actif');
+	const reste = vm.runInContext(`Jeu.resteReponse({ depuis: 90000 }, 1000)`, f116);
+	verifier(reste === vm.runInContext('Jeu.REGLAGES.community.delaiMs', f116), `prompt 131 : une plainte datée du futur doit repartir du délai complet (${reste})`);
+}
+
+// Prompt 132 : mode exposition — expo.js chargé en premier (la purge précède toute lecture du stockage), réglages et
+// langue gardés, sauvegardes et tutoriel effacés ; filet de rechargement après une erreur qui fige le rendu
+{
+	const html117 = readFileSync(join(pub, 'index.html'), 'utf8');
+	const premier = (html117.match(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/i) || [])[1];
+	verifier(premier === './expo.js', `prompt 132 : expo.js doit être le premier script (${premier})`);
+	const st = new Map([['pxe-nte001:jeu:reglages', '{}'], ['pxe-nte001-langue', 'en'], ['pxe-nte001-tutoriel-vu', 'oui'], ['pxe-nte001-partie-2026-09-14', '{}'], ['autre-site', 'x']]);
+	const ls = { getItem: (k) => (st.has(k) ? st.get(k) : null), setItem: (k, v) => st.set(k, String(v)), removeItem: (k) => st.delete(k), key: (i) => [...st.keys()][i] };
+	const c117 = { localStorage: new Proxy(ls, { ownKeys: () => [...st.keys()], getOwnPropertyDescriptor: (o, k) => (st.has(k) ? { enumerable: true, configurable: true, value: st.get(k) } : Reflect.getOwnPropertyDescriptor(o, k)) }), location: { search: '?expo=1', hash: '' }, URLSearchParams, Date, window: { addEventListener: () => {} }, setInterval: () => 0, document: {} };
+	c117.window = Object.assign(c117.window, c117);
+	vm.createContext(c117);
+	vm.runInContext(readFileSync(join(pub, 'expo.js'), 'utf8') + ';globalThis.__E = EXPO;', c117);
+	verifier(c117.__E.actif && [...st.keys()].sort().join(',') === 'autre-site,pxe-nte001-langue,pxe-nte001:jeu:reglages', `prompt 132 : purge du mode exposition (${[...st.keys()].join(',')})`);
+	verifier(/filetErreur/.test(readFileSync(join(pub, 'installation.js'), 'utf8')) && /sessionStorage\.setItem\(CLE/.test(readFileSync(join(pub, 'installation.js'), 'utf8')), 'prompt 132 : filet de rechargement (une fois par minute au plus)');
+}
+
+// Prompt 133 : « Quitter la journée » en secondaire, gravité « élevée » en rouge franc doublée par la taille,
+// badge à texte sombre en palette protan / deutan, touche F (plein écran)
+{
+	// Prompt 124 : le bouton a quitté le bandeau (immersion) — l'action est dans le menu Échap, la touche Q reste
+	{
+		const pan = readFileSync(join(pub, 'panneau.js'), 'utf8');
+		const imm = readFileSync(join(pub, 'immersion.js'), 'utf8');
+		verifier(!/t\('quitter\.bouton'\)|t\('accueil\.aide'\)|t\('jeu\.recommencer'\)/.test(pan), 'prompt 124 : plus de bouton Quitter la journée / Aide / Recommencer dans le bandeau');
+		verifier(/cle: 'quitter\.bouton'[^\n]*quitterJourneeRapide/.test(imm) && /cle: 'jeu\.recommencer'[^\n]*'reset'/.test(imm) && /cle: 'mp\.aide'/.test(imm), 'prompt 124 : quitter la journée, recommencer et aide dans le menu Échap');
+		verifier(!/t\('mp\.clavier'\)/.test(readFileSync(join(pub, 'menu.js'), 'utf8')), 'prompt 124 : plus de ligne d\'aide clavier sur le menu principal');
+		const sk = readFileSync(join(pub, 'sketch.js'), 'utf8');
+		const be = sk.slice(sk.indexOf('function bandeauEtat'), sk.indexOf('dessinerSomnolence();', sk.indexOf('function bandeauEtat')));
+		verifier(/annoncer\(/.test(be) && !/text\(|rect\(/.test(be), 'prompt 124 : l\'état du jeu est annoncé (aria-live), plus dessiné');
+	}
+	verifier(/g === 'elevee' \? C\.rougeFonce/.test(readFileSync(join(pub, 'carte.js'), 'utf8')) && /const tm = g === 'elevee' \? 36/.test(readFileSync(join(pub, 'carte-alertes.js'), 'utf8')), 'prompt 133 : gravité élevée en rouge franc et plus grande');
+	verifier(/\['protan', 'deutan'\]\.includes\(Confort\.Reglages\.daltonisme\)/.test(readFileSync(join(pub, 'ds.js'), 'utf8')), 'prompt 133 : badge lisible en protan / deutan');
+	verifier(/function basculerPleinEcran/.test(readFileSync(join(pub, 'sketch.js'), 'utf8')), 'prompt 133 : touche F, plein écran');
 }
 
 // Service worker : chaque script de index.html est dans la liste hors ligne de sw.js
