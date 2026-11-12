@@ -1626,6 +1626,7 @@
 	/** Message du patron au début de chaque journée : effectifs réels (remis à zéro chaque matin) */
 	Jeu.annoncerEffectifs = function () {
 		if (!Jeu.elementDebloque('equipes') || !Jeu.messagesPatron) return;
+		if (Jeu.plateauEquipesVisible) return; // prompt 103 : les effectifs sont sur le plateau de la carte (pas de doublon dans la messagerie)
 		const effectifs = {};
 		Jeu.TYPES_EQUIPES.forEach((k) => (effectifs[k] = REGLAGES.equipes[k].effectif));
 		Jeu.messagePatron(T('patron.effectifs', { liste: Jeu.TYPES_EQUIPES.map((k) => EQUIPES[k].nom + ' ' + REGLAGES.equipes[k].effectif).join(', ') }), 'equipes', { effectifs });

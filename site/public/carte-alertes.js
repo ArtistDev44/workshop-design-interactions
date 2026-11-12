@@ -10,10 +10,11 @@
  *   ouvert → envoyerEquipeIncident (règles de game.js inchangées). Clic sur un jeton puis sur le dossier = même
  *   chose ; Maj + 1/2/3/4 restent. L'adéquation n'est dite qu'APRÈS le dépôt (Jeu.equipesPertinentes).
  */
+Jeu.plateauEquipesVisible = true; // prompt 103 : le plateau des équipes dit les effectifs (game.js ne les répète plus au patron)
 const CARTE = { zone: null, vue: null, marqueurs: [], arrivees: {}, jeton: null, jetonChoisi: null, retour: null, jetons: [], depots: [], ouverte: false };
-const MENU_APP = { x: 40, y: 132, l: 112, h: 900 }; // prompt 103 : colonne du menu (réservée dès le prompt 102)
-const ZONE_CARTE_PLEINE = { x: 168, y: 132, l: 1712, h: 900 };
-const ZONE_CARTE_DOSSIER = { x: 168, y: 132, l: 572, h: 900 };
+const MENU_APP = { x: 40, y: 132, l: 128, h: 900 }; // prompt 103 : colonne du menu (réservée dès le prompt 102)
+const ZONE_CARTE_PLEINE = { x: 184, y: 132, l: 1696, h: 900 };
+const ZONE_CARTE_DOSSIER = { x: 184, y: 132, l: 556, h: 900 };
 const H_PLATEAU = 104;
 const PHASES_DOSSIER_CARTE = ['decision', 'contradiction', 'conflit', 'narration'];
 

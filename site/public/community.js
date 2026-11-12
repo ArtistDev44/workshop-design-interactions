@@ -177,7 +177,7 @@ function dessinerCompteSocial(z) {
 	dessinerBanniere(z.x, z.y, lp, 52); // prompt 101 : bannière plus basse
 	avatarCompte(z.x + 16, z.y + 40, 64);
 	dsTexte(t('commu.nom'), z.x + 96, z.y + 76, 20, DS.blanc, 'left');
-	dsTexte(t('commu.reseau'), z.x + 96, z.y + 102, 18, DS.blanc50, 'left'); // prompt 101 b : @regul.nte est déjà dans le titre
+	dsTexte('@regul.nte · ' + t('commu.reseau'), z.x + 96, z.y + 102, 18, DS.blanc50, 'left'); // prompt 103 : plus de titre de fenêtre, la poignée revient ici (une seule fois)
 	textFont(DS.policeTexte);
 	textSize(20);
 	const wn = textWidth(t('commu.nom'));

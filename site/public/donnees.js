@@ -131,7 +131,8 @@ function blocsDonnees() {
 }
 
 /** Appli plein écran (sur tout l'écran du PC, barre des tâches comprise), fermeture par la croix ou Échap */
-function dessinerAppliDonnees() {
+function dessinerAppliDonnees(z) {
+	if (z) return dessinerBlocsDonnees(z); // prompt 103 : vue intégrée de l'appli principale (sans bandeau rouge ni croix)
 	noStroke();
 	fill(DS.fond);
 	rect(0, 0, L, H);
@@ -185,6 +186,32 @@ function dessinerAppliDonnees() {
 		fill(DS.blanc75);
 		text(t('donnees.source', { source: b.source, licence: b.licence }), x + 24, y + bh - 118, bl - 48, 56);
 		dsBouton(x + 24, y + bh - 60, 360, 44, t('donnees.ouvrir'), () => ouvrirLienApi(b.url), 'contour');
+	});
+}
+/** Prompt 103 : les mêmes blocs dans une zone (une ligne d'intro, mode en texte secondaire, 2 × 2 blocs) */
+function dessinerBlocsDonnees(z) {
+	dsTexte(t('donnees.intro') + ' · ' + (modeDonnees() === 'direct' ? t('donnees.mode.direct') : t('donnees.mode.archive')), z.x, z.y, 18, DS.blanc75, 'left', z.l);
+	const blocs = blocsDonnees();
+	const e = 24;
+	const y0 = z.y + 76;
+	const bl = (z.l - e) / 2;
+	const bh = (z.h - 76 - e) / 2;
+	blocs.forEach((b, i) => {
+		const x = z.x + (i % 2) * (bl + e);
+		const y = y0 + Math.floor(i / 2) * (bh + e);
+		noStroke();
+		fill(DS.blanc05);
+		rect(x, y, bl, bh);
+		dsTexte(String(b.titre), x + 20, y + 16, 20, DS.blanc, 'left');
+		dsTexte(b.statut, x + 20, y + 48, 16, b.statut === t('donnees.repli') ? DS.alerte : DS.succesClair, 'left');
+		textFont(DS.policeTexte);
+		textSize(18);
+		textLeading(24);
+		fill(DS.blanc75);
+		textAlign(LEFT, TOP);
+		text(b.lignes.join('\n'), x + 20, y + 80, bl - 40, bh - 200);
+		dsTexte(t('donnees.source', { source: b.source, licence: b.licence }), x + 20, y + bh - 112, 16, DS.blanc50, 'left', bl - 40); // 2 lignes au plus (20 px rendus)
+		dsBouton(x + 20, y + bh - 50, 300, 40, t('donnees.ouvrir'), () => ouvrirLienApi(b.url), 'fantome');
 	});
 }
 function ouvrirLienApi(url) {

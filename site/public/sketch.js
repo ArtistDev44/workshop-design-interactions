@@ -203,7 +203,8 @@ function draw() {
 	espaceDessin = 'pc';
 	sourisVersEcran();
 	background(C.fond);
-	if (PC.etat === 'appli') {
+	const integree = typeof vueIntegree === 'function' && vueIntegree(); // prompt 103 : Patron, Community, Journal, Données = vues de l'appli
+	if (PC.etat === 'appli' || integree) {
 		// Prompt 50 : l'appli est une fenêtre de RégulOS, la barre des tâches reste visible
 		dessinerFondOS();
 		const n0 = entrerFenetreAppli();
@@ -211,8 +212,13 @@ function draw() {
 		fill(C.fond);
 		rect(0, 0, L, H);
 		if (ecran === 'accueil') dessinerAppliSansPartie(); // prompt 35 : l'accueil est sorti du PC (menu principal)
-		else {
+		else if (integree) {
+			dessinerBandeau();
+			dessinerVueApp();
+			dessinerMenuApp();
+		} else {
 			dessinerJeu();
+			dessinerMenuApp(); // prompt 103
 			bandeauEtat(); // prompt 43
 			indicateurSauvegarde(); // prompt 33
 			// Prompt 93 : ligne complète du bandeau ; prompt 98 : infobulle après 350 ms de survol (validations : tooltip-no-delay)
@@ -1202,6 +1208,8 @@ function keyPressed() {
 			return false;
 		}
 		// Prompt 28 : plainte en attente dans l'app Community — Tab parcourt les réponses, Entrée / 1-2-3 répond
+		// Prompt 103 : le menu a le focus (Tab) → Entrée ouvre l'entrée choisie avant les raccourcis de la vue
+		if (typeof MENU_FOCUS !== 'undefined' && MENU_FOCUS.actif && (keyCode === ENTER || keyCode === RETURN || key === ' ') && vueIntegree()) return (MENU_FOCUS.actif = false), ouvrirEntreeMenu(ICONES_OS[PC.selection].cle), false;
 		if (ecran === 'jeu' && toucheCommunity()) return false; // prompt 85 : onglets, défilement, publication
 		if (ecran === 'jeu' && touchePatron()) return false; // prompt 86 : filtres, défilement, réponses rapides
 		const plainte = PC.fenetre === 'community' && ecran === 'jeu' ? cibleCommunity() : null;
@@ -1218,8 +1226,9 @@ function keyPressed() {
 		if (keyCode === TAB) {
 			// Prompt 26 : le cycle Tab passe par les icônes, le bouton « Quitter le PC », puis (prompt 75) le logo
 			// en bas à gauche de la barre des tâches (accueil de RégulOS)
-			const n = ICONES_OS.length;
+			const n = ecran === 'jeu' && !(typeof vueIntegree === 'function' && vueIntegree()) ? 1 : ICONES_OS.length; // prompt 103 : bureau = une icône ; dans l'appli, Tab parcourt le menu
 			const recul = keyIsDown(SHIFT);
+			if (typeof MENU_FOCUS !== 'undefined') MENU_FOCUS.actif = typeof vueIntegree === 'function' && vueIntegree(); // prompt 103
 			if (focusQuitter) {
 				basculerFocusQuitter(false);
 				if (recul) PC.selection = n - 1;
