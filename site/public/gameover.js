@@ -26,7 +26,7 @@ function lancerLicenciement() {
 	fenetre = null;
 	enSieste = false;
 	reveil = null;
-	Sauvegarde.effacer(Sauvegarde.semaineCourante()); // plus rien à reprendre ; pas de palmarès (allerFin n'est pas appelé)
+	Sauvegarde.effacerCourante(); // plus rien à reprendre ; pas de palmarès (allerFin n'est pas appelé)
 	try {
 		localStorage.setItem(CLE_LICENCIEMENTS, String((Number(localStorage.getItem(CLE_LICENCIEMENTS)) || 0) + 1)); // statistique locale
 	} catch (e) {}

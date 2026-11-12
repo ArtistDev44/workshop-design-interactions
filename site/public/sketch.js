@@ -118,7 +118,6 @@ function optionsAccueil() {
 		titre: T('accueil.semaine', { debut: { toString: () => dateLongue(s.lundi) }, fin: { toString: () => dateLongue(s.dimanche) } }),
 		detail: Confort.Reglages.defiChrono ? T('accueil.detailChrono', { niveau: T('niveau.' + s.niveau), s: s.compteur_s }) : T('accueil.detail', { niveau: T('niveau.' + s.niveau) }), // prompt 87
 		info: T('accueil.info', { d: s.dossiers, e: s.evenements, meilleur: texteMeilleur(s.lundi) }),
-		sauvegarde: Sauvegarde.pour(s.lundi), // prompt 33
 	}));
 	opts.push({
 		type: 'direct',
@@ -126,7 +125,6 @@ function optionsAccueil() {
 		detail: T(Jeu.enLigne === false ? 'accueil.direct.indispo' : 'accueil.direct.flux'),
 		info: T('accueil.direct.info', { meilleur: texteMeilleur('direct') }),
 		desactive: Jeu.enLigne === false,
-		sauvegarde: Sauvegarde.pour('direct'),
 	});
 	return opts;
 }
@@ -313,14 +311,15 @@ function bandeauEtat() {
 function lancerPartie() {
 	const o = optionsAccueil()[choixAccueil];
 	if (!o || o.desactive) return;
-	// Prompt 33 : une sauvegarde existe pour cette semaine → « Reprendre » ou « Nouvelle partie » (écrasement confirmé)
-	if (o.sauvegarde) return ouvrir('reprise');
+	// Prompt 178 : chaque nouvelle partie a son emplacement — plus de fenêtre « Reprendre / Nouvelle partie ». Seule
+	// la limite d'emplacements arrête le lancement : l'écran « Reprendre une partie » propose de supprimer la plus ancienne
+	if (Sauvegarde.pleine()) return allerSauvegardes(lancerNouvellePartie);
 	lancerNouvellePartie();
 }
 function lancerNouvellePartie() {
 	const o = optionsAccueil()[choixAccueil];
 	if (!o || o.desactive) return;
-	if (o.sauvegarde) Sauvegarde.effacer(o.sauvegarde.semaine);
+	Sauvegarde.nouvelle(); // prompt 178 : nouvel emplacement, créé à la première sauvegarde automatique (les autres parties restent)
 	fenetre = null;
 	const p = o.type === 'direct' ? Jeu.chargerDirect() : Jeu.chargerSemaine(o.lundi);
 	Confort.Son.bip('choix');
@@ -421,7 +420,7 @@ function fermer() {
 // FENETRES_BLOQUANTES : elles exigent une réponse (décision, confirmation, bilan à lire, animation) et ne se ferment
 // JAMAIS au clic sur le fond. FERMETURE_FOND : ce que fait Échap dans chaque fenêtre qui se ferme ainsi.
 // Une fenêtre absente des deux listes est traitée comme bloquante.
-const FENETRES_BLOQUANTES = ['reset', 'reprise', 'demission', 'partir', 'blame', 'inspection', 'tache', 'mailFin', 'rapport', 'rapportVeille', 'deblocage', 'poste', 'cafe'];
+const FENETRES_BLOQUANTES = ['reset', 'demission', 'partir', 'blame', 'inspection', 'tache', 'mailFin', 'rapport', 'rapportVeille', 'deblocage', 'poste', 'cafe'];
 const FERMETURE_FOND = {
 	aide: fermer,
 	parametres: fermer,
@@ -450,43 +449,15 @@ function clicFondFenetre() {
 function confirmerReset() {
 	fenetre = null;
 	enPause = false;
-	Sauvegarde.effacer(Sauvegarde.semaineCourante()); // prompt 33 : le reset efface la sauvegarde de la semaine
+	Sauvegarde.effacerCourante(); // prompt 33 : le reset efface la sauvegarde de la partie en cours (prompt 178 : son emplacement, pas les autres)
 	rejouer();
 }
 
-// ——— Prompt 33 : reprendre une partie sauvegardée ———
+// ——— Prompt 33 : reprendre une partie sauvegardée (prompt 178 : le choix se fait dans l'écran « Reprendre une partie », menu.js) ———
+/** Raccourci de la webapp installée (?action=reprendre) : la partie la plus récente */
 function continuerPartie() {
 	const o = Sauvegarde.lister()[0];
 	if (o) Sauvegarde.reprendre(o);
-}
-function reprendreSemaineChoisie() {
-	const o = optionsAccueil()[choixAccueil];
-	fenetre = null;
-	if (o && o.sauvegarde) Sauvegarde.reprendre(o.sauvegarde);
-}
-function fenetreReprise() {
-	const o = optionsAccueil()[choixAccueil];
-	if (!o || !o.sauvegarde) return fermer();
-	const l = DS.fenetre.moyenne; // prompt 173 (était 860)
-	const h = 340;
-	const x = (L - l) / 2;
-	const y = (H - h) / 2;
-	panneau(x, y, l, h, C.accent);
-	textAlign(CENTER, TOP);
-	noStroke();
-	fill(C.texte);
-	textFont(POLICE_TEXTE);
-	textStyle(BOLD);
-	textSize(36);
-	text(t('reprise.titre'), L / 2, y + 44);
-	textStyle(NORMAL);
-	textSize(22);
-	fill(C.gris);
-	text(t('reprise.texte', { n: o.sauvegarde.etat.dossierIndex + 1, total: o.sauvegarde.etat.complet.paquet.length }), x + 48, y + 104, l - 96, 80);
-	const lb = (l - 128) / 3;
-	bouton(x + 48, y + h - 112, lb, 72, t('reprise.reprendre'), reprendreSemaineChoisie);
-	bouton(x + 64 + lb, y + h - 112, lb, 72, t('reprise.nouvelle'), lancerNouvellePartie, false, true);
-	bouton(x + 80 + 2 * lb, y + h - 112, lb, 72, t('reprise.annuler'), fermer, false, true);
 }
 
 // =====================================================================
@@ -1033,6 +1004,7 @@ function retourAccueil() {
 
 function rejouer() {
 	bilanCalcule = null;
+	Sauvegarde.nouvelle(); // prompt 178 : la partie rejouée prend un nouvel emplacement
 	const e = Jeu.etat;
 	const p = e.mode === 'semaine' ? Jeu.chargerSemaine(e.semaine.lundi) : e.mode === 'direct' ? Jeu.chargerDirect() : Jeu.chargerHorsLigne();
 	p.then(() => {
@@ -1250,10 +1222,6 @@ function keyPressed() {
 			if (keyCode === ENTER || keyCode === RETURN || key === 'o' || key === 'O') confirmerReset();
 			if (key === 'n' || key === 'N') fermer();
 		}
-		if (fenetre === 'reprise') {
-			if (keyCode === ENTER || keyCode === RETURN) reprendreSemaineChoisie();
-			if (key === 'n' || key === 'N') lancerNouvellePartie();
-		}
 		return false;
 	}
 	// Prompt 35 : menu principal (écran titre / choix de la semaine)
@@ -1459,7 +1427,6 @@ function contenuFenetre() {
 	if (fenetre === 'aide') return fenetreAide();
 	if (fenetre === 'reset') return fenetreReset();
 	if (fenetre === 'parametres') return fenetreParametres(); // prompt 175 : parametres.js
-	if (fenetre === 'reprise') return fenetreReprise();
 	if (fenetre === 'menu') return fenetreMenu();
 	if (fenetre === 'telephone') return fenetreTelephone(); // prompt 38
 }

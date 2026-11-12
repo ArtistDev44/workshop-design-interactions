@@ -64,6 +64,7 @@ function lancerChapitre(n) {
 	const i = optionsAccueil().findIndex((o) => o.lundi === lundi);
 	if (i < 0) return;
 	choixAccueil = i;
+	Sauvegarde.effacerCourante(); // prompt 178 : la semaine qui s'achève (ou la démission) libère son emplacement — la suivante prend le sien
 	lancerNouvellePartie();
 }
 /** Ouverture d'une semaine : le patron présente, au téléphone, le nouvel élément de jeu */
