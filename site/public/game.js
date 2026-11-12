@@ -657,11 +657,26 @@
 			resultat.aggravation = { lignes: d.lignes.slice(), plus: A.durable };
 		}
 		resultat.narration = Jeu.narrer(resultat);
-		if (clash) resultat.narration.texte = T('narr.avecClash', { texte: resultat.narration.texte }) // prompt 184 : le malus se voit sur la jauge (segment rouge);
+		if (clash) resultat.narration.texte = T('narr.avecClash', { texte: resultat.narration.texte, reaction: Jeu.reactionClash(d, Jeu.index) }); // prompt 184 : le malus se voit sur la jauge (segment rouge) ; prompt 194 : le plaignant répond par un commentaire masqué
 		Jeu.historique.push(resultat);
 		Jeu.index++;
 		Jeu.terminee = Jeu.index >= Jeu.paquet.length;
 		return resultat;
+	};
+
+	/** Prompt 194 : réaction du plaignant après un clash — commentaire méchant (mots masqués hors alphabet),
+	 * variante tirée de façon déterministe (catégorie + index du dossier), comme repliqueDe (panneau.js) */
+	Jeu.reactionClash = function (d, index) {
+		const cat = (Jeu.categorie && Jeu.categorie(d)) || 'autre';
+		const ok = [];
+		for (let k = 1; k <= 3; k++) {
+			const cle = 'reactionClash.' + cat + '.' + k;
+			if (typeof TRADUCTIONS !== 'undefined' && TRADUCTIONS.fr[cle] !== undefined) ok.push(cle);
+		}
+		if (!ok.length) ok.push('reactionClash.autre.1');
+		let h = (index || 0) * 13 + 7;
+		for (const c of cat) h = (h * 31 + c.charCodeAt(0)) % 1000003;
+		return String(t(ok[h % ok.length]));
 	};
 
 	/* Ton adaptatif selon les jauges (Q17) : neutre / tendu / critique. */

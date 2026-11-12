@@ -375,9 +375,10 @@ function bulleDuPlaignant(d, x, y, l) {
 	return yy + 12;
 }
 const BULLE = { dossier: null };
-/** Prompt 118 : pour la synthèse vocale, un mot masqué par des symboles (&#@!%$) est lu « mot masqué » */
+/** Prompt 118 : pour la synthèse vocale, un mot masqué par des symboles (&#@!%$…) est lu « mot masqué » ;
+ * prompt 194 : idem pour les caractères en dehors de l'alphabet (&#(, §¤, %¤…) */
 function lireMasques(txt) {
-	return String(txt).replace(/[\wÀ-ÿ]*[@#$%&!]{2,}[\wÀ-ÿ]*/g, t('plaignant.motMasque'));
+	return String(txt).replace(/[\wÀ-ÿ]*[@#$%&!?(§¤]{2,}[\wÀ-ÿ]*/g, t('plaignant.motMasque'));
 }
 function bloc(titre, lignes, x, y, l, couleur) {
 	noStroke();
