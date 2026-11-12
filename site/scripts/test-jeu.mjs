@@ -3408,6 +3408,88 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	verifier(existsSync(join(pub, 'kit-presse', 'index.html')) && existsSync(join(pub, 'kit-presse', 'communique-de-presse.txt')) && existsSync(join(pub, 'kit-presse', 'logo.svg')), 'prompt 188 : fichiers du kit de presse présents');
 }
 
+// Prompt 189 : personnages — ton du patron par semaine, trait (esquive / assume), SMS météo de Camille, registres
+{
+	const perso = readFileSync(join(pub, 'personnages.js'), 'utf8');
+	const html = readFileSync(join(pub, 'index.html'), 'utf8');
+	verifier(html.indexOf('./personnages.js') > html.indexOf('./histoire.js') && html.indexOf('./personnages.js') > html.indexOf('./game.js'), 'prompt 189 : personnages.js chargé après game.js et histoire.js');
+	verifier(/smsMeteoCamille\(journeeSuivante\)/.test(readFileSync(join(pub, 'soir.js'), 'utf8')), 'prompt 189 : finirSoir propose le SMS météo de Camille entre deux journées');
+	const TONS = { 0: 'professionnel', 1: 'pedagogue', 2: 'professionnel', 3: 'pression' };
+	const avecPerso = (ch) => {
+		const c = contexte('fr');
+		vm.runInContext(`var chapitreCourant = () => ${ch};`, c);
+		vm.runInContext(perso, c, { filename: 'personnages.js' });
+		return c;
+	};
+	const lundi = semaines[0];
+	const vus = new Set();
+	for (const ch of [0, 1, 2, 3]) {
+		const c = avecPerso(ch);
+		const r = vm.runInContext(
+			`(() => {
+			Jeu.chargerSemaine(${JSON.stringify(lundi)});
+			Jeu.nouvellePartie();
+			const consigne = Jeu.messagesPatron.find((m) => m.type === 'consigne');
+			const variantes = ['', '.v1', '.v2'].map((v) => TRADUCTIONS.fr['patron.ton.' + Jeu.tonPatron() + '.consigne' + v]);
+			const n0 = Jeu.messagesPatron.length;
+			Jeu.messagePatron('Test reproche', 'reproche', {});
+			const apresReproche = Jeu.messagesPatron.length - n0;
+			const e1 = Jeu.reactionPatronCommunity({ bonne: false }, { auteur: '@x' });
+			const e2 = Jeu.reactionPatronCommunity({ bonne: false }, { auteur: '@x' });
+			const a1 = Jeu.reactionPatronCommunity({ bonne: true }, { auteur: '@x' });
+			const sev = Jeu.messagesPatron.filter((m) => m.meta && m.meta.severe);
+			const fel = Jeu.messagesPatron.filter((m) => m.meta && m.meta.felicitation);
+			return { ton: Jeu.tonPatron(), champ: consigne && consigne.ton, texte: consigne ? String(consigne.texte) : '', variantes, apresReproche, e1, e2, a1, sev: sev.length, sevType: sev[0] && sev[0].type, fel: fel.length, jauges: JSON.stringify(Jeu.jauges) };
+		})()`,
+			c,
+		);
+		verifier(r.ton === TONS[ch] && r.champ === TONS[ch], `prompt 189 : ton du patron au chapitre ${ch} (${r.ton} / champ ${r.champ}, attendu ${TONS[ch]})`);
+		verifier(r.variantes.every(Boolean) && r.variantes.some((v) => r.texte.endsWith(v)), `prompt 189 : consigne du jour au chapitre ${ch} sans formulation du ton`);
+		vus.add(r.variantes.join('|'));
+		verifier(r.apresReproche === (ch === 3 ? 2 : 1), `prompt 189 : semaine 3 = deux messages après un reproche, sinon un (chapitre ${ch} : ${r.apresReproche})`);
+		verifier(r.e1 === 'esquive' && r.e2 === null && r.a1 === 'assume' && r.sev === 1 && r.sevType === 'reproche' && r.fel === 1, `prompt 189 : trait du patron (esquive / assume, une fois par jour) au chapitre ${ch}`);
+	}
+	verifier(vus.size === 3, 'prompt 189 : trois tons distincts sur les trois semaines');
+	// Camille : SMS seulement si la donnée météo du jour franchit un seuil explicite ; jamais sans la donnée du jour
+	const c = avecPerso(1);
+	for (const s of semaines) {
+		const r = vm.runInContext(
+			`(() => {
+			Jeu.chargerSemaine(${JSON.stringify(s)});
+			Jeu.nouvellePartie();
+			const S = Jeu.SEUILS_METEO_CAMILLE;
+			const meteo = Jeu.etat.semaine.meteo || [];
+			const erreurs = [];
+			Jeu.jours.forEach((j) => {
+				const m = meteo.find((x) => x.date === j.date);
+				const attendu = !m ? null : m.pluie_mm >= S.pluie_mm ? 'pluie' : m.rafales_max >= S.rafales_max ? 'vent' : m.temp_max >= S.temp_max ? 'chaleur' : null;
+				const obtenu = (Jeu.conditionMeteoCamille(j.date) || {}).condition || null;
+				if (attendu !== obtenu) erreurs.push(j.date + ' ' + attendu + '≠' + obtenu);
+			});
+			if (Jeu.conditionMeteoCamille('1999-01-01') !== null) erreurs.push('date sans donnée');
+			Jeu.jourIndex = Jeu.jours.length - 1;
+			if (Jeu.smsMeteoCamille() !== null) erreurs.push('SMS le dernier soir');
+			return erreurs;
+		})()`,
+			c,
+		);
+		verifier(r.length === 0, `prompt 189 : SMS météo de Camille (${s}) : ${r.join(', ')}`);
+	}
+	// Registres des plaintes (source : messages.json, généré en messages.js)
+	const msg = JSON.parse(readFileSync(join(pub, 'data', 'messages.json'), 'utf8'));
+	const regs = new Set(msg.plaintes.map((p) => p.registre).filter(Boolean));
+	verifier(regs.size >= 4 && [...regs].every((x) => ['etudiant', 'senior', 'touriste', 'travailleur', 'parent'].includes(x)), `prompt 189 : au moins 4 registres connus (${[...regs]})`);
+	// Clés FR / EN : chaque clé de personnages.js existe avec ses deux variantes dans les deux langues
+	const bases = [];
+	for (const ton of ['pedagogue', 'professionnel', 'pression']) for (const sorte of ['consigne', 'reproche', 'felicitation']) bases.push(`patron.ton.${ton}.${sorte}`);
+	bases.push('patron.ton.pression.relance', 'patron.trait.esquive', 'patron.trait.assume', 'camille.meteo.pluie', 'camille.meteo.vent', 'camille.meteo.chaleur');
+	for (const langue of ['fr', 'en']) {
+		const dico = vm.runInContext(`TRADUCTIONS.${langue}`, c);
+		const manque = bases.flatMap((b) => [b, b + '.v1', b + '.v2']).concat('camille.meteo.reponse').filter((k) => !dico[k]);
+		verifier(!manque.length, `prompt 189 : clés manquantes (${langue}) : ${manque.join(', ')}`);
+	}
+}
+
 if (erreurs.length) {
 	console.error(`Test du jeu : ${erreurs.length} erreur(s) sur ${controles + erreurs.length} contrôles`);
 	for (const e of erreurs) console.error(`  ✗ ${e}`);

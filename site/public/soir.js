@@ -104,7 +104,10 @@ function finirSoir() {
 	CAMERA.x = 0;
 	CAMERA.y = 0;
 	if (Confort.Son.musique && Confort.Son.musique.attenuer) Confort.Son.musique.attenuer(1);
-	if (typeof smsVeilleInspection !== 'function' || !smsVeilleInspection(journeeSuivante)) journeeSuivante(); // inchangé : allerFin() le dernier jour ; prompt 88 : SMS de Camille la veille de l'inspection
+	// prompt 88 : SMS de Camille la veille de l'inspection ; prompt 189 : sinon, SMS de Camille sur la météo réelle du jour joué
+	if (typeof smsVeilleInspection === 'function' && smsVeilleInspection(journeeSuivante)) return;
+	if (typeof smsMeteoCamille === 'function' && smsMeteoCamille(journeeSuivante)) return;
+	journeeSuivante(); // inchangé : allerFin() le dernier jour
 }
 
 /** Caméra de la sortie (bureau.js : majCamera) : pan vers la gauche, ou null hors sortie */

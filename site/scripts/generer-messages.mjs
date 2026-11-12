@@ -7,6 +7,10 @@ const dossier = new URL('../public/data/', import.meta.url);
 const brut = await readFile(new URL('messages.json', dossier), 'utf8');
 const donnees = JSON.parse(brut); // échoue clairement si le JSON est invalide
 if (!Array.isArray(donnees.plaintes)) throw new Error('messages.json : « plaintes » doit être une liste');
+// Prompt 189 : registre de langage de l'usager (facultatif, valeur connue) ; au moins 4 registres différents
+const REGISTRES = ['etudiant', 'senior', 'touriste', 'travailleur', 'parent'];
+for (const p of donnees.plaintes) if (p.registre !== undefined && !REGISTRES.includes(p.registre)) throw new Error('messages.json : registre inconnu « ' + p.registre + ' » (' + p.id + ')');
+if (new Set(donnees.plaintes.map((p) => p.registre).filter(Boolean)).size < 4) throw new Error('messages.json : au moins 4 registres différents attendus (prompt 189)');
 // Prompt 90 : modèles du téléphone — FR + EN obligatoires, 3 variantes au moins par fait (Camille) ou par type (chauffeurs)
 if (donnees.telephone) {
 	const tel = donnees.telephone;
