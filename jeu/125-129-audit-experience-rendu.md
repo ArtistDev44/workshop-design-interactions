@@ -90,6 +90,24 @@ modification de `menu.js` et `credits.js`. Le travail a été fusionné avec `ma
 - `scripts/test-difficulte.mjs` et `jeu/36-tests-difficulte.md` marqués historiques (ancienne table d'actions).
 - `audit-2026-11-12.md` : chaque constat traité est marqué.
 
+## Fusion avec `main` (12/11/2026, vers 14 h 15)
+
+Pendant ce travail, d'autres sessions ont fusionné dans `main` les prompts 114 à 120, dont deux touchent les mêmes
+zones :
+- **prompt 117, trois répliques mélangées dont un clash** : le clash reste toujours « raté » (vérifié en premier
+  dans `Jeu.evaluer`), puis vient l'évaluation pondérée. `Jeu.meilleureReponse`, qui choisit la bonne réplique du
+  trio, utilise désormais la même pondération que l'évaluation. Les tendances s'affichent sous les trois répliques ;
+  celle du clash compte son malus de réputation (−8), ce qui la rend reconnaissable : c'est un choix assumé
+  (tendance honnête), en tension avec l'intention « répliques indiscernables » du prompt 117, **à trancher par le
+  groupe** ;
+- **prompt 119, incidents inventés rares** (au plus un par semaine, marqué « Fictif ») : le cartel, la grammaire, le
+  registre et les README disent désormais « hormis un incident fictif par semaine, signalé comme tel, rien n'est
+  inventé ». Le cartel fait 117 mots.
+- `theme.js` (prompt 115 de `main`) manquait dans `rendu/` alors que son `index.html` le charge : ajouté.
+- Le prompt 120 de `main` (Crédits et menu) déclare l'écran de transition du jour comme conteneur de ses textes : les
+  6 défauts « transition sous le téléphone » que l'audit des textes trouvait sur cette branche en 1366×768 ont
+  disparu après fusion.
+
 ## Vérifications
 
 - `npm run build` ; `npm test` : smoke et test du jeu (contrôles ajoutés pour 125 à 128) ; `node --check` sur tous
@@ -97,5 +115,5 @@ modification de `menu.js` et `credits.js`. Le travail a été fusionné avec `ma
   prompt 126, rattrapée par le navigateur).
 - Parcours dans Chromium sans tête : fenêtre du dossier, narration, mode exposition, voile d'inactivité, filet,
   carte avec les trois gravités.
-- Audit des textes (`?audit=textes&parcours=1`) à 1920×1080, 1366×768 et 412×915 : voir le résultat dans
-  `journal.md`.
+- Après fusion : `npm test` = 520 (smoke) + 587 (jeu) contrôles réussis ; audit des textes
+  (`?audit=textes&parcours=1`) **0 défaut** à 1920×1080, 1366×768 et 412×915 ; mode exposition retesté.
