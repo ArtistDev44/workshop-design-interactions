@@ -1159,9 +1159,17 @@ function basculerPleinEcran() {
 	} catch (e) {}
 }
 if (typeof document !== 'undefined' && document.addEventListener) document.addEventListener('fullscreenchange', () => annoncer(t(document.fullscreenElement ? 'pleinEcran.entree' : 'pleinEcran.sortie')));
+/** Prompt 174 : true si la touche n'est pas pour le jeu — un champ de saisie HTML a le focus (le texte tapé lui
+ * appartient), ou Ctrl / Cmd / Alt est enfoncé (Ctrl+R, Ctrl+L, Ctrl+P, Alt+← restent au navigateur) */
+function saisieOuRaccourciNavigateur() {
+	const a = typeof document !== 'undefined' ? document.activeElement : null;
+	if (a && (/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) || a.isContentEditable)) return true;
+	return keyIsDown(CONTROL) || keyIsDown(ALT) || keyIsDown(91) || keyIsDown(93);
+}
 function keyPressed() {
 	// Prompt 33 : boîte d'import ouverte (champ texte, fichier) → le clavier lui appartient
 	if (Sauvegarde.dialogueOuvert) return;
+	if (saisieOuRaccourciNavigateur()) return; // prompt 174 : champ de texte au focus, ou Ctrl / Cmd / Alt (raccourcis du navigateur) → le jeu ne lit rien
 	if (arreterDemo()) return false; // prompt 48 : une touche arrête la démo automatique
 	if (CINE) return toucheCinematique(), false; // prompt 41
 	if (GAMEOVER) return toucheGameOver(), false; // prompt 84
@@ -1226,7 +1234,7 @@ function keyPressed() {
 	}
 	// Prompt 35 : menu principal (écran titre / choix de la semaine)
 	if (MENU.actif) return toucheMenu(), false;
-	if (toucheSoir()) return false; // prompt 69 : Entrée / S → sortie du bureau
+	if (toucheSoir()) return false; // prompt 69 : Entrée → sortie du bureau (prompt 174 : plus de S)
 	// Au bureau (§ 1, § 7) : Échap = menu ; Tab = objets (écran, livres) ; Entrée = ouvrir / s'installer
 	if (vue !== 'poste') {
 		if (vue !== 'bureau') return false;
@@ -1293,8 +1301,8 @@ function keyPressed() {
 	if (key === 'h' || key === 'H' || key === '?') return ouvrir('aide'), false;
 	if (key === 'm' || key === 'M') return toucheMEnfoncee(), false; // prompt 54 : brève = son, maintenue = micro
 	if (ecran === 'jeu') {
-		// Prompt 55 : pendant un dossier, R = ralenti tactique ; sinon R = recommencer la semaine (Q38)
-		if (key === 'r' || key === 'R') return ['decision', 'contradiction', 'conflit'].includes(phase) ? Jeu.defiChrono && demanderRalentiUI() : ouvrir('reset'), false; // prompt 87 : ralenti seulement en défi chrono
+		// Prompt 174 : R = ralenti tactique (défi chrono) seulement ; « Recommencer la semaine », action rare et destructrice, n'a plus de touche (menu du jeu)
+		if ((key === 'r' || key === 'R') && Jeu.defiChrono && ['decision', 'contradiction', 'conflit'].includes(phase)) return demanderRalentiUI(), false;
 		if (key === 'p' || key === 'P') return basculerPause(), false;
 	}
 	if (ecran === 'accueil') {
@@ -1306,7 +1314,6 @@ function keyPressed() {
 	} else if ((phase === 'decision' || phase === 'contradiction') && toucheEnquete()) {
 		// prompt 50 : 5 à 8 consultent une source
 	} else if (phase === 'decision') {
-		if ((key === 'b' || key === 'B') && Jeu.dossierCourant() && peutPublierDossier(Jeu.dossierCourant())) return publierDepuisDossier(Jeu.dossierCourant()), false; // prompt 91 § 3
 		// Prompt 87 : 1 à 4 = cartes de réponse affichées ; 0 ou Espace = la réponse « attendre » ; E = En savoir plus
 		toucheReponses(); // prompt 117 : 1 à 3 = les répliques affichées (plus de raccourci caché « 0 = attendre »)
 	} else if (phase === 'contradiction') {

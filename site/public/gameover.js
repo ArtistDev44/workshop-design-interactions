@@ -52,7 +52,6 @@ function toucheGameOver() {
 	else if (keyCode === LEFT_ARROW) GAMEOVER.focus = (GAMEOVER.focus + n - 1) % n;
 	else if (keyCode === ENTER || keyCode === RETURN || key === ' ') return ACTIONS_GAMEOVER[GAMEOVER.focus].action();
 	else if (keyCode === ESCAPE) return quitterGameOver('changer');
-	else if (key === 'j' || key === 'J') return ACTIONS_GAMEOVER[2].action();
 	else return;
 	annoncer(t(ACTIONS_GAMEOVER[GAMEOVER.focus].cle));
 }

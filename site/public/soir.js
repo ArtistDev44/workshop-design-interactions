@@ -269,7 +269,8 @@ function toucheSoir() {
 	}
 	if (vue !== 'bureau' || fenetre || MENU.actif) return false;
 	const surSortie = focusBureau > 0 && OBJETS_BUREAU[focusBureau] && OBJETS_BUREAU[focusBureau].nom === 'sortie';
-	if ((key === 's' || key === 'S') || ((keyCode === ENTER || keyCode === RETURN) && (focusBureau < 0 || surSortie))) {
+	// Prompt 174 : plus de touche S (doublon d'Entrée, et S servait ailleurs à « Semaine ») — Entrée sort
+	if ((keyCode === ENTER || keyCode === RETURN) && (focusBureau < 0 || surSortie)) {
 		if (sortieVisible()) quitterBureau();
 		return true;
 	}

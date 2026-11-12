@@ -1043,7 +1043,7 @@ function dessinerBoutonQuitterPC() {
 	const b = rectBoutonQuitter();
 	if (clignement) return; // pendant qu'on se lève, le bouton disparaît
 	const raison = raisonRetenuAuPC(); // prompt 182 : un choix attend → bouton désactivé, avec sa raison
-	bouton(b.x, b.y, b.l, b.h, t('poste.quitter_pc'), quitterPC, !!raison);
+	bouton(b.x, b.y, b.l, b.h, t(GUIDE.actif ? 'poste.quitter_pc_guide' : 'poste.quitter_pc'), quitterPC, !!raison); // prompt 174 : pendant le guide, Échap quitte le guide — le libellé ne la promet pas
 	cibleGuide('quitterPC', b.x, b.y, b.l, b.h); // prompt 37
 	if (raison) boutons.push({ x: b.x, y: b.y, l: b.l, h: b.h, action: quitterPC }); // clic / toucher sur le bouton désactivé : la raison est dite (infobulle + annonce), sans sortie
 	if (raison && !fenetre && !smsActif) {
