@@ -692,13 +692,14 @@ function origineBureau() {
 	// Cadre de la pièce sur le canevas (dézoom + caméra) et taille d'un pixel art (u) dans ce cadre
 	return { x: (L * (1 - SURCADRAGE)) / 2 + CAMERA.x, y: (H * (1 - SURCADRAGE)) / 2 + CAMERA.y, k: SURCADRAGE, u: (L * SURCADRAGE) / CADRAGE.l };
 }
-/** Prompt 32 : contour de survol / focus double — trait sombre #1c2733 (15:1 sur les murs blancs) doublé de jaune */
+/** Prompt 32 : contour de survol / focus double — trait sombre #1c2733 (15:1 sur les murs blancs) doublé de la couleur
+ * d'accent (prompt 173 : plus de jaune ; chaque primaire du thème tient 3:1 sur le fond sombre, theme.js) */
 function contourSurvol(x, y, l, h) {
 	noFill();
 	stroke('#1c2733');
 	strokeWeight(PIX + 4);
 	rect(x, y, l, h);
-	stroke('#f2c94c');
+	stroke(DS.primaire);
 	strokeWeight(PIX);
 	rect(x, y, l, h);
 	noStroke();
@@ -1020,7 +1021,7 @@ function dessinerBoutonQuitterPC() {
 	cibleGuide('quitterPC', b.x, b.y, b.l, b.h); // prompt 37
 	if (focusQuitter) {
 		noFill();
-		stroke('#f2c94c');
+		stroke(DS.blanc); // prompt 173 : focus clavier en blanc (plus de jaune), 3:1 et plus sur le bouton et la pièce assombrie
 		strokeWeight(4);
 		rect(b.x - 8, b.y - 8, b.l + 16, b.h + 16, 14);
 		noStroke();

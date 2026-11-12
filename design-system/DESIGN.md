@@ -329,3 +329,23 @@ Section rédigée à la main (hors extraction dembrandt). Les icônes d'interfac
 - **Ce qui reste en pixel art** : le décor et les objets de la pièce (`bureau.js`), les icônes d'applis du PC (`iconePixel`), les pictogrammes de catégories (Journal, enquête, équipes) et les logos de marque (dépôt, réseaux sociaux), absents de Lucide.
 
 <!-- dembrandt v0.39.2 -->
+
+## Fenêtres et voiles (jeu « Nantes en régulation », prompt 173)
+Section rédigée à la main (hors extraction dembrandt). Jetons dans `site/public/ds.js`.
+
+### Fenêtres et voiles
+- **Voile des fenêtres** : `DS.voile = 0,8` — fond `#0D0C0C` à 80 %, dessiné par `dsVoile(k)` (`voile()` y renvoie). Un seul voile pour toutes les fenêtres du canevas (pause, menu Échap, paramètres, aide, partage, bilans, téléphone en main, autorisations) et pour la boîte HTML d'import (`.sv-fond`). `k` (0 → 1) suit une animation d'ouverture.
+- **Mise en avant par l'obscurité** : `dsVoilePerce(cible, marge, opacite)` assombrit tout le canevas sauf le rectangle `cible` (`DS.voilePerce = 0,65`, fondu `DS.dureeVoile = 180 ms`, immédiat avec les animations réduites). Elle remplace les contours jaunes de mise en avant (guide « Prendre en main »). Le jaune `#FFC138` reste un code de sens (alerte, gravité moyenne, jauge sous 40) : il ne sert plus à désigner un élément à regarder.
+- **Focus clavier** : jamais jaune — double bordure blanche du DS, ou couleur d'accent (`DS.primaire`, ≥ 3:1 sur le fond) pour les objets de la pièce.
+- **Trois largeurs de fenêtre** (px du canevas 1920 × 1080), `DS.fenetre` :
+
+| Taille | Largeur | Usage |
+|---|---|---|
+| `etroite` | 640 | pause, menu Échap, réveil, boîte d'import |
+| `moyenne` | 960 | confirmations (recommencer, reprendre, partir, démission), paramètres, partage, installation, appli débloquée |
+| `large` | 1280 | aide, accessibilité, options de jeu, palmarès, explication du poste, tâche, inspection, blâme, mail de fin, rapport de la veille |
+
+- **Marge interne** `DS.fenetre.marge = 48` et **hauteur d'en-tête** `DS.fenetre.entete = 80` (titre compris) : valeurs de référence pour toute nouvelle fenêtre.
+- **Hors gabarit** (objets de la pièce, pas des fenêtres du DS) : téléphone en main (520), livre du tutoriel (1360), feuille du rapport de fin de semaine (1040), écrans pleins (autorisations, game over, cinématique).
+- **Clic sur le fond** : ferme la fenêtre comme Échap (`clicFondFenetre()`, appelé par `mousePressed`), sauf les fenêtres de `FENETRES_BLOQUANTES` (`sketch.js`) qui exigent une réponse. Une fenêtre non classée est bloquante.
+

@@ -161,7 +161,7 @@ function quitterRapport() {
 function fenetreMailFin() {
 	if (!RAPPORT || !RAPPORT.mail) return fermer();
 	const m = RAPPORT.mail;
-	const l = 1100;
+	const l = DS.fenetre.large; // prompt 173 (était 1100)
 	const h = 640;
 	const x = (L - l) / 2;
 	const y = (H - h) / 2;
@@ -201,7 +201,7 @@ function fenetreRapport() {
 	if (RAPPORT.page === 1) return fenetreRapportChiffres();
 	if (RAPPORT.page === 2) return fenetreRapportSources();
 	const b = RAPPORT.bilan;
-	const l = 1040;
+	const l = 1040; // feuille de papier (hors gabarit des fenêtres du DS, prompt 173)
 	const h = 900;
 	const x = (L - l) / 2;
 	const y0 = 40;
@@ -682,7 +682,7 @@ function texteRapportVeille() {
 	return [t('veilleRapport.titre', { date: c.date.split('-').reverse().join('/') }), t('recap.fait', { fait: c.fait }), prio ? t('veilleRapport.prio', { liste: prio }) : '', c.demande ? t('veilleRapport.demande', { demande: t('tache.demande.' + c.demande, Taches.R.demande), etat: t(c.accordee ? 'veilleRapport.accordee' : 'veilleRapport.refusee') }) : ''].filter(Boolean).join('\n');
 }
 function fenetreRapportVeille() {
-	const l = 1100;
+	const l = DS.fenetre.large; // prompt 173 (était 1100)
 	const h = 560;
 	const x = (L - l) / 2;
 	const y = (H - h) / 2;

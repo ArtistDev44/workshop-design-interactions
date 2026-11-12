@@ -168,7 +168,7 @@ function toucheTaches() {
 function fenetreTache() {
 	const tache = TACHE.courante;
 	if (!tache) return fermer();
-	const l = 1240;
+	const l = DS.fenetre.large; // prompt 173 (était 1240)
 	const h = enPortrait() ? H - 20 : 820;
 	const x = (L - l) / 2;
 	const y = (H - h) / 2;
@@ -489,7 +489,7 @@ function remettreCarriere() {
 }
 const OPTJEU = { focus: 0 };
 function fenetreOptionsJeu() {
-	const l = 1500;
+	const l = DS.fenetre.large; // prompt 173 (était 1500)
 	const h = 1050;
 	const x = (L - l) / 2;
 	const y = (H - h) / 2;
@@ -499,7 +499,9 @@ function fenetreOptionsJeu() {
 	const R = Confort.Reglages;
 	const items = OPTIONS_JEU.concat(['carriere']);
 	const lc = (l - 96 - 24) / 2;
-	const hc = 126;
+	const hc = 134; // prompt 173 : fenêtre large (1280 au lieu de 1500) → colonnes plus étroites, détail sur 4 lignes
+	const lb = 120; // bouton oui / non
+	const lt = lc - 16 - lb - 32; // largeur du texte à gauche du bouton
 	items.forEach((nom, i) => {
 		const cx = x + 48 + (i % 2) * (lc + 24);
 		const cy = y + 92 + Math.floor(i / 2) * (hc + 8);
@@ -519,20 +521,28 @@ function fenetreOptionsJeu() {
 		textSize(21);
 		fill(C.texte);
 		const titre = nom === 'carriere' ? t('optjeu.carriere', { grade: t('grade.' + Taches.grade().i), xp: Taches.grade().xp }) : t('optjeu.' + nom);
-		text((i < 9 ? i + 1 + '  ' : '') + titre, cx + 16, cy + 12, lc - 230, 30);
+		const libelle = (i < 9 ? i + 1 + '  ' : '') + titre;
+		const ltitre = nom === 'carriere' ? lc - 32 : lt;
+		ajusterTaille(libelle, ltitre, 21, 15);
+		text(libelle, cx + 16, cy + 10, ltitre + 8, 30);
+		push(); // interligne local (textLeading est un état global de p5)
 		textFont(POLICE_DONNEES);
 		textSize(15);
-		textLeading(19); // prompt 123 : interligne fixé ici (il dépendait de la dernière fenêtre dessinée, l'ancienne aide le remettait à zéro)
+		textLeading(19);
 		fill(C.gris);
-		if (nom !== 'carriere') text(t('optjeu.' + nom + '.detail'), cx + 16, cy + 46, lc - 230, 72);
-		if (nom === 'carriere') bouton(cx + lc - 16 - 260, cy + 30, 260, 64, t(confirmerRemiseCarriere && millis() - confirmerRemiseCarriere < 5000 ? 'optjeu.confirmerBouton' : 'optjeu.remettre'), remettreCarriere, false, true);
-		else bouton(cx + lc - 16 - 180, cy + 30, 180, 64, t(R[nom] ? 'commun.oui' : 'commun.non'), () => ((OPTJEU.focus = i), basculerOptionJeu(nom)), false, !R[nom]);
+		if (nom !== 'carriere') text(t('optjeu.' + nom + '.detail'), cx + 16, cy + 44, lt, 80);
+		pop();
+		if (nom === 'carriere') bouton(cx + 16, cy + 50, 300, 64, t(confirmerRemiseCarriere && millis() - confirmerRemiseCarriere < 5000 ? 'optjeu.confirmerBouton' : 'optjeu.remettre'), remettreCarriere, false, true);
+		else bouton(cx + lc - 16 - lb, cy + 35, lb, 64, t(R[nom] ? 'commun.oui' : 'commun.non'), () => ((OPTJEU.focus = i), basculerOptionJeu(nom)), false, !R[nom]);
 	});
 	textAlign(LEFT, TOP);
 	textFont(POLICE_DONNEES);
 	textSize(16);
 	fill(C.gris);
-	text(t('optjeu.note'), x + 48, y + h - 100, l - 400, 70);
+	push();
+	textLeading(22);
+	text(t('optjeu.note'), x + 48, y + h - 92, l - 400, 70);
+	pop();
 	bouton(x + l - 48 - 240, y + h - 96, 240, 64, t('param.retour'), () => ouvrir('parametres'));
 }
 function toucheOptionsJeu() {

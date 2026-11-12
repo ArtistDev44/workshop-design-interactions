@@ -52,7 +52,7 @@ function partirQuandMeme() {
 	terminerJournee();
 }
 function fenetrePartir() {
-	const l = 1000;
+	const l = DS.fenetre.moyenne; // prompt 173 (était 1000)
 	const h = 440;
 	const x = (L - l) / 2;
 	const y = (H - h) / 2;
@@ -112,7 +112,7 @@ function verifierBlame() {
 function fenetreBlame() {
 	const b = Jeu.blame;
 	if (!b) return fermer();
-	const l = 1100;
+	const l = DS.fenetre.large; // prompt 173 (était 1100)
 	const h = 560;
 	const x = (L - l) / 2;
 	const y = (H - h) / 2;

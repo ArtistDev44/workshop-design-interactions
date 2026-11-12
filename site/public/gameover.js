@@ -129,7 +129,7 @@ function dessinerGameOver() {
 		bouton(bx, y + h + 40, lb, 72, t(b.cle), b.action, false, i > 0);
 		if (G.focus === i) {
 			noFill();
-			stroke('#FFC138');
+			stroke(DS.blanc); // prompt 173 : focus clavier en double bordure blanche du DS (plus de jaune)
 			strokeWeight(4);
 			rect(bx - 8, y + h + 32, lb + 16, 88);
 			noStroke();

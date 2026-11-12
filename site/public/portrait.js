@@ -46,7 +46,9 @@ function region(src, dx, dy, dl, defile) {
 	PORTRAIT.regions.push({ src, dst: { x: dx, y: dy, l: dl, h: dh }, defile: !!defile });
 	return dh;
 }
-const LARGEUR_FENETRE = { partage: 900, installation: 1000, palmares: 1440, aide: 1260, accessibilite: 1260, parametres: 1040, menu: 760, inspection: 1140, demission: 940, partir: 1040, blame: 1140, mailFin: 1140, reset: 1000, reprise: 1100, tache: 1260, optionsJeu: 1520, deblocage: 1020 }; // prompt 88
+// Prompt 173 : les fenêtres n'ont plus que trois largeurs (DS.fenetre) ; le cadrage portrait = largeur + 40 px
+const CADRE_FENETRE = { etroite: DS.fenetre.etroite + 40, moyenne: DS.fenetre.moyenne + 40, large: DS.fenetre.large + 40 };
+const LARGEUR_FENETRE = { menu: CADRE_FENETRE.etroite, partage: CADRE_FENETRE.moyenne, installation: CADRE_FENETRE.moyenne, parametres: CADRE_FENETRE.moyenne, demission: CADRE_FENETRE.moyenne, partir: CADRE_FENETRE.moyenne, reset: CADRE_FENETRE.moyenne, reprise: CADRE_FENETRE.moyenne, deblocage: CADRE_FENETRE.moyenne }; // prompt 88 ; les autres : large
 
 function scenePortrait() {
 	if (typeof CINE !== 'undefined' && CINE) return 'plein';
@@ -80,7 +82,7 @@ function composerPortrait() {
 	else if (scene === 'main') region({ x: 880, y: 0, l: 780, h: H }, 0, 200, PL);
 	else if (scene === 'rapport') region({ x: 420, y: 0, l: 1420, h: H }, 0, (PH - (H * PL) / 1420) / 2, PL);
 	else if (scene === 'fenetre') {
-		const W = tutoriel ? 1400 : LARGEUR_FENETRE[fenetre] || 1260;
+		const W = tutoriel ? 1400 : LARGEUR_FENETRE[fenetre] || CADRE_FENETRE.large;
 		region({ x: (L - W) / 2, y: 0, l: W, h: H }, 0, (PH - (H * PL) / W) / 2, PL);
 	} else if (scene === 'menu') {
 		const hm = region({ x: 110, y: 60, l: BLOC_PARTAGE.x - 120, h: 1000 }, 0, 440, PL); // colonne du menu, titre entier (s'arrête avant le bloc de partage)

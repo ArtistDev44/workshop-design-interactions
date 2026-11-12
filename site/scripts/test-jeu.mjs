@@ -2489,6 +2489,57 @@ for (const langue of ['fr', 'en']) {
 	verifier(/fenetre === 'aide' && \(key === 't' \|\| key === 'T'\)\) return lancerTutoriel\(\)/.test(lire('sketch.js')) && /nom: 'aide'[^\n]*\n\t\{ nom: 'stress'/.test(imm172) && /function dessinerLivres/.test(imm172), 'prompt 172 : tutoriel (T) depuis l\'aide ou objets livres du décor disparus');
 }
 
+// Prompt 173 : un seul voile de fenêtre (DS.voile), clic sur le fond = fermer (sauf fenêtres bloquantes), trois
+// largeurs de fenêtre (DS.fenetre), mise en avant du guide par l'obscurité (voile percé) au lieu du contour jaune
+{
+	const lire = (f) => readFileSync(join(pub, f), 'utf8');
+	const ds173 = lire('ds.js');
+	const sk173 = lire('sketch.js');
+	verifier(/\tvoile: 0\.8,/.test(ds173) && /function dsVoile\(k\)/.test(ds173) && /function voile\(\) \{\n\tdsVoile\(\);/.test(sk173), 'prompt 173 : voile() doit passer par dsVoile() et DS.voile (0,8)');
+	verifier(/fenetre: \{ etroite: 640, moyenne: 960, large: 1280, marge: 48, entete: 80 \}/.test(ds173), 'prompt 173 : DS.fenetre doit déclarer les trois largeurs 640 / 960 / 1280');
+	verifier(/function dsVoilePerce\(cible, marge, opacite\)/.test(ds173) && /dureeVoile: 1\d\d,/.test(ds173) && /reduit \? 1 :/.test(ds173), 'prompt 173 : voile percé absent, trop lent (> 200 ms) ou non immédiat en animations réduites');
+	// Plus aucun voile de fenêtre écrit en dur (fill(13, 12, 12, 150|190) plein écran)
+	for (const f of ['sketch.js', 'immersion.js', 'telephone-main.js', 'autorisations.js']) verifier(!/fill\((13, 12, 12, (150|190)[^)]*|'rgba\(13,12,12,0\.7\)')\);[^\n]*\n\trect\(0, 0, L, H\)/.test(lire(f)), `prompt 173 : ${f} dessine encore son propre voile de fenêtre`);
+	// Chaque fenêtre prend sa largeur dans DS.fenetre (plus de « const l = 1100 » dans une fonction fenetreX)
+	const fichiersFenetres = ['sketch.js', 'immersion.js', 'histoire.js', 'mecaniques.js', 'taches-ui.js', 'applis.js', 'accessibilite.js', 'journee.js', 'menu.js', 'installation.js', 'aide.js'];
+	let nbFenetres = 0;
+	for (const f of fichiersFenetres)
+		for (const m of lire(f).matchAll(/\nfunction (fenetre[A-Z]\w*|dessinerPause|dessinerReveil)\(\) \{\n([\s\S]*?)\n\}/g)) {
+			const larg = m[2].match(/\tconst l = ([^;]+);/);
+			if (!larg || /^fenetreRapport(Chiffres|Sources)?$/.test(m[1])) continue; // le rapport de fin est une feuille de papier (hors gabarit)
+			nbFenetres++;
+			verifier(/^DS\.fenetre\.(etroite|moyenne|large)$/.test(larg[1]), `prompt 173 : ${f} ${m[1]} — largeur « ${larg[1]} » hors des trois tailles du DS`);
+		}
+	verifier(nbFenetres >= 20, `prompt 173 : seulement ${nbFenetres} fenêtres relevées (≥ 20 attendues)`);
+	// Clic sur le fond : point unique dans mousePressed, listes explicites, aucune fenêtre dans les deux à la fois
+	verifier(/\tif \(clicFondFenetre\(\)\) return;/.test(sk173.match(/function mousePressed\(\) \{[\s\S]*?\n\}/)[0]), 'prompt 173 : mousePressed ne passe plus par clicFondFenetre()');
+	const bloquantes = vm.runInNewContext(sk173.match(/const FENETRES_BLOQUANTES = (\[[^\]]*\]);/)[1]);
+	const fermables = [...sk173.match(/const FERMETURE_FOND = \{([\s\S]*?)\n\};/)[1].matchAll(/\n\t(\w+):/g)].map((x) => x[1]);
+	for (const n of ['reset', 'reprise', 'demission', 'partir', 'blame', 'inspection', 'tache', 'mailFin', 'rapport', 'cafe']) verifier(bloquantes.includes(n), `prompt 173 : la fenêtre « ${n} » exige une réponse, elle doit rester bloquante`);
+	for (const n of ['aide', 'parametres', 'partage', 'installation', 'palmares', 'menu', 'telephone', 'accessibilite', 'optionsJeu']) verifier(fermables.includes(n), `prompt 173 : la fenêtre « ${n} » doit se fermer au clic sur le fond`);
+	verifier(!fermables.some((n) => bloquantes.includes(n)), 'prompt 173 : une fenêtre est à la fois bloquante et fermable au clic sur le fond');
+	const dessinees = [...sk173.match(/function contenuFenetre\(\) \{[\s\S]*?\n\}/)[0].matchAll(/fenetre === '(\w+)'/g)].map((x) => x[1]);
+	for (const n of new Set(dessinees)) verifier(bloquantes.includes(n) || fermables.includes(n), `prompt 173 : fenêtre « ${n} » non classée (bloquante ou fermable au clic sur le fond)`);
+	// Logique du clic : hors du panneau → ferme ; dans le panneau, fenêtre bloquante, tutoriel ou SMS → ne ferme pas
+	{
+		const ctx = vm.createContext({ fenetre: null, tutoriel: null, smsActif: false, mouseX: 0, mouseY: 0, Confort: { Son: { clic() {}, bip() {} } } });
+		vm.runInContext(sk173.match(/function ouvrir\(nom\) \{[\s\S]*?\n\}/)[0] + '\n' + sk173.match(/function fermer\(\) \{[\s\S]*?\n\}/)[0] + '\n' + sk173.match(/const FENETRES_BLOQUANTES[\s\S]*?\nfunction clicFondFenetre\(\) \{[\s\S]*?\n\}/)[0], ctx);
+		const essai = (nom, x, y, plus) => vm.runInContext(`fenetre = '${nom}'; ZONE_FENETRE = { x: 480, y: 100, l: 960, h: 800 }; mouseX = ${x}; mouseY = ${y}; tutoriel = null; smsActif = false; ${plus || ''}; [clicFondFenetre(), fenetre]`, ctx);
+		verifier(JSON.stringify(essai('aide', 20, 20)) === '[true,null]', 'prompt 173 : un clic sur le fond doit fermer l\'aide');
+		verifier(JSON.stringify(essai('aide', 900, 500)) === '[false,"aide"]', 'prompt 173 : un clic dans la fenêtre ne doit pas la fermer');
+		verifier(JSON.stringify(essai('accessibilite', 20, 20)) === '[true,"parametres"]' && JSON.stringify(essai('optionsJeu', 20, 20)) === '[true,"parametres"]', 'prompt 173 : le fond des sous-fenêtres des paramètres doit y revenir, comme Échap');
+		for (const n of bloquantes) verifier(JSON.stringify(essai(n, 20, 20)) === `[false,"${n}"]`, `prompt 173 : la fenêtre bloquante « ${n} » se ferme au clic sur le fond`);
+		verifier(JSON.stringify(essai('aide', 20, 20, 'smsActif = true')) === '[false,"aide"]' && JSON.stringify(essai('aide', 20, 20, 'tutoriel = { etape: 0 }')) === '[false,"aide"]', 'prompt 173 : sous le tutoriel ou les SMS, le clic sur le fond ne ferme rien');
+		verifier(JSON.stringify(essai('inconnue', 20, 20)) === '[false,"inconnue"]', 'prompt 173 : une fenêtre non classée doit être traitée comme bloquante');
+	}
+	// Guide : plus de contour jaune, voile percé à la place ; focus du bureau et du game over sans jaune
+	const guide173 = lire('guide.js');
+	verifier(/dsVoilePerce\(c, 10\)/.test(guide173) && !/stroke\('#FFC138'\)/.test(guide173), 'prompt 173 : le guide doit assombrir le reste (dsVoilePerce) sans contour jaune');
+	verifier(!/#f2c94c/i.test(lire('bureau.js')) && !/stroke\('#FFC138'\)/.test(lire('gameover.js')), 'prompt 173 : contour de survol / focus encore jaune (bureau.js, gameover.js)');
+	verifier(/rgba\(13, 12, 12, 0\.8\)/.test(lire('style.css').match(/\.sv-fond \{[^}]*\}/)[0]) && /ev\.target === fond && fermerImport\(\)/.test(lire('sauvegarde.js')), 'prompt 173 : la boîte d\'import doit avoir le même voile et se fermer au clic sur le fond');
+	verifier(/### Fenêtres et voiles/.test(readFileSync(join(pub, '..', '..', 'design-system', 'DESIGN.md'), 'utf8')), 'prompt 173 : DESIGN.md doit documenter les trois largeurs de fenêtre et le voile');
+}
+
 // Service worker : chaque script de index.html est dans la liste hors ligne de sw.js
 const html = readFileSync(join(pub, 'index.html'), 'utf8');
 const sw = readFileSync(join(pub, 'sw.js'), 'utf8');

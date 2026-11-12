@@ -709,7 +709,7 @@ const TOUTES_ENTREES_PAUSE = [
 ];
 const entreesPause = () => TOUTES_ENTREES_PAUSE.filter((e) => !e.visible || e.visible());
 function fenetreMenu() {
-	const l = 700;
+	const l = DS.fenetre.etroite; // prompt 173 (était 700)
 	const ENTREES_PAUSE = entreesPause();
 	const h = 160 + ENTREES_PAUSE.length * 112;
 	if (choixPause >= ENTREES_PAUSE.length) choixPause = 0;
@@ -721,6 +721,7 @@ function fenetreMenu() {
 	strokeWeight(2);
 	rect(x, y, l, h);
 	noStroke();
+	zoneFenetre(x, y, l, h); // prompt 173 : clic sur le fond
 	dsTitre(t('menu.titre'), x + 48, y + 40, 44, '#ffffff', 'left');
 	noStroke();
 	textAlign(LEFT, TOP);
@@ -743,7 +744,7 @@ function quitterPartie() {
 function dessinerReveil() {
 	const reste = Math.max(0, reveil.limite - millis());
 	voile();
-	const l = 720;
+	const l = DS.fenetre.etroite; // prompt 173 (était 720)
 	const h = 300;
 	const x = (L - l) / 2;
 	const y = (H - h) / 2;
@@ -1131,7 +1132,7 @@ function majExplicationPoste() {
 	annoncer(t('poste.titre') + '. ' + t('poste.role') + ' ' + t('poste.decisions') + ' : ' + GESTES_POSTE.map((g) => t('poste.geste.' + g + '.k') + ' — ' + t('poste.geste.' + g)).join(' ') + ' ' + t('poste.apprendre'));
 }
 function fenetrePoste() {
-	const l = 1240;
+	const l = DS.fenetre.large; // prompt 173 (était 1240)
 	const h = 860;
 	const x = (L - l) / 2;
 	const y = (H - h) / 2;

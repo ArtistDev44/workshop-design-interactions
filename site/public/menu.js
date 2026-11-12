@@ -428,7 +428,7 @@ function copierLienJeu() {
 function fenetrePartage() {
 	const portrait = typeof PORTRAIT !== 'undefined' && PORTRAIT.actif; // mobile portrait : cibles ≥ 44 px à l'écran
 	const ho = portrait ? 104 : 66;
-	const l = 900;
+	const l = DS.fenetre.moyenne; // prompt 173 (était 900)
 	const h = portrait ? 960 : 700;
 	const x = (L - l) / 2;
 	const y = (H - h) / 2;

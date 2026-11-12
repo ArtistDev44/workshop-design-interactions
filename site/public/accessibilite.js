@@ -98,7 +98,7 @@ function ouvrirAccessibilite() {
 	annoncer(t('acc.titre'));
 }
 function fenetreAccessibilite() {
-	const l = 1240;
+	const l = DS.fenetre.large; // prompt 173 (était 1240)
 	const h = 1060;
 	const x = (L - l) / 2;
 	const y = (H - h) / 2;
