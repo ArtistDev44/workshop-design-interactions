@@ -45,14 +45,15 @@ function jaugesAffichees() {
 	return A.v;
 }
 /** Delta flottant au-dessus d'une jauge (x, y : coin haut gauche de la barre, l : largeur) */
-function dessinerDeltasJauge(cle, x, y, l) {
+function dessinerDeltasJauge(cle, x, y, l, hb) {
 	// Prompt 94 : éclair bref (220 ms, une fois par changement) sur la barre de la jauge qui vient de bouger
 	const recent = JAUGES_AFF.deltas.filter((d) => d.jauge === cle && millis() - d.t < 220 && Math.abs(d.d) >= 6).pop(); // prompt 96 : flash réservé aux tiers medium / large
 	if (recent && !reduireAnimations) {
 		noStroke();
 		fill(255, 255, 255, 130 * (1 - (millis() - recent.t) / 220));
-		rect(x, y, l, 16);
+		rect(x, y, l, hb || 16); // prompt 145 : hauteur de la barre compacte
 	}
+	const yc = y + (hb || 16) / 2; // centre de la barre
 	JAUGES_AFF.deltas
 		.filter((d) => d.jauge === cle)
 		.forEach((d, i) => {
@@ -69,11 +70,11 @@ function dessinerDeltasJauge(cle, x, y, l) {
 			const txt = (d.d > 0 ? '+' : '−') + Math.abs(d.d);
 			const w = textWidth(txt) + 14;
 			const bx = x + l - w - 4 - i * (w + 6); // à droite de la barre, sous la valeur
-			rect(bx, y - 2 - monte, w, 26);
+			rect(bx, yc - 13 - monte, w, 26);
 			fill(c);
 			textAlign(CENTER, CENTER);
-			zoneTexteDebut('pastille', bx, y - 2 - monte, w, 26); // prompt 93 : la pastille est le cadre du delta (elle monte exprès)
-			text(txt, bx + w / 2, y + 11 - monte);
+			zoneTexteDebut('pastille', bx, yc - 13 - monte, w, 26); // prompt 93 : la pastille est le cadre du delta (elle monte exprès)
+			text(txt, bx + w / 2, yc - monte);
 			zoneTexteFin();
 			textAlign(LEFT, TOP);
 		});

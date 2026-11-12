@@ -233,8 +233,8 @@ Preuves dans le code (grep ; 14–34 relevées au prompt 33, revérifiées et co
 | 142 | `142-jeu-journal-supprimer-notes-et-carnet.md` | Jeu : **supprimer la fonctionnalité de notes et de carnets** et tous les boutons dédiés (filtre « Mes notes », « Écrire une note », touches J/K, carnet du joueur et de la semaine) | ✅ fusionné dans main |
 | 143 | `143-jeu-main-telephone-pixel-art.md` | Jeu : la **main qui tient le téléphone** redessinée en pixel art (grille de 15 px, palette de la tasse en main) | ✅ fusionné dans main |
 | 143 | `143-jeu-jauges-sans-pourcentage.md` | Jeu : **plus de pourcentage sur les jauges** (bandeau + fenêtre Indicateurs) ; une **barre blanche de seuil** uniquement quand la jauge est l'objectif du jour (ex. réputation ≥ 60) | ✅ fusionné dans main |
-| 144 | `144-jeu-bandeau-fusion-priorites-objectif-date-haut-droite.md` | Jeu : bandeau — **fusionner priorités et objectif** en un seul élément (sans valeur chiffrée) ; **date du jour en haut à droite de l'écran** (coin supérieur) | ◻ à exécuter (avec 145) |
-| 145 | `145-jeu-bandeau-jauges-compactes.md` | Jeu : bandeau — **barres de jauges plus fines, à la même hauteur que la ligne du dessous** (priorités, objectif & date) ; bandeau réduit de moitié | ◻ à exécuter (avec 144) |
+| 144 | `144-jeu-bandeau-fusion-priorites-objectif-date-haut-droite.md` | Jeu : bandeau — **fusionner priorités et objectif** en un seul élément (sans valeur chiffrée) ; **date du jour en haut à droite de l'écran** (coin supérieur) | ✅ fusionné dans main |
+| 145 | `145-jeu-bandeau-jauges-compactes.md` | Jeu : bandeau — **barres de jauges plus fines, à la même hauteur que la ligne du dessous** (priorités, objectif & date) ; bandeau réduit de moitié | ✅ fusionné dans main |
 | 146 | `146-jeu-carte-bouton-recentrer-carree-blanc.md` | Jeu : appli Carte — remplacer le bouton texte « Recentrer » (fond sombre) par un **bouton carré blanc 48×48 « □ »**, même action `recentrer()` | ◻ à exécuter |
 | 147 | `147-jeu-carte-supprimer-lieu-a-preciser.md` | Jeu : **aucun texte « Lieu à préciser » à l'écran** (case de la carte, clé i18n, tutoriel, décalages de position associés) | ◻ à exécuter |
 

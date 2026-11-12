@@ -225,8 +225,9 @@ function draw() {
 			indicateurSauvegarde(); // prompt 33
 			// Prompt 93 : ligne complète du bandeau ; prompt 98 : infobulle après 350 ms de survol (validations : tooltip-no-delay)
 			if (BANDEAU.survol !== BANDEAU.survolPrec) (BANDEAU.survolPrec = BANDEAU.survol), (BANDEAU.survolDepuis = millis());
-			if (BANDEAU.survol && millis() - BANDEAU.survolDepuis >= 350) infobulle(BANDEAU.survol, Math.min(BANDEAU.x + 16, L - 28 - textWidth(BANDEAU.survol)), BANDEAU.y + BANDEAU.h + 4);
+			if (BANDEAU.survol && millis() - BANDEAU.survolDepuis >= 350) infobulle(BANDEAU.survol, Math.min(BANDEAU.survolX ? BANDEAU.survolX - textWidth(BANDEAU.survol) - 28 : BANDEAU.x + 16, L - 28 - textWidth(BANDEAU.survol)), BANDEAU.y + BANDEAU.h + 4); // prompt 144 : sous la date quand c'est elle
 			BANDEAU.survol = null;
+			BANDEAU.survolX = null;
 		}
 		if (enPause) dessinerPause();
 		// Prompt 105 : plein écran — plus de barre de titre ni de croix (Échap, « Quitter la journée », « Quitter le PC »)
@@ -450,7 +451,7 @@ function fenetreReprise() {
 // Écran de jeu (Q1–Q10, Q29, Q30, Q45)
 // =====================================================================
 // Prompt 87 : deux colonnes sous un bandeau fin (BANDEAU et PANNEAU : panneau.js) — liste à gauche, signalement à droite
-const FILE_SIG = { x: 40, y: 132, l: 700, h: 900 };
+const FILE_SIG = { x: 40, y: 92, l: 700, h: 940 }; // prompt 145 : bandeau d'une ligne, le contenu monte de 40 px
 
 function dossierCourant() {
 	return Jeu.dossierCourant ? Jeu.dossierCourant() : null;

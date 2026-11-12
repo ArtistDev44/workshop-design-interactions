@@ -72,7 +72,7 @@ function composerPortrait() {
 	if (scene === 'appli') regionsAppli();
 	else if (scene === 'vueApp') {
 		// Prompt 103 : bandeau en haut, contenu de la vue au milieu (défilant), menu en barre d'onglets en bas
-		const hj = region(appliVersImage(BANDEAU), 20, 12, PL - 40);
+		const hj = region(appliVersImage(BANDEAU_TOUT), 20, 12, PL - 40);
 		region(appliVersImage(ZONE_VUE), 20, 12 + hj + 8, PL - 40, true);
 		region(appliVersImage(MENU_BAS), 0, PH - 150, PL);
 	}
@@ -124,7 +124,7 @@ function composerPortrait() {
 
 /** Appli Signalements : jauges fixes, puis liste des signalements + lignes et dossier (défilables), barre des tâches + « Se lever » fixes */
 function regionsAppli() {
-	const hj = region(appliVersImage(BANDEAU), 20, 12, PL - 40); // prompt 87 : bandeau fin
+	const hj = region(appliVersImage(BANDEAU_TOUT), 20, 12, PL - 40); // prompt 87 : bandeau fin
 	const hs = region(appliVersImage(ZONE_SOMNO), (PL - 600) / 2, 12 + hj + 8, 600); // prompt 78 : somnolence (≥ 44 px)
 	const haut = 12 + hj + 8 + hs + 10;
 	const bas = PH - 190;

@@ -22,9 +22,9 @@ Jeu.incidentsFictifs = (() => {
 })();
 Jeu.plateauEquipesVisible = true; // prompt 103 : le panneau des équipes dit les effectifs (pas de doublon chez le patron)
 const CARTE = { zone: null, vue: null, cible: null, marqueurs: [], arrivees: {}, jeton: null, jetonChoisi: null, retour: null, jetons: [], depots: [], suivis: [], pan: null, centreSur: null, ligneSurvol: null, survolFrame: 0, controles: [] };
-const MENU_APP = { x: 40, y: 132, l: 128, h: 900 }; // prompt 103 : colonne du menu
-const ZONE_CARTE = { x: 184, y: 132, l: 1376, h: 900 }; // prompt 108 : la carte laisse la droite aux équipes
-const PANNEAU_EQUIPES = { x: 1576, y: 132, l: 304, h: 900 };
+const MENU_APP = { x: 40, y: 92, l: 128, h: 940 }; // prompt 103 : colonne du menu
+const ZONE_CARTE = { x: 184, y: 92, l: 1376, h: 940 }; // prompt 108 : la carte laisse la droite aux équipes
+const PANNEAU_EQUIPES = { x: 1576, y: 92, l: 304, h: 940 };
 const FENETRE_DIALOGUE = { l: 820, h: 868 }; // prompt 107 : fenêtre flottante du plaignant
 const ZONE_CARTE_PLEINE = ZONE_CARTE; // compatibilité (portrait, indicateur de sauvegarde)
 const PHASES_DOSSIER_CARTE = ['decision', 'contradiction', 'conflit', 'narration'];
