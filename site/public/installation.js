@@ -85,13 +85,23 @@ function actionDepuisUrl() {
 	else if (action === 'reprendre' && typeof continuerPartie === 'function' && Sauvegarde.lister().length) continuerPartie();
 }
 
-// Prompt 93 : détecteur de textes hors cadre, outil de développement — chargé SEULEMENT avec ?audit=textes
-// (avant l'initialisation de p5, pour que l'enveloppe de text() soit prise par le mode global)
-if (typeof location !== 'undefined' && /[?&]audit=textes(&|$)/.test(location.search) && typeof document !== 'undefined') {
-	if (document.readyState === 'loading') document.write('<script src="./audit-textes.js"><\/script>');
-	else {
-		const s = document.createElement('script');
-		s.src = './audit-textes.js';
-		document.head.appendChild(s);
+// Outils de développement chargés SEULEMENT avec leur paramètre (avant l'initialisation de p5, pour que les
+// enveloppes de text(), rect()… soient prises par le mode global) : ?audit=textes (prompt 93), ?audit=densite (prompt 101).
+// audit-parcours.js (aides du parcours automatique) est chargé avant l'un ou l'autre.
+if (typeof location !== 'undefined' && typeof document !== 'undefined') {
+	const audit = (/[?&]audit=(textes|densite)(&|$)/.exec(location.search) || [])[1];
+	if (audit) {
+		const fichiers = ['./audit-parcours.js', `./audit-${audit}.js`];
+		if (document.readyState === 'loading') fichiers.forEach((f) => document.write(`<script src="${f}"><\/script>`));
+		else {
+			const charger = (i) => {
+				if (i >= fichiers.length) return;
+				const s = document.createElement('script');
+				s.src = fichiers[i];
+				s.onload = () => charger(i + 1);
+				document.head.appendChild(s);
+			};
+			charger(0);
+		}
 	}
 }

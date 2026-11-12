@@ -5,7 +5,7 @@
  * séparateurs de journée, cartes typées (bloc enrichi selon le type), lus / non lus, accusés de lecture,
  * indicateur de saisie (affichage seul : l'heure du message ne change pas), réponses rapides SANS effet de jeu.
  */
-const PATRON = { filtre: 'tout', defil: 0, ouvert: false, epingle: false, premierNonLu: -1, vus: 0, ecritJusqua: 0, hauteurs: new Map(), max: 0 };
+const PATRON = { deplies: new Set(), toutDeplie: false, dernier: null, filtre: 'tout', defil: 0, ouvert: false, epingle: false, premierNonLu: -1, vus: 0, ecritJusqua: 0, hauteurs: new Map(), max: 0 };
 const FILTRES_PATRON = [
 	{ cle: 'tout', types: null },
 	{ cle: 'consignes', types: ['consigne'] },
@@ -15,6 +15,10 @@ const FILTRES_PATRON = [
 ];
 const COULEURS_TYPES = { consigne: () => DS.info, alerte: () => DS.erreur, conseil: () => DS.alerte, budget: (m) => (m.meta && m.meta.palier === 'haut' ? DS.succes : DS.alerte), reproche: () => DS.primaire, equipes: () => DS.info, info: () => DS.blanc75 };
 const REPONSES_RAPIDES = { consigne: ['recu', 'jemen'], alerte: ['redresse', 'compris'], conseil: ['compris'], reproche: ['corrige'], budget: ['recu'], equipes: ['recu'], info: ['recu'] };
+/** Prompt 101 : blocs enrichis repliés en une ligne (déplier : clic, ou V pour tous) ; le dernier message reste déplié */
+const BLOCS_PLIABLES = ['consigne', 'reproche', 'budget', 'equipes'];
+const aUnBloc = (m) => Object.keys(m.meta || {}).some((k) => k !== 'important');
+const blocDeplie = (m) => !BLOCS_PLIABLES.includes(typeDe(m)) || !aUnBloc(m) || PATRON.toutDeplie || PATRON.deplies.has(m) || m === PATRON.dernier;
 const typeDe = (m) => (Jeu.TYPES_MESSAGES.includes(m.type) ? m.type : 'info');
 const enPanne = () => !!(Jeu.modificateurActif && Jeu.modificateurActif() === 'panne_messagerie');
 
@@ -71,13 +75,13 @@ function majPatron() {
 
 /** Hauteur d'une carte, mise en cache (recalculée au changement de langue ou de largeur) */
 function hauteurCarte(m, l) {
-	const cle = Langue.actuelle + '|' + l + '|' + (m.reponse || '');
+	const cle = Langue.actuelle + '|' + l + '|' + (m.reponse || '') + '|' + blocDeplie(m);
 	const c = PATRON.hauteurs.get(m);
 	if (c && c.cle === cle) return c.h;
 	textFont(DS.policeTexte);
 	textSize(20);
 	const n = Math.max(1, Math.ceil((textWidth(String(m.texte)) * 1.06) / (l - 70)));
-	const bloc = { consigne: 56, alerte: 44, conseil: 44, reproche: 60, budget: 44, equipes: 40, info: 0 }[typeDe(m)] || 0;
+	const bloc = blocDeplie(m) ? { consigne: 56, alerte: 44, conseil: 44, reproche: 60, budget: 44, equipes: 40, info: 0 }[typeDe(m)] || 0 : 32;
 	const h = 46 + n * 28 + (bloc ? bloc + 8 : 0) + 18 + (m.reponse ? 56 : 0);
 	PATRON.hauteurs.set(m, { cle, h });
 	return h;
@@ -106,13 +110,13 @@ function appPatron(z) {
 		.reverse()
 		.forEach((f) => {
 			const nb = (Jeu.messagesPatron || []).filter((m) => !f.types || f.types.includes(typeDe(m))).length;
-			const lib = t('patron.filtre.' + f.cle) + ' ' + nb;
+			const lib = t('patron.filtre.' + f.cle) + (PATRON.filtre === f.cle ? ' ' + nb : ''); // prompt 101 : compteur sur le filtre actif seulement
 			textFont(DS.policeTexte);
 			textSize(18);
 			const w = Math.max(110, textWidth(lib) + 64); // place pour le chevron de dsBouton
 			fx -= w + 8;
 			if (mobile && f.cle !== 'tout' && f.cle !== PATRON.filtre) return; // portrait : filtres réduits
-			dsBouton(fx, z.y + 14, w, 44, lib, () => changerFiltre(f.cle), PATRON.filtre === f.cle ? 'primaire' : 'contour');
+			dsBouton(fx, z.y + 14, w, 44, lib, () => changerFiltre(f.cle), PATRON.filtre === f.cle ? 'secondaire' : 'fantome'); // prompt 101 : pas de rouge pour un filtre
 		});
 	let y = z.y + 88;
 	// Bandeau de panne : on ne masque plus tout
@@ -147,6 +151,7 @@ function appPatron(z) {
 	// Fil défilable
 	const zf = { x: z.x, y, l, h: z.y + z.h - y - 64 };
 	const liste = messagesFiltres();
+	PATRON.dernier = liste[liste.length - 1] || null;
 	const cachee = PATRON.ecritJusqua > millis() ? liste[liste.length - 1] : null; // le dernier attend la fin de « écrit… »
 	drawingContext.save();
 	drawingContext.beginPath();
@@ -170,9 +175,9 @@ function appPatron(z) {
 				PATRON.allerNonLu = false;
 			}
 			noStroke();
-			fill(DS.primaire);
-			rect(zf.x, yy + 12, l, 2);
-			dsTexte(t('patron.nouveaux'), zf.x + l / 2, yy, 18, DS.erreurClair, 'center');
+			fill(DS.blanc50); // prompt 101 : séparateur en blanc, le rouge reste rare
+			rect(zf.x, yy + 12, l, 1);
+			dsTexte(t('patron.nouveaux'), zf.x + l / 2, yy, 18, DS.blanc75, 'center');
 			yy += 34;
 		}
 		// Regroupement : même type à moins de 30 min de jeu → une seule heure
@@ -190,7 +195,7 @@ function appPatron(z) {
 	if (!liste.length) dsTexte(t('app.pasMessage'), zf.x, zf.y, 20, DS.blanc50, 'left');
 	// Accusé du dernier message : « Envoyé » à la réception, « Lu · HH:MM » une fois affiché
 	const dernier = liste[liste.length - 1];
-	if (dernier && dernier !== cachee) dsTexte(dernier.lu ? t('patron.lu', { heure: dernier.luA || dernier.heure }) : t('patron.envoye'), zf.x + l, yy - 4, 16, DS.blanc50, 'right');
+	if (dernier && dernier !== cachee) dsTexte(dernier.lu ? t('patron.lu', { heure: dernier.luA || dernier.heure }) : t('patron.envoye'), zf.x + l, yy - 4, 18, DS.blanc50, 'right');
 	zoneTexteFin();
 	drawingContext.restore();
 	for (let i = boutons.length - 1; i >= n0; i--) if (boutons[i].y + boutons[i].h < zf.y || boutons[i].y > zf.y + zf.h) boutons.splice(i, 1);
@@ -223,11 +228,7 @@ function separateurJour(iso, x, y, l) {
 	textFont(DS.policeTexte);
 	textSize(18);
 	const w = textWidth(lib) + 32;
-	noStroke();
-	fill(DS.blanc15);
-	rect(x, y + 14, (l - w) / 2, 2);
-	rect(x + (l + w) / 2, y + 14, (l - w) / 2, 2);
-	dsTexte(lib, x + l / 2, y + 4, 18, DS.blanc50, 'center');
+	dsTexte(lib, x + l / 2, y + 4, 18, DS.blanc50, 'center'); // prompt 101 : texte seul, sans trait
 	return 40;
 }
 /** Carte d'un message : barre de couleur du type, pictogramme, libellé, heure, texte, bloc enrichi (meta) */
@@ -254,7 +255,7 @@ function carteMessage(m, x, y, l, groupe, panne) {
 		circle(x + dx - 10, y + 22, 10); // non lu
 	}
 	picto(type, x + dx + 16, y + 12, c);
-	dsTexte(t('patron.type.' + type).toUpperCase() + (m.enRetard ? ' · ' + t('patron.retard') : ''), x + dx + 52, y + 14, 16, c, 'left');
+	dsTexte(t('patron.type.' + type).toUpperCase() + (m.enRetard ? ' · ' + t('patron.retard') : ''), x + dx + 52, y + 14, 18, c, 'left');
 	if (!groupe) dsTexte(m.heure, x + dx + l - 14, y + 14, 18, DS.blanc50, 'right');
 	dsTexte(String(m.texte), x + dx + 18, y + 44, 20, m.lu ? DS.blanc75 : DS.blanc, 'left', l - 70);
 	textFont(DS.policeTexte);
@@ -281,6 +282,15 @@ function carteMessage(m, x, y, l, groupe, panne) {
 function blocEnrichi(m, x, y, l, panne) {
 	const me = m.meta || {};
 	const type = typeDe(m);
+	if (!blocDeplie(m)) {
+		// Prompt 101 : une ligne en texte secondaire, dépliée au clic (ou V : tout déplier)
+		const lib = (type === 'reproche' && me.index !== undefined ? t('patron.dossierLie', { r: [me.ligne ? t('sujet.ligne', { ligne: me.ligne }) : '', me.action ? String(Jeu.libelleAction(me.action)) : ''].filter(Boolean).join(' · ') }) : t('journal.details')) + '  ›';
+		textFont(DS.policeTexte);
+		textSize(18);
+		dsTexte(lib, x, y + 4, 18, DS.blanc50, 'left');
+		boutons.push({ x, y: y - 8, l: Math.min(l, textWidth(lib) + 16), h: 44, action: () => (PATRON.deplies.add(m), annoncer(lib)) });
+		return;
+	}
 	if (type === 'consigne' && me.jauge) {
 		const obj = me.jauge === 'budget' ? t('obj.budget', { seuil: me.seuil }) : t('obj.garder', { jauge: t('jauge.' + me.jauge), seuil: me.seuil });
 		const puces = [t('patron.puce.objectif', { o: obj }), t('patron.puce.budget', { b: me.budget }), t('patron.puce.dossiers', { n: me.n })];
@@ -288,13 +298,13 @@ function blocEnrichi(m, x, y, l, panne) {
 		let px = x;
 		puces.forEach((p) => {
 			textFont(DS.policeTexte);
-			textSize(16);
+			textSize(18);
 			const w = textWidth(p) + 20;
 			if (px + w > x + l) return;
 			noStroke();
 			fill(DS.blanc15);
 			rect(px, y, w, 32);
-			dsTexte(p, px + 10, y + 7, 16, DS.blanc, 'left');
+			dsTexte(p, px + 10, y + 7, 18, DS.blanc, 'left');
 			px += w + 8;
 		});
 	} else if ((type === 'alerte' || type === 'conseil') && me.jauge) {
@@ -359,6 +369,7 @@ function touchePatron() {
 	if (keyCode === RIGHT_ARROW || keyCode === LEFT_ARROW) return changerFiltre(FILTRES_PATRON[(i + (keyCode === RIGHT_ARROW ? 1 : FILTRES_PATRON.length - 1)) % FILTRES_PATRON.length].cle), true;
 	if (keyCode === UP_ARROW || keyCode === DOWN_ARROW) return (PATRON.defil = constrain(PATRON.defil + (keyCode === DOWN_ARROW ? 120 : -120), 0, PATRON.max)), true;
 	if (keyCode === ENTER || keyCode === RETURN) return (PATRON.epingle = !PATRON.epingle), true;
+	if (key === 'v' || key === 'V') return (PATRON.toutDeplie = !PATRON.toutDeplie), annoncer(t(PATRON.toutDeplie ? 'journal.details' : 'journal.detailsMasquer')), true; // prompt 101
 	const l = messagesFiltres();
 	const rr = reponsesRapides(l[l.length - 1]);
 	if (Number(key) >= 1 && Number(key) <= rr.length) return repondreRapide(l[l.length - 1], rr[Number(key) - 1]), true;
