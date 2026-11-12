@@ -17,9 +17,7 @@ const SEUIL_CLIC_PX = 8;
 
 /** Souris en coordonnées de l'écran du PC (1920×1080), hors image (dans mousePressed / mouseReleased) */
 function sourisPC() {
-	if (vue !== 'poste' || typeof ECRAN_POSTE === 'undefined') return { x: mouseX, y: mouseY };
-	const r = ECRAN_POSTE;
-	return { x: ((mouseX - r.x) * L) / r.l, y: ((mouseY - r.y) * H) / r.h };
+	return typeof pointeurEcranPC === 'function' ? pointeurEcranPC(mouseX, mouseY) : { x: mouseX, y: mouseY }; // prompt 182 : hors du poste, le pointeur n'est « nulle part » pour l'appli (bureau.js)
 }
 const dansRect = (p, r) => !!r && p.x >= r.x && p.x <= r.x + r.l && p.y >= r.y && p.y <= r.y + r.h;
 function glisserPossible() {
