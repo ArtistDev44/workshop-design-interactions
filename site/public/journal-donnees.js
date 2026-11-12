@@ -1,6 +1,6 @@
 /* Nantes en régulation — prompt 89 : données de l'appli Journal (logique pure, sans p5, chargée par les tests).
  * Tout est recalculé à partir de l'état de la partie (Jeu.evenementsJournee, dossiers réels, Jeu.equipes,
- * Jeu.plaintes, jauges, carnet, Jeu.taches) : rien n'est stocké en double, rien n'est inventé ; absent → null
+ * Jeu.plaintes, jauges, Jeu.taches) : rien n'est stocké en double, rien n'est inventé ; absent → null
  * (l'affichage dit « non renseigné »). Pas de cache (prompt 59, 12/11 : cache déclaré mais jamais appelé, retiré).
  */
 const JournalDonnees = (() => {
@@ -25,16 +25,6 @@ const JournalDonnees = (() => {
 			return o;
 		}
 		return null;
-	}
-	/** Jauges en fin de journée : début du lendemain (effets du soir compris), sinon jauges actuelles (jour en cours) */
-	function finJour(i) {
-		const suiv = jours()[i + 1];
-		const r = suiv && (Jeu.jaugesDebutJour || {})[suiv.date];
-		if (r && i < Jeu.jourIndex) return Object.assign({}, r);
-		if (i === Jeu.jourIndex) return Object.assign({}, Jeu.jauges);
-		const ev = evDuJour(jours()[i].date);
-		const der = ev[ev.length - 1];
-		return der && der.resultat && der.resultat.jaugesApres ? Object.assign({}, der.resultat.jaugesApres) : null;
 	}
 	/** Mini-courbes : un point au début, puis un point par événement réel (valeurs après l'événement) — sans interpolation */
 	function courbes(date) {
@@ -107,17 +97,14 @@ const JournalDonnees = (() => {
 		const c = typeof Taches !== 'undefined' && Jeu.taches ? Taches.crise(j.date) : null;
 		if (c) out.push({ sorte: 'crise', c, heure: '16:30', minute: Taches.R.crise.debut, groupe: [] });
 		out.sort((a, b) => (a.minute === null ? 9999 : a.minute) - (b.minute === null ? 9999 : b.minute));
-		// La note du carnet de bord (prompt 47 : une note pour la semaine) ferme la frise
-		out.push({ sorte: 'note', texte: String(Jeu.carnet || '').trim(), heure: null, minute: null, groupe: [] });
 		return out;
 	}
-	const FILTRES = ['tout', 'rates', 'equipes', 'plaintes', 'notes'];
+	const FILTRES = ['tout', 'rates', 'equipes', 'plaintes']; // prompt 142 : filtre « Mes notes » retiré
 	const garde = (filtre) => (c) => {
 		if (filtre === 'tout') return true;
 		if (filtre === 'rates') return c.sorte === 'signalement' && (c.eval === 'rate' || c.eval === 'trop_tard');
 		if (filtre === 'equipes') return c.sorte === 'equipe' || (c.sorte === 'signalement' && c.groupe.some((g) => g.sorte === 'equipe'));
 		if (filtre === 'plaintes') return c.sorte === 'plainte' || (c.sorte === 'signalement' && c.groupe.some((g) => g.sorte === 'plainte'));
-		if (filtre === 'notes') return c.sorte === 'note';
 		return true;
 	};
 	function filtrer(liste, filtre) {
@@ -129,24 +116,9 @@ const JournalDonnees = (() => {
 		FILTRES.forEach((f) => {
 			if (f === 'equipes') o[f] = l.reduce((a, c) => a + (c.sorte === 'equipe' ? 1 : c.groupe.filter((g) => g.sorte === 'equipe').length), 0);
 			else if (f === 'plaintes') o[f] = l.reduce((a, c) => a + (c.sorte === 'plainte' ? 1 : c.groupe.filter((g) => g.sorte === 'plainte').length), 0);
-			else if (f === 'notes') o[f] = l.filter((c) => c.sorte === 'note' && c.texte).length;
-			else o[f] = filtrer(l, f).filter((c) => c.sorte !== 'note' || c.texte).length;
+			else o[f] = filtrer(l, f).length;
 		});
 		return o;
-	}
-
-	// ——— Vue semaine (§ 4) ———
-	function semaine() {
-		const cols = jours()
-			.map((j, i) => ({ i, j }))
-			.filter((x) => x.i <= Jeu.jourIndex)
-			.map(({ i, j }) => {
-				const tu = tuiles(i);
-				return { i, date: j.date, theme: tu.theme, signalements: tu.signalements.recus, bons: tu.bonnes.n, total: tu.bonnes.total, objectif: tu.objectif, fin: finJour(i) };
-			});
-		const pts = cols.filter((c) => c.fin).map((c) => ({ date: c.date, f: c.fin.fluidite, r: c.fin.reputation, b: c.fin.budget, score: c.fin.fluidite + c.fin.reputation + c.fin.budget }));
-		const b = Jeu.bilan ? Jeu.bilan() : { decisionsCles: [] };
-		return { colonnes: cols, courbe: pts, seuils: [150, 240], decisionsCles: (b.decisionsCles || []).map((d) => ({ qualite: d.qualite, titre: String(d.titre), action: String(d.action), deltas: d.deltas })), carnet: (Jeu.taches && Jeu.taches.carnet) || [] };
 	}
 
 	// ——— Enquête (§ 5) ———
@@ -184,6 +156,6 @@ const JournalDonnees = (() => {
 		return l.join('\n');
 	}
 
-	return { JAUGES, FILTRES, debutJour, finJour, courbes, tuiles, etatJour, cartes, filtrer, compteurs, semaine, enquete, resume, minutes };
+	return { JAUGES, FILTRES, debutJour, courbes, tuiles, etatJour, cartes, filtrer, compteurs, enquete, resume, minutes };
 })();
 if (typeof window !== 'undefined') window.JournalDonnees = JournalDonnees;

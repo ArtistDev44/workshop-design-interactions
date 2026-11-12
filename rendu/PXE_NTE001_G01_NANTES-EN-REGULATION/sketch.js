@@ -1099,7 +1099,7 @@ function dateLongue(iso) {
 // Entrées : souris, touch, clavier (raccourcis complets, 08-raccourcis)
 // =====================================================================
 function mousePressed() {
-	if (Sauvegarde.dialogueOuvert || CARNET.ouvert) return; // prompt 33 : clics destinés à la boîte d'import HTML
+	if (Sauvegarde.dialogueOuvert) return; // prompt 33 : clics destinés à la boîte d'import HTML
 	if (arreterDemo()) return; // prompt 48
 	Confort.Son.demarrer();
 	interaction();
@@ -1132,7 +1132,7 @@ function basculerPleinEcran() {
 }
 function keyPressed() {
 	// Prompt 33 : boîte d'import ouverte (champ texte, fichier) → le clavier lui appartient
-	if (Sauvegarde.dialogueOuvert || CARNET.ouvert) return;
+	if (Sauvegarde.dialogueOuvert) return;
 	if (arreterDemo()) return false; // prompt 48 : une touche arrête la démo automatique
 	if (CINE) return toucheCinematique(), false; // prompt 41
 	if (GAMEOVER) return toucheGameOver(), false; // prompt 84
@@ -1353,7 +1353,7 @@ function mouseMoved() {
 // Touch basique (Q32) : un appui = un clic sur les boutons
 function touchStarted(e) {
 	if (horsCanevas(e)) return; // prompt 60 : un bouton HTML (avis portrait, boîtes) garde son comportement normal
-	if (Sauvegarde.dialogueOuvert || CARNET.ouvert) return;
+	if (Sauvegarde.dialogueOuvert) return;
 	if (MOBILE.actif) return (PORTRAIT.actif ? portraitDebut(e) : toucherDebut()), false; // prompt 60 : sur téléphone, le clic part au relâchement (swipe, appui long) ; 60b : portrait
 	sourisDansCanevas = false; // au doigt, pas de caméra (la position du dernier appui resterait « collée »)
 	Confort.Son.demarrer();

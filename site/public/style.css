@@ -159,11 +159,6 @@ h3 {
 .sv-toast[hidden] {
 	display: none;
 }
-/* Prompt 47 : journal de bord (même boîte que l'import) */
-.cb-compte {
-	font-size: 14px;
-	color: rgba(255, 255, 255, 0.75);
-}
 /* Prompt 48 : taille du texte réglable (Paramètres → Accessibilité) aussi dans les boîtes HTML */
 .sv-dialogue {
 	font-size: calc(16px * var(--echelle-texte, 1));
@@ -171,8 +166,7 @@ h3 {
 .sv-dialogue h2 {
 	font-size: calc(24px * var(--echelle-texte, 1));
 }
-.sv-dialogue textarea,
-.cb-compte {
+.sv-dialogue textarea {
 	font-size: calc(14px * var(--echelle-texte, 1));
 }
 

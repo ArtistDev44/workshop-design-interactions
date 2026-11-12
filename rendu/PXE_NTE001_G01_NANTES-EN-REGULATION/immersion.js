@@ -703,7 +703,6 @@ const TOUTES_ENTREES_PAUSE = [
 	{ cle: 'menu.reprendre', icone: 'lecture', action: () => fermer() },
 	{ cle: 'accueil.parametres', icone: 'reglages', action: () => (fenetre = 'parametres') },
 	{ cle: 'mp.aide', icone: 'aide', action: () => (fenetre = 'aide') }, // prompt 122 : « Aide et tutoriel »
-	{ cle: 'menu.carnet', icone: 'carnet', action: () => (fermer(), ouvrirCarnet()) }, // prompt 47 : journal de bord (J)
 	{ cle: 'quitter.bouton', icone: 'retour', visible: journeeQuittable, action: () => (fermer(), quitterJourneeRapide()) },
 	{ cle: 'jeu.recommencer', icone: 'plus', visible: () => ecran === 'jeu', action: () => (fenetre = 'reset') },
 	{ cle: 'menu.menuPrincipal', icone: 'menu', action: () => quitterPartie() },

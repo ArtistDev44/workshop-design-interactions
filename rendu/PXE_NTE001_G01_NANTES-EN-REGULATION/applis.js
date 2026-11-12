@@ -101,7 +101,7 @@ function toucheDeblocage() {
 // ——— § 3 : pile de navigation des redirections ———
 /** Écran courant (ce qu'on empile) */
 function ecranCourantPC() {
-	return { etat: PC.etat, fenetre: PC.fenetre, journal: typeof JOURNAL !== 'undefined' ? { jour: JOURNAL.jour, enquete: JOURNAL.enquete, vue: JOURNAL.vue } : null, commu: typeof COMMU !== 'undefined' ? COMMU.onglet : null };
+	return { etat: PC.etat, fenetre: PC.fenetre, journal: typeof JOURNAL !== 'undefined' ? { jour: JOURNAL.jour, enquete: JOURNAL.enquete } : null, commu: typeof COMMU !== 'undefined' ? COMMU.onglet : null };
 }
 /** Redirection vers une appli avec contexte : l'origine est empilée ; Échap y revient */
 function redirigerVers(cle, prep) {
@@ -144,7 +144,6 @@ function voirDossierDepuis(index) {
 	redirigerVers('journal', () => {
 		const ji = (Jeu.jours || []).findIndex((j) => j.date === e.jour);
 		JOURNAL.jour = ji;
-		JOURNAL.vue = 'jour';
 		JOURNAL.enquete = (Jeu.evenementsJournee || []).filter((x) => x.jour === e.jour).indexOf(e);
 		JOURNAL.volet = 0;
 	});

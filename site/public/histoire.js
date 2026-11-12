@@ -293,16 +293,10 @@ function fenetreRapport() {
 		text(t('rapport.defis', { liste: ld, n: b.ralentis }), x + 56, y + 676, l - 112, 44);
 		textFont(POLICE_TEXTE);
 	}
-	// Prompt 47 : profil de gestion et extrait du journal de bord du joueur
+	// Prompt 47 : profil de gestion (prompt 142 : extrait du journal de bord retiré)
 	const m = lignesRapportMecaniques();
 	textSize(16);
 	textLeading(22);
-	if (m.carnet) {
-		fill(encre);
-		textStyle(ITALIC);
-		text(m.carnet, x + 56, y + h - 190, l - 112, 66);
-		textStyle(NORMAL);
-	}
 	fill(gris);
 	if (Jeu.profilSemaine) text(t('fin.profil', { phrase: Jeu.profilSemaine().phrase }), x + 56, y + h - 120, l - 112, 48);
 	if (m.gestion) text(m.gestion, x + 56, y + h - 66, l - 112, 44);
@@ -591,15 +585,18 @@ function fenetreRapportChiffres() {
 
 // ——— Prompt 89 bis : le rapport du soir de la veille (prompt 88) reste posé sur le bureau jusqu'à la fin de la semaine ———
 function rapportVeille() {
-	if (typeof Jeu === 'undefined' || !Jeu.taches || !Jeu.taches.carnet || ecran !== 'jeu' || phase === 'fin') return null;
+	// Prompt 142 : plus de carnet de la semaine ; le dernier rapport validé est relu dans Jeu.taches.jours
+	if (typeof Jeu === 'undefined' || !Jeu.taches || !Jeu.taches.jours || ecran !== 'jeu' || phase === 'fin') return null;
 	const j = Jeu.jourCourant && Jeu.jourCourant();
-	const c = Jeu.taches.carnet.filter((x) => !j || x.date < j.date);
-	return c.length ? c[c.length - 1] : null;
+	const dates = Object.keys(Jeu.taches.jours).filter((d) => Jeu.taches.jours[d].rapport && (!j || d < j.date)).sort();
+	if (!dates.length) return null;
+	const d = dates[dates.length - 1];
+	return Object.assign({ date: d }, Jeu.taches.jours[d].rapport);
 }
 function texteRapportVeille() {
 	const c = rapportVeille();
 	if (!c) return '';
-	const prio = (c.priorites || []).map((p) => t('tache.prio.' + p.id, p.vars) + ' (' + t('carnet.etat.' + p.etat) + ')').join(' ; ');
+	const prio = (c.priorites || []).map((p) => t('tache.prio.' + p.id, p.vars) + ' (' + t('tache.etat.' + p.etat) + ')').join(' ; ');
 	return [t('veilleRapport.titre', { date: c.date.split('-').reverse().join('/') }), t('recap.fait', { fait: c.fait }), prio ? t('veilleRapport.prio', { liste: prio }) : '', c.demande ? t('veilleRapport.demande', { demande: t('tache.demande.' + c.demande, Taches.R.demande), etat: t(c.accordee ? 'veilleRapport.accordee' : 'veilleRapport.refusee') }) : ''].filter(Boolean).join('\n');
 }
 function fenetreRapportVeille() {

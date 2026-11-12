@@ -210,7 +210,7 @@ const Taches = (() => {
 	// ——— État ———
 	function nouvellePartie(options) {
 		const o = options || {};
-		Jeu.taches = { jours: {}, carnet: [], demande: null, xpPartie: 0, themes: {}, crise: null, options: { chaines: !!o.chaines, deblocages: !!o.deblocages, arbitrage: !!o.arbitrage }, arbitrage: null };
+		Jeu.taches = { jours: {}, demande: null, xpPartie: 0, themes: {}, crise: null, options: { chaines: !!o.chaines, deblocages: !!o.deblocages, arbitrage: !!o.arbitrage }, arbitrage: null };
 		Jeu.taches.themes = calculerThemes();
 		const dc = Jeu.jours && Jeu.jours.length > 1 ? choisirJourCrise() : null;
 		if (dc) {
@@ -335,7 +335,7 @@ const Taches = (() => {
 		return 'sansObjet';
 	}
 
-	// ——— Rapport du soir (§ 1) et carnet de la semaine (§ 5) ———
+	// ——— Rapport du soir (§ 1) ———
 	/** Faits marquants proposés : tirés du journal réel de la journée (meilleure et pire décision, événement, non traité) */
 	function faitsDuJour(date) {
 		const ev = (Jeu.evenementsJournee || []).filter((e) => e.jour === date);
@@ -361,7 +361,7 @@ const Taches = (() => {
 		return { date: jr.date, faits: faitsDuJour(jr.date), demandes: DEMANDES.map((id) => ({ id, vars: R.demande })) };
 	}
 	/** Valide le rapport : fait marquant + demande au patron (accordée selon la réputation, appliquée le lendemain) ;
-	 * évalue les priorités du matin (bonus de réputation par priorité tenue) et écrit la ligne du carnet. */
+	 * évalue les priorités du matin (bonus de réputation par priorité tenue). Prompt 142 : plus de carnet. */
 	function validerRapport(idFait, idDemande) {
 		const rp = rapport();
 		if (!rp) return null;
@@ -387,8 +387,6 @@ const Taches = (() => {
 		noter('rapport', rp.date);
 		etat().joursJoues = (etat().joursJoues || 0) + 1; // prompt 91 § 4 : 3 priorités au bout de 4 jours joués
 		j.recap = verserJour(rp.date, j, { priorites: prio, crise: c ? c.resultat : null });
-		etat().carnet = etat().carnet.filter((c) => c.date !== rp.date);
-		etat().carnet.push({ date: rp.date, theme: theme(rp.date), fait: fait.texte, priorites: prio, demande: j.rapport.demande, accordee, crise: c ? c.resultat : null });
 		return j.rapport;
 	}
 	/** Matin : applique la demande de la veille (si accordée) et la rappelle dans les messages du patron */

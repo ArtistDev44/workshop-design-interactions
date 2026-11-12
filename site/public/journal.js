@@ -1,28 +1,25 @@
 /* Nantes en régulation — prompt 89 : l'appli « Journal » devient un tableau de bord de la journée (design system).
- * Pastilles des journées, tuiles de résumé avec mini-courbes, filtres, frise horaire de cartes, vue Semaine,
+ * Pastilles des journées, tuiles de résumé, filtres, frise horaire de cartes (prompt 140 : vue Semaine supprimée),
  * enquête en fiche (citation, puces de contexte, dés pixel, barres des effets attendus, suites).
  * Données : journal-donnees.js (recalculées, jamais inventées). Remplace appJournal / enqueteJournal d'os.js.
  * Clavier : ← → jours (ou volets dans l'enquête, 1 à 4 aussi) · ↑ ↓ cartes · Entrée enquêter · Échap retour ·
- * Tab zone suivante · S vue semaine · K carnet (vue semaine) · C copier le résumé.
+ * Tab zone suivante · V détails · C copier le résumé (prompts 140 / 142 : touches S et K retirées).
  */
-const JOURNAL = { jour: null, enquete: null, volet: 0, carnet: false, vue: 'jour', filtre: 'tout', details: false, survol: -1, defil: 0, defilMax: 0, focus: 0, zone: 0, ouvertA: 0, voletA: 0, copie: -1e9, dernierAnnonce: '' };
+const JOURNAL = { jour: null, enquete: null, volet: 0, filtre: 'tout', details: false, survol: -1, defil: 0, defilMax: 0, focus: 0, zone: 0, ouvertA: 0, voletA: 0, copie: -1e9, dernierAnnonce: '' };
 const VOLETS_ENQUETE = ['passe', 'contexte', 'decision', 'suites'];
 const ZONES_JOURNAL = ['jours', 'filtres', 'frise'];
-const HAUTEURS_CARTES = { signalement: 104, equipe: 52, plainte: 64, patron: 52, crise: 52, note: 84 };
+const HAUTEURS_CARTES = { signalement: 104, equipe: 52, plainte: 64, patron: 52, crise: 52 };
 
 const animJ = (debut, duree, retard) => (reduireAnimations ? 1 : constrain((millis() - debut - (retard || 0)) / duree, 0, 1));
 const nomJour = (i) => t('journal.pastille', { n: i + 1 });
-const dateCourte = (d) => d.split('-').slice(1).reverse().join('/');
 const sgn = (v) => (v > 0 ? '+' + v : v < 0 ? '−' + Math.abs(v) : '0');
 const nonRenseigne = () => t('carte.nonRenseigne');
 
 function choisirJourJournal(i) {
 	const n = Math.min(Jeu.jourIndex, (Jeu.jours || []).length - 1);
 	i = constrain(i, 0, n);
-	if (i === JOURNAL.jour && JOURNAL.vue === 'jour') return;
+	if (i === JOURNAL.jour) return;
 	JOURNAL.jour = i;
-	JOURNAL.vue = 'jour';
-	JOURNAL.carnet = false;
 	JOURNAL.enquete = null;
 	JOURNAL.defil = 0;
 	JOURNAL.focus = 0;
@@ -34,14 +31,6 @@ function annoncerJourJournal() {
 	const tu = JournalDonnees.tuiles(JOURNAL.jour);
 	if (!tu) return;
 	annoncer(t('journal.annonceJour', { jour: nomJour(JOURNAL.jour), date: dateLongue(tu.date), traites: tu.signalements.traites, recus: tu.signalements.recus, bons: tu.bonnes.n, total: tu.bonnes.total }));
-}
-function choisirVueJournal(v) {
-	JOURNAL.vue = v;
-	JOURNAL.carnet = v === 'semaine';
-	JOURNAL.enquete = null;
-	JOURNAL.ouvertA = millis();
-	Confort.Son.clic();
-	annoncer(t('journal.vue.' + v));
 }
 function choisirFiltreJournal(f) {
 	JOURNAL.filtre = f;
@@ -81,24 +70,22 @@ function enqueteCourante() {
 // ——— Point d'entrée (fenêtre d'appli d'os.js) ———
 function appJournal(z) {
 	if (JOURNAL.jour === null || JOURNAL.jour > Jeu.jourIndex) JOURNAL.jour = Jeu.jourIndex;
-	if (JOURNAL.carnet) JOURNAL.vue = 'semaine'; // prompt 88 : K ouvre le carnet, désormais dans la vue Semaine
 	const e = enqueteCourante();
 	if (e) return ficheEnquete(z, e);
 	JOURNAL.enquete = null;
 	barreJours(z);
-	if (JOURNAL.vue === 'semaine') vueSemaine(z);
-	else vueJour(z);
+	vueJour(z); // prompt 140 : la vue Jour est la seule vue
 	// Prompt 101 b : « Copier le résumé » n'est plus un bouton de pied permanent : il apparaît avec les Détails (touche C partout)
 }
 
 // ——— 1. Barre des journées ———
 function barreJours(z) {
 	const jours = Jeu.jours || [];
-	const lp = Math.min(118, (z.l - 400) / Math.max(1, jours.length) - 8);
-	jours.forEach((j, i) => {
+	const lp = Math.min(118, (z.l - 20) / Math.max(1, jours.length) - 8); // prompt 140 : plus de sélecteur Jour / Semaine à droite
+	jours.forEach((_, i) => {
 		const x = z.x + i * (lp + 8);
 		const etat = JournalDonnees.etatJour(i);
-		const actif = JOURNAL.vue === 'jour' && i === JOURNAL.jour;
+		const actif = i === JOURNAL.jour;
 		const futur = etat === 'futur';
 		noStroke();
 		fill(actif ? DS.primaire : futur ? DS.blanc05 : DS.fond);
@@ -120,9 +107,6 @@ function barreJours(z) {
 		}
 		if (!futur) boutons.push({ x, y: z.y - 6, l: lp, h: 44, action: () => choisirJourJournal(i) });
 	});
-	const xs = z.x + z.l - 380;
-	dsBouton(xs, z.y - 6, 150, 48, t('journal.vue.jour'), () => choisirVueJournal('jour'), JOURNAL.vue === 'jour' ? 'secondaire' : 'contour'); // prompt 101 : vue active en blanc, le rouge reste rare
-	dsBouton(xs + 160, z.y - 6, 220, 48, t('journal.vue.semaine'), () => choisirVueJournal('semaine'), JOURNAL.vue === 'semaine' ? 'secondaire' : 'contour');
 }
 
 // ——— 2. Tuiles ———
@@ -277,13 +261,10 @@ function frise(z, y0) {
 	const toutes = JournalDonnees.cartes(JOURNAL.jour);
 	const liste = JournalDonnees.filtrer(toutes, JOURNAL.filtre);
 	const hz = z.y + z.h - y0;
-	const evts = liste.filter((c) => c.sorte !== 'note');
-	if (!evts.length && JOURNAL.filtre !== 'notes') {
+	if (!liste.length) {
 		// État vide illustré (pas de zone noire)
 		dessinerPictoJournal('vide', z.x + z.l / 2 - 24, y0 + 30, 48);
 		dsTexte(t('journal.vide'), z.x + z.l / 2, y0 + 94, 20, DS.blanc75, 'center');
-		const note = liste.find((c) => c.sorte === 'note');
-		if (note) carteNote(note, z.x + 84, y0 + 140, z.l - 100);
 		return;
 	}
 	const hs = liste.map(hauteurCarteJournal);
@@ -366,7 +347,6 @@ function dessinerCarteJournal(c, x, y, l, focus, y0, hz) {
 	else if (c.sorte === 'plainte') cartePlainte(c.p, x, y, l, focus);
 	else if (c.sorte === 'patron') cadreCarte(x, y, l, h, focus, DS.alerte), dsTexte('⚠ ' + court(String(c.m.texte), 110), x + 20, y + 14, 16, DS.blanc, 'left', l - 40);
 	else if (c.sorte === 'crise') cadreCarte(x, y, l, h, focus, DS.primaire), dsTexte(t('crise.bandeau') + ' · ' + t(c.c.resultat === 'maitrisee' ? 'journal.criseOk' : c.c.resultat === 'debordee' ? 'journal.criseKo' : 'journal.enCours'), x + 20, y + 14, 17, DS.blanc, 'left', l - 40);
-	else if (c.sorte === 'note') carteNote(c, x, y, l, focus);
 	// Cartes liées (même dossier) : en retrait, reliées par un trait
 	let yy = y + h + 8;
 	c.groupe.forEach((g) => {
@@ -421,12 +401,6 @@ function cartePlainte(p, x, y, l, focus) {
 	dsTexte(p.reponse === null ? t('journal.sansReponse') : '↳ ' + court(Jeu.texteMessage(p.def.reponses[p.reponse].texte, p.vars), 64) + ' · ' + t(p.bonne ? 'journal.bienRecue' : 'journal.malRecue'), x + 20, y + 36, 14, DS.blanc75, 'left');
 	if (actionsVisiblesJournal()) dsBouton(x + l - 190, y + 10, 176, 44, t('journal.voirCommunity'), () => ouvrirAppPC('community'), 'fantome');
 }
-function carteNote(c, x, y, l, focus) {
-	cadreCarte(x, y, l, 84, focus, DS.blanc50);
-	dsTexte(t('journal.noteTitre'), x + 20, y + 8, 14, DS.blanc75, 'left');
-	dsTexte(c.texte ? court(c.texte.replace(/\s+/g, ' '), 120) : t('journal.noteVide'), x + 20, y + 32, 16, c.texte ? DS.blanc : DS.blanc50, 'left', l - 300);
-	dsBouton(x + l - 300, y + 20, 286, 44, t('journal.ecrireNote') + ' (J)', ouvrirCarnet, 'contour'); // prompt 103 : 20 px rendus dans l'appli
-}
 function ouvrirAppPC(nom) {
 	if (typeof ouvrirFenetreApp === 'function') ouvrirFenetreApp(nom);
 	else PC.fenetre = nom;
@@ -450,83 +424,7 @@ function dessinerPictoJournal(cle, x, y, taille) {
 	m.forEach((ligne, r) => [...ligne].forEach((ch, k) => ch === '#' && rect(x + k * p, y + r * p, Math.ceil(p), Math.ceil(p))));
 }
 
-// ——— 4. Vue Semaine ———
-function vueSemaine(z) {
-	const s = JournalDonnees.semaine();
-	const y0 = z.y + 60;
-	const n = Math.max(1, (Jeu.jours || []).length);
-	const lc = (z.l - (n - 1) * 10) / n;
-	s.colonnes.forEach((c) => {
-		const x = z.x + c.i * (lc + 10);
-		// prompt 103 : vue intégrée = texte rendu à 20 px au moins → lignes espacées de 26 px
-		tuileFond(x, y0, lc, 172, nomJour(c.i) + ' · ' + dateCourte(c.date));
-		if (c.theme) dsTexte(t('theme.' + c.theme), x + 12, y0 + 32, 14, DS.blanc75, 'left', lc - 24);
-		dsTexte(t('journal.sem.signalements', { n: c.signalements }), x + 12, y0 + 58, 14, DS.blanc, 'left', lc - 24);
-		dsTexte(t('journal.sem.bons', { n: c.bons, total: c.total }), x + 12, y0 + 84, 14, DS.blanc, 'left', lc - 24);
-		dsTexte(c.objectif ? (c.objectif.enCours ? '• ' + t('journal.enCours') : (c.objectif.atteint ? '✓ ' : '✗ ') + t(c.objectif.atteint ? 'journal.atteint' : 'journal.rate')) : '—', x + 12, y0 + 110, 14, c.objectif && !c.objectif.enCours ? (c.objectif.atteint ? DS.succesClair : DS.erreurClair) : DS.blanc75, 'left');
-		// Jauges de fin de journée : les chiffres seuls (prompt 101 : les barres doublaient ces chiffres ; la courbe
-		// de la semaine, en dessous, garde l'évolution visuelle)
-		if (c.fin) dsTexte(DS_JAUGES.map(([k, lettre]) => lettre + ' ' + c.fin[k]).join('  '), x + 12, y0 + 138, 14, DS.blanc75, 'left', lc - 24);
-		boutons.push({ x, y: y0, l: lc, h: 172, action: () => choisirJourJournal(c.i) });
-	});
-	(Jeu.jours || []).forEach((j, i) => {
-		if (i <= Jeu.jourIndex) return;
-		const x = z.x + i * (lc + 10);
-		// Prompt 101 : journée à venir sans cadre vide, une phrase en blanc 50 %
-		dsTexte(nomJour(i) + ' · ' + dateCourte(j.date), x + 12, y0 + 10, 14, DS.blanc50, 'left');
-		dsTexte(t('journal.aVenir'), x + 12, y0 + 54, 14, DS.blanc50, 'left', lc - 24);
-	});
-	// Courbe de la semaine : 3 jauges + score (0–300), seuils des fins 150 et 240 en pointillés
-	const yc = y0 + 190;
-	const hc = 140;
-	const lc2 = z.l * 0.55;
-	tuileFond(z.x, yc, lc2, hc + 108, t('journal.courbeSemaine'));
-	const gx = z.x + 60;
-	const gl = lc2 - 100; // prompt 93 : 80 → 100, l'étiquette du seuil (« 150 ») sortait de la tuile
-	const gy = yc + 34;
-	const pts = s.courbe;
-	const px = (i) => gx + (pts.length < 2 ? gl / 2 : (i * gl) / (pts.length - 1));
-	const py = (v, max) => gy + hc - (v / max) * hc;
-	dsTexte('300', gx - 8, gy - 6, 14, DS.blanc50, 'right');
-	dsTexte('0', gx - 8, gy + hc - 12, 14, DS.blanc50, 'right');
-	s.seuils.forEach((v) => {
-		stroke(DS.blanc50);
-		strokeWeight(1);
-		for (let xx = gx; xx < gx + gl; xx += 12) line(xx, py(v, 300), xx + 6, py(v, 300));
-		noStroke();
-		dsTexte(String(v), gx + gl + 4, py(v, 300) - 8, 14, DS.blanc75, 'left');
-	});
-	const serie = (k, max, couleur, epaisseur) => {
-		stroke(couleur);
-		strokeWeight(epaisseur);
-		for (let i = 0; i < pts.length - 1; i++) line(px(i), py(pts[i][k], max), px(i + 1), py(pts[i + 1][k], max));
-		noStroke();
-		fill(couleur);
-		pts.forEach((p, i) => rect(px(i) - 3, py(p[k], max) - 3, 6, 6));
-	};
-	serie('f', 300, '#7FB2FF', 2);
-	serie('r', 300, '#FFC138', 2);
-	serie('b', 300, '#00B74F', 2);
-	serie('score', 300, DS.blanc, 3);
-	dsTexte(t('journal.legendeCourbe'), z.x + 12, gy + hc + 10, 14, DS.blanc75, 'left', lc2 - 24);
-	// Décisions clés et carnet de la semaine
-	const xd = z.x + lc2 + 16;
-	const ld = z.l - lc2 - 16;
-	tuileFond(xd, yc, ld, hc + 108, t('journal.decisionsCles'));
-	let yy = yc + 34;
-	if (!s.decisionsCles.length) dsTexte(nonRenseigne(), xd + 12, yy, 15, DS.blanc50, 'left');
-	s.decisionsCles.forEach((d) => {
-		dsTexte(t('journal.cle.' + (d.qualite === 'mauvaise source' ? 'source' : d.qualite)) + ' : ' + court(d.titre, 40), xd + 12, yy, 14, DS.blanc, 'left');
-		dsTexte('↳ ' + court(d.action, 44) + ' (' + DS_JAUGES.map(([, lettre], i) => lettre + ' ' + sgn(d.deltas[i] || 0)).join(' · ') + ')', xd + 12, yy + 24, 14, DS.blanc75, 'left');
-		yy += 58;
-	});
-	const yk = yc + hc + 112;
-	dsTexte(t('carnet.titre').toUpperCase() + ' (K)', z.x, yk, 14, DS.blanc75, 'left');
-	if (!s.carnet.length) dsTexte(t('carnet.vide'), z.x, yk + 24, 15, DS.blanc50, 'left', z.l);
-	s.carnet.slice(-4).forEach((c, i) => dsTexte(t('carnet.ligne', { date: dateCourte(c.date), fait: court(c.fait, 70) }) + (c.theme ? ' · ' + t('theme.' + c.theme) : ''), z.x + (i % 2) * (z.l / 2), yk + 24 + Math.floor(i / 2) * 24, 14, DS.blanc, 'left', z.l / 2 - 12));
-}
-
-// ——— 5. Fiche d'enquête ———
+// ——— 4. Fiche d'enquête ———
 function ficheEnquete(z, e) {
 	const f = JournalDonnees.enquete(e);
 	let y = z.y;
@@ -686,7 +584,7 @@ function voletSuites(f, z, y) {
 	});
 }
 
-// ——— 6. Copier le résumé du jour ———
+// ——— 5. Copier le résumé du jour ———
 function copierResumeJour() {
 	const txt = JournalDonnees.resume(JOURNAL.jour);
 	const ok = () => {
@@ -737,19 +635,12 @@ function toucheJournal() {
 		if (n >= 0) return choisirVoletJournal(n), true;
 		return false;
 	}
-	if (key === 's' || key === 'S') return choisirVueJournal(JOURNAL.vue === 'semaine' ? 'jour' : 'semaine'), true;
-	if (key === 'k' || key === 'K') return choisirVueJournal(JOURNAL.vue === 'semaine' ? 'jour' : 'semaine'), true;
 	if (key === 'c' || key === 'C') return copierResumeJour(), true;
-	if ((key === 'v' || key === 'V') && JOURNAL.vue === 'jour') return basculerDetailsJournal(), true; // prompt 101
-	if (keyCode === ESCAPE && JOURNAL.vue === 'semaine') return choisirVueJournal('jour'), true;
+	if (key === 'v' || key === 'V') return basculerDetailsJournal(), true; // prompt 101
 	if (keyCode === TAB) {
 		JOURNAL.zone = (JOURNAL.zone + (keyIsDown(SHIFT) ? ZONES_JOURNAL.length - 1 : 1)) % ZONES_JOURNAL.length;
 		annoncer(t('journal.zone.' + ZONES_JOURNAL[JOURNAL.zone]));
 		return true;
-	}
-	if (JOURNAL.vue === 'semaine') {
-		if (keyCode === RIGHT_ARROW || keyCode === LEFT_ARROW) return choisirJourJournal(JOURNAL.jour + (keyCode === RIGHT_ARROW ? 1 : -1)), true;
-		return false;
 	}
 	if (keyCode === RIGHT_ARROW || keyCode === LEFT_ARROW) {
 		if (JOURNAL.zone === 1) {
@@ -773,7 +664,6 @@ function toucheJournal() {
 	if (keyCode === ENTER || keyCode === RETURN) {
 		const c = liste[JOURNAL.focus];
 		if (c && c.sorte === 'signalement') return ouvrirEnqueteJournal(c.e), true;
-		if (c && c.sorte === 'note') return ouvrirCarnet(), true;
 		return true;
 	}
 	return false;
@@ -782,12 +672,11 @@ function texteCarte(c) {
 	if (c.sorte === 'signalement') return (c.heure || '') + ' · ' + String(c.e.externeCourt) + (c.e.ligne ? ' · ' + t('dossier.ligne', { lignes: c.e.ligne }) : '') + ' · ' + (c.e.action ? String(c.e.action) : t('journal.aucuneAction')) + ' · ' + t('eval.' + c.eval);
 	if (c.sorte === 'equipe') return t('journal.carteEquipe', { nom: c.q.nom, sujet: c.q.sujet || '', cout: c.q.cout, etat: '' });
 	if (c.sorte === 'plainte') return c.p.auteur + ' : ' + Jeu.texteMessage(c.p.def.texte, c.p.vars);
-	if (c.sorte === 'note') return t('journal.noteTitre') + ' ' + (c.texte || t('journal.noteVide'));
 	if (c.sorte === 'patron') return String(c.m.texte);
 	return t('crise.bandeau');
 }
 function molletteJournal(delta) {
-	if (PC.fenetre !== 'journal' || JOURNAL.vue !== 'jour' || JOURNAL.enquete !== null || !Jeu.paquet || ecran !== 'jeu' || vue !== 'poste') return false;
+	if (PC.fenetre !== 'journal' || JOURNAL.enquete !== null || !Jeu.paquet || ecran !== 'jeu' || vue !== 'poste') return false;
 	JOURNAL.defil = constrain(JOURNAL.defil + delta, 0, JOURNAL.defilMax);
 	return true;
 }

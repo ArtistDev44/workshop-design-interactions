@@ -27,7 +27,7 @@
 	const nomAppli = () => {
 		const f = PC.fenetre;
 		if (f === 'community') return 'Community · ' + COMMU.onglet;
-		if (f === 'journal') return JOURNAL.enquete !== null && JOURNAL.enquete !== undefined ? 'Journal · fiche enquête' : 'Journal · ' + JOURNAL.vue;
+		if (f === 'journal') return JOURNAL.enquete !== null && JOURNAL.enquete !== undefined ? 'Journal · fiche enquête' : 'Journal · jour';
 		return { patron: 'Patron', corbeille: 'Corbeille' }[f] || 'appli ' + f;
 	};
 	function zone(nomFn, nom, aire) {
@@ -228,11 +228,9 @@
 			add('Bureau + barre des tâches', () => os(null));
 			add('Patron', () => os('patron'));
 			ONGLETS_COMMU.forEach((o) => add('Community · ' + o, () => (os('community'), (COMMU.onglet = o), (COMMU.ouvert = null))));
-			add('Journal · jour', () => (os('journal'), (JOURNAL.enquete = null), (JOURNAL.vue = 'jour')));
-			add('Journal · semaine', () => (os('journal'), (JOURNAL.enquete = null), (JOURNAL.vue = 'semaine')));
+			add('Journal · jour', () => (os('journal'), (JOURNAL.enquete = null)));
 			add('Journal · fiche enquête', () => {
 				os('journal');
-				JOURNAL.vue = 'jour';
 				JOURNAL.jour = Jeu.jourIndex;
 				const j = (Jeu.jours || [])[Jeu.jourIndex];
 				const e = j && (Jeu.evenementsJournee || []).find((x) => x.jour === j.date && x.resultat && x.resultat.dossier);
