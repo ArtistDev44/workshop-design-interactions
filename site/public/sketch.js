@@ -201,7 +201,6 @@ function draw() {
 	majPatron(); // prompt 86 : son, indicateur de saisie
 	if (PC.fenetre !== 'patron') PATRON.ouvert = false; // prochaine ouverture : sur le premier non lu
 	majRythme(); // prompt 74 : événements de rythme à heures fixes
-	majExplicationPoste(); // prompt 74 : explication du poste à la première ouverture de l'écran de jeu
 	majSoir(); // prompt 69 : crépuscule accéléré, sortie du bureau
 	if (typeof majProgressionBureau === 'function') majProgressionBureau(); // prompt 104 : nouvel objet sur le bureau (annonce, une fois)
 	majDemarrageJour(); // prompt 71 : démarrage du PC en début de journée (jours 1 à 3)
@@ -420,7 +419,7 @@ function fermer() {
 // FENETRES_BLOQUANTES : elles exigent une réponse (décision, confirmation, bilan à lire, animation) et ne se ferment
 // JAMAIS au clic sur le fond. FERMETURE_FOND : ce que fait Échap dans chaque fenêtre qui se ferme ainsi.
 // Une fenêtre absente des deux listes est traitée comme bloquante.
-const FENETRES_BLOQUANTES = ['reset', 'demission', 'partir', 'blame', 'inspection', 'tache', 'mailFin', 'rapport', 'rapportVeille', 'poste', 'cafe'];
+const FENETRES_BLOQUANTES = ['reset', 'demission', 'partir', 'blame', 'inspection', 'tache', 'mailFin', 'rapport', 'rapportVeille', 'cafe'];
 const FERMETURE_FOND = {
 	aide: fermer,
 	parametres: fermer,
@@ -1205,7 +1204,6 @@ function keyPressed() {
 		if (fenetre === 'aide' && toucheAide()) return false; // prompt 123 : onglets (← → Tab, 1 à 4) et pages (↑ ↓)
 		if (fenetre === 'aide' && (key === 't' || key === 'T')) return lancerTutoriel(), false; // prompt 34
 		if (fenetre === 'telephone' && (keyCode === ENTER || keyCode === RETURN)) return fermer(), false; // prompt 38
-		if (fenetre === 'poste' && (keyCode === ENTER || keyCode === RETURN || key === ' ')) return fermer(), false; // prompt 74
 		if (fenetre === 'partage' && keyCode !== ESCAPE) return touchePartage(), false; // prompt 81
 		if (fenetre === 'installation' && (keyCode === ENTER || keyCode === RETURN || key === ' ')) return fermer(), false; // prompt 171
 		if (fenetre === 'rapport' && (keyCode === ENTER || keyCode === RETURN)) return actionRapport(), false; // prompt 41
@@ -1400,7 +1398,6 @@ function contenuFenetre() {
 	if (fenetre === 'palmares') return fenetrePalmares(); // prompt 47
 	if (fenetre === 'partir') return fenetrePartir(); // prompt 51
 	if (fenetre === 'blame') return fenetreBlame(); // prompt 51
-	if (fenetre === 'poste') return fenetrePoste(); // prompt 74
 	if (fenetre === 'partage') return fenetrePartage(); // prompt 81
 	if (fenetre === 'installation') return fenetreInstallation(); // prompt 171
 	if (fenetre === 'aide') return fenetreAide();

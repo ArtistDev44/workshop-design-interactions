@@ -2165,8 +2165,8 @@ for (const s of semaines) {
 	verifier(!r161.out['2'].crise && r161.out['3'].crise && JSON.stringify(r161.nouveau) === '[null,null,"crise"]', `prompt 161 : seul « crise » est nouveau en semaine 3 (${JSON.stringify(r161.nouveau)})`);
 	// Code : annonce de la fenêtre « Votre poste », difficulté du menu, sieste / café / micro / guide selon le mode
 	const imm161 = readFileSync(join(pub, 'immersion.js'), 'utf8');
-	const expl = imm161.slice(imm161.indexOf('function majExplicationPoste'), imm161.indexOf('function fenetrePoste'));
-	verifier(/GESTES_POSTE\.map/.test(expl) && !/action\.desc\./.test(expl), 'prompt 161 : l\'annonce « Votre poste » doit lire les gestes affichés (poste.geste.*)');
+	// Fenêtre « Votre poste » supprimée (12/11/2026) : plus de fenêtre, d'ouverture automatique ni de textes poste.*
+	verifier(!/function (fenetrePoste|majExplicationPoste)|GESTES_POSTE|explicationVue/.test(imm161) && !/ouvrir\('poste'\)|fenetre === 'poste'/.test(readFileSync(join(pub, 'sketch.js'), 'utf8')) && !/explicationVue/.test(readFileSync(join(pub, 'taches-ui.js'), 'utf8')), 'fenêtre « Votre poste » : encore présente ou encore attendue par les tâches');
 	verifier(/survolChrono/.test(imm161), 'prompt 161 : infobulle du micro selon le défi chrono');
 	const menu161 = readFileSync(join(pub, 'menu.js'), 'utf8');
 	const diff = menu161.slice(menu161.indexOf('function texteDifficulteChapitre'), menu161.indexOf('function modesNouvellePartie'));
@@ -2186,8 +2186,6 @@ for (const s of semaines) {
 			const n = (txt, taille, l) => TexteUI.couperLignes(txt, l, 'mono', taille).length;
 			const v = { niveau: t('niveau.difficile'), budget: 50, actifs: t('mp.actifs.plusieurs', { n: 3 }), s: 15, n: 3, element: t('histoire.element.crise') };
 			return {
-				repondre: n(t('poste.geste.repondre'), 21, 950) <= 2,
-				carte: n(t('poste.geste.carte'), 21, 950) <= 2,
 				info: n(t('mp.mode.histoire.etatNouveau', v), 19, 700) + n(t('mp.difficulteChrono', v), 19, 700) <= 4,
 				sous: n(t('mp.mode.histoire.sous'), 22, 700) <= 4,
 				prochain: n(t('histoire.prochainSans', v), 18, 1000) === 1 && n(t('histoire.prochain', v), 18, 1000) === 1,
@@ -2522,7 +2520,7 @@ for (const langue of ['fr', 'en']) {
 			nbFenetres++;
 			verifier(/^DS\.fenetre\.(etroite|moyenne|large)$/.test(larg[1]), `prompt 173 : ${f} ${m[1]} — largeur « ${larg[1]} » hors des trois tailles du DS`);
 		}
-	verifier(nbFenetres >= 17, `prompt 173 : seulement ${nbFenetres} fenêtres relevées (≥ 17 attendues)`); // prompt 183 : plus de fenêtre d'intro d'appli (18 → 17) ; // prompt 175 : trois fenêtres de réglages fondues en une (21 → 19) ; prompt 178 : plus de fenêtre « reprise » (19 → 18)
+	verifier(nbFenetres >= 16, `prompt 173 : seulement ${nbFenetres} fenêtres relevées (≥ 16 attendues)`); // fenêtre « Votre poste » supprimée (17 → 16) ; // prompt 183 : plus de fenêtre d'intro d'appli (18 → 17) ; // prompt 175 : trois fenêtres de réglages fondues en une (21 → 19) ; prompt 178 : plus de fenêtre « reprise » (19 → 18)
 	// Clic sur le fond : point unique dans mousePressed, listes explicites, aucune fenêtre dans les deux à la fois
 	verifier(/\tif \(clicFondFenetre\(\)\) return;/.test(sk173.match(/function mousePressed\(\) \{[\s\S]*?\n\}/)[0]), 'prompt 173 : mousePressed ne passe plus par clicFondFenetre()');
 	const bloquantes = vm.runInNewContext(sk173.match(/const FENETRES_BLOQUANTES = (\[[^\]]*\]);/)[1]);

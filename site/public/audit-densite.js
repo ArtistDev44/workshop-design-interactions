@@ -235,7 +235,7 @@
 			});
 			add('Corbeille', () => os('corbeille'));
 			add('Indicateurs', () => (P.raz(), P.poste(), (PC.flottant = true)));
-			add('Signalements', () => ((PC.flottant = false), P.raz(), P.poste(), typeof FIL !== 'undefined' && (FIL.explicationVue = true)));
+			add('Signalements', () => ((PC.flottant = false), P.raz(), P.poste()));
 		});
 		return E;
 	}
