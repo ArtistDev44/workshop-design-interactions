@@ -425,6 +425,7 @@ const Sauvegarde = (function () {
 			}
 		});
 		fond.appendChild(boite);
+		fond.addEventListener('pointerdown', (ev) => ev.target === fond && fermerImport()); // prompt 173 : clic sur le fond = fermer, comme Échap
 		document.body.appendChild(fond);
 		dialogue = fond;
 		label.focus();

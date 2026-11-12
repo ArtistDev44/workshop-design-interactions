@@ -126,8 +126,7 @@ function dessinerAutorisations() {
 	const el = elementsAutor();
 	if (AUTOR.choix >= el.length || el[AUTOR.choix].desactive) AUTOR.choix = el.length - 1;
 	noStroke();
-	fill('rgba(13,12,12,0.7)'); // voile : la pièce floutée reste devinable, le texte garde son contraste
-	rect(0, 0, L, H);
+	dsVoile(); // prompt 173 : voile unique du DS (0,8)
 	const focus = (i) => AUTOR.choix === i;
 	dsTitre(t('autor.titre'), x, y0, portrait ? 52 : 64, DS.blanc, 'left');
 	dsTexte(t('autor.intro'), x, y0 + 96, 24, DS.blanc75, 'left', l);

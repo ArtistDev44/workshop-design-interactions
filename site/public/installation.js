@@ -43,7 +43,7 @@ function ouvrirInstallation() {
 const ETAPES_INSTALLATION = ['ordinateur', 'android', 'ios'];
 /** Explication d'installation (modale par-dessus le menu) : Échap, Entrée ou « Fermer » */
 function fenetreInstallation() {
-	const l = 1000;
+	const l = DS.fenetre.moyenne; // prompt 173 (était 1000)
 	const installe = estInstallee();
 	const h = installe ? 330 : 620;
 	const x = (L - l) / 2;

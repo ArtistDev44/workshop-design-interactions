@@ -40,7 +40,7 @@ function texteResultatInspection(r) {
 function fenetreInspection() {
 	const i = Jeu.inspection;
 	if (!i) return fermer();
-	const l = 1100;
+	const l = DS.fenetre.large; // prompt 173 (était 1100)
 	const h = 640;
 	const x = (L - l) / 2;
 	const y = (H - h) / 2;
@@ -101,7 +101,7 @@ function dessinerOffreDemission() {
 	bouton(x + l - 330, y + 12, 316, h - 24, t('demission.bouton'), () => ouvrir('demission'));
 }
 function fenetreDemission() {
-	const l = 900;
+	const l = DS.fenetre.moyenne; // prompt 173 (était 900)
 	const h = 420;
 	const x = (L - l) / 2;
 	const y = (H - h) / 2;
@@ -133,7 +133,7 @@ function lignesPalmares() {
 	return semaines.map((s) => Object.assign(s, { m: Confort.Bilans.meilleur(s.cle) }));
 }
 function fenetrePalmares() {
-	const l = 1400;
+	const l = DS.fenetre.large; // prompt 173 (était 1400)
 	const lignes = lignesPalmares();
 	const h = 300 + lignes.length * 96;
 	const x = (L - l) / 2;
@@ -145,7 +145,7 @@ function fenetrePalmares() {
 	textFont(POLICE_DONNEES);
 	textSize(18);
 	fill(C.gris);
-	const cols = [0, 400, 640, 1000];
+	const cols = [0, 360, 590, 900]; // prompt 173 : colonnes resserrées (fenêtre large 1280 au lieu de 1400)
 	[t('palmares.col.semaine'), t('palmares.col.score'), t('palmares.col.jauges'), t('palmares.col.profil')].forEach((c, i) => text(c, x + 56 + cols[i], y + 124));
 	lignes.forEach((s, i) => {
 		const ly = y + 164 + i * 96;
@@ -154,7 +154,7 @@ function fenetrePalmares() {
 		textFont(POLICE_TEXTE);
 		textSize(22);
 		fill(C.texte);
-		text(s.libelle, x + 56 + cols[0], ly, 380, 60);
+		text(s.libelle, x + 56 + cols[0], ly, 350, 60);
 		if (!s.m) {
 			fill(C.gris);
 			text(t('palmares.vide'), x + 56 + cols[1], ly);
@@ -170,13 +170,16 @@ function fenetrePalmares() {
 		fill(C.texte);
 		textSize(20);
 		const j = s.m.jauges || {};
-		text(t('palmares.jauges', { f: j.fluidite, r: j.reputation, b: j.budget }), x + 56 + cols[2], ly + 6, 340, 60);
-		text((s.m.profil ? t('profil.' + s.m.profil) : '—') + (s.m.defis ? ' · ' + t('palmares.defis', { n: s.m.defis }) : ''), x + 56 + cols[3], ly + 6, 320, 60); // prompt 56 : défis tenus
+		text(t('palmares.jauges', { f: j.fluidite, r: j.reputation, b: j.budget }), x + 56 + cols[2], ly + 6, 300, 60);
+		text((s.m.profil ? t('profil.' + s.m.profil) : '—') + (s.m.defis ? ' · ' + t('palmares.defis', { n: s.m.defis }) : ''), x + 56 + cols[3], ly + 6, 280, 60); // prompt 56 : défis tenus
 	});
 	textFont(POLICE_DONNEES);
 	textSize(18);
 	fill(C.gris);
-	text(t('palmares.aide'), x + 56, y + h - 110, l - 112 - 340, 100); // prompt 93 : 70 → 100 px (le texte était coupé)
+	push(); // prompt 173 : fenêtre large (1280) → le texte tient sur 4 lignes à interligne 24 (interligne local)
+	textLeading(24);
+	text(t('palmares.aide'), x + 56, y + h - 122, l - 112 - 340, 110); // prompt 93 : 70 → 100 px (le texte était coupé)
+	pop();
 	bouton(x + l - 56 - 300, y + h - 108, 300, 68, t('commun.fermer'), fermer);
 }
 

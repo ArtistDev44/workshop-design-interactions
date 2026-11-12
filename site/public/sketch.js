@@ -404,6 +404,38 @@ function fermer() {
 	fenetre = null;
 }
 
+// ——— Prompt 173 : clic (ou appui tactile) sur le fond = fermer la fenêtre, comme Échap ———
+// Point unique : mousePressed (le tactile y passe aussi), quand aucun bouton n'a pris le clic.
+// FENETRES_BLOQUANTES : elles exigent une réponse (décision, confirmation, bilan à lire, animation) et ne se ferment
+// JAMAIS au clic sur le fond. FERMETURE_FOND : ce que fait Échap dans chaque fenêtre qui se ferme ainsi.
+// Une fenêtre absente des deux listes est traitée comme bloquante.
+const FENETRES_BLOQUANTES = ['reset', 'reprise', 'demission', 'partir', 'blame', 'inspection', 'tache', 'mailFin', 'rapport', 'rapportVeille', 'deblocage', 'poste', 'cafe'];
+const FERMETURE_FOND = {
+	aide: fermer,
+	parametres: fermer,
+	partage: fermer,
+	installation: fermer,
+	palmares: fermer,
+	menu: fermer,
+	telephone: fermer,
+	accessibilite: () => (fenetre = 'parametres'), // Échap revient aux paramètres
+	optionsJeu: () => ouvrir('parametres'),
+};
+let ZONE_FENETRE = null; // rectangle de la fenêtre dessinée à cette image (premier panneau), null hors fenêtre
+let FENETRE_EN_DESSIN = false;
+function zoneFenetre(x, y, l, h) {
+	if (FENETRE_EN_DESSIN && !ZONE_FENETRE) ZONE_FENETRE = { x, y, l, h };
+}
+/** Vrai si le clic a fermé la fenêtre (clic hors du panneau d'une fenêtre non bloquante) */
+function clicFondFenetre() {
+	const z = ZONE_FENETRE;
+	if (!fenetre || !z || tutoriel || smsActif || FENETRES_BLOQUANTES.includes(fenetre) || !FERMETURE_FOND[fenetre]) return false;
+	if (mouseX >= z.x && mouseX <= z.x + z.l && mouseY >= z.y && mouseY <= z.y + z.h) return false;
+	FERMETURE_FOND[fenetre]();
+	Confort.Son.clic();
+	return true;
+}
+
 // ——— Recommencer la semaine (R, avec confirmation, Q38) ———
 function confirmerReset() {
 	fenetre = null;
@@ -425,7 +457,7 @@ function reprendreSemaineChoisie() {
 function fenetreReprise() {
 	const o = optionsAccueil()[choixAccueil];
 	if (!o || !o.sauvegarde) return fermer();
-	const l = 860;
+	const l = DS.fenetre.moyenne; // prompt 173 (était 860)
 	const h = 340;
 	const x = (L - l) / 2;
 	const y = (H - h) / 2;
@@ -1040,6 +1072,7 @@ function panneau(x, y, l, h, bordure) {
 	rect(x + 1, y + 1, l - 2, h - 2);
 	noStroke();
 	zoneTexteDeclarer('panneau', x, y, l, h); // prompt 93
+	zoneFenetre(x, y, l, h); // prompt 173 : clic sur le fond
 }
 
 function bouton(x, y, l, h, label, action, desactive, secondaire) {
@@ -1113,6 +1146,7 @@ function mousePressed() {
 			return;
 		}
 	}
+	if (clicFondFenetre()) return; // prompt 173 : clic sur le fond = fermer (fenêtres non bloquantes)
 	if (typeof debutPanCarte === 'function') debutPanCarte(); // prompt 106 : glisser la carte
 }
 
@@ -1366,14 +1400,12 @@ function touchStarted(e) {
 // Fenêtres : aide, confirmation de reset, paramètres ; voile de pause
 // =====================================================================
 function voile() {
-	noStroke();
-	fill(13, 12, 12, 190); // prompt 39 : voile = fond du DS
-	rect(0, 0, L, H);
+	dsVoile(); // prompt 173 : un seul voile (DS.voile, ds.js) derrière toutes les fenêtres
 }
 
 function dessinerPause() {
 	voile();
-	const l = 640;
+	const l = DS.fenetre.etroite;
 	const h = 240;
 	panneau((L - l) / 2, (H - h) / 2, l, h, C.accent);
 	textAlign(CENTER, CENTER);
@@ -1387,7 +1419,17 @@ function dessinerPause() {
 }
 
 function dessinerFenetre() {
-	if (fenetre === 'telephone') return fenetreTelephone(); // prompt 42 : le téléphone en main a son propre voile
+	// Prompt 173 : la zone de la fenêtre (premier panneau dessiné) sert au clic sur le fond
+	ZONE_FENETRE = null;
+	FENETRE_EN_DESSIN = true;
+	try {
+		contenuFenetre();
+	} finally {
+		FENETRE_EN_DESSIN = false;
+	}
+}
+function contenuFenetre() {
+	if (fenetre === 'telephone') return fenetreTelephone(); // prompt 42 : le téléphone en main (voile du DS, prompt 173)
 	if (fenetre === 'cafe') return fenetreCafe(); // prompt 52 : même animation, la tasse en main
 	voile();
 	if (fenetre === 'rapport') return fenetreRapport(); // prompt 41
@@ -1416,7 +1458,7 @@ function dessinerFenetre() {
 // Prompt 123 : la fenêtre d'aide (onglets, cartes, pagination) est dans aide.js
 
 function fenetreReset() {
-	const l = 760;
+	const l = DS.fenetre.moyenne; // prompt 173 (était 760)
 	const h = 300;
 	const x = (L - l) / 2;
 	const y = (H - h) / 2;
@@ -1459,7 +1501,7 @@ function basculerReglage(nom) {
 }
 
 function fenetreParametres() {
-	const l = 1000;
+	const l = DS.fenetre.moyenne; // prompt 173 (était 1000)
 	const h = 1052; // prompt 33 : + section « Progression » ; prompt 44 : + « Musique » ; prompt 48 : + « Accessibilité »
 	const x = (L - l) / 2;
 	const y = (H - h) / 2;

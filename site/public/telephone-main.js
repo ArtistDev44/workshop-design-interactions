@@ -45,8 +45,8 @@ function dessinerTelephoneEnMain(contenu, objet) {
 	const x = L / 2 - pl / 2 + 160;
 	const y = lerp(H + 60, 36, k);
 	noStroke();
-	fill(13, 12, 12, 150 * k); // la pièce reste visible, assombrie
-	rect(0, 0, L, H);
+	dsVoile(k); // prompt 173 : même voile que les fenêtres (DS.voile), au rythme de la montée du téléphone
+	if (!objet && typeof zoneFenetre === 'function') zoneFenetre(x, y, pl, ph); // clic à côté du téléphone = le reposer
 	const e = { x: x + 16, y: y + 16, l: pl - 32, h: ph - 32 };
 	if (!objet) {
 		// Ombre portée puis coque fine (coins arrondis : objet physique, hors Pixel DS)

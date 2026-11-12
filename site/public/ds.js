@@ -25,7 +25,43 @@ const DS = {
 	infoClair: '#C2CEFF',
 	u: 4, // unité
 	esp: { xxs: 2, xs: 4, sm: 8, md: 16, xl: 20, xxl: 24 },
+	// Prompt 173 : un seul voile derrière toutes les fenêtres (opacité 0,8 : le contenu derrière ne concurrence plus
+	// la fenêtre), un voile « percé » plus léger pour la mise en avant d'une cible (le reste s'assombrit, plus de
+	// contour jaune), et trois largeurs de fenêtre (px du canevas 1920×1080) avec la même marge interne et la même
+	// hauteur d'en-tête
+	voile: 0.8,
+	voilePerce: 0.65,
+	dureeVoile: 180, // ms (≤ 200) ; immédiat avec les animations réduites
+	fenetre: { etroite: 640, moyenne: 960, large: 1280, marge: 48, entete: 80 },
 };
+/** Prompt 173 : voile plein écran des fenêtres (k = avancement 0 → 1 d'une animation d'ouverture, 1 par défaut) */
+function dsVoile(k) {
+	noStroke();
+	fill(13, 12, 12, 255 * DS.voile * (k === undefined ? 1 : k));
+	rect(0, 0, L, H);
+}
+/** Prompt 173 : mise en avant par l'obscurité — tout le canevas est assombri SAUF le rectangle `cible` ({ x, y, l, h },
+ * agrandi de `marge` px). Le fondu d'apparition (DS.dureeVoile) repart quand le voile n'était pas dessiné à l'image
+ * précédente ; il est immédiat avec les animations réduites. Réutilisable par le guide, le tutoriel, les paramètres. */
+const VOILE_PERCE = { vue: -9, debut: 0 };
+function dsVoilePerce(cible, marge, opacite) {
+	const m = marge === undefined ? 10 : marge;
+	const x0 = Math.max(0, Math.round(cible.x - m));
+	const y0 = Math.max(0, Math.round(cible.y - m));
+	const x1 = Math.min(L, Math.round(cible.x + cible.l + m));
+	const y1 = Math.min(H, Math.round(cible.y + cible.h + m));
+	if (frameCount - VOILE_PERCE.vue > 1) VOILE_PERCE.debut = millis();
+	VOILE_PERCE.vue = frameCount;
+	const reduit = typeof reduireAnimations !== 'undefined' && reduireAnimations;
+	const k = reduit ? 1 : Math.min(1, (millis() - VOILE_PERCE.debut) / DS.dureeVoile);
+	noStroke();
+	fill(13, 12, 12, 255 * (opacite === undefined ? DS.voilePerce : opacite) * k);
+	rect(0, 0, L, y0); // au-dessus
+	rect(0, y1, L, H - y1); // au-dessous
+	rect(0, y0, x0, y1 - y0); // à gauche
+	rect(x1, y0, L - x1, y1 - y0); // à droite
+	return { x: x0, y: y0, l: x1 - x0, h: y1 - y0 };
+}
 function detecterPolicesDS() {
 	DS.policeTexte = policeInstallee(['JetBrains Mono', 'IBM Plex Mono', 'Menlo', 'Consolas', 'Courier New'], 'serif');
 	DS.policeTitreInstallee = policeInstallee(['Bitsy Pixels', '__aucune__'], 'serif') === 'Bitsy Pixels';
@@ -169,6 +205,7 @@ function dsPanneau(x, y, l, h, titre, couleurBarre) {
 	rect(x + 1, y + 1, l - 2, h - 2);
 	noStroke();
 	zoneTexteDeclarer('panneauDS', x, y, l, h); // prompt 93
+	if (typeof zoneFenetre === 'function') zoneFenetre(x, y, l, h); // prompt 173 : clic sur le fond
 	if (titre) {
 		fill(couleurBarre || DS.blanc05);
 		rect(x + 2, y + 2, l - 4, 56);

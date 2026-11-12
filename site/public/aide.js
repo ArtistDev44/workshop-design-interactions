@@ -309,7 +309,7 @@ function mettreEnPagesAide(cartes, x, y, l, h, colonnes, ecart) {
 
 function fenetreAide() {
 	const portrait = typeof PORTRAIT !== 'undefined' && PORTRAIT.actif;
-	const l = portrait ? 1260 : 1720;
+	const l = DS.fenetre.large; // prompt 173 (était 1720)
 	const h = 1040;
 	const x = (L - l) / 2;
 	const y = (H - h) / 2;
@@ -428,7 +428,8 @@ function dessinerDemarrerAide(x, y, l, h, portrait) {
 	const ty = portrait ? yy + 70 : y;
 	const tl = portrait ? l : l - lg - 64;
 	const total = typeof ETAPES_TUTORIEL !== 'undefined' ? ETAPES_TUTORIEL : 0;
-	const th = 42 + 44 + total * 34 + 28 + (portrait ? 110 : 76) + 32;
+	const deuxLignes = !portrait; // prompt 173 : fenêtre large (1280) → l'accroche du tutoriel passe sur deux lignes
+	const th = 42 + 44 + (deuxLignes ? 28 : 0) + total * 34 + 28 + (portrait ? 110 : 76) + 32;
 	noStroke();
 	fill(DS.blanc05);
 	rect(tx, ty, tl, th);
@@ -438,8 +439,11 @@ function dessinerDemarrerAide(x, y, l, h, portrait) {
 	rect(tx + 1, ty + 1, tl - 2, th - 2);
 	noStroke();
 	let y2 = ty + 28 + titreCarteAide(t('aide.tuto.titre'), tx + 32, ty + 28, tl - 64);
-	dsTexte(t('aide.tuto.texte', { n: total }), tx + 32, y2, 20, DS.blanc75, 'left');
-	y2 += 44;
+	push(); // interligne local
+	textLeading(28);
+	dsTexte(t('aide.tuto.texte', { n: total }), tx + 32, y2, 20, DS.blanc75, 'left', deuxLignes ? tl - 64 : undefined);
+	pop();
+	y2 += 44 + (deuxLignes ? 28 : 0);
 	for (let i = 1; i <= total; i++) {
 		dsTexte(String(i), tx + 32, y2, 20, DS.alerte, 'left');
 		textFont(POLICE_TEXTE);

@@ -77,7 +77,7 @@ function fermerIntroAppli() {
 	fermer();
 }
 function fenetreDeblocage() {
-	const l = 1000;
+	const l = DS.fenetre.moyenne; // prompt 173 (était 1000)
 	const h = 420;
 	const x = (L - l) / 2;
 	const y = (H - h) / 2;

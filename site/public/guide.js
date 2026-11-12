@@ -162,15 +162,8 @@ function dessinerGuide() {
 	const cx = constrain(c.x + c.l / 2, 60, L - 60);
 	const versBas = c.y > 260; // la flèche arrive par le haut, sauf si la cible est tout en haut
 	const py = versBas ? c.y - 8 - rebond : c.y + c.h + 8 + rebond;
-	// Contour de la cible
-	noFill();
-	stroke('#0D0C0C');
-	strokeWeight(8);
-	rect(c.x - 10, c.y - 10, c.l + 20, c.h + 20);
-	stroke('#FFC138');
-	strokeWeight(4);
-	rect(c.x - 10, c.y - 10, c.l + 20, c.h + 20);
-	noStroke();
+	// Prompt 173 : plus de contour jaune — la cible reste éclairée, tout le reste est assombri (voile percé du DS)
+	dsVoilePerce(c, 10);
 	// Prompt 131 : dossier ou conséquences ouverts → la bulle va sur la carte, à gauche, jamais sur le plaignant ni les répliques
 	const fenetreDossier = vue === 'poste' && PC.etat === 'appli' && (PHASES_DOSSIER.includes(phase) || phase === 'narration');
 	if (fenetreDossier) {
@@ -207,7 +200,7 @@ function bulleGuide(texte, cx, y, auDessus, xFixe, centreV) {
 	strokeWeight(2);
 	rect(x, by, l, h);
 	noStroke();
-	fill('#FFC138');
+	fill(DS.primaire); // prompt 173 : liseré à la couleur d'accent (plus de jaune de mise en avant)
 	rect(x, by, 8, h);
 	fill('#ffffff');
 	textAlign(LEFT, TOP);
