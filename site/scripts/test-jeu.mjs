@@ -2447,7 +2447,7 @@ for (const langue of ['fr', 'en']) {
 		vm.runInContext("installerJeu(); var sans = ouvertes.join(); var joue = 0; PWA.invite = { prompt() { joue++; }, userChoice: Promise.resolve({ outcome: 'accepted' }) }; installerJeu();", c);
 		verifier(vm.runInContext("sans === 'installation' && joue === 1 && ouvertes.length === 1 && /pwa\\.aide\\.titre/.test(annonces[0])", c), 'prompt 171 : installerJeu ne joue pas l\'invitation ou n\'ouvre pas l\'explication');
 	}
-	verifier(/textLeading\(40\)/.test(menu171) && /textLeading\(interligneAvant\)/.test(menu171), 'prompt 171 : interlignage du sous-titre du menu (≈ 1,4 × 28 px) non fixé ou non rendu');
+	verifier(/push\(\);[^\n]*\n\ttextLeading\(40\)/.test(menu171) && !/textLeading\(interligneAvant\)/.test(menu171), 'prompt 171 : interlignage du sous-titre du menu (≈ 1,4 × 28 px) non fixé ou non rendu');
 	verifier(/sansChevron \? label : label \+ '  ›'/.test(lire('ds.js')) && /'contour', false, retour\)/.test(lire('credits.js')) && !/[←‹]/.test(menu171.slice(menu171.indexOf('function dessinerChoixSemaine'), menu171.indexOf('function toucheMenu'))), 'prompt 171 : flèche encore présente sur un bouton « Retour » du menu');
 	for (const langue of ['fr', 'en']) {
 		const dico = vm.runInContext(`TRADUCTIONS[${JSON.stringify(langue)}]`, contexte(langue));
