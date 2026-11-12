@@ -581,6 +581,8 @@ for (const [nom, ctx] of [['fr', contexte('fr')], ['en', contexte('en')]]) {
 	const formes = bloc ? [...bloc[1].matchAll(/\[(\d+), (\d+), (\d+), (\d+), '(#[0-9a-f]+)'\]/gi)].map((m) => [Number(m[1]), Number(m[2]), Number(m[3]), Number(m[4]), m[5].toLowerCase()]) : [];
 	verifier(rects.length > 0 && JSON.stringify(rects) === JSON.stringify(formes), `logo : formes du bouton ≠ SVG du chargement (${rects.length} / ${formes.length})`);
 	const os = readFileSync(join(pub, 'os.js'), 'utf8');
+	// Prompt 151 : l'appli « carte » du menu garde le moniteur d'origine
+	verifier(/const LOGO_MONITEUR = \[/.test(ds) && /dessinerLogoPXE\([^;]*LOGO_MONITEUR/.test(readFileSync(join(pub, 'menu-app.js'), 'utf8')), 'logo : l\'appli carte doit garder le moniteur (LOGO_MONITEUR)');
 	verifier(/dessinerLogoPXE\(/.test(os) && !/dsTitre\('REGUL'/.test(os) && !/rect\(8, tb \+ 10, 140/.test(os), 'logo : le carré rouge « REGUL » doit être remplacé par le logo');
 }
 

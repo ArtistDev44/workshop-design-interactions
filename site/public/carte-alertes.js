@@ -392,19 +392,18 @@ function dessinerMarqueur(m) {
 	m.survol = mouseX >= x - 6 && mouseX <= x + 34 && mouseY >= y - 6 && mouseY <= y + 34;
 	noStroke();
 	// Prompt 133 : la gravité est doublée par la taille (élevée 36 px avec liseré blanc, moyenne 28, faible 20),
-	// jamais par la seule couleur ; le carré reste centré sur la même position
+	// jamais par la seule couleur ; le marqueur reste centré sur la même position
+	// Prompt 152 : le carré devient le pin d'alerte « ! » de logo/planche.html (ICONE_PIN, ds.js), mêmes tailles
 	const g = Jeu.gravite(d);
 	const tm = g === 'elevee' ? 36 : g === 'moyenne' ? 28 : 20;
 	const xm = x + 14 - tm / 2;
 	const ym = y + 14 - tm / 2;
 	if (g === 'elevee') {
-		fill(DS.blanc);
-		rect(xm - 3, ym - 3, tm + 6, tm + 6);
+		// liseré blanc de 3 px : la silhouette du pin, décalée dans les huit directions
+		const blanc = { P: DS.blanc, W: DS.blanc };
+		for (let dx = -3; dx <= 3; dx += 3) for (let dy = -3; dy <= 3; dy += 3) if (dx || dy) dessinerIconePixel(ICONE_PIN, xm + dx, ym + dy, tm, blanc);
 	}
-	fill(couleurGravite(g));
-	rect(xm, ym, tm, tm);
-	fill(g === 'elevee' ? DS.blanc : DS.fond);
-	rect(x + 10, y + 10, 8, 8);
+	dessinerIconePixel(ICONE_PIN, xm, ym, tm, { P: couleurGravite(g), W: g === 'elevee' ? DS.blanc : DS.fond });
 	if (m.courant || m.actif || (phase === 'selection' && m.r === SELECTION.focus)) {
 		noFill();
 		stroke(m.courant ? DS.primaire : DS.blanc);

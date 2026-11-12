@@ -237,6 +237,10 @@ Preuves dans le code (grep ; 14–34 relevées au prompt 33, revérifiées et co
 | 145 | `145-jeu-bandeau-jauges-compactes.md` | Jeu : bandeau — **barres de jauges plus fines, à la même hauteur que la ligne du dessous** (priorités, objectif & date) ; bandeau réduit de moitié | ✅ fusionné dans main |
 | 146 | `146-jeu-carte-bouton-recentrer-carree-blanc.md` | Jeu : appli Carte — remplacer le bouton texte « Recentrer » (fond sombre) par un **bouton carré blanc 48×48 « □ »**, même action `recentrer()` | ✅ fusionné dans main |
 | 147 | `147-jeu-carte-supprimer-lieu-a-preciser.md` | Jeu : **aucun texte « Lieu à préciser » à l'écran** (case de la carte, clé i18n, tutoriel, décalages de position associés) | ✅ fusionné dans main |
+| 150 | `150-jeu-logo-bulle-pin.md` | Jeu : le **logo bulle-pin** (piste 2 de `logo/planche.html`) remplace le moniteur : `LOGO_PXE`, écran de chargement, favicon, icônes de la webapp | ✅ fusionné dans main |
+| 151 | `151-jeu-logo-moniteur-appli-carte.md` | Jeu : l'appli **carte** du menu garde le **moniteur d'origine** (`LOGO_MONITEUR`) ; la bulle-pin reste le logo du jeu | ✅ fusionné dans main |
+| 152 | `152-jeu-icones-planche-pin-carte-ecran-demarrage.md` | Jeu : icônes de `logo/planche.html` — **pin d'alerte** pour les marqueurs de la carte, **écran de régulation** comme logo de démarrage du PC (`ICONE_PIN`, `ICONE_ECRAN`, `dessinerIconePixel`) | ✅ fusionné dans main |
+| 160 | `160-jeu-mode-exposition-arrivee-poste-pause.md` | Jeu : le **mode exposition** tient ses promesses — arrivée réelle **au poste** (sans consigne « cliquez sur l'écran du PC »), voile « Partie en pause » qui **suspend l'horloge** (annonce polie, une fois), **aucune sortie** sur le kiosque (liens, installation, nouvelle version), marque « EXPO » | ✅ fusionné dans main |
 
 > **Audit des textes (prompt 93)** : avant chaque fusion qui touche à l'interface, relancer `index.html?audit=textes&parcours=1` (1920×1080, 1366×768, mobile portrait) et garder 0 défaut A à D — voir `jeu/89-textes-hors-cadre.md` et `CONTRIBUTING.md`.
 

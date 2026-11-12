@@ -273,20 +273,11 @@ function dessinerDemarrage() {
 		const lignes = [0, 1, 2, 3, 4].map((n) => t('os.bios.' + n));
 		lignes.slice(0, 1 + Math.floor(tB / 220)).forEach((l, i) => dsTexte(l, 80, 80 + i * 44, 26, i === 0 ? DS.primaire : DS.blanc75, 'left'));
 	} else if (tB < DUREE_DEMARRAGE - 500) {
-		// Logo du système fictif (carré rouge, angles droits) + titre pixel + barre de progression
+		// Logo du système fictif + titre pixel + barre de progression
+		// Prompt 152 : l'écran de régulation de logo/planche.html (pin sur l'écran, Loire en escalier), 16 × 16 à l'échelle 8
 		const cx = L / 2;
 		const cy = H / 2 - 80;
-		noStroke();
-		fill(DS.primaire);
-		rect(cx - 64, cy - 64, 128, 128);
-		fill(DS.blanc);
-		rect(cx - 44, cy - 36, 88, 28);
-		rect(cx - 40, cy - 4, 80, 12);
-		rect(cx - 30, cy + 16, 16, 16);
-		rect(cx + 14, cy + 16, 16, 16);
-		fill(DS.primaire);
-		rect(cx - 36, cy - 30, 30, 14);
-		rect(cx + 6, cy - 30, 30, 14);
+		dessinerIconePixel(ICONE_ECRAN, cx - 64, cy - 64, 128, { P: DS.primaire, W: DS.blanc, G: '#8c8c8c', K: DS.fond });
 		dsTitre('RegulOS', cx, cy + 96, 56, DS.blanc, 'center');
 		const p = constrain((tB - 1200) / (DUREE_DEMARRAGE - 1700), 0, 1);
 		stroke(DS.blanc15);

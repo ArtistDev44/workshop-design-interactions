@@ -26,3 +26,15 @@ survol et au focus : « Accueil de RégulOS (clic, ou Tab puis Entrée) », anno
 - `npm test` : formes du bouton = rectangles du SVG du chargement ; plus de carré rouge « REGUL ».
 - Chromium 1920 × 1080 FR / EN et portrait 412 × 915 : logo net, focus visible après Tab Tab, Entrée → accueil
   de RégulOS, aucune erreur console.
+
+## Mise à jour (prompt 150)
+Le logo n'est plus le moniteur : c'est la **bulle-pin** (bulle « &#@! » à pointe de marqueur de carte, piste 2 de
+`logo/planche.html`). Même grille 24 × 20, même fonction `dessinerLogoPXE`, même test ; favicon et icônes de la
+webapp refaits avec la petite et la grande bulle.
+
+Prompt 151 : l'entrée « carte » du menu de l'appli garde le moniteur d'origine (`LOGO_MONITEUR`, 4e argument de
+`dessinerLogoPXE`).
+
+Prompt 152 : deux autres icônes de la planche entrent dans le jeu — le pin d'alerte pour les marqueurs de la carte
+(`ICONE_PIN`) et l'écran de régulation pour le logo du démarrage du PC (`ICONE_ECRAN`), dessinés par
+`dessinerIconePixel` (ds.js).

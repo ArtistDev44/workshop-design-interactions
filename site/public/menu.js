@@ -11,6 +11,7 @@ const LICENCE_URL = DEPOT_URL + '/blob/main/LICENSE';
 const URL_JEU = 'https://workshop-design-interactions.pages.dev/'; // URL canonique du jeu (prompt 02)
 /** Lien externe dans un nouvel onglet, sans accès à cette page (même motif que donnees.js) */
 function ouvrirLien(url) {
+	if (typeof EXPO !== 'undefined' && EXPO.actif) return; // prompt 160 : aucune sortie du jeu sur le kiosque
 	window.open(url, '_blank', 'noopener');
 }
 /** Page de présentation du projet (diaporama Slidev, prompt 82), servie à côté du jeu */
@@ -299,11 +300,30 @@ function dessinerMenuPrincipal() {
 	// Prompt 125 : plus de ligne « Données réelles… » ni de lien de licence ici — tout est dans l'écran Crédits
 	piedCredits(x0, H - 40, e.length);
 	blocPartage(e.length);
+	if (typeof EXPO !== 'undefined' && EXPO.actif) marqueExpo();
+}
+/** Prompt 160 : marque discrète « EXPO » en bas à droite de l'écran titre (blanc sur pastille nuit opaque : ≈ 19:1, quel que soit le fond flouté) */
+function marqueExpo() {
+	textFont(POLICE_DONNEES);
+	textStyle(BOLD);
+	textSize(18);
+	const l = textWidth('EXPO') + 24;
+	fill(MENU_C.nuit);
+	stroke(MENU_C.doux);
+	strokeWeight(2);
+	rect(L - 80 - l, H - 40 - 32, l, 36);
+	noStroke();
+	fill(MENU_C.blanc);
+	textAlign(CENTER, CENTER);
+	text('EXPO', L - 80 - l / 2, H - 40 - 14);
+	textStyle(NORMAL);
+	textAlign(LEFT, TOP);
 }
 
 // ——— Prompt 81 : crédits, dépôt et partage (écran titre uniquement) ; prompt 125 : la licence est dans les Crédits ———
 /** Éléments focalisables après les cartes du menu (↑ ↓ / Tab) : dépôt, partager, présentation (prompt 125 : plus de licence) */
-const EXTRAS_MENU = [
+// Prompt 160 : en exposition, ni Livrables, ni Dépôt, ni Partager, ni Présentation (le visiteur suivant doit trouver le jeu)
+const EXTRAS_MENU = typeof EXPO !== 'undefined' && EXPO.actif ? [] : [
 	{ cle: 'livrables', action: () => ouvrirLivrables() }, // prompt 136 : au-dessus des trois boutons, donc en premier
 	{ cle: 'depot', action: () => ouvrirLien(DEPOT_URL) },
 	{ cle: 'partager', action: () => ouvrirPartage() },
@@ -365,6 +385,7 @@ function boutonIcone(x, y, l, h, icone, libelle, action, focus) {
 }
 const BLOC_PARTAGE = { x: L - 80 - 3 * 260 - 2 * 16, y: H - 40 - 68, l: 260, h: 68 }; // demande du 11/11 : + bouton Présentation // 68 px : ≥ 44 px à l'écran en portrait mobile
 function blocPartage(n) {
+	if (!EXTRAS_MENU.length) return; // prompt 160 : mode exposition
 	const b = BLOC_PARTAGE;
 	const s1 = boutonIcone(b.x, b.y, b.l, b.h, 'github', t('mp.depot'), () => ouvrirLien(DEPOT_URL), focusExtra(n, 'depot'));
 	const s2 = boutonIcone(b.x + b.l + 16, b.y, b.l, b.h, 'partage', t('mp.partager'), ouvrirPartage, focusExtra(n, 'partager'));
