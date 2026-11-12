@@ -1183,6 +1183,8 @@ function keyPressed() {
 	}
 	// Prompt 36 : I ouvre / ferme l'app flottante « Indicateurs » (au poste)
 	if (key === 'i' || key === 'I') return basculerIndicateurs(), false;
+	// Prompt 101 (D2) : V déplie / replie les détails des Indicateurs (le Journal et le Patron gardent leur V quand ils sont ouverts)
+	if ((key === 'v' || key === 'V') && PC.flottant && PC.fenetre !== 'journal' && PC.fenetre !== 'patron') return basculerDetailsIndicateurs(), false;
 	// Prompt 91 § 1 : une fenêtre RégulOS ouverte par-dessus l'appli de jeu reçoit les touches d'abord (Échap la ferme)
 	if (PC.fenetre && PC.etat === 'appli') PC.etat = 'os';
 	// Au poste, système du PC (bureau RégulOS) : Tab = icônes, Entrée = ouvrir, Échap = fermer l'app puis se lever

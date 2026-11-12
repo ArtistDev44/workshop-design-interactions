@@ -560,8 +560,16 @@ const INDIC = (() => {
 		const o = JSON.parse(localStorage.getItem(CLE_INDICATEURS) || 'null');
 		if (o && Number.isFinite(o.x) && Number.isFinite(o.y)) pos = o;
 	} catch (e) {}
-	return { l: 460, h: 572, pos, prise: null }; // prompt 84 : + statut auprès du patron ; prompt 88 : + grade et badges
+	return { l: 460, h: 572, pos, prise: null, deplie: false }; // prompt 84 : + statut auprès du patron ; prompt 88 : + grade et badges ; prompt 101 (D2) : replié par défaut
 })();
+// Prompt 101, décision D2 (groupe, 12/11/2026) : panneau replié par défaut sur les trois jauges ; l'objectif, les
+// seuils, le statut, le grade et les badges s'affichent au survol, ou restent dépliés (bouton « Détails » ou touche V)
+const INDIC_H = { replie: 324, deplie: 616 }; // déplié : le contenu d'avant (572) décalé de 44 px sous « Détails »
+function basculerDetailsIndicateurs() {
+	INDIC.deplie = !INDIC.deplie;
+	Confort.Son.clic();
+	annoncer(t(INDIC.deplie ? 'journal.details' : 'journal.detailsMasquer'));
+}
 function basculerIndicateurs() {
 	PC.flottant = !PC.flottant;
 	if (PC.flottant) annoncer(t('indic.annonce', { f: Jeu.jauges ? Jeu.jauges.fluidite : 50, r: Jeu.jauges ? Jeu.jauges.reputation : 50, b: Jeu.jauges ? Jeu.jauges.budget : 50 }));
@@ -580,6 +588,9 @@ function couleurJauge(v) {
 function dessinerIndicateurs() {
 	if (!PC.flottant || PC.etat === 'eteint' || PC.etat === 'demarrage') return;
 	const I = INDIC;
+	const survol = mouseX >= I.pos.x && mouseX <= I.pos.x + I.l && mouseY >= I.pos.y && mouseY <= I.pos.y + I.h;
+	const deplie = I.deplie || !!I.prise || survol;
+	I.h = deplie ? INDIC_H.deplie : INDIC_H.replie;
 	if (I.prise) {
 		if (mouseIsPressed) {
 			I.pos.x = constrain(mouseX - I.prise.dx, 0, L - I.l);
@@ -644,22 +655,26 @@ function dessinerIndicateurs() {
 		const d = dernier && dernier.deltas ? dernier.deltas[k] : null;
 		if (d) dsTexte((d > 0 ? '▲ +' : '▼ ') + d, x + I.l - 132, ly, 16, d > 0 ? DS.succes : DS.alerte, 'right');
 	});
+	// Replié : « Détails » (clic / toucher, V) ; déplié par le bouton : « Masquer les détails » en bas
+	// Bouton à la même place dans les deux états (le survol déplie sans le déplacer sous la souris)
+	dsBouton(x + 18, y + 268, 300, 44, t(I.deplie ? 'journal.detailsMasquer' : 'journal.details') + ' (V)', basculerDetailsIndicateurs, 'fantome');
+	if (!deplie) return;
 	const o = Jeu.objectifDuJour ? Jeu.objectifDuJour() : null;
-	if (o) dsTexte(t('indic.objectif', { libelle: o.libelle, ok: Jeu.jauges[o.jauge] >= o.seuil ? '✓' : '✗' }), x + 18, y + 284, 16, DS.blanc75, 'left', I.l - 36);
+	if (o) dsTexte(t('indic.objectif', { libelle: o.libelle, ok: Jeu.jauges[o.jauge] >= o.seuil ? '✓' : '✗' }), x + 18, y + 328, 16, DS.blanc75, 'left', I.l - 36);
 	const b = Jeu.jauges.budget;
-	dsTexte(t(b < 20 ? 'indic.budgetBas' : b >= 70 ? 'indic.budgetHaut' : 'indic.budgetMoyen'), x + 18, y + 336, 16, DS.blanc50, 'left', I.l - 36);
+	dsTexte(t(b < 20 ? 'indic.budgetBas' : b >= 70 ? 'indic.budgetHaut' : 'indic.budgetMoyen'), x + 18, y + 380, 16, DS.blanc50, 'left', I.l - 36);
 	// Prompt 84 : statut auprès du patron (niveau et avertissements)
 	const S = Jeu.statutPatron || { niveau: 0, avertissements: 0 };
-	dsTexte(t('indic.statut', { statut: t(['statut.normal', 'statut.surveillance', 'statut.dernier'][S.niveau] || 'statut.normal'), n: S.avertissements }), x + 18, y + 384, 16, S.niveau === 2 ? DS.erreurClair : S.niveau === 1 ? DS.alerte : DS.blanc75, 'left', I.l - 36);
+	dsTexte(t('indic.statut', { statut: t(['statut.normal', 'statut.surveillance', 'statut.dernier'][S.niveau] || 'statut.normal'), n: S.avertissements }), x + 18, y + 428, 16, S.niveau === 2 ? DS.erreurClair : S.niveau === 1 ? DS.alerte : DS.blanc75, 'left', I.l - 36);
 	// Prompt 88 : grade (carrière, entre les parties) et vitrine des badges — faits de la partie uniquement
 	if (typeof Taches !== 'undefined') {
 		const g = Taches.grade();
-		dsTexte(t('indic.grade', { grade: t('grade.' + g.i), xp: g.xp }), x + 18, y + 452, 16, DS.blanc, 'left', I.l - 36);
+		dsTexte(t('indic.grade', { grade: t('grade.' + g.i), xp: g.xp }), x + 18, y + 496, 16, DS.blanc, 'left', I.l - 36);
 		const c = Taches.carriere();
 		Taches.R.badges.forEach((b, i) => {
 			const obtenu = !!(c.badges[b] && c.badges[b].n);
-			dessinerBadge(b, x + 18 + i * 108, y + 492, 40, obtenu);
-			if (obtenu && c.badges[b].n > 1) dsTexte('×' + c.badges[b].n, x + 64 + i * 108, y + 512, 14, DS.blanc75, 'left');
+			dessinerBadge(b, x + 18 + i * 108, y + 536, 40, obtenu);
+			if (obtenu && c.badges[b].n > 1) dsTexte('×' + c.badges[b].n, x + 64 + i * 108, y + 556, 14, DS.blanc75, 'left');
 		});
 	}
 }

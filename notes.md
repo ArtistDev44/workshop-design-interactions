@@ -145,7 +145,7 @@ fiche d'enquête un à la fois.
 | # | Question | Appliqué |
 |---|---|---|
 | D1 | Rouge réservé à l'action primaire seule, ou aussi à l'élément le plus urgent ? | [À COMPLÉTER] — état actuel gardé : rouge pour la sélection (jour du Journal, onglet actif), le primaire et le liseré d'un dossier raté ; tout le reste en blanc ou en couleur claire |
-| D2 | Panneau Indicateurs replié par défaut ? | [À COMPLÉTER] — non modifié |
+| D2 | Panneau Indicateurs replié par défaut ? | **Oui** (décision du groupe, 12/11/2026) — replié sur les trois jauges (nom, valeur, barre, dernière variation) ; objectif du jour, palier de budget, statut auprès du patron, grade et badges au survol du panneau, ou épinglés par « Détails (V) » (bouton au même endroit dans les deux états, utilisable au toucher) |
 | D3 | Colonne Nantes de Community : masquée sous quelle largeur, ou déplacée en onglet ? | [À COMPLÉTER] — non modifiée (déjà absente en portrait) |
 | D4 | Actions secondaires du Journal : menu « … » ou raccourcis visibles ? | [À COMPLÉTER] — non modifié (« Copier le résumé (C) » reste en bas à gauche) |
 
@@ -156,7 +156,7 @@ fiche d'enquête un à la fois.
 - **Fiche enquête +18 %** : les numéros de volet sont désormais des textes séparés (demandé au § 4).
 - **Signalements** : 5 tailles de texte et 5 % de rouge en jour 1 — vue hors périmètre (prompts 87, 98), seul
   l'alignement est fait ici.
-- **Indicateurs** : inchangé (D2).
+- **Indicateurs** : replié par défaut (D2 tranchée le 12/11) — 324 px de haut au lieu de 572.
 
 ### Vérifications
 - `npm run build` + `npm test` verts (smoke 460, jeu 541 contrôles, dont les modules `?audit=densite` / `?audit=textes`).
