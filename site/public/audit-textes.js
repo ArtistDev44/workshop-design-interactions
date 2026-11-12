@@ -379,7 +379,6 @@
 				['lignes', 'trafic', 'meteo', 'agenda'].forEach((c) => revelerSource(c, false));
 			}, 12);
 			add('dossier ' + ty + ' · historique', () => (SELECTION.onglet = 'historique'));
-			add('dossier ' + ty + ' · équipes', () => (SELECTION.onglet = 'equipes'));
 			add('dossier ' + ty + ' · narration', () => {
 				PLUS.ouvert = false;
 				SELECTION.onglet = 'enquete';

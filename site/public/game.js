@@ -1288,6 +1288,22 @@
 		return s.replace(/\{(\w+)\}/g, (m, k) => (vars && vars[k] !== undefined ? String(vars[k]) : m));
 	};
 
+	/** Prompt 102 : le plaignant d'un dossier, SANS effet de bord (lecture seule) — la plainte Community déjà
+	 * déclenchée pour ce dossier, sinon la plus spécifique qui correspond à ses faits réels (choix déterministe,
+	 * comme declencherPlainte), sinon null (c'est alors la source réelle qui « parle » dans le dialogue). */
+	Jeu.plaignantPour = function (index) {
+		const d = (Jeu.paquet || [])[index];
+		if (!d || !Jeu.MESSAGES) return null;
+		const deja = (Jeu.plaintes || []).find((p) => p.index === index);
+		if (deja) return { id: deja.id, auteur: deja.auteur, texte: Jeu.texteMessage(deja.def.texte, deja.vars) };
+		const vars = variablesDossier(d);
+		const candidates = (Jeu.MESSAGES.plaintes || []).filter((p) => plainteCorrespond(p, d, vars));
+		if (!candidates.length) return null;
+		const max = Math.max(...candidates.map(specificite));
+		const meilleures = candidates.filter((p) => specificite(p) === max);
+		const def = meilleures[index % meilleures.length];
+		return { id: def.id, auteur: def.auteur || '@usager_44', texte: Jeu.texteMessage(def.texte, vars) };
+	};
 	/** À la présentation d'un dossier : au plus une plainte, la plus spécifique parmi celles qui correspondent */
 	Jeu.declencherPlainte = function (index) {
 		const d = (Jeu.paquet || [])[index];

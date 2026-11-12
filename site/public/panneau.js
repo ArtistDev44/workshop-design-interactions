@@ -181,7 +181,7 @@ function dessinerPanneauSignalement(d, x, base) {
 		}
 		corpsEnquete(d, x + 32, y + 60, l, base.y + base.h - 430 - (y + 60)); // prompt 93 : hauteur d'origine (le décalage du prompt 92 coupait l'explication des cartes de réponse)
 	} else {
-		y = bloc(t('bloc.passe'), [phraseSituation(d)], x + 32, y, l, C.accent);
+		y = bulleDuPlaignant(d, x + 32, y, l); // prompt 102 : le plaignant (ou la source réelle) parle, le fait réel dessous
 		y = bloc(t('bloc.pourquoi'), pucesImportance(d).map((p) => '• ' + p), x + 32, y, l, C.orange);
 		const sv = savoirs(d);
 		const memo = typeof Traces !== 'undefined' && Traces.option('traceDossier') ? Traces.memoire(d) : []; // option : trace dans le dossier
@@ -213,6 +213,42 @@ function dessinerPanneauSignalement(d, x, base) {
 	dessinerCartesReponses(d, x + 32, yr, l, Math.max(290, base.y + base.h - 16 - yr));
 	dessinerGlisser(); // prompt 94 : zone de dépôt, carte flottante, retour, frappe
 }
+/** Prompt 102 : bulle de dialogue — la plainte écrite par le groupe (data/messages.json) que les faits réels du
+ * dossier déclenchent (Jeu.plaignantPour, sans effet de bord), sinon la source réelle ; dessous, le fait réel. */
+function bulleDuPlaignant(d, x, y, l) {
+	const pl = Jeu.plaignantPour ? Jeu.plaignantPour(Jeu.index) : null;
+	const auteur = pl ? pl.auteur : t('plaignant.source', { source: d.source || t('carte.nonRenseigne') });
+	const texte = pl ? String(pl.texte) : String(d.texte_source || phraseSituation(d));
+	const lt = l - 84;
+	const lignes = typeof couperLignes === 'function' ? couperLignes(texte, lt - 32, DS.policeTexte, 20).length : 2;
+	const hb = 52 + lignes * 28 + 12;
+	noStroke();
+	if (pl && typeof avatarUsager === 'function') avatarUsager(pl.auteur, x, y + 6, 56);
+	else {
+		fill(DS.blanc15);
+		rect(x, y + 6, 56, 56);
+		fill(DS.blanc75);
+		rect(x + 20, y + 18, 16, 4);
+		rect(x + 20, y + 28, 16, 4);
+		rect(x + 20, y + 38, 10, 4);
+	}
+	fill(DS.blanc05);
+	rect(x + 76, y, lt + 8, hb);
+	triangle(x + 76, y + 22, x + 66, y + 30, x + 76, y + 38); // pointe de la bulle vers l'avatar
+	dsTexte(couperLargeurCarte(auteur, lt - 24, 16), x + 94, y + 14, 16, DS.blanc50, 'left');
+	dsTexte(texte, x + 94, y + 42, 20, DS.blanc, 'left', lt - 32);
+	if (PC.etat === 'appli' && BULLE.dossier !== d) {
+		BULLE.dossier = d;
+		annoncer(t('plaignant.annonce', { auteur, texte }));
+	}
+	let yy = y + hb + 10;
+	if (pl) {
+		dsTexte(couperLargeurCarte(String(phraseSituation(d)), l, 16), x, yy, 16, DS.blanc50, 'left');
+		yy += 28;
+	}
+	return yy + 12;
+}
+const BULLE = { dossier: null };
 function bloc(titre, lignes, x, y, l, couleur) {
 	noStroke();
 	textFont(POLICE_DONNEES);

@@ -467,7 +467,7 @@ function texteResteJournee() {
 function indicateurSauvegarde() {
 	const r = texteResteJournee();
 	const messageFile = SELECTION.message && millis() - SELECTION.message.t < 5000; // le message de la file (bas) a la priorité
-	if (r && phase !== 'fin' && !messageFile) dessinerTexte(r, FILE_SIG.x + 16, FILE_SIG.y + FILE_SIG.h - 62, FILE_SIG.l - 32, { police: POLICE_DONNEES, taille: 18, couleur: C.texte, maxLignes: 1, interligne: 24 });
+	// Prompt 102 : « reste de la journée » dans la ligne d'état de la carte (carte-alertes.js) ; plus de doublon ici
 	const s = Sauvegarde.texteIndicateur();
 	if (!s) return;
 	textFont(POLICE_DONNEES);
@@ -475,7 +475,9 @@ function indicateurSauvegarde() {
 	textAlign(RIGHT, BOTTOM);
 	noStroke();
 	fill(C.gris);
-	text(s, FILE_SIG.x + FILE_SIG.l - 16, FILE_SIG.y + FILE_SIG.h - 6); // prompt 89 bis : en bas à droite de la liste (ne chevauche plus le titre)
+	const zc = typeof CARTE !== 'undefined' && CARTE.zone ? CARTE.zone : FILE_SIG;
+	if (zc.l < 900) return; // carte resserrée (dossier ouvert) : la case « Lieu à préciser » occupe le bas, l'indicateur se tait
+	text(s, zc.x + zc.l - 16, zc.y + zc.h - H_PLATEAU - 20); // prompt 102 : en bas à droite de la carte, au-dessus du plateau des équipes
 }
 
 function dessinerJeu() {
@@ -485,8 +487,8 @@ function dessinerJeu() {
 	const meteo = d ? Jeu.meteoDuJour(d.date) : null;
 	// Prompt 87 : bandeau fin (jauges, objectif, équipes, heure), liste des signalements, panneau du signalement ouvert
 	dessinerBandeau();
-	dessinerFileSignalements(FILE_SIG); // prompt 73
-	if (phase === 'selection') dessinerSelection();
+	dessinerCarteAlertes(); // prompt 102 : la carte des alertes réelles remplace la liste (prompt 73)
+	if (phase === 'selection') return; // prompt 102 : cliquer un marqueur prend le signalement (plus d'étape « Prendre »)
 	else if (phase === 'narration') dessinerNarration();
 	else if (phase === 'conflit') dessinerConflit();
 	else dessinerDossier(d, meteo);
@@ -495,9 +497,9 @@ function dessinerJeu() {
 /* Écran de jeu sans incident actif : bandeau, liste des signalements, horloge simulée à droite ; mail en fin de journée */
 function dessinerJeuAttente() {
 	dessinerBandeau();
-	dessinerFileSignalements(FILE_SIG); // prompt 73
-	dessinerAttente();
-	if (phase === 'mail') dessinerMail();
+	dessinerCarteAlertes(); // prompt 102 : carte pleine largeur entre deux signalements
+	if (phase === 'mail') dessinerAttente(), dessinerMail(); // fin de journée : panneau du mail inchangé
+	else if (enSieste) dessinerAttente(); // sieste : le panneau d'attente dit qu'on dort
 }
 
 
@@ -1074,6 +1076,7 @@ function mousePressed() {
 	if (arreterDemo()) return; // prompt 48
 	Confort.Son.demarrer();
 	interaction();
+	if (typeof debutJeton === 'function' && debutJeton()) return; // prompt 102 : jeton d'équipe saisi (glisser-déposer)
 	if (typeof debutGlisser === 'function' && debutGlisser()) return; // prompt 94 : une carte de réponse est saisie (clic ou glisser-déposer)
 	for (let i = boutons.length - 1; i >= 0; i--) {
 		const b = boutons[i];
@@ -1124,6 +1127,7 @@ function keyPressed() {
 	if (key === 'l' || key === 'L') return Langue.suivante(), false;
 	// Prompt 47 : inspection, démission, palmarès ; J = journal de bord, D = rendre son badge
 	if (toucheDeblocage() || toucheTelephone() || toucheTaches() || toucheMecaniques() || toucheAccessibilite() || toucheJournee()) return false; // prompts 47, 48 et 51
+	if (typeof toucheCarte === 'function' && toucheCarte()) return false; // prompt 102 : Échap annule un jeton d'équipe choisi
 	// Fenêtres ouvertes : elles captent le clavier
 	if (fenetre) {
 		if (keyCode === ESCAPE || (fenetre === 'aide' && (key === 'h' || key === 'H' || key === '?'))) return fermer(), false;
