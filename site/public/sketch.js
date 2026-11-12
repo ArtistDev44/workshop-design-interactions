@@ -485,7 +485,7 @@ function indicateurSauvegarde() {
 	fill(C.gris);
 	const zc = typeof CARTE !== 'undefined' && CARTE.zone ? CARTE.zone : FILE_SIG;
 	if (zc.l < 900) return; // carte resserrée (dossier ouvert) : la case « Lieu à préciser » occupe le bas, l'indicateur se tait
-	text(s, zc.x + zc.l - 16, zc.y + zc.h - H_PLATEAU - 20); // prompt 102 : en bas à droite de la carte, au-dessus du plateau des équipes
+	text(s, zc.x + zc.l - 16, zc.y + 100); // correctif : en haut à droite de la carte, sous le zoom (H_PLATEAU n'existe plus depuis le prompt 108 — l'erreur figeait l'écran)
 }
 
 function dessinerJeu() {
