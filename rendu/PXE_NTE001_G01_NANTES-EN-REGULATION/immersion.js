@@ -441,7 +441,7 @@ function dessinerMail() {
 	noStroke();
 	fill(13, 12, 12, 200);
 	rect(0, 0, L, H);
-	dsPanneau(x, y, l, h, t('mailf.titre'), m.positif ? 'rgba(0,251,116,0.12)' : 'rgba(212,3,28,0.25)');
+	dsPanneau(x, y, l, h, t('mailf.titre'), m.positif ? 'rgba(0,251,116,0.12)' : primaireRGBA(0.25)); // prompt 115
 	dsBadge(x + l - 120, y + 30, t('mailf.nouveau'), m.positif ? 'succes' : 'erreur');
 	dsTexte(t('mailf.de', { de: m.de }), x + 32, y + 84, 20, DS.blanc50, 'left');
 	dsTexte(t('mailf.a'), x + 32, y + 114, 20, DS.blanc50, 'left');

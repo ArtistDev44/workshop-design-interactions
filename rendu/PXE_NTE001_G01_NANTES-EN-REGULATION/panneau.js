@@ -73,7 +73,7 @@ function dessinerBandeau() {
 	if (crise) {
 		const actif = Taches.criseActive();
 		noStroke();
-		fill(actif ? C.primaire : 'rgba(212,3,28,0.25)');
+		fill(actif ? C.primaire : primaireRGBA(0.25)); // prompt 115
 		rect(z.x + z.l - 920, z.y + 42, 254, 32);
 		fill('#FFFFFF');
 		textFont(POLICE_TEXTE);

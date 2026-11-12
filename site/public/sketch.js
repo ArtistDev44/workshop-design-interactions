@@ -79,6 +79,7 @@ let projection = null;
 let gouttes = [];
 
 function setup() {
+	if (typeof Theme !== 'undefined') Theme.init(); // prompt 115 : couleur principale choisie (C, DS et menu sont définis)
 	Langue.detecter(); // prompt 24 : ?lang= → localStorage → navigateur → fr
 	const msgChargement = document.getElementById('chargement-message');
 	if (msgChargement) msgChargement.textContent = t('chargement.message'); // prompt 27 : dans la langue active
@@ -479,9 +480,9 @@ function indicateurSauvegarde() {
 	textAlign(RIGHT, BOTTOM);
 	noStroke();
 	fill(C.gris);
-	const zc = typeof CARTE !== 'undefined' && CARTE.zone ? CARTE.zone : FILE_SIG;
+	const zc = typeof CARTE !== 'undefined' && (CARTE.zoneLibre || CARTE.zone) ? CARTE.zoneLibre || CARTE.zone : FILE_SIG; // prompt 114 : partie libre de la carte
 	if (zc.l < 900) return; // carte resserrée (dossier ouvert) : la case « Lieu à préciser » occupe le bas, l'indicateur se tait
-	text(s, zc.x + zc.l - 16, zc.y + 100); // correctif : en haut à droite de la carte, sous le zoom (H_PLATEAU n'existe plus depuis le prompt 108 — l'erreur figeait l'écran)
+	text(couperLargeurCarte(s, zc.l - 32, 20), zc.x + zc.l - 16, zc.y + zc.h - 212); // prompt 114 : au-dessus des boutons de zoom (les notifications occupent le haut) // prompt 114 : sous le zoom et la légende ; correctif : en haut à droite de la carte, sous le zoom (H_PLATEAU n'existe plus depuis le prompt 108 — l'erreur figeait l'écran)
 }
 
 function dessinerJeu() {
@@ -1166,6 +1167,7 @@ function keyPressed() {
 			const cles = { 1: 'son', 2: 'horsLigneForce', 3: 'reduireAnimations', 4: 'contrasteRenforce', 0: 'defiChrono' }; // prompt 87 : 0 = défi chrono
 			if (cles[key]) basculerReglage(cles[key]);
 			if (key === '8') musiqueSuivante(); // prompt 44
+			if (key === 'c' || key === 'C') Theme.suivante(keyIsDown(SHIFT) ? -1 : 1); // prompt 115 : couleur principale
 			if (key === '9') return ouvrirAccessibilite(), false; // prompt 48
 			if (key === 'g' || key === 'G') return ouvrirOptionsJeu(), false; // prompt 88
 			if (key === '5') Sauvegarde.exporter(); // prompt 33
@@ -1543,7 +1545,7 @@ function fenetreParametres() {
 		['0', t('param.defiChrono'), 'defiChrono'], // prompt 87 : compteur, ralenti, expiration (prochaine partie)
 	];
 	lignes.forEach(([k, lib, nom], i) => {
-		const ly = y + 120 + i * 80;
+		const ly = y + 120 + i * 72; // prompt 115 : rangées de 72 px pour la couleur principale
 		textFont(POLICE_TEXTE);
 		ajusterTaille(lib, 490, 26);
 		fill(C.texte);
@@ -1565,15 +1567,15 @@ function fenetreParametres() {
 	textSize(26);
 	fill(C.texte);
 	textAlign(LEFT, CENTER);
-	text(t('langue.titre'), x + 48, y + 120 + 5 * 80 + 36);
+	text(t('langue.titre'), x + 48, y + 120 + 5 * 72 + 36);
 	textFont(POLICE_DONNEES);
 	textSize(18);
 	fill(C.gris);
-	text(t('param.touche', { k: 'L' }), x + 560, y + 120 + 5 * 80 + 36);
+	text(t('param.touche', { k: 'L' }), x + 560, y + 120 + 5 * 72 + 36);
 	textAlign(LEFT, TOP);
-	selecteurLangue(x + l - 48, y + 120 + 5 * 80 + 10);
+	selecteurLangue(x + l - 48, y + 120 + 5 * 72 + 10);
 	// Prompt 44 : choix de la musique (morceaux originaux, chiptune), touche 8
-	const ym = y + 120 + 6 * 80;
+	const ym = y + 120 + 6 * 72;
 	textFont(POLICE_TEXTE);
 	textSize(26);
 	fill(C.texte);
@@ -1592,7 +1594,7 @@ function fenetreParametres() {
 	text(t('param.musiqueCredits'), x + 48, ym + 70, l - 96, 24); // crédits des morceaux CC0 ; prompt 93 : largeur libre sous le bouton, libellé court
 	if (mouseX >= x + 48 && mouseX <= x + l - 48 && mouseY >= ym + 66 && mouseY <= ym + 92) infobulle(t('param.musiqueCreditsLong'), x + 48, ym + 96);
 	// Prompt 33 : Progression — exporter (fichier), copier (presse-papiers), importer (fichier ou texte collé)
-	const yp = y + 120 + 7 * 80;
+	const yp = y + 120 + 7 * 72 + 16;
 	textFont(POLICE_TEXTE);
 	textSize(26);
 	fill(C.texte);
@@ -1603,7 +1605,7 @@ function fenetreParametres() {
 	bouton(x + l - 48 - 2 * lbp - 16, yp + 8, lbp, 56, t('parametres.copier'), () => Sauvegarde.copier(), false, true);
 	bouton(x + l - 48 - lbp, yp + 8, lbp, 56, t('parametres.importer'), () => Sauvegarde.ouvrirImport(), false, true);
 	// Prompt 48 : accessibilité (daltonisme, taille du texte, lecture facile) et reprise sur un autre appareil
-	const ya = yp + 80;
+	const ya = yp + 72;
 	textFont(POLICE_TEXTE);
 	textSize(26);
 	fill(C.texte);
@@ -1615,7 +1617,7 @@ function fenetreParametres() {
 	text(t('param.touche', { k: '9' }), x + 560, ya + 36);
 	bouton(x + l - 48 - 280, ya + 8, 280, 56, t('acc.ouvrir'), ouvrirAccessibilite, false, true);
 	// Prompt 88 : options de jeu soumises au groupe (chaînes, déblocages, arbitrage) et remise à zéro de la progression
-	const yo = ya + 80;
+	const yo = ya + 72;
 	textFont(POLICE_TEXTE);
 	textSize(26);
 	fill(C.texte);
@@ -1626,6 +1628,19 @@ function fenetreParametres() {
 	fill(C.gris);
 	text(t('param.touche', { k: 'G' }), x + 560, yo + 36);
 	bouton(x + l - 48 - 280, yo + 8, 280, 56, t('optjeu.ouvrir'), ouvrirOptionsJeu, false, true);
+	// Prompt 115 : couleur principale du design system (6 palettes), touche C
+	const yc = yo + 72;
+	textFont(POLICE_TEXTE);
+	textSize(26);
+	fill(C.texte);
+	textAlign(LEFT, CENTER);
+	text(t('couleur.titre'), x + 48, yc + 36);
+	textFont(POLICE_DONNEES);
+	textSize(18);
+	fill(C.gris);
+	text(t('param.touche', { k: 'C' }), x + 440, yc + 36);
+	textAlign(LEFT, TOP);
+	selecteurCouleur(x + l - 48, yc + 10);
 	textAlign(LEFT, TOP);
 	bouton(x + l - 288, y + h - 104, 240, 64, t('param.retour'), fermer);
 }

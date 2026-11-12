@@ -258,7 +258,7 @@ function carteMessage(m, x, y, l, groupe, panne) {
 	if (!m._vu) m._vu = millis();
 	const dx = reduireAnimations ? 0 : Math.max(0, arrivee - (millis() - m._vu) / 25);
 	noStroke();
-	fill(m.important ? 'rgba(212,3,28,0.16)' : DS.blanc05);
+	fill(m.important ? primaireRGBA(0.16) : DS.blanc05); // prompt 115
 	rect(x + dx, y, l - (m.reponse ? 0 : 0), h - (m.reponse ? 56 : 0));
 	noStroke(); // prompt 101 b : fond seul, sans second cadre
 	zoneTexteDeclarer('carteMessage', x + dx, y, l, h); // prompt 93

@@ -67,7 +67,7 @@
 	const zone = (nom, x, y, l, h, opts) => Object.assign({ nom, espace: espace(), m: matrice(), local: { x, y, l, h } }, versEcran(x, y, l, h), opts || {});
 	window.zoneTexteDebut = (nom, x, y, l, h, opts) => A.pile.push(zone(nom, x, y, l, h, opts));
 	window.zoneTexteFin = () => A.pile.pop();
-	window.zoneTexteDeclarer = (nom, x, y, l, h, opts) => A.zonesImage.push(zone(nom, x, y, l, h, opts));
+	window.zoneTexteDeclarer = (nom, x, y, l, h, opts) => A.zonesImage.push(Object.assign(zone(nom, x, y, l, h, opts), { ordre: A.boites.length })); // prompt 114 : ordre de dessin (catégorie F)
 
 	function nomEcran() {
 		try {
@@ -229,6 +229,24 @@
 		}
 	}
 
+	// Prompt 114 — catégorie F : texte dessiné AVANT un panneau opaque qui le recouvre en partie (texte caché)
+	const OPAQUES = ['panneau', 'panneauDS'];
+	function caches() {
+		// les fenêtres modales (aide, mail, menu, pause…) recouvrent le fond exprès : seuls les panneaux non modaux comptent
+		if ((typeof fenetre !== 'undefined' && fenetre) || (typeof MENU !== 'undefined' && MENU.actif) || (typeof phase !== 'undefined' && (phase === 'mail' || phase === 'fin')) || (typeof enPause !== 'undefined' && enPause) || (typeof GAMEOVER !== 'undefined' && GAMEOVER) || (typeof CINE !== 'undefined' && CINE) || (typeof smsActif !== 'undefined' && smsActif)) return;
+		A.zonesImage
+			.filter((z) => OPAQUES.includes(z.nom) && z.ordre > 0)
+			.forEach((z) => {
+				for (let i = 0; i < z.ordre && i < 600; i++) {
+					const a = A.boites[i];
+					if (!a || (a.z && a.z.espace !== z.espace)) continue;
+					const ix = Math.min(a.b.x + a.b.l, z.x + z.l) - Math.max(a.b.x, z.x);
+					const iy = Math.min(a.b.y + a.b.h, z.y + z.h) - Math.max(a.b.y, z.y);
+					if (ix > 4 && iy > 4 && ix * iy > 0.15 * a.b.l * a.b.h) signaler({ cat: 'F', s: a.s + ' ▼ ' + z.nom, b: a.b, z, dep: Math.round(Math.min(ix, iy)) });
+				}
+			});
+	}
+
 	// ——— Enveloppe de text() (avant l'initialisation de p5 : le mode global lie p5.prototype.text) ———
 	const origine = p5.prototype.text;
 	p5.prototype.text = function (str, x, y, l, h) {
@@ -254,6 +272,7 @@
 	p5.prototype.registerMethod('post', function () {
 		try {
 			chevauchements();
+			caches();
 		} catch (e) {}
 		// Prompt 98 : boutons cliquables de l'image (nombre, et cibles trop petites)
 		if (A.enParcours && A.enregistre && typeof boutons !== 'undefined') {
@@ -362,6 +381,7 @@
 		['patron', 'community', 'journal', 'indicateurs', 'donnees', 'corbeille'].forEach((a) => add('appli ' + a, () => (H.poste(), (PC.etat = 'os'), (PC.fenetre = a))));
 		add('Journal · semaine', () => (H.poste(), (PC.etat = 'os'), (PC.fenetre = 'journal'), (JOURNAL.vue = 'semaine')));
 		add('Signalements · file', () => H.poste());
+		add('Signalements · équipes engagées (prompt 114)', () => (H.poste(), ['police', 'techniciens', 'ambulance'].forEach((c) => Jeu.envoyerEquipe(Jeu.index, c, typeof tempsCarte === 'function' ? tempsCarte() : millis()))));
 		// Un signalement de chaque type, sources révélées, onglets
 		[
 			[0, 'événement'],

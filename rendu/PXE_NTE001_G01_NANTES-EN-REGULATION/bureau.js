@@ -600,7 +600,7 @@ function dessinerTelephonePerspective(g, cx, y0) {
 		px(g, '#9aa8b6', d(y0 + 8) - 1, y0 + 8, 5, 1);
 		px(g, '#c8d2da', d(y0 + 10) - 1, y0 + 10, 4, 1);
 	}
-	if (et.pastille) (px(g, '#d4031c', d(y0) + 7, y0 - 2, 5, 5), px(g, '#ffffff', d(y0) + 9, y0, 1, 1)); // pastille des non lues (nombre dans l'infobulle et l'annonce)
+	if (et.pastille) (px(g, DS.primaire, d(y0) + 7, y0 - 2, 5, 5), px(g, '#ffffff', d(y0) + 9, y0, 1, 1)); // pastille des non lues (nombre dans l'infobulle et l'annonce)
 }
 
 /* Tasse de café (prompt 52, thé avant) : café, volutes de vapeur ; vide une fois bue dans la journée. */
