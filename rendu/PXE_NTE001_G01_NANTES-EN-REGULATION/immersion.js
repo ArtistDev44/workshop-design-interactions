@@ -697,16 +697,23 @@ function dessinerSMS() {
 // ——— Fenêtres du bureau : menu Échap (§ 1) et livre « stress » (§ 7) ———
 // Prompt 35 : menu Échap modernisé (même style que le menu principal)
 let choixPause = 0;
-const ENTREES_PAUSE = [
+// Prompt 124 : « Quitter la journée » et « Recommencer » ne sont plus dans le bandeau — ils sont ici (souris, toucher)
+const journeeQuittable = () => ecran === 'jeu' && !!Jeu.horloge && !!(Jeu.jourCourant && Jeu.jourCourant()) && phase !== 'fin';
+const TOUTES_ENTREES_PAUSE = [
 	{ cle: 'menu.reprendre', icone: 'lecture', action: () => fermer() },
 	{ cle: 'accueil.parametres', icone: 'reglages', action: () => (fenetre = 'parametres') },
 	{ cle: 'mp.aide', icone: 'aide', action: () => (fenetre = 'aide') }, // prompt 122 : « Aide et tutoriel »
 	{ cle: 'menu.carnet', icone: 'carnet', action: () => (fermer(), ouvrirCarnet()) }, // prompt 47 : journal de bord (J)
+	{ cle: 'quitter.bouton', icone: 'retour', visible: journeeQuittable, action: () => (fermer(), quitterJourneeRapide()) },
+	{ cle: 'jeu.recommencer', icone: 'plus', visible: () => ecran === 'jeu', action: () => (fenetre = 'reset') },
 	{ cle: 'menu.menuPrincipal', icone: 'menu', action: () => quitterPartie() },
 ];
+const entreesPause = () => TOUTES_ENTREES_PAUSE.filter((e) => !e.visible || e.visible());
 function fenetreMenu() {
 	const l = 700;
-	const h = 200 + ENTREES_PAUSE.length * 112;
+	const ENTREES_PAUSE = entreesPause();
+	const h = 160 + ENTREES_PAUSE.length * 112;
+	if (choixPause >= ENTREES_PAUSE.length) choixPause = 0;
 	const x = (L - l) / 2;
 	const y = (H - h) / 2;
 	noStroke();

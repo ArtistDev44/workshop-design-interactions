@@ -290,7 +290,7 @@ function dessinerMenuPrincipal() {
 	textFont(POLICE_DONNEES);
 	textSize(18);
 	fill(MENU_C.doux);
-	text(t('mp.clavier'), x0, H - 100);
+	// Prompt 124 : plus de ligne d'aide clavier sous les cartes (elle nuisait à l'immersion)
 	text(t('mp.sources'), x0, H - 70);
 	piedCredits(x0, H - 40, e.length);
 	blocPartage(e.length);

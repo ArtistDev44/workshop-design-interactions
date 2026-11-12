@@ -1943,7 +1943,7 @@ for (const f of ['enquete.js', 'carte.js', 'journal.js']) verifier(!/\*\s*1\.05\
 		TRANSITION_JOUR.semaine = 0;
 		const l = lignesTransitionJour().join(' | ');
 		r.prevus = l.includes(Jeu.jours[0].dossiers.length + ' signalement');
-		r.service = l.includes('8h00') && l.includes('20h00') && /Quitter la journée/.test(l);
+		r.service = l.includes('8h00') && l.includes('20h00') && /touche Q/.test(l);
 		r.courte = Jeu.jours.length < 7 ? /aucun événement réel le dimanche 20 septembre/.test(l) : true;
 		TRANSITION_JOUR.jour = 2; r.courteUneFois = !/aucun événement réel/.test(lignesTransitionJour().join(' '));
 		// Équipes : 20 minutes de jeu (1 000 ms de l'horloge des équipes = 1 min de jeu au rythme normal)
@@ -2102,7 +2102,17 @@ for (const s of semaines) {
 // Prompt 133 : « Quitter la journée » en secondaire, gravité « élevée » en rouge franc doublée par la taille,
 // badge à texte sombre en palette protan / deutan, touche F (plein écran)
 {
-	verifier(/t\('quitter\.bouton'\), quitterJourneeRapide, false, true\)/.test(readFileSync(join(pub, 'panneau.js'), 'utf8')), 'prompt 133 : « Quitter la journée » doit être secondaire');
+	// Prompt 124 : le bouton a quitté le bandeau (immersion) — l'action est dans le menu Échap, la touche Q reste
+	{
+		const pan = readFileSync(join(pub, 'panneau.js'), 'utf8');
+		const imm = readFileSync(join(pub, 'immersion.js'), 'utf8');
+		verifier(!/t\('quitter\.bouton'\)|t\('accueil\.aide'\)|t\('jeu\.recommencer'\)/.test(pan), 'prompt 124 : plus de bouton Quitter la journée / Aide / Recommencer dans le bandeau');
+		verifier(/cle: 'quitter\.bouton'[^\n]*quitterJourneeRapide/.test(imm) && /cle: 'jeu\.recommencer'[^\n]*'reset'/.test(imm) && /cle: 'mp\.aide'/.test(imm), 'prompt 124 : quitter la journée, recommencer et aide dans le menu Échap');
+		verifier(!/t\('mp\.clavier'\)/.test(readFileSync(join(pub, 'menu.js'), 'utf8')), 'prompt 124 : plus de ligne d\'aide clavier sur le menu principal');
+		const sk = readFileSync(join(pub, 'sketch.js'), 'utf8');
+		const be = sk.slice(sk.indexOf('function bandeauEtat'), sk.indexOf('dessinerSomnolence();', sk.indexOf('function bandeauEtat')));
+		verifier(/annoncer\(/.test(be) && !/text\(|rect\(/.test(be), 'prompt 124 : l\'état du jeu est annoncé (aria-live), plus dessiné');
+	}
 	verifier(/g === 'elevee' \? C\.rougeFonce/.test(readFileSync(join(pub, 'carte.js'), 'utf8')) && /const tm = g === 'elevee' \? 36/.test(readFileSync(join(pub, 'carte-alertes.js'), 'utf8')), 'prompt 133 : gravité élevée en rouge franc et plus grande');
 	verifier(/\['protan', 'deutan'\]\.includes\(Confort\.Reglages\.daltonisme\)/.test(readFileSync(join(pub, 'ds.js'), 'utf8')), 'prompt 133 : badge lisible en protan / deutan');
 	verifier(/function basculerPleinEcran/.test(readFileSync(join(pub, 'sketch.js'), 'utf8')), 'prompt 133 : touche F, plein écran');

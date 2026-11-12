@@ -989,6 +989,10 @@ function composerVue() {
 				? t('bureau.finJournee') // prompt 51
 				: t(typeof MOBILE !== 'undefined' && MOBILE.actif ? 'bureau.installerMobile' : 'bureau.installer'); // prompt 60 : consigne tactile
 	if (phase === 'soir' && SOIR.sortie) return; // prompt 69 : pendant la sortie, pas de consigne
+	// Prompt 124 : la consigne « Cliquez sur le PC… » n'est plus affichée en permanence (immersion) ; elle ne revient
+	// qu'après 10 s sans geste, pour qui hésite. Les messages d'état (incident, mail, soir) restent.
+	const consigne = msg === t('bureau.installer') || msg === t('bureau.installerMobile');
+	if (consigne && typeof inactifDepuis !== 'undefined' && millis() - inactifDepuis < 10000) return;
 	textFont(POLICE_DONNEES);
 	textSize(22);
 	const lm = textWidth(msg) + 40;
