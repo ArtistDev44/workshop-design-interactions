@@ -1,39 +1,165 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Nantes en régulation — PATRIMOINE.EXE · NTE001</title>
-<link rel="preload" as="image" href="/presentation/img/decision.webp">
-<link rel="preload" as="image" href="/presentation/img/sources.webp">
-<link rel="preload" as="image" href="/presentation/img/bureau.webp">
-<link rel="preload" as="image" href="/presentation/img/telephone.webp">
-<link rel="preload" as="image" href="/presentation/img/equipe/matteo-pp.webp">
-<link rel="preload" as="image" href="/presentation/img/equipe/guillaume-pp.webp">
-<link rel="icon" href="/favicon.svg">
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<meta property="slidev:version" content="53.1.0">
-<meta name="description" content="&quot;Présentation du jeu « Nantes en régulation » (ESD Nantes, B3 Design, 9, 10 &amp; 12 novembre 2026).\nChaîne source → grammaire → système → œuvre. Construit avec Slidev (prompts 82, 94 et 99).\n&quot;">
-<meta name="author" content="&quot;Mattéo Brevet &amp; Guillaume Renoult&quot;">
-<meta name="keywords" content="&quot;Nantes, Naolib, régulation, données ouvertes, jeu vidéo, p5.js, PATRIMOINE.EXE, ESD Nantes&quot;">
-<meta property="og:title" content="Nantes en régulation — PATRIMOINE.EXE · NTE001">
-<meta property="og:description" content="Rejouer une semaine réelle du réseau de transports nantais, en salle de contrôle. Présentation du jeu (ESD Nantes, B3 Design, 2026).">
-<meta property="og:image" content="https://workshop-design-interactions.pages.dev/presentation/og-image.png">
-<meta property="og:url" content="https://workshop-design-interactions.pages.dev/presentation/">
-<meta property="twitter:card" content="summary_large_image">
-<meta property="twitter:title" content="Nantes en régulation — PATRIMOINE.EXE · NTE001">
-<meta property="twitter:description" content="Rejouer une semaine réelle du réseau de transports nantais, en salle de contrôle.">
-<meta property="twitter:image" content="https://workshop-design-interactions.pages.dev/presentation/og-image.png">  <script type="module" crossorigin src="/presentation/assets/index-CxTjHdjB.js"></script>
-  <link rel="modulepreload" crossorigin href="/presentation/assets/rolldown-runtime-XKyaHtl9.js">
-  <link rel="modulepreload" crossorigin href="/presentation/assets/modules/shiki-DGvFi9d5.js">
-  <link rel="modulepreload" crossorigin href="/presentation/assets/useClicks-DDvjTulw.js">
-  <link rel="modulepreload" crossorigin href="/presentation/assets/modules/vue-Cvcc9j5C.js">
-  <link rel="stylesheet" crossorigin href="/presentation/assets/modules/shiki-V4-KMA-J.css">
-  <link rel="stylesheet" crossorigin href="/presentation/assets/index-BNndVvkI.css">
-</head>
-<body>
-  <div id="app"></div>
-  <div id="mermaid-rendering-container"></div>
-  
-</body>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+		<meta name="apple-mobile-web-app-title" content="Régulation" />
+		<title>Nantes en régulation — jeu de régulation des transports nantais</title>
+		<meta name="color-scheme" content="dark" />
+		<!-- Prompt 45 : SEO et partage (aucun service externe, aucun traceur) -->
+		<meta name="description" content="Jeu en pixel art : régulez le réseau de transports nantais à partir de données réelles (retards Naolib, météo, agenda de Nantes Métropole). Mode histoire en trois semaines et mode temps réel." />
+		<meta name="robots" content="index, follow" />
+		<link rel="canonical" href="https://workshop-design-interactions.pages.dev/" />
+		<meta name="theme-color" content="#0d0c0c" />
+		<link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+		<link rel="icon" href="./favicon.ico" sizes="48x48" />
+		<link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+		<link rel="manifest" href="./manifest.webmanifest" />
+		<!-- Polices du Pixel Design System, auto-hébergées (fonts.css + fonts/) : seulement en http(s) — en file://
+		     le navigateur bloque les polices (origine null) ; le jeu garde alors la police système de repli -->
+		<script>
+			if (location.protocol !== 'file:') {
+				['jetbrains-mono-var-latin', 'jetbrains-mono-var-latin-ext'].forEach(function (f) {
+					var l = document.createElement('link');
+					l.rel = 'preload'; l.as = 'font'; l.type = 'font/woff2'; l.crossOrigin = ''; l.href = './fonts/' + f + '.woff2';
+					document.head.appendChild(l);
+				});
+				var css = document.createElement('link');
+				css.rel = 'stylesheet'; css.href = './fonts.css';
+				document.head.appendChild(css);
+				// Déclenche le chargement (écran de chargement + re-détection ds.js / sketch.js) ; échec silencieux
+				if (document.fonts && document.fonts.load) ['400 16px "JetBrains Mono"', '700 16px "JetBrains Mono"'].forEach(function (f) { document.fonts.load(f).catch(function () {}); });
+			}
+		</script>
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="PATRIMOINE.EXE · NTE001" />
+		<meta property="og:title" content="Nantes en régulation" />
+		<meta property="og:description" content="Jeu en pixel art : régulez le réseau de transports nantais à partir de données réelles (retards Naolib, météo, agenda de Nantes Métropole). Mode histoire en trois semaines et mode temps réel." />
+		<meta property="og:url" content="https://workshop-design-interactions.pages.dev/" />
+		<meta property="og:image" content="https://workshop-design-interactions.pages.dev/og-image.jpg" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta property="og:image:alt" content="Écran titre de Nantes en régulation : le bureau de la salle de régulation en pixel art, menu Nouvelle partie, Paramètres, Aide, Tutoriel." />
+		<meta property="og:locale" content="fr_FR" />
+		<meta property="og:locale:alternate" content="en_GB" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content="Nantes en régulation" />
+		<meta name="twitter:description" content="Jeu en pixel art : régulez le réseau de transports nantais à partir de données réelles (retards Naolib, météo, agenda de Nantes Métropole). Mode histoire en trois semaines et mode temps réel." />
+		<meta name="twitter:image" content="https://workshop-design-interactions.pages.dev/og-image.jpg" />
+		<script type="application/ld+json">
+			{
+				"@context": "https://schema.org",
+				"@type": "VideoGame",
+				"name": "Nantes en régulation",
+				"url": "https://workshop-design-interactions.pages.dev/",
+				"description": "Jeu en pixel art : régulez le réseau de transports nantais à partir de données réelles (retards Naolib, météo, agenda de Nantes Métropole). Mode histoire en trois semaines et mode temps réel.",
+				"inLanguage": ["fr", "en"],
+				"genre": ["Simulation", "Gestion"],
+				"gamePlatform": "Navigateur web",
+				"isAccessibleForFree": true,
+				"image": "https://workshop-design-interactions.pages.dev/og-image.jpg"
+			}
+		</script>
+		<!-- Prompt 27 : fond sombre et écran de chargement posés AVANT tout CSS externe et tout script (aucun flash clair) -->
+		<style>
+			html, body { margin: 0; background: #0c1016; color: #ffffff; }
+			#chargement { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; background: #0d0c0c; color: #ffffff; font-family: 'JetBrains Mono', ui-monospace, monospace; text-align: center; transition: opacity 300ms ease-out; }
+			#chargement.masque { opacity: 0; pointer-events: none; }
+			#chargement[hidden] { display: none; }
+			#chargement .logo { display: block; margin: 0 auto 24px; width: 96px; height: 80px; }
+			#chargement .titre { margin: 0; font-family: 'Bitsy Pixels', ui-monospace, 'JetBrains Mono', monospace; font-size: clamp(28px, 4vw, 56px); font-weight: 700; }
+			#chargement .code { margin: 8px 0 0; font-family: ui-monospace, 'JetBrains Mono', monospace; font-size: clamp(14px, 1.4vw, 20px); }
+			#chargement .etat { margin: 28px 0 0; font-size: clamp(14px, 1.4vw, 20px); }
+			@media (prefers-reduced-motion: reduce) { #chargement { transition: none; } }
+		</style>
+		<link rel="stylesheet" href="./style.css" />
+	</head>
+	<body>
+		<div id="chargement" role="status" aria-live="polite">
+			<div>
+				<!-- Pictogramme dessiné en SVG inline : un moniteur et une ligne de bus (aucun fichier image) -->
+				<svg class="logo" viewBox="0 0 24 20" aria-hidden="true" shape-rendering="crispEdges">
+					<rect x="1" y="1" width="22" height="14" fill="#ffffff" />
+					<rect x="3" y="3" width="18" height="10" fill="#d4031c" style="fill: var(--primaire, #d4031c)" />
+					<rect x="4" y="9" width="16" height="1" fill="#ffffff" />
+					<rect x="6" y="7" width="3" height="3" fill="#00ca64" />
+					<rect x="15" y="7" width="3" height="3" fill="#ffffff" />
+					<rect x="11" y="15" width="2" height="3" fill="#ffffff" />
+					<rect x="7" y="18" width="10" height="1" fill="#ffffff" />
+				</svg>
+				<p class="titre">Nantes en régulation</p>
+				<p class="code">PXE-NTE001-G01-W01</p>
+				<p class="etat" id="chargement-message">Chargement… · Loading…</p>
+			</div>
+		</div>
+		<main id="scene" aria-label="Nantes en régulation — salle de contrôle des transports nantais">
+			<noscript>Ce jeu nécessite JavaScript. · This game requires JavaScript.</noscript>
+			<p id="annonces" class="sr-only" aria-live="polite"></p>
+		</main>
+
+		<!-- Tout est local et relatif : le jeu fonctionne sans réseau et ouvert par double clic. -->
+		<script src="./lib/p5.min.js"></script>
+		<script src="./data/lignes.js"></script>
+		<script src="./data/lieux.js"></script>
+		<script src="./data/semaines.js"></script>
+		<script src="./data/fallback.js"></script>
+		<script src="./data/messages.js"></script>
+		<script src="./data/reponses.js"></script>
+		<script src="./data/loire.js"></script>
+		<script src="./gtfsrt.js"></script>
+		<script src="./i18n.js"></script>
+		<script src="./sauvegarde.js"></script>
+		<script src="./game.js"></script>
+		<script src="./confort.js"></script>
+		<script src="./sketch.js"></script>
+		<script src="./ds.js"></script>
+		<script src="./theme.js"></script>
+		<script src="./progression-bureau.js"></script>
+		<script src="./bureau.js"></script>
+		<script src="./os.js"></script>
+		<script src="./applis.js"></script>
+		<script src="./donnees.js"></script>
+		<script src="./autorisations.js"></script>
+		<script src="./menu.js"></script>
+		<script src="./credits.js"></script>
+		<script src="./guide.js"></script>
+		<script src="./telephone.js"></script>
+		<script src="./notifs-tel.js"></script>
+		<script src="./telephone-main.js"></script>
+		<script src="./histoire.js"></script>
+		<script src="./immersion.js"></script>
+		<script src="./mecaniques.js"></script>
+		<script src="./accessibilite.js"></script>
+		<script src="./texte.js"></script>
+		<script src="./enquete.js"></script>
+		<script src="./juice.js"></script>
+		<script src="./glisser.js"></script>
+		<script src="./panneau.js"></script>
+		<script src="./rythme.js"></script>
+		<script src="./taches.js"></script>
+		<script src="./taches-ui.js"></script>
+		<script src="./traces.js"></script>
+		<script src="./multitache.js"></script>
+		<script src="./sieste.js"></script>
+		<script src="./gameover.js"></script>
+		<script src="./community.js"></script>
+		<script src="./patron.js"></script>
+		<script src="./journal-donnees.js"></script>
+		<script src="./journal.js"></script>
+		<script src="./carte.js"></script>
+		<script src="./carte-alertes.js"></script>
+		<script src="./menu-app.js"></script>
+		<script src="./journee.js"></script>
+		<script src="./soir.js"></script>
+		<script src="./cafe.js"></script>
+		<script src="./feedback.js"></script>
+		<script src="./micro.js"></script>
+		<script src="./webcam.js"></script>
+		<script src="./mobile.js"></script>
+		<script src="./portrait.js"></script>
+		<script src="./installation.js"></script>
+	</body>
 </html>
