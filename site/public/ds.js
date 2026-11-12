@@ -194,6 +194,119 @@ function dsBadge(x, y, txt, type) {
 	zoneTexteFin();
 }
 
+/** Interrupteur (prompt 175) : réglage à deux états, aligné à DROITE sur xDroite, haut de 44 px.
+ * L'état se lit sans la couleur : libellé « Activé » / « Désactivé » (ou `libelle`), curseur carré à droite (activé)
+ * ou à gauche (désactivé), repère sombre dans le curseur activé, piste pleine ou seulement bordée.
+ * La piste active prend la couleur principale (DS.primaire, theme.js). Renvoie la largeur occupée. */
+const DS_INTERRUPTEUR = { piste: 64, hPiste: 32, h: 44, ecart: 12 };
+/** Largeur d'un interrupteur (libellé + piste), sans le dessiner : pour placer ce qui l'entoure */
+function dsLargeurInterrupteur(actif, libelle) {
+	textFont(DS.policeTexte);
+	textStyle(NORMAL);
+	textSize(20);
+	return Math.ceil(textWidth(libelle || t(actif ? 'commun.active' : 'commun.desactive'))) + DS_INTERRUPTEUR.ecart + DS_INTERRUPTEUR.piste;
+}
+function dsInterrupteur(xDroite, y, actif, action, libelle, focus) {
+	const I = DS_INTERRUPTEUR;
+	const lib = libelle || t(actif ? 'commun.active' : 'commun.desactive');
+	noStroke();
+	const l = dsLargeurInterrupteur(actif, libelle);
+	const lt = l - I.ecart - I.piste;
+	const x = xDroite - l;
+	const px = xDroite - I.piste;
+	const py = y + (I.h - I.hPiste) / 2;
+	const survol = !!action && mouseX >= x - 8 && mouseX <= xDroite && mouseY >= y && mouseY <= y + I.h;
+	if (actif) {
+		fill(DS.primaire);
+		rect(px, py, I.piste, I.hPiste);
+	} else {
+		fill(DS.blanc05);
+		rect(px, py, I.piste, I.hPiste);
+		noFill();
+		stroke(DS.blanc50);
+		strokeWeight(2);
+		rect(px + 1, py + 1, I.piste - 2, I.hPiste - 2);
+		noStroke();
+	}
+	const c = I.hPiste - 8; // curseur carré
+	const cx = actif ? px + I.piste - 4 - c : px + 4;
+	fill(actif ? DS.blanc : DS.blanc75);
+	rect(cx, py + 4, c, c);
+	if (actif) {
+		fill(DS.fond);
+		rect(cx + c / 2 - 2, py + 10, 4, c - 12); // repère « I » : forme, pas couleur
+	}
+	if (survol || focus) {
+		noFill();
+		stroke(DS.blanc);
+		strokeWeight(2);
+		rect(px - 5, py - 5, I.piste + 10, I.hPiste + 10);
+		noStroke();
+	}
+	fill(actif ? DS.blanc : DS.blanc75);
+	textAlign(RIGHT, CENTER);
+	zoneTexteDebut('interrupteur', x, y, lt, I.h);
+	text(lib, px - I.ecart, y + I.h / 2 - 1);
+	zoneTexteFin();
+	textAlign(LEFT, TOP);
+	if (action) boutons.push({ x: x - 8, y, l: l + 8, h: I.h, action });
+	return l;
+}
+
+/** Curseur à crans (prompt 175) : dix segments de 10 %, boutons − et +, valeur écrite à droite (« 70 % »).
+ * regler(v) reçoit la nouvelle valeur (0 à 100, pas de 10) ; noms : [nom du bouton −, nom du bouton +] (infobulles).
+ * Les segments pleins prennent la couleur principale ; les vides ne sont que bordés. Haut de 44 px. */
+function dsCurseur(x, y, l, valeur, regler, noms) {
+	const h = 44;
+	const lb = 44;
+	const lv = 84;
+	const px = x + lb + 12;
+	const lp = l - 2 * lb - 24 - lv;
+	const seg = lp / 10;
+	const v = Math.max(0, Math.min(100, Math.round(valeur / 10) * 10));
+	const petit = (bx, icone, pas, inactif, nom) => {
+		const survol = !inactif && mouseX >= bx && mouseX <= bx + lb && mouseY >= y && mouseY <= y + h;
+		noStroke();
+		fill(survol ? DS.blanc15 : DS.blanc05);
+		rect(bx, y, lb, h);
+		noFill();
+		stroke(inactif ? DS.blanc15 : DS.blanc);
+		strokeWeight(2);
+		rect(bx + 1, y + 1, lb - 2, h - 2);
+		noStroke();
+		iconeLucide(icone, bx + 10, y + 10, 24, inactif ? DS.blanc50 : DS.blanc);
+		if (!inactif) boutons.push({ x: bx, y, l: lb, h, action: () => regler(v + pas) });
+		if (survol && nom && typeof infobulle === 'function') infobulle(nom, bx, y + h + 8);
+	};
+	petit(x, 'minus', -10, v <= 0, noms && noms[0]);
+	for (let i = 0; i < 10; i++) {
+		const plein = v >= (i + 1) * 10;
+		const sx = px + i * seg;
+		noStroke();
+		if (plein) {
+			fill(DS.primaire);
+			rect(sx, y + 8, seg - 4, h - 16);
+		} else {
+			noFill();
+			stroke(DS.blanc50);
+			strokeWeight(2);
+			rect(sx + 1, y + 9, seg - 6, h - 18);
+			noStroke();
+		}
+	}
+	boutons.push({ x: px, y, l: lp, h, action: () => regler(Math.max(0, Math.min(10, Math.ceil((mouseX - px) / seg))) * 10) });
+	petit(px + lp + 8, 'plus', 10, v >= 100, noms && noms[1]);
+	fill(DS.blanc);
+	textFont(DS.policeTexte);
+	textStyle(NORMAL);
+	textSize(22);
+	textAlign(RIGHT, CENTER);
+	zoneTexteDebut('curseur', x + l - lv, y, lv, h);
+	text(v + ' %', x + l, y + h / 2 - 1);
+	zoneTexteFin();
+	textAlign(LEFT, TOP);
+}
+
 /** Panneau / dialogue du design system : fond noir, bordure blanc 15 %, barre de titre en pixels */
 function dsPanneau(x, y, l, h, titre, couleurBarre) {
 	noStroke();

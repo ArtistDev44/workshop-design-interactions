@@ -218,7 +218,7 @@ function dessinerMicro() {
 function basculerMicroReglage() {
 	Confort.Reglages.basculer('micro');
 	if (!microActive()) arreterMicro();
-	annoncer(t('micro.reglage') + ' : ' + t(microActive() ? 'commun.oui' : 'commun.non'));
+	annoncer(t('micro.reglage') + ' : ' + t(microActive() ? 'commun.active' : 'commun.desactive'));
 }
 
 /** Micro de table en pixel art (pied, tige, capsule grillagée) ; voyant rouge pendant l'appui */

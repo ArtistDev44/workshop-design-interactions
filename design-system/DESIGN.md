@@ -342,10 +342,19 @@ Section rédigée à la main (hors extraction dembrandt). Jetons dans `site/publ
 | Taille | Largeur | Usage |
 |---|---|---|
 | `etroite` | 640 | pause, menu Échap, réveil, boîte d'import |
-| `moyenne` | 960 | confirmations (recommencer, reprendre, partir, démission), paramètres, partage, installation, appli débloquée |
-| `large` | 1280 | aide, accessibilité, options de jeu, palmarès, explication du poste, tâche, inspection, blâme, mail de fin, rapport de la veille |
+| `moyenne` | 960 | confirmations (recommencer, reprendre, partir, démission), partage, installation, appli débloquée |
+| `large` | 1280 | aide, paramètres (une fenêtre à quatre onglets, prompt 175), palmarès, explication du poste, tâche, inspection, blâme, mail de fin, rapport de la veille |
 
 - **Marge interne** `DS.fenetre.marge = 48` et **hauteur d'en-tête** `DS.fenetre.entete = 80` (titre compris) : valeurs de référence pour toute nouvelle fenêtre.
 - **Hors gabarit** (objets de la pièce, pas des fenêtres du DS) : téléphone en main (520), livre du tutoriel (1360), feuille du rapport de fin de semaine (1040), écrans pleins (autorisations, game over, cinématique).
 - **Clic sur le fond** : ferme la fenêtre comme Échap (`clicFondFenetre()`, appelé par `mousePressed`), sauf les fenêtres de `FENETRES_BLOQUANTES` (`sketch.js`) qui exigent une réponse. Une fenêtre non classée est bloquante.
 
+### Interrupteur et curseur
+Composants ajoutés au prompt 175 (`site/public/ds.js`), employés par la fenêtre des paramètres (`parametres.js`) et par « Ne pas déranger » du téléphone.
+
+- **Interrupteur** — `dsInterrupteur(xDroite, y, actif, action, libelle, focus)` : réglage à deux états, aligné à droite, haut de 44 px (cible ≥ 44 px). Piste de 64 × 32, curseur carré de 24 px, arrondi 0. Largeur sans dessin : `dsLargeurInterrupteur(actif, libelle)`.
+  - **L'état ne dépend jamais de la couleur seule** : libellé « Activé » / « Désactivé » (`commun.active`, `commun.desactive` ; « On » / « Off » en anglais) à gauche de la piste, curseur à droite (activé) ou à gauche (désactivé), repère sombre « I » dans le curseur activé, piste pleine (activé) ou seulement bordée blanc 50 % (désactivé).
+  - Piste active : couleur principale (`DS.primaire`, palette de `theme.js`) — aucune couleur en dur. Survol / focus : bordure blanche autour de la piste.
+  - Jamais de « oui / non » pour un réglage : toujours cet interrupteur. Le nom du réglage est écrit à côté (ou au-dessus quand la place manque, comme sur le téléphone).
+- **Curseur à crans** — `dsCurseur(x, y, l, valeur, regler, noms)` : dix segments de 10 %, boutons − et + (icônes Lucide `minus` / `plus`, nommées par infobulle), valeur écrite à droite (« 70 % »). Segments pleins en couleur principale, vides bordés blanc 50 %. Clavier : ← → par pas de 10. Employé pour le volume (0 % = son désactivé).
+- **Carte de réglage** (fenêtre des paramètres) : icône Lucide 24 px, nom (20 px gras, sur deux lignes au besoin), commande à droite, explication dessous (18 / 28 px, blanc 75 %). Focus clavier : bordure blanche + liseré de couleur principale à gauche.

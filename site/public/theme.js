@@ -65,8 +65,8 @@ function primaireRGBA(a) {
 	return 'rgba(' + parseInt(h.slice(0, 2), 16) + ',' + parseInt(h.slice(2, 4), 16) + ',' + parseInt(h.slice(4, 6), 16) + ',' + a + ')';
 }
 /** Rangée de pastilles (paramètres) : une par palette, la choisie avec la double bordure de focus */
-function selecteurCouleur(xDroite, y) {
-	const s = 52;
+function selecteurCouleur(xDroite, y, taille) {
+	const s = taille || 52;
 	PALETTES_COULEUR.forEach((p, i) => {
 		const x = xDroite - (PALETTES_COULEUR.length - i) * (s + 10);
 		const actif = p.id === Theme.id;

@@ -2453,7 +2453,7 @@ for (const langue of ['fr', 'en']) {
 		const dico = vm.runInContext(`TRADUCTIONS[${JSON.stringify(langue)}]`, contexte(langue));
 		for (const k of ['mp.installer', 'pwa.aide.titre', 'pwa.aide.intro', 'pwa.aide.ordinateur.k', 'pwa.aide.ordinateur', 'pwa.aide.android.k', 'pwa.aide.android', 'pwa.aide.ios.k', 'pwa.aide.ios', 'pwa.aide.horsLigne', 'pwa.aide.dejaInstalle', 'mp.aide', 'mp.credits']) verifier(typeof dico[k] === 'string' && dico[k].length > 0, `prompt 171 : clé ${k} absente (${langue})`);
 		for (const k of ['mp.credits.menu', 'pwa.installer', 'pwa.badge']) verifier(dico[k] === undefined, `prompt 171 : clé ${k} devenue inutile, à supprimer (${langue})`);
-		for (const k of ['mp.retour', 'param.retour', 'credits.retour']) verifier(!/[←‹›→]/.test(dico[k] || ''), `prompt 171 : flèche dans le libellé ${k} (${langue})`);
+		for (const k of ['mp.retour', 'credits.retour']) verifier(!/[←‹›→]/.test(dico[k] || ''), `prompt 171 : flèche dans le libellé ${k} (${langue})`);
 	}
 }
 
@@ -2501,7 +2501,7 @@ for (const langue of ['fr', 'en']) {
 	// Plus aucun voile de fenêtre écrit en dur (fill(13, 12, 12, 150|190) plein écran)
 	for (const f of ['sketch.js', 'immersion.js', 'telephone-main.js', 'autorisations.js']) verifier(!/fill\((13, 12, 12, (150|190)[^)]*|'rgba\(13,12,12,0\.7\)')\);[^\n]*\n\trect\(0, 0, L, H\)/.test(lire(f)), `prompt 173 : ${f} dessine encore son propre voile de fenêtre`);
 	// Chaque fenêtre prend sa largeur dans DS.fenetre (plus de « const l = 1100 » dans une fonction fenetreX)
-	const fichiersFenetres = ['sketch.js', 'immersion.js', 'histoire.js', 'mecaniques.js', 'taches-ui.js', 'applis.js', 'accessibilite.js', 'journee.js', 'menu.js', 'installation.js', 'aide.js'];
+	const fichiersFenetres = ['sketch.js', 'immersion.js', 'histoire.js', 'mecaniques.js', 'taches-ui.js', 'applis.js', 'parametres.js', 'journee.js', 'menu.js', 'installation.js', 'aide.js']; // prompt 175 : parametres.js remplace les fenêtres d'accessibilite.js et de taches-ui.js
 	let nbFenetres = 0;
 	for (const f of fichiersFenetres)
 		for (const m of lire(f).matchAll(/\nfunction (fenetre[A-Z]\w*|dessinerPause|dessinerReveil)\(\) \{\n([\s\S]*?)\n\}/g)) {
@@ -2510,13 +2510,13 @@ for (const langue of ['fr', 'en']) {
 			nbFenetres++;
 			verifier(/^DS\.fenetre\.(etroite|moyenne|large)$/.test(larg[1]), `prompt 173 : ${f} ${m[1]} — largeur « ${larg[1]} » hors des trois tailles du DS`);
 		}
-	verifier(nbFenetres >= 20, `prompt 173 : seulement ${nbFenetres} fenêtres relevées (≥ 20 attendues)`);
+	verifier(nbFenetres >= 19, `prompt 173 : seulement ${nbFenetres} fenêtres relevées (≥ 19 attendues)`); // prompt 175 : trois fenêtres de réglages fondues en une (21 → 19)
 	// Clic sur le fond : point unique dans mousePressed, listes explicites, aucune fenêtre dans les deux à la fois
 	verifier(/\tif \(clicFondFenetre\(\)\) return;/.test(sk173.match(/function mousePressed\(\) \{[\s\S]*?\n\}/)[0]), 'prompt 173 : mousePressed ne passe plus par clicFondFenetre()');
 	const bloquantes = vm.runInNewContext(sk173.match(/const FENETRES_BLOQUANTES = (\[[^\]]*\]);/)[1]);
 	const fermables = [...sk173.match(/const FERMETURE_FOND = \{([\s\S]*?)\n\};/)[1].matchAll(/\n\t(\w+):/g)].map((x) => x[1]);
 	for (const n of ['reset', 'reprise', 'demission', 'partir', 'blame', 'inspection', 'tache', 'mailFin', 'rapport', 'cafe']) verifier(bloquantes.includes(n), `prompt 173 : la fenêtre « ${n} » exige une réponse, elle doit rester bloquante`);
-	for (const n of ['aide', 'parametres', 'partage', 'installation', 'palmares', 'menu', 'telephone', 'accessibilite', 'optionsJeu']) verifier(fermables.includes(n), `prompt 173 : la fenêtre « ${n} » doit se fermer au clic sur le fond`);
+	for (const n of ['aide', 'parametres', 'partage', 'installation', 'palmares', 'menu', 'telephone']) verifier(fermables.includes(n), `prompt 173 : la fenêtre « ${n} » doit se fermer au clic sur le fond`);
 	verifier(!fermables.some((n) => bloquantes.includes(n)), 'prompt 173 : une fenêtre est à la fois bloquante et fermable au clic sur le fond');
 	const dessinees = [...sk173.match(/function contenuFenetre\(\) \{[\s\S]*?\n\}/)[0].matchAll(/fenetre === '(\w+)'/g)].map((x) => x[1]);
 	for (const n of new Set(dessinees)) verifier(bloquantes.includes(n) || fermables.includes(n), `prompt 173 : fenêtre « ${n} » non classée (bloquante ou fermable au clic sur le fond)`);
@@ -2527,7 +2527,7 @@ for (const langue of ['fr', 'en']) {
 		const essai = (nom, x, y, plus) => vm.runInContext(`fenetre = '${nom}'; ZONE_FENETRE = { x: 480, y: 100, l: 960, h: 800 }; mouseX = ${x}; mouseY = ${y}; tutoriel = null; smsActif = false; ${plus || ''}; [clicFondFenetre(), fenetre]`, ctx);
 		verifier(JSON.stringify(essai('aide', 20, 20)) === '[true,null]', 'prompt 173 : un clic sur le fond doit fermer l\'aide');
 		verifier(JSON.stringify(essai('aide', 900, 500)) === '[false,"aide"]', 'prompt 173 : un clic dans la fenêtre ne doit pas la fermer');
-		verifier(JSON.stringify(essai('accessibilite', 20, 20)) === '[true,"parametres"]' && JSON.stringify(essai('optionsJeu', 20, 20)) === '[true,"parametres"]', 'prompt 173 : le fond des sous-fenêtres des paramètres doit y revenir, comme Échap');
+		verifier(JSON.stringify(essai('parametres', 20, 20)) === '[true,null]' && !fermables.includes('accessibilite') && !fermables.includes('optionsJeu'), 'prompt 175 : une seule fenêtre de paramètres, fermée au clic sur le fond (plus de sous-fenêtres)');
 		for (const n of bloquantes) verifier(JSON.stringify(essai(n, 20, 20)) === `[false,"${n}"]`, `prompt 173 : la fenêtre bloquante « ${n} » se ferme au clic sur le fond`);
 		verifier(JSON.stringify(essai('aide', 20, 20, 'smsActif = true')) === '[false,"aide"]' && JSON.stringify(essai('aide', 20, 20, 'tutoriel = { etape: 0 }')) === '[false,"aide"]', 'prompt 173 : sous le tutoriel ou les SMS, le clic sur le fond ne ferme rien');
 		verifier(JSON.stringify(essai('inconnue', 20, 20)) === '[false,"inconnue"]', 'prompt 173 : une fenêtre non classée doit être traitée comme bloquante');
@@ -2538,6 +2538,77 @@ for (const langue of ['fr', 'en']) {
 	verifier(!/#f2c94c/i.test(lire('bureau.js')) && !/stroke\('#FFC138'\)/.test(lire('gameover.js')), 'prompt 173 : contour de survol / focus encore jaune (bureau.js, gameover.js)');
 	verifier(/rgba\(13, 12, 12, 0\.8\)/.test(lire('style.css').match(/\.sv-fond \{[^}]*\}/)[0]) && /ev\.target === fond && fermerImport\(\)/.test(lire('sauvegarde.js')), 'prompt 173 : la boîte d\'import doit avoir le même voile et se fermer au clic sur le fond');
 	verifier(/### Fenêtres et voiles/.test(readFileSync(join(pub, '..', '..', 'design-system', 'DESIGN.md'), 'utf8')), 'prompt 173 : DESIGN.md doit documenter les trois largeurs de fenêtre et le voile');
+}
+
+// Prompt 175 : paramètres en sections (une fenêtre à onglets), plein écran, volume maître, interrupteurs « Activé / Désactivé »
+{
+	const lire175 = (f) => readFileSync(join(pub, f), 'utf8');
+	const pa = lire175('parametres.js');
+	const tousJs = readdirSync(pub).filter((f) => f.endsWith('.js') && f !== 'sw.js' && f !== 'i18n.js').map((f) => [f, lire175(f)]);
+	// Une seule fenêtre, quatre sections, plus de sous-fenêtres ni de raccourcis chiffrés
+	verifier(/<script src="\.\/parametres\.js"><\/script>/.test(lire175('index.html')), 'prompt 175 : index.html doit charger parametres.js');
+	const onglets = [...pa.match(/const ONGLETS_PARAM = \[([\s\S]*?)\n\];/)[1].matchAll(/cle: '(\w+)'/g)].map((m) => m[1]);
+	verifier(JSON.stringify(onglets) === '["ecran","son","accessibilite","avance"]', `prompt 175 : sections attendues Écran · Son · Accessibilité · Avancé (${onglets.join(', ')})`);
+	for (const [f, src] of tousJs) {
+		verifier(!/fenetreAccessibilite|fenetreOptionsJeu|ouvrirAccessibilite|ouvrirOptionsJeu|toucheOptionsJeu|toucheAccessibilite/.test(src), `prompt 175 : ${f} référence encore une sous-fenêtre de paramètres`);
+		verifier(!/commun\.(oui|non)'|param\.touche|acc\.reprise|qr-edition/.test(src), `prompt 175 : ${f} emploie encore « oui / non », « touche {k} » ou la reprise sur un autre appareil`);
+		verifier(!/fenetre = 'accessibilite'|ouvrir\('optionsJeu'\)|ouvrir\('accessibilite'\)/.test(src), `prompt 175 : ${f} ouvre encore une fenêtre supprimée`);
+	}
+	verifier(/toucheDeblocage\(\) \|\| toucheParametres\(\)/.test(lire175('sketch.js')) && /keyCode === TAB \|\| keyCode === UP_ARROW \|\| keyCode === DOWN_ARROW/.test(pa) && /keyCode === ENTER \|\| keyCode === RETURN \|\| key === ' '/.test(pa), 'prompt 175 : navigation des paramètres par Tab / flèches et Entrée / Espace');
+	verifier(!/key === '\d'/.test(pa.match(/function toucheParametres\(\) \{[\s\S]*?\n\}/)[0]), 'prompt 175 : plus de raccourci chiffré dans les paramètres');
+	// Tous les réglages mémorisés restent accessibles dans la fenêtre (inventaire : DEFAUTS de confort.js)
+	const cf = lire175('confort.js');
+	const defauts = [...cf.match(/const DEFAUTS = \{([^}]*)\}/)[1].matchAll(/(\w+):/g)].map((m) => m[1]);
+	const optionsJeu = vm.runInNewContext(lire175('taches-ui.js').match(/const OPTIONS_JEU = (\[[^\]]*\]);/)[1]);
+	const icones175 = vm.runInNewContext('(' + pa.match(/const ICONES_OPTIONS_JEU = (\{[\s\S]*?\n\});/)[1] + ')');
+	const lucide = lire175('icones-lucide.js');
+	for (const k of defauts) verifier(optionsJeu.includes(k) || new RegExp(`'${k}'|R\\.${k}\\b`).test(pa), `prompt 175 : le réglage « ${k} » n'est plus accessible dans la fenêtre des paramètres`);
+	for (const k of optionsJeu) verifier(icones175[k] && lucide.includes(`'${icones175[k]}': [`), `prompt 175 : l'option « ${k} » de la section Avancé n'a pas d'icône Lucide embarquée`);
+	for (const m of pa.matchAll(/icone: '([a-z0-9-]+)'|, '([a-z0-9-]+)', t\('/g)) verifier(lucide.includes(`'${m[1] || m[2]}': [`) || lucide.includes(`\t${m[1] || m[2]}: [`), `prompt 175 : icône « ${m[1] || m[2]} » absente de icones-lucide.js`);
+	// Composants du DS : interrupteur (état lisible sans la couleur) et curseur ; documentés
+	const ds175 = lire175('ds.js');
+	verifier(/function dsInterrupteur\(xDroite, y, actif, action, libelle, focus\)/.test(ds175) && /commun\.active' : 'commun\.desactive'/.test(ds175) && /function dsCurseur\(x, y, l, valeur, regler, noms\)/.test(ds175), 'prompt 175 : ds.js doit fournir dsInterrupteur (libellé Activé / Désactivé) et dsCurseur');
+	verifier(!/#[0-9a-fA-F]{6}/.test(ds175.match(/function dsInterrupteur[\s\S]*?\n\}/)[0] + ds175.match(/function dsCurseur[\s\S]*?\n\}/)[0]), 'prompt 175 : l\'interrupteur et le curseur lisent la palette (DS.primaire), aucune couleur en dur');
+	verifier(/dsInterrupteur\(/.test(lire175('notifs-tel.js').match(/function contenuCentreNotifications[\s\S]*?\n\}/)[0]), 'prompt 175 : « Ne pas déranger » du téléphone doit être un interrupteur du DS');
+	verifier(/### Interrupteur et curseur/.test(readFileSync(join(pub, '..', '..', 'design-system', 'DESIGN.md'), 'utf8')), 'prompt 175 : DESIGN.md doit documenter l\'interrupteur et le curseur');
+	// Plein écran : une seule logique (touche F et interrupteur), état réel, jamais mémorisé
+	const sk175 = lire175('sketch.js');
+	verifier(tousJs.reduce((n, [, src]) => n + (src.match(/requestFullscreen\(\)/g) || []).length, 0) === 1, 'prompt 175 : requestFullscreen() doit n\'être appelé qu\'à un endroit (basculerPleinEcran)');
+	verifier(/addEventListener\('fullscreenchange'/.test(sk175) && /activer: basculerPleinEcran/.test(pa) && /pleinEcranPossible\(\) && \{ id: 'pleinEcran'/.test(pa) && !/pleinEcran/.test(cf), 'prompt 175 : interrupteur plein écran — état réel (fullscreenchange), masqué sans API, non mémorisé');
+	// Volume maître : mémorisé, rétrocompatible avec « son: true / false », 0 % = son désactivé
+	const essaiVolume = (stocke) => {
+		const st = new Map(stocke === undefined ? [] : [['pxe-nte001:jeu:reglages', JSON.stringify(stocke)]]);
+		const c = contexte('fr', st, true);
+		return { c, st, lireVolume: () => vm.runInContext('({ v: Confort.Reglages.volume, son: Confort.Reglages.son, n: Confort.Son.niveau() })', c), stocke: () => JSON.parse(st.get('pxe-nte001:jeu:reglages')) };
+	};
+	{
+		const a = essaiVolume({ son: true, musique: 'horizon', contrasteRenforce: true });
+		const r = a.lireVolume();
+		verifier(r.v === 100 && r.son === true && r.n === 1 && vm.runInContext('Confort.Reglages.musique === "horizon" && Confort.Reglages.contrasteRenforce === true', a.c), 'prompt 175 : réglages déjà stockés (sans volume) repris tels quels, volume à 100 %');
+		const b = essaiVolume({ son: false });
+		verifier(b.lireVolume().son === false && b.lireVolume().n === 0 && b.lireVolume().v === 100, 'prompt 175 : « son: false » déjà stocké doit rester muet');
+		vm.runInContext('Confort.Son.reglerVolume(40)', b.c);
+		verifier(b.lireVolume().son === true && Math.abs(b.lireVolume().n - 0.4) < 1e-9 && b.stocke().volume === 40 && b.stocke().son === true, 'prompt 175 : remonter le volume rétablit le son et mémorise la valeur');
+		vm.runInContext('Confort.Son.reglerVolume(0)', b.c);
+		verifier(b.lireVolume().son === false && b.lireVolume().n === 0 && b.stocke().volume === 0 && b.stocke().son === false, 'prompt 175 : 0 % équivaut à « son désactivé »');
+		vm.runInContext("Confort.Reglages.basculer('son')", b.c);
+		verifier(b.lireVolume().son === true && b.lireVolume().v === 100, 'prompt 175 : rétablir le son depuis 0 % doit redonner un volume audible');
+		vm.runInContext('Confort.Son.reglerVolume(57)', b.c);
+		verifier(b.lireVolume().v === 60 && vm.runInContext('Confort.Son.reglerVolume(250)', b.c) === 100 && vm.runInContext('Confort.Son.reglerVolume(-5)', b.c) === 0, 'prompt 175 : volume borné à 0–100, par pas de 10');
+		const d = essaiVolume({ son: true, volume: 30 });
+		verifier(d.lireVolume().v === 30 && Math.abs(d.lireVolume().n - 0.3) < 1e-9, 'prompt 175 : le volume mémorisé doit être relu au chargement');
+	}
+	verifier(/Son\.maitre\.gain\.value = GAIN_MAITRE \* Son\.niveau\(\)/.test(cf) && (cf.match(/\* Son\.niveau\(\)/g) || []).length >= 4, 'prompt 175 : le volume doit s\'appliquer au gain maître et à la musique en fichier');
+	// Textes : nouvelles clés dans les deux langues, clés retirées absentes, « Options de jeu » → « Avancé »
+	for (const langue of ['fr', 'en']) {
+		const c = contexte(langue);
+		const dico = vm.runInContext(`TRADUCTIONS[${JSON.stringify(langue)}]`, c);
+		for (const k of ['commun.active', 'commun.desactive', 'param.onglet.ecran', 'param.onglet.son', 'param.onglet.annonce', 'param.clavier', 'param.pleinEcran', 'param.pleinEcran.detail', 'param.volume', 'param.volume.detail', 'param.volume.moins', 'param.volume.plus', 'param.son.detail', 'acc.intensite.detail', 'acc.intensite.100', 'acc.intensite.50', 'acc.intensite.0', 'pleinEcran.f11', 'parametres.exporter.titre', 'parametres.copier.titre', 'param.horsLigne.detail', 'param.defiChrono.detail']) verifier(typeof dico[k] === 'string' && dico[k].length > 0, `prompt 175 : clé ${k} absente (${langue})`);
+		for (const k of ['commun.oui', 'commun.non', 'param.touche', 'param.note', 'param.retour', 'acc.ouvrir', 'optjeu.ouvrir', 'acc.reprise.titre', 'acc.reprise.texte', 'parametres.progression', 'param.musiqueCreditsLong', 'webcam.etat.on']) verifier(!(k in dico), `prompt 175 : clé ${k} devenue inutile, à retirer (${langue})`);
+		verifier(dico['optjeu.titre'] === (langue === 'fr' ? 'Avancé' : 'Advanced'), `prompt 175 : « Options de jeu » doit s'appeler « Avancé » (${langue})`);
+		for (const k of ['parametres.exporter', 'parametres.copier', 'parametres.importer', 'optjeu.remettre', 'optjeu.confirmerBouton', 'optjeu.note']) verifier(!/\(\d\)|1 à 9|1 to 9/.test(dico[k]), `prompt 175 : raccourci chiffré dans ${k} (${langue})`);
+		verifier(/100 ?%/.test(dico['acc.intensite.detail']) && /50 ?%/.test(dico['acc.intensite.detail']) && /0 ?%/.test(dico['acc.intensite.detail']), `prompt 175 : l'explication de l'intensité doit dire ce que font les trois valeurs (${langue})`);
+	}
 }
 
 // Service worker : chaque script de index.html est dans la liste hors ligne de sw.js

@@ -23,6 +23,7 @@ megaphone menu message-circle message-square message-square-warning mic minimize
 notebook-text paperclip pause pencil phone play plus power presentation refresh-cw reply rotate-ccw save search send
 settings share-2 sliders-horizontal square square-parking star sun thumbs-up timer traffic-cone tram-front trash-2
 trending-down trending-up triangle-alert trophy user users volume-2 volume-x wallet waves wrench x zap
+palette dices upload a-large-small cloud-off contrast lock-open webcam vibrate
 `
 	.trim()
 	.split(/\s+/);
