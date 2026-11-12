@@ -1,5 +1,5 @@
 /* Nantes en régulation — menu principal modernisé (prompt 35).
- * Écran titre plein écran affiché AVANT le bureau : Nouvelle partie, Reprendre, Paramètres, Aide, Tutoriel,
+ * Écran titre plein écran affiché AVANT le bureau : Nouvelle partie, Reprendre, Paramètres, Aide et tutoriel,
  * langue. « Nouvelle partie » ouvre le choix de la semaine (l'ancien accueil du PC, sorti de l'écran).
  * Fond : la pièce du bureau floutée et assombrie. Tout est dessiné par le code, textes via t().
  * Dès qu'une partie démarre ou reprend (ecran === 'jeu'), le menu se ferme et l'on arrive au bureau.
@@ -63,8 +63,7 @@ function entreesMenu() {
 	}
 	e.push({ cle: 'palmares', icone: 'trophee', action: () => ouvrir('palmares') }); // prompt 47
 	e.push({ cle: 'parametres', icone: 'reglages', action: () => ouvrir('parametres') });
-	e.push({ cle: 'aide', icone: 'aide', action: () => ouvrir('aide') });
-	e.push({ cle: 'tutoriel', icone: 'livre', action: () => lancerTutoriel() });
+	e.push({ cle: 'aide', icone: 'aide', action: () => ouvrir('aide') }); // prompt 122 : « Aide et tutoriel » — le tutoriel se lance depuis l'aide (T)
 	e.push({ cle: 'credits.menu', icone: 'menu', action: () => ouvrirCredits() }); // clé mp.credits.menu (mp.credits = les noms du pied de page) // prompt 113 : équipe, licence, usage de l'IA
 	return e;
 }

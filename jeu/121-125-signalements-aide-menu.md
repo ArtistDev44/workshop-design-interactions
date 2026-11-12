@@ -30,3 +30,15 @@ Date : 12/11/2026. Une branche par prompt, au nom du fichier du prompt.
   - une phrase ajoutée aux règles de l'aide.
 - **Vérifié :** `npm run build`, `npm test` (5 contrôles ajoutés, 570 au total), audit des textes à
   1920×1080 (3 étapes ajoutées au parcours) ; captures du badge et du marqueur en attente dans une partie pilotée sans écran.
+
+## 122 — Un seul bouton « Aide et tutoriel »
+
+- **Menu principal** (`entreesMenu`) : la carte « Tutoriel » est supprimée ; « Aide (H) » devient
+  « Aide et tutoriel (H) » (`mp.aide`, FR + EN). La clé `mp.tutoriel` est retirée.
+  - Une carte de moins : sans sauvegarde, 5 cartes ; avec « Reprendre », 6 (au lieu de 7).
+- **Fenêtre d'aide** : titre « Aide et tutoriel — Nantes en régulation » ; le bouton
+  « Lancer le tutoriel (T) » passe en primaire, « Fermer (Échap) » en secondaire.
+- **Menu Échap** (pause) : même libellé « Aide et tutoriel (H) ».
+- **Inchangé :** touche H, touche T depuis l'aide, livre « Aide » de la bibliothèque, guide de prise en main.
+- **Vérifié :** captures du menu (1366×768) et de l'aide (1920×1080), `npm run build`, `npm test`, audit des
+  textes à 1920×1080 : 0 défaut.
