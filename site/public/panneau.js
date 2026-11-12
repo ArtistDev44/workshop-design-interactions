@@ -533,12 +533,15 @@ function toucheReponses() {
 
 // ——— Retour après décision : ce qui s'est passé, et pourquoi (la meilleure réponse si la vôtre l'était moins) ———
 const RAISONS = { meteo: 'raison.meteo', forte: 'raison.forte', pointe: 'raison.pointe', long: 'raison.long', calme: 'raison.calme' };
-function explicationDecision(r) {
+/** sansEffets (prompt 184) : retour affiché juste après la décision — ni la liste des écarts ni les dés (les jauges
+ * animées les montrent) ; le détail chiffré reste dans l'appli Journal, qui appelle sans ce drapeau */
+function explicationDecision(r, sansEffets) {
 	const e = (Jeu.evenementsJournee || []).filter((x) => x.resultat === r)[0];
 	if (!e) return [];
-	const effets = ['fluidite', 'reputation', 'budget'].filter((k, i) => r.deltas[i]).map((k, i) => t('jaugeTitre.' + k) + ' ' + (r.deltas[['fluidite', 'reputation', 'budget'].indexOf(k)] > 0 ? '+' : '') + r.deltas[['fluidite', 'reputation', 'budget'].indexOf(k)]);
-	const lignes = [t('retour.passe', { action: String(e.action || t('action.temps')), effets: effets.join(', ') || t('narr.aucunEffet') }) + (e.retardEffectif !== null && e.retardEffectif !== undefined ? ' ' + t('trace.retardFige', { retard: e.retardEffectif }) : '')]; // prompt 89 bis : retard retenu au moment du choix
-	const des = typeof Traces !== 'undefined' && Traces.option('deVisible') ? Traces.texteDes(r) : null; // option : le dé réellement tiré
+	const retard = e.retardEffectif !== null && e.retardEffectif !== undefined ? t('trace.retardFige', { retard: e.retardEffectif }) : ''; // prompt 89 bis : retard retenu au moment du choix
+	const effets = ['fluidite', 'reputation', 'budget'].map((k, i) => [k, r.deltas[i]]).filter(([, v]) => v).map(([k, v]) => t('jaugeTitre.' + k) + ' ' + (v > 0 ? '+' : '') + v);
+	const lignes = sansEffets ? (retard ? [retard] : []) : [t('retour.passe', { action: String(e.action || t('action.temps')), effets: effets.join(', ') || t('narr.aucunEffet') }) + (retard ? ' ' + retard : '')];
+	const des = !sansEffets && typeof Traces !== 'undefined' && Traces.option('deVisible') ? Traces.texteDes(r) : null; // option : le dé réellement tiré
 	if (des) lignes.push(des);
 	const sit = e.categorie ? Jeu.situation(r.dossier) : null;
 	let pourquoi = sit ? sit.split('+').map((s) => t(RAISONS[s] || 'raison.calme')).join(', ') : '';

@@ -427,14 +427,16 @@ function dessinerIndicateurs() {
 	}
 	// Variation due à la dernière décision (deltas réels du journal)
 	const dernier = (Jeu.evenementsJournee || [])[Jeu.evenementsJournee.length - 1];
+	const aff = jaugesAffichees(); // prompt 184 : mêmes valeurs animées et mêmes segments vert / rouge que le bandeau
 	['fluidite', 'reputation', 'budget'].forEach((k, i) => {
-		const v = Jeu.jauges[k];
+		const v = aff[k];
 		const ly = y + 62 + i * 74;
 		dsTexte(t('jaugeTitre.' + k), x + 18, ly, 20, DS.blanc, 'left');
 		fill(DS.blanc15);
 		rect(x + 18, ly + 32, I.l - 36, 14);
 		fill(couleurJauge(v));
 		rect(x + 18, ly + 32, ((I.l - 36) * v) / 100, 14);
+		dessinerDeltasJauge(k, x + 18, ly + 32, I.l - 36, 14);
 		// Prompt 143 : plus de « v / 100 » ; barre blanche de seuil sur la seule jauge objectif du jour, libellée dessous
 		if (dessinerSeuilObjectif(k, x + 18, ly + 32, I.l - 36, 14)) dsTexte('| ' + texteSeuilObjectif(k), x + I.l - 120, ly + 3, 15, DS.blanc, 'right'); // libellé sur la ligne du titre, avant le delta
 		const d = dernier && dernier.deltas ? dernier.deltas[k] : null;

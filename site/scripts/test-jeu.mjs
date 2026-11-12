@@ -3225,6 +3225,63 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	verifier(/bouton\(b\.x, b\.y, b\.l, b\.h, t\(GUIDE\.actif \? 'poste\.quitter_pc_guide'/.test(lire174('bureau.js')), 'prompt 174 : libellé de « Quitter le PC » adapté au guide');
 }
 
+// Prompt 184 : après un choix, plus de liste des écarts affichée (narration, panneau) — les jauges du bandeau et des
+// Indicateurs s'animent (segment vert / rouge + ▲ / ▼) sur les seules jauges qui changent ; valeurs finales exactes ;
+// une phrase « en hausse / en baisse » au lecteur d'écran ; détail chiffré gardé dans l'appli Journal
+{
+	const lire184 = (f) => readFileSync(join(pub, f), 'utf8');
+	const sk = lire184('sketch.js');
+	const narr = sk.slice(sk.indexOf('function dessinerNarration()'), sk.indexOf('// ——— Écran de fin'));
+	verifier(!/r\.deltas|narration\.de'|r\.des\[/.test(narr) && /explicationDecision\(r, true\)/.test(narr), 'prompt 184 : le panneau de narration ne doit plus lister les écarts (deltas, dés, « Effets : … »)');
+	const dec = sk.slice(sk.indexOf('function decider(action)'), sk.indexOf('function continuer()'));
+	verifier(/phraseEcarts\(dernierResultat\.deltas\)/.test(dec) && !/Math\.abs\(v\)/.test(dec), 'prompt 184 : l\'annonce de la décision doit passer par phraseEcarts (sens, sans chiffres)');
+	verifier(/explicationDecision\(e\.resultat\)/.test(lire184('journal.js')), 'prompt 184 : l\'appli Journal doit garder le détail chiffré (explicationDecision sans drapeau)');
+	verifier(/dessinerDeltasJauge\(cle, bx, by, lbar, hb\)/.test(lire184('panneau.js')) && /dessinerDeltasJauge\(k, /.test(lire184('os.js')) && /jaugesAffichees\(\)/.test(lire184('os.js')), 'prompt 184 : bandeau et Indicateurs doivent dessiner les segments d\'écart');
+	const fb = lire184('feedback.js');
+	verifier(!/fill\(255, 255, 255, 130/.test(fb) && !/text\(txt/.test(fb) && /DS\.succes/.test(fb) && /DS\.erreur/.test(fb) && /triangle\(/.test(fb), 'prompt 184 : plus d\'éclair ni de chiffre flottant ; segment DS.succes / DS.erreur (palettes daltonisme) et triangle ▲ / ▼');
+	for (const [langue, attendu] of [['fr', 'Fluidité en hausse, budget en baisse.'], ['en', 'Flow up, budget down.']]) {
+		const c = contexte(langue);
+		vm.runInContext(sk.slice(sk.indexOf('function phraseEcarts'), sk.indexOf('function continuer()')), c);
+		verifier(vm.runInContext('phraseEcarts([4, 0, -6])', c) === attendu, `prompt 184 (${langue}) : phrase des écarts « ${vm.runInContext('phraseEcarts([4, 0, -6])', c)} »`);
+		// Narration réelle d'une semaine : aucune « Jauge ±n » dans le texte affiché après la décision
+		const fautes = vm.runInContext(`(() => {
+			Jeu.chargerSemaine(${JSON.stringify(semaines[0])});
+			Jeu.nouvellePartie();
+			const f = []; let n = 0;
+			while (!Jeu.terminee && n++ < 60) {
+				const d = Jeu.prochainDuJour();
+				if (!d) { Jeu.finDeJourneeTactique(); if (!Jeu.jours[Jeu.jourIndex + 1]) break; Jeu.journeeSuivante(); continue; }
+				if (Jeu.conflit && Jeu.conflit()) Jeu.choisirPriorite('a');
+				const r = Jeu.decider(Jeu.actionsPossibles(d)[n % Jeu.actionsPossibles(d).length], d.contradiction ? d.contradiction.bonne : undefined);
+				const noms = ['fluidite', 'reputation', 'budget'].map((k) => t('jaugeTitre.' + k)).join('|');
+				if (new RegExp('(' + noms + ') [+−-]?\\d', 'i').test(r.narration.texte)) f.push(r.narration.texte);
+			}
+			return f;
+		})()`, c);
+		verifier(!fautes.length, `prompt 184 (${langue}) : la narration liste encore des écarts : ${fautes.slice(0, 2).join(' | ')}`);
+	}
+	// Animation : seules les jauges qui changent, gain vert / perte rouge, valeurs finales exactes, mode sans mouvement
+	const c = vm.createContext({ Math, Object, Jeu: { jauges: { fluidite: 50, reputation: 30, budget: 60 }, paquet: [] }, reduireAnimations: false, Juice: { intensite: () => 1 }, horloge: 0 });
+	vm.runInContext('const millis = () => horloge; const constrain = (v, a, b) => Math.max(a, Math.min(b, v)); const easeOut = (t) => 1 - Math.pow(1 - t, 3);', c);
+	vm.runInContext(fb.slice(fb.indexOf('const JAUGES_AFF'), fb.indexOf('/** Prompt 184 : segment gagné')), c);
+	const ev = (x) => vm.runInContext(x, c);
+	ev('jaugesAffichees(); horloge = 1000; Jeu.jauges = { fluidite: 54, reputation: 30, budget: 54 }; jaugesAffichees();');
+	const notes = ev('JAUGES_AFF.deltas.map((d) => d.jauge + ":" + d.avant + ">" + d.apres).join(",")');
+	verifier(notes === 'fluidite:50>54,budget:60>54', `prompt 184 : écarts notés pour les seules jauges qui changent (${notes})`);
+	const mi = ev('horloge = 1300; jaugesAffichees(); JSON.stringify(["fluidite", "reputation", "budget"].map((k) => segmentsEcart(k, horloge)))');
+	const [sf, sr, sb] = JSON.parse(mi);
+	verifier(sf.length === 1 && sf[0].sens === 1 && sf[0].de === 50 && sf[0].a > 50 && sf[0].a <= 54 && sr.length === 0 && sb.length === 1 && sb[0].sens === -1 && sb[0].de === 54 && sb[0].a > 54 && sb[0].a <= 60, `prompt 184 : à mi-course, segment de gain sur fluidité et de perte sur budget, rien sur réputation (${mi})`);
+	const fin = JSON.parse(ev('horloge = 1000 + DUREE_ECART_MS; JSON.stringify([jaugesAffichees(), ["fluidite", "budget"].map((k) => segmentsEcart(k, horloge).length)])'));
+	verifier(fin[0].fluidite === 54 && fin[0].reputation === 30 && fin[0].budget === 54 && fin[1].join() === '0,0' && ev('DUREE_ECART_MS >= 600 && DUREE_ECART_MS <= 900'), `prompt 184 : valeurs finales exactes et segments terminés (${JSON.stringify(fin)})`);
+	for (const regl of ['reduireAnimations = true', 'Juice.intensite = () => 0']) {
+		const s0 = JSON.parse(ev(`${regl}; Jeu.jauges = { fluidite: 54, reputation: 30, budget: 44 }; horloge = 5000; const v${regl.length} = jaugesAffichees(); JSON.stringify([v${regl.length}.budget, segmentsEcart('budget', 5100)])`));
+		verifier(s0[0] === 44 && s0[1].length === 1 && s0[1][0].de === 54 && s0[1][0].a === 44 && s0[1][0].alpha === 1, `prompt 184 : sans mouvement (${regl}), valeur directe et segment entier, visible (${JSON.stringify(s0)})`);
+		const s1 = JSON.parse(ev(`JSON.stringify(segmentsEcart('budget', 5000 + DUREE_ECART_MS * 0.85))`));
+		verifier(s1.length === 1 && s1[0].alpha > 0 && s1[0].alpha < 1 && s1[0].a === 44, `prompt 184 : sans mouvement (${regl}), fondu court en fin d'écart (${JSON.stringify(s1)})`);
+		ev('reduireAnimations = false; Juice.intensite = () => 1; Jeu.jauges = { fluidite: 54, reputation: 30, budget: 54 }; horloge = 9000; jaugesAffichees(); horloge = 20000; jaugesAffichees();');
+	}
+}
+
 if (erreurs.length) {
 	console.error(`Test du jeu : ${erreurs.length} erreur(s) sur ${controles + erreurs.length} contrôles`);
 	for (const e of erreurs) console.error(`  ✗ ${e}`);

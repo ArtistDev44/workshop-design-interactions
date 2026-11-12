@@ -657,7 +657,7 @@
 			resultat.aggravation = { lignes: d.lignes.slice(), plus: A.durable };
 		}
 		resultat.narration = Jeu.narrer(resultat);
-		if (clash) resultat.narration.texte = T('narr.avecClash', { texte: resultat.narration.texte, malus: REGLAGES.malusClash });
+		if (clash) resultat.narration.texte = T('narr.avecClash', { texte: resultat.narration.texte }) // prompt 184 : le malus se voit sur la jauge (segment rouge);
 		Jeu.historique.push(resultat);
 		Jeu.index++;
 		Jeu.terminee = Jeu.index >= Jeu.paquet.length;
@@ -695,7 +695,6 @@
 		const objet = d.lignes && d.lignes.length ? T('narr.objetLigne', { lignes: d.lignes.join(', ') }) : d.type === 'événement' ? (d.texte_source ? T('narr.objetAffluenceNom', { nom: String(d.texte_source).split(' — ')[0].trim() }) : T('narr.objetAffluence')) : d.nature; // prompt 88 : le nom réel de l'événement
 		const re = Jeu.retardEffectif(d);
 		const fait = d.retard !== null && d.retard !== undefined ? (re !== d.retard ? T('narr.retardAggrave', { reel: d.retard, effectif: re }) : ' (+' + d.retard + ' min)') : ''; // prompt 79
-		const items = r.deltas.map((v, i) => (v ? T('delta', { jauge: LIBELLES_JAUGES[NOMS_JAUGES[i]], v: (v > 0 ? '+' : '') + v }) : null)).filter(Boolean);
 		const ton = Jeu.ton();
 		return {
 			titre: T('narr.titre', { quand, objet, fait }),
@@ -703,7 +702,7 @@
 				action: r.nomAction,
 				communique: r.communique ? T('narr.communique') : '',
 				source: r.mauvaiseSource ? T('narr.mauvaiseSource') : '',
-				bilan: items.length ? T('narr.bilan', { liste: Liste(items, ', ', true) }) : T('narr.aucunEffet'),
+				// prompt 184 : plus de liste des écarts dans la narration — les jauges animées la portent, le Journal la détaille
 				reaction: T(Jeu.variante('ton.' + ton, 'ton|' + Jeu.paquet.indexOf(d))), // prompt 88 : 3 variantes
 			}),
 			ton,
