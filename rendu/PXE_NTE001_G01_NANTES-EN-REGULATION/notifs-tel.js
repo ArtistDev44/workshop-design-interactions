@@ -137,7 +137,8 @@ const NotifsTel = (() => {
 			.map((app) => ({ app, liste: g[app].slice().reverse() }))
 			.sort((a, b) => b.liste[0].minute - a.liste[0].minute);
 	}
-	const texte = (n) => (n.texte ? n.texte : t(n.cle, n.vars || {}));
+	// Prompt 162 : une notification rattachée au dossier fictif garde « Fictif · »
+	const texte = (n) => String(marquerFictif(n.dossier !== undefined && Jeu.paquet ? Jeu.paquet[n.dossier] : null, n.texte ? n.texte : t(n.cle, n.vars || {})));
 	return { PRIO, APPS, R, planJour, evenementsPartie, maj, etatVide, groupes, texte };
 })();
 if (typeof window !== 'undefined') window.NotifsTel = NotifsTel;
@@ -204,36 +205,40 @@ function contenuCentreNotifications(e, pret) {
 	const lo = (l - 32 - (onglets.length - 1) * 6) / onglets.length;
 	onglets.forEach((o, i) => bouton(x + 16 + i * (lo + 6), e.y + 170, lo, 48, t('tel.onglet.' + o), () => ((TELN.onglet = o), (TELN.focus = 0), annoncer(t('tel.onglet.' + o))), false, TELN.onglet !== o));
 	const yc = e.y + 232;
-	const hc = e.h - 232 - 130;
+	const hc = e.h - 232 - 130 - 28; // prompt 175 : 28 px rendus au nom du réglage « Ne pas déranger », au-dessus de son interrupteur
 	if (TELN.onglet === 'agenda') contenuAgendaTel(x, yc, l, hc);
 	else if (TELN.onglet === 'direct') contenuDirectTel(x, yc, l, hc);
 	else contenuGroupesTel(x, yc, l, hc);
 	if (pret) {
-		bouton(x + 16, e.y + e.h - 112, (l - 40) / 2, 56, (Confort.Reglages.npd ? '☾ ' : '') + t('tel.npd') + ' : ' + t(Confort.Reglages.npd ? 'commun.oui' : 'commun.non'), basculerNpd, false, !Confort.Reglages.npd);
+		// Prompt 175 : « Ne pas déranger » = interrupteur du DS (« Activé » / « Désactivé »), plus de bouton « oui / non » ;
+		// la lune (Lucide, prompt 170) précède le nom du réglage
+		// Le nom du réglage (lune + « Ne pas déranger ») est écrit au-dessus de l'interrupteur : la demi-largeur de
+		// l'écran ne tient pas le nom et l'état sur une ligne
+		const lw = (l - 40) / 2;
+		const y0 = e.y + e.h - 112;
+		const npd = !!Confort.Reglages.npd;
+		dsInterrupteur(x + 16 + dsLargeurInterrupteur(npd), y0 + 6, npd, basculerNpd);
+		iconeLucide('moon', x + 16, y0 - 22, 20, '#ffffff');
+		noStroke();
+		fill('#ffffff');
+		textFont(POLICE_TEXTE);
+		textStyle(NORMAL);
+		textAlign(LEFT, CENTER);
+		zoneTexteDebut('npdTel', x + 42, y0 - 24, lw - 26, 24);
+		ajusterTaille(t('tel.npd'), lw - 26, 18, 14);
+		text(t('tel.npd'), x + 42, y0 - 13);
+		zoneTexteFin();
+		textAlign(LEFT, TOP);
 		bouton(x + 24 + (l - 40) / 2, e.y + e.h - 112, (l - 40) / 2, 56, t('commun.fermer'), fermer);
 	}
 }
-/** Icônes d'appli pixel 8 × 8 (dessins originaux, ×3) ; toujours accompagnées du nom de l'appli */
-const ICONES_TEL = {
-	agenda: ['########', '#.#..#.#', '########', '#......#', '#.##.#.#', '#......#', '#.#.##.#', '########'],
-	meteo: ['..##....', '.####...', '########', '........', '.#.#.#..', '#.#.#...', '........', '........'],
-	travaux: ['...##...', '..####..', '..#..#..', '.######.', '.#....#.', '########', '#......#', '########'],
-	loire: ['........', '.##..##.', '#..##..#', '........', '.##..##.', '#..##..#', '........', '........'],
-	messages: ['########', '#......#', '#.####.#', '#......#', '#.###..#', '########', '.##.....', '#.......'],
-	regul: ['########', '#.....##', '#.###.##', '#.....##', '#.##..##', '#.....##', '########', '...##...'],
-	quai: ['.######.', '#......#', '#.#..#.#', '#......#', '#.####.#', '#......#', '.######.', '........'],
-	rappels: ['..####..', '.#....#.', '#..#...#', '#..##..#', '#......#', '.#....#.', '..####..', '.#....#.'],
-	parkings: ['#####...', '#....#..', '#....#..', '#####...', '#.......', '#.......', '#.......', '........'],
-	velos: ['........', '....#...', '...##...', '.##.#.#.', '#..#.#.#', '#..#.#.#', '.##...#.', '........'],
-	trafic: ['..####..', '.#....#.', '.#.##.#.', '.#....#.', '.#.##.#.', '.#....#.', '..####..', '...##...'],
-	pollens: ['...#....', '..###...', '...#....', '.#.#.#..', '..###...', '...#....', '...#....', '..###...'],
-};
+/** Prompt 170 : icônes d'appli Lucide (icones-lucide.js) sur pastille blanche ; toujours accompagnées du nom de l'appli */
+const ICONES_TEL = { agenda: 'calendar', meteo: 'cloud-rain', travaux: 'construction', loire: 'waves', messages: 'message-square', regul: 'monitor', quai: 'tram-front', rappels: 'alarm-clock', parkings: 'square-parking', velos: 'bike', trafic: 'traffic-cone', pollens: 'flower-2' };
 function iconeTel(app, x, y, s) {
-	const mo = ICONES_TEL[app] || ICONES_TEL.regul;
+	noStroke();
 	fill('#ffffff');
 	rect(x - 3, y - 3, 8 * s + 6, 8 * s + 6, 6);
-	fill('#0b1b33');
-	mo.forEach((ligne, r) => [...ligne].forEach((c, k) => c === '#' && rect(x + k * s, y + r * s, s, s)));
+	iconeLucide(ICONES_TEL[app] || ICONES_TEL.regul, x, y, 8 * s, '#0b1b33');
 }
 function contenuGroupesTel(x, y0, l, h) {
 	const gs = NotifsTel.groupes(TELN);
@@ -261,7 +266,7 @@ function contenuGroupesTel(x, y0, l, h) {
 			rect(x + 16, y, l - 32, nh, 18);
 			if (focus) {
 				noFill();
-				stroke('#ffc138');
+				stroke(DS.primaire); // prompt 176 : focus à la couleur d'accent (carte blanche : l'aplat tient 4,5:1)
 				strokeWeight(4);
 				rect(x + 16, y, l - 32, nh, 18);
 				noStroke();
@@ -276,14 +281,10 @@ function contenuGroupesTel(x, y0, l, h) {
 			fill('#0b1b33');
 			text(court(NotifsTel.texte(n), 96), x + 30, y + 44, l - 130, 76); // prompt 114 : 3 lignes au plus (texte complet à l’ouverture)
 			boutons.push({ x: x + 16, y, l: l - 132, h: nh, action: () => ouvrirNotifTel(n) });
-			// Ignorer : carré sombre « ✕ » (cible 56 px), libellé lu par l'annonce
+			// Ignorer : carré sombre, croix Lucide (cible 56 px), libellé lu par l'annonce
 			fill('#0b1b33');
 			rect(x + l - 84, y + 34, 56, 56, 10);
-			fill('#ffffff');
-			textAlign(CENTER, CENTER);
-			textSize(22);
-			text('✕', x + l - 56, y + 62);
-			textAlign(LEFT, TOP);
+			iconeLucide('x', x + l - 68, y + 50, 24, '#ffffff'); // prompt 170
 			boutons.push({ x: x + l - 84, y: y + 34, l: 56, h: 56, action: () => ignorerNotifTel(n) });
 			y += nh + 8;
 		});
@@ -388,7 +389,7 @@ function contenuDirectTel(x, y0, l, h) {
 // ——— Actions ———
 function basculerNpd() {
 	Confort.Reglages.basculer('npd');
-	annoncer(t('tel.npd') + ' : ' + t(Confort.Reglages.npd ? 'commun.oui' : 'commun.non'));
+	annoncer(t('tel.npd') + ' : ' + t(Confort.Reglages.npd ? 'commun.active' : 'commun.desactive'));
 }
 function ignorerNotifTel(n) {
 	n.ignoree = true;

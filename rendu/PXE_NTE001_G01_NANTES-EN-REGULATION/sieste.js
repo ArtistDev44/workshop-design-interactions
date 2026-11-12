@@ -57,7 +57,7 @@ function dormir(volontaire) {
 	SOMNO.bilan = { arrives: 0, expires: 0, minutes: Jeu.horloge.minutes, jauges: Object.assign({}, Jeu.jauges) };
 	if (vue === 'poste') seLever(); // on se cale dans le fauteuil : retour à la vue bureau
 	Confort.Son.bip('choix');
-	annoncer(t(volontaire ? 'sieste.volontaire' : 'sieste.forcee'));
+	annoncer(t(volontaire ? 'sieste.volontaire' + (Jeu.defiChrono ? 'Chrono' : '') : 'sieste.forcee')); // prompt 161 : la règle du mode joué
 	return true;
 }
 /** Se réveiller : bilan de la sieste, puis reprise (signalement actif le plus urgent, ou la liste) */
@@ -71,7 +71,7 @@ function reveiller() {
 	SOMNO.bilan = null;
 	if (b) {
 		const delta = Jeu.NOMS_JAUGES.map((k) => Jeu.jauges[k] - b.jauges[k]);
-		const m = { cle: 'sieste.bilan', vars: { duree: dureeJeu(Jeu.horloge.minutes - b.minutes), arrives: b.arrives, expires: b.expires, delta: delta.map((v, i) => t('jaugeTitre.' + Jeu.NOMS_JAUGES[i]) + ' ' + (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v)).join(', ') } };
+		const m = { cle: b.expires ? 'sieste.bilan' : 'sieste.bilanSans', vars: { duree: dureeJeu(Jeu.horloge.minutes - b.minutes), arrives: b.arrives, expires: b.expires, delta: delta.map((v, i) => t('jaugeTitre.' + Jeu.NOMS_JAUGES[i]) + ' ' + (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v)).join(', ') } };
 		if (typeof ajouterFil === 'function') ajouterFil(m, b.expires ? 'courage' : 'rythme');
 		if (typeof notifier === 'function') notifier({ titre: t('sieste.bilanTitre'), extrait: t(m.cle, m.vars), icone: 'signalements', action: () => ouvrirSignalements() });
 	}
@@ -151,11 +151,12 @@ function dessinerSomnolence() {
 		textFont(POLICE_DONNEES);
 		textSize(17);
 		textLeading(23);
-		const n = Math.ceil((textWidth(t('sieste.aide')) * 1.08) / (l - 28));
+		const aide = t(Jeu.defiChrono ? 'sieste.aideChrono' : 'sieste.aide'); // prompt 161 : hors défi chrono, rien n'expire avant l'heure de fin
+		const n = Math.ceil((textWidth(aide) * 1.08) / (l - 28));
 		const h = n * 23 + 22;
 		fill(13, 12, 12, 240);
 		rect(z.x + z.l - l, z.y - h - 8, l, h);
 		fill('#FFFFFF');
-		text(t('sieste.aide'), z.x + z.l - l + 14, z.y - h + 3, l - 28, h - 6);
+		text(aide, z.x + z.l - l + 14, z.y - h + 3, l - 28, h - 6);
 	}
 }

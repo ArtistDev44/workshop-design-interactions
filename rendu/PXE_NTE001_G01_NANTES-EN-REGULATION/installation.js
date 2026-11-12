@@ -1,9 +1,10 @@
 /* Nantes en régulation — prompt 65 : webapp installable.
  * - Enregistre le service worker (http(s) seulement, jamais en file://).
- * - « Installer l'application » : proposé seulement si le navigateur émet beforeinstallprompt (et pas déjà
- *   installé) — entrée du menu principal et bouton de la fenêtre Accessibilité et reprise.
- * - appinstalled → message de confirmation ; en mode installé (display-mode standalone ou fullscreen) → mention
- *   discrète « webapp installée » au menu.
+ * - Installation : l'invitation du navigateur (beforeinstallprompt) est gardée pour nos boutons — l'icône
+ *   « télécharger » du menu principal (prompt 171, installerJeu) et le bouton de la fenêtre Accessibilité et reprise.
+ *   Sans invitation (navigateur qui ne la propose pas, jeu déjà installé), l'icône ouvre une courte explication
+ *   (fenêtre 'installation').
+ * - appinstalled → message de confirmation.
  * - Nouvelle version prête (le service worker a changé) → bandeau HTML « Nouvelle version disponible — Recharger ».
  * - Raccourcis du manifest : ?action=nouvelle (choix de la partie) et ?action=reprendre (dernière sauvegarde).
  */
@@ -16,7 +17,8 @@ function estInstallee() {
 		return false;
 	}
 }
-const installationPossible = () => !!PWA.invite && !estInstallee();
+const kiosqueExpo = () => typeof EXPO !== 'undefined' && EXPO.actif; // prompt 160 : ni installation ni bandeau de mise à jour
+const installationPossible = () => !kiosqueExpo() && !!PWA.invite && !estInstallee();
 
 function installerApplication() {
 	if (!PWA.invite) return;
@@ -26,6 +28,45 @@ function installerApplication() {
 	invite.userChoice
 		.then((c) => annoncer(t(c && c.outcome === 'accepted' ? 'pwa.acceptee' : 'pwa.refusee')))
 		.catch(() => {});
+}
+
+/** Prompt 171 : icône « télécharger » du menu principal — l'invitation du navigateur si elle existe, sinon l'explication */
+function installerJeu() {
+	if (kiosqueExpo()) return;
+	if (installationPossible()) return installerApplication();
+	ouvrirInstallation();
+}
+function ouvrirInstallation() {
+	ouvrir('installation');
+	annoncer(t('pwa.aide.titre') + '. ' + (estInstallee() ? t('pwa.aide.dejaInstalle') : [t('pwa.aide.intro'), ...ETAPES_INSTALLATION.map((k) => t('pwa.aide.' + k + '.k') + ' : ' + t('pwa.aide.' + k)), t('pwa.aide.horsLigne')].join(' ')));
+}
+const ETAPES_INSTALLATION = ['ordinateur', 'android', 'ios'];
+/** Explication d'installation (modale par-dessus le menu) : Échap, Entrée ou « Fermer » */
+function fenetreInstallation() {
+	const l = DS.fenetre.moyenne; // prompt 173 (était 1000)
+	const installe = estInstallee();
+	const h = installe ? 330 : 620;
+	const x = (L - l) / 2;
+	const y = (H - h) / 2;
+	panneau(x, y, l, h, C.accent);
+	noStroke();
+	textAlign(LEFT, TOP);
+	fill(C.texte);
+	textFont(POLICE_TEXTE);
+	textStyle(BOLD);
+	textSize(36);
+	text(t('pwa.aide.titre'), x + 48, y + 36);
+	textStyle(NORMAL);
+	let yy = y + 104;
+	yy += dessinerTexte(t(installe ? 'pwa.aide.dejaInstalle' : 'pwa.aide.intro'), x + 48, yy, l - 96, { taille: 22, interligne: 32 }).h + 20;
+	if (!installe) {
+		ETAPES_INSTALLATION.forEach((k) => {
+			dessinerTexte(t('pwa.aide.' + k + '.k'), x + 48, yy, 250, { taille: 20, interligne: 30, police: POLICE_DONNEES, style: BOLD, couleur: C.orange });
+			yy += dessinerTexte(t('pwa.aide.' + k), x + 310, yy, l - 310 - 48, { taille: 20, interligne: 30 }).h + 16;
+		});
+		dessinerTexte(t('pwa.aide.horsLigne'), x + 48, yy + 8, l - 96, { taille: 20, interligne: 30, couleur: C.gris });
+	}
+	bouton(x + l - 48 - 260, y + h - 96, 260, 60, t('commun.fermer'), fermer);
 }
 
 window.addEventListener('beforeinstallprompt', (e) => {
@@ -41,7 +82,7 @@ window.addEventListener('appinstalled', () => {
 
 // ——— Service worker et bandeau de nouvelle version ———
 function bandeauNouvelleVersion() {
-	if (document.getElementById('nouvelle-version')) return;
+	if (kiosqueExpo() || document.getElementById('nouvelle-version')) return;
 	const d = document.createElement('div');
 	d.id = 'nouvelle-version';
 	d.setAttribute('role', 'status');

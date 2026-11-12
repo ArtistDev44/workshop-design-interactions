@@ -172,7 +172,7 @@ function nombreBadge(cle) {
 	if (typeof appliDebloquee === 'function' && cle !== 'signalements' && !appliDebloquee(cle)) return 0; // prompt 91 : rien sur une appli verrouillée
 	const nl = Jeu.nonLus || {};
 	if (cle === 'signalements') return NOTIFS.nonVues.signalements;
-	if (cle === 'patron') return nl.patron || 0; // compteur tenu par game.js (les mails du patron), sans double compte
+	if (cle === 'patron') return typeof mailsNonLus === 'function' ? mailsNonLus() : nl.patron || 0; // prompt 185 : total des mails non lus (lus à l'ouverture dans le volet de lecture)
 	if (cle === 'community') {
 		const attente = (Jeu.plaintes || []).filter((p) => p.reponse === null && !p.expiree && !p.transmise).length;
 		return Math.max(nl.community || 0, attente); // une plainte nouvelle compte déjà dans nonLus : le max évite le double compte
@@ -212,7 +212,7 @@ function majNotifications() {
 	}
 	if (nb.plaintes > V.plaintes) {
 		const p = Jeu.plaintes[nb.plaintes - 1];
-		notifier({ titre: t('notif.plainte'), extrait: extrait(p && p.def ? Jeu.texteMessage(p.def.texte, p.vars) : '', 70), icone: 'community', action: () => ouvrirAppliNotif('community') });
+		notifier({ titre: t('notif.plainte'), extrait: extrait(p && p.def ? Jeu.textePlainte(p) : '', 70), icone: 'community', action: () => ouvrirAppliNotif('community') });
 	}
 	Object.assign(V, nb);
 	// Fin d'intervention : passage « sur place » → « retour » observé pendant la partie

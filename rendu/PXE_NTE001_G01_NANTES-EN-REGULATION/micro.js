@@ -47,7 +47,7 @@ function toucheMRelachee() {
 	if (millis() - MICRO.appuiM < MICRO_APPUI_MS) basculerSon();
 }
 function keyReleased() {
-	if (Sauvegarde.dialogueOuvert) return; // on tape dans une boîte de texte
+	if (Sauvegarde.dialogueOuvert || saisieOuRaccourciNavigateur()) return; // on tape dans une boîte de texte (prompt 174 : ou un champ HTML)
 	if (key === 'm' || key === 'M') toucheMRelachee();
 }
 function mouseReleased() {
@@ -218,7 +218,7 @@ function dessinerMicro() {
 function basculerMicroReglage() {
 	Confort.Reglages.basculer('micro');
 	if (!microActive()) arreterMicro();
-	annoncer(t('micro.reglage') + ' : ' + t(microActive() ? 'commun.oui' : 'commun.non'));
+	annoncer(t('micro.reglage') + ' : ' + t(microActive() ? 'commun.active' : 'commun.desactive'));
 }
 
 /** Micro de table en pixel art (pied, tige, capsule grillagée) ; voyant rouge pendant l'appui */

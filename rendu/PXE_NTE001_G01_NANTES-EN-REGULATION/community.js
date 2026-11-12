@@ -6,8 +6,48 @@
  * Photos : dessinées par le code (createGraphics basse définition, agrandies avec un lissage léger), mises en cache.
  * Compteurs (abonnés, « j'aime ») : valeurs de jeu dérivées de la réputation, jamais présentées comme réelles.
  */
-const COMMU = { deplies: new Set(), onglet: 'fil', defil: 0, grille: false, conv: 0, ouvert: null, publier: null, vus: 0, brouillon: null }; // prompt 91 : brouillon venu d'un dossier
+const COMMU = { deplies: new Set(), onglet: 'fil', defil: 0, vue: null, conv: 0, ouvert: null, publier: null, vus: 0, brouillon: null }; // prompt 91 : brouillon venu d'un dossier
 const ONGLETS_COMMU = ['fil', 'mentions', 'messagerie', 'stats'];
+// Prompt 186 : vue du fil — 'cartes' (publications complètes) ou 'liste' (une ligne par publication), mémorisée
+const CLE_VUE_COMMU = 'pxe-nte001-community-vue';
+function vueCommunity() {
+	if (COMMU.vue === null) COMMU.vue = (typeof lireStockage === 'function' && lireStockage(CLE_VUE_COMMU)) === 'liste' ? 'liste' : 'cartes';
+	return COMMU.vue;
+}
+function basculerVueCommunity() {
+	COMMU.vue = vueCommunity() === 'liste' ? 'cartes' : 'liste';
+	COMMU.defil = 0;
+	if (typeof ecrireStockage === 'function') ecrireStockage(CLE_VUE_COMMU, COMMU.vue);
+	Confort.Son.clic();
+	annoncer(t('commu.vue.annonce', { vue: t('commu.vue.' + COMMU.vue) }));
+}
+/** Bouton à icône de la bascule (en-tête, onglet Fil) : l'icône montre la vue proposée (layout-grid ↔ list), l'infobulle
+ * la nomme ; état « pressé » (vue liste) : aplat blanc 15 % + liseré d'accent sous l'icône */
+function boutonVueCommunity(x, y) {
+	const s = 48;
+	const liste = vueCommunity() === 'liste';
+	const survol = mouseX >= x && mouseX <= x + s && mouseY >= y && mouseY <= y + s;
+	noStroke();
+	fill(survol || liste ? DS.blanc15 : DS.blanc05);
+	rect(x, y, s, s);
+	noFill();
+	stroke(survol ? DS.blanc : DS.blanc50);
+	strokeWeight(2);
+	rect(x + 1, y + 1, s - 2, s - 2);
+	noStroke();
+	if (liste) {
+		fill(DS.primaireTrait);
+		rect(x + 4, y + s - 6, s - 8, 3);
+	}
+	iconeLucide(liste ? 'layout-grid' : 'list', x + 12, y + 12, 24, DS.blanc);
+	boutons.push({ x, y, l: s, h: s, action: basculerVueCommunity });
+	if (survol && typeof infobulle === 'function') {
+		const txt = t(liste ? 'commu.vue.versCartes' : 'commu.vue.versListe');
+		textFont(typeof POLICE_DONNEES !== 'undefined' ? POLICE_DONNEES : DS.policeTexte);
+		textSize(18);
+		infobulle(txt, x + s - textWidth(txt) - 28, y + s + 8);
+	}
+}
 const cachePhotos = new Map();
 const plaintesPubliques = () => (Jeu.plaintes || []).filter((p) => !(p.def && p.def.prive));
 const plaintesPrivees = () => (Jeu.plaintes || []).filter((p) => p.def && p.def.prive);
@@ -190,6 +230,7 @@ function dessinerCompteSocial(z) {
 	const enStats = COMMU.onglet === 'stats';
 	if (!mobile && enStats) dsTexte(t('commu.compteurs', { posts, abonnes, tendance: tendance > 0 ? '▲' : tendance < 0 ? '▼' : '=', r: bp.traitees, n: bp.total }), z.x + lp, z.y + 82, 18, DS.blanc75, 'right');
 	if (enStats) dsTexte(t('commu.bio'), z.x + 96, z.y + 128, 18, DS.blanc50, 'left', lp - 110);
+	const boutonVue = COMMU.onglet === 'fil'; // prompt 186 : bascule cartes / liste, à droite de l'en-tête (dessinée en dernier : infobulle au-dessus)
 	// Onglets (indicateur rouge sous l'onglet actif) — en bas en portrait
 	const yo = mobile ? z.y + z.h - 52 : z.y + 158;
 	const nb = { mentions: enAttenteDe(plaintesPubliques()).length, messagerie: enAttenteDe(plaintesPrivees()).length };
@@ -240,6 +281,7 @@ function dessinerCompteSocial(z) {
 		rect(zc.x + zc.l + 2, zc.y + ((zc.h - hb) * COMMU.defil) / COMMU.max, 4, hb);
 	}
 	COMMU.zone = zc;
+	if (boutonVue) boutonVueCommunity(z.x + lp - 48, z.y + 64);
 	annoncerNouveautesCommunity();
 }
 function changerOnglet(o) {
@@ -262,7 +304,7 @@ function annoncerNouveautesCommunity() {
 /** Tous les posts du fil, du plus récent au plus ancien */
 function postsDuFil() {
 	const partie = Jeu.postsPartie();
-	const joueur = Jeu.postsJoueur.map((p) => ({ sorte: 'joueur', index: p.index, jour: p.jour, heure: p.heure, texte: p.brouillon ? texteBrouillon(p.index) : t('commu.info.' + p.modele, p.vars), photo: Jeu.sujetPhoto(Jeu.paquet[p.index]), likes: Math.round(12 * (Jeu.jauges.reputation / 50)), date: p.jour, coherent: p.coherent }));
+	const joueur = Jeu.postsJoueur.map((p) => ({ sorte: 'joueur', index: p.index, jour: p.jour, heure: p.heure, texte: String(marquerFictif(Jeu.paquet[p.index], p.brouillon ? texteBrouillon(p.index) : t('commu.info.' + p.modele, p.vars))), photo: Jeu.sujetPhoto(Jeu.paquet[p.index]), likes: Math.round(12 * (Jeu.jauges.reputation / 50)), date: p.jour, coherent: p.coherent }));
 	const archive = Jeu.postsArchive().map((p) => Object.assign({}, p, { texte: String(p.texte) }));
 	return partie
 		.concat(joueur)
@@ -271,11 +313,12 @@ function postsDuFil() {
 }
 function ongletFil(z) {
 	let y = z.y - COMMU.defil;
-	// Fil / Grille, et « Publier une info trafic » sur le dernier dossier traité
-	dsBouton(z.x, y, 220, 44, t(COMMU.grille ? 'commu.fil' : 'commu.grille'), () => (COMMU.grille = !COMMU.grille), 'contour');
+	// « Publier une info trafic » sur le dernier dossier traité (prompt 186 : la bascule de vue est dans l'en-tête)
 	const dernier = (Jeu.evenementsJournee || []).slice(-1)[0];
-	if (dernier && !Jeu.postsJoueur.some((p) => p.index === dernier.index)) dsBouton(z.x + 236, y, 360, 44, t('commu.publier'), () => (COMMU.publier = COMMU.publier === null ? dernier.index : null), 'secondaire');
-	y += 60;
+	if (dernier && !Jeu.postsJoueur.some((p) => p.index === dernier.index)) {
+		dsBouton(z.x, y, 360, 44, t('commu.publier'), () => (COMMU.publier = COMMU.publier === null ? dernier.index : null), 'secondaire');
+		y += 60;
+	}
 	y = carteBrouillon(z, y); // prompt 91 § 3 : brouillon pré-rempli depuis le dossier
 	if (COMMU.publier !== null) {
 		dsTexte(t('commu.publierAide'), z.x, y, 18, DS.blanc75, 'left', z.l);
@@ -293,19 +336,37 @@ function ongletFil(z) {
 		dsTexte(t('commu.vide'), z.x, y, 20, DS.blanc50, 'left', z.l);
 		return y - (z.y - COMMU.defil) + 40;
 	}
-	if (COMMU.grille) {
-		const c = (z.l - 32) / 3;
-		posts.forEach((p, i) => {
-			const px = z.x + (i % 3) * (c + 16);
-			const py = y + Math.floor(i / 3) * (c * 0.62 + 16);
-			const m = meteoDe(p.date);
-			dessinerPhoto(p.photo, px, py, c, c * 0.62, (m.pluie_mm || 0) >= 1 || p.photo.pluie, nuitDe(p.minute));
-			boutons.push({ x: px, y: py, l: c, h: c * 0.62, action: () => ((COMMU.grille = false), annoncer(altPhoto(p) + ' — ' + p.texte)) });
-		});
-		return y - (z.y - COMMU.defil) + Math.ceil(posts.length / 3) * (c * 0.62 + 16);
+	if (vueCommunity() === 'liste') {
+		posts.forEach((p) => (y += lignePost(p, z.x, y, z.l)));
+		return y - (z.y - COMMU.defil);
 	}
 	posts.forEach((p, i) => (y += carteDePost(p, z.x, y, z.l, i)));
 	return y - (z.y - COMMU.defil);
+}
+/** Prompt 186 : vue liste compacte — une ligne par publication : heure, auteur, début du texte, réactions. Un clic
+ * repasse en vue cartes (choix mémorisé, comme la bascule) et lit la publication. */
+function lignePost(p, x, y, l) {
+	const h = 56;
+	const comms = p.index !== undefined && p.sorte !== 'archive' ? commentairesDuPost(p.index) : [];
+	const survol = mouseX >= x && mouseX <= x + l && mouseY >= y && mouseY <= y + h;
+	noStroke();
+	fill(survol ? DS.blanc15 : DS.blanc05);
+	rect(x, y, l, h - 4);
+	zoneTexteDeclarer('post', x, y, l, h - 4);
+	const quand = p.sorte === 'archive' ? p.date.split('-').reverse().join('/') : p.heure;
+	const auteur = p.sorte === 'joueur' ? t('commu.votrePost') : '@regul.nte';
+	const reac = '♥ ' + p.likes + (comms.length ? ' · ' + t('commu.nbComm', { n: comms.length }) : '');
+	textFont(DS.policeTexte);
+	textSize(18);
+	const lq = Math.max(64, textWidth(quand) + 16);
+	const la = textWidth(auteur) + 20;
+	const lr = textWidth(reac) + 16;
+	dsTexte(quand, x + 12, y + 14, 18, DS.blanc75, 'left');
+	dsTexte(auteur, x + 12 + lq, y + 14, 18, DS.blanc75, 'left');
+	dsTexte(couperLargeur(String(p.texte).replace(/\s+/g, ' '), l - 24 - lq - la - lr - 16, 18), x + 12 + lq + la, y + 14, 18, DS.blanc, 'left');
+	dsTexte(reac, x + l - 12, y + 14, 18, DS.blanc75, 'right');
+	boutons.push({ x, y, l, h: h - 4, action: () => (basculerVueCommunity(), annoncer(t('commu.vue.annonce', { vue: t('commu.vue.cartes') }) + ' — ' + p.texte)) });
+	return h;
 }
 function publierInfoTrafic(id) {
 	const r = Jeu.publierInfo(COMMU.publier, id);
@@ -407,12 +468,12 @@ function boutonTexte(x, y, l, label, action, actif) {
 	noStroke();
 	fill(actif ? DS.primaire : survol ? DS.blanc15 : DS.blanc05);
 	rect(x, y, l, h);
-	stroke(actif ? DS.primaire : DS.blanc);
+	stroke(actif ? DS.primaireTrait : DS.blanc);
 	strokeWeight(2);
 	noFill();
 	rect(x + 1, y + 1, l - 2, h - 2);
 	noStroke();
-	fill(DS.blanc);
+	fill(actif ? DS.surPrimaire : DS.blanc);
 	textAlign(LEFT, TOP);
 	textLeading(26);
 	text(label, x + 16, y + 10, l - 32, h);
@@ -429,10 +490,10 @@ function blocPlainteSociale(pl, x, y, l, prive) {
 		const reste = Jeu.resteReponse(pl, typeof tempsPlaintes === 'function' ? tempsPlaintes() : millis());
 		dsTexte(t('plainte.delai', { s: Math.ceil(reste / 1000) }), x + l - 8, yy + 4, 18, reste < 30000 ? DS.alerte : DS.blanc75, 'right');
 	}
-	dsTexte(Jeu.texteMessage(pl.def.texte, pl.vars), x + 34, yy + 30, 20, DS.blanc, 'left', l - 60);
+	dsTexte(Jeu.textePlainte(pl), x + 34, yy + 30, 20, DS.blanc, 'left', l - 60); // prompt 162 : « Fictif · » si la plainte porte sur le dossier fictif
 	textFont(DS.policeTexte);
 	textSize(20);
-	yy += 40 + couperLignes(String(Jeu.texteMessage(pl.def.texte, pl.vars)), l - 60, DS.policeTexte, 20).length * 28; // prompt 93
+	yy += 40 + couperLignes(Jeu.textePlainte(pl), l - 60, DS.policeTexte, 20).length * 28; // prompt 93
 	if (pl.reponse !== null) {
 		const r = pl.def.reponses[pl.reponse];
 		noStroke();
@@ -504,7 +565,7 @@ function ongletMessagerie(z) {
 		avatarUsager(p.auteur, z.x + 10, y + 14, 36);
 		dsTexte(p.auteur, z.x + 56, y + 8, 18, DS.blanc, 'left');
 		dsTexte(p.heure, z.x + lg - 10, y + 8, 18, DS.blanc50, 'right');
-		dsTexte(String(Jeu.texteMessage(p.def.texte, p.vars)).slice(0, 22) + '…', z.x + 56, y + 36, 18, DS.blanc50, 'left');
+		dsTexte(Jeu.textePlainte(p).slice(0, 22) + '…', z.x + 56, y + 36, 18, DS.blanc50, 'left');
 		if (nonLu) dsBadge(z.x + lg - 30, y + 40, '!', 'info');
 		boutons.push({ x: z.x, y, l: lg, h: 68, action: () => ((COMMU.conv = i), (focusReponse = 0)) });
 	});

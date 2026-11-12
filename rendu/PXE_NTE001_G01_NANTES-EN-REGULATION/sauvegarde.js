@@ -1,6 +1,10 @@
 /* Nantes en régulation — sauvegarde de la progression (prompt 33).
- * Une sauvegarde par semaine dans localStorage (clé pxe-nte001-partie-<semaine>), automatique ;
- * reprise depuis l'accueil ; export (fichier JSON via Blob local, presse-papiers) et import (fichier ou
+ * Prompt 178 : plusieurs emplacements. Chaque partie a le sien dans localStorage (clé pxe-nte001-partie-<id>,
+ * format version 2 : id, creeLe), sauvegarde automatique dans l'emplacement de la partie en cours, MAX emplacements.
+ * Migration : l'ancienne sauvegarde (version 1, une par semaine, clé pxe-nte001-partie-<semaine>) EST un emplacement
+ * dont l'identifiant est la semaine ; elle est réécrite sur place en version 2, sans jamais être effacée d'abord.
+ * La progression de carrière (histoire), les réglages et le palmarès restent des clés globales, hors emplacements.
+ * Reprise depuis l'écran « Reprendre une partie » (menu.js) ; export (fichier JSON via Blob local, presse-papiers) et import (fichier ou
  * texte collé) depuis les Paramètres, avec validation stricte (JSON.parse en try/catch, jamais d'eval).
  * Rien d'autre que l'état du jeu n'est stocké : aucune donnée personnelle, aucun réseau.
  * Les autres clés (meilleurs bilans, réglages, langue, lampe) ne sont jamais touchées.
@@ -9,7 +13,12 @@ const Sauvegarde = (function () {
 	'use strict';
 
 	const PREFIXE = 'pxe-nte001-partie-';
-	const VERSION = 1;
+	const VERSION = 2; // prompt 178 (la version 1, sans id, reste lue et importable)
+	const MAX = 5; // emplacements : une partie pèse 6 à 45 ko
+	let courant = null; // identifiant de l'emplacement de la partie en cours (null : créé à la première sauvegarde)
+	let suspendue = false; // l'emplacement de la partie en cours vient d'être supprimé : plus d'écriture avant nouvelle() / reprendre()
+	const memo = new Map(); // clé → { brut, objet } : lister() est appelée à chaque image, on n'analyse le JSON qu'une fois
+	const dejaMigree = new Set();
 	const JEU = 'PXE-NTE001-G01-W01';
 	const PHASES_COMPTEUR = ['decision', 'contradiction', 'conflit'];
 	let indisponibleSignale = false;
@@ -64,17 +73,34 @@ const Sauvegarde = (function () {
 		}
 	}
 	function ecrireCle(cle, objet) {
+		// Quota dépassé ou stockage bloqué : setItem lève AVANT d'écrire — l'ancienne valeur de cette clé et les autres
+		// emplacements restent intacts, la partie continue en mémoire ; message une fois, redonné après un succès
 		try {
 			localStorage.setItem(cle, JSON.stringify(objet));
+			indisponibleSignale = false;
 			return true;
 		} catch (e) {
 			signalerIndisponible();
 			return false;
 		}
 	}
+	const ID_VALIDE = /^[A-Za-z0-9-]{1,40}$/;
+	function nouvelId() {
+		let id;
+		do id = 'e' + Date.now().toString(36) + Math.floor(Math.random() * 46656).toString(36);
+		while (cleExiste(PREFIXE + id));
+		return id;
+	}
+	function cleExiste(cle) {
+		try {
+			return localStorage.getItem(cle) !== null;
+		} catch (e) {
+			return false;
+		}
+	}
 
 	// ——— Modèle ———
-	const cleSemaine = (semaine) => PREFIXE + semaine;
+	const cleEmplacement = (id) => PREFIXE + id;
 	function semaineCourante() {
 		const e = Jeu.etat || {};
 		return e.mode === 'semaine' && e.semaine ? e.semaine.lundi : e.mode === 'direct' ? 'direct' : 'fallback';
@@ -84,6 +110,7 @@ const Sauvegarde = (function () {
 	function recalerEquipes(liste, decal) {
 		(liste || []).forEach((q) => ['depart', 'arrivee', 'finIntervention', 'libre'].forEach((k) => typeof q[k] === 'number' && (q[k] += decal)));
 	}
+	let creeLe = null;
 	/** Objet de sauvegarde de la partie en cours (null si aucune partie à sauver) */
 	function construire() {
 		if (ecran !== 'jeu' || !Jeu.paquet || !Jeu.paquet.length) return null;
@@ -96,8 +123,11 @@ const Sauvegarde = (function () {
 		s.historique = undefined;
 		s.evenementsJournee = undefined;
 		const R = Confort.Reglages;
+		if (!courant) creeLe = new Date().toISOString();
 		return {
 			version: VERSION,
+			id: courant || (courant = nouvelId()),
+			creeLe,
 			sauvegardeLe: new Date().toISOString(),
 			semaine: s.semaine,
 			etat: {
@@ -109,7 +139,7 @@ const Sauvegarde = (function () {
 				modeHorsLigne: s.mode === 'hors ligne',
 				parametres: { son: !!R.son, contraste: !!R.contrasteRenforce, reduireAnimations: !!R.reduireAnimations, tailleTexte: 1 },
 				// Où en était l'écran : la phase, et le temps déjà écoulé du compte à rebours (recalculé à la reprise)
-				interface: { phase, ecoule: PHASES_COMPTEUR.includes(phase) ? Math.max(0, maintenant - debutCompteur) : 0, pcJour: typeof JOUR_PC !== 'undefined' ? JOUR_PC.fait : '', explication: typeof FIL !== 'undefined' && FIL.explicationVue, somnolence: typeof SOMNO !== 'undefined' ? Math.round(SOMNO.v) : 0, community: typeof COMMU !== 'undefined' ? COMMU.onglet : 'fil', patron: typeof PATRON !== 'undefined' ? { filtre: PATRON.filtre, defil: PATRON.defil } : null, pile: typeof APPLIS !== 'undefined' ? APPLIS.pile.slice() : [], brouillon: typeof COMMU !== 'undefined' ? COMMU.brouillon : null, telephone: typeof TELN !== 'undefined' ? { jour: TELN.jour, recues: TELN.recues.filter((n) => !n.heureReelle).map((n) => Object.assign({}, n)), vus: Object.assign({}, TELN.vus), spontanees: TELN.spontanees, dernier: TELN.dernier } : null, journal: typeof JOURNAL !== 'undefined' ? { jour: JOURNAL.jour, filtre: JOURNAL.filtre, defil: Math.round(JOURNAL.defil) } : null }, // prompt 71 : journée dont le PC a déjà démarré ; prompt 74 : explication du poste vue
+				interface: { phase, ecoule: PHASES_COMPTEUR.includes(phase) ? Math.max(0, maintenant - debutCompteur) : 0, pcJour: typeof JOUR_PC !== 'undefined' ? JOUR_PC.fait : '', somnolence: typeof SOMNO !== 'undefined' ? Math.round(SOMNO.v) : 0, community: typeof COMMU !== 'undefined' ? COMMU.onglet : 'fil', patron: typeof PATRON !== 'undefined' ? { filtre: PATRON.filtre, defil: PATRON.defil } : null, pile: typeof APPLIS !== 'undefined' ? APPLIS.pile.slice() : [], brouillon: typeof COMMU !== 'undefined' ? COMMU.brouillon : null, telephone: typeof TELN !== 'undefined' ? { jour: TELN.jour, recues: TELN.recues.filter((n) => !n.heureReelle).map((n) => Object.assign({}, n)), vus: Object.assign({}, TELN.vus), spontanees: TELN.spontanees, dernier: TELN.dernier } : null, journal: typeof JOURNAL !== 'undefined' ? { jour: JOURNAL.jour, filtre: JOURNAL.filtre, defil: Math.round(JOURNAL.defil) } : null }, // prompt 71 : journée dont le PC a déjà démarré ; prompt 74 : explication du poste vue
 				complet: encoder(s),
 			},
 		};
@@ -117,13 +147,13 @@ const Sauvegarde = (function () {
 
 	/** Sauvegarde automatique : après chaque décision, à la pause, en fin de journée, en quittant la page */
 	function auto(annonce) {
-		if (ecran !== 'jeu' || !Jeu.paquet) return false;
+		if (ecran !== 'jeu' || !Jeu.paquet || suspendue) return false;
 		if (phase === 'fin') {
-			effacer(semaineCourante()); // partie terminée : plus rien à reprendre (le meilleur bilan est gardé à part)
+			effacerCourante(); // partie terminée : plus rien à reprendre (le meilleur bilan est gardé à part)
 			return false;
 		}
 		const o = construire();
-		if (!o || !ecrireCle(cleSemaine(o.semaine), o)) return false;
+		if (!o || !ecrireCle(cleEmplacement(o.id), o)) return false;
 		derniere = new Date();
 		derniereJeu = Jeu.horloge && Jeu.jourCourant && Jeu.jourCourant() ? { minutes: Jeu.horloge.minutes, jour: Jeu.jourIndex + 1 } : null;
 		if (annonce) annoncer(texteIndicateur());
@@ -136,31 +166,78 @@ const Sauvegarde = (function () {
 		return t('sauvegarde.auto', { heure: String(derniere.getHours()).padStart(2, '0') + ':' + String(derniere.getMinutes()).padStart(2, '0') });
 	}
 
-	function effacer(semaine) {
+	/** Supprime UN emplacement (les autres ne sont jamais touchés) ; si c'est celui de la partie en cours, elle n'est plus sauvegardée */
+	function effacer(id) {
+		if (!id) return;
 		try {
-			localStorage.removeItem(cleSemaine(semaine));
+			localStorage.removeItem(cleEmplacement(id));
 		} catch (e) {}
+		memo.delete(cleEmplacement(id));
+		if (id === courant) {
+			courant = null;
+			suspendue = true;
+		}
+	}
+	function effacerCourante() {
+		if (courant) effacer(courant);
+		courant = null;
+	}
+	/** Nouvelle partie : elle aura son propre emplacement, créé à sa première sauvegarde automatique */
+	function nouvelle() {
+		courant = null;
+		creeLe = null;
+		suspendue = false;
 	}
 
-	/** Toutes les sauvegardes valides, la plus récente d'abord */
+	/** Version 1 (sans id) → version 2 : l'identifiant est la fin de la clé (la semaine, pour l'ancienne sauvegarde) */
+	function normaliser(o, id) {
+		if (!o || typeof o !== 'object' || Array.isArray(o)) return o;
+		if (o.version === 1) return Object.assign({}, o, { version: VERSION, id, creeLe: o.sauvegardeLe || null });
+		if (o.id !== id) return Object.assign({}, o, { id });
+		return o;
+	}
+	/** Tous les emplacements valides, le plus récent d'abord. Une sauvegarde d'avant le prompt 178 est réécrite sur
+	 * place au nouveau format (un seul essai par session ; en cas d'échec d'écriture, l'ancienne reste lue telle quelle) */
 	function lister() {
 		const liste = [];
+		const vues = new Set();
 		try {
 			for (let i = 0; i < localStorage.length; i++) {
 				const cle = localStorage.key(i);
 				if (!cle || cle.indexOf(PREFIXE) !== 0) continue;
-				const o = lireCle(cle);
-				if (valider(o).ok) liste.push(o);
+				vues.add(cle);
+				const brut = localStorage.getItem(cle);
+				let m = memo.get(cle);
+				if (!m || m.brut !== brut) {
+					let lu = null;
+					try {
+						lu = JSON.parse(brut);
+					} catch (e) {}
+					const id = cle.slice(PREFIXE.length);
+					const o = ID_VALIDE.test(id) ? normaliser(lu, id) : null;
+					m = { brut, objet: valider(o).ok ? o : null };
+					if (m.objet && lu.version === 1 && !dejaMigree.has(cle)) {
+						dejaMigree.add(cle);
+						try {
+							const neuf = JSON.stringify(m.objet);
+							localStorage.setItem(cle, neuf); // remplacement atomique : jamais d'effacement préalable
+							m.brut = neuf;
+						} catch (e) {}
+					}
+					if (m.objet || (Jeu.semaines && Jeu.semaines.semaines)) memo.set(cle, m); // données pas encore chargées : on réessaiera
+				}
+				if (m.objet) liste.push(m.objet);
 			}
 		} catch (e) {
 			return [];
 		}
-		return liste.sort((a, b) => String(b.sauvegardeLe).localeCompare(String(a.sauvegardeLe)));
+		memo.forEach((v, k) => vues.has(k) || memo.delete(k));
+		return liste.sort((a, b) => String(b.sauvegardeLe || '').localeCompare(String(a.sauvegardeLe || '')));
 	}
-	const pour = (semaine) => {
-		const o = lireCle(cleSemaine(semaine));
-		return valider(o).ok ? o : null;
-	};
+	const pour = (id) => lister().find((o) => o.id === id) || null;
+	const pleine = () => lister().length >= MAX;
+	/** L'emplacement le plus ancien (proposé à la suppression quand la limite est atteinte) */
+	const plusAncienne = () => lister().slice(-1)[0] || null;
 
 	// ——— Validation stricte (aucune écriture si un seul critère échoue) ———
 	function semaineConnue(id) {
@@ -170,7 +247,8 @@ const Sauvegarde = (function () {
 	function valider(o) {
 		const non = (raison) => ({ ok: false, raison });
 		if (!o || typeof o !== 'object' || Array.isArray(o)) return non('objet');
-		if (o.version !== VERSION) return non('version');
+		if (o.version !== VERSION && o.version !== 1) return non('version');
+		if (o.id !== undefined && (typeof o.id !== 'string' || !ID_VALIDE.test(o.id))) return non('id');
 		if (typeof o.semaine !== 'string' || !semaineConnue(o.semaine)) return non('semaine');
 		const e = o.etat;
 		if (!e || typeof e !== 'object') return non('etat');
@@ -275,7 +353,6 @@ const Sauvegarde = (function () {
 				FIL.messages = [];
 				FIL.serieDepuis = (Jeu.evenementsJournee || []).length;
 				FIL.jourCle = ''; // les heures de rythme déjà passées ne sont pas rejouées (majRythme)
-				FIL.explicationVue = ui.explication !== undefined ? !!ui.explication : true; // anciennes sauvegardes : déjà joué
 			}
 			if (typeof JOUR_PC !== 'undefined') {
 				// Prompt 71 : reprise en cours de journée → pas de nouveau démarrage (anciennes sauvegardes : idem)
@@ -283,6 +360,9 @@ const Sauvegarde = (function () {
 				JOUR_PC.attendu = false;
 				demarrageDuJour();
 			}
+			courant = o.id || null; // prompt 178 : la sauvegarde automatique continue dans le même emplacement
+			creeLe = o.creeLe || o.sauvegardeLe || null;
+			suspendue = false;
 			derniere = new Date(o.sauvegardeLe);
 			derniereJeu = null;
 			annoncer(t('sauvegarde.reprise', { semaine: libelleSemaine(o.semaine), n: o.etat.dossierIndex + 1, total: c.paquet.length }));
@@ -298,7 +378,7 @@ const Sauvegarde = (function () {
 	// ——— Export ———
 	function aExporter() {
 		if (ecran === 'jeu') auto(false);
-		const courante = ecran === 'jeu' ? pour(semaineCourante()) : null;
+		const courante = ecran === 'jeu' && courant ? pour(courant) : null;
 		return courante || lister()[0] || null;
 	}
 	function contenuExport(o) {
@@ -356,9 +436,18 @@ const Sauvegarde = (function () {
 			toast(t('parametres.import.erreur'), 'erreur'); // aucun état modifié
 			return false;
 		}
-		if (!ecrireCle(cleSemaine(r.objet.semaine), stripExport(r.objet))) return false;
-		toast(t('parametres.import.ok', { semaine: libelleSemaine(r.objet.semaine) }), 'ok');
-		montrerReprise(r.objet);
+		// Prompt 178 : la partie importée prend un emplacement — le sien si elle y est déjà (même id), sinon un nouveau
+		const brut = stripExport(r.objet);
+		const existe = brut.version === VERSION && brut.id && pour(brut.id);
+		if (!existe && pleine()) {
+			toast(t('sauvegarde.pleine', { max: MAX }), 'erreur'); // aucun emplacement écrasé d'office
+			return false;
+		}
+		const id = existe ? brut.id : nouvelId();
+		const objet = Object.assign({}, brut, { version: VERSION, id, creeLe: brut.creeLe || brut.sauvegardeLe || null });
+		if (!ecrireCle(cleEmplacement(id), objet)) return false;
+		toast(t('parametres.import.ok', { semaine: libelleSemaine(objet.semaine) }), 'ok');
+		montrerReprise(objet);
 		return true;
 	}
 	function stripExport(o) {
@@ -425,6 +514,7 @@ const Sauvegarde = (function () {
 			}
 		});
 		fond.appendChild(boite);
+		fond.addEventListener('pointerdown', (ev) => ev.target === fond && fermerImport()); // prompt 173 : clic sur le fond = fermer, comme Échap
 		document.body.appendChild(fond);
 		dialogue = fond;
 		label.focus();
@@ -475,8 +565,17 @@ const Sauvegarde = (function () {
 	return {
 		auto,
 		effacer,
+		effacerCourante,
+		nouvelle,
 		lister,
 		pour,
+		pleine,
+		plusAncienne,
+		MAX,
+		VERSION,
+		get courant() {
+			return courant;
+		},
 		valider,
 		analyser,
 		importer,

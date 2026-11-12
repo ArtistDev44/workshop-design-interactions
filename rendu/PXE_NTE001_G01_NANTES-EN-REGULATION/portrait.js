@@ -2,7 +2,7 @@
  * Principe : RECOMPOSITION. Le jeu continue de dessiner en 1920×1080 (ordinateur et paysage inchangés) ; en
  * portrait, un second canevas 1080×1920 recompose, à chaque image, des régions de cette image empilées :
  *   appli Signalements : jauges (fixes) / liste des signalements + lignes, dossier avec sources, compteur et actions (défilables,
- *     défilement automatique vers le dossier à son arrivée) / barre des tâches et « Se lever » (fixes) ;
+ *     défilement automatique vers le dossier à son arrivée) / « Se lever » (fixe) ;
  *   fenêtres : recadrées à leur largeur ; téléphone et tasse en main : recadrés sur l'objet ; menu : sa colonne ;
  *   bureau : la pièce en haut, et tous les objets en grosses cibles tactiles en dessous (≥ 96 px).
  * Les touchers sont reconvertis vers les coordonnées 1920×1080 avant d'appeler les gestionnaires du jeu.
@@ -46,7 +46,9 @@ function region(src, dx, dy, dl, defile) {
 	PORTRAIT.regions.push({ src, dst: { x: dx, y: dy, l: dl, h: dh }, defile: !!defile });
 	return dh;
 }
-const LARGEUR_FENETRE = { partage: 900, palmares: 1440, 'livre-stress': 1400, aide: 1260, accessibilite: 1260, parametres: 1040, menu: 760, inspection: 1140, demission: 940, partir: 1040, blame: 1140, mailFin: 1140, reset: 1000, reprise: 1100, tache: 1260, optionsJeu: 1520, deblocage: 1020 }; // prompt 88
+// Prompt 173 : les fenêtres n'ont plus que trois largeurs (DS.fenetre) ; le cadrage portrait = largeur + 40 px
+const CADRE_FENETRE = { etroite: DS.fenetre.etroite + 40, moyenne: DS.fenetre.moyenne + 40, large: DS.fenetre.large + 40 };
+const LARGEUR_FENETRE = { menu: CADRE_FENETRE.etroite, partage: CADRE_FENETRE.moyenne, installation: CADRE_FENETRE.moyenne, demission: CADRE_FENETRE.moyenne, partir: CADRE_FENETRE.moyenne, reset: CADRE_FENETRE.moyenne }; // prompt 88 ; les autres : large
 
 function scenePortrait() {
 	if (typeof CINE !== 'undefined' && CINE) return 'plein';
@@ -56,7 +58,6 @@ function scenePortrait() {
 	if (MENU.actif) return 'menu';
 	if (vue === 'poste' && PC.etat === 'appli' && ecran === 'jeu') return 'appli';
 	if (vue === 'poste' && typeof vueIntegree === 'function' && vueIntegree()) return 'vueApp'; // prompt 103 : vue intégrée de l'appli
-	if (vue === 'poste' && PC.etat === 'os' && (PC.fenetre === 'community' || PC.fenetre === 'patron') && ecran === 'jeu') return 'community'; // prompts 85 / 86 : une colonne
 	if (vue === 'bureau' && ecran === 'jeu' && !TRANSITION_JOUR) return 'bureau';
 	return 'plein';
 }
@@ -76,15 +77,14 @@ function composerPortrait() {
 		region(appliVersImage(ZONE_VUE), 20, 12 + hj + 8, PL - 40, true);
 		region(appliVersImage(MENU_BAS), 0, PH - 150, PL);
 	}
-	else if (scene === 'community') region(pcVersImage({ x: FENETRE_APP.x, y: FENETRE_APP.y, l: 924, h: FENETRE_APP.h }), 0, 160, PL); // prompt 85 : colonne de 860 px, onglets en bas
 	else if (scene === 'main') region({ x: 880, y: 0, l: 780, h: H }, 0, 200, PL);
 	else if (scene === 'rapport') region({ x: 420, y: 0, l: 1420, h: H }, 0, (PH - (H * PL) / 1420) / 2, PL);
 	else if (scene === 'fenetre') {
-		const W = tutoriel ? 1400 : LARGEUR_FENETRE[fenetre] || 1260;
+		const W = tutoriel ? 1400 : LARGEUR_FENETRE[fenetre] || CADRE_FENETRE.large;
 		region({ x: (L - W) / 2, y: 0, l: W, h: H }, 0, (PH - (H * PL) / W) / 2, PL);
 	} else if (scene === 'menu') {
 		const hm = region({ x: 110, y: 60, l: BLOC_PARTAGE.x - 120, h: 1000 }, 0, 440, PL); // colonne du menu, titre entier (s'arrête avant le bloc de partage)
-		region({ x: BLOC_PARTAGE.x - 12, y: BLOC_PARTAGE.y - BLOC_PARTAGE.h - 16 - 12, l: 3 * BLOC_PARTAGE.l + 56, h: 2 * BLOC_PARTAGE.h + 16 + 24 }, 20, 440 + hm + 24, PL - 40); // prompt 81 : dépôt et partage sous le menu (≥ 44 px) ; prompt 136 : + rangée Livrables
+		region({ x: BLOC_PARTAGE.x - 12, y: BLOC_PARTAGE.y - 2 * (BLOC_PARTAGE.h + 16) - 12, l: 3 * BLOC_PARTAGE.l + 56, h: 3 * BLOC_PARTAGE.h + 32 + 24 }, 20, 440 + hm + 24, PL - 40); // prompt 81 : dépôt et partage sous le menu (≥ 44 px) ; prompt 136 : + rangée Livrables ; prompt 188 : + rangée Kit de presse
 	}
 	else if (scene === 'bureau') {
 		region({ x: 0, y: 0, l: L, h: H }, 0, 150, PL);
@@ -122,7 +122,7 @@ function composerPortrait() {
 	}
 }
 
-/** Appli Signalements : jauges fixes, puis liste des signalements + lignes et dossier (défilables), barre des tâches + « Se lever » fixes */
+/** Appli Signalements : jauges fixes, puis liste des signalements + lignes et dossier (défilables), « Se lever » fixe */
 function regionsAppli() {
 	const hj = region(appliVersImage(BANDEAU_TOUT), 20, 12, PL - 40); // prompt 87 : bandeau fin
 	const hs = region(appliVersImage(ZONE_SOMNO), (PL - 600) / 2, 12 + hj + 8, 600); // prompt 78 : somnolence (≥ 44 px)
@@ -152,8 +152,7 @@ function regionsAppli() {
 		if (Math.abs(PORTRAIT.cible - PORTRAIT.defil) < 1) (PORTRAIT.defil = PORTRAIT.cible), (PORTRAIT.cible = null);
 	}
 	PORTRAIT.defil = constrain(PORTRAIT.defil, 0, PORTRAIT.defilMax);
-	region(pcVersImage({ x: 0, y: H - BARRE_OS, l: L, h: BARRE_OS }), 20, PH - 182, PL - 40);
-	PORTRAIT.boutons.push({ x: 20, y: PH - 110, l: PL - 40, h: 96, texte: t('portrait.seLever'), action: quitterPC, primaire: false });
+	PORTRAIT.boutons.push({ x: 20, y: PH - 110, l: PL - 40, h: 96, texte: t('portrait.seLever'), action: quitterPC, primaire: false, desactive: !!raisonRetenuAuPC() }); // prompt 182 : estompé tant qu'un choix attend (le toucher annonce la raison)
 }
 /** Bureau : tous les objets de la pièce en grosses cibles (2 colonnes), plus « S'installer au PC » */
 function boutonsBureau() {
@@ -176,6 +175,8 @@ function boutonsBureau() {
 }
 function dessinerBoutonPortrait(b) {
 	const ctx = PORTRAIT.ctx;
+	ctx.save();
+	if (b.desactive) ctx.globalAlpha = 0.5; // prompt 182
 	ctx.fillStyle = b.primaire ? DS.primaire : '#171616'; // prompt 115
 	ctx.fillRect(b.x, b.y, b.l, b.h);
 	ctx.strokeStyle = b.primaire ? DS.primaire : 'rgba(255,255,255,0.6)';
@@ -191,6 +192,7 @@ function dessinerBoutonPortrait(b) {
 		ctx.font = '600 ' + taille + 'px "JetBrains Mono", ui-monospace, monospace';
 	}
 	ctx.fillText(b.texte, b.x + b.l / 2, b.y + b.h / 2 + 2);
+	ctx.restore();
 }
 
 // ——— Entrées : portrait → image principale ———

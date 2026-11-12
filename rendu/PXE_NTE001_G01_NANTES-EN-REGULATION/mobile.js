@@ -49,6 +49,7 @@ function toucherFin() {
 	if (Math.abs(dy) / k > SEUIL_SWIPE && Math.abs(dy) > Math.abs(dx) && dansZoneSources(d.x, d.y)) return; // prompt 92 : le glisser a fait défiler les sources (mouseDragged)
 	if (Math.abs(dy) / k > SEUIL_SWIPE && Math.abs(dy) > Math.abs(dx)) {
 		// Swipe vertical : doigt vers le haut = molette vers le haut (s'installer) ; vers le bas = se lever
+		if (typeof guideBloque === 'function' && guideBloque(d.x, d.y)) return rappelerConsigneGuide(); // prompt 181 : même filtre, à la position du toucher
 		scrollSortiePC(dy < 0 ? -150 : 150);
 		return;
 	}

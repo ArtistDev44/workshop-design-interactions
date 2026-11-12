@@ -650,13 +650,14 @@
 		Jeu.majStatutPatron(); // prompt 84 : la décision a changé les jauges
 		// Prompt 79 : mauvaise réaction sur un retard → la ligne reste aggravée jusqu'au soir (malus : ceux qui existent déjà)
 		const ev = Jeu.evaluer(entree);
+		resultat.evaluation = ev; // prompt 163 : rang des décisions clés du rapport (bon / moyen / mauvais)
 		if (re !== null && (ev === 'rate' || ev === 'trop_tard') && d.lignes && d.lignes.length) {
 			const A = REGLAGES.aggravation;
 			d.lignes.forEach((l) => (Jeu.aggravationLignes[l] = Math.min(A.plafondDurable, (Jeu.aggravationLignes[l] || 0) + A.durable)));
 			resultat.aggravation = { lignes: d.lignes.slice(), plus: A.durable };
 		}
 		resultat.narration = Jeu.narrer(resultat);
-		if (clash) resultat.narration.texte = T('narr.avecClash', { texte: resultat.narration.texte, malus: REGLAGES.malusClash });
+		if (clash) resultat.narration.texte = T('narr.avecClash', { texte: resultat.narration.texte }) // prompt 184 : le malus se voit sur la jauge (segment rouge);
 		Jeu.historique.push(resultat);
 		Jeu.index++;
 		Jeu.terminee = Jeu.index >= Jeu.paquet.length;
@@ -694,7 +695,6 @@
 		const objet = d.lignes && d.lignes.length ? T('narr.objetLigne', { lignes: d.lignes.join(', ') }) : d.type === 'événement' ? (d.texte_source ? T('narr.objetAffluenceNom', { nom: String(d.texte_source).split(' — ')[0].trim() }) : T('narr.objetAffluence')) : d.nature; // prompt 88 : le nom réel de l'événement
 		const re = Jeu.retardEffectif(d);
 		const fait = d.retard !== null && d.retard !== undefined ? (re !== d.retard ? T('narr.retardAggrave', { reel: d.retard, effectif: re }) : ' (+' + d.retard + ' min)') : ''; // prompt 79
-		const items = r.deltas.map((v, i) => (v ? T('delta', { jauge: LIBELLES_JAUGES[NOMS_JAUGES[i]], v: (v > 0 ? '+' : '') + v }) : null)).filter(Boolean);
 		const ton = Jeu.ton();
 		return {
 			titre: T('narr.titre', { quand, objet, fait }),
@@ -702,7 +702,7 @@
 				action: r.nomAction,
 				communique: r.communique ? T('narr.communique') : '',
 				source: r.mauvaiseSource ? T('narr.mauvaiseSource') : '',
-				bilan: items.length ? T('narr.bilan', { liste: Liste(items, ', ', true) }) : T('narr.aucunEffet'),
+				// prompt 184 : plus de liste des écarts dans la narration — les jauges animées la portent, le Journal la détaille
 				reaction: T(Jeu.variante('ton.' + ton, 'ton|' + Jeu.paquet.indexOf(d))), // prompt 88 : 3 variantes
 			}),
 			ton,
@@ -727,10 +727,31 @@
 		},
 	};
 
+	/** Prompt 163 : évaluation d'une décision du bilan — gardée sur le résultat depuis le prompt 163, sinon relue dans le
+	 * journal (même objet), sinon « trop tard » pour le temps écoulé ; rang 0 bon, 1 moyen, 2 mauvais. */
+	const RANG_EVALUATION = { bon: 0, aucun_detour: 1, inconnu: 1, rate: 2, trop_tard: 2 };
+	function evaluationDe(r) {
+		if (r.evaluation && RANG_EVALUATION[r.evaluation] !== undefined) return r.evaluation;
+		const e = (Jeu.evenementsJournee || []).find((x) => x.resultat === r);
+		if (e) return Jeu.evaluer(e);
+		return r.action === 'temps' ? 'trop_tard' : 'inconnu';
+	}
+	Jeu.RANG_EVALUATION = RANG_EVALUATION;
+	/** Prompt 163 : seuils des fins, cités sur le rapport à côté du tampon */
+	Jeu.SEUILS_FIN = { bonne: 240, moyenne: 150 };
+	/** Prompt 163 : période en jj/mm (« du 14/09 au 20/09/2026 · 6 jours joués ») ; temps réel : l'horodatage tel quel */
+	Jeu.periodeTexte = function () {
+		const s = Jeu.etat && Jeu.etat.semaine;
+		if (!s) return (Jeu.etat && Jeu.etat.horodatage) || '';
+		const jm = (iso) => iso.split('-').reverse().slice(0, 2).join('/');
+		const joues = Math.min((Jeu.jours || []).length, (Jeu.jourIndex || 0) + 1);
+		return T('rapport.periodeSemaine', { debut: jm(s.lundi), fin: s.dimanche.split('-').reverse().join('/'), n: joues });
+	};
+
 	/** Fin déterminée par le score combiné (Q43, Q48) : bonne ≥ 240, moyenne ≥ 150, mauvaise < 150. */
 	Jeu.typeFin = function (score) {
 		const s = score === undefined ? Jeu.score() : score;
-		return s >= 240 ? 'bonne' : s >= 150 ? 'moyenne' : 'mauvaise';
+		return s >= Jeu.SEUILS_FIN.bonne ? 'bonne' : s >= Jeu.SEUILS_FIN.moyenne ? 'moyenne' : 'mauvaise';
 	};
 
 	/**
@@ -741,12 +762,18 @@
 		const type = Jeu.typeFin();
 		const decisions = (Jeu.historique || []).filter((h) => h.action);
 		const total = (r) => r.deltas.reduce((s, v) => s + v, 0);
-		const tries = decisions.slice().sort((a, b) => total(b) - total(a));
+		// Prompt 163 : rang d'abord selon l'évaluation (bon < moyen < mauvais), puis l'écart total des jauges —
+		// une décision jugée « bon choix » n'est plus montrée comme la pire parce qu'elle a coûté du budget
+		const rang = (r) => RANG_EVALUATION[evaluationDe(r)];
+		const tries = decisions.slice().sort((a, b) => rang(a) - rang(b) || total(b) - total(a));
 		const cles = [];
 		if (tries.length) cles.push(Object.assign({ qualite: 'meilleure' }, tries[0]));
-		if (tries.length > 1) cles.push(Object.assign({ qualite: 'pire' }, tries[tries.length - 1]));
+		if (tries.length > 1) {
+			const der = tries[tries.length - 1];
+			cles.push(Object.assign({ qualite: rang(der) === 0 ? 'moins bonne' : 'pire' }, der)); // toutes bonnes : « moins bonne », pas « pire »
+		}
 		decisions
-			.filter((d) => d.mauvaiseSource && !cles.includes(d))
+			.filter((d) => d.mauvaiseSource && !cles.some((c) => c.dossier === d.dossier && c.jour === d.jour && c.minuteSim === d.minuteSim))
 			.slice(0, 1)
 			.forEach((d) => cles.push(Object.assign({ qualite: 'mauvaise source' }, d)));
 		const retards = Jeu.paquet.filter((d) => d.retard !== null && d.retard !== undefined);
@@ -768,14 +795,17 @@
 			mauvaisesSources: decisions.filter((d) => d.mauvaiseSource).length,
 			decisionsCles: cles.map((d) => ({
 				qualite: d.qualite,
-				titre: d.narration.titre,
+				titre: marquerFictif(d, d.narration.titre), // prompt 162
 				action: d.nomAction,
+				evaluation: evaluationDe(d), // prompt 163
 				deltas: d.deltas,
 			})),
 			faits: {
 				periode: Jeu.etat.semaine ? Jeu.etat.semaine.lundi + ' → ' + Jeu.etat.semaine.dimanche : Jeu.etat.horodatage || '',
+				periodeTexte: Jeu.periodeTexte(), // prompt 163 : jj/mm et jours joués
 				pireRetard: pire ? { ligne: (pire.lignes || []).join(', '), minutes: pire.retard } : null,
 				parType,
+				composition: Jeu.compositionDossiers(Jeu.paquet), // prompt 163 : composition honnête (prompt 162) sur le rapport
 			},
 		};
 	};
@@ -929,8 +959,10 @@
 	};
 
 	/** Événement externe réel du dossier (nature, météo, affluence) — jamais inventé */
+	/** Prompt 162 : nom d'un événement de l'agenda (« Nom — Lieu »), sinon sa nature (catégorie brute) */
+	const nomEvenementDossier = (d) => String(d.texte_source || '').split(' — ')[0].trim() || String(d.nature || '').split(',')[0].trim();
 	function externe(d, ctx) {
-		let e = d.type === 'événement' ? T('ext.affluence', { nature: String(d.nature).split(',')[0] }) : d.type === 'ligne en difficulté' ? T('ext.retard') : d.nature;
+		let e = d.type === 'événement' ? T('ext.affluence', { nature: nomEvenementDossier(d) }) : d.type === 'ligne en difficulté' ? T('ext.retard') : d.natureAffichee || d.nature; // prompt 162 : nature du fictif traduite
 		if (ctx.meteo && d.type !== 'alerte météo') e = T('ext.meteo', { e });
 		return e;
 	}
@@ -953,7 +985,7 @@
 			heure: r.minuteSim === null ? '' : String(Math.floor(r.minuteSim / 60) % 24).padStart(2, '0') + ':' + String(Math.floor(r.minuteSim) % 60).padStart(2, '0'),
 			ligne: d.lignes && d.lignes.length ? d.lignes.join(', ') : null,
 			externe: externe(d, ctx),
-			externeCourt: d.type === 'événement' ? String(d.nature).split(',')[0] : d.type === 'ligne en difficulté' ? T('ext.retard') : d.nature,
+			externeCourt: d.type === 'événement' ? nomEvenementDossier(d) : d.type === 'ligne en difficulté' ? T('ext.retard') : d.natureAffichee || d.nature,
 			retard: d.retard === undefined ? null : d.retard,
 			retardEffectif: Jeu.retardEffectif(d), // prompt 79
 			action: r.action === 'temps' ? null : r.nomAction,
@@ -970,6 +1002,7 @@
 			valeurBasse: Math.round((r.jaugesAvant || Jeu.jauges)[NOMS_JAUGES[poids.indexOf(Math.max(...poids))]]),
 			resultat: r,
 			index: Jeu.index, // prompt 85 : rang du dossier dans le paquet (post du compte social)
+			fictif: estFictif(d), // prompt 162 : la trace garde l'étiquette « Fictif »
 		};
 		Jeu.evenementsJournee.push(entree);
 		Jeu.reagirApps(entree);
@@ -989,7 +1022,7 @@
 	};
 
 	Jeu.ligneMail = function (e) {
-		const sujet = e.ligne ? T('sujet.ligne', { ligne: e.ligne }) : T('sujet.reseau');
+		const sujet = marquerFictif(e, e.ligne ? T('sujet.ligne', { ligne: e.ligne }) : T('sujet.reseau')); // prompt 162
 		const retard = e.retard !== null ? T('mail.retard', { retard: e.retardEffectif !== undefined && e.retardEffectif !== null ? e.retardEffectif : e.retard }) : ''; // prompt 79 : retard qui a compté
 		const ev = Jeu.evaluer(e);
 		const suite =
@@ -1049,7 +1082,7 @@
 		if (Jeu.defis && Jeu.defis.length) {
 			if (Jeu.jourIndex >= (Jeu.jours || []).length - 1) {
 				lignes.push(T('mail.defisBilan'));
-				Jeu.resultatsDefis().forEach((r) => lignes.push(T(r.tenu ? 'defi.tenu' : 'defi.rate', { defi: T('defi.' + r.id), valeur: r.valeur, bonus: T('delta', { jauge: LIBELLES_JAUGES[r.jauge], v: '+' + r.bonus }) })));
+				Jeu.resultatsDefis().forEach((r) => lignes.push(T(r.sansObjet ? 'defi.sansObjet' : r.tenu ? 'defi.tenu' : 'defi.rate', { defi: T('defi.' + r.id), valeur: r.valeur, bonus: T('delta', { jauge: LIBELLES_JAUGES[r.jauge], v: '+' + r.bonus }) })));
 			} else lignes.push(T('mail.defis', { liste: Jeu.defis.map((id) => T('defi.' + id)).join(' · ') }));
 		}
 		const style = Jeu.profilGestion(duJour.map((e) => e.famille || e.cleAction)); // prompt 47 : épilogue personnalisé ; prompt 87 : famille de la réponse
@@ -1059,8 +1092,58 @@
 			objet: T(parfaite ? 'mail.objetMerci' : 'mail.objetRevoir', { date }),
 			positif: parfaite,
 			lignes,
+			scene: Jeu.sceneDuSoir(duJour), // prompt 191 : le mail raconte un moment (fait marquant + phrase du patron), le bilan passe dessous
 			dernier: Jeu.jourIndex >= (Jeu.jours || []).length - 1,
 		};
+	};
+
+	// =====================================================================
+	// Prompt 191 — le mail du soir comme scène : un fait marquant tiré d'un dossier RÉELLEMENT joué ce jour,
+	// une phrase du patron à trois niveaux (part des décisions jugées « bon choix ! » dans la journée).
+	// Couche de présentation : aucune règle ni aucun effet de jauge.
+	// =====================================================================
+	const SEUILS_MAIL_PATRON = { satisfait: 2 / 3, inquiet: 1 / 3 }; // part des bonnes décisions du jour
+	Jeu.SEUILS_MAIL_PATRON = SEUILS_MAIL_PATRON;
+	const retardDe = (e) => (e.retardEffectif !== undefined && e.retardEffectif !== null ? e.retardEffectif : e.retard !== null && e.retard !== undefined ? e.retard : null);
+	/** Dossier retenu : la pire décision du jour (plus gros retard d'abord, puis la plus tôt) ; sinon la meilleure */
+	Jeu.faitMarquantDuJour = function (duJour) {
+		const evs = (duJour || []).filter((e) => e && e.heure && e.resultat);
+		if (!evs.length) return null;
+		const tri = (a, b) => (retardDe(b) || 0) - (retardDe(a) || 0) || String(a.heure).localeCompare(String(b.heure));
+		const mauvais = evs.filter((e) => Jeu.evaluer(e) !== 'bon').sort(tri);
+		const e = mauvais[0] || evs.slice().sort(tri)[0];
+		const ev = Jeu.evaluer(e);
+		const r = retardDe(e);
+		const texte = T(ev === 'bon' ? 'mailf.fait.bon' : e.cleAction === 'temps' ? 'mailf.fait.tropTard' : 'mailf.fait.rate', {
+			heure: e.heure,
+			sujet: marquerFictif(e, e.ligne ? T('sujet.ligne', { ligne: e.ligne }) : T('sujet.reseau')),
+			externe: e.externe,
+			retard: r !== null ? T('mail.retard', { retard: r }) : '',
+			action: e.action,
+			meilleure: e.meilleureAction,
+		});
+		return { texte, evenement: e, evaluation: ev };
+	};
+	/** Niveau du patron : satisfait / neutre / inquiet selon la part de « bon choix ! » du jour (neutre sans dossier) */
+	Jeu.niveauPatronDuJour = function (duJour) {
+		const evs = duJour || [];
+		if (!evs.length) return 'neutre';
+		const part = evs.filter((e) => Jeu.evaluer(e) === 'bon').length / evs.length;
+		return part >= SEUILS_MAIL_PATRON.satisfait ? 'satisfait' : part < SEUILS_MAIL_PATRON.inquiet ? 'inquiet' : 'neutre';
+	};
+	Jeu.sceneDuSoir = function (duJour) {
+		const niveau = Jeu.niveauPatronDuJour(duJour);
+		const suffixe = ['', '.v1', '.v2'][hacher(String(Jeu.graine) + '|mailSoir|' + Jeu.jourIndex + '|' + niveau) % 3]; // tirage déterministe, sans dé
+		return { fait: Jeu.faitMarquantDuJour(duJour), niveau, patron: T('mailf.patron.' + niveau + suffixe) };
+	};
+	/** Accroche météo du matin (écran « Jour N ») : la météo réelle du jour, seulement si la donnée du jour existe */
+	Jeu.accrocheMeteo = function (date) {
+		const m = date && Jeu.meteoDuJour ? Jeu.meteoDuJour(date) : null;
+		if (!m || m.date !== date) return null; // meteoDuJour retombe sur le 1er jour de la semaine : rien sans la donnée du jour
+		const ok = (k) => typeof m[k] === 'number' && isFinite(m[k]);
+		if (!['temp_min', 'temp_max', 'pluie_mm', 'rafales_max'].every(ok)) return null;
+		const n = (v) => (typeof Langue !== 'undefined' && Langue.actuelle === 'fr' ? String(v).replace('.', ',') : String(v));
+		return T('transition.meteo', { min: n(m.temp_min), max: n(m.temp_max), pluie: n(m.pluie_mm), vent: n(Math.round(m.rafales_max)) });
 	};
 
 	// =====================================================================
@@ -1092,8 +1175,22 @@
 		const o = Jeu.objectifDuJour();
 		const mo = Jeu.modificateur;
 		const m = mo ? (mo.actionBloquee ? T('patron.modBloque', { libelle: mo.libelle, action: REGLAGES.effets[mo.actionBloquee].nom }) : T('patron.mod', { libelle: mo.libelle })) : '';
-		return T('patron.consigne', { n, date: j ? j.date.split('-').reverse().join('/') : '', objectif: o.libelle, budget: Jeu.jauges.budget, mod: m });
+		return T('patron.consigne', { n, parts: Jeu.compositionDossiers(j ? j.dossiers : []), date: j ? j.date.split('-').reverse().join('/') : '', objectif: o.libelle, budget: Jeu.jauges.budget, mod: m });
 	}
+	/** Prompt 162 : composition d'une liste de dossiers dite honnêtement — « réel » réservé aux faits de la source
+	 * (perturbations, retards, alertes météo) ; l'agenda (affluence supposée), l'incident fictif et les conséquences de
+	 * jeu comptés à part ; seules les parts non nulles. Texte différé (suit la langue). */
+	Jeu.compositionDossiers = function (dossiers) {
+		const n = { reelles: 0, meteo: 0, agenda: 0, fictif: 0, chaine: 0 };
+		(dossiers || []).forEach((d) => {
+			if (estFictif(d)) n.fictif++;
+			else if (d.consequence) n.chaine++;
+			else if (d.type === 'événement') n.agenda++;
+			else if (d.type === 'alerte météo') n.meteo++;
+			else n.reelles++;
+		});
+		return Liste(Object.keys(n).filter((k) => n[k]).map((k) => T('compo.' + k, { n: n[k] })), ', ');
+	};
 
 	/** Prompt 86 : message typé (consigne, alerte, conseil, budget, reproche, equipes, info) avec ses valeurs réelles
 	 * au moment de l'envoi (meta). Pendant la panne de messagerie (prompt 23), il attend et arrive « en retard ». */
@@ -1268,12 +1365,12 @@
 
 	Jeu.commenter = function (sorte, sujet, retard, equipe, index) {
 		const n = Jeu.commentaires.length;
-		const texte = T('com.' + sorte + '.' + (n % COMMENTAIRES[sorte]), {
+		const texte = marquerFictif(index !== undefined && Jeu.paquet ? Jeu.paquet[index] : null, T('com.' + sorte + '.' + (n % COMMENTAIRES[sorte]), {
 			sujet,
 			retard: retard !== null && retard !== undefined ? ' (+' + retard + ' min)' : '',
 			heure: maintenantSim(),
 			equipe: equipe || '',
-		});
+		})); // prompt 162 : commentaire sur un dossier fictif marqué
 		const delta = DELTA_REPUTATION[sorte];
 		Jeu.commentaires.push({ heure: maintenantSim(), auteur: PSEUDOS[n % PSEUDOS.length], texte, delta, index, jour: Jeu.jourIndex }); // prompt 85 : rattaché au post du dossier
 		Jeu.nonLus.community++;
@@ -1285,8 +1382,8 @@
 		const sujet = e.ligne ? T('sujet.ligne', { ligne: e.ligne }) : e.externeCourt || e.externe;
 		const ev = Jeu.evaluer(e);
 		Jeu.commenter(ev === 'bon' ? 'bon' : 'mauvais', sujet, e.retard, undefined, e.index);
-		if (ev === 'rate') Jeu.messagePatron(T(Jeu.variante('patron.rate', 'rate|' + e.index), { sujet, action: e.action, meilleure: e.meilleureAction }), 'reproche', { index: e.index, jour: e.jour, ligne: e.ligne, action: e.cleAction, meilleure: e.cleMeilleure });
-		if (ev === 'trop_tard') Jeu.messagePatron(T('patron.tropTard', { sujet }), 'reproche', { index: e.index, jour: e.jour, ligne: e.ligne, action: 'temps', meilleure: e.cleMeilleure });
+		if (ev === 'rate') Jeu.messagePatron(marquerFictif(e, T(Jeu.variante('patron.rate', 'rate|' + e.index), { sujet, action: e.action, meilleure: e.meilleureAction })), 'reproche', { index: e.index, jour: e.jour, ligne: e.ligne, action: e.cleAction, meilleure: e.cleMeilleure });
+		if (ev === 'trop_tard') Jeu.messagePatron(marquerFictif(e, T('patron.tropTard', { sujet })), 'reproche', { index: e.index, jour: e.jour, ligne: e.ligne, action: 'temps', meilleure: e.cleMeilleure });
 		Jeu.verifierAlertesPatron();
 	};
 
@@ -1330,6 +1427,7 @@
 		if (d.lignes && d.lignes.length) v.ligne = d.lignes.join(', ');
 		if (d.retard !== null && d.retard !== undefined) v.retard = d.retard;
 		if (d.nature) v.nature = String(d.nature).split(',')[0].trim();
+		if (d.type === 'événement') v.nom = nomEvenementDossier(d); // prompt 162 : le nom de l'événement, pas sa catégorie d'agenda
 		return v;
 	}
 	function variablesUtilisees(p) {
@@ -1363,6 +1461,8 @@
 		return s.replace(/\{(\w+)\}/g, (m, k) => (vars && vars[k] !== undefined ? String(vars[k]) : m));
 	};
 
+	/** Prompt 162 : texte d'une plainte reçue, marqué « Fictif · » si elle porte sur le dossier fictif */
+	Jeu.textePlainte = (p) => String(marquerFictif(p && Jeu.paquet ? Jeu.paquet[p.index] : null, Jeu.texteMessage(p.def.texte, p.vars)));
 	/** Prompt 117 : meilleure réponse attendue pour ce dossier (même calcul que le Journal), lecture seule */
 	Jeu.meilleureReponse = function (d) {
 		// Prompt 130 : la meilleure réponse au sens de l'évaluation — effets pondérés par le besoin des jauges actuelles
@@ -1554,7 +1654,7 @@
 				index: e.index !== undefined ? e.index : Jeu.paquet.indexOf(d),
 				jour: e.jour,
 				heure: e.heure,
-				texte: T(e.cleAction === 'temps' ? 'post.tropTard' : 'post.action', { sujet: sujetDe(d), retard: e.retard !== null ? T('post.retard', { retard: e.retard }) : '', action: e.action || '' }),
+				texte: marquerFictif(d, T(e.cleAction === 'temps' ? 'post.tropTard' : 'post.action', { sujet: sujetDe(d), retard: e.retard !== null ? T('post.retard', { retard: e.retard }) : '', action: e.action || '' })), // prompt 162
 				likes: Math.round((LIKES_EVAL[ev] || 10) * (Jeu.jauges.reputation / 50)),
 				photo: Jeu.sujetPhoto(d),
 				date: d.date,
@@ -1617,7 +1717,7 @@
 		plainte.transmise = true;
 		plainte.statut = 'transmise';
 		plainte.jourStatut = Jeu.jourIndex;
-		Jeu.messagePatron(T('patron.transfert', { auteur: plainte.auteur, texte: { toString: () => Jeu.texteMessage(plainte.def.texte, plainte.vars) } }));
+		Jeu.messagePatron(T('patron.transfert', { auteur: plainte.auteur, texte: { toString: () => Jeu.textePlainte(plainte) } }));
 		return true;
 	};
 
@@ -2088,7 +2188,7 @@
 		zero_expire: { jauge: 'reputation', valeur: () => (Jeu.historique || []).filter((h) => h.action === 'temps').length, tenu: (v) => v === 0 },
 		budget60: { jauge: 'budget', valeur: () => Jeu.jauges.budget, tenu: (v) => v >= 60 },
 		fluidite60: { jauge: 'fluidite', valeur: () => Jeu.jauges.fluidite, tenu: (v) => v >= 60 },
-		plaintes: { jauge: 'reputation', valeur: () => { const b = Jeu.bilanPlaintes(); return b.traitees + '/' + b.total; }, tenu: () => { const b = Jeu.bilanPlaintes(); return b.traitees === b.total; }, element: 'plaintes' },
+		plaintes: { jauge: 'reputation', valeur: () => { const b = Jeu.bilanPlaintes(); return b.traitees + '/' + b.total; }, tenu: () => { const b = Jeu.bilanPlaintes(); return b.traitees === b.total; }, sansObjet: () => !Jeu.bilanPlaintes().total, element: 'plaintes' }, // prompt 163 : 0/0 = sans objet, pas de bonus
 		equipes: { jauge: 'reputation', valeur: () => (Jeu.malus || {}).equipe_inutile || 0, tenu: (v) => v === 0, element: 'equipes' },
 	};
 	Jeu.DEFIS = Object.keys(DEFIS);
@@ -2103,7 +2203,8 @@
 		return (Jeu.defis || []).map((id) => {
 			const d = DEFIS[id];
 			const valeur = d.valeur();
-			return { id, jauge: d.jauge, valeur, tenu: !!d.tenu(valeur), bonus: Jeu.BONUS_DEFI };
+			const sansObjet = !!(d.sansObjet && d.sansObjet()); // prompt 163 : ni tenu ni manqué, aucun bonus
+			return { id, jauge: d.jauge, valeur, tenu: !sansObjet && !!d.tenu(valeur), sansObjet, bonus: sansObjet ? 0 : Jeu.BONUS_DEFI };
 		});
 	};
 	/** Bonus des défis tenus : +5 sur la jauge concernée, une seule fois, en fin de semaine (pas après une démission) */
@@ -2132,16 +2233,25 @@
 	// =====================================================================
 	// Prompt 56 — chiffres réels de la semaine et mail du patron du dernier soir
 	// =====================================================================
+	const FAMILLES = ['renfort', 'devier', 'retenir', 'rien']; // ordre des profils (pompier, stratège, discret, spectateur)
+	Jeu.FAMILLES = FAMILLES;
 	Jeu.statsSemaine = function () {
 		const dec = (Jeu.historique || []).filter((h) => h.action);
-		const parAction = { devier: 0, retenir: 0, renfort: 0, rien: 0, temps: 0 };
-		dec.forEach((h) => (parAction[h.action] = (parAction[h.action] || 0) + 1));
+		// Prompt 163 : réponses comptées par famille (celle de profilPartie), plus par les clés de l'ancien modèle à
+		// 4 actions — les réponses jouées sont « cat.id » depuis le prompt 87, l'ancien compte valait 0 partout
+		const parFamille = { renfort: 0, devier: 0, retenir: 0, rien: 0 };
+		let expires = 0;
+		dec.forEach((h) => {
+			if (h.action === 'temps') return expires++;
+			const f = h.famille || Jeu.familleDe(h.action);
+			parFamille[FAMILLES.includes(f) ? f : 'rien']++;
+		});
 		const durees = dec.filter((h) => typeof h.dureeMs === 'number');
 		return {
 			recus: (Jeu.paquet || []).length,
-			traites: dec.filter((h) => h.action !== 'temps').length,
-			expires: parAction.temps,
-			parAction,
+			traites: dec.length - expires,
+			expires,
+			parFamille,
 			tempsMoyen: durees.length ? Math.round(durees.reduce((s, h) => s + h.dureeMs, 0) / durees.length / 100) / 10 : null, // secondes, 1 décimale
 			sources: dec.reduce((s, h) => s + (h.sources || 0), 0),
 			ralentis: (Jeu.ralenti && Jeu.ralenti.utilises) || 0,
@@ -2151,11 +2261,24 @@
 			score: Jeu.score(),
 		};
 	};
+	/** Prompt 163 : un fait de la source pour le mail de fin de semaine — pire retard réel (temps réel), sinon la
+	 * première alerte météo, sinon le premier événement de l'agenda ; null si la semaine n'en a aucun. */
+	Jeu.faitSourceSemaine = function () {
+		const p = (Jeu.paquet || []).filter((d) => !estFictif(d) && !d.consequence);
+		const jm = (iso) => String(iso || '').split('-').reverse().join('/');
+		const r = p.filter((d) => typeof d.retard === 'number').sort((a, b) => b.retard - a.retard)[0];
+		if (r) return T('finSemaine.faitRetard', { min: r.retard, ligne: (r.lignes || []).join(', ') || '—' });
+		const m = p.find((d) => d.type === 'alerte météo');
+		if (m) return T('finSemaine.faitMeteo', { date: jm(m.date).slice(0, 5), heure: m.heure || '—', nature: String(m.natureAffichee || m.nature || '').split(',')[0].trim() || T('type.alerte météo'), valeur: m.valeur || '' });
+		const e = p.find((d) => d.type === 'événement' && nomEvenementDossier(d));
+		if (e) return T('finSemaine.faitAgenda', { date: jm(e.date).slice(0, 5), nom: nomEvenementDossier(e) });
+		return null;
+	};
 	/** Mail du patron du dernier soir : félicitations, avertissement ou rappel, avec 2 à 3 vrais chiffres */
 	Jeu.mailFinSemaine = function () {
 		const s = Jeu.statsSemaine();
 		const res = Jeu.defis ? Jeu.resultatsDefis() : [];
-		const rates = res.filter((r) => !r.tenu);
+		const rates = res.filter((r) => !r.tenu && !r.sansObjet);
 		const [ok, total] = s.objectifs.split('/').map(Number);
 		const basse = NOMS_JAUGES.slice().sort((a, b) => s.jauges[a] - s.jauges[b])[0];
 		const lignes = [T('finSemaine.intro', { score: s.score, traites: s.traites, recus: s.recus })];
@@ -2165,6 +2288,8 @@
 		if (rates.length) lignes.push(T('finSemaine.defisRates', { liste: rates.map((r) => T('defi.' + r.id)).join(', ') }));
 		else if (res.length) lignes.push(T('finSemaine.defisTenus'));
 		if (s.expires) lignes.push(T('finSemaine.expires', { n: s.expires }));
+		const fait = Jeu.faitSourceSemaine();
+		if (fait) lignes.push(fait); // prompt 163 : une donnée de la source dans le mail
 		return { objet: T(total && ok === total && !rates.length ? 'finSemaine.objetBravo' : 'finSemaine.objet'), lignes };
 	};
 

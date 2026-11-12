@@ -255,7 +255,9 @@ function dessinerFileSignalements(z) {
 		const courant = enCours && it.index === Jeu.index;
 		const resteA = actif ? Math.max(0, resteActif(actif)) : 0;
 		const surligne = SELECTION.surbrillance && dossierConnu(it.index) && (d.lignes || []).includes(SELECTION.surbrillance);
-		fill(courant ? 'rgba(212,3,28,0.22)' : actif ? 'rgba(212,3,28,0.10)' : r === SELECTION.focus && phase === 'selection' ? 'rgba(255,193,56,0.14)' : 'rgba(255,255,255,0.05)');
+		// Prompt 176 : « en cours à l'écran » et focus clavier = couleur d'accent ; « pris, compteur qui tourne » garde son rouge (sens)
+		const focusFile = r === SELECTION.focus && phase === 'selection';
+		fill(courant ? primaireRGBA(0.22) : actif ? 'rgba(209,11,0,0.10)' : focusFile ? primaireRGBA(0.14) : 'rgba(255,255,255,0.05)');
 		rect(z.x + 16, y, z.l - 32, hc);
 		zoneTexteDeclarer('carteFile', z.x + 16, y, z.l - 32, hc); // prompt 93
 		fill(couleurGravite(Jeu.gravite(d)));
@@ -276,9 +278,15 @@ function dessinerFileSignalements(z) {
 		text(t('carte.gravite', { g: t('gravite.' + Jeu.gravite(d)) }) + ' · ' + etat, z.x + 40, y + 78, z.l - 80, 26);
 		if (courant || actif || surligne || (r === SELECTION.focus && phase === 'selection')) {
 			noFill();
-			stroke(courant ? C.primaire : surligne ? '#FFFFFF' : actif ? C.rougeFonce : C.orange);
+			stroke(courant ? C.primaireTrait : surligne ? '#FFFFFF' : actif ? C.rougeFonce : C.primaireTrait);
 			strokeWeight(3);
 			rect(z.x + 16, y, z.l - 32, hc);
+			if (focusFile && !courant && !surligne) {
+				// focus : double bordure (accent + blanc), jamais confondue avec le trait rouge simple d'un signalement pris
+				stroke(DS.blanc);
+				strokeWeight(2);
+				rect(z.x + 20, y + 4, z.l - 40, hc - 8);
+			}
 			noStroke();
 		}
 		if ((phase === 'selection' || enCours) && !courant) {
@@ -286,7 +294,7 @@ function dessinerFileSignalements(z) {
 			textAlign(RIGHT, TOP);
 			textFont(POLICE_DONNEES);
 			textSize(16);
-			fill(C.orange);
+			fill(C.primaireTexte); // lien d'action : accent lisible en texte (≥ 4,5:1)
 			text(t(actif ? 'multi.basculer' : 'sig.prendre'), z.x + z.l - 32, y + 14);
 			textAlign(LEFT, TOP);
 			boutons.push({ x: z.x + 16, y, l: z.l - 32, h: hc, action: () => prendreSignalement(r) });

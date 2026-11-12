@@ -29,8 +29,14 @@
 	};
 
 	// ——— Réglages (écran Paramètres, 11-direction-artistique) ———
-	const DEFAUTS = { intensiteFeedback: 100, son: true, horsLigneForce: false, reduireAnimations: false, contrasteRenforce: false, musique: 'coquillage', daltonisme: 'normal', tailleTexte: 100, lectureFacile: false, defiChrono: false, chaines: false, deblocages: false, arbitrage: false, traceDossier: false, pressionVisible: false, deVisible: false, eclairageJauges: false, npd: false, deblocageApplis: false, toutDebloque: false, somnolenceNecessaire: false, micro: true, webcam: false }; // prompt 57 : webcam désactivée par défaut (opt-in) // prompt 48 : accessibilité ; prompt 54 : micro (push-to-talk) // prompt 44 : choix de la musique ; prompt 62 : Chillin' Poupi par défaut
+	const DEFAUTS = { intensiteFeedback: 100, son: true, volume: 100, horsLigneForce: false, reduireAnimations: false, contrasteRenforce: false, musique: 'coquillage', daltonisme: 'normal', tailleTexte: 100, lectureFacile: false, defiChrono: false, chaines: false, deblocages: false, arbitrage: false, traceDossier: false, pressionVisible: false, deVisible: false, eclairageJauges: false, npd: false, deblocageApplis: false, toutDebloque: false, somnolenceNecessaire: false, micro: true, webcam: false }; // prompt 57 : webcam désactivée par défaut (opt-in) // prompt 48 : accessibilité ; prompt 54 : micro (push-to-talk) // prompt 44 : choix de la musique ; prompt 62 : Chillin' Poupi par défaut
 	const Reglages = Object.assign({}, DEFAUTS, lire(CLE_REGLAGES, {}));
+	// Prompt 175 : volume maître 0–100 (pas de 10). Les réglages déjà stockés n'ont que « son: true / false » : ils
+	// gardent leur état (son coupé = muet) et prennent le volume par défaut, 100 %. Un volume stocké à 0 = son coupé.
+	const borneVolume = (v) => (Number.isFinite(Number(v)) ? Math.max(0, Math.min(100, Math.round(Number(v) / 10) * 10)) : DEFAUTS.volume);
+	Reglages.volume = borneVolume(Reglages.volume);
+	if (Reglages.volume === 0) Reglages.son = false;
+	const GAIN_MAITRE = 0.16; // prompt 49 : bruitages, ambiance et radio en retrait (0,5 avant) ; la musique lofi passe par son propre élément audio
 	// Prompt 49 : une seule fois, la musique passe au lofi (l'ancien défaut « chillin » n'était pas un choix)
 	// Prompt 62 : « Chillin' Poupi » redevient le morceau principal (une seule bascule pour ceux restés sur le lofi par défaut)
 	if (!lire('pxe-nte001:jeu:chillin-v62', false)) {
@@ -51,10 +57,14 @@
 	}
 	Reglages.basculer = function (nom) {
 		Reglages[nom] = !Reglages[nom];
+		if (nom === 'son' && Reglages.son && !Reglages.volume) Reglages.volume = DEFAUTS.volume; // prompt 175 : rétablir le son depuis 0 %
 		const a_sauver = {};
 		Object.keys(DEFAUTS).forEach((k) => (a_sauver[k] = Reglages[k]));
 		ecrire(CLE_REGLAGES, a_sauver);
-		if (nom === 'son') Reglages.son ? Son.demarrer() : Son.couper();
+		if (nom === 'son') {
+			Reglages.son ? Son.demarrer() : Son.couper();
+			Son.appliquerVolume();
+		}
 		return Reglages[nom];
 	};
 	/** Prompt 44 : réglage à valeur (musique), mémorisé comme les autres */
@@ -86,6 +96,22 @@
 	const Son = {
 		ctx: null,
 		maitre: null,
+		/** Prompt 175 : volume effectif, 0 à 1 (0 si le son est coupé) */
+		niveau: () => (Reglages.son ? borneVolume(Reglages.volume) / 100 : 0),
+		/** Règle le volume (0–100, pas de 10), le mémorise et l'applique tout de suite ; 0 % = son désactivé */
+		reglerVolume: function (v) {
+			v = borneVolume(v);
+			Reglages.choisir('volume', v);
+			if ((v === 0) === !!Reglages.son) Reglages.basculer('son'); // 0 % coupe le son ; remonter le rétablit
+			Reglages.choisir('volume', v);
+			Son.appliquerVolume();
+			return v;
+		},
+		/** Gain maître (bruitages, ambiances, musique composée) et élément audio de la musique en fichier */
+		appliquerVolume: function () {
+			if (Son.maitre && Son.ctx) Son.maitre.gain.setTargetAtTime(GAIN_MAITRE * Son.niveau(), Son.ctx.currentTime, 0.03);
+			if (typeof Musique !== 'undefined') Musique.attenuer(Musique.facteur);
+		},
 		ambiance: null,
 		demarrer: function () {
 			if (!Reglages.son) return;
@@ -94,7 +120,7 @@
 			if (!Son.ctx) {
 				Son.ctx = new AC();
 				Son.maitre = Son.ctx.createGain();
-				Son.maitre.gain.value = 0.16; // prompt 49 : bruitages, ambiance et radio en retrait (0,5 avant) ; la musique lofi passe par son propre élément audio
+				Son.maitre.gain.value = GAIN_MAITRE * Son.niveau(); // prompt 175 : gain maître × volume réglé
 				Son.maitre.connect(Son.ctx.destination);
 			}
 			if (Son.ctx.state === 'suspended') Son.ctx.resume();
@@ -517,7 +543,12 @@
 			onde: 'square', basse: 'square', filtre: 2200, gain: 0.26, percu: true,
 		},
 	};
-	const piste = () => PISTES[(typeof Musique !== 'undefined' && Musique.humeurActive) || Reglages.musique] || PISTES.origine; // prompt 88 : humeur temporaire (crise)
+	// Prompt 88 : humeur temporaire (crise). Prompt 193 : un morceau en fichier qui n'a pas pu se charger (hors ligne sans
+	// cache, format refusé) est remplacé, pour la session, par le morceau composé en WebAudio « origine »
+	const piste = () => {
+		const p = PISTES[(typeof Musique !== 'undefined' && Musique.humeurActive) || Reglages.musique] || PISTES.origine;
+		return p.fichier && typeof Musique !== 'undefined' && Musique.enPanne.has(p.fichier) ? PISTES.origine : p;
+	};
 	const Musique = {
 		bus: null,
 		minuterie: null,
@@ -547,13 +578,23 @@
 			Musique.facteur = f;
 			const a = Musique.audio;
 			const p = piste();
-			if (a && Musique.minuterie === 'fichier' && p && p.volume) a.volume = p.volume * f;
+			if (a && Musique.minuterie === 'fichier' && p && p.volume) a.volume = p.volume * f * Son.niveau(); // prompt 175 : × volume réglé
 			if (Musique.bus && Son.ctx) Musique.bus.gain.setTargetAtTime(Math.max(0.0001, Musique.volume * f), Son.ctx.currentTime, 0.33);
 		},
 		/** Morceau CC0 : élément audio en boucle (OGG, ou MP3 si le navigateur ne lit pas l'OGG), fondu d'entrée 2 s */
 		audio: null,
+		enPanne: new Set(), // prompt 193 : fichiers dont le chargement a échoué pendant la session
 		demarrerFichier: function (p) {
 			const a = new Audio();
+			// Prompt 193 : erreur de chargement → repli immédiat sur la musique synthétisée (WebAudio, sans réseau)
+			a.addEventListener('error', () => {
+				if (Musique.audio !== a) return;
+				Musique.enPanne.add(p.fichier);
+				Musique.audio = null;
+				if (Musique.minuterie && Musique.minuterie !== 'fichier') clearInterval(Musique.minuterie);
+				Musique.minuterie = null;
+				Musique.demarrer();
+			});
 			const ogg = a.canPlayType('audio/ogg; codecs="vorbis"');
 			a.src = p.fichier + (ogg ? '.ogg' : '.mp3');
 			a.loop = true;
@@ -563,7 +604,7 @@
 			let k = 0;
 			Musique.minuterie = setInterval(() => {
 				k = Math.min(1, k + 0.05);
-				if (Musique.audio === a) a.volume = p.volume * k * Musique.facteur;
+				if (Musique.audio === a) a.volume = p.volume * k * Musique.facteur * Son.niveau();
 				if (k >= 1) {
 					clearInterval(Musique.minuterie);
 					Musique.minuterie = 'fichier'; // marqueur « en cours de lecture »

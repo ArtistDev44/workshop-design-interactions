@@ -480,7 +480,7 @@ function dessinerMurDroit(g) {
 	const lampe = typeof OBJETS_BUREAU !== 'undefined' ? OBJETS_BUREAU.find((o) => o.nom === 'lampe') : null;
 	if (!lampe) return;
 	const lx = lampe.x + lampe.l / 2;
-	const allumee = typeof PIECE === 'undefined' || PIECE.lampe;
+	const allumee = typeof PIECE === 'undefined' || (typeof lampeAllumee === 'function' ? lampeAllumee() : PIECE.lampe); // prompt 191 : allumée le soir
 	if (allumee) {
 		g.fill(255, 226, 160, 46);
 		g.quad(lx - 4, lampe.y + lampe.h, lx + 4, lampe.y + lampe.h, lx + 14, BAIE_BAS, lx - 14, BAIE_BAS);
@@ -692,13 +692,14 @@ function origineBureau() {
 	// Cadre de la pièce sur le canevas (dézoom + caméra) et taille d'un pixel art (u) dans ce cadre
 	return { x: (L * (1 - SURCADRAGE)) / 2 + CAMERA.x, y: (H * (1 - SURCADRAGE)) / 2 + CAMERA.y, k: SURCADRAGE, u: (L * SURCADRAGE) / CADRAGE.l };
 }
-/** Prompt 32 : contour de survol / focus double — trait sombre #1c2733 (15:1 sur les murs blancs) doublé de jaune */
+/** Prompt 32 : contour de survol / focus double — trait sombre #1c2733 (15:1 sur les murs blancs) doublé de la couleur
+ * d'accent (prompt 173 : plus de jaune ; chaque primaire du thème tient 3:1 sur le fond sombre, theme.js) */
 function contourSurvol(x, y, l, h) {
 	noFill();
 	stroke('#1c2733');
 	strokeWeight(PIX + 4);
 	rect(x, y, l, h);
-	stroke('#f2c94c');
+	stroke(DS.primaireTrait);
 	strokeWeight(PIX);
 	rect(x, y, l, h);
 	noStroke();
@@ -863,12 +864,25 @@ function rectEcranCourant() {
 
 /** À appeler AVANT de dessiner le contenu de l'écran : la souris est ramenée dans les coordonnées 1920×1080 de l'écran */
 let sourisReelle = null;
+// ——— Prompt 182 : vue bureau ≠ vue PC ———
+// L'application affichée sur le moniteur n'est interactive qu'une fois installé au PC (vue === 'poste'). Tout passe
+// par ce prédicat et par pointeurEcranPC() : le survol pendant le dessin du contenu (sourisVersEcran), les gestes
+// hors image (sourisPC, sourisEcranPC → carte, jetons, cartes de réponse) et les raccourcis de l'appli (keyPressed).
+// Les boutons du contenu, eux, sont déjà vidés hors du poste (composerVue). En retrait, le moniteur n'est qu'un
+// objet de la pièce : clic ou Entrée = s'installer.
+const appliInteractive = () => vue === 'poste';
+const HORS_ECRAN_PC = { x: -9999, y: -9999 };
+/** Pointeur dans le repère 1920×1080 de l'écran du PC ; hors du poste, il est « nulle part » (aucun survol, aucun geste) */
+function pointeurEcranPC(x, y) {
+	if (!appliInteractive()) return { x: HORS_ECRAN_PC.x, y: HORS_ECRAN_PC.y };
+	const r = ECRAN_POSTE;
+	return { x: ((x - r.x) * L) / r.l, y: ((y - r.y) * H) / r.h };
+}
 function sourisVersEcran() {
 	sourisReelle = { x: mouseX, y: mouseY };
-	if (vue !== 'poste') return;
-	const r = ECRAN_POSTE;
-	window.mouseX = ((mouseX - r.x) * L) / r.l;
-	window.mouseY = ((mouseY - r.y) * H) / r.h;
+	const p = pointeurEcranPC(mouseX, mouseY);
+	window.mouseX = p.x;
+	window.mouseY = p.y;
 }
 function sourisRestaurer() {
 	if (sourisReelle) {
@@ -939,6 +953,10 @@ function composerVue() {
 	if (phase === 'soir' && vue === 'bureau') {
 		fill(4, 6, 12, 215); // prompt 69 : PC en veille
 		rect(r.x, r.y, r.l, r.h);
+	} else if (vue === 'bureau') {
+		// Prompt 182 : en retrait, l'écran est légèrement assombri — on le regarde, on ne s'en sert pas
+		fill(13, 12, 12, 96);
+		rect(r.x, r.y, r.l, r.h);
 	}
 	if (typeof dessinerCouloirSoir === 'function') dessinerCouloirSoir(); // prompt 69 : couloir révélé par le pan
 	if (incidentImportant()) bordureRouge(r.x, r.y, r.l, r.h, auPoste ? 4 : 2); // fin, à l'intérieur de l'écran du PC (plus immersif)
@@ -964,6 +982,14 @@ function composerVue() {
 	}
 	boutons.push({ x: r.x - 5 * PIX, y: r.y - 5 * PIX, l: r.l + 10 * PIX, h: r.h + 11 * PIX, action: sAsseoir });
 	cibleGuide('ecranPC', r.x, r.y, r.l, r.h); // prompt 37
+	// Prompt 182 : l'invite « S'installer au PC » au survol / focus de l'écran (toujours au doigt : pas de survol)
+	const tactile = typeof MOBILE !== 'undefined' && MOBILE.actif;
+	if ((survolEcran || focusBureau === 0 || tactile) && !(phase === 'soir' && SOIR.sortie) && !fenetre && !smsActif) {
+		const invite = t('bureau.inviteInstaller');
+		textFont(POLICE_DONNEES);
+		textSize(18);
+		infobulle(invite, r.x + (r.l - textWidth(invite) - 28) / 2, r.y + (r.h - 40) / 2);
+	}
 	if (typeof dessinerFlecheSortie === 'function') dessinerFlecheSortie(); // prompt 69
 	zonesObjetsBureau();
 	if (ecran === 'jeu' && phase !== 'fin') {
@@ -988,7 +1014,7 @@ function composerVue() {
 			: ecran === 'jeu' && phase === 'attente' && Jeu.journeeFinie && Jeu.journeeFinie()
 				? t('bureau.finJournee') // prompt 51
 				: t(typeof MOBILE !== 'undefined' && MOBILE.actif ? 'bureau.installerMobile' : 'bureau.installer'); // prompt 60 : consigne tactile
-	if (phase === 'soir' && SOIR.sortie) return; // prompt 69 : pendant la sortie, pas de consigne
+	if (phase === 'soir' && (SOIR.sortie || respirationSoir())) return; // prompt 69 : pendant la sortie, pas de consigne ; prompt 191 : ni pendant « Fin de journée. »
 	// Prompt 124 : la consigne « Cliquez sur le PC… » n'est plus affichée en permanence (immersion) ; elle ne revient
 	// qu'après 10 s sans geste, pour qui hésite. Les messages d'état (incident, mail, soir) restent.
 	const consigne = msg === t('bureau.installer') || msg === t('bureau.installerMobile');
@@ -1016,31 +1042,69 @@ function rectBoutonQuitter() {
 function dessinerBoutonQuitterPC() {
 	const b = rectBoutonQuitter();
 	if (clignement) return; // pendant qu'on se lève, le bouton disparaît
-	bouton(b.x, b.y, b.l, b.h, t('poste.quitter_pc'), quitterPC);
+	const raison = raisonRetenuAuPC(); // prompt 182 : un choix attend → bouton désactivé, avec sa raison
+	bouton(b.x, b.y, b.l, b.h, t(GUIDE.actif ? 'poste.quitter_pc_guide' : 'poste.quitter_pc'), quitterPC, !!raison); // prompt 174 : pendant le guide, Échap quitte le guide — le libellé ne la promet pas
 	cibleGuide('quitterPC', b.x, b.y, b.l, b.h); // prompt 37
+	if (raison) boutons.push({ x: b.x, y: b.y, l: b.l, h: b.h, action: quitterPC }); // clic / toucher sur le bouton désactivé : la raison est dite (infobulle + annonce), sans sortie
+	if (raison && !fenetre && !smsActif) {
+		const survol = mouseX >= b.x && mouseX <= b.x + b.l && mouseY >= b.y && mouseY <= b.y + b.h;
+		if (survol || focusQuitter || millis() - SORTIE_REFUSEE.t < 3000) {
+			const txt = t(raison);
+			textFont(POLICE_DONNEES);
+			textSize(18);
+			infobulle(txt, Math.min(b.x, L - textWidth(txt) - 28 - 16), b.y - 48);
+		}
+	}
 	if (focusQuitter) {
 		noFill();
-		stroke('#f2c94c');
+		stroke(DS.blanc); // prompt 173 : focus clavier en blanc (plus de jaune), 3:1 et plus sur le bouton et la pièce assombrie
 		strokeWeight(4);
 		rect(b.x - 8, b.y - 8, b.l + 16, b.h + 16, 14);
 		noStroke();
 	}
 }
+// ——— Prompt 182 : on ne quitte le PC de soi-même que si aucun choix n'attend ———
+// Règle unique pour le bouton, Échap, Entrée sur le bouton, la molette et le balayage (mobile, portrait) : tous passent
+// par quitterPC() ou scrollSortiePC(). Les sorties décidées par le jeu (sieste, fin de journée, soir, rapport)
+// appellent seLever() directement et ne sont jamais retenues.
+const SORTIE_REFUSEE = { t: -99999, alterne: false };
+/** Clé i18n de la raison qui retient le joueur au PC, ou null. Un dossier ouvert (décision, contradiction, conflit)
+ * attend une réponse ; les fenêtres modales, elles, captent déjà clic, clavier et molette. Le guide « Prendre en
+ * main » garde la main sur sa propre étape « quitter » (aucune impasse). */
+function raisonRetenuAuPC() {
+	if (vue !== 'poste' || ecran !== 'jeu') return null;
+	if (typeof guideEnCours === 'function' && guideEnCours() && typeof ETAPES_GUIDE !== 'undefined' && ETAPES_GUIDE[GUIDE.etape] && ETAPES_GUIDE[GUIDE.etape].id === 'quitter') return null;
+	if (typeof PHASES_ACTIVES !== 'undefined' && PHASES_ACTIVES.includes(phase)) return 'poste.quitter_retenu';
+	return null;
+}
+/** Geste volontaire de sortie (bouton, Échap, Entrée) : refusé avec sa raison (infobulle 3 s + annonce) si un choix attend */
 function quitterPC() {
+	const raison = raisonRetenuAuPC();
+	if (raison) {
+		SORTIE_REFUSEE.t = millis();
+		SORTIE_REFUSEE.alterne = !SORTIE_REFUSEE.alterne; // même texte deux fois : la zone aria-live ne relit que ce qui change
+		annoncer(t(raison) + (SORTIE_REFUSEE.alterne ? '' : '\u00A0'));
+		return false;
+	}
 	focusQuitter = false;
 	seLever();
+	return true;
 }
 function basculerFocusQuitter(actif) {
 	focusQuitter = actif;
-	if (actif) annoncer(t('poste.quitter_pc_focus'));
+	const raison = actif && raisonRetenuAuPC();
+	if (actif) annoncer(raison ? t('poste.quitter_pc_indispo') + ' ' + t(raison) : t('poste.quitter_pc_focus'));
 }
-/** Molette au poste : quitte le PC, avec anti-rebond (600 ms) et un seuil, pour qu'un scroll continu ne fasse rien d'autre. */
+/** Molette au poste : quitte le PC, avec anti-rebond (600 ms) et un seuil, pour qu'un scroll continu ne fasse rien d'autre.
+ * Sert aussi au balayage vertical sur téléphone (mobile.js). */
 function scrollSortiePC(delta) {
 	// Prompt 38 : molette vers le haut au bureau → s'installer au PC ; vers le bas au poste → se lever
 	const versPC = vue === 'bureau' && delta < 0;
 	const versBureau = vue === 'poste' && delta > 0;
 	const bloque = clignement || fenetre || smsActif || (typeof tutoriel !== 'undefined' && tutoriel) || (typeof MENU !== 'undefined' && MENU.actif);
-	if (bloque || (!versPC && !versBureau) || (versBureau && (PC.fenetre || phase === 'mail' || phase === 'reveil'))) {
+	// Prompt 182 : un choix attend (raisonRetenuAuPC) → la molette ne fait jamais quitter le PC ; elle est avalée ici
+	// (le contenu qui défile a déjà pris le geste dans mouseWheel), sans message : aucune sortie involontaire
+	if (bloque || (!versPC && !versBureau) || (versBureau && (PC.fenetre || phase === 'mail' || phase === 'reveil' || raisonRetenuAuPC()))) {
 		cumulScroll = 0;
 		return vue === 'poste' && !bloque && !PC.fenetre ? true : false; // au poste, le scroll ne fait pas défiler la page
 	}
@@ -1122,8 +1186,8 @@ function sAsseoir() {
 function seLever() {
 	if (vue !== 'poste' || clignement) return;
 	focusQuitter = false;
-	if (typeof focusDemarrer !== 'undefined') focusDemarrer = false; // prompt 75
-	if (typeof PC !== 'undefined') PC.fenetre = null; // prompt 22 : se lever referme l'app ouverte
+	if (typeof MENU_FOCUS !== 'undefined') MENU_FOCUS.actif = false;
+	if (typeof PC !== 'undefined' && (PC.etat === 'os' || PC.etat === 'appli')) versAppliPrincipale(); // prompt 22 : se lever referme l'app ouverte ; prompt 183 : on retrouvera la carte
 	clignement = { debut: millis(), sens: 'arriere', bascule: false }; // la vue bascule à mi-clignement
 	Confort.Son.bip('choix');
 }

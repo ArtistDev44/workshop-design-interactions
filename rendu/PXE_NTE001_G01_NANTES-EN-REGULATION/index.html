@@ -10,7 +10,7 @@
 		<title>Nantes en régulation — jeu de régulation des transports nantais</title>
 		<meta name="color-scheme" content="dark" />
 		<!-- Prompt 45 : SEO et partage (aucun service externe, aucun traceur) -->
-		<meta name="description" content="Jeu en pixel art : régulez le réseau de transports nantais à partir de données réelles (retards Naolib, météo, agenda de Nantes Métropole). Mode histoire en trois semaines et mode temps réel." />
+		<meta name="description" content="Jeu en pixel art : régulez le réseau de transports nantais à partir de données réelles (perturbations du réseau Naolib, retards en temps réel seulement, météo, agenda de Nantes Métropole). Mode histoire en trois semaines et mode temps réel." />
 		<meta name="robots" content="index, follow" />
 		<link rel="canonical" href="https://workshop-design-interactions.pages.dev/" />
 		<meta name="theme-color" content="#0d0c0c" />
@@ -37,7 +37,7 @@
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="PATRIMOINE.EXE · NTE001" />
 		<meta property="og:title" content="Nantes en régulation" />
-		<meta property="og:description" content="Jeu en pixel art : régulez le réseau de transports nantais à partir de données réelles (retards Naolib, météo, agenda de Nantes Métropole). Mode histoire en trois semaines et mode temps réel." />
+		<meta property="og:description" content="Jeu en pixel art : régulez le réseau de transports nantais à partir de données réelles (perturbations du réseau Naolib, retards en temps réel seulement, météo, agenda de Nantes Métropole). Mode histoire en trois semaines et mode temps réel." />
 		<meta property="og:url" content="https://workshop-design-interactions.pages.dev/" />
 		<meta property="og:image" content="https://workshop-design-interactions.pages.dev/og-image.jpg" />
 		<meta property="og:image:width" content="1200" />
@@ -47,7 +47,7 @@
 		<meta property="og:locale:alternate" content="en_GB" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:title" content="Nantes en régulation" />
-		<meta name="twitter:description" content="Jeu en pixel art : régulez le réseau de transports nantais à partir de données réelles (retards Naolib, météo, agenda de Nantes Métropole). Mode histoire en trois semaines et mode temps réel." />
+		<meta name="twitter:description" content="Jeu en pixel art : régulez le réseau de transports nantais à partir de données réelles (perturbations du réseau Naolib, retards en temps réel seulement, météo, agenda de Nantes Métropole). Mode histoire en trois semaines et mode temps réel." />
 		<meta name="twitter:image" content="https://workshop-design-interactions.pages.dev/og-image.jpg" />
 		<meta name="twitter:image:alt" content="Le décor en pixel art de Nantes en régulation : un bureau face à une baie vitrée sur la Loire et la grue Titan ; l’écran du PC affiche le titre du jeu sur la carte du réseau Naolib, deux alertes rouges flottent au-dessus de la ville. Accroche : « Chaque incident devient un dossier. À vous de trancher. »" />
 		<script type="application/ld+json">
@@ -56,7 +56,7 @@
 				"@type": "VideoGame",
 				"name": "Nantes en régulation",
 				"url": "https://workshop-design-interactions.pages.dev/",
-				"description": "Jeu en pixel art : régulez le réseau de transports nantais à partir de données réelles (retards Naolib, météo, agenda de Nantes Métropole). Mode histoire en trois semaines et mode temps réel.",
+				"description": "Jeu en pixel art : régulez le réseau de transports nantais à partir de données réelles (perturbations du réseau Naolib, retards en temps réel seulement, météo, agenda de Nantes Métropole). Mode histoire en trois semaines et mode temps réel.",
 				"inLanguage": ["fr", "en"],
 				"genre": ["Simulation", "Gestion"],
 				"gamePlatform": "Navigateur web",
@@ -81,15 +81,43 @@
 	<body>
 		<div id="chargement" role="status" aria-live="polite">
 			<div>
-				<!-- Pictogramme dessiné en SVG inline : un moniteur et une ligne de bus (aucun fichier image) -->
+				<!-- Logo dessiné en SVG inline : la bulle-pin, bulle « &#@! » à pointe de marqueur de carte (aucun fichier image) -->
 				<svg class="logo" viewBox="0 0 24 20" aria-hidden="true" shape-rendering="crispEdges">
-					<rect x="1" y="1" width="22" height="14" fill="#ffffff" />
-					<rect x="3" y="3" width="18" height="10" fill="#d4031c" style="fill: var(--primaire, #d4031c)" />
-					<rect x="4" y="9" width="16" height="1" fill="#ffffff" />
-					<rect x="6" y="7" width="3" height="3" fill="#00ca64" />
-					<rect x="15" y="7" width="3" height="3" fill="#ffffff" />
-					<rect x="11" y="15" width="2" height="3" fill="#ffffff" />
-					<rect x="7" y="18" width="10" height="1" fill="#ffffff" />
+					<rect x="1" y="0" width="22" height="1" fill="#d4031c" style="fill: var(--primaire, #d4031c)" />
+					<rect x="0" y="1" width="24" height="11" fill="#d4031c" style="fill: var(--primaire, #d4031c)" />
+					<rect x="1" y="12" width="22" height="1" fill="#d4031c" style="fill: var(--primaire, #d4031c)" />
+					<rect x="6" y="13" width="12" height="1" fill="#d4031c" style="fill: var(--primaire, #d4031c)" />
+					<rect x="7" y="14" width="10" height="1" fill="#d4031c" style="fill: var(--primaire, #d4031c)" />
+					<rect x="8" y="15" width="8" height="1" fill="#d4031c" style="fill: var(--primaire, #d4031c)" />
+					<rect x="9" y="16" width="6" height="1" fill="#d4031c" style="fill: var(--primaire, #d4031c)" />
+					<rect x="10" y="17" width="4" height="1" fill="#d4031c" style="fill: var(--primaire, #d4031c)" />
+					<rect x="11" y="18" width="2" height="1" fill="#d4031c" style="fill: var(--primaire, #d4031c)" />
+					<rect x="4" y="4" width="1" height="1" fill="#ffffff" />
+					<rect x="9" y="4" width="1" height="1" fill="#ffffff" />
+					<rect x="11" y="4" width="1" height="1" fill="#ffffff" />
+					<rect x="15" y="4" width="2" height="1" fill="#ffffff" />
+					<rect x="19" y="4" width="1" height="1" fill="#ffffff" />
+					<rect x="3" y="5" width="1" height="1" fill="#ffffff" />
+					<rect x="5" y="5" width="1" height="1" fill="#ffffff" />
+					<rect x="8" y="5" width="5" height="1" fill="#ffffff" />
+					<rect x="14" y="5" width="1" height="1" fill="#ffffff" />
+					<rect x="16" y="5" width="1" height="1" fill="#ffffff" />
+					<rect x="19" y="5" width="1" height="1" fill="#ffffff" />
+					<rect x="4" y="6" width="1" height="1" fill="#ffffff" />
+					<rect x="9" y="6" width="1" height="1" fill="#ffffff" />
+					<rect x="11" y="6" width="1" height="1" fill="#ffffff" />
+					<rect x="14" y="6" width="3" height="1" fill="#ffffff" />
+					<rect x="19" y="6" width="1" height="1" fill="#ffffff" />
+					<rect x="3" y="7" width="1" height="1" fill="#ffffff" />
+					<rect x="5" y="7" width="1" height="1" fill="#ffffff" />
+					<rect x="8" y="7" width="5" height="1" fill="#ffffff" />
+					<rect x="14" y="7" width="1" height="1" fill="#ffffff" />
+					<rect x="4" y="8" width="1" height="1" fill="#ffffff" />
+					<rect x="6" y="8" width="1" height="1" fill="#ffffff" />
+					<rect x="9" y="8" width="1" height="1" fill="#ffffff" />
+					<rect x="11" y="8" width="1" height="1" fill="#ffffff" />
+					<rect x="15" y="8" width="2" height="1" fill="#ffffff" />
+					<rect x="19" y="8" width="1" height="1" fill="#ffffff" />
 				</svg>
 				<p class="titre">Nantes en régulation</p>
 				<p class="code">PXE-NTE001-G01-W01</p>
@@ -119,6 +147,7 @@
 		<script src="./sketch.js"></script>
 		<script src="./aide.js"></script>
 		<script src="./ds.js"></script>
+		<script src="./icones-lucide.js"></script><!-- prompt 170 : icônes d'interface Lucide (ISC), copiées dans le dépôt -->
 		<script src="./theme.js"></script>
 		<script src="./progression-bureau.js"></script>
 		<script src="./bureau.js"></script>
@@ -133,6 +162,7 @@
 		<script src="./notifs-tel.js"></script>
 		<script src="./telephone-main.js"></script>
 		<script src="./histoire.js"></script>
+		<script src="./personnages.js"></script><!-- prompt 189 : ton du patron, trait, SMS météo de Camille -->
 		<script src="./immersion.js"></script>
 		<script src="./mecaniques.js"></script>
 		<script src="./accessibilite.js"></script>
@@ -144,6 +174,7 @@
 		<script src="./rythme.js"></script>
 		<script src="./taches.js"></script>
 		<script src="./taches-ui.js"></script>
+		<script src="./parametres.js"></script>
 		<script src="./traces.js"></script>
 		<script src="./multitache.js"></script>
 		<script src="./sieste.js"></script>

@@ -7,8 +7,8 @@
  *   (1,2 / s), il s'additionne sans se remettre à zéro, et le décalage revient exactement à 0.
  * - Hit-stop : échelle de temps 0,05 pendant ≤ 0,12 s, restaurée en temps réel ; un seul propriétaire (le plus récent).
  * - Pops : ease-out-back (≈ 10 % de dépassement) sur 180 ms, finissant exactement à 1.
- * - Accessibilité : animations réduites → trauma 0, pas de hit-stop, pops instantanés ; réglage « Intensité du
- *   feedback » 100 / 50 / 0 % (fenêtre Accessibilité, touche 6). Aucun flash au-delà de 3 par seconde.
+ * - Accessibilité : animations réduites → trauma 0, pas de hit-stop, pops instantanés ; réglage « Secousses des décisions » —
+ *   complet / atténué / aucun (100 / 50 / 0 %, Paramètres → Accessibilité). Aucun flash au-delà de 3 par seconde.
  */
 const Juice = (() => {
 	const TIERS = {

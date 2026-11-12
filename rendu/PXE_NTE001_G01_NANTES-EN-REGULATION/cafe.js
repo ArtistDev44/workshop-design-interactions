@@ -34,7 +34,7 @@ function finGorgee() {
 	if (fenetre === 'cafe') fenetre = null;
 	CAFE.boost = millis();
 	CAFE.prochainBattement = millis() + 300;
-	annoncer(t('cafe.boost'));
+	annoncer(t(Jeu.defiChrono ? 'cafe.boostChrono' : 'cafe.boost')); // prompt 161 : sources gratuites seulement utiles en défi chrono
 }
 /** 0 → 1 → 0 : intensité du boost (montée rapide, longue descente) */
 function intensiteBoost() {

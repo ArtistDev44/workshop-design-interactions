@@ -17,9 +17,7 @@ const SEUIL_CLIC_PX = 8;
 
 /** Souris en coordonnées de l'écran du PC (1920×1080), hors image (dans mousePressed / mouseReleased) */
 function sourisPC() {
-	if (vue !== 'poste' || typeof ECRAN_POSTE === 'undefined') return { x: mouseX, y: mouseY };
-	const r = ECRAN_POSTE;
-	return { x: ((mouseX - r.x) * L) / r.l, y: ((mouseY - r.y) * H) / r.h };
+	return typeof pointeurEcranPC === 'function' ? pointeurEcranPC(mouseX, mouseY) : { x: mouseX, y: mouseY }; // prompt 182 : hors du poste, le pointeur n'est « nulle part » pour l'appli (bureau.js)
 }
 const dansRect = (p, r) => !!r && p.x >= r.x && p.x <= r.x + r.l && p.y >= r.y && p.y <= r.y + r.h;
 function glisserPossible() {
@@ -90,10 +88,10 @@ function dessinerGlisser() {
 		const dessus = dansRect({ x: mouseX, y: mouseY }, z) || dansRect({ x: GLISSER.x + c.l / 2, y: GLISSER.y + c.h / 2 }, z);
 		// Zone du dossier : pointillés, « Déposer ici »
 		noStroke();
-		fill(dessus ? 'rgba(255,193,56,0.16)' : 'rgba(255,193,56,0.06)');
+		fill(primaireRGBA(dessus ? 0.2 : 0.08)); // prompt 176 : zone de dépôt = cible active, couleur d'accent
 		rect(z.x, z.y, z.l, z.h);
 		noFill();
-		stroke(C.orange);
+		stroke(C.primaireTrait);
 		strokeWeight(dessus ? 4 : 3);
 		drawingContext.setLineDash([14, 10]);
 		rect(z.x + 2, z.y + 2, z.l - 4, z.h - 4);
@@ -104,9 +102,9 @@ function dessinerGlisser() {
 		textStyle(BOLD);
 		textSize(22);
 		const ll = textWidth(lib) + 32;
-		fill(C.orange);
+		fill(C.primaire);
 		rect(z.x + z.l / 2 - ll / 2, z.y + z.h / 2 - 22, ll, 44);
-		fill(DS.fond);
+		fill(C.surPrimaire);
 		textAlign(CENTER, CENTER);
 		text(lib, z.x + z.l / 2, z.y + z.h / 2);
 		textStyle(NORMAL);

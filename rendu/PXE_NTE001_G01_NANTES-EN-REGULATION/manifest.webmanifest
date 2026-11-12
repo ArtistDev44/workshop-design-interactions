@@ -2,7 +2,7 @@
 	"id": "./",
 	"name": "Nantes en régulation",
 	"short_name": "Régulation",
-	"description": "Jeu en pixel art : régulez le réseau de transports nantais à partir de données réelles (retards Naolib, météo, agenda de Nantes Métropole).",
+	"description": "Jeu en pixel art : régulez le réseau de transports nantais à partir de données réelles (perturbations du réseau Naolib, retards en temps réel seulement, météo, agenda de Nantes Métropole).",
 	"lang": "fr",
 	"dir": "ltr",
 	"start_url": "./",
