@@ -146,6 +146,6 @@ Les décisions de jeu (Q1–Q61, `jeu/`) et les prompts ont été rédigés en a
 
 ## Livrables J3 (prompt 46)
 - Pages : le jeu (`/`), les cartels avec captation et QR codes (`/cartel/`), la chaîne des prompts générée depuis `prompts/README.md` (`/making-of/`).
-- `public/manifest.json` (modèle du livret), `public/captures/` (hero, detail-01, process, thumb, demo.mp4 de 28 s, issus du vrai rendu).
+- `public/manifest.json` (modèle du livret), `public/captures/` (hero, detail-01, process, thumb, demo.mp4 de 29 s, issus du vrai rendu).
 - Version figée : `rendu/PXE_NTE001_G01_NANTES-EN-REGULATION/` (à la racine du dépôt).
 - Ajouter une semaine, un message ou une traduction : `CONTRIBUTING.md` (racine).

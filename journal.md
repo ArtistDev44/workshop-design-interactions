@@ -4,6 +4,8 @@ Règle : chaque push sur la branche main ajoute une entrée dans le tableau, la 
 
 | Date | Commit | Fichiers | Résumé |
 |---|---|---|---|
+| 2026-11-12 | ce commit | journal.md, site/public/sw.js | Fusion dans main de `captation/cartel-captures-a-jour` (captures et vidéo du cartel refaites) ; conflits résolus : journal (deux entrées gardées), sw.js (version du précache régénérée) |
+| 2026-11-12 | 812d094 | site/src/pages/cartel.astro, site/public/captures/ (hero, detail-01, process, thumb, demo.mp4), copies dans rendu/PXE_NTE001_G01_NANTES-EN-REGULATION/, rendu/README.md, site/README.md, site/public/sw.js | Cartel : captures et vidéo refaites depuis le jeu actuel (Playwright 1920 × 1080, worktree propre de main) — salle de régulation, dossier enquêté, rapport de la semaine 1, vidéo de 29 s du menu au rapport (× 1,25) ; textes alternatifs et légendes mis à jour |
 | 2026-11-12 | ce commit | prompts/138-jeu-livrables-lien-clics.md (nouveau), prompts/README.md, prompts/auteurs.json, site/public/menu.js, site/public/sw.js | Prompt 138 : le bouton « Livrables » ouvre `presentation/#/livrables?clicks=5` ; build et tests verts (532 + 605 contrôles) |
 | 2026-11-12 | ce commit | prompts/136-jeu-menu-bouton-livrables.md (nouveau), prompts/README.md, prompts/auteurs.json, site/public/menu.js, site/public/portrait.js, site/public/i18n.js, site/public/sw.js | Prompt 136 : bouton « Livrables » dans le menu principal, de la largeur du bloc dépôt · partage · présentation et placé au-dessus ; ouvre `presentation/#/livrables` ; build et tests verts (530 + 605 contrôles) |
 | 2026-11-12 | ce commit | journal.md | Fusion dans main de l'image de la planche des logos (`logo/planche.png`), sans conflit |

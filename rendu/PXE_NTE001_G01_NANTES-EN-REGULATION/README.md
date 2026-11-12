@@ -102,4 +102,4 @@ rédigées en amont ; les données sont réelles.
 - Code : licence MIT (Mattéo Brevet & Guillaume Renoult). Ce projet n'est pas un service officiel de Naolib ni
   de Nantes Métropole.
 - Métadonnées de l'édition : `manifest.json` ; captation : `hero.jpg`, `detail-01.jpg`, `process.jpg`,
-  `thumb.jpg`, `demo.mp4` (28 s, 1280 × 720, vrai rendu du jeu).
+  `thumb.jpg`, `demo.mp4` (29 s, 1280 × 720, vrai rendu du jeu).
