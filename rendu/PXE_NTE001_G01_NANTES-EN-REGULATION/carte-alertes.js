@@ -329,24 +329,35 @@ function ligneSous(pr, mx, my) {
 function dessinerControlesCarte(z) {
 	const x = z.x + z.l - 64;
 	let y = z.y + z.h - 196 - (CARTE.marqueurs.some((m) => !m.lieu.pt) && z.l < 900 ? 84 : 0); // au-dessus de « Lieu à préciser » si la place manque
+	// Prompt 146 : « Recentrer » devient le 3e bouton carré blanc 48 × 48 (pictogramme carré), libellé en infobulle
+	let infobulle = null;
 	[
 		['+', () => zoomer(1.4)],
 		['−', () => zoomer(1 / 1.4)],
-	].forEach(([lib, action]) => {
+		['□', recentrer, t('carte.recentrer')],
+	].forEach(([lib, action, titre]) => {
 		const sv = mouseX >= x && mouseX <= x + 48 && mouseY >= y && mouseY <= y + 48;
 		noStroke();
 		fill(sv ? DS.blanc75 : DS.blanc);
 		rect(x, y, 48, 48);
-		dsTexte(lib, x + 24, y + 10, 24, DS.fond, 'center');
-		boutons.push({ x, y, l: 48, h: 48, action });
+		if (lib === '□') {
+			// carré dessiné (pas de glyphe : rendu identique quelle que soit la police)
+			noFill();
+			stroke(DS.fond);
+			strokeWeight(3);
+			rect(x + 15, y + 15, 18, 18);
+			noStroke();
+		} else dsTexte(lib, x + 24, y + 10, 24, DS.fond, 'center');
+		boutons.push({ x, y, l: 48, h: 48, action, titre });
 		CARTE.controles.push({ x, y, l: 48, h: 48 });
+		if (sv && titre) {
+			textFont(DS.policeTexte);
+			textSize(16);
+			infobulle = [titre, x - 8 - (textWidth(titre) + 20) / 2, y + 49]; // à gauche du bouton, sans couvrir « − »
+		}
 		y += 56;
 	});
-	textFont(DS.policeTexte);
-	textSize(20);
-	const lr = textWidth(t('carte.recentrer')) + 64;
-	dsBouton(z.x + z.l - 16 - lr, y, lr, 48, t('carte.recentrer'), recentrer, 'contour');
-	CARTE.controles.push({ x: z.x + z.l - 16 - lr, y, l: lr, h: 48 });
+	if (infobulle) infobulleCarte(...infobulle);
 	// zoom et légende : sous la ligne d'état (y + 64), à droite de la partie libre
 	dsTexte(t('carte.niveauZoom', { z: (CARTE.vue.ech / CARTE.ech0).toFixed(1).replace('.', ',') }), z.x + z.l - 16, z.y + 64, 16, DS.blanc50, 'right');
 	if ((Jeu.equipes || []).some((q) => !q.inutile && Jeu.phaseEquipe(q, tempsCarte()) !== 'libre')) dsTexte(couperLargeurCarte(t('carte.volOiseau'), z.l - 32, 20), z.x + z.l - 16, z.y + 92, 16, DS.blanc50, 'right');
