@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Planche logos</title>
+<!-- Nantes en régulation — prompt 126 : planche de comparaison des 4 pistes de logo.
+     Pixel art pur : chaque logo est une grille de lettres (P = couleur principale, W = blanc, G = gris, K = noir,
+     . = transparent), dessinée sur canvas sans lissage. Aucune image externe, aucun appel réseau. -->
+<link rel="stylesheet" href="../site/public/fonts.css">
+<style>
+	:root { --fond: #0D0C0C; --texte: #FFFFFF; --doux: rgba(255,255,255,.75); --ligne: rgba(255,255,255,.15); --primaire: #D4031C; }
+	* { box-sizing: border-box; }
+	body { margin: 0; background: var(--fond); color: var(--texte); font: 16px/1.5 'JetBrains Mono', ui-monospace, monospace; }
+	main { max-width: 1280px; margin: 0 auto; padding: 32px 16px 64px; }
+	h1, h2 { font-family: 'Bitsy Pixels', 'JetBrains Mono', monospace; font-weight: 400; margin: 0; }
+	h1 { font-size: 40px; line-height: 1.1; }
+	h2 { font-size: 28px; }
+	p { margin: 8px 0 0; color: var(--doux); max-width: 70ch; }
+	.chapeau { margin-bottom: 32px; }
+	.palettes { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+	.palettes button { font: inherit; color: #FFF; border: 0; padding: 8px 14px; cursor: pointer; }
+	.palettes button[aria-pressed="true"] { outline: 3px solid #FFF; outline-offset: 2px; }
+	.palettes button:focus-visible { outline: 3px solid #FFF; outline-offset: 4px; }
+	.piste { border-top: 1px solid var(--ligne); padding: 32px 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; }
+	@media (min-width: 900px) { .piste { grid-template-columns: 300px minmax(0, 1fr); } }
+	.num { color: var(--primaire); font-family: 'Bitsy Pixels', monospace; font-size: 20px; }
+	.reco { display: inline-block; margin-top: 8px; padding: 2px 8px; background: var(--primaire); color: #FFF; font-size: 14px; }
+	ul { margin: 12px 0 0; padding-left: 0; list-style: none; color: var(--doux); }
+	li { margin: 4px 0; }
+	.tailles { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; }
+	.case { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+	.case span { font-size: 12px; color: var(--doux); }
+	.cadre { padding: 16px; display: flex; flex-wrap: wrap; max-width: 100%; align-items: flex-end; gap: 16px; }
+	.cadre.sombre { background: #1A1919; }
+	.cadre.clair { background: #FFFFFF; }
+	.rangee { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
+	canvas { display: block; max-width: 100%; height: auto; image-rendering: pixelated; image-rendering: crisp-edges; }
+	.onglet { margin-top: 16px; display: flex; align-items: center; gap: 8px; background: #2A2828; padding: 6px 12px; width: max-content; max-width: 100%; font-size: 13px; }
+	footer { border-top: 1px solid var(--ligne); padding-top: 24px; color: var(--doux); font-size: 14px; }
+</style>
+</head>
+<body>
+<main>
+	<header class="chapeau">
+		<h1>Nantes en régulation — pistes de logo</h1>
+		<p>Quatre directions tirées du jeu, plus le logo actuel en référence. Chaque piste est montrée en 256, 48 et 16 px, sur fond sombre et sur fond clair, puis dans les six couleurs principales du jeu (prompt 115).</p>
+		<p>Changer la couleur principale de toute la planche :</p>
+		<div class="palettes" id="palettes" role="group" aria-label="Couleur principale"></div>
+	</header>
+	<div id="pistes"></div>
+	<footer>
+		<p>Contraintes tenues : grille pixel 16×16 (logotype à part), une couleur principale + blanc + gris, aucune police ou identité de Nantes Métropole, de Naolib ou de la Semitan, aucun monument, aucune animation. Les pastilles « onglet » simulent l'icône du navigateur à 16 px.</p>
+		<p>Prochaine étape : choisir une piste, puis la coder au format <code>LOGO_PXE</code> (ds.js) pour qu'elle suive les palettes.</p>
+	</footer>
+</main>
+<script>
+const PALETTES = [
+	['rouge', '#D4031C'], ['bleu', '#2F5BE0'], ['vert', '#0A7D45'],
+	['violet', '#7A3FD1'], ['orange', '#B54800'], ['turquoise', '#00777A'],
+];
+let primaire = PALETTES[0][1];
+
+/* ---------- Police pixel 3×5 (N sur 4) pour le logotype ---------- */
+const GLYPHES = {
+	N: ['W..W', 'WW.W', 'W.WW', 'W..W', 'W..W'],
+	A: ['.W.', 'W.W', 'WWW', 'W.W', 'W.W'],
+	T: ['WWW', '.W.', '.W.', '.W.', '.W.'],
+	E: ['WWW', 'W..', 'WW.', 'W..', 'WWW'],
+	S: ['.WW', 'W..', '.W.', '..W', 'WW.'],
+	R: ['WW.', 'W.W', 'WW.', 'W.W', 'W.W'],
+	G: ['.WW', 'W..', 'W.W', 'W.W', '.WW'],
+	U: ['W.W', 'W.W', 'W.W', 'W.W', 'WWW'],
+	L: ['W..', 'W..', 'W..', 'W..', 'WWW'],
+	I: ['WWW', '.W.', '.W.', '.W.', 'WWW'],
+	O: ['.W.', 'W.W', 'W.W', 'W.W', '.W.'],
+	'&': ['.W..', 'W.W.', '.W..', 'W.W.', '.W.W'],
+	'#': ['.W.W.', 'WWWWW', '.W.W.', 'WWWWW', '.W.W.'],
+	'@': ['.WW', 'W.W', 'WWW', 'W..', '.WW'],
+	'!': ['.W.', '.W.', '.W.', '...', '.W.'],
+	' ': ['..', '..', '..', '..', '..'],
+};
+function grilleVide(l, h) { return Array.from({ length: h }, () => Array(l).fill('.')); }
+function poser(g, motif, x, y, couleur) {
+	motif.forEach((ligne, j) => [...ligne].forEach((c, i) => {
+		if (c !== '.' && g[y + j] && x + i < g[0].length) g[y + j][x + i] = couleur || c;
+	}));
+}
+function largeurTexte(txt) { return [...txt].reduce((s, c) => s + GLYPHES[c][0].length + 1, -1); }
+function ecrire(g, txt, x, y, couleur) {
+	for (const c of txt) { poser(g, GLYPHES[c], x, y, couleur); x += GLYPHES[c][0].length + 1; }
+}
+
+/* ---------- Référence : logo actuel (LOGO_PXE, ds.js), 24×20 ---------- */
+function logoActuel() {
+	const g = grilleVide(24, 20);
+	const r = (x, y, l, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < l; i++) g[y + j][x + i] = c; };
+	r(1, 1, 22, 14, 'W'); r(3, 3, 18, 10, 'P'); r(4, 9, 16, 1, 'W'); r(6, 7, 3, 3, 'V'); r(15, 7, 3, 3, 'W');
+	r(11, 15, 2, 3, 'W'); r(7, 18, 10, 1, 'W');
+	return g;
+}
+
+/* ---------- Piste 1 : le pin d'alerte ---------- */
+const PIN = [
+	'......PPPP......',
+	'....PPPPPPPP....',
+	'...PPPPWWPPPP...',
+	'..PPPPPWWPPPPP..',
+	'..PPPPPWWPPPPP..',
+	'.PPPPPPWWPPPPPP.',
+	'.PPPPPPWWPPPPPP.',
+	'.PPPPPPWWPPPPPP.',
+	'.PPPPPPPPPPPPPP.',
+	'..PPPPPWWPPPPP..',
+	'..PPPPPWWPPPPP..',
+	'...PPPPPPPPPP...',
+	'....PPPPPPPP....',
+	'.....PPPPPP.....',
+	'......PPPP......',
+	'.......PP.......',
+];
+
+/* ---------- Piste 2 : la bulle-pin (16×16, « … ») et sa version grande (24×20, « &#@! ») ---------- */
+const BULLE = [
+	'................',
+	'.PPPPPPPPPPPPPP.',
+	'PPPPPPPPPPPPPPPP',
+	'PPPPPPPPPPPPPPPP',
+	'PPPPPPPPPPPPPPPP',
+	'PPPWWPPWWPPWWPPP',
+	'PPPWWPPWWPPWWPPP',
+	'PPPPPPPPPPPPPPPP',
+	'PPPPPPPPPPPPPPPP',
+	'PPPPPPPPPPPPPPPP',
+	'.PPPPPPPPPPPPPP.',
+	'....PPPPPPPP....',
+	'.....PPPPPP.....',
+	'......PPPP......',
+	'.......PP.......',
+	'................',
+];
+function bulleGrande() {
+	const g = grilleVide(24, 20);
+	for (let y = 0; y < 13; y++) for (let x = 0; x < 24; x++) {
+		const coin = (y === 0 || y === 12) && (x === 0 || x === 23);
+		if (!coin) g[y][x] = 'P';
+	}
+	ecrire(g, '&#@!', Math.floor((24 - largeurTexte('&#@!')) / 2), 4, 'W');
+	// pointe du marqueur : rangées de 12, 10, 8, 6, 4 puis 2 pixels, centrées
+	[12, 10, 8, 6, 4, 2].forEach((largeur, k) => {
+		for (let x = 12 - largeur / 2; x < 12 + largeur / 2; x++) g[13 + k][x] = 'P';
+	});
+	return g;
+}
+
+/* ---------- Piste 3 : l'écran de régulation (pin + Loire) ---------- */
+const ECRAN = [
+	'GGGGGGGGGGGGGGGG',
+	'GPPPPPPPPPPPPPPG',
+	'GPPPPPWWWWPPPPPG',
+	'GPPPPWWPPWWPPPPG',
+	'GPPPPWWPPWWPPPPG',
+	'GPPPPPWWWWPPPPPG',
+	'GPPPPPPWWPPPPPPG',
+	'GPPPPPPPPPPPPPPG',
+	'GPPKKKPPPPPKKKPG',
+	'GKKPPPKKKKKPPPKG',
+	'GPPPPPPPPPPPPPPG',
+	'GGGGGGGGGGGGGGGG',
+	'................',
+	'......GGGG......',
+	'......GGGG......',
+	'...GGGGGGGGGG...',
+];
+
+/* ---------- Piste 4 : logotype + monogramme ---------- */
+function logotype() {
+	const l1 = 'NANTES EN', l2 = 'REGULATION';
+	const l = Math.max(largeurTexte(l1), largeurTexte(l2));
+	const g = grilleVide(l, 14);
+	ecrire(g, l1, 0, 0, 'W');
+	ecrire(g, l2, 0, 9, 'P');
+	// accent du É (2e lettre de RÉGULATION) dessiné comme un petit pin de carte
+	const xE = GLYPHES.R[0].length + 1;
+	poser(g, ['PPP', 'PPP', '.P.'], xE, 5);
+	return g;
+}
+function monogramme() {
+	const g = grilleVide(16, 16);
+	for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) {
+		const coin = (y === 0 || y === 15) && (x === 0 || x === 15);
+		if (!coin) g[y][x] = 'P';
+	}
+	const txt = 'NER';
+	ecrire(g, txt, Math.floor((16 - largeurTexte(txt)) / 2), 6, 'W');
+	poser(g, ['WWW', 'WWW', '.W.'], Math.floor((16 - largeurTexte(txt)) / 2) + 5, 2); // l'accent-pin sur le E
+	return g;
+}
+
+/* ---------- Rendu ---------- */
+const COULEURS = () => ({ P: primaire, W: '#FFFFFF', G: '#8C8C8C', K: '#0D0C0C', V: '#00CA64' });
+function lignes(m) { return Array.isArray(m[0]) ? m : m.map((s) => [...s]); }
+function canvasDe(motif, px) {
+	const g = lignes(motif), h = g.length, l = g[0].length;
+	const k = Math.max(1, Math.round(px / Math.max(l, h)));
+	const c = document.createElement('canvas');
+	c.width = l * k; c.height = h * k;
+	c.setAttribute('aria-hidden', 'true');
+	const ctx = c.getContext('2d'), col = COULEURS();
+	g.forEach((ligne, y) => ligne.forEach((v, x) => {
+		if (v === '.') return;
+		ctx.fillStyle = col[v]; // le blanc reste blanc sur fond clair : la planche montre où il disparaît
+		ctx.fillRect(x * k, y * k, k, k);
+	}));
+	return c;
+}
+function caseTaille(motif, px, etiquette, surClair) {
+	const d = document.createElement('div'); d.className = 'case';
+	d.append(canvasDe(motif, px, surClair));
+	const s = document.createElement('span'); s.textContent = etiquette; d.append(s);
+	return d;
+}
+function bloc(grand, petit, surClair) {
+	const d = document.createElement('div'); d.className = 'cadre ' + (surClair ? 'clair' : 'sombre');
+	d.append(caseTaille(grand, 256, '256 px', surClair), caseTaille(petit, 48, '48 px', surClair), caseTaille(petit, 16, '16 px', surClair));
+	if (surClair) d.querySelectorAll('span').forEach((s) => (s.style.color = '#3A3838'));
+	return d;
+}
+
+const PISTES = [
+	{
+		num: '0', nom: 'Logo actuel (référence)', grand: logoActuel, petit: logoActuel,
+		idee: 'Le moniteur de RégulOS avec une ligne de bus et un arrêt vert. Il sert de point de comparaison.',
+		pour: ['Déjà en place, suit les palettes', 'Lien direct avec le PC du jeu'],
+		contre: ['Dit « ordinateur », pas « signalement »', 'Le vert de l\'arrêt est une 2e couleur fixe', 'Illisible à 16 px'],
+	},
+	{
+		num: '1', nom: 'Le pin d\'alerte', grand: () => PIN, petit: () => PIN,
+		idee: 'Un marqueur de carte avec un « ! » blanc : l\'action de base du jeu, cliquer sur un signalement.',
+		pour: ['Le plus lisible à 16 px', 'Une seule forme, une seule couleur', 'Se pose tel quel sur la carte'],
+		contre: ['Très répandu (applis de cartes, d\'alerte)', 'Ne dit rien du plaignant ni du ton du jeu'],
+	},
+	{
+		num: '2', nom: 'La bulle-pin', reco: true, grand: bulleGrande, petit: () => BULLE,
+		idee: 'Une bulle de dialogue dont la pointe est celle d\'un marqueur de carte. En grand, le mot masqué « &#@! » ; en petit, trois points « … ».',
+		pour: ['Raconte tout le jeu : quelqu\'un se plaint, à un endroit précis', '« &#@! » porte l\'humour des plaignants désagréables et du clash', 'Tient à 16 px grâce aux trois points'],
+		contre: ['Deux versions à maintenir (grande et petite)', '« &#@! » peut paraître agressif hors contexte'],
+	},
+	{
+		num: '3', nom: 'L\'écran de régulation', grand: () => ECRAN, petit: () => ECRAN,
+		idee: 'Évolution du logo actuel : le poste, avec un pin sur l\'écran et une Loire en escalier.',
+		pour: ['Continuité avec le logo et le bureau actuels', 'Une seule couleur fixe (gris), plus de vert'],
+		contre: ['Trop de détails à 16 px', 'La Loire en pixels reste peu reconnaissable', 'Le cadre gris disparaît presque sur fond clair'],
+	},
+	{
+		num: '4', nom: 'Le logotype pixel', grand: logotype, petit: monogramme,
+		idee: '« NANTES EN RÉGULATION » en lettres pixel 3×5, l\'accent du É remplacé par un petit pin. Le monogramme « NÉR » sert aux petites tailles.',
+		pour: ['Le nom du jeu se lit directement (écran titre, affiche)', 'L\'accent-pin est un détail propre au jeu', 'Se combine avec la piste 1 ou 2 comme symbole'],
+		contre: ['Le logotype est inutilisable seul en petit', 'Le blanc de la 1re ligne disparaît sur fond clair'],
+	},
+];
+
+function rendre() {
+	const racine = document.getElementById('pistes');
+	racine.textContent = '';
+	PISTES.forEach((p) => {
+		const s = document.createElement('section'); s.className = 'piste';
+		s.setAttribute('aria-labelledby', 'p' + p.num);
+		const texte = document.createElement('div');
+		texte.innerHTML = '<div class="num">Piste ' + p.num + '</div><h2 id="p' + p.num + '"></h2><p class="idee"></p>' +
+			(p.reco ? '<span class="reco">Recommandée</span>' : '') +
+			'<ul class="pour" aria-label="Points forts"></ul><ul class="contre" aria-label="Points faibles"></ul>';
+		texte.querySelector('h2').textContent = p.nom;
+		texte.querySelector('.idee').textContent = p.idee;
+		p.pour.forEach((x) => { const li = document.createElement('li'); li.textContent = '+ ' + x; texte.querySelector('.pour').append(li); });
+		p.contre.forEach((x) => { const li = document.createElement('li'); li.textContent = '− ' + x; texte.querySelector('.contre').append(li); });
+
+		const visuels = document.createElement('div');
+		const grand = p.grand(), petit = p.petit();
+		const t = document.createElement('div'); t.className = 'tailles';
+		t.append(bloc(grand, petit, false), bloc(grand, petit, true));
+		visuels.append(t);
+		// les six palettes, en 48 px
+		const r = document.createElement('div'); r.className = 'rangee';
+		const garde = primaire;
+		PALETTES.forEach(([nom, hex]) => { primaire = hex; r.append(caseTaille(petit, 48, nom, false)); });
+		primaire = garde;
+		visuels.append(r);
+		// simulation d'onglet de navigateur
+		const o = document.createElement('div'); o.className = 'onglet';
+		o.append(canvasDe(petit, 16, false), document.createTextNode('Nantes en régulation'));
+		visuels.append(o);
+
+		s.append(texte, visuels);
+		racine.append(s);
+	});
+}
+
+const barre = document.getElementById('palettes');
+PALETTES.forEach(([nom, hex]) => {
+	const b = document.createElement('button');
+	b.type = 'button'; b.textContent = nom; b.style.background = hex;
+	b.setAttribute('aria-pressed', hex === primaire ? 'true' : 'false');
+	b.addEventListener('click', () => {
+		primaire = hex;
+		document.documentElement.style.setProperty('--primaire', hex);
+		barre.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', x === b ? 'true' : 'false'));
+		rendre();
+	});
+	barre.append(b);
+});
+rendre();
+</script>
+</body>
+</html>
