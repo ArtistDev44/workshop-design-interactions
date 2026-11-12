@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 
 const pub = fileURLToPath(new URL('../public/', import.meta.url));
 const PAGES_ASTRO = ['./cartel/', './making-of/', './presentation/']; // générées dans dist/, servies en ligne
+const PAGES_DOSSIER = ['./kit-presse/']; // prompt 188 : pages statiques de public/ ouvertes par leur dossier (la navigation hors ligne cherche cette URL, pas …/index.html)
 const EXCLUS = new Set(['sw.js']); // le service worker ne se met pas lui-même en cache
 
 function lister(dossier) {
@@ -24,7 +25,7 @@ const fichiers = lister(pub)
 const hash = createHash('sha1');
 fichiers.forEach((f) => hash.update(f).update(readFileSync(join(pub, f))));
 const version = 'nte-regulation-' + hash.digest('hex').slice(0, 10);
-const liste = ['./', ...fichiers.map((f) => './' + f), ...PAGES_ASTRO];
+const liste = ['./', ...fichiers.map((f) => './' + f), ...PAGES_DOSSIER, ...PAGES_ASTRO];
 
 const swChemin = join(pub, 'sw.js');
 const sw = readFileSync(swChemin, 'utf8');

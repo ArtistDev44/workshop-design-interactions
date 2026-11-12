@@ -3390,6 +3390,24 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	}
 }
 
+// Prompt 188 : bouton « Kit de presse » du menu principal (modèle Livrables) — ordre clavier = ordre visuel, textes FR / EN
+{
+	const menu = readFileSync(join(pub, 'menu.js'), 'utf8');
+	const extras = menu.slice(menu.indexOf('const EXTRAS_MENU'), menu.indexOf('const HAUT_MENU'));
+	const ordre = [...extras.matchAll(/cle: '(\w+)'/g)].map((x) => x[1]).join();
+	verifier(ordre === 'livrables,kitpresse,depot,partager,presentation,installer', `prompt 188 : ordre des extras du menu (${ordre})`);
+	verifier(/function ouvrirKitPresse\(\) \{\s*annoncer\(t\('mp\.kitpresse\.annonce'\)\);\s*ouvrirLien\('\.\/kit-presse\/'\);/.test(menu) && /presse: 'newspaper'/.test(menu), 'prompt 188 : ouvrirKitPresse (annonce + ./kit-presse/ en nouvel onglet) et icône Lucide newspaper');
+	// De haut en bas : Livrables, Kit de presse, puis les trois boutons — même largeur, 16 px d'écart
+	verifier(/boutonIcone\(b\.x, b\.y - 2 \* \(b\.h \+ 16\), 3 \* b\.l \+ 32, b\.h, 'carnet'/.test(menu) && /boutonIcone\(b\.x, b\.y - b\.h - 16, 3 \* b\.l \+ 32, b\.h, 'presse', t\('mp\.kitpresse'\), ouvrirKitPresse, focusExtra\(n, 'kitpresse'\)\)/.test(menu), 'prompt 188 : rangées Livrables puis Kit de presse au-dessus du bloc');
+	verifier(/BLOC_PARTAGE\.y - 2 \* \(BLOC_PARTAGE\.h \+ 16\) - 12, l: 3 \* BLOC_PARTAGE\.l \+ 56, h: 3 \* BLOC_PARTAGE\.h \+ 32 \+ 24/.test(readFileSync(join(pub, 'portrait.js'), 'utf8')), 'prompt 188 : la région portrait du bloc inclut les deux rangées');
+	const c = contexte('fr');
+	for (const langue of ['fr', 'en']) {
+		const dico = vm.runInContext(`TRADUCTIONS.${langue}`, c);
+		verifier(['mp.kitpresse', 'mp.kitpresse.infobulle', 'mp.kitpresse.annonce'].every((k) => dico[k]), `prompt 188 : clés mp.kitpresse manquantes (${langue})`);
+	}
+	verifier(existsSync(join(pub, 'kit-presse', 'index.html')) && existsSync(join(pub, 'kit-presse', 'communique-de-presse.txt')) && existsSync(join(pub, 'kit-presse', 'logo.svg')), 'prompt 188 : fichiers du kit de presse présents');
+}
+
 if (erreurs.length) {
 	console.error(`Test du jeu : ${erreurs.length} erreur(s) sur ${controles + erreurs.length} contrôles`);
 	for (const e of erreurs) console.error(`  ✗ ${e}`);

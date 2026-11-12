@@ -9,7 +9,7 @@
  * Enregistré seulement en http(s), jamais en file:// (index.html).
  */
 /* précache:début (généré par scripts/generer-sw.mjs — ne pas modifier à la main) */
-const VERSION = 'nte-regulation-1818011146';
+const VERSION = 'nte-regulation-ab9e1fb5d2';
 const ESSENTIELS = [
 	"./",
 	"./accessibilite.js",
@@ -108,6 +108,15 @@ const ESSENTIELS = [
 	"./journal.js",
 	"./journee.js",
 	"./juice.js",
+	"./kit-presse/README.md",
+	"./kit-presse/communique-de-presse.md",
+	"./kit-presse/communique-de-presse.txt",
+	"./kit-presse/detail-01.jpg",
+	"./kit-presse/hero.jpg",
+	"./kit-presse/index.html",
+	"./kit-presse/logo.svg",
+	"./kit-presse/process.jpg",
+	"./kit-presse/thumb.jpg",
 	"./lib/p5.min.js",
 	"./licences/lucide-LICENSE.txt",
 	"./manifest.json",
@@ -217,6 +226,7 @@ const ESSENTIELS = [
 	"./theme.js",
 	"./traces.js",
 	"./webcam.js",
+	"./kit-presse/",
 	"./cartel/",
 	"./making-of/",
 	"./presentation/"

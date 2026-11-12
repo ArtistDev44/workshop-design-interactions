@@ -26,6 +26,11 @@ function ouvrirLivrables() {
 	annoncer(t('mp.livrables.annonce'));
 	ouvrirLien('./presentation/#/livrables?clicks=5');
 }
+/** Prompt 188 : kit de presse (page statique kit-presse/index.html : communiqué, captures, vidéo, logo, liens), nouvel onglet */
+function ouvrirKitPresse() {
+	annoncer(t('mp.kitpresse.annonce'));
+	ouvrirLien('./kit-presse/');
+}
 const MENU_C = {
 	nuit: '#0D0C0C', // Background du Pixel DS (prompt 39)
 	encre: '#0D0C0C', // Secondary-Foreground
@@ -113,7 +118,7 @@ function fondMenu() {
 
 /** Prompt 170 : icônes d'interface Lucide (icones-lucide.js), 48 px centrées dans le carré 56 × 56 ; les logos de
  * marque, absents de Lucide, restent en pixel art (iconeReseau) */
-const ICONES_MENU = { plus: 'plus', lecture: 'play', reglages: 'settings', aide: 'circle-question-mark', livre: 'book-open', presentation: 'presentation', retour: 'arrow-left', trophee: 'trophy', carnet: 'notebook-text', menu: 'menu', partage: 'share-2', lien: 'link' };
+const ICONES_MENU = { plus: 'plus', lecture: 'play', reglages: 'settings', aide: 'circle-question-mark', livre: 'book-open', presentation: 'presentation', retour: 'arrow-left', trophee: 'trophy', carnet: 'notebook-text', presse: 'newspaper', menu: 'menu', partage: 'share-2', lien: 'link' };
 function iconeMenu(type, x, y, c) {
 	push();
 	translate(x, y);
@@ -288,6 +293,7 @@ function marqueExpo() {
 // Prompt 160 : en exposition, ni Livrables, ni Dépôt, ni Partager, ni Présentation (le visiteur suivant doit trouver le jeu)
 const EXTRAS_MENU = typeof EXPO !== 'undefined' && EXPO.actif ? [] : [
 	{ cle: 'livrables', action: () => ouvrirLivrables() }, // prompt 136 : au-dessus des trois boutons, donc en premier
+	{ cle: 'kitpresse', action: () => ouvrirKitPresse() }, // prompt 188 : rangée entre Livrables et les trois boutons
 	{ cle: 'depot', action: () => ouvrirLien(DEPOT_URL) },
 	{ cle: 'partager', action: () => ouvrirPartage() },
 	{ cle: 'presentation', action: () => ouvrirPresentation() }, // page /presentation/ (diaporama Slidev, prompt 82)
@@ -382,13 +388,15 @@ function blocPartage(n) {
 	const s1 = boutonIcone(b.x, b.y, b.l, b.h, 'github', t('mp.depot'), () => ouvrirLien(DEPOT_URL), focusExtra(n, 'depot'));
 	const s2 = boutonIcone(b.x + b.l + 16, b.y, b.l, b.h, 'partage', t('mp.partager'), ouvrirPartage, focusExtra(n, 'partager'));
 	const s3 = boutonIcone(b.x + 2 * (b.l + 16), b.y, b.l, b.h, 'presentation', t('mp.presentation'), ouvrirPresentation, focusExtra(n, 'presentation'));
-	// Prompt 136 : « Livrables » sur toute la largeur des trois boutons, une rangée au-dessus
-	const s0 = boutonIcone(b.x, b.y - b.h - 16, 3 * b.l + 32, b.h, 'carnet', t('mp.livrables'), ouvrirLivrables, focusExtra(n, 'livrables'));
-	const bulle = s0 || focusExtra(n, 'livrables') ? t('mp.livrables.infobulle') : s1 || focusExtra(n, 'depot') ? t('mp.depot.infobulle') : s2 || focusExtra(n, 'partager') ? t('mp.partager.infobulle') : s3 || focusExtra(n, 'presentation') ? t('mp.presentation.infobulle') : null;
+	// Prompt 136 : « Livrables » sur toute la largeur des trois boutons ; prompt 188 : « Kit de presse » juste au-dessus des
+	// trois boutons, Livrables une rangée plus haut (ordre visuel de haut en bas = ordre clavier ↑ ↓ / Tab)
+	const s0 = boutonIcone(b.x, b.y - 2 * (b.h + 16), 3 * b.l + 32, b.h, 'carnet', t('mp.livrables'), ouvrirLivrables, focusExtra(n, 'livrables'));
+	const sk = boutonIcone(b.x, b.y - b.h - 16, 3 * b.l + 32, b.h, 'presse', t('mp.kitpresse'), ouvrirKitPresse, focusExtra(n, 'kitpresse'));
+	const bulle = s0 || focusExtra(n, 'livrables') ? t('mp.livrables.infobulle') : sk || focusExtra(n, 'kitpresse') ? t('mp.kitpresse.infobulle') : s1 || focusExtra(n, 'depot') ? t('mp.depot.infobulle') : s2 || focusExtra(n, 'partager') ? t('mp.partager.infobulle') : s3 || focusExtra(n, 'presentation') ? t('mp.presentation.infobulle') : null;
 	if (bulle) {
 		textFont(POLICE_DONNEES);
 		textSize(18);
-		infobulle(bulle, Math.min(b.x, L - 24 - (textWidth(bulle) + 28)), b.y - b.h - 16 - 52); // reste dans l'écran
+		infobulle(bulle, Math.min(b.x, L - 24 - (textWidth(bulle) + 28)), b.y - 2 * (b.h + 16) - 52); // reste dans l'écran, au-dessus des deux rangées
 	}
 	textAlign(LEFT, TOP);
 }
