@@ -288,6 +288,13 @@ function bulleDuPlaignant(d, x, y, l) {
 		annoncer(t('plaignant.annonce', { auteur, texte: lireMasques(texte) })); // prompt 118 : « mot masqué » à la place des symboles
 	}
 	let yy = y + hb + 10;
+	if (d.fictif) {
+		noStroke();
+		fill(DS.alerte);
+		rect(x, yy + 2, 4, 22);
+		dsTexte(t('fictif.badge'), x + 14, yy, 16, DS.alerteClair, 'left'); // prompt 119 : un incident inventé est toujours signalé comme tel
+		yy += 34;
+	}
 	if (pl) {
 		dsTexte(couperLargeurCarte(String(phraseSituation(d)), l, 16), x, yy, 16, DS.blanc50, 'left');
 		yy += 28;

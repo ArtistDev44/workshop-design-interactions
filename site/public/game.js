@@ -242,8 +242,39 @@
 			paquet = base.concat(evts);
 		}
 		paquet = paquet.slice(0, REGLAGES.dossiersParPartie);
+		const fictif = Jeu.incidentsFictifs ? incidentFictif(etat, paquet) : null; // prompt 119 : au plus un par semaine, marqué fictif
+		if (fictif) paquet = paquet.concat([fictif]);
 		paquet.sort((a, b) => (a.date + (a.heure || '')).localeCompare(b.date + (b.heure || '')));
 		return paquet.map((d) => Object.assign({}, d, { contradiction: detecterContradiction(d) }));
+	}
+
+	/* Prompt 119 — exception assumée à « aucune donnée inventée » (décision du groupe) : un incident INVENTÉ, rare
+	 * (au plus un par semaine), pour pimenter le rythme. Toujours marqué fictif (fictif: true, source « Scénario du
+	 * jeu (fictif) ») ; jour, heure (9 h–19 h) et ligne réelle (GTFS) tirés par hachage de la graine — aucun dé. Activé
+	 * seulement par l'affichage (Jeu.incidentsFictifs, désactivable avec ?fictifs=0) : les tests de règles n'en ont pas. */
+	function incidentFictif(etat, paquet) {
+		const graine = String((etat.semaine && etat.semaine.lundi) || etat.seed || 'partie');
+		let h = 0;
+		for (const c of graine) h = (h * 31 + c.charCodeAt(0)) % 1000003;
+		const dates = [...new Set(paquet.map((d) => d.date))].sort();
+		const lignes = Jeu.lignes && Jeu.lignes.lignes ? Jeu.lignes.lignes.filter((l) => l.traces && l.traces.length && (l.type === 0 || l.type === 3)) : [];
+		if (!dates.length || !lignes.length) return null;
+		const sorte = h % 2 ? 'agression' : 'vol';
+		const ligne = lignes[(h >> 3) % lignes.length].nom;
+		const heure = String(9 + ((h >> 5) % 10)).padStart(2, '0') + ':' + String(((h >> 7) % 4) * 15).padStart(2, '0');
+		const nature = sorte === 'agression' ? T('fictif.nature.agression') : T('fictif.nature.vol');
+		return {
+			date: dates[(h >> 2) % dates.length],
+			heure,
+			type: 'incident fictif',
+			nature: sorte === 'agression' ? 'agression en cours' : 'vol à main armée',
+			natureAffichee: nature,
+			lignes: [String(ligne)],
+			retard: null,
+			source: 'Scénario du jeu (fictif)',
+			texte_source: (sorte === 'agression' ? 'Agression en cours signalée à bord' : 'Vol à main armée signalé à un arrêt') + ', ligne ' + ligne + ' — incident fictif',
+			fictif: true,
+		};
 	}
 
 	/* Démarre une partie sur l'état chargé (semaine, direct ou hors ligne). */
@@ -461,6 +492,7 @@
 	/** Catégorie calculée sur les champs réels (sans tirage) : la plus grave l'emporte */
 	Jeu.categorie = function (d) {
 		if (!d) return null;
+		if (d.fictif || d.type === 'incident fictif') return 'securite'; // prompt 119
 		const m = Jeu.meteoDuJour(d.date) || {};
 		if (MOTS_ACCIDENT.test(String(d.texte_source || '') + ' ' + String(d.nature || ''))) return 'accident';
 		if (d.type === 'alerte météo' || (m.pluie_mm || 0) >= 10 || (m.rafales_max || 0) >= 60) return 'meteo';
@@ -1607,6 +1639,7 @@
 		if (d.type === 'perturbation') ['techniciens', 'police'].forEach((x) => p.add(x));
 		if (d.type === 'événement') p.add('police');
 		if (d.type === 'alerte météo') ['pompiers', 'techniciens'].forEach((x) => p.add(x));
+		if (d.type === 'incident fictif') ['police'].concat(/agression/.test(String(d.nature)) ? ['ambulance'] : []).forEach((x) => p.add(x)); // prompt 119
 		if (MOTS_SECOURS.test(String(d.texte_source || '') + ' ' + String(d.nature || ''))) ['ambulance', 'police'].forEach((x) => p.add(x));
 		return Jeu.TYPES_EQUIPES.filter((x) => p.has(x));
 	};
@@ -1614,7 +1647,7 @@
 	Jeu.gravite = function (d) {
 		if (!d) return 'faible';
 		const re = Jeu.retardEffectif(d); // prompt 79 : la gravité suit le retard effectif
-		if ((re !== null && re >= 20) || d.type === 'alerte météo') return 'elevee';
+		if ((re !== null && re >= 20) || d.type === 'alerte météo' || d.type === 'incident fictif') return 'elevee'; // prompt 119 : incident fictif = gravité élevée
 		if ((re !== null && re >= 10) || d.type === 'événement' || d.affluence) return 'moyenne';
 		return 'faible';
 	};

@@ -1058,6 +1058,25 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 	verifier(r.agressifs > 0 && r.agressifs < r.total, `plaintes agressives : ${r.agressifs} sur ${r.total} plaignants (ni aucune, ni toutes)`);
 }
 
+// Prompt 119 : incidents inventés — au plus un par semaine, marqués fictifs, sur une ligne réelle, catégorie « securite »,
+// témoin trouvé ; désactivés (tests de règles) → paquet inchangé
+{
+	const c119 = contexte('fr');
+	const r = vm.runInContext(`(() => {
+		const out = [];
+		for (const sem of ['2026-09-14', '2026-10-12', '2026-11-02']) {
+			Jeu.incidentsFictifs = false; Jeu.chargerSemaine(sem); Jeu.nouvellePartie(); const sans = Jeu.paquet.length;
+			Jeu.incidentsFictifs = true; Jeu.chargerSemaine(sem); Jeu.nouvellePartie();
+			const f = Jeu.paquet.filter((d) => d.fictif);
+			const d = f[0];
+			out.push({ sans, avec: Jeu.paquet.length, n: f.length, ok: !!d && d.type === 'incident fictif' && /fictif/i.test(d.source) && Jeu.lignes.lignes.some((l) => l.nom === d.lignes[0]) && Jeu.categorie(d) === 'securite' && Jeu.gravite(d) === 'elevee' && Jeu.equipesPertinentes(d).includes('police') && !!Jeu.plaignantPour(Jeu.paquet.indexOf(d)) });
+		}
+		Jeu.incidentsFictifs = false;
+		return out;
+	})()`, c119);
+	verifier(r.every((x) => x.n === 1 && x.avec === x.sans + 1 && x.ok), `incidents fictifs : ${JSON.stringify(r)}`);
+}
+
 // Prompt 88 : aucun texte identique deux fois dans une même journée (mesure du § 0, FR et EN), variantes reproductibles
 {
 	const { mesurer } = await import('./mesure-repetition.mjs');

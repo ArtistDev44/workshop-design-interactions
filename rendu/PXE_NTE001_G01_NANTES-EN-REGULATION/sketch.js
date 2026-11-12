@@ -671,9 +671,7 @@ function dessinerDossier(d, meteo) {
 			return;
 		}
 	} else {
-		textAlign(RIGHT, TOP);
-		fill(C.gris);
-		text(t('dossier.pause'), x + base.l - 32, base.y + 24); // prompt 87 : horloge du jeu en pause pendant la lecture
+		// prompt 119 : « Horloge en pause » retiré de la fenêtre — le bandeau l'affiche déjà (« en pause hh:mm ») et le texte chevauchait l'en-tête
 	}
 	textAlign(LEFT, TOP);
 	dessinerPanneauSignalement(d, x, base); // prompt 87 : 3 blocs, « En savoir plus », conseil, réponses de la catégorie
@@ -1285,11 +1283,7 @@ function keyPressed() {
 	} else if (phase === 'decision') {
 		if ((key === 'b' || key === 'B') && Jeu.dossierCourant() && peutPublierDossier(Jeu.dossierCourant())) return publierDepuisDossier(Jeu.dossierCourant()), false; // prompt 91 § 3
 		// Prompt 87 : 1 à 4 = cartes de réponse affichées ; 0 ou Espace = la réponse « attendre » ; E = En savoir plus
-		if (!toucheReponses() && (key === '0' || key === ' ')) {
-			const d0 = Jeu.dossierCourant();
-			const att = d0 && reponsesAffichees(d0).find((r) => Jeu.familleDe(r.cle) === 'rien');
-			if (att) decider(att.cle);
-		}
+		toucheReponses(); // prompt 117 : 1 à 3 = les répliques affichées (plus de raccourci caché « 0 = attendre »)
 	} else if (phase === 'contradiction') {
 		if (key === 'a' || key === 'A') choisirSource('a');
 		if (key === 'b' || key === 'B') choisirSource('b');

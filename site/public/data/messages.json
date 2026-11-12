@@ -1153,6 +1153,162 @@
      "bonne": false
     }
    ]
+  },
+  {
+   "id": "fictif_agression_1",
+   "auteur": "@temoin_ligne",
+   "fictif": true,
+   "condition": {
+    "type": "incident fictif",
+    "nature_contient": "agression"
+   },
+   "texte": {
+    "fr": "Vite ! Un homme s'en prend à une passagère dans la ligne {ligne}, il crie, il la bouscule. Faites quelque chose !",
+    "en": "Quick! A man is attacking a passenger on line {ligne}, he's shouting and shoving her. Do something!"
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Les secours sont prévenus, éloignez-vous et restez en sécurité.",
+      "en": "Emergency services are alerted; move away and stay safe."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 4,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Nous ne commentons pas ce type d'incident.",
+      "en": "We don't comment on this kind of incident."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -5,
+      "budget": 0
+     },
+     "bonne": false
+    }
+   ]
+  },
+  {
+   "id": "fictif_agression_2",
+   "auteur": "@passagere_affolee",
+   "fictif": true,
+   "condition": {
+    "type": "incident fictif",
+    "nature_contient": "agression"
+   },
+   "texte": {
+    "fr": "Ça se bat dans le tram, ligne {ligne}. Quelqu'un est blessé, je crois. Envoyez quelqu'un !",
+    "en": "There's a fight on the tram, line {ligne}. Someone's hurt, I think. Send someone!"
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Les secours sont prévenus, éloignez-vous et restez en sécurité.",
+      "en": "Emergency services are alerted; move away and stay safe."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 4,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Nous ne commentons pas ce type d'incident.",
+      "en": "We don't comment on this kind of incident."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -5,
+      "budget": 0
+     },
+     "bonne": false
+    }
+   ]
+  },
+  {
+   "id": "fictif_vol_1",
+   "auteur": "@temoin_arret",
+   "fictif": true,
+   "condition": {
+    "type": "incident fictif",
+    "nature_contient": "vol"
+   },
+   "texte": {
+    "fr": "Deux types armés viennent de braquer des gens à l'arrêt, ligne {ligne}. Ils sont partis à pied, j'ai peur.",
+    "en": "Two armed guys just robbed people at the stop, line {ligne}. They left on foot, I'm scared."
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Les secours sont prévenus, éloignez-vous et restez en sécurité.",
+      "en": "Emergency services are alerted; move away and stay safe."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 4,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Nous ne commentons pas ce type d'incident.",
+      "en": "We don't comment on this kind of incident."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -5,
+      "budget": 0
+     },
+     "bonne": false
+    }
+   ]
+  },
+  {
+   "id": "fictif_vol_2",
+   "auteur": "@chauffeur_inquiet",
+   "fictif": true,
+   "condition": {
+    "type": "incident fictif",
+    "nature_contient": "vol"
+   },
+   "texte": {
+    "fr": "Vol à main armée à bord, ligne {ligne}. J'ai arrêté le véhicule. Il faut la police, maintenant.",
+    "en": "Armed robbery on board, line {ligne}. I've stopped the vehicle. We need the police, now."
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Les secours sont prévenus, éloignez-vous et restez en sécurité.",
+      "en": "Emergency services are alerted; move away and stay safe."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 4,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Nous ne commentons pas ce type d'incident.",
+      "en": "We don't comment on this kind of incident."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -5,
+      "budget": 0
+     },
+     "bonne": false
+    }
+   ]
   }
  ],
  "modeles": [

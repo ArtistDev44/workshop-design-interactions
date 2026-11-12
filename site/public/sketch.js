@@ -671,9 +671,7 @@ function dessinerDossier(d, meteo) {
 			return;
 		}
 	} else {
-		textAlign(RIGHT, TOP);
-		fill(C.gris);
-		text(t('dossier.pause'), x + base.l - 32, base.y + 24); // prompt 87 : horloge du jeu en pause pendant la lecture
+		// prompt 119 : « Horloge en pause » retiré de la fenêtre — le bandeau l'affiche déjà (« en pause hh:mm ») et le texte chevauchait l'en-tête
 	}
 	textAlign(LEFT, TOP);
 	dessinerPanneauSignalement(d, x, base); // prompt 87 : 3 blocs, « En savoir plus », conseil, réponses de la catégorie

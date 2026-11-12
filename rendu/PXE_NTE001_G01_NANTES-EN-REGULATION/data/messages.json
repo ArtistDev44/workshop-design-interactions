@@ -844,6 +844,471 @@
      "bonne": false
     }
    ]
+  },
+  {
+   "id": "agressif_retard_10",
+   "auteur": "@raleur_du_44",
+   "ton": "agressif",
+   "condition": {
+    "type": "ligne en difficulté",
+    "retard_min": 10
+   },
+   "texte": {
+    "fr": "Encore la ligne {ligne} en retard de {retard} minutes ! Vous faites exprès ou vous êtes juste des b@#&!s ?",
+    "en": "Line {ligne} late AGAIN, {retard} minutes! Are you doing it on purpose or are you just c@#&!s?"
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Nous comprenons votre agacement : le retard sur la ligne {ligne} est pris en charge.",
+      "en": "We understand your frustration: the delay on line {ligne} is being handled."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 4,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Restez poli ou passez votre chemin.",
+      "en": "Be polite or move along."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -5,
+      "budget": 0
+     },
+     "bonne": false
+    }
+   ]
+  },
+  {
+   "id": "agressif_retard_20",
+   "auteur": "@plus_jamais_le_tram",
+   "ton": "agressif",
+   "condition": {
+    "type": "ligne en difficulté",
+    "retard_min": 20
+   },
+   "texte": {
+    "fr": "{retard} minutes d'attente sur la ligne {ligne}. Bravo, vraiment. Une bande de m%$#es aux commandes.",
+    "en": "{retard} minutes waiting on line {ligne}. Bravo, really. A bunch of cl%$#s in charge."
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Un retard de {retard} minutes est inacceptable, nous mettons des moyens sur la ligne {ligne}.",
+      "en": "A {retard}-minute delay is unacceptable; we're putting resources on line {ligne}."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 4,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Si vous n'êtes pas content, prenez votre voiture.",
+      "en": "If you're not happy, take your car."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -5,
+      "budget": 0
+     },
+     "bonne": false
+    }
+   ]
+  },
+  {
+   "id": "agressif_perturbation",
+   "auteur": "@nantais_vener",
+   "ton": "agressif",
+   "condition": {
+    "type": "perturbation"
+   },
+   "texte": {
+    "fr": "Ligne {ligne} encore perturbée. Je paie mon abonnement pour quoi, au juste ? Pour vos con&#@ries ?",
+    "en": "Line {ligne} disrupted again. What exactly am I paying my pass for? Your b@#&!t?"
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "La ligne {ligne} est perturbée, nous vous tenons informé de la reprise.",
+      "en": "Line {ligne} is disrupted; we'll keep you posted on the restart."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 4,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Votre abonnement ne vous donne pas le droit d'insulter.",
+      "en": "Your pass doesn't entitle you to insult us."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -5,
+      "budget": 0
+     },
+     "bonne": false
+    }
+   ]
+  },
+  {
+   "id": "agressif_travaux",
+   "auteur": "@chantier_ma_vie",
+   "ton": "agressif",
+   "condition": {
+    "type": "perturbation",
+    "nature_contient": "travaux"
+   },
+   "texte": {
+    "fr": "Des travaux, toujours des travaux. Vous creusez quoi, votre propre tombe ? Quel b%$#el.",
+    "en": "Works, always works. What are you digging, your own grave? What a m%$#."
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Les travaux sont signalés aux arrêts, une déviation est en place.",
+      "en": "The works are signposted at stops; a diversion is in place."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 4,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Allez-y, creusez à notre place si vous savez mieux faire.",
+      "en": "Go on, dig for us if you know better."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -5,
+      "budget": 0
+     },
+     "bonne": false
+    }
+   ]
+  },
+  {
+   "id": "agressif_evenement",
+   "auteur": "@coincee_dans_la_foule",
+   "ton": "agressif",
+   "condition": {
+    "type": "événement"
+   },
+   "texte": {
+    "fr": "« {nature} » et vous mettez toujours aussi peu de trams ? On est serrés comme des s@#!nes, merci pour rien.",
+    "en": "“{nature}” and still this few trams? We're packed like s@#!nes, thanks for nothing."
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Nous renforçons les passages autour de « {nature} ».",
+      "en": "We're adding runs around “{nature}”."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 4,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Il fallait venir à pied.",
+      "en": "You should have walked."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -5,
+      "budget": 0
+     },
+     "bonne": false
+    }
+   ]
+  },
+  {
+   "id": "agressif_pluie",
+   "auteur": "@trempe_et_furax",
+   "ton": "agressif",
+   "condition": {
+    "type": "*",
+    "meteo": "pluie"
+   },
+   "texte": {
+    "fr": "Sous la pluie depuis vingt minutes, abri cassé, aucune info. Vous vous f%$#ez de nous ?",
+    "en": "In the rain for twenty minutes, broken shelter, no info. Are you taking the p%$#?"
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Désolés pour l'attente sous la pluie : l'info trafic est mise à jour.",
+      "en": "Sorry for the wait in the rain: traffic info is being updated."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 4,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "La pluie, ce n'est pas nous.",
+      "en": "The rain isn't our fault."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -5,
+      "budget": 0
+     },
+     "bonne": false
+    }
+   ]
+  },
+  {
+   "id": "agressif_general",
+   "auteur": "@client_mecontent",
+   "ton": "agressif",
+   "condition": {
+    "type": "*"
+   },
+   "texte": {
+    "fr": "Franchement, votre réseau c'est de la m@#&e. Personne ne répond jamais, à quoi vous servez ?",
+    "en": "Honestly, your network is cr@#&p. Nobody ever answers, what are you even for?"
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Nous vous répondons : la situation est suivie par la salle de régulation.",
+      "en": "We're answering: the control room is following the situation."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 4,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "On sert à vous ignorer, visiblement.",
+      "en": "Apparently we're here to ignore you."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -5,
+      "budget": 0
+     },
+     "bonne": false
+    }
+   ]
+  },
+  {
+   "id": "agressif_vent",
+   "auteur": "@decoiffe_44",
+   "ton": "agressif",
+   "condition": {
+    "type": "alerte météo",
+    "nature_contient": "vent"
+   },
+   "texte": {
+    "fr": "Du vent et vous ralentissez tout ? C'est pas une tempête, c'est une brise, bande de tr@#!llards.",
+    "en": "A bit of wind and you slow everything down? It's not a storm, it's a breeze, you w@#!mps."
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Par sécurité, les véhicules roulent au ralenti pendant les rafales.",
+      "en": "For safety, vehicles run slower during the gusts."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 4,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Venez conduire avec ces rafales, on verra.",
+      "en": "Come and drive in these gusts, we'll see."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -5,
+      "budget": 0
+     },
+     "bonne": false
+    }
+   ]
+  },
+  {
+   "id": "fictif_agression_1",
+   "auteur": "@temoin_ligne",
+   "fictif": true,
+   "condition": {
+    "type": "incident fictif",
+    "nature_contient": "agression"
+   },
+   "texte": {
+    "fr": "Vite ! Un homme s'en prend à une passagère dans la ligne {ligne}, il crie, il la bouscule. Faites quelque chose !",
+    "en": "Quick! A man is attacking a passenger on line {ligne}, he's shouting and shoving her. Do something!"
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Les secours sont prévenus, éloignez-vous et restez en sécurité.",
+      "en": "Emergency services are alerted; move away and stay safe."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 4,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Nous ne commentons pas ce type d'incident.",
+      "en": "We don't comment on this kind of incident."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -5,
+      "budget": 0
+     },
+     "bonne": false
+    }
+   ]
+  },
+  {
+   "id": "fictif_agression_2",
+   "auteur": "@passagere_affolee",
+   "fictif": true,
+   "condition": {
+    "type": "incident fictif",
+    "nature_contient": "agression"
+   },
+   "texte": {
+    "fr": "Ça se bat dans le tram, ligne {ligne}. Quelqu'un est blessé, je crois. Envoyez quelqu'un !",
+    "en": "There's a fight on the tram, line {ligne}. Someone's hurt, I think. Send someone!"
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Les secours sont prévenus, éloignez-vous et restez en sécurité.",
+      "en": "Emergency services are alerted; move away and stay safe."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 4,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Nous ne commentons pas ce type d'incident.",
+      "en": "We don't comment on this kind of incident."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -5,
+      "budget": 0
+     },
+     "bonne": false
+    }
+   ]
+  },
+  {
+   "id": "fictif_vol_1",
+   "auteur": "@temoin_arret",
+   "fictif": true,
+   "condition": {
+    "type": "incident fictif",
+    "nature_contient": "vol"
+   },
+   "texte": {
+    "fr": "Deux types armés viennent de braquer des gens à l'arrêt, ligne {ligne}. Ils sont partis à pied, j'ai peur.",
+    "en": "Two armed guys just robbed people at the stop, line {ligne}. They left on foot, I'm scared."
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Les secours sont prévenus, éloignez-vous et restez en sécurité.",
+      "en": "Emergency services are alerted; move away and stay safe."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 4,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Nous ne commentons pas ce type d'incident.",
+      "en": "We don't comment on this kind of incident."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -5,
+      "budget": 0
+     },
+     "bonne": false
+    }
+   ]
+  },
+  {
+   "id": "fictif_vol_2",
+   "auteur": "@chauffeur_inquiet",
+   "fictif": true,
+   "condition": {
+    "type": "incident fictif",
+    "nature_contient": "vol"
+   },
+   "texte": {
+    "fr": "Vol à main armée à bord, ligne {ligne}. J'ai arrêté le véhicule. Il faut la police, maintenant.",
+    "en": "Armed robbery on board, line {ligne}. I've stopped the vehicle. We need the police, now."
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Les secours sont prévenus, éloignez-vous et restez en sécurité.",
+      "en": "Emergency services are alerted; move away and stay safe."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 4,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Nous ne commentons pas ce type d'incident.",
+      "en": "We don't comment on this kind of incident."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -5,
+      "budget": 0
+     },
+     "bonne": false
+    }
+   ]
   }
  ],
  "modeles": [
