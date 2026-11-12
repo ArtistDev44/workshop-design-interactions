@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 
 const pub = fileURLToPath(new URL('../public/', import.meta.url));
 const PAGES_ASTRO = ['./cartel/', './making-of/', './presentation/']; // générées dans dist/, servies en ligne
-const EXCLUS = new Set(['sw.js']); // le service worker ne se met pas lui-même en cache
+const EXCLUS = new Set(['sw.js', 'captures/trailer.mp4']); // le service worker ne se met pas lui-même en cache ; prompt 187 : le trailer (8 Mo) reste en ligne, hors précache
 
 function lister(dossier) {
 	return readdirSync(dossier).flatMap((nom) => {

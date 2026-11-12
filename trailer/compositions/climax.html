@@ -1,0 +1,51 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; background: var(--fond, #0d0c0c); overflow: hidden; }
+    #root .cam { position: absolute; inset: 0; }
+    #root video { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
+    #climax-titre { position: absolute; left: 96px; bottom: 96px; padding: 18px 28px; background: #d4031c; color: #ffffff;
+      font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 64px; letter-spacing: -0.01em; }
+  </style>
+  <div id="root" data-composition-id="climax" data-width="1920" data-height="1080">
+    <div id="climax-cam0" class="cam" data-layout-allow-overflow style="transform-origin:60% 45%"><video id="climax-v0" class="clip" src="assets/clips/partie-complete.mp4" muted playsinline data-start="0.000" data-duration="0.465" data-media-start="128.20" data-track-index="0"></video></div>
+    <div id="climax-cam1" class="cam" data-layout-allow-overflow style="transform-origin:50% 30%"><video id="climax-v1" class="clip" src="assets/clips/partie-complete.mp4" muted playsinline data-start="0.465" data-duration="0.465" data-media-start="124.00" data-track-index="1"></video></div>
+    <div id="climax-cam2" class="cam" data-layout-allow-overflow style="transform-origin:30% 30%"><video id="climax-v2" class="clip" src="assets/clips/partie-complete.mp4" muted playsinline data-start="0.930" data-duration="0.465" data-media-start="143.00" data-track-index="0"></video></div>
+    <div id="climax-cam3" class="cam" data-layout-allow-overflow style="transform-origin:50% 25%"><video id="climax-v3" class="clip" src="assets/clips/partie-complete.mp4" muted playsinline data-start="1.395" data-duration="0.465" data-media-start="136.00" data-track-index="1"></video></div>
+    <div id="climax-cam4" class="cam" data-layout-allow-overflow style="transform-origin:50% 40%"><video id="climax-v4" class="clip" src="assets/clips/partie-complete.mp4" muted playsinline data-start="1.860" data-duration="0.465" data-media-start="41.90" data-track-index="0"></video></div>
+    <div id="climax-cam5" class="cam" data-layout-allow-overflow style="transform-origin:50% 30%"><video id="climax-v5" class="clip" src="assets/clips/partie-complete.mp4" muted playsinline data-start="2.325" data-duration="0.465" data-media-start="16.60" data-track-index="1"></video></div>
+    <div id="climax-cam6" class="cam" data-layout-allow-overflow style="transform-origin:50% 30%"><video id="climax-v6" class="clip" src="assets/clips/partie-complete.mp4" muted playsinline data-start="2.791" data-duration="0.465" data-media-start="156.40" data-track-index="0"></video></div>
+    <div id="climax-cam7" class="cam" data-layout-allow-overflow style="transform-origin:55% 50%"><video id="climax-v7" class="clip" src="assets/clips/partie-complete.mp4" muted playsinline data-start="3.256" data-duration="0.465" data-media-start="160.00" data-track-index="1"></video></div>
+    <div id="climax-cam8" class="cam" data-layout-allow-overflow style="transform-origin:50% 50%"><video id="climax-v8" class="clip" src="assets/clips/partie-complete.mp4" muted playsinline data-start="3.721" data-duration="0.459" data-media-start="164.50" data-track-index="0"></video></div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo('#climax-cam0', { scale: 1.431 }, { scale: 1.350, duration: 0.3, ease: 'expo.out' }, 0.000);
+    tl.to('#climax-cam0', { scale: 1.450, duration: 0.165, ease: 'none' }, 0.300);
+    tl.fromTo('#climax-cam0', { x: 0, y: 0 }, { keyframes: [{ x: 3, y: -2 }, { x: -2, y: 2 }, { x: 2, y: 1 }, { x: 0, y: 0 }], duration: 0.2, ease: 'none' }, 0.000);
+    tl.fromTo('#climax-cam1', { scale: 1.431 }, { scale: 1.350, duration: 0.3, ease: 'expo.out' }, 0.465);
+    tl.to('#climax-cam1', { scale: 1.450, duration: 0.165, ease: 'none' }, 0.765);
+    tl.fromTo('#climax-cam1', { x: 0, y: 0 }, { keyframes: [{ x: 3, y: -2 }, { x: -2, y: 2 }, { x: 2, y: 1 }, { x: 0, y: 0 }], duration: 0.2, ease: 'none' }, 0.465);
+    tl.fromTo('#climax-cam2', { scale: 1.431 }, { scale: 1.350, duration: 0.3, ease: 'expo.out' }, 0.930);
+    tl.to('#climax-cam2', { scale: 1.450, duration: 0.165, ease: 'none' }, 1.230);
+    tl.fromTo('#climax-cam2', { x: 0, y: 0 }, { keyframes: [{ x: 3, y: -2 }, { x: -2, y: 2 }, { x: 2, y: 1 }, { x: 0, y: 0 }], duration: 0.2, ease: 'none' }, 0.930);
+    tl.fromTo('#climax-cam3', { scale: 1.431 }, { scale: 1.350, duration: 0.3, ease: 'expo.out' }, 1.395);
+    tl.to('#climax-cam3', { scale: 1.450, duration: 0.165, ease: 'none' }, 1.695);
+    tl.fromTo('#climax-cam3', { x: 0, y: 0 }, { keyframes: [{ x: 3, y: -2 }, { x: -2, y: 2 }, { x: 2, y: 1 }, { x: 0, y: 0 }], duration: 0.2, ease: 'none' }, 1.395);
+    tl.fromTo('#climax-cam4', { scale: 1.431 }, { scale: 1.350, duration: 0.3, ease: 'expo.out' }, 1.860);
+    tl.to('#climax-cam4', { scale: 1.450, duration: 0.165, ease: 'none' }, 2.160);
+    tl.fromTo('#climax-cam4', { x: 0, y: 0 }, { keyframes: [{ x: 3, y: -2 }, { x: -2, y: 2 }, { x: 2, y: 1 }, { x: 0, y: 0 }], duration: 0.2, ease: 'none' }, 1.860);
+    tl.fromTo('#climax-cam5', { scale: 1.431 }, { scale: 1.350, duration: 0.3, ease: 'expo.out' }, 2.325);
+    tl.to('#climax-cam5', { scale: 1.450, duration: 0.165, ease: 'none' }, 2.625);
+    tl.fromTo('#climax-cam5', { x: 0, y: 0 }, { keyframes: [{ x: 3, y: -2 }, { x: -2, y: 2 }, { x: 2, y: 1 }, { x: 0, y: 0 }], duration: 0.2, ease: 'none' }, 2.325);
+    tl.fromTo('#climax-cam6', { scale: 1.431 }, { scale: 1.350, duration: 0.3, ease: 'expo.out' }, 2.791);
+    tl.to('#climax-cam6', { scale: 1.450, duration: 0.165, ease: 'none' }, 3.091);
+    tl.fromTo('#climax-cam6', { x: 0, y: 0 }, { keyframes: [{ x: 3, y: -2 }, { x: -2, y: 2 }, { x: 2, y: 1 }, { x: 0, y: 0 }], duration: 0.2, ease: 'none' }, 2.791);
+    tl.fromTo('#climax-cam7', { scale: 1.431 }, { scale: 1.350, duration: 0.3, ease: 'expo.out' }, 3.256);
+    tl.to('#climax-cam7', { scale: 1.450, duration: 0.165, ease: 'none' }, 3.556);
+    tl.fromTo('#climax-cam7', { x: 0, y: 0 }, { keyframes: [{ x: 3, y: -2 }, { x: -2, y: 2 }, { x: 2, y: 1 }, { x: 0, y: 0 }], duration: 0.2, ease: 'none' }, 3.256);
+    tl.fromTo('#climax-cam8', { scale: 1.431 }, { scale: 1.350, duration: 0.3, ease: 'expo.out' }, 3.721);
+    tl.to('#climax-cam8', { scale: 1.450, duration: 0.159, ease: 'none' }, 4.021);
+    tl.fromTo('#climax-cam8', { x: 0, y: 0 }, { keyframes: [{ x: 3, y: -2 }, { x: -2, y: 2 }, { x: 2, y: 1 }, { x: 0, y: 0 }], duration: 0.2, ease: 'none' }, 3.721);
+    window.__timelines['climax'] = tl;
+  </script>
+</template>
