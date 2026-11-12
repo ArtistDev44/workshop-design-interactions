@@ -7,7 +7,7 @@
  */
 const CLE_GUIDE_OPTION = 'pxe-nte001-prise-en-main';
 const CLE_GUIDE_FINI = 'pxe-nte001-prise-en-main-fini';
-const GUIDE = { actif: false, etape: 0, debutEtape: 0, fin: 0, option: null };
+const GUIDE = { actif: false, etape: 0, debutEtape: 0, fin: 0, option: null, vu: 0 }; // vu : ms d'affichage de la bulle de l'étape sur sa propre cible (prompt 161)
 let ciblesGuide = {};
 let espaceDessin = 'ecran'; // mis à 'pc' pendant le dessin du contenu de l'écran du PC (sketch.js)
 
@@ -57,7 +57,9 @@ function cibleReelle(nom) {
 const PHASES_DOSSIER = ['decision', 'contradiction', 'conflit']; // prompt 68 : la sélection d'un signalement précède le dossier
 const ETAPES_GUIDE = [
 	{ id: 'installer', cible: () => 'ecranPC', fait: () => vue === 'poste' },
-	{ id: 'jauges', cible: () => (vue === 'poste' && PC.etat === 'appli' ? 'jauges' : vue === 'poste' ? 'iconeSignalements' : 'ecranPC'), fait: () => phase === 'selection' || PHASES_DOSSIER.includes(phase) },
+	// Prompt 161 : validée seulement après lecture effective de la bulle des jauges (seuils 120 / 90 du patron), plus à
+	// l'arrivée du premier signalement — qui précédait presque toujours l'arrivée au poste
+	{ id: 'jauges', cible: () => (vue === 'poste' && PC.etat === 'appli' ? 'jauges' : vue === 'poste' ? 'iconeSignalements' : 'ecranPC'), fait: () => GUIDE.vu > (typeof EXPO !== 'undefined' && EXPO.actif ? 3000 : 8000) },
 	// Prompt 78 : la somnolence et le compromis de la sieste (validée en se reposant, ou après 10 s de lecture)
 	{ id: 'somnolence', cible: () => (vue === 'poste' && PC.etat === 'appli' ? 'somnolence' : vue === 'poste' ? 'iconeSignalements' : 'ecranPC'), fait: () => enSieste || (vue === 'poste' && PC.etat === 'appli' && millis() - GUIDE.debutEtape > (typeof EXPO !== 'undefined' && EXPO.actif ? 3000 : 10000)) },
 	// Prompt 66 : étape dédiée au signalement (prendre le dossier lance le compteur)
@@ -71,6 +73,7 @@ function demarrerGuide() {
 	GUIDE.actif = true;
 	GUIDE.etape = 0;
 	GUIDE.debutEtape = millis();
+	GUIDE.vu = 0;
 	GUIDE.fin = 0;
 	annoncerEtapeGuide();
 }
@@ -90,11 +93,12 @@ function texteEtapeGuide(e) {
 	if (c === 'ecranPC' && e.id !== 'installer' && e.id !== 'apps') return t('guide.retourPC');
 	if (c === 'iconeSignalements') return t('guide.ouvrirSignalements');
 	if (e.id === 'apps') return t(c === 'fermerAppli' ? 'guide.apps.fermer' : c === 'ecranPC' ? 'guide.retourPC' : 'guide.apps.ouvrir');
-	return t('guide.' + e.id, { x: IMMERSION.compression }); // prompt 77 : « ×100 » suit la valeur réelle
+	return t('guide.' + e.id + (e.id === 'somnolence' && Jeu.defiChrono ? 'Chrono' : ''), { x: IMMERSION.compression }); // prompt 77 : « ×100 » suit la valeur réelle ; prompt 161 : règle du mode joué
 }
 function etapeGuideSuivante() {
 	GUIDE.etape++;
 	GUIDE.debutEtape = millis();
+	GUIDE.vu = 0;
 	Confort.Son.bip('choix');
 	if (GUIDE.etape >= ETAPES_GUIDE.length) {
 		GUIDE.actif = false;
@@ -148,6 +152,7 @@ function dessinerGuide() {
 	if (e.fait()) return etapeGuideSuivante(); // validée dès que le joueur a fait l'action, même sous une fenêtre
 	if (fenetre || smsActif || tutoriel || clignement || phase === 'mail' || SOMMEIL.k > 0.001) return; // sieste : yeux fermés, pas de bulle // prompt 66 : le mail du soir se lit sans bulle
 	const c = cibleReelle(e.cible());
+	if (c && e.cible() === e.id) GUIDE.vu += Math.min(deltaTime || 0, 100); // prompt 161 : temps de lecture réel de la bulle de l'étape
 	const texte = t('guide.etape', { n: GUIDE.etape + 1, total: ETAPES_GUIDE.length }) + ' · ' + texteEtapeGuide(e);
 	if (!c) return bulleGuide(texte, L / 2, H - 260, true);
 	const rebond = reduireAnimations ? 0 : Math.sin(millis() / 220) * 10;

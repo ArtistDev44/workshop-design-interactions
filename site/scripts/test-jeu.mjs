@@ -2010,12 +2010,12 @@ for (const f of ['enquete.js', 'carte.js', 'journal.js']) verifier(!/\*\s*1\.05\
 // Prompt 97 (skill game-design-theory) : apprendre vite — l'aide H et le guide nomment les gestes (glisser / clic,
 // 1-4, Q) et les 3 jauges, et répondent à « pourquoi ma décision a raté ? » ; la difficulté est lisible avant de jouer
 for (const [langue, mots] of [
-	['fr', { glisser: /Glisser/, touches: /1 à 3/, q: /Quitter la journée/, jauges: /fluidité, réputation et budget/, rate: /Pourquoi une décision a raté/, guide: /répondez-lui/, diff: /Difficulté facile : budget 60 · 3 signalement/ }],
-	['en', { glisser: /Drag/, touches: /1 to 3/, q: /End the day/, jauges: /flow, reputation and budget/, rate: /Why did a decision fail/, guide: /then reply/, diff: /easy difficulty: budget 60 · 3 report/ }],
+	['fr', { glisser: /Glisser/, touches: /1 à 3/, q: /Quitter la journée/, jauges: /fluidité, réputation et budget/, rate: /Pourquoi une décision a raté/, guide: /répondez-lui/, diff: /Difficulté facile : budget de départ 60 · jusqu’à 3 signalements en même temps/ }],
+	['en', { glisser: /Drag/, touches: /1 to 3/, q: /End the day/, jauges: /flow, reputation and budget/, rate: /Why did a decision fail/, guide: /then reply/, diff: /easy difficulty: starting budget 60 · up to 3 reports at once/ }],
 ]) {
 	const c97 = contexte(langue);
 	const a = vm.runInContext(
-		`({ raccourcis: [t('aide.k.glisserTouche'), t('aide.k.glisser'), t('aide.k.actionsTouche'), t('aide.k.quitterJournee')].join(' | '), texte: t('aide.texte'), guide: t('guide.actions'), diff: t('mp.difficulte', { niveau: t('niveau.facile'), budget: Jeu.REGLAGES.difficultes.facile.budget, actifs: Jeu.REGLAGES.difficultes.facile.actifs, aggravation: 0.5 }) })`,
+		`({ raccourcis: [t('aide.k.glisserTouche'), t('aide.k.glisser'), t('aide.k.actionsTouche'), t('aide.k.quitterJournee')].join(' | '), texte: t('aide.texte'), guide: t('guide.actions'), diff: t('mp.difficulte', { niveau: t('niveau.facile'), budget: Jeu.REGLAGES.difficultes.facile.budget, actifs: t('mp.actifs.plusieurs', { n: Jeu.REGLAGES.difficultes.facile.actifs }) }) })`,
 		c97,
 	);
 	const tout = a.raccourcis + ' ' + a.texte;
@@ -2117,6 +2117,88 @@ for (const s of semaines) {
 	verifier(/g === 'elevee' \? C\.rougeFonce/.test(readFileSync(join(pub, 'carte.js'), 'utf8')) && /const tm = g === 'elevee' \? 36/.test(readFileSync(join(pub, 'carte-alertes.js'), 'utf8')), 'prompt 133 : gravité élevée en rouge franc et plus grande');
 	verifier(/\['protan', 'deutan'\]\.includes\(Confort\.Reglages\.daltonisme\)/.test(readFileSync(join(pub, 'ds.js'), 'utf8')), 'prompt 133 : badge lisible en protan / deutan');
 	verifier(/function basculerPleinEcran/.test(readFileSync(join(pub, 'sketch.js'), 'utf8')), 'prompt 133 : touche F, plein écran');
+}
+
+// Prompt 161 : les textes décrivent le jeu qui tourne (prolonge le contrôle du prompt 131 sur sms.*) — pas de chrono par
+// défaut (prompt 87), équipes dès la semaine 1 (prompt 108), trois répliques (prompt 117), archives sans minutes de retard
+{
+	const PREFIXES = ['histoire.c', 'histoire.prochain', 'mp.mode.', 'mp.difficulte', 'mp.actifs.', 'poste.', 'sieste.', 'cafe.', 'stress.', 'credits.', 'fin.', 'guide.somnolence', 'tuto.', 'objet.micro.', 'webcam.', 'enq.revele.'];
+	const PERIMEES = {
+		fr: [/15 secondes/i, /quatre répliques/i, /\b1 à 4\b/, /expirent sont perdus/i, /Nouveauté : vous pouvez envoyer des équipes/i, /un nouvel élément de jeu/i, /\bDévier\b|\bRetenir\b|Ne rien faire|ne rien faire/, /retards ×/, /chrono est long/i, /ne se met pas en pause/i, /ne dépend que de l'inactivité/i, /Révèle le retard/i],
+		en: [/15 seconds/i, /four replies/i, /\b1 to 4\b/, /expire are lost/i, /New this week: you can send/i, /new game element/i, /\bDivert\b|Hold at terminus|Do nothing|do nothing/, /delays ×/, /timer is long/i, /can.t be paused/i, /only depend on inactivity/i, /Reveals the delay/i],
+	};
+	// Exceptions motivées : les touches du tutoriel des équipes (Maj + 1 à 4 = quatre équipes, pas des répliques)
+	const EXCEPTIONS = new Set(['tuto.4.touches']);
+	const c161 = contexte('fr', new Map(), true);
+	for (const langue of ['fr', 'en']) {
+		const dico = vm.runInContext(`TRADUCTIONS[${JSON.stringify(langue)}]`, c161);
+		const cles = Object.keys(dico).filter((k) => PREFIXES.some((p) => k.startsWith(p)) && !EXCEPTIONS.has(k));
+		verifier(cles.length > 60, `prompt 161 : clés contrôlées (${langue}) trop peu nombreuses (${cles.length})`);
+		for (const k of cles) for (const re of PERIMEES[langue]) verifier(!re.test(dico[k]), `prompt 161 : formule périmée ${re} dans ${k} (${langue}) : « ${dico[k]} »`);
+	}
+	// Ce que le patron annonce aux semaines 2 et 3 = règle réellement jouée (signalements simultanés, budget, compteur ;
+	// en défi chrono, 3 signalements chaque semaine : la semaine 2 n'annonce que le compteur et le budget)
+	const r161 = vm.runInContext(
+		`(() => {
+		const vu = [];
+		globalThis.lancerConversation = (o) => vu.push(o.messages.map((m) => String(m.texte)));
+		globalThis.interaction = () => {};
+		const out = {};
+		for (const chrono of [false, true]) for (const n of [2, 3]) {
+			Jeu.chargerSemaine(semainesHistoire()[n - 1]);
+			Jeu.defiChrono = chrono;
+			Jeu.nouvellePartie();
+			conversationChapitre(n);
+			const actifs = chrono ? 3 : Jeu.difficulte().actifs;
+			out[n + (chrono ? 'c' : '')] = { texte: vu[vu.length - 1][0], budget: Jeu.jauges.budget, actifs: String(texteActifs(actifs)), s: Jeu.etat.semaine.difficulte.compteur_s, crise: Jeu.elementDebloque('crise'), equipes: Jeu.elementDebloque('equipes') };
+		}
+		Jeu.defiChrono = false;
+		return { out, nouveau: [1, 2, 3].map(elementNouveauChapitre) };
+	})()`,
+		c161,
+	);
+	for (const [id, o] of Object.entries(r161.out)) {
+		verifier(o.texte.includes(String(o.budget)) && (id === '2c' || o.texte.includes(o.actifs)), `prompt 161 : semaine ${id}, le patron doit annoncer le budget et les signalements réels (${o.texte})`);
+		verifier(id.endsWith('c') ? o.texte.includes(String(o.s)) : !/secondes/.test(o.texte), `prompt 161 : semaine ${id}, durée par signalement seulement en défi chrono (${o.texte})`);
+		verifier(o.equipes, `prompt 161 : équipes actives dès la semaine 1 (semaine ${id})`);
+	}
+	verifier(!r161.out['2'].crise && r161.out['3'].crise && JSON.stringify(r161.nouveau) === '[null,null,"crise"]', `prompt 161 : seul « crise » est nouveau en semaine 3 (${JSON.stringify(r161.nouveau)})`);
+	// Code : annonce de la fenêtre « Votre poste », difficulté du menu, sieste / café / micro / guide selon le mode
+	const imm161 = readFileSync(join(pub, 'immersion.js'), 'utf8');
+	const expl = imm161.slice(imm161.indexOf('function majExplicationPoste'), imm161.indexOf('function fenetrePoste'));
+	verifier(/GESTES_POSTE\.map/.test(expl) && !/action\.desc\./.test(expl), 'prompt 161 : l\'annonce « Votre poste » doit lire les gestes affichés (poste.geste.*)');
+	verifier(/survolChrono/.test(imm161), 'prompt 161 : infobulle du micro selon le défi chrono');
+	const menu161 = readFileSync(join(pub, 'menu.js'), 'utf8');
+	const diff = menu161.slice(menu161.indexOf('function texteDifficulteChapitre'), menu161.indexOf('function modesNouvellePartie'));
+	verifier(!/aggravation/.test(diff) && /mp\.difficulteChrono/.test(diff), 'prompt 161 : difficulté du menu sans « retards × », budget réel en défi chrono');
+	verifier(/sieste\.aideChrono/.test(readFileSync(join(pub, 'sieste.js'), 'utf8')) && /'sieste\.bilanSans'/.test(readFileSync(join(pub, 'sieste.js'), 'utf8')), 'prompt 161 : aide et bilan de la sieste selon le mode');
+	verifier(/cafe\.boostChrono/.test(readFileSync(join(pub, 'cafe.js'), 'utf8')), 'prompt 161 : effet du café selon le mode');
+	const guide161 = readFileSync(join(pub, 'guide.js'), 'utf8');
+	verifier(/id: 'jauges'[^\n]*fait: \(\) => GUIDE\.vu >/.test(guide161) && /GUIDE\.vu \+=/.test(guide161), 'prompt 161 : l\'étape « jauges » du guide se valide après affichage de sa bulle');
+	verifier(!/'5 6 7 8'/.test(readFileSync(join(pub, 'aide.js'), 'utf8')), 'prompt 161 : raccourcis des sources, une seule vérité aide / tutoriel');
+	verifier(!/retards Naolib/.test(readFileSync(join(pub, 'index.html'), 'utf8')), 'prompt 161 : méta description sans « retards Naolib »');
+	// Les textes reformulés tiennent dans leur cadre (JetBrains Mono : 0,6 em par caractère, estimation prudente)
+	for (const langue of ['fr', 'en']) {
+		const c = contexte(langue);
+		const r = vm.runInContext(
+			`(() => {
+			TexteUI.mesureur = (s, p, t) => [...String(s)].length * t * 0.6;
+			const n = (txt, taille, l) => TexteUI.couperLignes(txt, l, 'mono', taille).length;
+			const v = { niveau: t('niveau.difficile'), budget: 50, actifs: t('mp.actifs.plusieurs', { n: 3 }), s: 15, n: 3, element: t('histoire.element.crise') };
+			return {
+				repondre: n(t('poste.geste.repondre'), 21, 950) <= 2,
+				carte: n(t('poste.geste.carte'), 21, 950) <= 2,
+				info: n(t('mp.mode.histoire.etatNouveau', v), 19, 700) + n(t('mp.difficulteChrono', v), 19, 700) <= 4,
+				sous: n(t('mp.mode.histoire.sous'), 22, 700) <= 4,
+				prochain: n(t('histoire.prochainSans', v), 18, 1000) === 1 && n(t('histoire.prochain', v), 18, 1000) === 1,
+				lecture: n(t('acc.lecture.detail'), 18, 1144) <= 2,
+				palmares: (n(t('palmares.aide'), 18, 1400 - 112 - 340) - 1) * 22.5 + 18 <= 100,
+			};
+		})()`,
+			c,
+		);
+		verifier(Object.values(r).every(Boolean), `prompt 161 : texte reformulé hors de son cadre (${langue}) : ${JSON.stringify(r)}`);
+	}
 }
 
 // Service worker : chaque script de index.html est dans la liste hors ligne de sw.js

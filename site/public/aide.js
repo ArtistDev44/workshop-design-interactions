@@ -152,9 +152,8 @@ function cartesAide(onglet) {
 			carteRaccourcisAide(t('aide.groupe.signalement'), [
 				[t('aide.k.entreeTouche'), t('aide.k.entree')],
 				[t('aide.k.actionsTouche'), t('aide.k.actions')],
-				[t('aide.k.rienTouche'), t('aide.k.rien')],
 				['A / B', t('aide.k.ab')],
-				['5 6 7 8', t('aide.k.sources')],
+				['E / 5–8', t('aide.k.sources')], // prompt 161 : une seule vérité avec le tutoriel (E ouvre, 5 à 8 révèlent) ; plus de ligne « 0 ou Espace » (raccourci retiré au prompt 117)
 			]),
 			carteRaccourcisAide(t('aide.groupe.equipes'), [
 				[t('aide.k.glisserTouche'), t('aide.k.glisser')],
