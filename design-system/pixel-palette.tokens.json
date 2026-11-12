@@ -1,0 +1,47 @@
+{
+  "name": "Pixel Design System (Community) — palette",
+  "source": "pixel-design-system.md (extrait du fichier Figma « Pixel Design System (Community) », export PDF du 2026-11-10), §2.1 Thème et §2.3 Primitives",
+  "semantic": {
+    "background": { "hex": "#0D0C0C", "token": "Background" },
+    "primary": { "hex": "#D4031C", "token": "Primary" },
+    "accent": { "hex": "#FFFFFF", "alpha": 0.05, "token": "Colors/Neutral/White 05" },
+    "border": { "hex": "#FFFFFF", "alpha": 0.15, "token": "Colors/Neutral/White 15" }
+  },
+  "functional": {
+    "success-primary": { "hex": "#00B74F", "token": "Colors/Functional/Success Primary" },
+    "success-light": { "hex": "#BFFFDB", "token": "Colors/Functional/Success Light" },
+    "warning-primary": { "hex": "#FFC138", "token": "Colors/Functional/Warning Primary" },
+    "warning-light": { "hex": "#FFECC2", "token": "Colors/Functional/Warning Light" },
+    "error-primary": { "hex": "#D10B00", "token": "Colors/Functional/Error Primary" },
+    "error-light": { "hex": "#FFC5C2", "token": "Colors/Functional/Error Light" },
+    "info-primary": { "hex": "#3860FF", "token": "Colors/Functional/Info Primary" },
+    "info-light": { "hex": "#C2CEFF", "token": "Colors/Functional/Info Light" }
+  },
+  "neutral": {
+    "black": { "hex": "#0D0C0C", "token": "Colors/Neutral/Black" },
+    "black-75": { "hex": "#0D0C0C", "alpha": 0.75 },
+    "black-50": { "hex": "#0D0C0C", "alpha": 0.5 },
+    "black-15": { "hex": "#0D0C0C", "alpha": 0.15 },
+    "black-05": { "hex": "#0D0C0C", "alpha": 0.05 },
+    "black-03": { "hex": "#0D0C0C", "alpha": 0.03 },
+    "white": { "hex": "#FFFFFF", "token": "Colors/Neutral/White" },
+    "white-75": { "hex": "#FFFFFF", "alpha": 0.75 },
+    "white-50": { "hex": "#FFFFFF", "alpha": 0.5 },
+    "white-15": { "hex": "#FFFFFF", "alpha": 0.15 },
+    "white-05": { "hex": "#FFFFFF", "alpha": 0.05 },
+    "white-03": { "hex": "#FFFFFF", "alpha": 0.03 },
+    "transparent": { "hex": "#FFFFFF", "alpha": 0, "token": "Colors/Neutral/Transparent" }
+  },
+  "usage": {
+    "profile-picture-effect": {
+      "recommended": "info-primary",
+      "hex": "#3860FF",
+      "why": "Halo / contour sur fond Background #0D0C0C : contraste élevé, sémantique « info » du design system.",
+      "alternatives": {
+        "success-primary": "#00B74F — pastille « en ligne » sur l'image de profil",
+        "warning-primary": "#FFC138 — effet « alerte » plus chaud",
+        "primary": "#D4031C — rappel de la couleur du compte"
+      }
+    }
+  }
+}

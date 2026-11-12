@@ -139,6 +139,8 @@ function reglagesParam(cle) {
 			action('copier', 'copy', t('parametres.copier.titre'), t('parametres.copier.detail'), () => t('parametres.copier'), () => Sauvegarde.copier()),
 			action('importer', 'upload', t('parametres.import.titre'), t('parametres.importer.detail'), () => t('parametres.importer'), () => Sauvegarde.ouvrirImport()),
 			action('carriere', 'rotate-ccw', t('optjeu.carriere', { grade: t('grade.' + g.i), xp: g.xp }), confirmer ? t('optjeu.confirmer') : '', () => t(confirmer ? 'optjeu.confirmerBouton' : 'optjeu.remettre'), remettreCarriere),
+			// Lecture seule : version du build (version.js, réécrit par scripts/generer-sw.mjs au build)
+			{ id: 'version', type: 'info', icone: 'info', titre: t('param.version'), detail: t('param.version.detail'), valeur: () => (typeof VERSION_BUILD !== 'undefined' ? VERSION_BUILD : '—') },
 		]);
 }
 /** État ou valeur d'un réglage, en toutes lettres (affichage de l'interrupteur, annonce) */
@@ -212,6 +214,7 @@ function carteParam(it, i) {
 			else if (it.type === 'curseur') dsCurseur(xd - lc, cy, lc, it.valeur(), (v) => ((PARAM.focus = i), it.fixer(v)), [t('param.volume.moins'), t('param.volume.plus')]);
 			else if (it.type === 'langue') selecteurLangue(xd, cy, 44);
 			else if (it.type === 'couleur') selecteurCouleur(xd, cy + 2, 40);
+			else if (it.type === 'info') dsTexte(etatParam(it), xd, cy + 12, 18, DS.blanc75, 'right');
 			else bouton(xd - lc, cy, lc, 44, etatParam(it), () => activerParam(i), false, true);
 			dessinerTexte(it.titre, x + 54, y + 16, lt(l), ot);
 			textStyle(NORMAL);

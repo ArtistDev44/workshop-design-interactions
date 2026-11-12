@@ -1,0 +1,18 @@
+GIMP Palette
+Name: Pixel Design System (Community)
+Columns: 5
+#
+# Palette extraite de pixel-design-system.md (fichier Figma « Pixel Design System (Community) », export du 2026-11-10).
+# Les variantes d'opacité (White 75/50/15/05/03, Black 75/50/15/05/03) ne sont pas représentables en GPL (pas d'alpha) :
+# voir pixel-palette.tokens.json pour les valeurs alpha.
+ 13  12  12	Background / Black — #0D0C0C
+212   3  28	Primary — #D4031C
+209  11   0	Error Primary — #D10B00
+255 193  56	Warning Primary — #FFC138
+  0 183  79	Success Primary — #00B74F
+ 56  96 255	Info Primary — #3860FF
+255 197 194	Error Light — #FFC5C2
+255 236 194	Warning Light — #FFECC2
+191 255 219	Success Light — #BFFFDB
+194 206 255	Info Light — #C2CEFF
+255 255 255	White — #FFFFFF
