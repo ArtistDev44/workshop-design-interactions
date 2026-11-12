@@ -2090,7 +2090,7 @@ for (const s of semaines) {
 	const html117 = readFileSync(join(pub, 'index.html'), 'utf8');
 	const premier = (html117.match(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/i) || [])[1];
 	verifier(premier === './expo.js', `prompt 132 : expo.js doit être le premier script (${premier})`);
-	const st = new Map([['pxe-nte001:jeu:reglages', '{}'], ['pxe-nte001-langue', 'en'], ['pxe-nte001-tutoriel-vu', 'oui'], ['pxe-nte001-partie-2026-09-14', '{}'], ['autre-site', 'x']]);
+	const st = new Map([['pxe-nte001:jeu:reglages', '{}'], ['pxe-nte001-langue', 'en'], ['pxe-nte001-tutoriel-vu', 'oui'], ['pxe-nte001-partie-2026-09-14', '{}'], ['pxe-nte001-partie-e178abc', '{}'], ['autre-site', 'x']]); // prompt 178 : + un emplacement de sauvegarde
 	const ls = { getItem: (k) => (st.has(k) ? st.get(k) : null), setItem: (k, v) => st.set(k, String(v)), removeItem: (k) => st.delete(k), key: (i) => [...st.keys()][i] };
 	const c117 = { localStorage: new Proxy(ls, { ownKeys: () => [...st.keys()], getOwnPropertyDescriptor: (o, k) => (st.has(k) ? { enumerable: true, configurable: true, value: st.get(k) } : Reflect.getOwnPropertyDescriptor(o, k)) }), location: { search: '?expo=1', hash: '' }, URLSearchParams, Date, window: { addEventListener: () => {} }, setInterval: () => 0, document: {} };
 	c117.window = Object.assign(c117.window, c117);
@@ -2510,12 +2510,12 @@ for (const langue of ['fr', 'en']) {
 			nbFenetres++;
 			verifier(/^DS\.fenetre\.(etroite|moyenne|large)$/.test(larg[1]), `prompt 173 : ${f} ${m[1]} — largeur « ${larg[1]} » hors des trois tailles du DS`);
 		}
-	verifier(nbFenetres >= 19, `prompt 173 : seulement ${nbFenetres} fenêtres relevées (≥ 19 attendues)`); // prompt 175 : trois fenêtres de réglages fondues en une (21 → 19)
+	verifier(nbFenetres >= 18, `prompt 173 : seulement ${nbFenetres} fenêtres relevées (≥ 18 attendues)`); // prompt 175 : trois fenêtres de réglages fondues en une (21 → 19) ; prompt 178 : plus de fenêtre « reprise » (19 → 18)
 	// Clic sur le fond : point unique dans mousePressed, listes explicites, aucune fenêtre dans les deux à la fois
 	verifier(/\tif \(clicFondFenetre\(\)\) return;/.test(sk173.match(/function mousePressed\(\) \{[\s\S]*?\n\}/)[0]), 'prompt 173 : mousePressed ne passe plus par clicFondFenetre()');
 	const bloquantes = vm.runInNewContext(sk173.match(/const FENETRES_BLOQUANTES = (\[[^\]]*\]);/)[1]);
 	const fermables = [...sk173.match(/const FERMETURE_FOND = \{([\s\S]*?)\n\};/)[1].matchAll(/\n\t(\w+):/g)].map((x) => x[1]);
-	for (const n of ['reset', 'reprise', 'demission', 'partir', 'blame', 'inspection', 'tache', 'mailFin', 'rapport', 'cafe']) verifier(bloquantes.includes(n), `prompt 173 : la fenêtre « ${n} » exige une réponse, elle doit rester bloquante`);
+	for (const n of ['reset', 'demission', 'partir', 'blame', 'inspection', 'tache', 'mailFin', 'rapport', 'cafe']) verifier(bloquantes.includes(n), `prompt 173 : la fenêtre « ${n} » exige une réponse, elle doit rester bloquante`);
 	for (const n of ['aide', 'parametres', 'partage', 'installation', 'palmares', 'menu', 'telephone']) verifier(fermables.includes(n), `prompt 173 : la fenêtre « ${n} » doit se fermer au clic sur le fond`);
 	verifier(!fermables.some((n) => bloquantes.includes(n)), 'prompt 173 : une fenêtre est à la fois bloquante et fermable au clic sur le fond');
 	const dessinees = [...sk173.match(/function contenuFenetre\(\) \{[\s\S]*?\n\}/)[0].matchAll(/fenetre === '(\w+)'/g)].map((x) => x[1]);
@@ -2655,6 +2655,151 @@ for (const langue of ['fr', 'en']) {
 const html = readFileSync(join(pub, 'index.html'), 'utf8');
 const sw = readFileSync(join(pub, 'sw.js'), 'utf8');
 for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/gi)) verifier(sw.includes(`'${src}'`) || sw.includes(`"${src}"`), `sw.js : ${src} absent du cache hors ligne`);
+
+// Prompt 178 : plusieurs emplacements de sauvegarde — migration de l'ancienne sauvegarde unique (version 1) vers le
+// premier emplacement, trois parties et reprise de la deuxième à l'identique, suppression d'une seule, limite, quota
+{
+	const lire = (f) => readFileSync(join(pub, f), 'utf8');
+	const PRE = 'pxe-nte001-partie-';
+	/** Contexte de jeu + sauvegarde.js réel ; `plein.v` à true : localStorage.setItem lève (quota dépassé) */
+	const ctxSauv = (stockage, plein = { v: false }) => {
+		const c = contexte('fr', stockage, true);
+		Object.assign(c.localStorage, {
+			key: (i) => [...stockage.keys()][i] ?? null,
+			setItem: (k, v) => {
+				if (plein.v) throw new Error('QuotaExceededError');
+				stockage.set(k, String(v));
+			},
+		});
+		Object.defineProperty(c.localStorage, 'length', { get: () => stockage.size });
+		c.__toasts = [];
+		const noeud = () => ({ setAttribute() {}, appendChild() {}, remove() {}, set textContent(v) { c.__toasts.push(String(v)); } });
+		Object.assign(c.document, { createElement: noeud, body: { appendChild() {} }, addEventListener() {} });
+		c.addEventListener = () => {};
+		c.setTimeout = () => 0;
+		c.clearTimeout = () => {};
+		vm.runInContext(
+			`var ecran = 'jeu', phase = 'attente', fenetre = null, enPause = false, enSieste = false, reveil = null, smsActif = false, introVue = true, bilanCalcule = null,
+				sourceChoisie = null, alerteTempsJouee = false, dernierResultat = null, facteurDuree = 1, arriveeDossier = 0, debutCompteur = 0, __annonces = [];
+			var millis = () => 1000, annoncer = (x) => __annonces.push(String(x)), interaction = () => {}, allerFin = () => {};`,
+			c,
+		);
+		vm.runInContext(lire('sauvegarde.js'), c, { filename: 'sauvegarde.js' });
+		return c;
+	};
+	/** Nouvelle partie sur une semaine, `n` décisions, sauvegarde automatique ; renvoie l'état attendu à la reprise */
+	const jouerEtSauver = (c, lundi, n) =>
+		vm.runInContext(
+			`(() => {
+			Jeu.chargerSemaine(${JSON.stringify(lundi)});
+			Jeu.nouvellePartie();
+			Sauvegarde.nouvelle();
+			ecran = 'jeu'; phase = 'attente';
+			let k = 0, tours = 0;
+			while (k < ${n} && tours++ < 200) {
+				const d = Jeu.prochainDuJour();
+				if (d) { if (Jeu.conflit && Jeu.conflit()) Jeu.choisirPriorite('a'); Jeu.decider(['renfort', 'rien', 'devier'][k % 3], d.contradiction ? d.contradiction.bonne : undefined); k++; }
+				else { Jeu.finDeJourneeTactique(); Jeu.mailDuJour(); Jeu.journeeSuivante(); const i = Jeu.preparerInspection(); if (i) Jeu.repondreInspection(i.bonne); }
+			}
+			const ok = Sauvegarde.auto(false);
+			return { ok, id: Sauvegarde.courant, etat: __etat() };
+		})()`,
+			c,
+		);
+	const ETAT = `var __etat = () => JSON.stringify({ semaine: Jeu.etat.semaine.lundi, index: Jeu.index, jour: Jeu.jourIndex, jauges: Jeu.jauges, decisions: Jeu.historique.length, graine: Jeu.graine, minutes: Jeu.horloge.minutes, paquet: Jeu.paquet.map((d) => d.id || d.titre || '') });`;
+	const dormir = (ms) => new Promise((r) => setTimeout(r, ms));
+	const [s1, s2, s3] = semaines;
+	const clesParties = (m) => [...m.keys()].filter((k) => k.startsWith(PRE));
+
+	// ——— 1. Ancien format (version 1, clé par semaine) → premier emplacement, sans perte ———
+	const stA = new Map();
+	const a = ctxSauv(stA);
+	vm.runInContext(ETAT, a);
+	const origine = jouerEtSauver(a, s1, 4);
+	verifier(origine.ok && clesParties(stA).join() === PRE + origine.id, `prompt 178 : une nouvelle partie doit créer son emplacement (${[...stA.keys()]})`);
+	const v2 = JSON.parse(stA.get(PRE + origine.id));
+	verifier(v2.version === 2 && v2.id === origine.id && typeof v2.creeLe === 'string', `prompt 178 : format versionné (version ${v2.version}, id ${v2.id})`);
+	const v1 = Object.assign({}, v2, { version: 1 });
+	delete v1.id;
+	delete v1.creeLe;
+	const CLE_GLOBALES = [['pxe-nte001:jeu:reglages', '{"son":false}'], ['pxe-nte001:jeu:meilleurs-bilans', '{"x":1}'], ['pxe-nte001-langue', 'fr']];
+	const stB = new Map([[PRE + s1, JSON.stringify(v1)], ...CLE_GLOBALES]);
+	const b = ctxSauv(stB);
+	vm.runInContext(ETAT, b);
+	const listeB = vm.runInContext('Sauvegarde.lister()', b);
+	const migre = JSON.parse(stB.get(PRE + s1) || 'null');
+	verifier(listeB.length === 1 && listeB[0].id === s1 && migre && migre.version === 2 && migre.id === s1, `prompt 178 : l'ancienne sauvegarde doit devenir le premier emplacement (${listeB.length}, version ${migre && migre.version})`);
+	verifier(JSON.stringify(migre.etat) === JSON.stringify(v1.etat) && migre.sauvegardeLe === v1.sauvegardeLe && migre.semaine === v1.semaine, 'prompt 178 : la migration ne doit rien perdre de la partie');
+	verifier(CLE_GLOBALES.every(([k, v]) => stB.get(k) === v) && clesParties(stB).length === 1, 'prompt 178 : réglages, palmarès et langue restent hors emplacements, intacts');
+	const repriseV1 = await vm.runInContext('Sauvegarde.reprendre(Sauvegarde.lister()[0]).then((ok) => ({ ok, etat: __etat(), id: Sauvegarde.courant }))', b);
+	verifier(repriseV1.ok === true && repriseV1.etat === origine.etat && repriseV1.id === s1, 'prompt 178 : une sauvegarde d\'avant la mise à jour doit être reprise à l\'identique');
+	vm.runInContext('Sauvegarde.auto(false)', b);
+	verifier([...stB.keys()].filter((k) => k.startsWith(PRE)).length === 1, 'prompt 178 : la partie migrée continue dans son emplacement (pas de doublon)');
+	// Une version 1 illisible n'est ni listée ni effacée
+	const stC = new Map([[PRE + s1, '{"version":1,"semaine":"' + s1 + '"}']]);
+	verifier(vm.runInContext('Sauvegarde.lister().length', ctxSauv(stC)) === 0 && clesParties(stC).length === 1, 'prompt 178 : une sauvegarde invalide n\'est ni proposée ni détruite');
+
+	// ——— 2. Trois parties, reprise de la deuxième à l'identique, suppression de la première seule ———
+	const st = new Map(CLE_GLOBALES);
+	const plein = { v: false };
+	const c = ctxSauv(st, plein);
+	vm.runInContext(ETAT, c);
+	const parties = [];
+	for (const [lundi, n] of [[s1, 2], [s2, 5], [s3, 3]]) {
+		parties.push(jouerEtSauver(c, lundi, n));
+		await dormir(3); // horodatages distincts
+	}
+	const ids = vm.runInContext('Sauvegarde.lister().map((o) => o.id)', c);
+	verifier(parties.every((p) => p.ok) && new Set(parties.map((p) => p.id)).size === 3 && JSON.stringify(ids) === JSON.stringify(parties.map((p) => p.id).reverse()), `prompt 178 : trois parties = trois emplacements, la plus récente d'abord (${ids})`);
+	const r2 = await vm.runInContext(`Sauvegarde.reprendre(Sauvegarde.pour(${JSON.stringify(parties[1].id)})).then((ok) => ({ ok, etat: __etat(), id: Sauvegarde.courant }))`, c);
+	verifier(r2.ok === true && r2.etat === parties[1].etat && r2.id === parties[1].id, 'prompt 178 : la deuxième partie doit être reprise à l\'identique (jour, jauges, dossiers)');
+	const avant = [st.get(PRE + parties[1].id), st.get(PRE + parties[2].id)];
+	vm.runInContext(`Sauvegarde.effacer(${JSON.stringify(parties[0].id)})`, c);
+	verifier(!st.has(PRE + parties[0].id) && st.get(PRE + parties[1].id) === avant[0] && st.get(PRE + parties[2].id) === avant[1] && vm.runInContext('Sauvegarde.lister().length', c) === 2, 'prompt 178 : supprimer la première partie ne doit pas toucher aux autres');
+	verifier(CLE_GLOBALES.every(([k, v]) => st.get(k) === v), 'prompt 178 : supprimer une partie ne touche ni aux réglages ni au palmarès');
+	// La partie reprise continue dans SON emplacement
+	vm.runInContext('Sauvegarde.auto(false)', c);
+	verifier([...st.keys()].filter((k) => k.startsWith(PRE)).length === 2 && vm.runInContext('Sauvegarde.courant', c) === parties[1].id, 'prompt 178 : la sauvegarde automatique doit écrire dans l\'emplacement de la partie en cours');
+
+	// ——— 3. Limite d'emplacements ———
+	const MAX = vm.runInContext('Sauvegarde.MAX', c);
+	verifier(MAX >= 3 && MAX <= 8 && vm.runInContext('Sauvegarde.pleine()', c) === false, `prompt 178 : limite d'emplacements raisonnable (${MAX})`);
+	while (vm.runInContext('Sauvegarde.lister().length', c) < MAX) {
+		await dormir(3);
+		jouerEtSauver(c, s1, 1);
+	}
+	verifier(vm.runInContext('Sauvegarde.pleine()', c) === true && vm.runInContext('Sauvegarde.plusAncienne().id', c) === parties[2].id, 'prompt 178 : à la limite, la plus ancienne partie est proposée à la suppression');
+	const sk = lire('sketch.js');
+	const lancer = sk.slice(sk.indexOf('function lancerPartie()'), sk.indexOf('function lancerNouvellePartie()'));
+	verifier(/if \(Sauvegarde\.pleine\(\)\) return allerSauvegardes\(lancerNouvellePartie\)/.test(lancer) && !/ouvrir\('reprise'\)/.test(sk), 'prompt 178 : à la limite, le lancement passe par l\'écran des sauvegardes (et plus de fenêtre de rappel)');
+
+	// ——— 4. Quota : échec d'écriture → rien de perdu, message clair ———
+	const photo = JSON.stringify([...st.entries()]);
+	plein.v = true;
+	const q = vm.runInContext(`(() => { const d = Jeu.prochainDuJour(); if (d) Jeu.decider('rien', d.contradiction ? d.contradiction.bonne : undefined); return { ok: Sauvegarde.auto(false), n: Sauvegarde.lister().length, index: Jeu.index, courant: Sauvegarde.courant }; })()`, c);
+	verifier(q.ok === false && JSON.stringify([...st.entries()]) === photo && q.n === MAX && q.index >= 1, 'prompt 178 : stockage plein — ni la partie en cours ni les autres emplacements ne doivent être perdus');
+	verifier(c.__toasts.length === 1 && c.__toasts[0] === vm.runInContext(`t('sauvegarde.indisponible')`, c) && /Reprendre une partie/.test(c.__toasts[0]), `prompt 178 : message clair quand le stockage est plein (${c.__toasts})`);
+	plein.v = false;
+	verifier(vm.runInContext('Sauvegarde.auto(false)', c) === true && st.has(PRE + q.courant), 'prompt 178 : dès que la place revient, la partie en cours est de nouveau sauvegardée');
+	// Partie terminée : seul son emplacement est libéré, et rien n'est réécrit tant qu'une nouvelle partie n'a pas commencé
+	const nAvant = vm.runInContext('Sauvegarde.lister().length', c);
+	vm.runInContext(`phase = 'fin'; Sauvegarde.auto(false); phase = 'attente'; Sauvegarde.auto(false);`, c);
+	verifier(vm.runInContext('Sauvegarde.lister().length', c) === nAvant - 1 && !st.has(PRE + q.courant), 'prompt 178 : une partie terminée libère son seul emplacement');
+
+	// ——— 5. Menu, écran « Reprendre une partie », textes, mode exposition ———
+	const menu = lire('menu.js');
+	const i18n178 = lire('i18n.js');
+	const libelles = [...i18n178.matchAll(/"mp\.reprendre": "([^"]*)"/g)].map((m) => m[1]);
+	verifier(libelles.length === 2 && libelles[0] === 'Reprendre une partie' && libelles.every((l) => !/[()]/.test(l)), `prompt 178 : entrée « Reprendre une partie », sans raccourci entre parenthèses (${libelles})`);
+	const entrees = menu.slice(menu.indexOf('function entreesMenu'), menu.indexOf('function allerChoixSemaine'));
+	verifier(/desactive: !n/.test(entrees) && /allerSauvegardes\(\)/.test(entrees) && /while \(choisi\(\)\.desactive\)/.test(menu) && /carteMenuGrisee/.test(menu), 'prompt 178 : sans sauvegarde, l\'entrée est grisée et sautée au clavier');
+	const touches = menu.slice(menu.indexOf('function toucheSauvegardes'), menu.indexOf('/** Clavier du menu principal'));
+	verifier(['UP_ARROW', 'DOWN_ARROW', 'ENTER', 'DELETE', 'ESCAPE'].every((k) => touches.includes('keyCode === ' + k)) && /MENU\.confirmeSauv/.test(touches) && /annonceSauvegarde/.test(touches), 'prompt 178 : écran des sauvegardes au clavier (↑ ↓, Entrée, Suppr avec confirmation, Échap) et annoncé');
+	verifier(/"sauv\.annonce": "Sauvegarde \{i\} sur \{n\} : /.test(i18n178) && /\[À COMPLÉTER\]/.test(menu.slice(menu.indexOf('function infosSauvegarde'), menu.indexOf('function annonceSauvegarde'))), 'prompt 178 : annonce « sauvegarde 2 sur 3 : … » et champ absent → [À COMPLÉTER]');
+	verifier(!/"reprise\.(titre|texte|reprendre|nouvelle|annuler)"|"accueil\.continuerDetail"/.test(i18n178) && !/fenetreReprise|reprendreSemaineChoisie|'reprise'/.test(sk + lire('portrait.js')), 'prompt 178 : la modale de rappel / d\'écrasement et ses textes doivent avoir disparu');
+	const garder = (lire('expo.js').match(/const GARDER = \[([^\]]*)\]/) || [])[1] || '';
+	verifier(!/partie/.test(garder) && /const PREFIXE = 'pxe-nte001-partie-'/.test(lire('sauvegarde.js')), 'prompt 178 : la purge du mode exposition doit vider les emplacements de sauvegarde');
+}
 
 if (erreurs.length) {
 	console.error(`Test du jeu : ${erreurs.length} erreur(s) sur ${controles + erreurs.length} contrôles`);

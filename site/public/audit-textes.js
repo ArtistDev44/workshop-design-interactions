@@ -483,6 +483,10 @@
 		}, 12);
 		add('retour · marqueur en attente', () => continuer(), 12);
 		add('licenciement · journal', () => GAMEOVER && (GAMEOVER.vue = 'journal'), 20);
+		// Prompt 178 : écran « Reprendre une partie » (les parties jouées par l'audit ont laissé leurs emplacements), confirmation de suppression, limite atteinte
+		add('menu sauvegardes', () => (H.raz(), (MENU.actif = true), allerSauvegardes()));
+		add('menu sauvegardes · confirmation', () => demanderSuppressionSauvegarde());
+		add('menu sauvegardes · limite', () => allerSauvegardes(() => {}));
 		add('retour menu', () => (H.raz(), (MENU.actif = true), (MENU.ecran = 'titre')));
 		return E;
 	}

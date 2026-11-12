@@ -1,11 +1,12 @@
 /* Nantes en régulation — menu principal modernisé (prompt 35).
- * Écran titre plein écran affiché AVANT le bureau : Nouvelle partie, Reprendre, Palmarès, Paramètres ; en haut, le
+ * Écran titre plein écran affiché AVANT le bureau : Nouvelle partie, Reprendre une partie (prompt 178 : écran des
+ * emplacements de sauvegarde, MENU.ecran = 'sauvegardes'), Palmarès, Paramètres ; en haut, le
  * logo à gauche, la langue et l'installation à droite (prompt 171 : plus d'entrée « Aide et tutoriel » ni
  * « Crédits » — l'aide s'ouvre en partie, les crédits par les noms du pied de page). « Nouvelle partie » ouvre le choix de la semaine (l'ancien accueil du PC, sorti de l'écran).
  * Fond : la pièce du bureau floutée et assombrie. Tout est dessiné par le code, textes via t().
  * Dès qu'une partie démarre ou reprend (ecran === 'jeu'), le menu se ferme et l'on arrive au bureau.
  */
-const MENU = { actif: true, ecran: 'titre', choix: 0, choixSemaine: 0, debut: 0 };
+const MENU = { actif: true, ecran: 'titre', choix: 0, choixSemaine: 0, debut: 0, choixSauv: 0, confirmeSauv: false, apresSuppr: null };
 // Prompt 81 : liens du projet — une seule définition (constantes nommées), jamais recopiés ailleurs
 const DEPOT_URL = 'https://github.com/ArtistDev44/workshop-design-interactions';
 const LICENCE_URL = DEPOT_URL + '/blob/main/LICENSE';
@@ -53,24 +54,12 @@ function fermerMenuPrincipal() {
 	vue = 'bureau';
 }
 
-/** Entrées du menu principal (Reprendre seulement s'il existe une sauvegarde) */
+/** Entrées du menu principal. Prompt 178 : « Reprendre une partie » ouvre la liste des sauvegardes ; sans
+ * sauvegarde, l'entrée reste visible mais grisée, non cliquable et sautée au clavier */
 function entreesMenu() {
-	const recente = Sauvegarde.lister()[0];
+	const n = Sauvegarde.lister().length;
 	const e = [{ cle: 'nouvelle', icone: 'plus', action: () => allerChoixSemaine() }];
-	if (recente) {
-		const d = new Date(recente.sauvegardeLe);
-		e.push({
-			cle: 'reprendre',
-			icone: 'lecture',
-			sous: t('accueil.continuerDetail', {
-				semaine: Sauvegarde.libelleSemaine(recente.semaine),
-				n: recente.etat.dossierIndex + 1,
-				total: recente.etat.complet.paquet.length,
-				heure: String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'),
-			}),
-			action: () => avantDeJouer(continuerPartie), // prompt 110 : autorisations avant de jouer
-		});
-	}
+	e.push({ cle: 'reprendre', icone: 'lecture', sous: n ? t('sauv.compte', { n, max: Sauvegarde.MAX }) : t('sauv.vide'), desactive: !n, action: () => allerSauvegardes() });
 	e.push({ cle: 'palmares', icone: 'trophee', action: () => ouvrir('palmares') }); // prompt 47
 	e.push({ cle: 'parametres', icone: 'reglages', action: () => ouvrir('parametres') });
 	// Prompt 171 : plus d'entrée « Aide et tutoriel » (l'aide s'ouvre en partie : H, menu pause) ni « Crédits » (les noms du pied de page y mènent)
@@ -95,7 +84,7 @@ function lancerDepuisMenu() {
 	} else choixAccueil = optionsAccueil().findIndex((o) => o.type === 'direct');
 	if (choixAccueil < 0) return;
 	const c = choixAccueil;
-	avantDeJouer(() => ((choixAccueil = c), lancerPartie())); // prompt 110 : micro, caméra et son demandés avant la partie ; sauvegarde existante → fenêtre « Reprendre / Nouvelle partie » (prompt 33)
+	avantDeJouer(() => ((choixAccueil = c), lancerPartie())); // prompt 110 : micro, caméra et son demandés avant la partie ; prompt 178 : plus de fenêtre de rappel, la partie prend un nouvel emplacement
 }
 
 // ——— Dessin ———
@@ -146,7 +135,8 @@ function iconeReseau(type, c) {
 }
 
 /** Carte de menu moderne : sélection = carte blanche + liseré bleu ; sinon carte sombre translucide */
-function carteMenu(x, y, l, h, titre, sous, action, sel, icone) {
+function carteMenu(x, y, l, h, titre, sous, action, sel, icone, desactive) {
+	if (desactive) return carteMenuGrisee(x, y, l, h, titre, sous, icone);
 	const survol = mouseX >= x && mouseX <= x + l && mouseY >= y && mouseY <= y + h;
 	const actif = sel || survol;
 	noStroke();
@@ -193,9 +183,36 @@ function carteMenu(x, y, l, h, titre, sous, action, sel, icone) {
 	}
 }
 
+/** Prompt 178 : carte grisée (entrée indisponible) — ni survol, ni clic, ni focus ; texte blanc 55 % sur le voile nuit (≥ 4,5:1) */
+function carteMenuGrisee(x, y, l, h, titre, sous, icone) {
+	const gris = 'rgba(255,255,255,0.55)';
+	noFill();
+	stroke(255, 255, 255, 36);
+	strokeWeight(2);
+	rect(x + 1, y + 1, l - 2, h - 2);
+	noStroke();
+	if (icone) iconeMenu(icone, x + 28, y + h / 2 - 28, gris);
+	const tx = x + (icone ? 108 : 32);
+	textAlign(LEFT, sous ? BOTTOM : CENTER);
+	textFont(POLICE_TEXTE);
+	textStyle(BOLD);
+	ajusterTaille(titre, l - (tx - x) - 24, 30);
+	fill(gris);
+	text(titre, tx, sous ? y + h / 2 + 4 : y + h / 2);
+	textStyle(NORMAL);
+	if (sous) {
+		textAlign(LEFT, TOP);
+		textFont(POLICE_DONNEES);
+		ajusterTaille(sous, l - (tx - x) - 24, 18, 14);
+		zoneTexteDeclarer('sousTitreMenu', tx, y + h / 2 + 10, l - (tx - x) - 24, 24);
+		text(sous, tx, y + h / 2 + 10);
+	}
+}
+
 function dessinerMenuPrincipal() {
 	fondMenu();
 	if (MENU.ecran === 'semaines') return dessinerChoixSemaine();
+	if (MENU.ecran === 'sauvegardes') return dessinerSauvegardes(); // prompt 178
 	if (MENU.ecran === 'autorisations') return dessinerAutorisations(); // prompt 110
 	if (MENU.ecran === 'credits') return dessinerCredits(); // prompt 113
 	const k = reduireAnimations ? 1 : easeOut(constrain((millis() - MENU.debut) / 500, 0, 1));
@@ -216,7 +233,7 @@ function dessinerMenuPrincipal() {
 	text(t('accueil.sousTitre'), x0, 276, 900, 84);
 	pop();
 	const e = entreesMenu();
-	if (MENU.choix >= e.length + EXTRAS_MENU.length) MENU.choix = 0;
+	if (MENU.choix >= e.length + EXTRAS_MENU.length || (e[MENU.choix] && e[MENU.choix].desactive)) MENU.choix = 0;
 	// Prompt 120 : pile calculée dans l'espace disponible (sous-titre du jeu → pied de page, 16 px de marge) :
 	// cartes normales si elles tiennent, sinon compactes ; l'écart se répartit (6 px au moins, 30 au plus)
 	let yc = 370;
@@ -227,7 +244,7 @@ function dessinerMenuPrincipal() {
 	if (somme(hs) + 12 * (e.length - 1) > basPile - yc) hs = hauteurs(true);
 	const ecart = constrain((basPile - yc - somme(hs)) / Math.max(1, e.length - 1), 6, 30);
 	e.forEach((it, i) => {
-		carteMenu(x0, yc, 620, hs[i], t('mp.' + it.cle), it.sous, it.action, i === MENU.choix, it.icone);
+		carteMenu(x0, yc, 620, hs[i], t('mp.' + it.cle), it.sous, it.action, i === MENU.choix, it.icone, it.desactive);
 		yc += hs[i] + ecart;
 	});
 	// Prompt 171 : FR / EN puis l'icône « télécharger » (installer le jeu, prompt 65), bord droit à la marge
@@ -600,10 +617,205 @@ function dessinerChoixSemaine() {
 	bouton(160, H - 140, 260, 68, t('mp.retour'), () => ((MENU.ecran = 'titre'), (MENU.debut = millis())), false, true);
 }
 
+// ——— Prompt 178 : écran « Reprendre une partie » — les emplacements de sauvegarde, le plus récent d'abord ———
+// Colonne de gauche (x 160 → 1000) : elle tient dans le recadrage portrait du menu. ↑ ↓ choisir, Entrée reprendre,
+// Suppr supprimer (confirmation dans l'écran : Entrée confirme, Échap annule), Échap revenir au menu.
+const SAUV_ZONE = { x: 160, y: 276, l: 840, h: 112, ecart: 12 };
+/** `apres` : action à relancer une fois une place libérée (nouvelle partie arrêtée par la limite d'emplacements) */
+function allerSauvegardes(apres) {
+	const liste = Sauvegarde.lister();
+	MENU.ecran = 'sauvegardes';
+	MENU.debut = millis();
+	MENU.confirmeSauv = false;
+	MENU.apresSuppr = typeof apres === 'function' ? apres : null;
+	MENU.choixSauv = MENU.apresSuppr ? Math.max(0, liste.length - 1) : 0; // limite atteinte : la plus ancienne est proposée
+	Confort.Son.bip('choix');
+	annoncer((MENU.apresSuppr ? t('sauv.limite', { max: Sauvegarde.MAX }) : t('sauv.annonceEcran', { n: liste.length })) + ' ' + (liste.length ? annonceSauvegarde(liste, MENU.choixSauv) : t('sauv.vide')));
+}
+function quitterSauvegardes() {
+	MENU.ecran = MENU.apresSuppr ? 'semaines' : 'titre';
+	MENU.apresSuppr = null;
+	MENU.confirmeSauv = false;
+	MENU.debut = millis();
+}
+/** Ce qu'on sait d'un emplacement, sans rien inventer : un champ absent (ancienne sauvegarde) → [À COMPLÉTER] */
+function infosSauvegarde(o) {
+	const inconnu = '[À COMPLÉTER]';
+	const c = (o.etat && o.etat.complet) || {};
+	const ch = o.semaine === 'direct' || o.semaine === 'fallback' ? 0 : semainesHistoire().indexOf(o.semaine) + 1;
+	const mode = o.semaine === 'direct' ? t('mp.mode.direct') : o.semaine === 'fallback' ? t('sauv.mode.reference') : ch ? t('sauv.mode.histoire', { n: ch }) : t('sauv.mode.semaine');
+	const semaine = o.semaine === 'direct' || o.semaine === 'fallback' ? '' : t('sauv.semaine', { date: dateLongue(o.semaine) });
+	const jour = Number.isInteger(c.jourIndex) && Array.isArray(c.jours) ? t('sauv.jour', { j: c.jourIndex + 1, n: c.jours.length }) : inconnu;
+	const d = o.sauvegardeLe ? new Date(o.sauvegardeLe) : null;
+	const p = (v) => String(v).padStart(2, '0');
+	const date = d && !isNaN(d.getTime()) ? t('sauv.date', { date: p(d.getDate()) + '/' + p(d.getMonth() + 1) + '/' + d.getFullYear(), heure: p(d.getHours()) + ':' + p(d.getMinutes()) }) : t('sauv.dateInconnue', { v: inconnu });
+	const j = (o.etat && o.etat.jauges) || {};
+	const jauges = ['fluidite', 'reputation', 'budget'].map((k) => ({ cle: k, v: typeof j[k] === 'number' ? Math.round(j[k]) : null }));
+	return { mode, semaine, jour, date, jauges, inconnu };
+}
+/** « Sauvegarde 2 sur 3 : … » (lecteur d'écran) */
+function annonceSauvegarde(liste, i) {
+	const o = liste[i];
+	if (!o) return '';
+	const f = infosSauvegarde(o);
+	return t('sauv.annonce', { i: i + 1, n: liste.length, detail: [f.mode, f.semaine, f.jour, f.date].filter(Boolean).join(', '), jauges: f.jauges.map((g) => t('jauge.' + g.cle) + ' ' + (g.v === null ? f.inconnu : g.v)).join(', ') });
+}
+function reprendreSauvegarde(i) {
+	const o = Sauvegarde.lister()[i];
+	if (!o) return;
+	MENU.apresSuppr = null;
+	avantDeJouer(() => Sauvegarde.reprendre(o)); // prompt 110 : autorisations avant de jouer
+}
+function demanderSuppressionSauvegarde() {
+	const liste = Sauvegarde.lister();
+	if (!liste[MENU.choixSauv]) return;
+	MENU.confirmeSauv = true;
+	annoncer(t('sauv.confirmer.annonce') + ' ' + annonceSauvegarde(liste, MENU.choixSauv));
+}
+function supprimerSauvegarde() {
+	const o = Sauvegarde.lister()[MENU.choixSauv];
+	MENU.confirmeSauv = false;
+	if (!o) return;
+	Sauvegarde.effacer(o.id); // cet emplacement seulement
+	Confort.Son.bip('choix');
+	const reste = Sauvegarde.lister();
+	MENU.choixSauv = Math.min(MENU.choixSauv, Math.max(0, reste.length - 1));
+	const suite = MENU.apresSuppr;
+	if (suite && !Sauvegarde.pleine()) {
+		// La place est libérée : la nouvelle partie demandée se lance
+		MENU.apresSuppr = null;
+		MENU.ecran = 'semaines';
+		annoncer(t('sauv.supprimee', { n: reste.length }));
+		return suite();
+	}
+	annoncer(t('sauv.supprimee', { n: reste.length }) + ' ' + (reste.length ? annonceSauvegarde(reste, MENU.choixSauv) : t('sauv.vide')));
+}
+function dessinerSauvegardes() {
+	const liste = Sauvegarde.lister();
+	const Z = SAUV_ZONE;
+	if (MENU.choixSauv >= liste.length) MENU.choixSauv = Math.max(0, liste.length - 1);
+	noStroke();
+	dsTitre(t('mp.reprendre'), Z.x, 100, 60, MENU_C.blanc, 'left');
+	noStroke();
+	textAlign(LEFT, TOP);
+	textFont(POLICE_TEXTE);
+	textSize(24);
+	push(); // interligne : état global de p5, rendu tel quel par pop()
+	textLeading(34);
+	fill(MENU_C.doux);
+	text(MENU.apresSuppr ? t('sauv.limite', { max: Sauvegarde.MAX }) : liste.length ? t('sauv.sous', { n: liste.length, max: Sauvegarde.MAX }) : t('sauv.vide'), Z.x, 186, Z.l, 72);
+	pop();
+	// MAX lignes tiennent à l'écran ; au-delà (emplacements en trop, jamais créés par le menu), la liste suit la sélection
+	const debut = Math.max(0, Math.min(MENU.choixSauv - 2, liste.length - Sauvegarde.MAX));
+	liste.slice(debut, debut + Sauvegarde.MAX).forEach((o, k0) => {
+		const i = debut + k0;
+		const y = Z.y + k0 * (Z.h + Z.ecart);
+		const sel = i === MENU.choixSauv;
+		const survol = !MENU.confirmeSauv && mouseX >= Z.x && mouseX <= Z.x + Z.l && mouseY >= y && mouseY <= y + Z.h;
+		const actif = sel || survol;
+		const f = infosSauvegarde(o);
+		noStroke();
+		if (actif) {
+			fill(MENU_C.blanc);
+			rect(Z.x, y, Z.l, Z.h);
+			fill(MENU_C.bleu);
+			rect(Z.x, y, 8, Z.h);
+		} else {
+			fill(255, 255, 255, 22);
+			rect(Z.x, y, Z.l, Z.h);
+			stroke(255, 255, 255, 60);
+			strokeWeight(2);
+			noFill();
+			rect(Z.x + 1, y + 1, Z.l - 2, Z.h - 2);
+			noStroke();
+		}
+		if (sel) {
+			noFill();
+			stroke(DS.primaireTrait);
+			strokeWeight(4);
+			rect(Z.x - 6, y - 6, Z.l + 12, Z.h + 12);
+			noStroke();
+		}
+		const encre = actif ? MENU_C.encre : MENU_C.blanc;
+		const doux = actif ? 'rgba(13,12,12,0.75)' : MENU_C.doux;
+		const lt = Z.l - 32 - 300; // texte à gauche, jauges à droite (268 px + marges)
+		textAlign(LEFT, TOP);
+		textFont(POLICE_TEXTE);
+		textStyle(BOLD);
+		const titre = f.mode + (f.semaine ? ' · ' + f.semaine : '');
+		ajusterTaille(titre, lt, 24, 16);
+		fill(encre);
+		text(titre, Z.x + 32, y + 18);
+		textStyle(NORMAL);
+		textFont(POLICE_DONNEES);
+		ajusterTaille(f.jour, lt, 18, 14);
+		fill(doux);
+		text(f.jour, Z.x + 32, y + 54);
+		ajusterTaille(f.date, lt, 18, 14);
+		text(f.date, Z.x + 32, y + 80);
+		// État des trois jauges : libellé, barre, valeur (la couleur n'est jamais la seule information)
+		const xj = Z.x + Z.l - 284;
+		f.jauges.forEach((g, k) => {
+			const yj = y + 16 + k * 28;
+			textSize(16);
+			textAlign(LEFT, CENTER);
+			fill(doux);
+			text(t('jauge.' + g.cle), xj, yj + 12);
+			fill(actif ? 'rgba(13,12,12,0.14)' : 'rgba(255,255,255,0.18)');
+			rect(xj + 112, yj + 6, 100, 12);
+			if (g.v !== null) {
+				fill(couleurJauge(g.v));
+				rect(xj + 112, yj + 6, Math.max(2, g.v), 12);
+			}
+			fill(encre);
+			textAlign(RIGHT, CENTER);
+			text(g.v === null ? f.inconnu : String(g.v), xj + 268, yj + 12);
+		});
+		textAlign(LEFT, TOP);
+		if (!MENU.confirmeSauv) boutons.push({ x: Z.x, y, l: Z.l, h: Z.h, action: () => (MENU.choixSauv === i ? reprendreSauvegarde(i) : ((MENU.choixSauv = i), annoncer(annonceSauvegarde(Sauvegarde.lister(), i)))) });
+	});
+	const yb = H - 140;
+	if (MENU.confirmeSauv) {
+		textFont(POLICE_TEXTE);
+		textStyle(BOLD);
+		textSize(24);
+		textAlign(LEFT, BOTTOM);
+		fill(MENU_C.blanc);
+		text(t('sauv.confirmer.texte'), Z.x, yb - 16);
+		textStyle(NORMAL);
+		textAlign(LEFT, TOP);
+		bouton(Z.x, yb, 410, 68, t('sauv.confirmer.oui'), supprimerSauvegarde);
+		bouton(Z.x + 430, yb, 410, 68, t('sauv.confirmer.non'), () => ((MENU.confirmeSauv = false), annoncer(t('sauv.confirmer.annulee'))), false, true);
+		return;
+	}
+	bouton(Z.x, yb, 240, 68, t('mp.retour'), quitterSauvegardes, false, true);
+	bouton(Z.x + 260, yb, 270, 68, t('sauv.supprimer'), demanderSuppressionSauvegarde, !liste.length, true);
+	bouton(Z.x + 550, yb, 290, 68, t('sauv.reprendre'), () => reprendreSauvegarde(MENU.choixSauv), !liste.length);
+}
+function toucheSauvegardes() {
+	const liste = Sauvegarde.lister();
+	const n = liste.length;
+	if (MENU.confirmeSauv) {
+		if (keyCode === ENTER || keyCode === RETURN) supprimerSauvegarde();
+		else if (keyCode === ESCAPE || keyCode === BACKSPACE) (MENU.confirmeSauv = false), annoncer(t('sauv.confirmer.annulee'));
+		return true;
+	}
+	if (keyCode === ESCAPE || keyCode === BACKSPACE) return quitterSauvegardes(), true;
+	if (!n) return true;
+	if (keyCode === UP_ARROW || (keyCode === TAB && keyIsDown(SHIFT))) MENU.choixSauv = (MENU.choixSauv + n - 1) % n;
+	else if (keyCode === DOWN_ARROW || keyCode === TAB) MENU.choixSauv = (MENU.choixSauv + 1) % n;
+	else if (keyCode === ENTER || keyCode === RETURN) return reprendreSauvegarde(MENU.choixSauv), true;
+	else if (keyCode === DELETE) return demanderSuppressionSauvegarde(), true;
+	else return true;
+	annoncer(annonceSauvegarde(liste, MENU.choixSauv));
+	return true;
+}
+
 /** Clavier du menu principal ; renvoie true si la touche a été traitée */
 function toucheMenu() {
 	if (MENU.ecran === 'autorisations') return toucheAutorisations(); // prompt 110
 	if (MENU.ecran === 'credits') return toucheCredits(); // prompt 113
+	if (MENU.ecran === 'sauvegardes') return toucheSauvegardes(); // prompt 178
 	if (MENU.ecran === 'semaines') {
 		const n = modesNouvellePartie().length;
 		if (keyCode === LEFT_ARROW || keyCode === UP_ARROW || (keyCode === TAB && keyIsDown(SHIFT))) MENU.choixSemaine = (MENU.choixSemaine + n - 1) % n;
@@ -618,10 +830,14 @@ function toucheMenu() {
 	const e = entreesMenu();
 	const n = e.length + EXTRAS_MENU.length; // prompt 81 : puis dépôt, partager, licence
 	const choisi = () => (MENU.choix < e.length ? e[MENU.choix] : EXTRAS_MENU[MENU.choix - e.length]);
-	if (keyCode === UP_ARROW || (keyCode === TAB && keyIsDown(SHIFT))) MENU.choix = (MENU.choix + n - 1) % n;
-	else if (keyCode === DOWN_ARROW || keyCode === TAB) MENU.choix = (MENU.choix + 1) % n;
-	else if (keyCode === ENTER || keyCode === RETURN || key === ' ') choisi().action();
-	else if ((key === 'c' || key === 'C') && e.some((x) => x.cle === 'reprendre')) avantDeJouer(continuerPartie);
+	// Prompt 178 : une entrée grisée (« Reprendre une partie » sans sauvegarde) n'est jamais focalisée
+	const pas = (d) => {
+		do MENU.choix = (MENU.choix + n + d) % n;
+		while (choisi().desactive);
+	};
+	if (keyCode === UP_ARROW || (keyCode === TAB && keyIsDown(SHIFT))) pas(-1);
+	else if (keyCode === DOWN_ARROW || keyCode === TAB) pas(1);
+	else if ((keyCode === ENTER || keyCode === RETURN || key === ' ') && !choisi().desactive) choisi().action();
 	// Prompt 171 : plus de raccourci H au menu titre (l'aide s'ouvre en partie)
 	if (keyCode === UP_ARROW || keyCode === DOWN_ARROW || keyCode === TAB) annoncer(t('mp.' + choisi().cle));
 	return true;
