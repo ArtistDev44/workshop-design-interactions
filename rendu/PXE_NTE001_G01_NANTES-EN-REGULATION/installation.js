@@ -82,7 +82,7 @@ function actionDepuisUrl() {
 		action = new URLSearchParams(location.search).get('action');
 	} catch (e) {}
 	if (action === 'nouvelle' && typeof allerChoixSemaine === 'function') allerChoixSemaine();
-	else if (action === 'reprendre' && typeof continuerPartie === 'function' && Sauvegarde.lister().length) continuerPartie();
+	else if (action === 'reprendre' && typeof continuerPartie === 'function' && Sauvegarde.lister().length) (typeof avantDeJouer === 'function' ? avantDeJouer(continuerPartie) : continuerPartie()); // prompt 110
 }
 
 // Outils de développement chargés SEULEMENT avec leur paramètre (avant l'initialisation de p5, pour que les

@@ -5,7 +5,8 @@
  * - Une vue intégrée garde l'état d'aujourd'hui : PC.fenetre = 'patron' | 'community' | 'journal' | 'donnees', PC.etat
  *   reste 'os' (le clavier des applis est inchangé) ; seul le DESSIN change : dans la fenêtre de l'appli, sous le
  *   bandeau, à droite du menu — sans cadre, sans croix, sans grand titre (le menu dit où l'on est).
- * - Badges : seulement ce qui est À FAIRE (badgeIcone, prompt 101 règle 6), jamais sur l'entrée active.
+ * - Badges : prompt 111 — badge rouge chiffré des nouveautés de chaque appli (nombreBadge, multitache.js), jamais sur
+ *   l'entrée active ; plus aucune carte de notification à l'écran.
  * - Mobile portrait : le menu devient une barre d'onglets en bas (dessinée sous le contenu, y 1036).
  */
 const VUES_APP = ['patron', 'community', 'journal', 'donnees'];
@@ -66,11 +67,20 @@ function dessinerMenuApp() {
 			rect(r.x + 2, r.y + 2, r.l - 4, r.h - 4);
 			noStroke();
 		}
-		const b = !actif && !verrou && typeof badgeIcone === 'function' ? badgeIcone(cle) : '';
+		// Prompt 111 : badge rouge chiffré (nouveautés de l'appli) ; l'entrée active est vue → compteur remis à zéro
+		if (actif && vue === 'poste') marquerVue(cle);
+		const nb = !actif && !verrou ? nombreBadge(cle) : 0;
+		const b = nb ? texteBadge(nb) : cle === 'signalements' && !actif && typeof badgeIcone === 'function' ? badgeIcone(cle) : ''; // « ! » : incident en cours (prompt 68)
 		if (b) dsBadge(r.x + r.l - (portrait ? 30 : 28), r.y + 8, b, 'erreur');
 		boutons.push({ x: r.x, y: r.y, l: r.l, h: r.h, action: () => ouvrirEntreeMenu(cle) });
 		if (k === 1) cibleGuide('iconesOS', M.x, M.y + 112, M.l, 4 * 112); // prompt 37 : le guide montre le menu
 	});
+}
+/** Prompt 111 : libellé accessible d'une entrée, avec son badge (« Patron, 3 nouveautés ») */
+function libelleEntreeMenu(cle) {
+	const lib = cle === 'signalements' ? t('menuApp.carte') : t('menuApp.' + cle);
+	const n = typeof nombreBadge === 'function' && entreeActive() !== cle ? nombreBadge(cle) : 0;
+	return n ? t('badge.libelle', { appli: lib, n }) : lib;
 }
 function ouvrirEntreeMenu(cle) {
 	MENU_FOCUS.actif = false;

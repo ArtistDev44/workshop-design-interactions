@@ -21,7 +21,8 @@ function multiReset() {
 	MULTI.paquet = Jeu.paquet;
 	MULTI.actifs = [];
 	MULTI.MAX = Jeu.defiChrono ? 3 : Jeu.difficulte().actifs; // prompt 87 : 3 / 2 / 1 selon la difficulté, sans chrono
-	NOTIFS.vus = null; // les notifications déjà affichées s'effacent seules (6 s)
+	NOTIFS.vus = null;
+	NOTIFS.nonVues = { signalements: 0, patron: 0, community: 0 }; // prompt 111 : compteurs des badges remis à zéro
 }
 const actifDe = (d) => MULTI.actifs.find((a) => a.d === d) || null;
 /** Signalement actif affiché (en tête du paquet pendant une phase de dossier), sinon null */
@@ -154,13 +155,38 @@ function majMultitache() {
 // =====================================================================
 // Notifications style bureau
 // =====================================================================
-const NOTIFS = { liste: [], vus: null, DUREE: 6000, MAX: 3 };
+// Prompt 111 : plus de cartes de notification à l'écran (elles coupaient la lecture d'un dossier). notifier() reste la
+// source unique : il garde l'historique (NOTIFS.liste), annonce aux lecteurs d'écran (aria-live poli) et incrémente le
+// compteur de l'appli, affiché en badge rouge chiffré dans le menu à gauche (menu-app.js) et, vu du bureau, sur l'écran du PC.
+const NOTIFS = { liste: [], vus: null, nonVues: { signalements: 0, patron: 0, community: 0 } };
+/** L'appli de la notification est déjà sous les yeux du joueur : rien à compter */
+const appliSousLesYeux = (cle) => typeof vue !== 'undefined' && vue === 'poste' && typeof entreeActive === 'function' && entreeActive() === cle && (PC.etat === 'appli' || PC.etat === 'os');
 function notifier(n) {
 	NOTIFS.liste.push(Object.assign({ t: millis() }, n));
 	if (NOTIFS.liste.length > 8) NOTIFS.liste.shift();
+	if (n.icone && NOTIFS.nonVues[n.icone] !== undefined && !appliSousLesYeux(n.icone)) NOTIFS.nonVues[n.icone]++;
 	annoncer(n.titre + ' : ' + n.extrait);
 }
-const notifsVisibles = () => NOTIFS.liste.filter((n) => millis() - n.t < NOTIFS.DUREE && (!n.icone || typeof appliDebloquee !== 'function' || appliDebloquee(n.icone))).slice(-NOTIFS.MAX); // prompt 91 § 2 : applis débloquées seulement
+/** Nombre affiché dans le badge d'une appli (0 = pas de badge) */
+function nombreBadge(cle) {
+	if (typeof appliDebloquee === 'function' && cle !== 'signalements' && !appliDebloquee(cle)) return 0; // prompt 91 : rien sur une appli verrouillée
+	const nl = Jeu.nonLus || {};
+	if (cle === 'signalements') return NOTIFS.nonVues.signalements;
+	if (cle === 'patron') return nl.patron || 0; // compteur tenu par game.js (les mails du patron), sans double compte
+	if (cle === 'community') {
+		const attente = (Jeu.plaintes || []).filter((p) => p.reponse === null && !p.expiree && !p.transmise).length;
+		return Math.max(nl.community || 0, attente); // une plainte nouvelle compte déjà dans nonLus : le max évite le double compte
+	}
+	return 0;
+}
+const texteBadge = (n) => (n > 9 ? '9+' : n ? String(n) : '');
+/** Total des badges (écran du PC vu du bureau) */
+const totalBadges = () => ['signalements', 'patron', 'community'].reduce((s, k) => s + nombreBadge(k), 0);
+/** Remise à zéro quand l'appli devient visible */
+function marquerVue(cle) {
+	if (NOTIFS.nonVues[cle] !== undefined) NOTIFS.nonVues[cle] = 0;
+	if (Jeu.nonLus && Jeu.nonLus[cle] !== undefined) Jeu.nonLus[cle] = 0;
+}
 /** Appelé par fileIncidents à la première apparition d'un signalement dans la liste */
 function notifierArrivee(d, i) {
 	if (ecran !== 'jeu') return;
@@ -217,80 +243,14 @@ function ouvrirAppliNotif(cle) {
 	if (i < 0 || (PC.etat !== 'os' && PC.etat !== 'appli')) return;
 	if (PC.fenetre !== cle) ouvrirIconeOS(i);
 }
-/** Prompt 80 : la dernière notification en une ligne, dans la barre des tâches (entre les icônes et les jauges) */
-function dessinerNotificationBarre() {
-	const liste = notifsVisibles();
-	if (!liste.length) return;
-	const n = liste[liste.length - 1];
-	const x = 760;
-	const l = 500; // s'arrête avant les jauges de la barre des tâches
-	const y = H - BARRE_OS + 10;
-	const h = BARRE_OS - 20;
-	noStroke();
-	fill(DS.blanc15);
-	rect(x, y, l, h);
-	fill(n.icone === 'patron' ? DS.primaire : n.icone === 'community' ? DS.info : DS.alerte);
-	rect(x, y, 6, h);
-	const ic = ICONES_OS.find((c) => c.cle === n.icone);
-	if (ic) ic.dessin(x + 14, y + 6, 0.65);
-	const txt = n.titre + ' · ' + n.extrait;
-	textFont(POLICE_TEXTE);
-	textStyle(BOLD);
-	textSize(18);
-	textAlign(LEFT, CENTER);
-	fill(DS.blanc);
-	const place = l - 86 - (liste.length > 1 ? 48 : 0);
-	let court = txt;
-	while (court.length > 8 && textWidth(court) > place) court = court.slice(0, -2);
-	text(court === txt ? txt : court.trim() + '…', x + 78, y + h / 2);
-	textStyle(NORMAL);
-	if (liste.length > 1) {
-		textAlign(RIGHT, CENTER);
-		fill(DS.alerte);
-		text(t('notif.autres', { n: liste.length - 1 }), x + l - 10, y + h / 2);
-	}
-	textAlign(LEFT, TOP);
-	boutons.push({ x, y, l, h, action: () => ((n.t = -Infinity), n.action && n.action()) });
-}
-/** Pile de notifications en haut à droite de la zone (x0 = bord droit), dans l'espace de dessin courant */
-function dessinerNotifications(xDroite, y0, echelle) {
-	const liste = notifsVisibles();
-	if (!liste.length) return;
-	const k = echelle || 1;
-	const l = 460 * k;
-	const h = 128 * k; // prompt 107 : trois lignes d'extrait lisibles même à 20 px (taille minimale dans l'appli)
-	liste
-		.slice()
-		.reverse()
-		.forEach((n, i) => {
-			const age = millis() - n.t;
-			const glisse = reduireAnimations ? 0 : Math.max(0, 1 - age / 250) * 40 * k; // entrée douce, absente si animations réduites
-			const x = xDroite - l - 16 * k + glisse;
-			const y = y0 + i * (h + 10 * k);
-			noStroke();
-			fill(0, 0, 0, 120);
-			rect(x + 6 * k, y + 8 * k, l, h);
-			fill(DS.fond);
-			stroke(DS.blanc15);
-			strokeWeight(2);
-			rect(x, y, l, h);
-			noStroke();
-			zoneTexteDeclarer('notification', x, y, l, h); // prompt 93
-			fill(n.icone === 'patron' ? DS.primaire : n.icone === 'community' ? DS.info : DS.alerte);
-			rect(x, y, 6 * k, h);
-			const ic = ICONES_OS.find((c) => c.cle === n.icone);
-			if (ic) ic.dessin(x + 18 * k, y + 16 * k, 0.8 * k);
-			textAlign(LEFT, TOP);
-			textFont(POLICE_TEXTE);
-			textStyle(BOLD);
-			textSize(20 * k);
-			fill(DS.blanc);
-			text(extrait(n.titre, 30), x + 100 * k, y + 14 * k, l - 116 * k, 26 * k);
-			textStyle(NORMAL);
-			textSize(17 * k);
-			textLeading(25 * k);
-			fill(DS.blanc75);
-			text(n.extrait, x + 100 * k, y + 44 * k, l - 116 * k, 78 * k);
-			boutons.push({ x, y, l, h, action: () => ((n.t = -Infinity), n.action && n.action()) });
-		});
+// Prompt 111 : dessinerNotificationBarre (prompt 80) et dessinerNotifications (prompt 77) supprimées — les badges
+// rouges du menu à gauche les remplacent.
+/** Prompt 111 : vue bureau (PC « fermé ») — un seul badge rouge, le total, au coin haut droit de l'écran du PC.
+ * Apparition simple, sans clignotement (même rendu si les animations sont réduites). */
+function badgeEcranBureau() {
+	if (ecran !== 'jeu' || !Jeu.paquet || typeof rectEcranCourant !== 'function') return;
+	const n = totalBadges();
+	if (!n) return;
+	const r = rectEcranCourant();
+	dsBadge(r.x + r.l - 26, r.y + 26, texteBadge(n), 'erreur');
 }
