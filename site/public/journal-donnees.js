@@ -1,21 +1,10 @@
 /* Nantes en régulation — prompt 89 : données de l'appli Journal (logique pure, sans p5, chargée par les tests).
  * Tout est recalculé à partir de l'état de la partie (Jeu.evenementsJournee, dossiers réels, Jeu.equipes,
  * Jeu.plaintes, jauges, carnet, Jeu.taches) : rien n'est stocké en double, rien n'est inventé ; absent → null
- * (l'affichage dit « non renseigné »). Résultats mis en cache par journée, invalidés quand un événement s'ajoute
- * ou que la langue change.
+ * (l'affichage dit « non renseigné »). Pas de cache (prompt 59, 12/11 : cache déclaré mais jamais appelé, retiré).
  */
 const JournalDonnees = (() => {
 	const JAUGES = ['fluidite', 'reputation', 'budget'];
-	const cache = new Map();
-	const signature = () => [(Jeu.evenementsJournee || []).length, (Jeu.equipes || []).length, (Jeu.plaintes || []).length, (Jeu.plaintes || []).filter((p) => p.reponse !== null).length, (Jeu.messagesPatron || []).length, Jeu.jourIndex, typeof Langue !== 'undefined' ? Langue.actuelle : 'fr', (Jeu.objectifsResultats || []).length, Jeu.carnet || ''].join('|');
-	function enCache(cle, f) {
-		const sig = signature();
-		const c = cache.get(cle);
-		if (c && c.sig === sig) return c.v;
-		const v = f();
-		cache.set(cle, { sig, v });
-		return v;
-	}
 	const jours = () => Jeu.jours || [];
 	const evDuJour = (date) => (Jeu.evenementsJournee || []).filter((e) => e.jour === date);
 	const indexDossier = (e) => (e.resultat && e.resultat.dossier ? Jeu.paquet.indexOf(e.resultat.dossier) : -1);
