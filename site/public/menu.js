@@ -18,10 +18,10 @@ function ouvrirPresentation() {
 	annoncer(t('mp.presentation.annonce'));
 	ouvrirLien('./presentation/');
 }
-/** Prompt 136 : diapositive « Les livrables » du diaporama (routeAlias livrables), même page /presentation/ */
+/** Prompt 136 : diapositive « Les livrables » du diaporama (routeAlias livrables), même page /presentation/ ; prompt 138 : ?clicks=5 ouvre la diapositive avec ses 5 apparitions déjà jouées */
 function ouvrirLivrables() {
 	annoncer(t('mp.livrables.annonce'));
-	ouvrirLien('./presentation/#/livrables');
+	ouvrirLien('./presentation/#/livrables?clicks=5');
 }
 const MENU_C = {
 	nuit: '#0D0C0C', // Background du Pixel DS (prompt 39)
