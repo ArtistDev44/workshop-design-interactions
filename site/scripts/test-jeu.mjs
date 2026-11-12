@@ -269,11 +269,13 @@ const eq = vm.runInContext(
 	Jeu.elementDebloque = () => true;
 	const t0 = 1000000;
 	const d0 = Jeu.paquet[0];
-	const a = Jeu.envoyerEquipe(0, 'ambulance', t0); // 1 ambulance par jour
+	const effA = Jeu.effectifJour('ambulance'); // prompt 108 : effectif du jour = base + ⌊signalements ÷ 3⌋, plafonné
+	const a = Jeu.envoyerEquipe(0, 'ambulance', t0);
 	const deja = Jeu.envoyerEquipe(0, 'ambulance', t0);
-	const dispoApres = Jeu.equipesDisponibles('ambulance', t0);
-	Jeu.index = 1;
-	const refus = Jeu.envoyerEquipe(1, 'ambulance', t0 + 1000);
+	for (let k = 1; k < effA; k++) Jeu.envoyerEquipe(k, 'ambulance', t0 + 15000); // les autres ambulances du jour, engagées plus tard
+	const dispoApres = Jeu.equipesDisponibles('ambulance', t0 + 15000);
+	Jeu.index = effA;
+	const refus = Jeu.envoyerEquipe(effA, 'ambulance', t0 + 16000);
 	const libreAvant = Jeu.equipesDisponibles('ambulance', t0 + 20000 + 50000 + 9000);
 	const libreApres = Jeu.equipesDisponibles('ambulance', t0 + 20000 + 50000 + 10001);
 	// Effet hors sujet : moitié
@@ -285,10 +287,10 @@ const eq = vm.runInContext(
 	const snap = JSON.parse(JSON.stringify(Jeu.instantane(t0 + 30000)));
 	// Remise à zéro le matin
 	const t1 = t0 + 2000;
-	Jeu.envoyerEquipe(1, 'police', t1); Jeu.envoyerEquipe(1, 'techniciens', t1);
-	const policeAvant = Jeu.equipesDisponibles('police', t1);
+	Jeu.envoyerEquipe(effA, 'police', t1); Jeu.envoyerEquipe(effA, 'techniciens', t1);
+	const policeAvant = Jeu.effectifJour('police') - Jeu.equipesDisponibles('police', t1) === 1 ? 1 : -1;
 	Jeu.journeeSuivante();
-	const policeMatin = Jeu.equipesDisponibles('police', t1 + 1);
+	const policeMatin = Jeu.equipesDisponibles('police', t1 + 1) === Jeu.effectifJour('police') ? 2 : -1;
 	return { g, p, a: a.ok, deja: deja.ok, dispoApres, refus: refus.ok === false && refus.refus === true && Jeu.refusEquipes, libreAvant, libreApres, pert: amb.pertinente, gain, eff: Jeu.EQUIPES.ambulance.effets.reputation, snapPhase: snap.equipes[0].libre > 0, policeAvant, policeMatin, d0type: d0.type };
 	})()`,
 	fr,
@@ -874,7 +876,7 @@ verifier(eq.policeAvant === 1 && eq.policeMatin === 2, `équipes : effectifs non
 		const rp = M.find((m) => m.type === 'reproche' && m.meta.index !== undefined);
 		r.reproche = !rp || (Jeu.evenementsJournee.some((e) => e.index === rp.meta.index) && !!rp.meta.meilleure);
 		const eq = M.find((m) => m.type === 'equipes');
-		r.equipes = !eq || (eq.meta.effectifs && eq.meta.effectifs.police === Jeu.REGLAGES.equipes.police.effectif);
+		r.equipes = !eq || (eq.meta.effectifs && eq.meta.effectifs.police >= Jeu.REGLAGES.equipes.police.effectif); // prompt 108 : effectif du jour ≥ base
 		const al = M.find((m) => m.type === 'alerte' && m.meta.jauge);
 		r.alerte = !al || (al.meta.v < al.meta.seuil);
 		const bu = M.find((m) => m.type === 'budget');
@@ -891,12 +893,13 @@ verifier(eq.policeAvant === 1 && eq.policeMatin === 2, `équipes : effectifs non
 		snap.messagesPatron.forEach((m) => delete m.type);
 		Jeu.chargerSemaine('2026-10-12'); Jeu.restaurerInstantane(snap, 0);
 		r.ancienne = Jeu.messagesPatron.every((m) => m.type === 'info');
+		r.plateau = !!Jeu.plateauEquipesVisible; // prompt 103 : les effectifs sont sur le panneau des équipes
 		return JSON.parse(JSON.stringify(r));
 	})()`,
 		fr,
 	);
 	verifier(pm.invalides === 0 && pm.types.includes('consigne') && pm.types.includes('reproche') && pm.types.length >= 4, `patron : types ${pm.types}`);
-	verifier(pm.consigne && pm.reproche && pm.equipes && pm.alerte && pm.budget, `patron : meta réelle ${JSON.stringify(pm)}`);
+	verifier(pm.consigne && pm.reproche && (pm.equipes || pm.plateau) && pm.alerte && pm.budget, `patron : meta réelle ${JSON.stringify(pm)}`);
 	verifier(pm.pendant === 0 && pm.apres, 'patron : message en file pendant la panne, « reçu en retard » ensuite');
 	verifier(pm.ancienne, 'patron : ancienne sauvegarde sans type chargée en « info »');
 	const pj = readFileSync(join(pub, 'patron.js'), 'utf8');
@@ -1874,8 +1877,8 @@ for (const f of ['enquete.js', 'carte.js', 'journal.js']) verifier(!/\*\s*1\.05\
 // Prompt 97 (skill game-design-theory) : apprendre vite — l'aide H et le guide nomment les gestes (glisser / clic,
 // 1-4, Q) et les 3 jauges, et répondent à « pourquoi ma décision a raté ? » ; la difficulté est lisible avant de jouer
 for (const [langue, mots] of [
-	['fr', { glisser: /Glisser/, touches: /1 à 4/, q: /Quitter la journée/, jauges: /fluidité, réputation et budget/, rate: /Pourquoi une décision a raté/, guide: /glissez une carte sur le dossier/, diff: /Difficulté facile : budget 60 · 3 signalement/ }],
-	['en', { glisser: /Drag/, touches: /1 to 4/, q: /End the day/, jauges: /flow, reputation and budget/, rate: /Why did a decision fail/, guide: /drag a card onto the case/, diff: /easy difficulty: budget 60 · 3 report/ }],
+	['fr', { glisser: /Glisser/, touches: /1 à 4/, q: /Quitter la journée/, jauges: /fluidité, réputation et budget/, rate: /Pourquoi une décision a raté/, guide: /répondez-lui/, diff: /Difficulté facile : budget 60 · 3 signalement/ }],
+	['en', { glisser: /Drag/, touches: /1 to 4/, q: /End the day/, jauges: /flow, reputation and budget/, rate: /Why did a decision fail/, guide: /then reply/, diff: /easy difficulty: budget 60 · 3 report/ }],
 ]) {
 	const c97 = contexte(langue);
 	const a = vm.runInContext(

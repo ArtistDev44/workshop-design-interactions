@@ -228,13 +228,14 @@ function draw() {
 			BANDEAU.survol = null;
 		}
 		if (enPause) dessinerPause();
-		dessinerFermerAppli();
+		// Prompt 105 : plein écran — plus de barre de titre ni de croix (Échap, « Quitter la journée », « Quitter le PC »)
 		sortirFenetreAppli(n0);
-		dessinerBarreTaches();
+		// Prompt 105 : plus de barre des tâches sous l'appli
 	} else dessinerOS();
 	// Prompt 77 : notifications en haut à droite de l'écran du PC ; prompt 80 : appli ou fenêtre ouverte → bandeau compact
 	// dans la barre des tâches (les jauges, le dossier et le contenu des applis ne sont plus masqués)
-	if (PC.etat === 'appli' || (PC.etat === 'os' && PC.fenetre)) dessinerNotificationBarre();
+	if (PC.etat === 'appli' || integree) dessinerNotifications(1556, 140); // prompt 105 : en haut à droite de la carte (plus de barre des tâches)
+	else if (PC.etat === 'os' && PC.fenetre) dessinerNotificationBarre();
 	else if (PC.etat === 'os') dessinerNotifications(L, 16);
 	dessinerIndicateurs(); // prompt 36 : app flottante, au premier plan
 	sourisRestaurer();
@@ -496,7 +497,9 @@ function dessinerJeu() {
 	dessinerBandeau();
 	dessinerCarteAlertes(); // prompt 102 : la carte des alertes réelles remplace la liste (prompt 73)
 	if (phase === 'selection') return; // prompt 102 : cliquer un marqueur prend le signalement (plus d'étape « Prendre »)
-	else if (phase === 'narration') dessinerNarration();
+	positionnerDialogue(); // prompt 107 : le dossier s'ouvre dans une fenêtre flottante sur la carte
+	if (DIALOGUE.reduit && (phase === 'decision' || phase === 'contradiction') && d) return dessinerOngletDialogue(d);
+	if (phase === 'narration') dessinerNarration();
 	else if (phase === 'conflit') dessinerConflit();
 	else dessinerDossier(d, meteo);
 }
@@ -505,7 +508,8 @@ function dessinerJeu() {
 function dessinerJeuAttente() {
 	dessinerBandeau();
 	dessinerCarteAlertes(); // prompt 102 : carte pleine largeur entre deux signalements
-	if (phase === 'mail') dessinerAttente(), dessinerMail(); // fin de journée : panneau du mail inchangé
+	if (phase === 'mail' || enSieste) Object.assign(PANNEAU, { x: ZONE_CARTE.x + (ZONE_CARTE.l - FENETRE_DIALOGUE.l) / 2, y: ZONE_CARTE.y + 16, l: FENETRE_DIALOGUE.l, h: FENETRE_DIALOGUE.h }); // prompt 107
+	if (phase === 'mail') dessinerMail(); // fin de journée : le mail couvre tout l'écran (prompt 107 : plus de panneau d'attente caché dessous)
 	else if (enSieste) dessinerAttente(); // sieste : le panneau d'attente dit qu'on dort
 }
 
@@ -1093,6 +1097,7 @@ function mousePressed() {
 			return;
 		}
 	}
+	if (typeof debutPanCarte === 'function') debutPanCarte(); // prompt 106 : glisser la carte
 }
 
 function basculerSon() {
@@ -1304,6 +1309,7 @@ function keyPressed() {
 // Prompt 26 : au poste, la molette fait quitter le PC (anti-rebond dans bureau.js) ; ailleurs, scroll normal
 function mouseWheel(event) {
 	interaction();
+	if (typeof molletteCarte === 'function' && molletteCarte(event.delta)) return false; // prompt 106 : zoom de la carte
 	if (molletteCommunity(event.delta)) return false; // prompt 85 : défilement du fil
 	if (mollettePatron(event.delta)) return false; // prompt 86 : historique du patron
 	if (molletteJournal(event.delta)) return false; // prompt 89 : frise du Journal

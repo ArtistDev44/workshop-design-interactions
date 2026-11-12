@@ -141,77 +141,84 @@ function savoirs(d) {
 }
 
 // ——— Panneau du signalement ouvert (phase décision / contradiction) ———
+/** Prompt 107 : fenêtre flottante du plaignant — posée sur la carte, du côté opposé au marqueur ; Échap ou la
+ * croix la réduisent (le signalement reste ouvert, un clic sur son marqueur la rouvre). */
+const DIALOGUE = { reduit: false, index: null };
+function positionnerDialogue() {
+	const z = typeof ZONE_CARTE !== 'undefined' ? ZONE_CARTE : { x: 184, y: 132, l: 1376, h: 900 };
+	const F = typeof FENETRE_DIALOGUE !== 'undefined' ? FENETRE_DIALOGUE : { l: 820, h: 868 };
+	if (DIALOGUE.index !== Jeu.index) (DIALOGUE.index = Jeu.index), (DIALOGUE.reduit = false);
+	const m = typeof CARTE !== 'undefined' ? CARTE.marqueurs.find((k) => k.courant && k.x !== undefined) : null;
+	const aGauche = m ? m.x > z.x + z.l / 2 : false; // marqueur à droite → fenêtre à gauche
+	Object.assign(PANNEAU, { x: aGauche ? z.x + 16 : z.x + z.l - F.l - 16, y: z.y + 16, l: F.l, h: F.h });
+}
+function reduireDialogue() {
+	DIALOGUE.reduit = true;
+	annoncer(t('dialogue.fermer'));
+}
+/** Fenêtre réduite : un onglet en bas de la carte pour la rouvrir */
+function dessinerOngletDialogue(d) {
+	const z = typeof ZONE_CARTE !== 'undefined' ? ZONE_CARTE : PANNEAU;
+	const txt = t('enq.signalement.' + d.type) + ' · ' + t('carte.gravite', { g: t('gravite.' + Jeu.gravite(d)) }) + '  ›';
+	textFont(DS.policeTexte);
+	textSize(20);
+	const l = textWidth(txt) + 48;
+	const x = z.x + (z.l - l) / 2;
+	const y = z.y + z.h - 64;
+	dsBouton(x, y, l, 48, txt, () => (DIALOGUE.reduit = false), 'primaire');
+}
+/** Prompt 107 : contenu de la fenêtre — titre, plaignant, (enquête), répliques adaptées à la situation */
 function dessinerPanneauSignalement(d, x, base) {
 	const l = base.l - 64;
-	let y = base.y + 70;
-	const titre = (d.lignes && d.lignes.length && dossierConnu(Jeu.index) ? t('dossier.ligne', { lignes: d.lignes.join(', ') }) : t('enq.signalement.' + d.type)) + ' · ' + t('carte.gravite', { g: t('gravite.' + Jeu.gravite(d)) });
+	let y = base.y + 64;
+	const titre = (d.lignes && d.lignes.length ? t('dossier.ligne', { lignes: d.lignes.join(', ') }) : t('enq.signalement.' + d.type)) + ' · ' + t('carte.gravite', { g: t('gravite.' + Jeu.gravite(d)) });
 	noStroke();
 	textAlign(LEFT, TOP);
 	textFont(POLICE_TEXTE);
 	textStyle(BOLD);
-	ajusterTaille(titre, l, 30, 20);
+	ajusterTaille(titre, l - 60, 28, 20);
 	fill(C.texte);
 	text(titre, x + 32, y);
 	textStyle(NORMAL);
-	y += 46;
-	// Prompt 89 bis (option « pression visible ») : le retard effectif grimpe, gravité doublée d'un seuil, temps écoulé
-	if (typeof Traces !== 'undefined' && Traces.option('pressionVisible')) {
-		const pr = Traces.pression(d);
-		if (pr) {
-			const g = t('gravite.' + pr.gravite) + (pr.gravite === 'elevee' ? ' (≥ 20 min)' : pr.gravite === 'moyenne' ? ' (≥ 10 min)' : '');
-			const txt = (pr.retard !== null ? t('trace.pressionRetard', { retard: pr.retard, reel: pr.reel === null ? '—' : pr.reel }) + ' · ' : '') + t('carte.gravite', { g }) + ' · ' + t('trace.arrive', { ecoule: pr.ecouleTexte });
-			textFont(POLICE_DONNEES);
-			textSize(17);
-			fill(couleurGravite(pr.gravite));
-			text(txt, x + 32, y - 6, l, 24);
-			y += 26;
-		}
-	}
+	bouton(x + base.l - 76, base.y + 56, 48, 44, '×', reduireDialogue, false, true);
+	textAlign(LEFT, TOP);
+	y += 48;
+	y = bulleDuPlaignant(d, x + 32, y, l);
+	// Répliques : en bas de la fenêtre
+	const rs = reponsesAffichees(d);
+	const hRep = 44 + rs.length * 70;
+	const yr = base.y + base.h - 24 - hRep;
 	if (PLUS.ouvert) {
-		// « En savoir plus » : sources, historique de la ligne, équipes
-		bouton(x + 32, y, 320, 52, t('plus.fermer'), basculerPlus, false, true); // prompt 98 : 44 → 52 px
+		bouton(x + 32, y, 320, 52, t('plus.fermer'), basculerPlus, false, true);
 		textAlign(LEFT, TOP);
-		// Prompt 89 bis : mémoire du dossier — décisions déjà prises aujourd'hui sur cette ligne (journal réel)
-		const mem = typeof Traces !== 'undefined' ? Traces.memoire(d) : [];
-		if (mem.length) {
-			textFont(POLICE_DONNEES);
-			textSize(16);
-			fill(C.gris);
-			text(t('trace.memoireTitre') + ' ' + mem.slice(-3).join(' · '), x + 372, y + 2, l - 340, 44);
-		}
-		corpsEnquete(d, x + 32, y + 60, l, base.y + base.h - 430 - (y + 60)); // prompt 93 : hauteur d'origine (le décalage du prompt 92 coupait l'explication des cartes de réponse)
+		corpsEnquete(d, x + 32, y + 60, l, Math.max(120, yr - 16 - (y + 60)));
 	} else {
-		y = bulleDuPlaignant(d, x + 32, y, l); // prompt 102 : le plaignant (ou la source réelle) parle, le fait réel dessous
-		y = bloc(t('bloc.pourquoi'), pucesImportance(d).map((p) => '• ' + p), x + 32, y, l, C.orange);
-		const sv = savoirs(d);
-		const memo = typeof Traces !== 'undefined' && Traces.option('traceDossier') ? Traces.memoire(d) : []; // option : trace dans le dossier
-		if (memo.length) sv.splice(Math.min(2, sv.length), sv.length, { sur: true, txt: t('trace.memoireTitre') + ' ' + memo[memo.length - 1] });
-		y = bloc(t('bloc.savoir'), sv.map((s) => (s.sur ? '✓ ' : '? ') + s.txt), x + 32, y, l, C.gris);
-		bouton(x + 32, y, 320, 52, t('plus.ouvrir'), basculerPlus, false, true); // prompt 98 : 44 → 52 px
+		bouton(x + 32, y, 320, 52, t('plus.ouvrir'), basculerPlus, false, true);
 		textAlign(LEFT, TOP);
 		cibleGuide('sources', x + 32, y, 320, 52);
-		// Prompt 91 § 3 : à chaque retard (et perturbation, météo, accident), publier l'info sur Community depuis le dossier
-		if (peutPublierDossier(d)) bouton(x + 372, y, 400, 52, '→ ' + t('applis.publier') + ' (B)', () => publierDepuisDossier(d), false, true);
+		if (peutPublierDossier(d)) bouton(x + 372, y, Math.min(400, l - 340), 52, '→ ' + t('applis.publier') + ' (B)', () => publierDepuisDossier(d), false, true);
 		textAlign(LEFT, TOP);
-		y += 56; // bas réel des blocs : le conseil et les cartes ne le chevauchent pas
-	}
-	// Conseil factuel (prompt 23), au-dessus des réponses ; il ne désigne jamais une réponse
-	let yr = base.y + base.h - 360;
-	const conseil = Jeu.conseil ? String(Jeu.conseil(d)) : '';
-	if (conseil) {
-		textFont(POLICE_DONNEES);
-		textSize(16);
-		fill(C.gris);
-		textLeading(22);
-		const yc = PLUS.ouvert ? yr - 62 : Math.max(yr - 62, y);
-		const hc = textWidth(conseil) > l ? 44 : 22;
-		text(conseil, x + 32, yc, l, 50); // deux lignes au plus
-		yr = Math.max(yr, yc + hc + 10);
 	}
 	if (phase === 'contradiction') return dessinerChoixSource(d, x + 32, yr, l);
-	ZONE_DEPOT = { x: x + 16, y: base.y + 60, l: l + 32, h: Math.max(80, yr - 70 - (base.y + 60)) }; // prompt 94 : le dossier, où déposer une carte
-	dessinerCartesReponses(d, x + 32, yr, l, Math.max(290, base.y + base.h - 16 - yr));
-	dessinerGlisser(); // prompt 94 : zone de dépôt, carte flottante, retour, frappe
+	CARTES = []; // prompt 107 : plus de cartes à glisser
+	ZONE_DEPOT = null;
+	dsTexte(t('dialogue.titre'), x + 32, yr, 18, DS.blanc75, 'left');
+	const bloquee = Jeu.actionBloquee ? Jeu.actionBloquee() : null;
+	rs.forEach((r, i) => {
+		const ry = yr + 36 + i * 70;
+		const off = r.cle === bloquee;
+		const survol = !off && mouseX >= x + 32 && mouseX <= x + 32 + l && mouseY >= ry && mouseY <= ry + 62;
+		noStroke();
+		fill(survol ? DS.blanc15 : DS.blanc05);
+		rect(x + 32, ry, l, 62);
+		fill(off ? DS.blanc15 : DS.blanc);
+		rect(x + 32, ry, 44, 62);
+		dsTexte(TOUCHES_REPONSES[i], x + 54, ry + 18, 20, DS.fond, 'center');
+		const rep = tSi('repl.' + r.cle, String(r.lib));
+		dessinerTexte('« ' + rep + ' »', x + 92, ry + 6, l - 76, { taille: 20, couleur: off ? C.gris : C.texte, maxLignes: 2, interligne: 25 });
+		if (!off) boutons.push({ x: x + 32, y: ry, l, h: 62, action: () => decider(r.cle) });
+		if (i === 0) cibleGuide('actions', x + 32, yr + 36, l, rs.length * 70);
+	});
 }
 /** Prompt 102 : bulle de dialogue — la plainte écrite par le groupe (data/messages.json) que les faits réels du
  * dossier déclenchent (Jeu.plaignantPour, sans effet de bord), sinon la source réelle ; dessous, le fait réel. */

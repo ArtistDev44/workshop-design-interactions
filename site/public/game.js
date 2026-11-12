@@ -1551,12 +1551,19 @@
 	};
 	Jeu.RETOUR_EQUIPE_MS = 10000;
 	Jeu.TYPES_EQUIPES = ['police', 'ambulance', 'techniciens', 'pompiers']; // ordre des raccourcis Maj + 1/2/3/4
+	// Prompt 108 : effectif du jour adapté au volume — base + ⌊signalements du jour ÷ 3⌋, plafonné (durées et coûts inchangés)
+	const PLAFONDS_EQUIPES = { police: 4, ambulance: 3, techniciens: 4, pompiers: 3 };
+	Jeu.effectifJour = function (cle) {
+		const j = Jeu.jourCourant ? Jeu.jourCourant() : null;
+		const n = j && j.dossiers ? j.dossiers.length : 0;
+		return Math.min(PLAFONDS_EQUIPES[cle] || 4, REGLAGES.equipes[cle].effectif + Math.floor(n / 3)) + ((Jeu.bonusEffectifs || {})[cle] || 0);
+	};
 	const engagees = (cle, maintenant) => (Jeu.equipes || []).filter((q) => q.cle === cle && !q.inutile && q.jourIndex === Jeu.jourIndex && maintenant < q.libre);
-	Jeu.equipesDisponibles = (cle, maintenant) => Math.max(0, REGLAGES.equipes[cle].effectif + ((Jeu.bonusEffectifs || {})[cle] || 0) - engagees(cle, maintenant).length); // prompt 88 : demande « une équipe de plus » accordée
+	Jeu.equipesDisponibles = (cle, maintenant) => Math.max(0, Jeu.effectifJour(cle) - engagees(cle, maintenant).length); // prompt 88 : demande « une équipe de plus » accordée
 	/** Secondes avant le retour de la première équipe engagée de ce type (0 si une est libre) */
 	Jeu.retourEquipe = (cle, maintenant) => {
 		const e = engagees(cle, maintenant);
-		return e.length < REGLAGES.equipes[cle].effectif + ((Jeu.bonusEffectifs || {})[cle] || 0) ? 0 : Math.ceil((Math.min(...e.map((q) => q.libre)) - maintenant) / 1000);
+		return e.length < Jeu.effectifJour(cle) ? 0 : Math.ceil((Math.min(...e.map((q) => q.libre)) - maintenant) / 1000);
 	};
 	/** Phase d'une équipe engagée : 'route' | 'place' | 'retour' | 'libre' */
 	Jeu.phaseEquipe = (q, maintenant) => (q.inutile || maintenant >= q.libre ? 'libre' : maintenant < q.arrivee ? 'route' : maintenant < q.finIntervention ? 'place' : 'retour');
@@ -1628,7 +1635,7 @@
 		if (!Jeu.elementDebloque('equipes') || !Jeu.messagesPatron) return;
 		if (Jeu.plateauEquipesVisible) return; // prompt 103 : les effectifs sont sur le plateau de la carte (pas de doublon dans la messagerie)
 		const effectifs = {};
-		Jeu.TYPES_EQUIPES.forEach((k) => (effectifs[k] = REGLAGES.equipes[k].effectif));
+		Jeu.TYPES_EQUIPES.forEach((k) => (effectifs[k] = Jeu.effectifJour(k)));
 		Jeu.messagePatron(T('patron.effectifs', { liste: Jeu.TYPES_EQUIPES.map((k) => EQUIPES[k].nom + ' ' + REGLAGES.equipes[k].effectif).join(', ') }), 'equipes', { effectifs });
 	};
 	/** Bilan des équipes de la semaine : envois par type, part pertinente, refus faute d'effectif */
