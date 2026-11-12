@@ -151,8 +151,8 @@ function dessinerFondOS() {
 // ——— Prompt 50 : l'appli Régulation n'est plus en plein écran — fenêtre au-dessus de la barre des tâches ———
 // Elle garde ses coordonnées 1920×1080 : on la dessine réduite (même proportion) et centrée, souris, boutons et
 // cibles du guide étant convertis.
-const FENETRE_APPLI = { k: (H - BARRE_OS - 12) / H, x: 0, y: 6 };
-FENETRE_APPLI.x = (L - L * FENETRE_APPLI.k) / 2;
+// Prompt 105 : l'appli occupe tout l'écran du PC (échelle 1, plus de barre des tâches dessous)
+const FENETRE_APPLI = { k: 1, x: 0, y: 0 };
 let transformAppli = null;
 let sourisAvantAppli = null;
 function entrerFenetreAppli() {

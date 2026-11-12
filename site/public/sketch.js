@@ -228,13 +228,14 @@ function draw() {
 			BANDEAU.survol = null;
 		}
 		if (enPause) dessinerPause();
-		dessinerFermerAppli();
+		// Prompt 105 : plein écran — plus de barre de titre ni de croix (Échap, « Quitter la journée », « Quitter le PC »)
 		sortirFenetreAppli(n0);
-		dessinerBarreTaches();
+		// Prompt 105 : plus de barre des tâches sous l'appli
 	} else dessinerOS();
 	// Prompt 77 : notifications en haut à droite de l'écran du PC ; prompt 80 : appli ou fenêtre ouverte → bandeau compact
 	// dans la barre des tâches (les jauges, le dossier et le contenu des applis ne sont plus masqués)
-	if (PC.etat === 'appli' || (PC.etat === 'os' && PC.fenetre)) dessinerNotificationBarre();
+	if (PC.etat === 'appli' || integree) dessinerNotifications(1556, 140); // prompt 105 : en haut à droite de la carte (plus de barre des tâches)
+	else if (PC.etat === 'os' && PC.fenetre) dessinerNotificationBarre();
 	else if (PC.etat === 'os') dessinerNotifications(L, 16);
 	dessinerIndicateurs(); // prompt 36 : app flottante, au premier plan
 	sourisRestaurer();
