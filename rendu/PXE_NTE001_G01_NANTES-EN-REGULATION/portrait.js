@@ -55,6 +55,7 @@ function scenePortrait() {
 	if (fenetre || tutoriel) return 'fenetre';
 	if (MENU.actif) return 'menu';
 	if (vue === 'poste' && PC.etat === 'appli' && ecran === 'jeu') return 'appli';
+	if (vue === 'poste' && typeof vueIntegree === 'function' && vueIntegree()) return 'vueApp'; // prompt 103 : vue intégrée de l'appli
 	if (vue === 'poste' && PC.etat === 'os' && (PC.fenetre === 'community' || PC.fenetre === 'patron') && ecran === 'jeu') return 'community'; // prompts 85 / 86 : une colonne
 	if (vue === 'bureau' && ecran === 'jeu' && !TRANSITION_JOUR) return 'bureau';
 	return 'plein';
@@ -69,6 +70,12 @@ function composerPortrait() {
 	PORTRAIT.boutons = [];
 	const scene = scenePortrait();
 	if (scene === 'appli') regionsAppli();
+	else if (scene === 'vueApp') {
+		// Prompt 103 : bandeau en haut, contenu de la vue au milieu (défilant), menu en barre d'onglets en bas
+		const hj = region(appliVersImage(BANDEAU), 20, 12, PL - 40);
+		region(appliVersImage(ZONE_VUE), 20, 12 + hj + 8, PL - 40, true);
+		region(appliVersImage(MENU_BAS), 0, PH - 150, PL);
+	}
 	else if (scene === 'community') region(pcVersImage({ x: FENETRE_APP.x, y: FENETRE_APP.y, l: 924, h: FENETRE_APP.h }), 0, 160, PL); // prompt 85 : colonne de 860 px, onglets en bas
 	else if (scene === 'main') region({ x: 880, y: 0, l: 780, h: H }, 0, 200, PL);
 	else if (scene === 'rapport') region({ x: 420, y: 0, l: 1420, h: H }, 0, (PH - (H * PL) / 1420) / 2, PL);
@@ -127,7 +134,9 @@ function regionsAppli() {
 	// Prompt 73 : la liste des signalements en haut (hauteur selon le nombre de signalements), le dossier dessous,
 	// puis la colonne lignes / objectif / équipes
 	const nSig = Math.max(1, Math.min(typeof fileIncidents === 'function' ? fileIncidents().length : 1, 7));
-	y += region(appliVersImage({ x: FILE_SIG.x, y: FILE_SIG.y, l: FILE_SIG.l, h: Math.min(FILE_SIG.h, 130 + nSig * 122) }), 20, y, PL - 40, true) + 16;
+	const zcP = typeof zoneCarte === 'function' ? zoneCarte() : FILE_SIG; // prompt 102 : la carte à la place de la liste
+	y += region(appliVersImage({ x: zcP.x, y: zcP.y, l: zcP.l, h: zcP.h }), 20, y, PL - 40, true) + 16;
+	y += region(appliVersImage(MENU_BAS), 0, y, PL) + 16; // prompt 103 : menu en barre d'onglets
 	const yDossier = y;
 	y += region(appliVersImage(PANNEAU), 20, y, PL - 40, true) + 16;
 	PORTRAIT.defilMax = Math.max(0, y - bas);

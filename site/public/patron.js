@@ -80,8 +80,8 @@ function hauteurCarte(m, l) {
 	if (c && c.cle === cle) return c.h;
 	textFont(DS.policeTexte);
 	textSize(20);
-	const n = Math.max(1, Math.ceil((textWidth(String(m.texte)) * 1.06) / (l - 70)));
-	const bloc = blocDeplie(m) ? { consigne: 56, alerte: 44, conseil: 44, reproche: 60, budget: 44, equipes: 40, info: 0 }[typeDe(m)] || 0 : 32;
+	const n = Math.max(1, couperLignes(String(m.texte), l - 70, DS.policeTexte, 20).length); // prompt 101 b : vraie coupure (plus de ligne vide)
+	const bloc = typeDe(m) === 'reproche' && (m.meta || {}).index !== undefined ? 32 : blocDeplie(m) ? { consigne: 56, alerte: 44, conseil: 44, reproche: 60, budget: 44, equipes: 40, info: 0 }[typeDe(m)] || 0 : 32;
 	const h = 46 + n * 28 + (bloc ? bloc + 8 : 0) + 18 + (m.reponse ? 56 : 0);
 	PATRON.hauteurs.set(m, { cle, h });
 	return h;
@@ -100,11 +100,11 @@ function appPatron(z) {
 	// En-tête de conversation (88 px) : avatar, nom, rôle, statut ; filtres à droite
 	avatarPatron(z.x, z.y, 64);
 	dsTexte(t('mail.de'), z.x + 80, z.y + 4, 20, DS.blanc, 'left');
-	dsTexte(t('patron.role'), z.x + 80, z.y + 32, 18, DS.blanc50, 'left');
+	// Prompt 101 b : le rôle (« Direction de la salle de régulation ») répétait le nom ; le statut remonte d'une ligne
 	noStroke();
 	fill(panne ? DS.erreur : DS.succes);
-	rect(z.x + 80, z.y + 62, 12, 12);
-	dsTexte(t(panne ? 'patron.statut.horsLigne' : 'patron.statut.enLigne'), z.x + 100, z.y + 58, 18, panne ? DS.erreurClair : DS.succesClair, 'left');
+	rect(z.x + 80, z.y + 40, 12, 12);
+	dsTexte(t(panne ? 'patron.statut.horsLigne' : 'patron.statut.enLigne'), z.x + 100, z.y + 36, 18, panne ? DS.erreurClair : DS.blanc50, 'left');
 	let fx = z.x + l;
 	FILTRES_PATRON.slice()
 		.reverse()
@@ -162,8 +162,26 @@ function appPatron(z) {
 	let yy = zf.y - PATRON.defil;
 	let jour = null;
 	let prec = null;
+	// Prompt 101 b : un même message répété le même jour (même type, même texte) n'est montré qu'une fois, avec « ×N »
+	const repetes = new Map();
+	liste.forEach((m) => {
+		const k = typeDe(m) + '|' + m.jour + '|' + String(m.texte);
+		const r = repetes.get(k);
+		if (r) r.n++, (m._doublon = r.m !== m), (m._rep = r.m);
+		else repetes.set(k, { m, n: 1 }), (m._doublon = false), (m._rep = m);
+	});
+	PATRON.repetes = new Map([...repetes.values()].map((r) => [r.m, r.n]));
 	liste.forEach((m) => {
 		if (m === cachee) return;
+		if (consigne && m === consigne) {
+			// prompt 103 : la consigne du jour est déjà épinglée en haut — pas de seconde carte identique
+			if (!m.lu && !panne) (m.lu = true), (m.luA = Jeu.horloge ? Jeu.formaterHeure(Jeu.horloge.minutes) : '');
+			return;
+		}
+		if (m._doublon) {
+			if (!m.lu && !panne) (m.lu = true), (m.luA = Jeu.horloge ? Jeu.formaterHeure(Jeu.horloge.minutes) : ''); // compté dans la carte « ×N »
+			return;
+		}
 		if (m.jour && m.jour !== jour) {
 			jour = m.jour;
 			yy += separateurJour(m.jour, zf.x, yy, l);
@@ -184,7 +202,7 @@ function appPatron(z) {
 		const groupe = prec && typeDe(prec) === typeDe(m) && prec.jour === m.jour && Math.abs(minutesDe(m.heure) - minutesDe(prec.heure)) < 30;
 		const h = hauteurCarte(m, l) - (groupe ? 0 : 0);
 		if (yy + h >= zf.y && yy <= zf.y + zf.h) carteMessage(m, zf.x, yy, l, groupe, panne); // seulement les cartes visibles
-		yy += h + 10;
+		yy += h + 16; // prompt 101 b : plus d'air entre les messages
 		prec = m;
 	});
 	if (cachee) {
@@ -215,7 +233,7 @@ function appPatron(z) {
 		fill(DS.blanc75);
 		rect(zf.x + l + 4, zf.y + ((zf.h - hb) * PATRON.defil) / PATRON.max, 4, hb);
 	}
-	barreReponses(dernier && dernier !== cachee ? dernier : null, z.x, z.y + z.h - 56, l, panne);
+	barreReponses(dernier && dernier !== cachee ? dernier._rep || dernier : null, z.x, z.y + z.h - 56, l, panne);
 }
 const minutesDe = (h) => {
 	const m = String(h || '').match(/(\d+)\D(\d+)/);
@@ -242,11 +260,7 @@ function carteMessage(m, x, y, l, groupe, panne) {
 	noStroke();
 	fill(m.important ? 'rgba(212,3,28,0.16)' : DS.blanc05);
 	rect(x + dx, y, l - (m.reponse ? 0 : 0), h - (m.reponse ? 56 : 0));
-	stroke(DS.blanc15);
-	strokeWeight(2);
-	noFill();
-	rect(x + dx + 1, y + 1, l - 2, h - 2 - (m.reponse ? 56 : 0));
-	noStroke();
+	noStroke(); // prompt 101 b : fond seul, sans second cadre
 	zoneTexteDeclarer('carteMessage', x + dx, y, l, h); // prompt 93
 	fill(c);
 	rect(x + dx, y, 4, h - (m.reponse ? 56 : 0));
@@ -254,13 +268,14 @@ function carteMessage(m, x, y, l, groupe, panne) {
 		fill(DS.primaire);
 		circle(x + dx - 10, y + 22, 10); // non lu
 	}
-	picto(type, x + dx + 16, y + 12, c);
-	dsTexte(t('patron.type.' + type).toUpperCase() + (m.enRetard ? ' · ' + t('patron.retard') : ''), x + dx + 52, y + 14, 18, c, 'left');
+	picto(type, x + dx + 16, y + 12, DS.blanc75);
+	const nRep = (PATRON.repetes && PATRON.repetes.get(m)) || 1;
+	dsTexte(t('patron.type.' + type).toUpperCase() + (nRep > 1 ? ' ×' + nRep : '') + (m.enRetard ? ' · ' + t('patron.retard') : ''), x + dx + 52, y + 14, 18, DS.blanc50, 'left'); // prompt 101 b : le rouge reste sur la barre de type
 	if (!groupe) dsTexte(m.heure, x + dx + l - 14, y + 14, 18, DS.blanc50, 'right');
 	dsTexte(String(m.texte), x + dx + 18, y + 44, 20, m.lu ? DS.blanc75 : DS.blanc, 'left', l - 70);
 	textFont(DS.policeTexte);
 	textSize(20);
-	const yb = y + 44 + Math.max(1, Math.ceil((textWidth(String(m.texte)) * 1.06) / (l - 70))) * 28 + 6;
+	const yb = y + 44 + Math.max(1, couperLignes(String(m.texte), l - 70, DS.policeTexte, 20).length) * 28 + 6;
 	blocEnrichi(m, x + dx + 18, yb, l - 36, panne);
 	if (m.reponse) {
 		// Réponse du joueur : bulle à droite, accusé « Vu ✓ »
@@ -282,6 +297,15 @@ function carteMessage(m, x, y, l, groupe, panne) {
 function blocEnrichi(m, x, y, l, panne) {
 	const me = m.meta || {};
 	const type = typeDe(m);
+	if (type === 'reproche' && me.index !== undefined) {
+		// Prompt 101 b : « Dossier lié : action » et le rappel répétaient le message ; une seule ligne, un seul geste
+		const lib = (me.ligne ? t('sujet.ligne', { ligne: me.ligne }) + ' · ' : '') + t('patron.voirDossier') + '  ›';
+		textFont(DS.policeTexte);
+		textSize(18);
+		dsTexte(lib, x, y + 4, 18, DS.blanc75, 'left');
+		if (!panne) boutons.push({ x, y: y - 8, l: Math.min(l, textWidth(lib) + 16), h: 44, action: () => voirDossier(me) });
+		return;
+	}
 	if (!blocDeplie(m)) {
 		// Prompt 101 : une ligne en texte secondaire, dépliée au clic (ou V : tout déplier)
 		const lib = (type === 'reproche' && me.index !== undefined ? t('patron.dossierLie', { r: [me.ligne ? t('sujet.ligne', { ligne: me.ligne }) : '', me.action ? String(Jeu.libelleAction(me.action)) : ''].filter(Boolean).join(' · ') }) : t('journal.details')) + '  ›';

@@ -29,7 +29,7 @@ function glisserPossible() {
 /** Appui : une carte de réponse est saisie (true si l'appui est pris) */
 function debutGlisser() {
 	if (!glisserPossible() || GLISSER.carte) return false;
-	const p = sourisPC();
+	const p = typeof sourisAppli === 'function' ? sourisAppli() : sourisPC(); // prompt 102 : repère de l'appli (fenêtre réduite)
 	const c = CARTES.find((k) => dansRect(p, k));
 	if (!c) return false;
 	Object.assign(GLISSER, { carte: c, x: c.x, y: c.y, dx: p.x - c.x, dy: p.y - c.y, x0: p.x, y0: p.y, vx: 0, ang: 0, retour: null });
@@ -39,7 +39,7 @@ function debutGlisser() {
 function relacherGlisser() {
 	const c = GLISSER.carte;
 	if (!c) return false;
-	const p = sourisPC();
+	const p = typeof sourisAppli === 'function' ? sourisAppli() : sourisPC();
 	GLISSER.carte = null;
 	const deplace = Math.hypot(p.x - GLISSER.x0, p.y - GLISSER.y0);
 	if (deplace < SEUIL_CLIC_PX) {

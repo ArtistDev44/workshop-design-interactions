@@ -104,9 +104,9 @@ function couleurGravite(g) {
 }
 
 // ——— Onglets du panneau incident (dessinés par enquete.js au-dessus des sources) ———
-const ONGLETS_INCIDENT = ['enquete', 'historique', 'equipes'];
+const ONGLETS_INCIDENT = ['enquete', 'historique']; // prompt 102 : les équipes sont sur le plateau de la carte (plus d'onglet en double)
 function dessinerOngletsIncident(x, y, l) {
-	const lb = (l - 2 * 10) / 3;
+	const lb = (l - (ONGLETS_INCIDENT.length - 1) * 10) / ONGLETS_INCIDENT.length;
 	ONGLETS_INCIDENT.forEach((o, i) => bouton(x + i * (lb + 10), y, lb, 52, t('carte.onglet.' + o), () => (SELECTION.onglet = o), false, SELECTION.onglet !== o));
 	textAlign(LEFT, TOP);
 }

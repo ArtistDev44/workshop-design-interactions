@@ -88,9 +88,7 @@ function appJournal(z) {
 	barreJours(z);
 	if (JOURNAL.vue === 'semaine') vueSemaine(z);
 	else vueJour(z);
-	// Copier le résumé du jour (pied de fenêtre, à gauche du bouton Fermer)
-	const f = FENETRE_APP;
-	dsBouton(f.x + 24, f.y + f.h - 80, 400, 56, t(millis() - JOURNAL.copie < 2500 ? 'journal.copie' : 'journal.copier') + ' (C)', copierResumeJour, 'contour');
+	// Prompt 101 b : « Copier le résumé » n'est plus un bouton de pied permanent : il apparaît avec les Détails (touche C partout)
 }
 
 // ——— 1. Barre des journées ———
@@ -125,7 +123,7 @@ function barreJours(z) {
 	});
 	const xs = z.x + z.l - 380;
 	dsBouton(xs, z.y - 6, 150, 48, t('journal.vue.jour'), () => choisirVueJournal('jour'), JOURNAL.vue === 'jour' ? 'secondaire' : 'contour'); // prompt 101 : vue active en blanc, le rouge reste rare
-	dsBouton(xs + 160, z.y - 6, 220, 48, t('journal.vue.semaine') + ' (S)', () => choisirVueJournal('semaine'), JOURNAL.vue === 'semaine' ? 'secondaire' : 'contour');
+	dsBouton(xs + 160, z.y - 6, 220, 48, t('journal.vue.semaine'), () => choisirVueJournal('semaine'), JOURNAL.vue === 'semaine' ? 'secondaire' : 'contour');
 }
 
 // ——— 2. Tuiles ———
@@ -160,17 +158,24 @@ function vueJour(z) {
 	if (!tu) return;
 	// Prompt 101 : à l'ouverture, UNE ligne de chiffres ; les tuiles (sparklines, détail des équipes…) au clic sur
 	// « Détails » ou touche V — rien n'est retiré, seulement replié
-	const yr = z.y + 64;
+	const yr = z.y + 84; // prompt 101 b : 24 px d'air sous la barre des jours
 	const s0 = tu.signalements;
-	const jg = DS_JAUGES.map(([cle, court]) => court + ' ' + (tu.jauges.fin ? tu.jauges.fin[cle] : '—') + (tu.jauges.ecart[cle] !== undefined ? ' (' + sgn(tu.jauges.ecart[cle]) + ')' : '')).join('  ');
+	// Prompt 101 b : seulement l'écart du jour — les valeurs des jauges sont déjà dans la barre des tâches
+	const jg = DS_JAUGES.filter(([cle]) => tu.jauges.ecart[cle] !== undefined).map(([cle, court]) => court + ' ' + sgn(tu.jauges.ecart[cle])).join('  ');
 	const o0 = tu.objectif;
-	const morceaux = [t('journal.tuile.signalements') + ' ' + s0.traites + '/' + s0.recus, t('journal.tuile.bonnes') + ' ' + tu.bonnes.n + '/' + tu.bonnes.total, jg];
+	const morceaux = [t('journal.tuile.signalements') + ' ' + s0.traites + '/' + s0.recus, t('journal.tuile.bonnes') + ' ' + tu.bonnes.n + '/' + tu.bonnes.total];
+	if (jg) morceaux.push(jg);
 	if (o0) morceaux.push(t('journal.tuile.objectif') + ' ' + (o0.enCours ? '• ' + t('journal.enCours') : (o0.atteint ? '✓ ' : '✗ ') + t(o0.atteint ? 'journal.atteint' : 'journal.rate')));
 	if (tu.avertissements) morceaux.push(tu.avertissements + ' ' + t('journal.tuile.avertissements'));
-	dsTexte(court(morceaux.join(' · '), 118), z.x, yr, 16, DS.blanc, 'left');
-	dsBouton(z.x + z.l - 210, yr - 12, 210, 44, t(JOURNAL.details ? 'journal.detailsMasquer' : 'journal.details') + ' (V)', basculerDetailsJournal, 'fantome');
-	const y0 = yr + 48;
-	if (!JOURNAL.details) return filtresEtFrise(z, y0);
+	// Prompt 101 b : une seule rangée sous les jours — [filtre] résumé (ou Copier, détails ouverts) … [Détails]
+	const lf = filtreJournal(z, yr - 12);
+	const xr = z.x + lf + 24;
+	const lr = z.l - lf - 24 - 210 - 24;
+	if (JOURNAL.details) dsBouton(xr, yr - 12, Math.min(lr, 380), 44, t(millis() - JOURNAL.copie < 2500 ? 'journal.copie' : 'journal.copier'), copierResumeJour, 'fantome');
+	else dsTexte(couperLargeur(morceaux.join(' · '), lr, 16), xr, yr, 16, DS.blanc75, 'left');
+	dsBouton(z.x + z.l - 210, yr - 12, 210, 44, t(JOURNAL.details ? 'journal.detailsMasquer' : 'journal.details'), basculerDetailsJournal, 'fantome');
+	const y0 = yr + 56;
+	if (!JOURNAL.details) return frise(z, y0);
 	const liste = ['signalements', 'bonnes', 'jauges', 'objectif', 'equipes'];
 	if (tu.theme) liste.push('theme');
 	if (tu.avertissements) liste.push('patron');
@@ -223,7 +228,16 @@ function vueJour(z) {
 		}
 		x += l + 12;
 	});
-	filtresEtFrise(z, y0 + h + 16);
+	frise(z, y0 + h + 24);
+}
+/** Coupe un texte à une largeur (police du texte), avec « … » */
+function couperLargeur(txt, l, taille) {
+	textFont(DS.policeTexte);
+	textSize(taille);
+	if (textWidth(txt) <= l) return txt;
+	let c = txt;
+	while (c.length > 4 && textWidth(c + '…') > l) c = c.slice(0, -1);
+	return c.trimEnd() + '…';
 }
 function basculerDetailsJournal() {
 	JOURNAL.details = !JOURNAL.details;
@@ -231,19 +245,24 @@ function basculerDetailsJournal() {
 	annoncer(t(JOURNAL.details ? 'journal.details' : 'journal.detailsMasquer'));
 }
 // 4. Filtres : UN sélecteur (clic = filtre suivant, flèches en zone filtres) ; seul le filtre actif porte son compteur
-function filtresEtFrise(z, yf) {
+// Prompt 101 b : il rejoint la rangée de résumé (une ligne de commandes en moins) ; renvoie sa largeur
+function filtreJournal(z, yf) {
 	const cpt = JournalDonnees.compteurs(JOURNAL.jour);
 	const F = JournalDonnees.FILTRES;
 	const suivant = () => choisirFiltreJournal(F[(F.indexOf(JOURNAL.filtre) + 1) % F.length]);
-	dsBouton(z.x, yf, 380, 44, t('journal.filtreActif', { nom: t('journal.filtre.' + JOURNAL.filtre), n: cpt[JOURNAL.filtre] }), suivant, 'contour');
+	const lib = t('journal.filtreActif', { nom: t('journal.filtre.' + JOURNAL.filtre), n: cpt[JOURNAL.filtre] });
+	textFont(DS.policeTexte);
+	textSize(18);
+	const lf = Math.max(240, Math.ceil(textWidth(lib)) + 72);
+	dsBouton(z.x, yf, lf, 44, lib, suivant, 'contour');
 	if (JOURNAL.zone === 1) {
 		noFill();
 		stroke(DS.blanc);
 		strokeWeight(2);
-		rect(z.x - 6, yf - 6, 392, 56);
+		rect(z.x - 6, yf - 6, lf + 12, 56);
 		noStroke();
 	}
-	frise(z, yf + 60);
+	return lf;
 }
 const DS_JAUGES = [
 	['fluidite', 'F', '#7FB2FF'],
@@ -269,7 +288,7 @@ function frise(z, y0) {
 		return;
 	}
 	const hs = liste.map(hauteurCarteJournal);
-	const total = hs.reduce((a, b) => a + b + 12, 0);
+	const total = hs.reduce((a, b) => a + b + 16, 0); // prompt 101 b : 16 px entre cartes
 	JOURNAL.defilMax = Math.max(0, total - hz);
 	JOURNAL.defil = constrain(JOURNAL.defil, 0, JOURNAL.defilMax);
 	JOURNAL.focus = constrain(JOURNAL.focus, 0, Math.max(0, liste.length - 1));
@@ -297,7 +316,7 @@ function frise(z, y0) {
 			fill(DS.blanc50);
 			rect(z.x + 62, y + 14, 9, 9);
 		}
-		y += h + 12;
+		y += h + 16;
 	});
 	zoneTexteFin();
 	drawingContext.restore();
@@ -407,7 +426,7 @@ function carteNote(c, x, y, l, focus) {
 	cadreCarte(x, y, l, 84, focus, DS.blanc50);
 	dsTexte(t('journal.noteTitre'), x + 20, y + 8, 14, DS.blanc75, 'left');
 	dsTexte(c.texte ? court(c.texte.replace(/\s+/g, ' '), 120) : t('journal.noteVide'), x + 20, y + 32, 16, c.texte ? DS.blanc : DS.blanc50, 'left', l - 300);
-	dsBouton(x + l - 260, y + 20, 246, 44, t('journal.ecrireNote') + ' (J)', ouvrirCarnet, 'contour');
+	dsBouton(x + l - 300, y + 20, 286, 44, t('journal.ecrireNote') + ' (J)', ouvrirCarnet, 'contour'); // prompt 103 : 20 px rendus dans l'appli
 }
 function ouvrirAppPC(nom) {
 	if (typeof ouvrirFenetreApp === 'function') ouvrirFenetreApp(nom);
@@ -440,15 +459,16 @@ function vueSemaine(z) {
 	const lc = (z.l - (n - 1) * 10) / n;
 	s.colonnes.forEach((c) => {
 		const x = z.x + c.i * (lc + 10);
-		tuileFond(x, y0, lc, 160, nomJour(c.i) + ' · ' + dateCourte(c.date));
+		// prompt 103 : vue intégrée = texte rendu à 20 px au moins → lignes espacées de 26 px
+		tuileFond(x, y0, lc, 172, nomJour(c.i) + ' · ' + dateCourte(c.date));
 		if (c.theme) dsTexte(t('theme.' + c.theme), x + 12, y0 + 32, 14, DS.blanc75, 'left', lc - 24);
-		dsTexte(t('journal.sem.signalements', { n: c.signalements }), x + 12, y0 + 54, 14, DS.blanc, 'left', lc - 24);
-		dsTexte(t('journal.sem.bons', { n: c.bons, total: c.total }), x + 12, y0 + 74, 14, DS.blanc, 'left', lc - 24);
-		dsTexte(c.objectif ? (c.objectif.enCours ? '• ' + t('journal.enCours') : (c.objectif.atteint ? '✓ ' : '✗ ') + t(c.objectif.atteint ? 'journal.atteint' : 'journal.rate')) : '—', x + 12, y0 + 94, 14, c.objectif && !c.objectif.enCours ? (c.objectif.atteint ? DS.succesClair : DS.erreurClair) : DS.blanc75, 'left');
+		dsTexte(t('journal.sem.signalements', { n: c.signalements }), x + 12, y0 + 58, 14, DS.blanc, 'left', lc - 24);
+		dsTexte(t('journal.sem.bons', { n: c.bons, total: c.total }), x + 12, y0 + 84, 14, DS.blanc, 'left', lc - 24);
+		dsTexte(c.objectif ? (c.objectif.enCours ? '• ' + t('journal.enCours') : (c.objectif.atteint ? '✓ ' : '✗ ') + t(c.objectif.atteint ? 'journal.atteint' : 'journal.rate')) : '—', x + 12, y0 + 110, 14, c.objectif && !c.objectif.enCours ? (c.objectif.atteint ? DS.succesClair : DS.erreurClair) : DS.blanc75, 'left');
 		// Jauges de fin de journée : les chiffres seuls (prompt 101 : les barres doublaient ces chiffres ; la courbe
 		// de la semaine, en dessous, garde l'évolution visuelle)
-		if (c.fin) dsTexte(DS_JAUGES.map(([k, lettre]) => lettre + ' ' + c.fin[k]).join('  '), x + 12, y0 + 124, 14, DS.blanc75, 'left', lc - 24);
-		boutons.push({ x, y: y0, l: lc, h: 160, action: () => choisirJourJournal(c.i) });
+		if (c.fin) dsTexte(DS_JAUGES.map(([k, lettre]) => lettre + ' ' + c.fin[k]).join('  '), x + 12, y0 + 138, 14, DS.blanc75, 'left', lc - 24);
+		boutons.push({ x, y: y0, l: lc, h: 172, action: () => choisirJourJournal(c.i) });
 	});
 	(Jeu.jours || []).forEach((j, i) => {
 		if (i <= Jeu.jourIndex) return;
@@ -458,10 +478,10 @@ function vueSemaine(z) {
 		dsTexte(t('journal.aVenir'), x + 12, y0 + 54, 14, DS.blanc50, 'left', lc - 24);
 	});
 	// Courbe de la semaine : 3 jauges + score (0–300), seuils des fins 150 et 240 en pointillés
-	const yc = y0 + 178;
+	const yc = y0 + 190;
 	const hc = 140;
 	const lc2 = z.l * 0.55;
-	tuileFond(z.x, yc, lc2, hc + 96, t('journal.courbeSemaine'));
+	tuileFond(z.x, yc, lc2, hc + 108, t('journal.courbeSemaine'));
 	const gx = z.x + 60;
 	const gl = lc2 - 100; // prompt 93 : 80 → 100, l'étiquette du seuil (« 150 ») sortait de la tuile
 	const gy = yc + 34;
@@ -493,7 +513,7 @@ function vueSemaine(z) {
 	// Décisions clés et carnet de la semaine
 	const xd = z.x + lc2 + 16;
 	const ld = z.l - lc2 - 16;
-	tuileFond(xd, yc, ld, hc + 96, t('journal.decisionsCles'));
+	tuileFond(xd, yc, ld, hc + 108, t('journal.decisionsCles'));
 	let yy = yc + 34;
 	if (!s.decisionsCles.length) dsTexte(nonRenseigne(), xd + 12, yy, 15, DS.blanc50, 'left');
 	s.decisionsCles.forEach((d) => {
@@ -745,7 +765,7 @@ function toucheJournal() {
 		JOURNAL.focus = constrain(JOURNAL.focus + (keyCode === DOWN_ARROW ? 1 : -1), 0, Math.max(0, liste.length - 1));
 		// Défilement pour garder la carte visible
 		const hs = liste.map(hauteurCarteJournal);
-		const haut = hs.slice(0, JOURNAL.focus).reduce((a, b) => a + b + 12, 0);
+		const haut = hs.slice(0, JOURNAL.focus).reduce((a, b) => a + b + 16, 0);
 		JOURNAL.defil = constrain(haut - 120, 0, JOURNAL.defilMax);
 		const c = liste[JOURNAL.focus];
 		if (c) annoncer(texteCarte(c));

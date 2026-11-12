@@ -193,6 +193,7 @@ function draw() {
 	majRythme(); // prompt 74 : événements de rythme à heures fixes
 	majExplicationPoste(); // prompt 74 : explication du poste à la première ouverture de l'écran de jeu
 	majSoir(); // prompt 69 : crépuscule accéléré, sortie du bureau
+	if (typeof majProgressionBureau === 'function') majProgressionBureau(); // prompt 104 : nouvel objet sur le bureau (annonce, une fois)
 	majDemarrageJour(); // prompt 71 : démarrage du PC en début de journée (jours 1 à 3)
 	avancerTemps(); // horloge simulée, sieste, arrivée des incidents, fin de journée (immersion.js)
 	if (Jeu.equipes) Jeu.majEquipes((typeof tempsEquipes === 'function' ? tempsEquipes() : millis())); // prompt 95 : temps de jeu // équipes envoyées depuis les signalements (prompts 22, 68)
@@ -203,7 +204,8 @@ function draw() {
 	espaceDessin = 'pc';
 	sourisVersEcran();
 	background(C.fond);
-	if (PC.etat === 'appli') {
+	const integree = typeof vueIntegree === 'function' && vueIntegree(); // prompt 103 : Patron, Community, Journal, Données = vues de l'appli
+	if (PC.etat === 'appli' || integree) {
 		// Prompt 50 : l'appli est une fenêtre de RégulOS, la barre des tâches reste visible
 		dessinerFondOS();
 		const n0 = entrerFenetreAppli();
@@ -211,8 +213,13 @@ function draw() {
 		fill(C.fond);
 		rect(0, 0, L, H);
 		if (ecran === 'accueil') dessinerAppliSansPartie(); // prompt 35 : l'accueil est sorti du PC (menu principal)
-		else {
+		else if (integree) {
+			dessinerBandeau();
+			dessinerVueApp();
+			dessinerMenuApp();
+		} else {
 			dessinerJeu();
+			dessinerMenuApp(); // prompt 103
 			bandeauEtat(); // prompt 43
 			indicateurSauvegarde(); // prompt 33
 			// Prompt 93 : ligne complète du bandeau ; prompt 98 : infobulle après 350 ms de survol (validations : tooltip-no-delay)
@@ -467,7 +474,7 @@ function texteResteJournee() {
 function indicateurSauvegarde() {
 	const r = texteResteJournee();
 	const messageFile = SELECTION.message && millis() - SELECTION.message.t < 5000; // le message de la file (bas) a la priorité
-	if (r && phase !== 'fin' && !messageFile) dessinerTexte(r, FILE_SIG.x + 16, FILE_SIG.y + FILE_SIG.h - 62, FILE_SIG.l - 32, { police: POLICE_DONNEES, taille: 18, couleur: C.texte, maxLignes: 1, interligne: 24 });
+	// Prompt 102 : « reste de la journée » dans la ligne d'état de la carte (carte-alertes.js) ; plus de doublon ici
 	const s = Sauvegarde.texteIndicateur();
 	if (!s) return;
 	textFont(POLICE_DONNEES);
@@ -475,7 +482,9 @@ function indicateurSauvegarde() {
 	textAlign(RIGHT, BOTTOM);
 	noStroke();
 	fill(C.gris);
-	text(s, FILE_SIG.x + FILE_SIG.l - 16, FILE_SIG.y + FILE_SIG.h - 6); // prompt 89 bis : en bas à droite de la liste (ne chevauche plus le titre)
+	const zc = typeof CARTE !== 'undefined' && CARTE.zone ? CARTE.zone : FILE_SIG;
+	if (zc.l < 900) return; // carte resserrée (dossier ouvert) : la case « Lieu à préciser » occupe le bas, l'indicateur se tait
+	text(s, zc.x + zc.l - 16, zc.y + zc.h - H_PLATEAU - 20); // prompt 102 : en bas à droite de la carte, au-dessus du plateau des équipes
 }
 
 function dessinerJeu() {
@@ -485,8 +494,8 @@ function dessinerJeu() {
 	const meteo = d ? Jeu.meteoDuJour(d.date) : null;
 	// Prompt 87 : bandeau fin (jauges, objectif, équipes, heure), liste des signalements, panneau du signalement ouvert
 	dessinerBandeau();
-	dessinerFileSignalements(FILE_SIG); // prompt 73
-	if (phase === 'selection') dessinerSelection();
+	dessinerCarteAlertes(); // prompt 102 : la carte des alertes réelles remplace la liste (prompt 73)
+	if (phase === 'selection') return; // prompt 102 : cliquer un marqueur prend le signalement (plus d'étape « Prendre »)
 	else if (phase === 'narration') dessinerNarration();
 	else if (phase === 'conflit') dessinerConflit();
 	else dessinerDossier(d, meteo);
@@ -495,9 +504,9 @@ function dessinerJeu() {
 /* Écran de jeu sans incident actif : bandeau, liste des signalements, horloge simulée à droite ; mail en fin de journée */
 function dessinerJeuAttente() {
 	dessinerBandeau();
-	dessinerFileSignalements(FILE_SIG); // prompt 73
-	dessinerAttente();
-	if (phase === 'mail') dessinerMail();
+	dessinerCarteAlertes(); // prompt 102 : carte pleine largeur entre deux signalements
+	if (phase === 'mail') dessinerAttente(), dessinerMail(); // fin de journée : panneau du mail inchangé
+	else if (enSieste) dessinerAttente(); // sieste : le panneau d'attente dit qu'on dort
 }
 
 
@@ -1074,6 +1083,7 @@ function mousePressed() {
 	if (arreterDemo()) return; // prompt 48
 	Confort.Son.demarrer();
 	interaction();
+	if (typeof debutJeton === 'function' && debutJeton()) return; // prompt 102 : jeton d'équipe saisi (glisser-déposer)
 	if (typeof debutGlisser === 'function' && debutGlisser()) return; // prompt 94 : une carte de réponse est saisie (clic ou glisser-déposer)
 	for (let i = boutons.length - 1; i >= 0; i--) {
 		const b = boutons[i];
@@ -1124,6 +1134,7 @@ function keyPressed() {
 	if (key === 'l' || key === 'L') return Langue.suivante(), false;
 	// Prompt 47 : inspection, démission, palmarès ; J = journal de bord, D = rendre son badge
 	if (toucheDeblocage() || toucheTelephone() || toucheTaches() || toucheMecaniques() || toucheAccessibilite() || toucheJournee()) return false; // prompts 47, 48 et 51
+	if (typeof toucheCarte === 'function' && toucheCarte()) return false; // prompt 102 : Échap annule un jeton d'équipe choisi
 	// Fenêtres ouvertes : elles captent le clavier
 	if (fenetre) {
 		if (keyCode === ESCAPE || (fenetre === 'aide' && (key === 'h' || key === 'H' || key === '?'))) return fermer(), false;
@@ -1198,6 +1209,8 @@ function keyPressed() {
 			return false;
 		}
 		// Prompt 28 : plainte en attente dans l'app Community — Tab parcourt les réponses, Entrée / 1-2-3 répond
+		// Prompt 103 : le menu a le focus (Tab) → Entrée ouvre l'entrée choisie avant les raccourcis de la vue
+		if (typeof MENU_FOCUS !== 'undefined' && MENU_FOCUS.actif && (keyCode === ENTER || keyCode === RETURN || key === ' ') && vueIntegree()) return (MENU_FOCUS.actif = false), ouvrirEntreeMenu(ICONES_OS[PC.selection].cle), false;
 		if (ecran === 'jeu' && toucheCommunity()) return false; // prompt 85 : onglets, défilement, publication
 		if (ecran === 'jeu' && touchePatron()) return false; // prompt 86 : filtres, défilement, réponses rapides
 		const plainte = PC.fenetre === 'community' && ecran === 'jeu' ? cibleCommunity() : null;
@@ -1214,8 +1227,9 @@ function keyPressed() {
 		if (keyCode === TAB) {
 			// Prompt 26 : le cycle Tab passe par les icônes, le bouton « Quitter le PC », puis (prompt 75) le logo
 			// en bas à gauche de la barre des tâches (accueil de RégulOS)
-			const n = ICONES_OS.length;
+			const n = ecran === 'jeu' && !(typeof vueIntegree === 'function' && vueIntegree()) ? 1 : ICONES_OS.length; // prompt 103 : bureau = une icône ; dans l'appli, Tab parcourt le menu
 			const recul = keyIsDown(SHIFT);
+			if (typeof MENU_FOCUS !== 'undefined') MENU_FOCUS.actif = typeof vueIntegree === 'function' && vueIntegree(); // prompt 103
 			if (focusQuitter) {
 				basculerFocusQuitter(false);
 				if (recul) PC.selection = n - 1;

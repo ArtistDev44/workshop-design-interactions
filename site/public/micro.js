@@ -26,7 +26,7 @@ const MICRO = {
 	prochainGrain: 0,
 };
 const MICRO_APPUI_MS = 250;
-const microActive = () => Confort.Reglages.micro !== false;
+const microActive = () => Confort.Reglages.micro !== false && (typeof objetPresent !== 'function' || objetPresent('micro')); // prompt 104 : pas de micro avant qu'il soit posé
 
 // ——— Touche M : brève = son (comme avant), maintenue = micro ———
 function toucheMEnfoncee() {
@@ -51,6 +51,7 @@ function keyReleased() {
 	if (key === 'm' || key === 'M') toucheMRelachee();
 }
 function mouseReleased() {
+	if (typeof relacherJeton === 'function' && relacherJeton()) return; // prompt 102 : dépôt d'un jeton d'équipe
 	if (typeof relacherGlisser === 'function') relacherGlisser(); // prompt 94 : dépôt d'une carte (ou clic)
 	if (MICRO.ouvert && MICRO.par === 'clic') arreterMicro();
 }
