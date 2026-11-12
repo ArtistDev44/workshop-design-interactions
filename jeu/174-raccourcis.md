@@ -50,8 +50,8 @@ chaque touche qu'il cite est lue par le code et qu'aucune clé `aide.k.*` n'est 
 | Poste | I · V · H / ? · M · Z · Q · D | Indicateurs · détails des Indicateurs · aide · son · sieste · quitter la journée · démission | « Détails (V) » |
 | Poste, fin de semaine | Entrée · Échap / Retour arrière | Rejouer · accueil | « Rejouer (Entrée) » |
 | Appli Mails (prompt 185) | Tab · ← → · ↑ ↓ · Entrée · Échap · V · 1–n | Zones (dossiers, liste, lecture) · dossiers · mails / défiler · ouvrir · retour à la liste (zone étroite) · tout déplier · réponses rapides | — |
-| Appli Community | ← → · ↑ ↓ · Tab · Entrée / Espace · 1–n | Onglets · défiler · réponses · répondre / publier | « Publier (Entrée) » |
-| Appli Journal | Tab · ← → · ↑ ↓ · Entrée · V · C · Échap | Zones · jour / filtre · cartes · enquête · détails · copier le résumé · retour | C **à retirer au prompt 186** |
+| Appli Community | ← → · ↑ ↓ · Tab · Entrée / Espace · 1–n | Onglets · défiler · réponses · répondre / publier | « Publier (Entrée) » ; bascule cartes / liste (prompt 186) : bouton à icône seulement, sans touche |
+| Appli Journal | Tab · ← → · ↑ ↓ · Entrée · Échap | Zones · jour / filtre (contrôle segmenté) · cartes · enquête · retour | prompt 186 : V (pli « Détails ») et C (copier le résumé) retirés |
 
 ## Décisions
 
@@ -66,9 +66,9 @@ chaque touche qu'il cite est lue par le code et qu'aucune clé `aide.k.*` n'est 
 | Menu du jeu sans pause | menu du jeu = temps suspendu | constat du prompt 183 |
 | Aide : « Liste des signalements · semaine », « Recommencer la semaine · ralenti » | « Liste des signalements (Entrée : prendre) », « Ralenti, en défi chrono » ; lignes ajoutées : + / −, Origine, I | aide = tableau |
 
-Gardés et signalés (en cas de doute) : **V** (détails, même sens dans Journal, Patron, Indicateurs ; seule commande
+Gardés et signalés (en cas de doute) : **V** (détails, même sens dans Patron / Mails et Indicateurs — plus au Journal depuis le prompt 186 ; seule commande
 clavier du « tout déplier » du Patron) ; **D** (démission, aussi un bouton) ; **Q** ; **Z** (sieste possible aussi
 pendant un dossier, comportement voulu par le prompt 78) ; **G** (option guide au menu, quitter le guide en partie :
-même sujet) ; **C** au Journal jusqu'au prompt 186. Lecteurs d'écran : le jeu est un canevas, les lettres simples ne
+même sujet) ; **C** au Journal : retiré au prompt 186. Lecteurs d'écran : le jeu est un canevas, les lettres simples ne
 sont lues qu'avec le focus sur la page ; NVDA / JAWS en mode navigation les interceptent avant le jeu (pas de
 correctif possible côté page, non vérifié avec un lecteur réel).

@@ -3,9 +3,10 @@
  * enquête en fiche (citation, puces de contexte, dés pixel, barres des effets attendus, suites).
  * Données : journal-donnees.js (recalculées, jamais inventées). Remplace appJournal / enqueteJournal d'os.js.
  * Clavier : ← → jours (ou volets dans l'enquête, 1 à 4 aussi) · ↑ ↓ cartes · Entrée enquêter · Échap retour ·
- * Tab zone suivante · V détails · C copier le résumé (prompts 140 / 142 : touches S et K retirées).
+ * Tab zone suivante (prompts 140 / 142 : touches S et K retirées ; prompt 186 : V et C retirés — plus de pli
+ * « Détails » ni de « Copier le résumé du jour », filtres en contrôle segmenté du DS).
  */
-const JOURNAL = { jour: null, enquete: null, volet: 0, filtre: 'tout', details: false, survol: -1, defil: 0, defilMax: 0, focus: 0, zone: 0, ouvertA: 0, voletA: 0, copie: -1e9, dernierAnnonce: '' };
+const JOURNAL = { jour: null, enquete: null, volet: 0, filtre: 'tout', survol: -1, defil: 0, defilMax: 0, focus: 0, zone: 0, ouvertA: 0, voletA: 0, dernierAnnonce: '' };
 const VOLETS_ENQUETE = ['passe', 'contexte', 'decision', 'suites'];
 const ZONES_JOURNAL = ['jours', 'filtres', 'frise'];
 const HAUTEURS_CARTES = { signalement: 104, equipe: 52, plainte: 64, patron: 52, crise: 52 };
@@ -37,8 +38,10 @@ function choisirFiltreJournal(f) {
 	JOURNAL.defil = 0;
 	JOURNAL.focus = 0;
 	Confort.Son.clic();
-	annoncer(t('journal.filtre.' + f) + ' : ' + JournalDonnees.compteurs(JOURNAL.jour)[f]);
+	const F = JournalDonnees.FILTRES;
+	annoncer(dsAnnonceSegment(t('journal.filtres'), F.indexOf(f), F.length, libelleFiltreJournal(f))); // prompt 186 : « Filtre n sur N : … »
 }
+const libelleFiltreJournal = (f) => t('journal.filtreNb', { nom: t('journal.filtre.' + f), n: JournalDonnees.compteurs(JOURNAL.jour)[f] });
 function ouvrirEnqueteJournal(e) {
 	JOURNAL.citationOuverte = false; // prompt 92
 	const ev = (Jeu.evenementsJournee || []).filter((x) => x.jour === e.jour);
@@ -75,7 +78,6 @@ function appJournal(z) {
 	JOURNAL.enquete = null;
 	barreJours(z);
 	vueJour(z); // prompt 140 : la vue Jour est la seule vue
-	// Prompt 101 b : « Copier le résumé » n'est plus un bouton de pied permanent : il apparaît avec les Détails (touche C partout)
 }
 
 // ——— 1. Barre des journées ———
@@ -125,27 +127,19 @@ function tuileFond(x, y, l, h, titre) {
 function vueJour(z) {
 	const tu = JournalDonnees.tuiles(JOURNAL.jour);
 	if (!tu) return;
-	// Prompt 101 : à l'ouverture, UNE ligne de chiffres ; au clic sur « Détails » ou touche V, trois tuiles (prompt 141 :
-	// signalements, bons choix, objectif du jour)
+	// Prompt 186 : plus de pli « Détails » — les trois tuiles du prompt 141 (signalements, bons choix, objectif du jour)
+	// s'affichent d'office ; la frise défile en dessous
 	const yr = z.y + 84; // prompt 101 b : 24 px d'air sous la barre des jours
-	const s0 = tu.signalements;
-	// Prompt 101 b : seulement l'écart du jour — les valeurs des jauges sont déjà dans la barre des tâches
+	// Prompt 101 b : seulement l'écart du jour — les valeurs des jauges sont déjà dans la barre des tâches.
+	// Prompt 186 : à droite des filtres, seulement ce que les tuiles ne disent pas (écarts des jauges, avertissements)
 	const jg = DS_JAUGES.filter(([cle]) => tu.jauges.ecart[cle] !== undefined).map(([cle, court]) => court + ' ' + sgn(tu.jauges.ecart[cle])).join('  ');
-	const o0 = tu.objectif;
-	const morceaux = [t('journal.tuile.signalements') + ' ' + s0.traites + '/' + s0.recus, t('journal.tuile.bonnes') + ' ' + tu.bonnes.n + '/' + tu.bonnes.total];
+	const morceaux = [];
 	if (jg) morceaux.push(jg);
-	if (o0) morceaux.push(t('journal.tuile.objectif') + ' ' + (o0.enCours ? '• ' + t('journal.enCours') : (o0.atteint ? '✓ ' : '✗ ') + t(o0.atteint ? 'journal.atteint' : 'journal.rate')));
 	if (tu.avertissements) morceaux.push(tu.avertissements + ' ' + t('journal.tuile.avertissements'));
-	// Prompt 101 b : une seule rangée sous les jours — [filtre] résumé (ou Copier, détails ouverts) … [Détails]
 	const lf = filtreJournal(z, yr - 12);
 	const xr = z.x + lf + 24;
-	const lr = z.l - lf - 24 - 210 - 24;
-	if (JOURNAL.details) dsBouton(xr, yr - 12, Math.min(lr, 380), 44, t(millis() - JOURNAL.copie < 2500 ? 'journal.copie' : 'journal.copier'), copierResumeJour, 'fantome');
-	else dsTexte(couperLargeur(morceaux.join(' · '), lr, 16), xr, yr, 16, DS.blanc75, 'left');
-	dsBouton(z.x + z.l - 210, yr - 12, 210, 44, t(JOURNAL.details ? 'journal.detailsMasquer' : 'journal.details'), basculerDetailsJournal, 'fantome');
+	if (morceaux.length) dsTexte(couperLargeur(morceaux.join(' · '), z.l - lf - 24, 16), xr, yr, 16, DS.blanc75, 'left');
 	const y0 = yr + 56;
-	if (!JOURNAL.details) return frise(z, y0);
-	// Prompt 141 : les Détails se limitent à trois tuiles — signalements, bons choix, objectif du jour
 	const liste = ['signalements', 'bonnes', 'objectif'];
 	const largeurs = liste.map((k) => (k === 'objectif' ? 1.6 : 1));
 	const unite = (z.l - (liste.length - 1) * 12) / largeurs.reduce((a, b) => a + b, 0);
@@ -185,29 +179,12 @@ function couperLargeur(txt, l, taille) {
 	while (c.length > 4 && textWidth(c + '…') > l) c = c.slice(0, -1);
 	return c.trimEnd() + '…';
 }
-function basculerDetailsJournal() {
-	JOURNAL.details = !JOURNAL.details;
-	Confort.Son.clic();
-	annoncer(t(JOURNAL.details ? 'journal.details' : 'journal.detailsMasquer'));
-}
-// 4. Filtres : UN sélecteur (clic = filtre suivant, flèches en zone filtres) ; seul le filtre actif porte son compteur
-// Prompt 101 b : il rejoint la rangée de résumé (une ligne de commandes en moins) ; renvoie sa largeur
+// 4. Filtres — prompt 186 : contrôle segmenté du DS (dsSegments, rôle radiogroup) : un segment par filtre, chacun
+// avec son compteur, le filtre actif à la couleur d'accent ; ← → en zone filtres. Renvoie sa largeur
 function filtreJournal(z, yf) {
-	const cpt = JournalDonnees.compteurs(JOURNAL.jour);
 	const F = JournalDonnees.FILTRES;
-	const suivant = () => choisirFiltreJournal(F[(F.indexOf(JOURNAL.filtre) + 1) % F.length]);
-	const lib = t('journal.filtreActif', { nom: t('journal.filtre.' + JOURNAL.filtre), n: cpt[JOURNAL.filtre] });
-	textFont(DS.policeTexte);
-	textSize(18);
-	const lf = Math.max(240, Math.ceil(textWidth(lib)) + 72);
-	dsBouton(z.x, yf, lf, 44, lib, suivant, 'contour');
-	if (JOURNAL.zone === 1) {
-		noFill();
-		stroke(DS.blanc);
-		strokeWeight(2);
-		rect(z.x - 6, yf - 6, lf + 12, 56);
-		noStroke();
-	}
+	const lf = Math.min(Math.round(z.l * 0.62), 180 * F.length);
+	dsSegments(z.x, yf, lf, F.map(libelleFiltreJournal), F.indexOf(JOURNAL.filtre), (i) => choisirFiltreJournal(F[i]), JOURNAL.zone === 1);
 	return lf;
 }
 const DS_JAUGES = [
@@ -547,46 +524,6 @@ function voletSuites(f, z, y) {
 	});
 }
 
-// ——— 5. Copier le résumé du jour ———
-function copierResumeJour() {
-	const txt = JournalDonnees.resume(JOURNAL.jour);
-	const ok = () => {
-		JOURNAL.copie = millis();
-		annoncer(t('journal.copie'));
-		Confort.Son.bip('choix');
-	};
-	const repli = () => afficherZoneCopie(txt);
-	if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(ok, repli);
-	else repli();
-}
-/** Échec du presse-papiers : le texte s'affiche dans une zone sélectionnable (HTML), fermée par Échap ou le bouton */
-function afficherZoneCopie(txt) {
-	let b = document.getElementById('zone-copie-journal');
-	if (!b) {
-		b = document.createElement('div');
-		b.id = 'zone-copie-journal';
-		b.setAttribute('role', 'dialog');
-		b.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(92vw,720px);background:#0D0C0C;border:2px solid rgba(255,255,255,.5);padding:16px;z-index:50;color:#fff;font:16px monospace';
-		const p = document.createElement('p');
-		p.textContent = t('journal.copieEchec');
-		const z = document.createElement('textarea');
-		z.readOnly = true;
-		z.style.cssText = 'width:100%;height:40vh;background:#1d1b1b;color:#fff;border:1px solid rgba(255,255,255,.3);font:15px monospace';
-		const f = document.createElement('button');
-		f.textContent = t('commun.fermer');
-		f.style.cssText = 'margin-top:8px;min-height:44px;padding:0 16px;background:var(--primaire);color:var(--sur-primaire, #fff);border:0;font:16px monospace';
-		f.onclick = () => b.remove();
-		z.onkeydown = (ev) => ev.key === 'Escape' && b.remove();
-		b.append(p, z, f);
-		document.body.appendChild(b);
-	}
-	const z = b.querySelector('textarea');
-	z.value = txt;
-	z.focus();
-	z.select();
-	annoncer(t('journal.copieEchec'));
-}
-
 // ——— Clavier et molette ———
 function toucheJournal() {
 	if (PC.fenetre !== 'journal' || !Jeu.paquet || ecran !== 'jeu') return false;
@@ -598,8 +535,6 @@ function toucheJournal() {
 		if (n >= 0) return choisirVoletJournal(n), true;
 		return false;
 	}
-	if (key === 'c' || key === 'C') return copierResumeJour(), true;
-	if (key === 'v' || key === 'V') return basculerDetailsJournal(), true; // prompt 101
 	if (keyCode === TAB) {
 		JOURNAL.zone = (JOURNAL.zone + (keyIsDown(SHIFT) ? ZONES_JOURNAL.length - 1 : 1)) % ZONES_JOURNAL.length;
 		annoncer(t('journal.zone.' + ZONES_JOURNAL[JOURNAL.zone]));
@@ -608,7 +543,7 @@ function toucheJournal() {
 	if (keyCode === RIGHT_ARROW || keyCode === LEFT_ARROW) {
 		if (JOURNAL.zone === 1) {
 			const f = JournalDonnees.FILTRES;
-			return choisirFiltreJournal(f[(f.indexOf(JOURNAL.filtre) + (keyCode === RIGHT_ARROW ? 1 : f.length - 1)) % f.length]), true;
+			return choisirFiltreJournal(f[dsSegmentVoisin(f.length, f.indexOf(JOURNAL.filtre), keyCode === RIGHT_ARROW ? 1 : -1)]), true; // prompt 186
 		}
 		return choisirJourJournal(JOURNAL.jour + (keyCode === RIGHT_ARROW ? 1 : -1)), true;
 	}

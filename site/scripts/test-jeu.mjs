@@ -1460,14 +1460,13 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 		if (f.decision.barres.length !== Object.keys(e.attendus).length || f.decision.barres.some((b) => Math.abs(b.v - e.attendus[b.cle]) > 0.051)) out.erreurs.push('barres ≠ attendus');
 		if (f.decision.barres.filter((b) => b.choix).map((b) => b.cle).join() !== e.cleAction || f.decision.barres.filter((b) => b.meilleure).map((b) => b.cle).join() !== e.cleMeilleure) out.erreurs.push('choix / meilleure');
 		if (f.decision.barres.some((b) => Math.abs(b.v) > f.decision.echelle)) out.erreurs.push('échelle');
-		out.resume = JournalDonnees.resume(0);
-		out.lignesMail = Jeu.evenementsJournee.filter((x) => x.jour === Jeu.jours[0].date).length;
+		out.resume = typeof JournalDonnees.resume; // prompt 186 : « Copier le résumé du jour » retiré
 		return out;
 	})()`,
 		cj,
 	);
 	verifier(r.erreurs.length === 0, `journal : ${r.erreurs.slice(0, 5)}`);
-	verifier(/^Nantes en régulation — journée du 12\/10\/2026/.test(r.resume) && r.resume.split('\n').filter((l) => l.startsWith('- ')).length === r.lignesMail && !/\[À COMPLÉTER\]|undefined/.test(r.resume), `journal : résumé copié (${r.resume.slice(0, 120)})`);
+	verifier(r.resume === 'undefined', 'journal : le résumé copié doit avoir disparu (prompt 186)');
 	const sv = readFileSync(join(pub, 'sauvegarde.js'), 'utf8');
 	verifier(/journal: typeof JOURNAL[^\n]*\{ jour: JOURNAL\.jour, filtre: JOURNAL\.filtre, defil/.test(sv) && /ui\.journal/.test(sv), 'journal : jour, filtre et défilement sauvegardés (prompt 140 : plus de vue)');
 	verifier(!/function appJournal|function enqueteJournal/.test(readFileSync(join(pub, 'os.js'), 'utf8')), 'journal : ancien rendu retiré d’os.js');
@@ -3336,6 +3335,58 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 		const s1 = JSON.parse(ev(`JSON.stringify(segmentsEcart('budget', 5000 + DUREE_ECART_MS * 0.85))`));
 		verifier(s1.length === 1 && s1[0].alpha > 0 && s1[0].alpha < 1 && s1[0].a === 44, `prompt 184 : sans mouvement (${regl}), fondu court en fin d'écart (${JSON.stringify(s1)})`);
 		ev('reduireAnimations = false; Juice.intensite = () => 1; Jeu.jauges = { fluidite: 54, reputation: 30, budget: 54 }; horloge = 9000; jaugesAffichees(); horloge = 20000; jaugesAffichees();');
+	}
+}
+
+// Prompt 186 : Community — bascule cartes / liste (icône Lucide, choix mémorisé) ; Journal — filtres en contrôle
+// segmenté du DS (dsSegments), plus de pli « Détails » ni de « Copier le résumé du jour » (touches V et C)
+{
+	const lire = (f) => readFileSync(join(pub, f), 'utf8');
+	const jn = lire('journal.js');
+	const cm = lire('community.js');
+	const ds = lire('ds.js');
+	verifier(!/copierResumeJour|afficherZoneCopie|zone-copie-journal|basculerDetailsJournal|JOURNAL\.details|JOURNAL\.copie/.test(jn), 'prompt 186 : copie du résumé et pli « Détails » retirés du Journal');
+	verifier(!/key === 'c' \|\| key === 'C'|key === 'v' \|\| key === 'V'/.test(jn), 'prompt 186 : touches C et V plus lues par le Journal');
+	verifier(!/function resume\(|resume, minutes/.test(lire('journal-donnees.js')), 'prompt 186 : JournalDonnees.resume retiré');
+	verifier(/function vueJour[\s\S]*?tuileFond\(x, y0[\s\S]*?frise\(z, y0 \+ h \+ 24\)/.test(jn) && !/if \(!JOURNAL\.details\) return frise/.test(jn), 'prompt 186 : les tuiles du jour s\'affichent d\'office');
+	verifier(/dsSegments\(z\.x, yf, lf, F\.map\(libelleFiltreJournal\), F\.indexOf\(JOURNAL\.filtre\)/.test(jn) && /dsSegmentVoisin\(f\.length/.test(jn) && /dsAnnonceSegment\(t\('journal\.filtres'\)/.test(jn), 'prompt 186 : filtres du Journal en contrôle segmenté (clic, ← →, annonce)');
+	verifier(/function dsSegments\([\s\S]*?DS\.primaire[\s\S]*?DS\.surPrimaire[\s\S]*?boutons\.push/.test(ds), 'prompt 186 : dsSegments (ds.js) à la couleur d\'accent');
+	verifier(!/dsSegments/.test(lire('patron.js')), 'prompt 186 : pas de contrôle segmenté dans Mails (colonne de dossiers du prompt 185)');
+	verifier(/#{3} Interrupteur et curseur[\s\S]*Contrôle segmenté[\s\S]*dsSegments/.test(readFileSync(join(pub, '..', '..', 'design-system', 'DESIGN.md'), 'utf8')), 'prompt 186 : DESIGN.md doit documenter le contrôle segmenté');
+	verifier(/iconeLucide\(liste \? 'layout-grid' : 'list'/.test(cm) && /infobulle\(txt/.test(cm) && !/COMMU\.grille/.test(cm), 'prompt 186 : bascule Community par icône Lucide avec infobulle');
+	const c = vm.createContext({});
+	vm.runInContext(
+		`var __st = new Map(), __ann = [], COMMU = { vue: null, defil: 50 }, boutons = [];
+		const Confort = { Son: { clic() {} } }; function annoncer(s) { __ann.push(s); } function t(k, v) { return v ? k + JSON.stringify(v) : k; }
+		function lireStockage(k) { return __st.has(k) ? __st.get(k) : null; } function ecrireStockage(k, v) { __st.set(k, v); }`,
+		c,
+	);
+	vm.runInContext(cm.slice(cm.indexOf('const CLE_VUE_COMMU'), cm.indexOf('/** Bouton à icône de la bascule')), c);
+	vm.runInContext(ds.slice(ds.indexOf('const dsSegmentVoisin'), ds.indexOf('/** Curseur à crans')), c);
+	const r = JSON.parse(
+		vm.runInContext(
+			`(() => {
+		const r = { d: vueCommunity() };
+		basculerVueCommunity();
+		r.apres = COMMU.vue; r.cle = __st.get('pxe-nte001-community-vue'); r.defil = COMMU.defil; r.ann = __ann.slice(-1)[0];
+		COMMU.vue = null; // appli fermée puis rouverte (ou partie rechargée)
+		r.relu = vueCommunity();
+		r.voisins = [dsSegmentVoisin(4, 0, -1), dsSegmentVoisin(4, 3, 1), dsSegmentVoisin(4, 1, 1)];
+		r.annSeg = dsAnnonceSegment('Filtre', 1, 4, 'Ratés (3)');
+		return JSON.stringify(r);
+	})()`,
+			c,
+		),
+	);
+	verifier(r.d === 'cartes' && r.apres === 'liste' && r.cle === 'liste' && r.relu === 'liste' && r.defil === 0, `prompt 186 : la vue Community doit basculer et rester mémorisée (${JSON.stringify(r)})`);
+	verifier(/commu\.vue\.annonce.*commu\.vue\.liste/.test(r.ann), `prompt 186 : annonce de la vue active (${r.ann})`);
+	verifier(r.voisins.join() === '3,0,2' && /ds\.segment\.annonce.*"i":2.*"n":4/.test(r.annSeg), `prompt 186 : ← → en boucle et annonce « n sur N » (${r.voisins} ${r.annSeg})`);
+	const ci = contexte('fr');
+	for (const langue of ['fr', 'en']) {
+		const dico = vm.runInContext(`TRADUCTIONS.${langue}`, ci);
+		verifier(['commu.vue.cartes', 'commu.vue.liste', 'commu.vue.annonce', 'commu.vue.versListe', 'commu.vue.versCartes', 'journal.filtres', 'journal.filtreNb', 'ds.segment.annonce', 'parametres.copier', 'parametres.copie.ok', 'parametres.copie.erreur'].every((k) => dico[k]), `prompt 186 : clés manquantes (${langue})`);
+		const orphelines = Object.keys(dico).filter((k) => /^(journal\.copi|journal\.resume\.|journal\.filtreActif|commu\.grille|commu\.fil$)/.test(k));
+		verifier(!orphelines.length, `prompt 186 : clés orphelines (${langue}) : ${orphelines}`);
 	}
 }
 
