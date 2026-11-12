@@ -220,6 +220,65 @@ const LOGO_PXE = [
 	[15, 8, 2, 1, '#ffffff'],
 	[19, 8, 1, 1, '#ffffff'],
 ];
+// ——— Prompt 152 : icônes pixel 16 × 16 de logo/planche.html, en grilles de lettres ———
+// P = couleur principale, W = blanc, G = gris, K = noir, . = transparent (mêmes lettres que la planche).
+const ICONE_PIN = [
+	'......PPPP......',
+	'....PPPPPPPP....',
+	'...PPPPWWPPPP...',
+	'..PPPPPWWPPPPP..',
+	'..PPPPPWWPPPPP..',
+	'.PPPPPPWWPPPPPP.',
+	'.PPPPPPWWPPPPPP.',
+	'.PPPPPPWWPPPPPP.',
+	'.PPPPPPPPPPPPPP.',
+	'..PPPPPWWPPPPP..',
+	'..PPPPPWWPPPPP..',
+	'...PPPPPPPPPP...',
+	'....PPPPPPPP....',
+	'.....PPPPPP.....',
+	'......PPPP......',
+	'.......PP.......',
+];
+const ICONE_ECRAN = [
+	'GGGGGGGGGGGGGGGG',
+	'GPPPPPPPPPPPPPPG',
+	'GPPPPPWWWWPPPPPG',
+	'GPPPPWWPPWWPPPPG',
+	'GPPPPWWPPWWPPPPG',
+	'GPPPPPWWWWPPPPPG',
+	'GPPPPPPWWPPPPPPG',
+	'GPPPPPPPPPPPPPPG',
+	'GPPKKKPPPPPKKKPG',
+	'GKKPPPKKKKKPPPKG',
+	'GPPPPPPPPPPPPPPG',
+	'GGGGGGGGGGGGGGGG',
+	'................',
+	'......GGGG......',
+	'......GGGG......',
+	'...GGGGGGGGGG...',
+];
+/** Dessine une icône en grille de lettres : (x, y) coin haut gauche, « taille » = côté en px, « couleurs » = lettre →
+ * couleur (une lettre absente n'est pas dessinée). Les bords de chaque case sont arrondis au pixel : pas de lissage,
+ * même quand la taille n'est pas un multiple de la grille. */
+function dessinerIconePixel(grille, x, y, taille, couleurs) {
+	const k = taille / grille.length;
+	const bord = (o, n) => Math.round(o + n * k);
+	noStroke();
+	grille.forEach((ligne, j) => {
+		for (let i = 0; i < ligne.length; ) {
+			const v = ligne[i];
+			let f = i + 1;
+			while (f < ligne.length && ligne[f] === v) f++; // une suite de même couleur = un seul rectangle
+			if (couleurs[v]) {
+				fill(couleurs[v]);
+				rect(bord(x, i), bord(y, j), bord(x, f) - bord(x, i), bord(y, j + 1) - bord(y, j));
+			}
+			i = f;
+		}
+	});
+}
+
 // Prompt 151 : le moniteur d'origine (prompt 75) reste l'icône de l'appli « carte » dans le menu de l'appli de jeu.
 const LOGO_MONITEUR = [
 	[1, 1, 22, 14, '#ffffff'], // moniteur

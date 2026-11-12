@@ -230,6 +230,7 @@ Preuves dans le code (grep ; 14–34 relevées au prompt 33, revérifiées et co
 | 143 | `143-jeu-main-telephone-pixel-art.md` | Jeu : la **main qui tient le téléphone** redessinée en pixel art (grille de 15 px, palette de la tasse en main) | ✅ fusionné dans main |
 | 150 | `150-jeu-logo-bulle-pin.md` | Jeu : le **logo bulle-pin** (piste 2 de `logo/planche.html`) remplace le moniteur : `LOGO_PXE`, écran de chargement, favicon, icônes de la webapp | ✅ fusionné dans main |
 | 151 | `151-jeu-logo-moniteur-appli-carte.md` | Jeu : l'appli **carte** du menu garde le **moniteur d'origine** (`LOGO_MONITEUR`) ; la bulle-pin reste le logo du jeu | ✅ fusionné dans main |
+| 152 | `152-jeu-icones-planche-pin-carte-ecran-demarrage.md` | Jeu : icônes de `logo/planche.html` — **pin d'alerte** pour les marqueurs de la carte, **écran de régulation** comme logo de démarrage du PC (`ICONE_PIN`, `ICONE_ECRAN`, `dessinerIconePixel`) | ✅ fusionné dans main |
 
 > **Audit des textes (prompt 93)** : avant chaque fusion qui touche à l'interface, relancer `index.html?audit=textes&parcours=1` (1920×1080, 1366×768, mobile portrait) et garder 0 défaut A à D — voir `jeu/89-textes-hors-cadre.md` et `CONTRIBUTING.md`.
 

@@ -34,3 +34,7 @@ webapp refaits avec la petite et la grande bulle.
 
 Prompt 151 : l'entrée « carte » du menu de l'appli garde le moniteur d'origine (`LOGO_MONITEUR`, 4e argument de
 `dessinerLogoPXE`).
+
+Prompt 152 : deux autres icônes de la planche entrent dans le jeu — le pin d'alerte pour les marqueurs de la carte
+(`ICONE_PIN`) et l'écran de régulation pour le logo du démarrage du PC (`ICONE_ECRAN`), dessinés par
+`dessinerIconePixel` (ds.js).
