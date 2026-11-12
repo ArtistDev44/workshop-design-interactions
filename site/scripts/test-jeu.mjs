@@ -1659,8 +1659,20 @@ for (const f of ['enquete.js', 'carte.js', 'journal.js']) verifier(!/\*\s*1\.05\
 	verifier(ca.AUDIT_TEXTES === undefined && ca.p5.prototype.registerMethod === undefined, 'audit textes : actif sans ?audit=textes');
 	const ca2 = vm.createContext({ location: { search: '?audit=textes' }, URLSearchParams, p5: { prototype: { text() {}, registerMethod() {} } }, addEventListener() {} });
 	ca2.window = ca2;
+	vm.runInContext(readFileSync(join(pub, 'audit-parcours.js'), 'utf8'), ca2, { filename: 'audit-parcours.js' }); // prompt 101 : aides partagées
 	vm.runInContext(readFileSync(join(pub, 'audit-textes.js'), 'utf8'), ca2, { filename: 'audit-textes.js' });
 	verifier(ca2.AUDIT_TEXTES && typeof ca2.AUDIT_TEXTES.rapport === 'function' && typeof ca2.zoneTexteDebut === 'function' && ca2.AUDIT_TEXTES.etapes().length > 40, 'audit textes : module ou parcours incomplet avec ?audit=textes');
+	// Prompt 101 : mesure de densité, même principe (rien sans ?audit=densite, parcours complet avec)
+	verifier(!html93.includes('audit-densite.js') && /audit=\(textes\|densite\)/.test(inst93), 'audit densité : chargé seulement avec ?audit=densite');
+	const cd = vm.createContext({ location: { search: '' }, URLSearchParams, p5: { prototype: { text() {} } } });
+	cd.window = cd;
+	vm.runInContext(readFileSync(join(pub, 'audit-densite.js'), 'utf8'), cd, { filename: 'audit-densite.js' });
+	verifier(cd.AUDIT_DENSITE === undefined && cd.p5.prototype.registerMethod === undefined, 'audit densité : actif sans ?audit=densite');
+	const cd2 = vm.createContext({ location: { search: '?audit=densite' }, URLSearchParams, p5: { prototype: { text() {}, rect() {}, image() {}, registerMethod() {} } }, addEventListener() {} });
+	cd2.window = cd2;
+	vm.runInContext(readFileSync(join(pub, 'audit-parcours.js'), 'utf8'), cd2, { filename: 'audit-parcours.js' });
+	vm.runInContext(readFileSync(join(pub, 'audit-densite.js'), 'utf8'), cd2, { filename: 'audit-densite.js' });
+	verifier(cd2.AUDIT_DENSITE && typeof cd2.AUDIT_DENSITE.rapport === 'function' && typeof cd2.AUDIT_DENSITE.parcours === 'function', 'audit densité : module incomplet avec ?audit=densite');
 	// Cas réels de libellés longs corrigés (JetBrains Mono : 0,6 em par caractère), en FR et en EN
 	for (const langue of ['fr', 'en']) {
 		const c93 = contexte(langue);

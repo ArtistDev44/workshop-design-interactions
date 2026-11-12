@@ -9,7 +9,7 @@
  * Enregistré seulement en http(s), jamais en file:// (index.html).
  */
 /* précache:début (généré par scripts/generer-sw.mjs — ne pas modifier à la main) */
-const VERSION = 'nte-regulation-205de846a0';
+const VERSION = 'nte-regulation-84692bca27';
 const ESSENTIELS = [
 	"./",
 	"./accessibilite.js",
@@ -30,6 +30,8 @@ const ESSENTIELS = [
 	"./audio/night-in-a-seashell.ogg",
 	"./audio/travel-to-the-horizon.mp3",
 	"./audio/travel-to-the-horizon.ogg",
+	"./audit-densite.js",
+	"./audit-parcours.js",
 	"./audit-textes.js",
 	"./bureau.js",
 	"./cafe.js",

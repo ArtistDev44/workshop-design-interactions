@@ -6,7 +6,7 @@
  * Photos : dessinées par le code (createGraphics basse définition, agrandies avec un lissage léger), mises en cache.
  * Compteurs (abonnés, « j'aime ») : valeurs de jeu dérivées de la réputation, jamais présentées comme réelles.
  */
-const COMMU = { onglet: 'fil', defil: 0, grille: false, conv: 0, ouvert: null, publier: null, vus: 0, brouillon: null }; // prompt 91 : brouillon venu d'un dossier
+const COMMU = { deplies: new Set(), onglet: 'fil', defil: 0, grille: false, conv: 0, ouvert: null, publier: null, vus: 0, brouillon: null }; // prompt 91 : brouillon venu d'un dossier
 const ONGLETS_COMMU = ['fil', 'mentions', 'messagerie', 'stats'];
 const cachePhotos = new Map();
 const plaintesPubliques = () => (Jeu.plaintes || []).filter((p) => !(p.def && p.def.prive));
@@ -128,12 +128,7 @@ function photoPixel(photo, pluie, nuit) {
 function dessinerPhoto(photo, x, y, l, h, pluie, nuit) {
 	const g = photoPixel(photo, pluie, nuit);
 	drawingContext.imageSmoothingEnabled = true;
-	image(g, x, y, l, h);
-	noFill();
-	stroke(DS.blanc15);
-	strokeWeight(2);
-	rect(x, y, l, h);
-	noStroke();
+	image(g, x, y, l, h); // prompt 101 : sans cadre (le bord de l'image suffit, deux niveaux de cadres au plus)
 }
 const meteoDe = (date) => (Jeu.meteoDuJour && date ? Jeu.meteoDuJour(date) : null) || {};
 const nuitDe = (minute) => minute !== undefined && minute !== null && (minute < 7 * 60 || minute >= 20 * 60);
@@ -179,21 +174,22 @@ function dessinerCompteSocial(z) {
 	const mobile = typeof PORTRAIT !== 'undefined' && PORTRAIT.actif;
 	const lp = mobile ? Math.min(z.l, 860) : z.l; // portrait : une seule colonne
 	// En-tête de profil
-	dessinerBanniere(z.x, z.y, lp, 70);
+	dessinerBanniere(z.x, z.y, lp, 52); // prompt 101 : bannière plus basse
 	avatarCompte(z.x + 16, z.y + 40, 64);
 	dsTexte(t('commu.nom'), z.x + 96, z.y + 76, 20, DS.blanc, 'left');
 	dsTexte('@regul.nte · ' + t('commu.reseau'), z.x + 96, z.y + 102, 18, DS.blanc50, 'left');
 	textFont(DS.policeTexte);
 	textSize(20);
 	const wn = textWidth(t('commu.nom'));
-	textSize(18);
-	dsBadge(z.x + 96 + wn + 16 + (textWidth(t('commu.service')) + 16) / 2, z.y + 87, t('commu.service'), 'info'); // badge centré sur x
+	dsTexte('· ' + t('commu.service'), z.x + 96 + wn + 12, z.y + 78, 18, DS.infoClair, 'left'); // prompt 101 : statut en texte (un badge est réservé à ce qui demande une action)
 	const bp = Jeu.bilanPlaintes();
 	const abonnes = Math.round((1200 * Jeu.jauges.reputation) / 50);
 	const tendance = (Jeu.commentaires || []).filter((c) => c.jour === Jeu.jourIndex).reduce((a, c) => a + (c.delta || 0), 0);
 	const posts = Jeu.postsPartie().length + Jeu.postsJoueur.length + Jeu.postsArchive().length;
-	if (!mobile) dsTexte(t('commu.compteurs', { posts, abonnes, tendance: tendance > 0 ? '▲' : tendance < 0 ? '▼' : '=', r: bp.traitees, n: bp.total }), z.x + lp, z.y + 82, 18, DS.blanc75, 'right');
-	dsTexte(t('commu.bio'), z.x + 96, z.y + 128, 18, DS.blanc50, 'left', lp - 110);
+	// Prompt 101 : compteurs du compte et bio dans l'onglet Statistiques seulement (en-tête allégé ailleurs)
+	const enStats = COMMU.onglet === 'stats';
+	if (!mobile && enStats) dsTexte(t('commu.compteurs', { posts, abonnes, tendance: tendance > 0 ? '▲' : tendance < 0 ? '▼' : '=', r: bp.traitees, n: bp.total }), z.x + lp, z.y + 82, 18, DS.blanc75, 'right');
+	if (enStats) dsTexte(t('commu.bio'), z.x + 96, z.y + 128, 18, DS.blanc50, 'left', lp - 110);
 	// Onglets (indicateur rouge sous l'onglet actif) — en bas en portrait
 	const yo = mobile ? z.y + z.h - 52 : z.y + 158;
 	const nb = { mentions: enAttenteDe(plaintesPubliques()).length, messagerie: enAttenteDe(plaintesPrivees()).length };
@@ -202,9 +198,10 @@ function dessinerCompteSocial(z) {
 		const ox = z.x + i * lo;
 		const actif = COMMU.onglet === o;
 		noStroke();
-		fill(actif ? DS.blanc15 : DS.blanc05);
-		rect(ox, yo, lo - 8, 48);
 		if (actif) {
+			// Prompt 101 : seul l'onglet actif a un fond ; les autres, du texte (l'espace remplace les cadres)
+			fill(DS.blanc15);
+			rect(ox, yo, lo - 8, 48);
 			fill(DS.primaire);
 			rect(ox, yo + 44, lo - 8, 4);
 		}
@@ -354,8 +351,21 @@ function carteDePost(p, x, y, l, rang) {
 		dsTexte(lien, x + l - 16, y + hc - 34, 18, DS.infoClair, 'right');
 		boutons.push({ x: x + l - 16 - textWidth(lien), y: y + hc - 40, l: textWidth(lien), h: 32, action: () => (PC.fenetre = null, (PC.etat = 'appli')) });
 	}
+	// Prompt 101 : le premier commentaire seulement (et toute plainte qui attend une réponse), puis « Voir les N autres »
 	let yy = y + hc + 8;
-	comms.forEach((c) => (yy += commentaire(c, x + 40, yy, l - 40)));
+	const ouvert = COMMU.deplies.has(p.index);
+	const attend = (c) => c.plainte && c.plainte.reponse === null && !c.plainte.expiree && !c.plainte.transmise;
+	const vus = ouvert ? comms : comms.filter((c, i) => i === 0 || attend(c));
+	vus.forEach((c) => (yy += commentaire(c, x + 40, yy, l - 40)));
+	const caches = comms.length - vus.length;
+	if (caches > 0 || (ouvert && comms.length > 1)) {
+		const lien = ouvert ? t('commu.replier') : t('commu.voirAutres', { n: caches });
+		textFont(DS.policeTexte);
+		textSize(18);
+		dsTexte(lien, x + 40, yy, 18, DS.blanc75, 'left');
+		boutons.push({ x: x + 40, y: yy - 12, l: textWidth(lien) + 16, h: 44, action: () => (ouvert ? COMMU.deplies.delete(p.index) : COMMU.deplies.add(p.index), annoncer(lien)) });
+		yy += 36;
+	}
 	return yy - y + 16;
 }
 /** Commentaires d'un post : plaintes publiques (avec réponse ou « Répondre »), commentaires, réactions en chaîne */
@@ -384,7 +394,7 @@ function commentaire(c, x, y, l) {
 		avatarUsager(k.auteur, x, y + 4, 24);
 		dsTexte(k.auteur + ' · ' + k.heure, x + 34, y + 4, 18, DS.blanc50, 'left');
 		dsTexte(String(k.texte), x + 34, y + 30, 20, DS.blanc, 'left', l - 160);
-		dsBadge(x + l - 70, y + 30, t('app.rep', { d: (k.delta > 0 ? '+' : '') + k.delta }), k.delta > 0 ? 'succes' : 'erreur');
+		dsTexte(t('app.rep', { d: (k.delta > 0 ? '+' : '') + k.delta }), x + l - 8, y + 30, 18, k.delta > 0 ? DS.succesClair : DS.erreurClair, 'right'); // prompt 101 : effet en texte, pas en badge rouge
 		return 72;
 	}
 	return blocPlainteSociale(c.plainte, x, y, l);

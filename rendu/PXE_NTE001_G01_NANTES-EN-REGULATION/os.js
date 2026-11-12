@@ -130,7 +130,7 @@ function dessinerOS() {
 		boutons.push({ x, y, l: g.l, h: g.h, action: () => ouvrirIconeOS(i) });
 		if (i === 0) cibleGuide('iconeSignalements', x, y, g.l, g.h); // prompt 37 ; prompts 68 / 73 : « Signalements » est la première icône
 		if (i === 1) cibleGuide('iconesOS', x, y, g.l * 2 + g.ecart, g.h * 3 + g.ecart * 2); // patron, community, journal, indicateurs, corbeille
-		const b = !appliDebloquee(ic.cle) ? '' : ic.cle === 'indicateurs' ? (PC.flottant ? '●' : '') : badgeIcone(ic.cle); // prompt 91 : pas de pastille sur une appli verrouillée
+		const b = !appliDebloquee(ic.cle) || ic.cle === 'indicateurs' ? '' : badgeIcone(ic.cle); // prompt 101 : plus de pastille « ● » (le panneau ouvert se voit) // prompt 91 : pas de pastille sur une appli verrouillée
 		if (b) dsBadge(x + g.l - 34, y + 20, b, ic.cle === 'indicateurs' ? 'succes' : 'erreur');
 	});
 	dessinerBulleVerrou(); // prompt 91 § 2
@@ -326,7 +326,7 @@ function dessinerFermerAppli() {
 	rect(0, 0, L, 34);
 	fill(DS.blanc15);
 	rect(0, 34, L, 2);
-	dsTitre(t('os.barreTitre'), 16, 6, 24, DS.blanc, 'left');
+	dsTitre(t('os.barreTitre'), DS.esp.xxl, 6, 24, DS.blanc, 'left'); // prompt 101 : même marge gauche (24 px) que le titre des autres applis
 	dsTexte(t('os.poste'), L / 2, 8, 16, DS.blanc50, 'center');
 	const x = L - 46;
 	const y = 3;
@@ -377,8 +377,13 @@ function fermerFenetreApp() {
 }
 function badgeIcone(cle) {
 	if (cle === 'signalements') return typeof incidentActif === 'function' && (incidentActif() || phase === 'mail') ? '!' : ''; // prompt 68
-	if (!Jeu.nonLus) return '';
-	return Jeu.nonLus[cle] ? String(Jeu.nonLus[cle]) : '';
+	// Prompt 101 (règle 6) : un badge seulement pour ce qui est À FAIRE — les plaintes qui attendent une réponse ;
+	// les nouveaux messages du patron (information) restent annoncés par les notifications et « Nouveaux messages »
+	if (cle === 'community') {
+		const n = (Jeu.plaintes || []).filter((p) => p.reponse === null && !p.expiree && !p.transmise).length;
+		return n ? String(n) : '';
+	}
+	return '';
 }
 
 /** Icônes 80×80 en pixels (rectangles, angles droits), dessinées par le code */
@@ -500,10 +505,10 @@ const signe = (v) => (v > 0 ? '+' + v : v < 0 ? '−' + Math.abs(v) : '0');
 // =====================================================================
 function appCorbeille(z) {
 	const liste = (Jeu.plaintes || []).filter((p) => p.reponse !== null && !p.masquee);
+	if (!liste.length) return dsTexte(t('app.corbeille.vide'), z.x, z.y, 20, DS.blanc50, 'left'); // prompt 101 : vue vide = une phrase
 	dsTexte(t('app.corbeille.intro', { n: liste.length }), z.x, z.y, 20, DS.blanc75, 'left', z.l - 320);
-	if (liste.length) dsBouton(z.x + z.l - 300, z.y - 8, 300, 52, t('app.corbeille.vider'), viderCorbeille, 'contour');
+	dsBouton(z.x + z.l - 300, z.y - 8, 300, 52, t('app.corbeille.vider'), viderCorbeille, 'contour');
 	let y = z.y + 64;
-	if (!liste.length) dsTexte(t('app.corbeille.vide'), z.x, y, 20, DS.blanc50, 'left');
 	liste
 		.slice()
 		.reverse()
