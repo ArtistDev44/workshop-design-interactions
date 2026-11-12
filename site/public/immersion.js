@@ -700,7 +700,7 @@ let choixPause = 0;
 const ENTREES_PAUSE = [
 	{ cle: 'menu.reprendre', icone: 'lecture', action: () => fermer() },
 	{ cle: 'accueil.parametres', icone: 'reglages', action: () => (fenetre = 'parametres') },
-	{ cle: 'accueil.aide', icone: 'aide', action: () => (fenetre = 'aide') },
+	{ cle: 'mp.aide', icone: 'aide', action: () => (fenetre = 'aide') }, // prompt 122 : « Aide et tutoriel »
 	{ cle: 'menu.carnet', icone: 'carnet', action: () => (fermer(), ouvrirCarnet()) }, // prompt 47 : journal de bord (J)
 	{ cle: 'menu.menuPrincipal', icone: 'menu', action: () => quitterPartie() },
 ];

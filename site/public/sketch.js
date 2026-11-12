@@ -1506,8 +1506,9 @@ function fenetreAide() {
 	textLeading(Math.round(ts * 1.4));
 	text(regles, rx, y + 136, rl, 820);
 	textLeading(textSize() * 1.25);
-	bouton(x + l - 288, y + h - 92, 240, 60, t('commun.fermer'), fermer);
-	bouton(x + l - 288 - 300, y + h - 92, 280, 60, t('tuto.relancer'), lancerTutoriel, false, true); // prompt 34
+	// Prompt 122 : le tutoriel se lance d'ici (bouton primaire) — seul chemin depuis le menu « Aide et tutoriel »
+	bouton(x + l - 288, y + h - 92, 240, 60, t('commun.fermer'), fermer, false, true);
+	bouton(x + l - 288 - 400, y + h - 92, 380, 60, t('tuto.relancer'), lancerTutoriel);
 }
 
 function fenetreReset() {
