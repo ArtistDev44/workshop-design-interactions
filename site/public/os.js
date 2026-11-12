@@ -209,7 +209,7 @@ function fermerFenetreApp() {
 	versAppliPrincipale();
 }
 function badgeIcone(cle) {
-	if (cle === 'signalements') return typeof incidentActif === 'function' && (incidentActif() || phase === 'mail') ? '!' : ''; // prompt 68
+	if (cle === 'signalements') return typeof incidentActif === 'function' && incidentActif() ? '!' : ''; // prompt 68
 	// Prompt 101 (règle 6) : un badge seulement pour ce qui est À FAIRE — les plaintes qui attendent une réponse ;
 	// les nouveaux messages du patron (information) restent annoncés par les notifications et « Nouveaux messages »
 	if (cle === 'community') {

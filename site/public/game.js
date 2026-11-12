@@ -1136,6 +1136,23 @@
 		const suffixe = ['', '.v1', '.v2'][hacher(String(Jeu.graine) + '|mailSoir|' + Jeu.jourIndex + '|' + niveau) % 3]; // tirage déterministe, sans dé
 		return { fait: Jeu.faitMarquantDuJour(duJour), niveau, patron: T('mailf.patron.' + niveau + suffixe) };
 	};
+	/** Prompt 194 : le mail du soir n'est plus un passage obligé plein écran — il est déposé, non lu, dans l'appli Mails
+	 * (dossier « Soirs ») au clic sur l'horloge : fait marquant + phrase du patron en texte, bilan compact en bloc.
+	 * Une fois par jour joué ; hors panne de messagerie (il part après le service). Aucune donnée inventée. */
+	Jeu.deposerMailDuSoir = function () {
+		const j = Jeu.jourCourant();
+		if (!j || !Jeu.messagesPatron) return null;
+		const deja = Jeu.messagesPatron.find((m) => m.type === 'soir' && m.jour === j.date);
+		if (deja) return deja;
+		const mail = Jeu.mailDuJour();
+		const sc = mail.scene || {};
+		const texte = Liste([sc.fait ? sc.fait.texte : T('mailf.fait.aucun')].concat(sc.patron ? [T('mailf.patronCite', { patron: sc.patron })] : []), ' ');
+		const lignes = mail.lignes.map((l) => ({ texte: l, fait: !!l.fait, ok: !!l.ok }));
+		const m = { heure: maintenantSim(), jour: j.date, texte, type: 'soir', meta: { objet: mail.objet, positif: !!mail.positif, lignes }, important: false, lu: false };
+		Jeu.messagesPatron.push(m);
+		Jeu.nonLus.patron = (Jeu.nonLus.patron || 0) + 1;
+		return m;
+	};
 	/** Accroche météo du matin (écran « Jour N ») : la météo réelle du jour, seulement si la donnée du jour existe */
 	Jeu.accrocheMeteo = function (date) {
 		const m = date && Jeu.meteoDuJour ? Jeu.meteoDuJour(date) : null;
@@ -1194,7 +1211,7 @@
 
 	/** Prompt 86 : message typé (consigne, alerte, conseil, budget, reproche, equipes, info) avec ses valeurs réelles
 	 * au moment de l'envoi (meta). Pendant la panne de messagerie (prompt 23), il attend et arrive « en retard ». */
-	Jeu.TYPES_MESSAGES = ['consigne', 'alerte', 'conseil', 'budget', 'reproche', 'equipes', 'info'];
+	Jeu.TYPES_MESSAGES = ['consigne', 'alerte', 'conseil', 'budget', 'reproche', 'equipes', 'info', 'soir']; // prompt 194 : « soir » = le mail du soir, déposé dans Mails
 	Jeu.patronEnAttente = [];
 	Jeu.messagePatron = function (texte, type, meta) {
 		const m = { heure: maintenantSim(), jour: ((Jeu.jourCourant && Jeu.jourCourant()) || {}).date || null, texte, type: Jeu.TYPES_MESSAGES.includes(type) ? type : 'info', meta: meta || {}, important: !!(meta && meta.important), lu: false };

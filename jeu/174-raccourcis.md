@@ -35,7 +35,7 @@ chaque touche qu'il cite est lue par le code et qu'aucune clé `aide.k.*` n'est 
 | Paramètres | Tab / ↑ ↓ · ← → · Entrée / Espace · Page préc. / suiv. · Échap · M | Focus · régler · basculer · pages · fermer · son | — |
 | Aide | ← → / Tab · 1–4 · ↑ ↓ / Page préc. / suiv. · T · H / ? / Échap | Onglets · pages · tutoriel · fermer | « Lancer le tutoriel (T) », « Fermer (Échap) » |
 | Menu du jeu (pause) | ↑ ↓ / Tab · Entrée · Échap | Parcourir · valider · fermer | « Reprendre (Échap) » |
-| Fenêtres modales (rapport, mail de fin, partir, blâme, démission, inspection, tâche, téléphone, recommencer) | Entrée · Échap · Tab (pages du rapport) · 1–3 (inspection) · 1–4 (tâche) · ↑ ↓ / Suppr (notifications du téléphone) | Valider · annuler | libellés « (Entrée) » / « (Échap) » / « (Tab) » |
+| Fenêtres modales (rapport, partir, blâme, démission, inspection, tâche, téléphone, recommencer) | Entrée · Échap · Tab (pages du rapport) · 1–3 (inspection) · 1–4 (tâche) · ↑ ↓ / Suppr (notifications du téléphone) | Valider · annuler | libellés « (Entrée) » / « (Échap) » / « (Tab) » |
 | Bureau | ← → ↑ ↓ (maintenues) · Tab · Entrée / Espace · Échap · H / ? · M · Z · Q · D | Regarder · objets · ouvrir / s'installer · menu du jeu · aide · son / micro · sieste · quitter la journée · démission (jauges sous 20) | aide ; « Quitter la journée (Q) » ; « rendre votre badge (D) » |
 | Soir, au bureau | Entrée | Sortir (quand la sortie est visible) | « Quitter le bureau (Entrée) » |
 | Poste, carte | Échap | Retour d'écran, sinon `quitterPC()` (refusé si un choix attend) | « Quitter le PC (Échap) » |
@@ -49,7 +49,7 @@ chaque touche qu'il cite est lue par le code et qu'aucune clé `aide.k.*` n'est 
 | Poste, défi chrono | R | Ralenti pendant un dossier | « Ralenti (R) » |
 | Poste | I · V · H / ? · M · Z · Q · D | Indicateurs · détails des Indicateurs · aide · son · sieste · quitter la journée · démission | « Détails (V) » |
 | Poste, fin de semaine | Entrée · Échap / Retour arrière | Rejouer · accueil | « Rejouer (Entrée) » |
-| Appli Mails (prompt 185) | Tab · ← → · ↑ ↓ · Entrée · Échap · V · 1–n | Zones (dossiers, liste, lecture) · dossiers · mails / défiler · ouvrir · retour à la liste (zone étroite) · tout déplier · réponses rapides | — |
+| Appli Mails (prompts 185, 195) | Tab · ← → · ↑ ↓ · Entrée · Échap · V · 1–n · saisie | Zones (barre d'outils, dossiers, liste, lecture) · dossiers (dans la barre : recherche puis actions Répondre, Archiver, Marquer comme non lu, Voir le dossier) · mails / défiler · ouvrir ou agir · effacer la recherche, puis retour à la liste (zone étroite) · tout déplier · réponses rapides · quand le champ de recherche a le focus, toute lettre (V, 1–3, L, F, I, M… compris) va au champ | — |
 | Appli Community | ← → · ↑ ↓ · Tab · Entrée / Espace · 1–n | Onglets · défiler · réponses · répondre / publier | « Publier (Entrée) » ; bascule cartes / liste (prompt 186) : bouton à icône seulement, sans touche |
 | Appli Journal | Tab · ← → · ↑ ↓ · Entrée · Échap | Zones · jour / filtre (contrôle segmenté) · cartes · enquête · retour | prompt 186 : V (pli « Détails ») et C (copier le résumé) retirés |
 

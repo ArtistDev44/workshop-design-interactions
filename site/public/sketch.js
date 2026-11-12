@@ -295,7 +295,7 @@ let curseurMain = false;
 let dernierEtatAnnonce = '';
 function bandeauEtat() {
 	if (ecran !== 'jeu') return;
-	const cle = { attente: 'attente', reveil: 'attente', selection: 'selection', decision: 'decision', contradiction: 'contradiction', conflit: 'conflit', narration: 'narration', mail: 'mail', soir: 'soir', fin: 'fin' }[phase];
+	const cle = { attente: 'attente', reveil: 'attente', selection: 'selection', decision: 'decision', contradiction: 'contradiction', conflit: 'conflit', narration: 'narration', soir: 'soir', fin: 'fin' }[phase];
 	if (!cle) return;
 	const fin = phase === 'attente' && Jeu.journeeFinie && Jeu.journeeFinie();
 	const id = fin ? 'finJournee' : cle + (cle === 'decision' && Jeu.defiChrono ? 'Chrono' : '');
@@ -504,7 +504,7 @@ function indicateurSauvegarde() {
 
 function dessinerJeu() {
 	if (phase === 'fin') return RAPPORT ? dessinerEcranRapportImprime() : dessinerFin(); // prompt 41
-	if (phase === 'attente' || phase === 'reveil' || phase === 'mail' || phase === 'soir') return dessinerJeuAttente(); // prompt 69 : le soir, l'appli reste consultable
+	if (phase === 'attente' || phase === 'reveil' || phase === 'soir') return dessinerJeuAttente(); // prompt 69 : le soir, l'appli reste consultable
 	const d = dossierCourant();
 	const meteo = d ? Jeu.meteoDuJour(d.date) : null;
 	// Prompt 87 : bandeau fin (jauges, objectif, équipes, heure), liste des signalements, panneau du signalement ouvert
@@ -518,13 +518,14 @@ function dessinerJeu() {
 	else dessinerDossier(d, meteo);
 }
 
-/* Écran de jeu sans incident actif : bandeau, liste des signalements, horloge simulée à droite ; mail en fin de journée */
+/* Écran de jeu sans incident actif : bandeau, liste des signalements, horloge simulée à droite */
 function dessinerJeuAttente() {
 	dessinerBandeau();
 	dessinerCarteAlertes(); // prompt 102 : carte pleine largeur entre deux signalements
-	if (phase === 'mail' || enSieste) Object.assign(PANNEAU, { x: ZONE_CARTE.x + (ZONE_CARTE.l - FENETRE_DIALOGUE.l) / 2, y: ZONE_CARTE.y + 16, l: FENETRE_DIALOGUE.l, h: FENETRE_DIALOGUE.h }); // prompt 107
-	if (phase === 'mail') dessinerMail(); // fin de journée : le mail couvre tout l'écran (prompt 107 : plus de panneau d'attente caché dessous)
-	else if (enSieste) dessinerAttente(); // sieste : le panneau d'attente dit qu'on dort
+	if (enSieste) {
+		Object.assign(PANNEAU, { x: ZONE_CARTE.x + (ZONE_CARTE.l - FENETRE_DIALOGUE.l) / 2, y: ZONE_CARTE.y + 16, l: FENETRE_DIALOGUE.l, h: FENETRE_DIALOGUE.h }); // prompt 107
+		dessinerAttente(); // sieste : le panneau d'attente dit qu'on dort (prompt 194 : plus de mail plein écran le soir)
+	}
 }
 
 
@@ -1125,6 +1126,7 @@ function mousePressed() {
 	if (typeof guideBloque === 'function' && guideBloque(mouseX, mouseY)) return rappelerConsigneGuide(); // prompt 181 : guide contraignant — hors de la cible, le clic est ignoré
 	if (typeof debutJeton === 'function' && debutJeton()) return; // prompt 102 : jeton d'équipe saisi (glisser-déposer)
 	if (typeof debutGlisser === 'function' && debutGlisser()) return; // prompt 94 : une carte de réponse est saisie (clic ou glisser-déposer)
+	if (typeof PATRON !== 'undefined' && PATRON.zoneFocus === 'barre') PATRON.zoneFocus = null; // prompt 195 : un clic hors du champ quitte la recherche de Mails (le champ, cliqué, la reprend)
 	for (let i = boutons.length - 1; i >= 0; i--) {
 		const b = boutons[i];
 		if (mouseX >= b.x && mouseX <= b.x + b.l && mouseY >= b.y && mouseY <= b.y + b.h) {
@@ -1182,6 +1184,7 @@ function keyPressed() {
 	Confort.Son.demarrer(); // l'audio ne peut démarrer qu'après un geste du joueur
 	interaction();
 	if (typeof guideFiltre === 'function' && guideFiltre() && toucheGuide()) return false; // prompt 181 : guide contraignant — liste blanche de touches (guide.js)
+	if (!smsActif && !tutoriel && typeof saisieRechercheMails === 'function' && saisieRechercheMails()) return false; // prompt 195 : le champ de recherche de Mails a le focus — la frappe lui appartient (aucune lettre n'atteint les raccourcis)
 	// Intro SMS (§ 2) : clic / Entrée pour avancer
 	if (smsActif) {
 		if (keyCode === ENTER || keyCode === RETURN || key === ' ') avancerConversation(); // prompt 42
@@ -1303,7 +1306,6 @@ function keyPressed() {
 	// (Patron, Community, Journal, Données) — seul chemin au clavier vers les autres applis depuis la carte
 	if (keyCode === TAB) return ecran === 'jeu' && phase !== 'fin' ? tabMenuApp() : basculerFocusQuitter(!focusQuitter), false;
 	if (focusQuitter && (keyCode === ENTER || keyCode === RETURN || key === ' ')) return quitterPC(), false;
-	if (phase === 'mail' && (keyCode === ENTER || keyCode === RETURN)) return rangerPoste(), false; // prompt 69 : on range le poste, la nuit tombe
 	// Touches valables partout
 	if (key === 'h' || key === 'H' || key === '?') return ouvrir('aide'), false;
 	if (key === 'm' || key === 'M') return toucheMEnfoncee(), false; // prompt 54 : brève = son, maintenue = micro

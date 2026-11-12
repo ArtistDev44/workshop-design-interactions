@@ -332,7 +332,9 @@ const Sauvegarde = (function () {
 			alerteTempsJouee = false;
 			dernierResultat = null;
 			const enCompteur = PHASES_COMPTEUR.includes(ui.phase) && Jeu.dossierCourant() && !Jeu.terminee;
-			phase = enCompteur ? ui.phase : ui.phase === 'mail' ? 'mail' : ui.phase === 'soir' && !Jeu.terminee ? 'soir' : Jeu.terminee ? 'fin' : 'attente';
+			const ancienMail = ui.phase === 'mail' && !Jeu.terminee; // prompt 194 : la phase « mail » n'existe plus — reprise au soir, mail déposé dans Mails
+			if (ancienMail && Jeu.deposerMailDuSoir) Jeu.deposerMailDuSoir();
+			phase = enCompteur ? ui.phase : (ui.phase === 'soir' || ancienMail) && !Jeu.terminee ? 'soir' : Jeu.terminee ? 'fin' : 'attente';
 			if (phase === 'soir' && typeof reprendreSoir === 'function') reprendreSoir(); // prompt 69 : la nuit est tombée, la flèche attend
 			if (phase === 'fin') allerFin();
 			facteurDuree = Jeu.modificateurActif && Jeu.modificateurActif(maintenant) === 'heure_pointe' ? 0.8 : 1;
