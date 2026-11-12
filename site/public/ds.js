@@ -177,17 +177,48 @@ function dsPanneau(x, y, l, h, titre, couleurBarre) {
 	}
 }
 
-// ——— Prompt 75 : logo du jeu (moniteur à écran rouge et ligne de bus) — UNE seule définition des formes ———
+// ——— Logo du jeu : la bulle-pin (piste 2 de logo/planche.html) — UNE seule définition des formes ———
+// Une bulle de dialogue « &#@! » dont la pointe est un marqueur de carte : quelqu'un se plaint, à un endroit précis.
 // Mêmes rectangles que le SVG de l'écran de chargement (index.html, #chargement .logo, viewBox 0 0 24 20) ;
-// scripts/test-jeu.mjs vérifie que les deux restent identiques.
+// scripts/test-jeu.mjs vérifie que les deux restent identiques. Le rouge suit la couleur principale (prompt 115).
 const LOGO_PXE = [
-	[1, 1, 22, 14, '#ffffff'], // moniteur
-	[3, 3, 18, 10, '#d4031c'], // écran rouge
-	[4, 9, 16, 1, '#ffffff'], // ligne de bus
-	[6, 7, 3, 3, '#00ca64'], // fenêtre (arrêt desservi)
-	[15, 7, 3, 3, '#ffffff'], // fenêtre
-	[11, 15, 2, 3, '#ffffff'], // pied
-	[7, 18, 10, 1, '#ffffff'], // socle
+	// bulle puis pointe du marqueur
+	[1, 0, 22, 1, '#d4031c'],
+	[0, 1, 24, 11, '#d4031c'],
+	[1, 12, 22, 1, '#d4031c'],
+	[6, 13, 12, 1, '#d4031c'],
+	[7, 14, 10, 1, '#d4031c'],
+	[8, 15, 8, 1, '#d4031c'],
+	[9, 16, 6, 1, '#d4031c'],
+	[10, 17, 4, 1, '#d4031c'],
+	[11, 18, 2, 1, '#d4031c'],
+	// « &#@! » en lettres pixel 3×5
+	[4, 4, 1, 1, '#ffffff'],
+	[9, 4, 1, 1, '#ffffff'],
+	[11, 4, 1, 1, '#ffffff'],
+	[15, 4, 2, 1, '#ffffff'],
+	[19, 4, 1, 1, '#ffffff'],
+	[3, 5, 1, 1, '#ffffff'],
+	[5, 5, 1, 1, '#ffffff'],
+	[8, 5, 5, 1, '#ffffff'],
+	[14, 5, 1, 1, '#ffffff'],
+	[16, 5, 1, 1, '#ffffff'],
+	[19, 5, 1, 1, '#ffffff'],
+	[4, 6, 1, 1, '#ffffff'],
+	[9, 6, 1, 1, '#ffffff'],
+	[11, 6, 1, 1, '#ffffff'],
+	[14, 6, 3, 1, '#ffffff'],
+	[19, 6, 1, 1, '#ffffff'],
+	[3, 7, 1, 1, '#ffffff'],
+	[5, 7, 1, 1, '#ffffff'],
+	[8, 7, 5, 1, '#ffffff'],
+	[14, 7, 1, 1, '#ffffff'],
+	[4, 8, 1, 1, '#ffffff'],
+	[6, 8, 1, 1, '#ffffff'],
+	[9, 8, 1, 1, '#ffffff'],
+	[11, 8, 1, 1, '#ffffff'],
+	[15, 8, 2, 1, '#ffffff'],
+	[19, 8, 1, 1, '#ffffff'],
 ];
 /** Dessine le logo en pixel art : (x, y) coin haut gauche, « taille » = hauteur en px (largeur 24/20 × taille) ;
  * l'échelle est arrondie à l'entier pour des pixels nets (crisp). */
@@ -195,7 +226,7 @@ function dessinerLogoPXE(x, y, taille) {
 	const k = Math.max(1, Math.floor(taille / 20));
 	noStroke();
 	LOGO_PXE.forEach(([rx, ry, rl, rh, c]) => {
-		fill(c === '#d4031c' ? DS.primaire : c); // prompt 115 : l'écran du logo prend la couleur principale
+		fill(c === '#d4031c' ? DS.primaire : c); // prompt 115 : la bulle du logo prend la couleur principale
 		rect(Math.round(x) + rx * k, Math.round(y) + ry * k, rl * k, rh * k);
 	});
 	return { l: 24 * k, h: 20 * k };
