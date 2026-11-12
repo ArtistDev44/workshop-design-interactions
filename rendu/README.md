@@ -7,7 +7,7 @@ jeu lançable (`index.html`, double clic, hors ligne), `README.md`, `manifest.js
 
 - **Copie figée** : la source de vérité reste `site/public/`. Pour réarchiver après une
   modification, recopier `site/public/` (sans `captures/`), puis les captures à la racine.
-- Captation : vrai rendu du jeu dans Chromium 1920 × 1080 (Playwright), vidéo de 28 s
-  sans son, réencodée en H.264 1280 × 720.
+- Captation : vrai rendu du jeu dans Chromium 1920 × 1080 (Playwright), vidéo de 29 s
+  sans son (accélérée × 1,25), réencodée en H.264 1280 × 720 ; captures refaites le 12/11/2026.
 - Le numéro de groupe **G01** et les champs `[À COMPLÉTER]` (auteurs, contributions,
   licence, fiche-source) restent à confirmer par le groupe.
