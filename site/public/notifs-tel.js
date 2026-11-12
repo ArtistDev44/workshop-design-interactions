@@ -137,7 +137,8 @@ const NotifsTel = (() => {
 			.map((app) => ({ app, liste: g[app].slice().reverse() }))
 			.sort((a, b) => b.liste[0].minute - a.liste[0].minute);
 	}
-	const texte = (n) => (n.texte ? n.texte : t(n.cle, n.vars || {}));
+	// Prompt 162 : une notification rattachée au dossier fictif garde « Fictif · »
+	const texte = (n) => String(marquerFictif(n.dossier !== undefined && Jeu.paquet ? Jeu.paquet[n.dossier] : null, n.texte ? n.texte : t(n.cle, n.vars || {})));
 	return { PRIO, APPS, R, planJour, evenementsPartie, maj, etatVide, groupes, texte };
 })();
 if (typeof window !== 'undefined') window.NotifsTel = NotifsTel;

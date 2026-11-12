@@ -1943,7 +1943,7 @@ for (const f of ['enquete.js', 'carte.js', 'journal.js']) verifier(!/\*\s*1\.05\
 		const mode = Jeu.etat.mode; Jeu.etat.mode = 'direct'; r.direct = /TEMPS RÉEL/.test(texteTransitionJour()); Jeu.etat.mode = mode;
 		TRANSITION_JOUR.semaine = 0;
 		const l = lignesTransitionJour().join(' | ');
-		r.prevus = l.includes(Jeu.jours[0].dossiers.length + ' signalement');
+		r.prevus = l.includes(Jeu.jours[0].dossiers.length + ' dossier(s) prévu(s)') && !/réel\(s\) prévu/.test(l); // prompt 162 : composition, plus de « réels »
 		r.service = l.includes('8h00') && l.includes('20h00') && /touche Q/.test(l);
 		r.courte = Jeu.jours.length < 7 ? /aucun événement réel le dimanche 20 septembre/.test(l) : true;
 		TRANSITION_JOUR.jour = 2; r.courteUneFois = !/aucun événement réel/.test(lignesTransitionJour().join(' '));
@@ -2199,6 +2199,113 @@ for (const s of semaines) {
 		);
 		verifier(Object.values(r).every(Boolean), `prompt 161 : texte reformulé hors de son cadre (${langue}) : ${JSON.stringify(r)}`);
 	}
+}
+
+// Prompt 162 : « Fictif » sur chaque trace du dossier fictif, « affluence supposée » pour l'agenda, « réel » réservé à la
+// source (grammar.md, prompts 119 et 134) — partie jouée avec l'incident fictif activé, en FR et en EN
+for (const [langue, pre] of [['fr', 'Fictif · '], ['en', 'Fictional · ']]) {
+	const c162 = contexte(langue);
+	const r = vm.runInContext(
+		`(() => {
+		Jeu.incidentsFictifs = true;
+		Jeu.chargerSemaine('2026-09-14');
+		Jeu.nouvellePartie();
+		const iF = Jeu.paquet.findIndex((d) => d.fictif);
+		const jourF = iF >= 0 ? Jeu.paquet[iF].date : null;
+		const out = { iF, mails: [], compo: '', faits: [] };
+		let tours = 0;
+		while (!Jeu.terminee && tours++ < 500) {
+			const d = Jeu.prochainDuJour();
+			if (d) {
+				if (Jeu.conflit && Jeu.conflit()) Jeu.choisirPriorite('a');
+				Jeu.decider(Jeu.actionsPossibles(d)[0]);
+			} else {
+				Jeu.finDeJourneeTactique();
+				const j = Jeu.jourCourant();
+				if (j && j.date === jourF) {
+					out.mails = Jeu.mailDuJour().lignes.map(String);
+					out.compo = String(Jeu.compositionDossiers(j.dossiers));
+					const tous = Jeu.evenementsJournee;
+					Jeu.evenementsJournee = tous.filter((e) => e.index === iF);
+					out.faits = Taches.faitsDuJour(jourF).map((f) => String(f.texte));
+					Jeu.evenementsJournee = tous;
+				}
+				if (!Jeu.jours[Jeu.jourIndex + 1]) break;
+				Jeu.journeeSuivante();
+			}
+		}
+		const eF = Jeu.evenementsJournee.find((e) => e.index === iF);
+		const autres = Jeu.evenementsJournee.filter((e) => e.index !== iF);
+		out.ligneF = eF ? String(Jeu.ligneMail(eF)) : '';
+		out.autresMarques = autres.filter((e) => String(Jeu.ligneMail(e)).includes(PRE)).length;
+		out.postF = String((Jeu.postsPartie().find((p) => p.index === iF) || {}).texte || '');
+		out.comF = Jeu.commentaires.filter((c) => c.index === iF).map((c) => String(c.texte));
+		out.reprochesF = (Jeu.messagesPatron || []).filter((m) => m.meta && m.meta.index === iF).map((m) => String(m.texte));
+		const iEv = Jeu.paquet.findIndex((d) => d.type === 'événement');
+		const plainte = (index) => Jeu.textePlainte({ index, def: { texte: { fr: 'x', en: 'x' } }, vars: {} });
+		out.plainteF = plainte(iF);
+		out.plainteAutre = plainte(iEv);
+		const fictifs = Jeu.historique.filter((h) => h.action && h.dossier && h.dossier.fictif).map((h) => String(h.narration.titre));
+		out.clesF = Jeu.bilan().decisionsCles.filter((k) => fictifs.some((f) => String(k.titre).endsWith(f))).map((k) => String(k.titre));
+		const consigne = (Jeu.messagesPatron || []).find((m) => m.type === 'consigne');
+		out.consigne = consigne ? String(consigne.texte) : '';
+		out.notif = NotifsTel.texte({ dossier: iF, texte: 'x' });
+		const ev = Jeu.paquet[iEv];
+		out.causeEv = String(Taches.causeDe(ev));
+		out.causeRetard = String(Taches.causeDe({ type: 'ligne en difficulté', lignes: ['1'], retard: null }));
+		out.vars = Jeu.variablesReplique(iEv);
+		out.nomEv = String(ev.texte_source).split(' — ')[0].trim();
+		out.dico = TRADUCTIONS[LANGUE];
+		return out;
+	})()`.replaceAll('PRE', JSON.stringify(pre)).replaceAll('LANGUE', JSON.stringify(langue)),
+		c162,
+	);
+	verifier(r.iF >= 0, `prompt 162 : la semaine du 14/09 doit contenir l'incident fictif (${langue})`);
+	verifier(r.ligneF.includes(pre), `prompt 162 : ligne du mail / journal du dossier fictif sans « ${pre}» (${r.ligneF})`);
+	verifier(r.autresMarques === 0, `prompt 162 : « ${pre}» sur ${r.autresMarques} ligne(s) de dossiers réels`);
+	verifier(r.mails.some((l) => l.includes(pre)), `prompt 162 : mail du soir du jour fictif sans « ${pre}» (${langue})`);
+	verifier(r.postF.startsWith(pre), `prompt 162 : post Community du dossier fictif sans « ${pre}» (${r.postF})`);
+	verifier(r.comF.length > 0 && r.comF.every((c) => c.startsWith(pre)), `prompt 162 : commentaires Community du dossier fictif sans « ${pre}» (${JSON.stringify(r.comF)})`);
+	verifier(r.reprochesF.every((m) => m.startsWith(pre)), `prompt 162 : reproche du patron sur le dossier fictif sans « ${pre}» (${JSON.stringify(r.reprochesF)})`);
+	verifier(r.plainteF.startsWith(pre) && !r.plainteAutre.includes(pre), `prompt 162 : plainte du dossier fictif (et elle seule) marquée (${r.plainteF} / ${r.plainteAutre})`);
+	verifier(r.notif.startsWith(pre), `prompt 162 : notification du téléphone rattachée au dossier fictif sans « ${pre}»`);
+	const faitsDossier = r.faits.filter((f) => /\d{2}:\d{2}/.test(f));
+	verifier(faitsDossier.length > 0 && faitsDossier.every((f) => f.includes(pre)), `prompt 162 : fait marquant du dossier fictif sans « ${pre}» (${JSON.stringify(r.faits)})`);
+	verifier(r.clesF.every((k) => k.startsWith(pre)), `prompt 162 : décision clé du dossier fictif sans « ${pre}» (${JSON.stringify(r.clesF)})`);
+	verifier((langue === 'fr' ? /1 incident fictif/ : /1 fictional incident/).test(r.compo) && !/réel\(s\) prévu|real report/.test(r.compo), `prompt 162 : composition du jour fictif (${r.compo})`);
+	verifier(langue === 'fr' ? /dossier\(s\) attendus aujourd’hui \([^)]*\) : \d+ /.test(r.consigne) : /case\(s\) expected today \([^)]*\): \d+ /.test(r.consigne), `prompt 162 : la consigne du patron dit la composition (${r.consigne})`);
+	verifier(r.causeEv.includes(langue === 'fr' ? 'Affluence supposée' : 'Assumed crowds') && r.causeRetard === r.dico['tache.cause.retardSignale'], `prompt 162 : causes d'info trafic (${r.causeEv} / ${r.causeRetard})`);
+	verifier(r.vars.nom === r.nomEv && r.nomEv.length > 0, `prompt 162 : variable {nom} = nom de l'événement (${JSON.stringify(r.vars)})`);
+	// Dictionnaire : « réel » réservé à la source ; affluence dite comme une hypothèse ; fictif dans les crédits et la fin
+	const d = r.dico;
+	const interdits =
+		langue === 'fr'
+			? [/rien n.est inventé/i, /Aucun événement inventé/i, /Chiffres réels/, /valeur réelle/i, /signalement\(s\) réel\(s\)/, /dossier\(s\) réels/, /attire du monde/, /Affluence signalée/, /affluence est attendue/i, /\bVigilance\b/]
+			: [/nothing made up/i, /No invented event/i, /Real figures/, /actual value/i, /real report\(s\) expected/, /real case\(s\)/, /draws crowds/, /Crowds reported/, /Crowds are expected/i, /\bwarning \{valeur\}/];
+	for (const re of interdits) {
+		const cles = Object.keys(d).filter((k) => re.test(d[k]));
+		verifier(!cles.length, `prompt 162 : formule ${re} encore dans ${cles.join(', ')} (${langue})`);
+	}
+	verifier(/fictif|fictional/i.test(d['credits.ia.donnees.v']) && /suppos|assumed/i.test(d['credits.ia.donnees.v']), `prompt 162 : crédits sans l'incident fictif ni l'affluence supposée (${langue})`);
+	verifier(/fictif|fictional/i.test(d['fin.sources']), `prompt 162 : fin.sources sans l'incident fictif (${langue})`);
+	verifier(/fictif|fictional/i.test(d['mp.mode.sous']) && /2 (à|to) 4/.test(d['mp.mode.sous']), `prompt 162 : mp.mode.sous sans la part réelle / fictive (${langue})`);
+	verifier(/suppos|assum/i.test(d['enq.signalement.événement']) && /suppos|assum/i.test(d['phrase.affluence']) && /suppos|assum/i.test(d['tache.prep.contexte']) && /hypoth|assumption/i.test(d['enq.fait.evenement']), `prompt 162 : affluence non dite comme une hypothèse (${langue})`);
+}
+{
+	// Plaintes d'affluence : nom de l'événement (pas la catégorie brute de l'agenda) et doute, jamais la foule affirmée
+	const m162 = JSON.parse(readFileSync(join(pub, 'data/messages.json'), 'utf8'));
+	const affl = m162.plaintes.filter((x) => x.condition && x.condition.type === 'événement');
+	verifier(affl.length >= 5, `prompt 162 : plaintes d'affluence trop peu nombreuses (${affl.length})`);
+	for (const p of affl) {
+		for (const l of ['fr', 'en']) verifier(!/\{nature\}/.test(p.texte[l]) && /\{nom\}/.test(p.texte[l]), `prompt 162 : plainte ${p.id} (${l}) doit citer {nom}, pas {nature}`);
+		verifier(/risqu|\?|pourrait|\bsi /i.test(p.texte.fr) && /might|may|could|\?|\bif /i.test(p.texte.en), `prompt 162 : plainte ${p.id} affirme la foule au lieu d'en douter`);
+	}
+	const pan = readFileSync(join(pub, 'panneau.js'), 'utf8');
+	verifier(/const titre = String\(marquerFictif\(d,/.test(pan), 'prompt 162 : titre de la fenêtre du dossier préfixé « Fictif · »');
+	verifier(/phrase\.alerteMeteo', \{[^}]*nombreFr\(d\.valeur\)/.test(pan), 'prompt 162 : alerte météo, nombre à la française');
+	verifier(/marquerFictif\(e, titre\)/.test(readFileSync(join(pub, 'journal.js'), 'utf8')), 'prompt 162 : Journal, titre du dossier fictif marqué');
+	verifier(/marquerFictif\(Jeu\.paquet\[p\.index\]/.test(readFileSync(join(pub, 'community.js'), 'utf8')), 'prompt 162 : info trafic publiée sur le dossier fictif marquée');
+	verifier(/compositionDossiers/.test(readFileSync(join(pub, 'immersion.js'), 'utf8')), 'prompt 162 : transition et pile de dossiers disent la composition');
 }
 
 // Service worker : chaque script de index.html est dans la liste hors ligne de sw.js

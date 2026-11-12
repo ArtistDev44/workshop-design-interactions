@@ -147,7 +147,7 @@ function phraseSituation(d) {
 	if (cat === 'accident' || cat === 'travaux') return t('phrase.' + cat, { texte: d.texte_source, ligne: ligne || t('carte.nonRenseigne') });
 	if (cat === 'affluence') return t('phrase.affluence', { nom: String(d.texte_source).split(' — ')[0], lieu: String(d.texte_source).split(' — ')[1] || t('carte.nonRenseigne') });
 	if (cat === 'meteo') {
-		if (d.type === 'alerte météo') return t('phrase.alerteMeteo', { nature: d.nature, valeur: d.valeur || t('carte.nonRenseigne'), heure: d.heure || t('carte.nonRenseigne') });
+		if (d.type === 'alerte météo') return t('phrase.alerteMeteo', { nature: d.nature, valeur: d.valeur ? nombreFr(d.valeur) : t('carte.nonRenseigne'), heure: d.heure || t('carte.nonRenseigne') }); // prompt 162 : nombre à la française
 		const m = Jeu.meteoDuJour(d.date) || {};
 		return t('phrase.meteoForte', { pluie: nombreFr(m.pluie_mm), vent: nombreFr(m.rafales_max), texte: d.texte_source });
 	}
@@ -203,7 +203,7 @@ function reduireDialogue() {
 /** Fenêtre réduite : un onglet en bas de la carte pour la rouvrir */
 function dessinerOngletDialogue(d) {
 	const z = typeof ZONE_CARTE !== 'undefined' ? ZONE_CARTE : PANNEAU;
-	const txt = t('enq.signalement.' + d.type) + ' · ' + t('carte.gravite', { g: t('gravite.' + Jeu.gravite(d)) }) + '  ›';
+	const txt = String(marquerFictif(d, t('enq.signalement.' + d.type))) + ' · ' + t('carte.gravite', { g: t('gravite.' + Jeu.gravite(d)) }) + '  ›'; // prompt 162
 	textFont(DS.policeTexte);
 	textSize(20);
 	const l = textWidth(txt) + 48;
@@ -215,7 +215,7 @@ function dessinerOngletDialogue(d) {
 function dessinerPanneauSignalement(d, x, base) {
 	const l = base.l - 64;
 	let y = base.y + 64;
-	const titre = (d.lignes && d.lignes.length ? t('dossier.ligne', { lignes: d.lignes.join(', ') }) : t('enq.signalement.' + d.type)) + ' · ' + t('carte.gravite', { g: t('gravite.' + Jeu.gravite(d)) });
+	const titre = String(marquerFictif(d, d.lignes && d.lignes.length ? t('dossier.ligne', { lignes: d.lignes.join(', ') }) : t('enq.signalement.' + d.type))) + ' · ' + t('carte.gravite', { g: t('gravite.' + Jeu.gravite(d)) }); // prompt 162 : « Fictif · » dans le titre
 	noStroke();
 	textAlign(LEFT, TOP);
 	textFont(POLICE_TEXTE);

@@ -331,7 +331,7 @@ function carteSignalement(c, x, y, l, focus) {
 	let bx = x + 56;
 	if (e.ligne) bx += badgeLigne(e.ligne, bx, y + 14) + 10;
 	const titre = d.consequence ? t('chaine.nature') : e.retardEffectif !== null && e.retardEffectif !== undefined && e.ligne ? t('journal.titreRetard', { retard: e.retardEffectif, ligne: e.ligne }) : d.type === 'événement' && d.texte_source ? t('tache.cause.affluence', { nom: String(d.texte_source).split(' — ')[0] }) : String(e.externeCourt || tSi('type.' + d.type, d.type));
-	dsTexte(court(titre, 64), bx, y + 14, 18, DS.blanc, 'left');
+	dsTexte(court(String(marquerFictif(e, titre)), 64), bx, y + 14, 18, DS.blanc, 'left'); // prompt 162
 	// Réponse choisie (puce) et évaluation (couleur + symbole + mot)
 	const rep = e.action ? String(e.action) : t('journal.aucuneAction');
 	textFont(DS.policeTexte);
@@ -360,7 +360,7 @@ function carteEquipe(q, x, y, l, focus) {
 }
 function cartePlainte(p, x, y, l, focus) {
 	cadreCarte(x, y, l, 64, focus, p.reponse === null ? DS.alerte : p.bonne ? DS.succes : DS.erreur);
-	dsTexte('✉ ' + p.auteur + ' · ' + court(Jeu.texteMessage(p.def.texte, p.vars), 72), x + 20, y + 8, 15, DS.blanc, 'left'); // une ligne : pas de chevauchement
+	dsTexte('✉ ' + p.auteur + ' · ' + court(Jeu.textePlainte(p), 72), x + 20, y + 8, 15, DS.blanc, 'left'); // une ligne : pas de chevauchement
 	dsTexte(p.reponse === null ? t('journal.sansReponse') : '↳ ' + court(Jeu.texteMessage(p.def.reponses[p.reponse].texte, p.vars), 64) + ' · ' + t(p.bonne ? 'journal.bienRecue' : 'journal.malRecue'), x + 20, y + 36, 14, DS.blanc75, 'left');
 	if (actionsVisiblesJournal()) dsBouton(x + l - 190, y + 10, 176, 44, t('journal.voirCommunity'), () => ouvrirAppPC('community'), 'fantome');
 }
@@ -634,7 +634,7 @@ function toucheJournal() {
 function texteCarte(c) {
 	if (c.sorte === 'signalement') return (c.heure || '') + ' · ' + String(c.e.externeCourt) + (c.e.ligne ? ' · ' + t('dossier.ligne', { lignes: c.e.ligne }) : '') + ' · ' + (c.e.action ? String(c.e.action) : t('journal.aucuneAction')) + ' · ' + t('eval.' + c.eval);
 	if (c.sorte === 'equipe') return t('journal.carteEquipe', { nom: c.q.nom, sujet: c.q.sujet || '', cout: c.q.cout, etat: '' });
-	if (c.sorte === 'plainte') return c.p.auteur + ' : ' + Jeu.texteMessage(c.p.def.texte, c.p.vars);
+	if (c.sorte === 'plainte') return c.p.auteur + ' : ' + Jeu.textePlainte(c.p);
 	if (c.sorte === 'patron') return String(c.m.texte);
 	return t('crise.bandeau');
 }

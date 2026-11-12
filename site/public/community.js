@@ -262,7 +262,7 @@ function annoncerNouveautesCommunity() {
 /** Tous les posts du fil, du plus récent au plus ancien */
 function postsDuFil() {
 	const partie = Jeu.postsPartie();
-	const joueur = Jeu.postsJoueur.map((p) => ({ sorte: 'joueur', index: p.index, jour: p.jour, heure: p.heure, texte: p.brouillon ? texteBrouillon(p.index) : t('commu.info.' + p.modele, p.vars), photo: Jeu.sujetPhoto(Jeu.paquet[p.index]), likes: Math.round(12 * (Jeu.jauges.reputation / 50)), date: p.jour, coherent: p.coherent }));
+	const joueur = Jeu.postsJoueur.map((p) => ({ sorte: 'joueur', index: p.index, jour: p.jour, heure: p.heure, texte: String(marquerFictif(Jeu.paquet[p.index], p.brouillon ? texteBrouillon(p.index) : t('commu.info.' + p.modele, p.vars))), photo: Jeu.sujetPhoto(Jeu.paquet[p.index]), likes: Math.round(12 * (Jeu.jauges.reputation / 50)), date: p.jour, coherent: p.coherent }));
 	const archive = Jeu.postsArchive().map((p) => Object.assign({}, p, { texte: String(p.texte) }));
 	return partie
 		.concat(joueur)
@@ -429,10 +429,10 @@ function blocPlainteSociale(pl, x, y, l, prive) {
 		const reste = Jeu.resteReponse(pl, typeof tempsPlaintes === 'function' ? tempsPlaintes() : millis());
 		dsTexte(t('plainte.delai', { s: Math.ceil(reste / 1000) }), x + l - 8, yy + 4, 18, reste < 30000 ? DS.alerte : DS.blanc75, 'right');
 	}
-	dsTexte(Jeu.texteMessage(pl.def.texte, pl.vars), x + 34, yy + 30, 20, DS.blanc, 'left', l - 60);
+	dsTexte(Jeu.textePlainte(pl), x + 34, yy + 30, 20, DS.blanc, 'left', l - 60); // prompt 162 : « Fictif · » si la plainte porte sur le dossier fictif
 	textFont(DS.policeTexte);
 	textSize(20);
-	yy += 40 + couperLignes(String(Jeu.texteMessage(pl.def.texte, pl.vars)), l - 60, DS.policeTexte, 20).length * 28; // prompt 93
+	yy += 40 + couperLignes(Jeu.textePlainte(pl), l - 60, DS.policeTexte, 20).length * 28; // prompt 93
 	if (pl.reponse !== null) {
 		const r = pl.def.reponses[pl.reponse];
 		noStroke();
@@ -504,7 +504,7 @@ function ongletMessagerie(z) {
 		avatarUsager(p.auteur, z.x + 10, y + 14, 36);
 		dsTexte(p.auteur, z.x + 56, y + 8, 18, DS.blanc, 'left');
 		dsTexte(p.heure, z.x + lg - 10, y + 8, 18, DS.blanc50, 'right');
-		dsTexte(String(Jeu.texteMessage(p.def.texte, p.vars)).slice(0, 22) + '…', z.x + 56, y + 36, 18, DS.blanc50, 'left');
+		dsTexte(Jeu.textePlainte(p).slice(0, 22) + '…', z.x + 56, y + 36, 18, DS.blanc50, 'left');
 		if (nonLu) dsBadge(z.x + lg - 30, y + 40, '!', 'info');
 		boutons.push({ x: z.x, y, l: lg, h: 68, action: () => ((COMMU.conv = i), (focusReponse = 0)) });
 	});
