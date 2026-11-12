@@ -1,4 +1,4 @@
-# Prompt 125 — Jeu « Nantes en régulation » : une évaluation qui suit les jauges, des tendances avant de choisir
+# Prompt 130 — Jeu « Nantes en régulation » : une évaluation qui suit les jauges, des tendances avant de choisir
 
 Demande d'origine (12/11/2026) : « À partir du fichier `audit-2026-11-12.md`, crée plusieurs prompts et exécute-les. »
 Ce prompt reprend les sections 3.1 et 3.2 de l'audit.
@@ -57,4 +57,4 @@ La tendance ▲▼ par jauge existe déjà (`tendance()`, `Jeu.effetsAttendus`),
   avant / après dans la doc.
 - Ajouter un contrôle à `site/scripts/test-jeu.mjs` : suivre l'évaluation ne mène pas au licenciement.
 - `npm run build`, `npm test`, audit des textes à 0 défaut.
-- Doc commune `jeu/125-129-audit-experience-rendu.md`, `prompts/README.md`, `journal.md`.
+- Doc commune `jeu/130-134-audit-experience-rendu.md`, `prompts/README.md`, `journal.md`.

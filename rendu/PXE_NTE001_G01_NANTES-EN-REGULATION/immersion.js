@@ -257,7 +257,7 @@ function tempsCompresse() {
 // pendant la lecture d'un signalement. game.js reçoit cette valeur comme « maintenant » (API inchangée).
 const TEMPS_EQUIPES = { ms: 0, actif: 0 };
 const tempsEquipes = () => TEMPS_EQUIPES.ms;
-/** Prompt 126 : ms réelles de jeu actif — une plainte n'expire plus pendant la lecture d'un signalement */
+/** Prompt 131 : ms réelles de jeu actif — une plainte n'expire plus pendant la lecture d'un signalement */
 const tempsPlaintes = () => TEMPS_EQUIPES.actif;
 /** État de la vitesse du temps : 'pause' | 'normal' | 'accelere' */
 function vitesseTemps() {
@@ -271,7 +271,7 @@ function avancerTemps() {
 	if (tempsSuspendu()) return; // prompt 34 / 43 : tutoriel et transition suspendent le temps
 	const vitesse = IMMERSION.minutesParSeconde * (tempsCompresse() ? IMMERSION.compression : 1) * (typeof Juice !== 'undefined' ? Juice.echelleTemps(maintenant) : 1); // prompt 78 : sieste ×100 ; prompt 96 : hit-stop (horloge seule, entrées libres)
 	TEMPS_EQUIPES.ms += dt * (vitesse / IMMERSION.minutesParSeconde); // prompt 95 (le hit-stop la ralentit aussi)
-	TEMPS_EQUIPES.actif += dt; // prompt 126 : temps réel de jeu ACTIF (×1, arrêté quand le temps est suspendu) — délai des plaintes
+	TEMPS_EQUIPES.actif += dt; // prompt 131 : temps réel de jeu ACTIF (×1, arrêté quand le temps est suspendu) — délai des plaintes
 	const avant = Jeu.horloge.minutes;
 	Jeu.horloge.minutes += (dt / 1000) * vitesse;
 	// Prompt 78 : l'horloge ne dépasse pas la fin de journée tant que des signalements restent (sieste ×100)
@@ -1176,7 +1176,7 @@ function fenetrePoste() {
 	textSize(24);
 	text(t('poste.decisions'), x + 56, y + 262);
 	textStyle(NORMAL);
-	// Prompt 126 : les gestes réels du jeu (carte, répliques 1 à 4, équipes glissées, menu à gauche), plus l'ancienne table Q5–Q7
+	// Prompt 131 : les gestes réels du jeu (carte, répliques 1 à 4, équipes glissées, menu à gauche), plus l'ancienne table Q5–Q7
 	['carte', 'repondre', 'equipes', 'menu'].forEach((g, i) => {
 		const k = t('poste.geste.' + g + '.k');
 		const yy = y + 310 + i * 72;

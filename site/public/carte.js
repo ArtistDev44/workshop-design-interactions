@@ -100,7 +100,7 @@ function dessinerSelection() {
 	text(t(f.length > 1 ? 'sig.choisir' : 'sig.seul'), base.x + 32, base.y + 356, base.l - 64, 120);
 }
 function couleurGravite(g) {
-	return g === 'elevee' ? C.rougeFonce : g === 'moyenne' ? C.orange : C.gris; // prompt 128 : « élevée » en rouge franc (C.rouge, rose pâle, était moins visible que l'orange)
+	return g === 'elevee' ? C.rougeFonce : g === 'moyenne' ? C.orange : C.gris; // prompt 133 : « élevée » en rouge franc (C.rouge, rose pâle, était moins visible que l'orange)
 }
 
 // ——— Onglets du panneau incident (dessinés par enquete.js au-dessus des sources) ———

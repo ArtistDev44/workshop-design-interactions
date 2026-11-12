@@ -1,4 +1,4 @@
-/* Nantes en régulation — prompt 127 : mode exposition (?expo=1 ou #expo).
+/* Nantes en régulation — prompt 132 : mode exposition (?expo=1 ou #expo).
  * Chargé en PREMIER (avant p5 et les autres scripts) : la purge du stockage doit précéder toute lecture.
  * - Au chargement : efface les clés « pxe-nte001* » du visiteur précédent (partie, progression, tutoriel vu,
  *   carrière, intros…) SAUF les réglages de confort, la langue et le palmarès.

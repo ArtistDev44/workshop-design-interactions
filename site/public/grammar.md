@@ -9,7 +9,7 @@ dossier à trancher. En temps réel (mode « aujourd'hui », GTFS-RT), un retard
 10 minutes en devient un aussi ; tant qu'il n'est pas traité, ce retard s'aggrave. À l'heure de fin
 de service, ce qui reste en file subit ses conséquences naturelles (Q25).
 
-Ce que le jeu joue vraiment (prompt 129, vérifié dans les données le 12/11/2026) : les archives
+Ce que le jeu joue vraiment (prompt 134, vérifié dans les données le 12/11/2026) : les archives
 (changelog GTFS) ne donnent **aucun retard en minutes** (`retard: null` dans les 3 semaines et le
 repli) ; une semaine compte 2 à 4 perturbations réelles, et le paquet est complété à 15 dossiers par
 des événements de l'agenda. Le seuil de 10 minutes et l'aggravation du retard ne jouent donc qu'en
@@ -59,5 +59,5 @@ la cohérence des variantes et permet l'archive.
 « Les archives Naolib (perturbations datées), l'agenda de la métropole et Open-Meteo fournissent les faits
 de la semaine choisie, et le flux GTFS-RT le retard réel du jour : chaque fait devient un dossier, et chaque
 réponse du joueur module les trois jauges selon le contexte. »
-(prompt 129 : reformulée d'après ce que le jeu joue ; l'ancienne phrase de `jeu/00-concept.md` mettait le seuil de
+(prompt 134 : reformulée d'après ce que le jeu joue ; l'ancienne phrase de `jeu/00-concept.md` mettait le seuil de
 10 min au centre, alors qu'il ne joue qu'en temps réel)

@@ -106,7 +106,7 @@ if (typeof location !== 'undefined' && typeof document !== 'undefined') {
 	}
 }
 
-// ——— Prompt 127 : filet en cas d'erreur de rendu ———
+// ——— Prompt 132 : filet en cas d'erreur de rendu ———
 // Une exception dans draw() arrête la boucle de p5 : l'écran reste figé pour de bon (bug H_PLATEAU du 12/11).
 // Après une erreur, si p5 ne dessine plus rien pendant 2 s (frameCount figé), message sobre puis rechargement au
 // bout de 3 s. Au plus un rechargement par minute (sessionStorage), pour ne jamais boucler. Une promesse rejetée

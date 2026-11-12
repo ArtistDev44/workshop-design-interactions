@@ -71,7 +71,7 @@ let phase = 'decision'; // 'conflit' | 'contradiction' | 'decision' | 'narration
 let sourceChoisie = null; // 'a' | 'b' quand le dossier contient une contradiction (Q9)
 let dernierResultat = null;
 let debutNarration = 0;
-const DUREE_NARRATION = 10000; // prompt 126 : défi chrono seulement (6 s → 10 s) ; sinon pas de suite automatique
+const DUREE_NARRATION = 10000; // prompt 131 : défi chrono seulement (6 s → 10 s) ; sinon pas de suite automatique
 let arriveeDossier = 0; // millis() d'arrivée du dossier (glissement, Q10)
 let debutCompteur = 0;
 let boutons = []; // zones cliquables recalculées à chaque image
@@ -322,7 +322,7 @@ function lancerNouvellePartie() {
 		nouvellePartieRythme(); // prompt 74 : ordre d'arrivée tiré par la graine, fil de la journée remis à zéro
 		demarrerJournee(); // journée 1, 8h00 (prompt 76), en attente du premier incident
 		const ch = chapitreCourant();
-		if (typeof EXPO !== 'undefined' && EXPO.actif) return expoAuPoste(); // prompt 127 : exposition, droit à la carte
+		if (typeof EXPO !== 'undefined' && EXPO.actif) return expoAuPoste(); // prompt 132 : exposition, droit à la carte
 		if (!introVue) lancerIntroSMS(); // § 2 : une seule fois, pas sur « Rejouer »
 		else if (ch) conversationChapitre(ch); // prompt 41 : le patron présente la semaine et son nouvel élément
 		else if (!tutorielVu() && !optionGuide()) lancerTutoriel(); // prompt 34 (pas si le guide « Prendre en main » est choisi)
@@ -475,7 +475,7 @@ function indicateurSauvegarde() {
 	const messageFile = SELECTION.message && millis() - SELECTION.message.t < 5000; // le message de la file (bas) a la priorité
 	// Prompt 102 : « reste de la journée » dans la ligne d'état de la carte (carte-alertes.js) ; plus de doublon ici
 	const s = Sauvegarde.texteIndicateur();
-	if (!s || phase === 'narration') return; // prompt 126 : il chevauchait le titre de la narration
+	if (!s || phase === 'narration') return; // prompt 131 : il chevauchait le titre de la narration
 	textFont(POLICE_DONNEES);
 	textSize(16);
 	textAlign(RIGHT, BOTTOM);
@@ -794,7 +794,7 @@ function dessinerNarration() {
 	text(expl.join('\n'), z.x + 32, z.y + 612, z.l - 64, 150);
 
 	// Suite automatique, ou Entrée / clic
-	// Prompt 126 : plus de suite automatique hors défi chrono — le joueur lit à son rythme (Entrée, clic ou « Suivant »)
+	// Prompt 131 : plus de suite automatique hors défi chrono — le joueur lit à son rythme (Entrée, clic ou « Suivant »)
 	const auto = !!Jeu.defiChrono;
 	const tA = auto ? constrain((millis() - debutNarration) / DUREE_NARRATION, 0, 1) : 0;
 	if (auto) {
@@ -1104,7 +1104,7 @@ function basculerSon() {
 	Confort.Reglages.basculer('son');
 }
 
-/** Prompt 128 : plein écran du document (1920×1080 du brief sans barres du navigateur) */
+/** Prompt 133 : plein écran du document (1920×1080 du brief sans barres du navigateur) */
 function basculerPleinEcran() {
 	const doc = document;
 	try {
@@ -1145,7 +1145,7 @@ function keyPressed() {
 	if ((key === 'g' || key === 'G') && GUIDE.actif && !MENU.actif) return arreterGuide(), false;
 	// Prompt 34 : le tutoriel capte le clavier (L reste disponible pour changer de langue)
 	if (tutoriel && !(key === 'l' || key === 'L')) return toucheTutoriel(), false;
-	// Prompt 128 : F = plein écran (entrée / sortie), partout hors saisie ; rien si l'API est absente
+	// Prompt 133 : F = plein écran (entrée / sortie), partout hors saisie ; rien si l'API est absente
 	if ((key === 'f' || key === 'F') && !keyIsDown(CONTROL) && !keyIsDown(91)) return basculerPleinEcran(), false;
 	// Langue (prompt 24) : L bascule partout, sans toucher à la partie
 	if (key === 'l' || key === 'L') return Langue.suivante(), false;
@@ -1424,7 +1424,7 @@ function fenetreAide() {
 		['M', t('aide.k.son')],
 		[t('aide.k.aideTouche'), t('aide.k.aide')],
 		['T', t('aide.k.tuto')],
-		['L · F', t('aide.k.langue')], // prompt 128 : F = plein écran
+		['L · F', t('aide.k.langue')], // prompt 133 : F = plein écran
 		['Tab', t('aide.k.objets')],
 		['← → ↑ ↓', t('aide.k.regarder')],
 		[t('aide.k.quitterTouche'), t('aide.k.quitter')],

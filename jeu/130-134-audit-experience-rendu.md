@@ -1,12 +1,12 @@
-# Prompts 125 à 124 : tirés de l'audit du 12/11/2026 (expérience de jeu et rendu)
+# Prompts 130 à 124 : tirés de l'audit du 12/11/2026 (expérience de jeu et rendu)
 
 Ces cinq prompts appliquent les constats de `audit-2026-11-12.md` (racine). Ils ont été exécutés le 12/11/2026 sur la
-branche `jeu/125-129-audit-experience-rendu`, dans un worktree séparé : d'autres sessions travaillaient en même temps
-(prompts 114 à 121 créés ou fusionnés dans `main` pendant ce travail),
-d'où la numérotation à partir de 125 (les prompts ont d'abord été numérotés 115 à 119, puis 120 à 124) et l'absence de toute
+branche `jeu/130-134-audit-experience-rendu`, dans un worktree séparé : d'autres sessions travaillaient en même temps
+(prompts 114 à 125 créés ou fusionnés dans `main` pendant ce travail),
+d'où la numérotation à partir de 130 (les prompts ont d'abord été numérotés 115 à 119, puis 120 à 124, puis 125 à 129) et l'absence de toute
 modification de `menu.js` et `credits.js`. Le travail a été fusionné avec `main` après coup : voir « Fusion ».
 
-## 125 — Une évaluation qui suit les jauges, des tendances avant de choisir
+## 130 — Une évaluation qui suit les jauges, des tendances avant de choisir
 
 - **Constat rejoué par simulation** (vrais `game.js`, `taches.js`, `rythme.js` et données, dans Node) : la réponse
   jugée « bonne » était celle dont la **somme brute** des effets attendus était la plus haute. Avec le bonus ×1,25 de
@@ -35,7 +35,7 @@ modification de `menu.js` et `credits.js`. Le travail a été fusionné avec `ma
 - **Test** : `test-jeu.mjs` joue les 3 semaines en suivant le conseil (aucun licenciement, 15/15 « bon », score
   ≥ 180). Le test des « chaînes » choisit désormais la pire réponse au sens pondéré.
 
-## 126 — Un retour lisible, une intro qui décrit le vrai jeu
+## 131 — Un retour lisible, une intro qui décrit le vrai jeu
 
 - **Textes** (FR et EN) : `sms.2` ne parle plus de « dévier, retenir, renfort… le chrono tourne » ; `sms.4` ne dit
   plus « pas de sieste au poste ». La fenêtre « Votre poste » décrit les gestes réels : clic sur la carte (horloge
@@ -50,7 +50,7 @@ modification de `menu.js` et `credits.js`. Le travail a été fusionné avec `ma
   (sous le menu si c'est lui qu'elle désigne) ; elle couvrait la plainte, puis les répliques.
 - **Indicateur de sauvegarde** masqué pendant la narration : il chevauchait son titre.
 
-## 127 — Mode exposition et filet en cas d'erreur
+## 132 — Mode exposition et filet en cas d'erreur
 
 - **`?expo=1`** (nouveau `expo.js`, premier script de la page) :
   - purge des clés `pxe-nte001*` du visiteur précédent, sauf réglages, langue, palmarès et marqueurs de migration
@@ -66,7 +66,7 @@ modification de `menu.js` et `credits.js`. Le travail a été fusionné avec `ma
   (`sessionStorage`). Testé en remplaçant `draw()` par une fonction qui lève une erreur.
 - README de `site/` et de `rendu/` : l'adresse d'exposition.
 
-## 128 — Hiérarchie du bandeau, gravité lisible, plein écran
+## 133 — Hiérarchie du bandeau, gravité lisible, plein écran
 
 - « Quitter la journée » en bouton secondaire (contour) : le rouge plein reste à l'urgence et aux badges.
 - Gravité sur la carte : « élevée » en rouge franc `#D10B00` (3,5:1 sur le fond, au-dessus des 3:1 d'un élément
@@ -79,7 +79,7 @@ modification de `menu.js` et `credits.js`. Le travail a été fusionné avec `ma
 - **Hors champ** : l'écran Crédits (mise en page portrait, licence Hub'Eau encore « [À COMPLÉTER] » dans
   `credits.licence.texte` alors que `manifest.json` la donne) est laissé à la session qui redessine les Crédits (prompt « Crédits et menu », non fusionné à cette heure).
 
-## 129 — Décrire la règle que le jeu joue vraiment
+## 134 — Décrire la règle que le jeu joue vraiment
 
 - **Vérifié dans les données** : `retard: null` sur les 15, 23 et 28 entrées des trois semaines et les 6 du repli.
   Le seuil de 10 minutes et l'aggravation du retard ne jouent qu'en temps réel.
@@ -92,7 +92,7 @@ modification de `menu.js` et `credits.js`. Le travail a été fusionné avec `ma
 
 ## Fusion avec `main` (12/11/2026, vers 14 h 15)
 
-Pendant ce travail, d'autres sessions ont fusionné dans `main` les prompts 114 à 120, dont deux touchent les mêmes
+Pendant ce travail, d'autres sessions ont fusionné dans `main` les prompts 114 à 121 (et les fichiers des prompts 122 à 125), dont deux touchent les mêmes
 zones :
 - **prompt 117, trois répliques mélangées dont un clash** : le clash reste toujours « raté » (vérifié en premier
   dans `Jeu.evaluer`), puis vient l'évaluation pondérée. `Jeu.meilleureReponse`, qui choisit la bonne réplique du
@@ -110,9 +110,9 @@ zones :
 
 ## Vérifications
 
-- `npm run build` ; `npm test` : smoke et test du jeu (contrôles ajoutés pour 125 à 128) ; `node --check` sur tous
+- `npm run build` ; `npm test` : smoke et test du jeu (contrôles ajoutés pour 130 à 133) ; `node --check` sur tous
   les scripts (le test du jeu ne charge pas `sketch.js` : une erreur de syntaxe y passait inaperçue pendant le
-  prompt 126, rattrapée par le navigateur).
+  prompt 131, rattrapée par le navigateur).
 - Parcours dans Chromium sans tête : fenêtre du dossier, narration, mode exposition, voile d'inactivité, filet,
   carte avec les trois gravités.
 - Après fusion : `npm test` = 520 (smoke) + 587 (jeu) contrôles réussis ; audit des textes

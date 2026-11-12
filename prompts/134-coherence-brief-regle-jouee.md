@@ -1,4 +1,4 @@
-# Prompt 129 — Cohérence avec le brief : décrire la règle que le jeu joue vraiment
+# Prompt 134 — Cohérence avec le brief : décrire la règle que le jeu joue vraiment
 
 Demande d'origine (12/11/2026) : prompts tirés de `audit-2026-11-12.md`, section 5.1.
 
@@ -26,7 +26,7 @@ Demande d'origine (12/11/2026) : prompts tirés de `audit-2026-11-12.md`, sectio
 4. **Test d'équilibrage** : `site/scripts/test-difficulte.mjs` joue encore l'ancienne table
    `devier/retenir/renfort/rien` ; le faire jouer `Jeu.actionsPossibles(d)` ou le marquer obsolète dans
    `jeu/36-tests-difficulte.md`.
-5. Mettre à jour `audit-2026-11-12.md` : chaque constat traité par les prompts 125 à 124 est marqué comme tel, avec
+5. Mettre à jour `audit-2026-11-12.md` : chaque constat traité par les prompts 130 à 124 est marqué comme tel, avec
    le commit.
 
 ## Vérifications

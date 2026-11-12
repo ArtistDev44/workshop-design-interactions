@@ -14,7 +14,7 @@ pression. »
 - **Départ** : le joueur sélectionne une semaine réelle (dans les limites de l'API).
 - **Partie** : environ 15 décisions basées sur des incidents réels ; aucun événement inventé.
 - **Détection d'incident** : retard ≥ 10 min sur les données temps réel, ou alerte météo.
-  *Note du prompt 129 (12/11/2026)* : en archives, la source ne donne pas de minutes ; ce sont les perturbations
+  *Note du prompt 134 (12/11/2026)* : en archives, la source ne donne pas de minutes ; ce sont les perturbations
   datées, la météo extrême et l'agenda (affluence supposée) qui font les dossiers. Le seuil ne joue qu'en temps réel.
 - **Actions** : 3 actions + « ne rien faire ».
 - **Pression du temps** : oui, un compteur est actif pendant chaque décision.
