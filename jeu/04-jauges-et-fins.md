@@ -10,7 +10,7 @@
 |---|---|
 | Fluidité du réseau | Retards absorbés, trafic global de la semaine |
 | Satisfaction usagers | Communication, renforts, temps d'attente vécus |
-| Réputation de la salle de contrôle | Cohérence des décisions, gestion des crises |
+| Réputation du réseau (prompt 179 ; « de la salle de contrôle » auparavant) | Cohérence des décisions, gestion des crises |
 
 Chaque action modifie les jauges selon le **contexte** du dossier (météo,
 heure de pointe, affluence, source de données choisie en cas de contradiction).

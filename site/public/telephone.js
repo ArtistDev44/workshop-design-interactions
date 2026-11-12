@@ -77,6 +77,34 @@ function ouvrirTelephone() {
 	if (TEL.cache[TEL.date]) annoncer(t('tel.annonce', { n: TEL.cache[TEL.date].notifs.length }));
 }
 
+// ——— Prompt 179 : première utilisation du téléphone = temps gelé ———
+// Tant que le joueur n'a pas lu puis reposé son téléphone une première fois, tempsSuspendu() (immersion.js) arrête
+// l'horloge, les arrivées de signalements et la somnolence ; ensuite le téléphone se consulte pendant que le temps file.
+// La clé commence par « pxe-nte001 » et n'est pas dans GARDER : le mode exposition la purge entre deux visiteurs.
+const CLE_TEL_LU = 'pxe-nte001-telephone-lu';
+function telephoneDejaLu() {
+	if (TEL.lu === undefined) {
+		try {
+			TEL.lu = localStorage.getItem(CLE_TEL_LU) === 'oui';
+		} catch (e) {
+			TEL.lu = false; // stockage bloqué : gelé à la première ouverture de la session seulement
+		}
+	}
+	return TEL.lu;
+}
+/** Le temps est-il gelé par la première lecture du téléphone ? */
+function telephonePremiereLecture() {
+	return fenetre === 'telephone' && !telephoneDejaLu();
+}
+/** Appelé par fermer() (sketch.js) quand le téléphone est reposé : la première lecture est faite */
+function noterTelephoneLu() {
+	if (telephoneDejaLu()) return;
+	TEL.lu = true;
+	try {
+		localStorage.setItem(CLE_TEL_LU, 'oui');
+	} catch (e) {} // stockage bloqué : mémorisé pour la session
+}
+
 /** Vue téléphone (prompt 38, rendue par l'animation « téléphone en main » du prompt 42) */
 function fenetreTelephone() {
 	dessinerTelephoneEnMain(typeof contenuCentreNotifications === 'function' ? contenuCentreNotifications : contenuNotifications); // prompt 90 : écran de verrouillage et centre de notifications
