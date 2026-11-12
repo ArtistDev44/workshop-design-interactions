@@ -12,6 +12,9 @@
 ## Musique
 - « Chillin' Poupi » (Komiku, CC0) redevient le morceau par défaut ; une seule bascule ramène les joueurs
   restés sur le lofi par défaut du prompt 49 (clé `pxe-nte001:jeu:chillin-v62`). Les lofi restent au choix.
+- **Mise à jour du 12/11/2026 (demande du groupe)** : « Night in a seashell » (Komiku, CC0) devient le morceau par
+  défaut (`DEFAUTS.musique = 'coquillage'`, `confort.js`) ; une seule bascule, enregistrée, pour les joueurs restés sur
+  « Chillin' Poupi » (clé `pxe-nte001:jeu:coquillage-v101`) ; un autre morceau choisi est conservé.
 
 ## Sieste
 - **Cause** : à ×30, les dossiers s'enchaînent toutes les ~6 s réelles, et la suite automatique d'un dossier

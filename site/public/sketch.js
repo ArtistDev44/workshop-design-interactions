@@ -1484,7 +1484,7 @@ function fenetreReset() {
 /** Prompt 44 : morceau suivant (mémorisé), joué tout de suite si le son est actif */
 function musiqueSuivante() {
 	const liste = Confort.Son.musique.pistes();
-	const i = liste.indexOf(Confort.Reglages.musique || 'chillin');
+	const i = liste.indexOf(Confort.Reglages.musique || 'coquillage');
 	const suivante = liste[(i + 1) % liste.length];
 	Confort.Son.demarrer();
 	Confort.Son.musique.changer(suivante);
@@ -1567,7 +1567,7 @@ function fenetreParametres() {
 	fill(C.gris);
 	text(t('param.touche', { k: '8' }), x + 500, ym + 36);
 	bouton(x + l - 48 - 340, ym + 8, 340, 56, // prompt 98 : 280 → 340, le titre du morceau tient sans passer sous 14 px
-		 '♪ ' + t('musique.' + (Confort.Reglages.musique || 'chillin')), musiqueSuivante, false, true);
+		 '♪ ' + t('musique.' + (Confort.Reglages.musique || 'coquillage')), musiqueSuivante, false, true);
 	textFont(POLICE_DONNEES);
 	textSize(14);
 	fill(C.gris);

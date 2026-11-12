@@ -29,7 +29,7 @@
 	};
 
 	// ——— Réglages (écran Paramètres, 11-direction-artistique) ———
-	const DEFAUTS = { intensiteFeedback: 100, son: true, horsLigneForce: false, reduireAnimations: false, contrasteRenforce: false, musique: 'chillin', daltonisme: 'normal', tailleTexte: 100, lectureFacile: false, defiChrono: false, chaines: false, deblocages: false, arbitrage: false, traceDossier: false, pressionVisible: false, deVisible: false, eclairageJauges: false, npd: false, deblocageApplis: false, toutDebloque: false, somnolenceNecessaire: false, micro: true, webcam: false }; // prompt 57 : webcam désactivée par défaut (opt-in) // prompt 48 : accessibilité ; prompt 54 : micro (push-to-talk) // prompt 44 : choix de la musique ; prompt 62 : Chillin' Poupi par défaut
+	const DEFAUTS = { intensiteFeedback: 100, son: true, horsLigneForce: false, reduireAnimations: false, contrasteRenforce: false, musique: 'coquillage', daltonisme: 'normal', tailleTexte: 100, lectureFacile: false, defiChrono: false, chaines: false, deblocages: false, arbitrage: false, traceDossier: false, pressionVisible: false, deVisible: false, eclairageJauges: false, npd: false, deblocageApplis: false, toutDebloque: false, somnolenceNecessaire: false, micro: true, webcam: false }; // prompt 57 : webcam désactivée par défaut (opt-in) // prompt 48 : accessibilité ; prompt 54 : micro (push-to-talk) // prompt 44 : choix de la musique ; prompt 62 : Chillin' Poupi par défaut
 	const Reglages = Object.assign({}, DEFAUTS, lire(CLE_REGLAGES, {}));
 	// Prompt 49 : une seule fois, la musique passe au lofi (l'ancien défaut « chillin » n'était pas un choix)
 	// Prompt 62 : « Chillin' Poupi » redevient le morceau principal (une seule bascule pour ceux restés sur le lofi par défaut)
@@ -37,6 +37,17 @@
 		if (Reglages.musique === 'softly') Reglages.musique = 'chillin';
 		ecrire('pxe-nte001:jeu:chillin-v62', true);
 		ecrire('pxe-nte001:jeu:lofi-v49', true); // l'ancienne bascule vers le lofi ne doit plus jouer
+	}
+	// 12/11/2026 (demande du groupe) : « Night in a seashell » devient le morceau par défaut (DEFAUTS.musique) — une
+	// seule bascule pour ceux restés sur l'ancien défaut « Chillin' Poupi » ; un autre morceau choisi ensuite est respecté
+	if (!lire('pxe-nte001:jeu:coquillage-v101', false)) {
+		if (Reglages.musique === 'chillin') {
+			Reglages.musique = 'coquillage';
+			const enregistres = lire(CLE_REGLAGES, null);
+			if (enregistres) ecrire(CLE_REGLAGES, Object.assign(enregistres, { musique: 'coquillage' })); // bascule enregistrée
+		}
+		ecrire('pxe-nte001:jeu:coquillage-v101', true);
+		ecrire('pxe-nte001:jeu:chillin-v62', true); // la bascule du prompt 62 ne doit plus jouer
 	}
 	Reglages.basculer = function (nom) {
 		Reglages[nom] = !Reglages[nom];
