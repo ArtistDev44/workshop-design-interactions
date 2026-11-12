@@ -246,7 +246,7 @@ function heureAffichee() {
 
 /** Le temps de jeu est-il arrêté ? (fin, mail, soir, démarrage du PC, SMS, pause, tutoriel, transition, fenêtres) */
 function tempsSuspendu() {
-	return ecran !== 'jeu' || !Jeu.horloge || phase === 'fin' || phase === 'mail' || phase === 'soir' || pcDemarre() || smsActif || enPause || tutoriel || TRANSITION_JOUR || mecaniquesSuspendentTemps() || fenetre === 'poste' || lecturePanneau(); // prompt 74 : explication du poste ; prompt 87 : lecture d'un signalement
+	return ecran !== 'jeu' || !Jeu.horloge || phase === 'fin' || phase === 'mail' || phase === 'soir' || pcDemarre() || smsActif || enPause || tutoriel || TRANSITION_JOUR || mecaniquesSuspendentTemps() || fenetre === 'poste' || lecturePanneau() || (typeof expoEnPause === 'function' && expoEnPause()); // prompt 160 : voile « Partie en pause » de l'exposition ; prompt 74 : explication du poste ; prompt 87 : lecture d'un signalement
 }
 function tempsCompresse() {
 	return ecran === 'jeu' && (phase === 'attente' || phase === 'reveil') && !tempsSuspendu(); // « ×100 » seulement quand le temps file vraiment

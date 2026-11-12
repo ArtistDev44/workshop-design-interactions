@@ -16,7 +16,8 @@ function estInstallee() {
 		return false;
 	}
 }
-const installationPossible = () => !!PWA.invite && !estInstallee();
+const kiosqueExpo = () => typeof EXPO !== 'undefined' && EXPO.actif; // prompt 160 : ni installation ni bandeau de mise à jour
+const installationPossible = () => !kiosqueExpo() && !!PWA.invite && !estInstallee();
 
 function installerApplication() {
 	if (!PWA.invite) return;
@@ -41,7 +42,7 @@ window.addEventListener('appinstalled', () => {
 
 // ——— Service worker et bandeau de nouvelle version ———
 function bandeauNouvelleVersion() {
-	if (document.getElementById('nouvelle-version')) return;
+	if (kiosqueExpo() || document.getElementById('nouvelle-version')) return;
 	const d = document.createElement('div');
 	d.id = 'nouvelle-version';
 	d.setAttribute('role', 'status');
