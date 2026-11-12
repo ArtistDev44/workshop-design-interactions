@@ -188,15 +188,18 @@ function fermerMailFin() {
 	fenetre = null;
 	setTimeout(() => RAPPORT && !fenetre && ouvrirRapport(), reduireAnimations ? 0 : 1900); // la feuille sort de l'imprimante puis s'ouvre
 }
-function changerPageRapport() {
+/** Prompt 163 : trois pages — 1 bilan, 2 chiffres, 3 sources et faits ; Tab avance, Maj + Tab recule */
+const PAGES_RAPPORT = 3;
+function changerPageRapport(sens) {
 	if (!RAPPORT) return;
-	RAPPORT.page = RAPPORT.page ? 0 : 1;
-	annoncer(t(RAPPORT.page ? 'rapport.page2' : 'rapport.page1'));
+	RAPPORT.page = ((RAPPORT.page || 0) + (sens === -1 ? -1 : 1) + PAGES_RAPPORT) % PAGES_RAPPORT;
+	annoncer(t('rapport.page' + (RAPPORT.page + 1)) + (RAPPORT.page === 2 ? ' ' + lignesSourcesRapport().map((l) => String(l.texte)).join(' ') : ''));
 }
 
 function fenetreRapport() {
 	if (!RAPPORT) return fermer();
 	if (RAPPORT.page === 1) return fenetreRapportChiffres();
+	if (RAPPORT.page === 2) return fenetreRapportSources();
 	const b = RAPPORT.bilan;
 	const l = 1040;
 	const h = 900;
@@ -226,7 +229,7 @@ function fenetreRapport() {
 	textStyle(NORMAL);
 	textSize(19);
 	fill(gris);
-	text(t('rapport.periode', { p: b.faits.periode }), x + 56, y + 130);
+	text(t('rapport.periode', { p: b.faits.periodeTexte || b.faits.periode }), x + 56, y + 130); // prompt 163 : jj/mm et jours joués
 	// Tampon de la fin (incliné)
 	const couleurs = { bonne: '#1e7a3c', moyenne: '#a15c07', mauvaise: '#b3261e', demission: '#b3261e' };
 	const tampon = b.demission ? 'demission' : b.type; // prompt 47
@@ -247,22 +250,32 @@ function fenetreRapport() {
 	zoneTexteFin();
 	textStyle(NORMAL);
 	pop();
+	// Prompt 163 : le type de fin nommé sous le tampon, avec son seuil
+	if (!b.demission) {
+		textAlign(CENTER, TOP);
+		textFont(POLICE_DONNEES);
+		textSize(16);
+		fill(couleurs[b.type]);
+		text(t('rapport.typeFin.' + b.type, { s: Jeu.SEUILS_FIN[b.type === 'mauvaise' ? 'moyenne' : b.type] }), x + l - 380, y + 186, 340, 24);
+		textAlign(LEFT, TOP);
+		textFont(POLICE_TEXTE);
+	}
 	// Score et texte de la fin
-	let ly = y + 190;
+	let ly = y + 218;
 	textAlign(LEFT, TOP);
 	textFont(POLICE_TEXTE);
 	textStyle(BOLD);
 	textSize(28);
 	fill(encre);
 	textLeading(34); // titre sur deux lignes sans chevauchement
-	text(t('rapport.score', { s: b.score }) + ' — ' + (b.demission ? t('demission.rapportTitre') : b.titre), x + 56, ly, l - 112, 80);
+	text(t('rapport.score', { s: b.score }) + ' — ' + (b.demission ? t('demission.rapportTitre') : b.titre), x + 56, ly, l - 112, 72);
 	textStyle(NORMAL);
-	ly += 84;
+	ly += 78;
 	textSize(19);
 	textLeading(27);
 	fill(encre);
-	text(b.demission ? t('demission.rapportTexte') : b.texte, x + 56, ly, l - 112, 90);
-	ly += 100;
+	text(b.demission ? t('demission.rapportTexte') : b.texte, x + 56, ly, l - 112, 84);
+	ly += 92;
 	// Jauges
 	[['fluidite', b.jauges.fluidite], ['reputation', b.jauges.reputation], ['budget', b.jauges.budget]].forEach(([cle, v], i) => {
 		const jx = x + 56 + i * ((l - 112) / 3);
@@ -275,47 +288,34 @@ function fenetreRapport() {
 		fill(couleurPapier(v)); // prompt 48 : palette daltonisme
 		rect(jx, ly + 30, (jl * v) / 100, 12);
 	});
-	ly += 70;
-	// Faits et décisions clés
+	ly += 66;
+	// Faits et décisions clés (prompt 163 : plaintes citées seulement s'il y en a eu)
 	textSize(18);
 	fill(encre);
 	const bp = Jeu.bilanPlaintes ? Jeu.bilanPlaintes() : { traitees: 0, total: 0, bonnes: 0 };
-	text(t('rapport.faits', { n: b.traites, total: b.total, sans: b.sansDecision, pt: bp.traitees, pT: bp.total, pb: bp.bonnes }), x + 56, ly, l - 112, 60);
-	ly += 64;
-	textStyle(BOLD);
-	text(t('fin.decisions'), x + 56, ly);
-	textStyle(NORMAL);
-	ly += 32;
-	// Prompt 66 : qualité en tête de ligne, texte sur deux lignes (il était coupé : « Bus de… »)
-	b.decisionsCles.slice(0, 3).forEach((d) => {
-		textSize(15);
-		textLeading(19);
-		const etiquette = String(t('qualite.' + d.qualite)).toUpperCase() + ' · ';
-		fill(gris);
-		text(etiquette, x + 56, ly);
-		const decal = textWidth(etiquette);
-		fill(encre);
-		text(String(d.titre) + ' — ' + String(d.action || t('action.temps')), x + 56 + decal, ly, l / 2 - 80 - decal, 40);
-		ly += 45;
-	});
-	dessinerCourbesJauges(x + l / 2 + 40, y + 552, l / 2 - 96, 96, encre, gris); // prompt 48 : courbes des jauges
-	// Prompt 55 : défis de la semaine (vrais chiffres) et ralentis utilisés
-	if (b.defis && b.defis.length) {
-		textFont(POLICE_DONNEES);
-		textSize(15);
-		textLeading(20);
-		fill(encre);
-		const ld = b.defis.map((r) => (r.tenu ? '✓ ' : '✗ ') + t('defi.' + r.id) + ' (' + r.valeur + ')').join(' · ');
-		text(t('rapport.defis', { liste: ld, n: b.ralentis }), x + 56, y + 676, l - 112, 44);
-		textFont(POLICE_TEXTE);
+	text(t(bp.total ? 'rapport.faits' : 'rapport.faitsSansPlaintes', { n: b.traites, total: b.total, sans: b.sansDecision, pt: bp.traitees, pT: bp.total, pb: bp.bonnes }), x + 56, ly, l - 112, 52);
+	ly += 58;
+	if (b.decisionsCles.length) {
+		textStyle(BOLD);
+		text(t('fin.decisions'), x + 56, ly);
+		textStyle(NORMAL);
+		ly += 34;
 	}
-	// Prompt 47 : profil de gestion (prompt 142 : extrait du journal de bord retiré)
-	const m = lignesRapportMecaniques();
-	textSize(16);
-	textLeading(22);
-	fill(gris);
-	if (Jeu.profilSemaine) text(t('fin.profil', { phrase: Jeu.profilSemaine().phrase }), x + 56, y + h - 120, l - 112, 48);
-	if (m.gestion) text(m.gestion, x + 56, y + h - 66, l - 112, 44);
+	// Prompt 163 : pleine largeur (les courbes sont en page 2), action entière, évaluation et écarts de jauges
+	const colEtiq = 190;
+	b.decisionsCles.slice(0, 3).forEach((d) => {
+		textFont(POLICE_DONNEES);
+		textSize(14);
+		textAlign(LEFT, TOP);
+		fill(gris);
+		text(String(t('qualite.' + d.qualite)).toUpperCase(), x + 56, ly + 2, colEtiq - 12, 20);
+		const r = dessinerTexte(texteDecisionCle(d), x + 56 + colEtiq, ly, l - 112 - colEtiq, { taille: 16, couleur: encre, maxLignes: 2, interligne: 21 });
+		const r2 = dessinerTexte(ecartsDecisionCle(d), x + 56 + colEtiq, ly + r.h + 2, l - 112 - colEtiq, { taille: 15, couleur: gris, police: POLICE_DONNEES, maxLignes: 1, interligne: 20 });
+		ly += r.h + r2.h + 14;
+	});
+	// Prompt 163 : un seul profil (gestion + semaine) ; défis et courbes en page 2 (prompt 142 : extrait du journal retiré)
+	const pr = texteProfilRapport();
+	if (pr) dessinerTexte(pr, x + 56, Math.max(ly + 6, y + h - 104), l - 112, { taille: 16, couleur: gris, maxLignes: 3, interligne: 22 });
 	// Prochaine étape (sous la feuille)
 	const by = y + h + 20;
 	if (RAPPORT.chapitre && b.demission) {
@@ -507,7 +507,7 @@ function planPiece(type, u) {
 
 // ——— Prompt 56 : page 2 du rapport — chiffres réels de la semaine ———
 function boutonPageRapport(xDroite, y) {
-	bouton(xDroite + 24, y + 8, 300, 50, t(RAPPORT.page ? 'rapport.versPage1' : 'rapport.versPage2'), changerPageRapport, false, true); // à droite de la feuille, sur le fond sombre (contraste)
+	bouton(xDroite + 24, y + 8, 300, 50, t(['rapport.versPage2', 'rapport.versPage3', 'rapport.versPage1'][RAPPORT.page || 0]), changerPageRapport, false, true); // à droite de la feuille, sur le fond sombre (contraste) ; prompt 163 : trois pages
 }
 function autreSemaine() {
 	quitterRapport();
@@ -539,63 +539,127 @@ function fenetreRapportChiffres() {
 	text(t('rapport.chiffresTitre'), x + 56, y + 76);
 	textStyle(NORMAL);
 	// Colonne de gauche : tableau des chiffres réels
+	// Prompt 163 : réponses comptées par famille (les mots des répliques jouées), équipes sur trois lignes (débordement)
+	const pf = s.parFamille || {};
 	const lignes = [
 		[t('stats.recus'), s.recus],
 		[t('stats.traites'), s.traites],
+		...Jeu.FAMILLES.map((f) => [t('famille.' + f), pf[f] || 0, true]),
 		[t('stats.expires'), s.expires],
-		[t('action.devier'), s.parAction.devier],
-		[t('action.retenir'), s.parAction.retenir],
-		[t('action.renfort'), s.parAction.renfort],
-		[t('action.rien'), s.parAction.rien],
 		[t('stats.tempsMoyen'), s.tempsMoyen === null ? '—' : String(s.tempsMoyen).replace('.', Langue.actuelle === 'fr' ? ',' : '.') + ' s'],
 		[t('stats.sources'), s.sources],
 		[t('stats.ralentis'), s.ralentis],
 		[t('stats.objectifs'), s.objectifs],
-		[t('stats.equipes'), s.equipes ? s.equipes.total + ' · ' + t('stats.pertinentes', { n: s.equipes.pertinentes }) + ' · ' + t('stats.refus', { n: s.equipes.refus }) : '—'], // prompt 68
+		[t('stats.equipes'), s.equipes ? s.equipes.total : '—'], // prompt 68
+		...(s.equipes ? [[t('stats.equipesPert'), s.equipes.pertinentes, true], [t('stats.equipesRefus'), s.equipes.refus, true]] : []),
 	];
 	textFont(POLICE_DONNEES);
 	textSize(19);
-	lignes.forEach(([lib, v], i) => {
-		const ly = y + 150 + i * 34;
+	lignes.forEach(([lib, v, retrait], i) => {
+		const ly = y + 150 + i * 32;
 		fill(i % 2 ? '#efe8d6' : '#f6f1e3');
-		rect(x + 48, ly - 5, 440, 32);
-		fill(i >= 3 && i <= 6 ? gris : encre);
+		rect(x + 48, ly - 4, 460, 30);
+		fill(retrait ? gris : encre);
 		textAlign(LEFT, TOP);
-		text((i >= 3 && i <= 6 ? '   ' : '') + lib, x + 60, ly);
+		text((retrait ? '   ' : '') + lib, x + 60, ly);
 		textAlign(RIGHT, TOP);
 		fill(encre);
-		text(String(v), x + 476, ly);
+		text(String(v), x + 496, ly);
 	});
 	textAlign(LEFT, TOP);
-	// Colonne de droite : courbes, jauges finales, score
+	// Colonne de droite : courbes (jauges finales et score : page 1 seulement, prompt 163)
 	dessinerCourbesJauges(x + 580, y + 180, l - 640, 200, encre, gris);
+	// Bas : défis (bonus appliqués ; « sans objet » sans plainte) — seul endroit du rapport où ils figurent
+	let ly = y + 150 + lignes.length * 32 + 24;
 	textFont(POLICE_TEXTE);
-	textSize(20);
 	fill(encre);
-	text(t('stats.final', { f: s.jauges.fluidite, r: s.jauges.reputation, b: s.jauges.budget }), x + 560, y + 420, l - 600, 60);
-	textStyle(BOLD);
-	textSize(28);
-	text(t('rapport.score', { s: s.score }), x + 560, y + 480);
-	textStyle(NORMAL);
-	// Bas : défis (bonus appliqués) et profil de gestion
-	let ly = y + 590;
 	textSize(20);
 	textStyle(BOLD);
 	text(t('stats.defis'), x + 56, ly);
 	textStyle(NORMAL);
-	ly += 36;
-	textFont(POLICE_DONNEES);
-	textSize(17);
+	ly += 34;
 	(b.defis || []).forEach((r) => {
-		fill(r.tenu ? '#1e5f30' : '#8a1f18');
-		text((r.tenu ? '✓ ' : '✗ ') + t('defi.' + r.id) + ' — ' + t('stats.valeur', { v: r.valeur }) + (r.tenu ? ' · ' + t('stats.bonus', { jauge: t('jaugeTitre.' + r.jauge), v: r.bonus }) : ''), x + 56, ly, l - 112, 26);
-		ly += 30;
+		const coul = r.sansObjet ? gris : r.tenu ? '#1e5f30' : '#8a1f18';
+		const suite = r.sansObjet ? t('stats.sansObjet') : r.tenu ? t('stats.bonus', { jauge: t('jaugeTitre.' + r.jauge), v: r.bonus }) : '';
+		const txt = (r.sansObjet ? '– ' : r.tenu ? '✓ ' : '✗ ') + t('defi.' + r.id) + ' — ' + t('stats.valeur', { v: r.valeur }) + (suite ? ' · ' + suite : '');
+		ly += dessinerTexte(txt, x + 56, ly, l - 112, { taille: 17, police: POLICE_DONNEES, couleur: coul, maxLignes: 2, interligne: 23 }).h + 6;
 	});
+	boutonPageRapport(x + l, y);
+	const by = y + h + 20;
+	bouton(L / 2 - 220, by + 10, 440, 64, t(RAPPORT.cine ? 'finSemaine.cine' : RAPPORT.chapitre && !b.demission ? 'rapport.suivante' : 'fin.rejouer'), actionRapport);
+}
+
+// ——— Prompt 163 : décisions clés, profil unique et page « Sources et faits de la semaine » ———
+/** « titre — action (évaluation) » : l'action entière (plus de « Ne rien » coupé) */
+function texteDecisionCle(d) {
+	const ev = d.evaluation && d.evaluation !== 'inconnu' ? ' (' + t('eval.' + d.evaluation) + ')' : '';
+	return String(d.titre) + ' — ' + String(d.action || t('action.temps')) + ev;
+}
+/** « fluidité +6 · réputation 0 · budget −7 » */
+function ecartsDecisionCle(d) {
+	return ['fluidite', 'reputation', 'budget'].map((k, i) => t('jauge.' + k) + ' ' + (d.deltas[i] > 0 ? '+' : d.deltas[i] < 0 ? '−' : '') + Math.abs(d.deltas[i])).join(' · ');
+}
+/** Un seul profil : la famille la plus jouée, puis la phrase de la semaine (jauge forte, malus répété) */
+function texteProfilRapport() {
 	const g = Jeu.profilPartie();
-	fill(gris);
-	textFont(POLICE_TEXTE);
+	const phrase = Jeu.profilSemaine ? String(Jeu.profilSemaine().phrase) : '';
+	if (!g) return phrase ? String(t('fin.profil', { phrase })) : '';
+	return String(t('rapport.profil', { profil: t('profil.' + g.id), n: g.n, total: g.total, action: t('profilAction.' + g.id), phrase }));
+}
+/** Lignes de la page 3, reprises de l'ancien écran dessinerFin (inatteignable) : faits de la source puis bilans de la partie */
+function lignesSourcesRapport() {
+	if (!RAPPORT) return [];
+	const b = RAPPORT.bilan;
+	const f = b.faits;
+	const L3 = [{ section: true, texte: t('rapport.sectionDonnees') }];
+	L3.push({ texte: RAPPORT.mode === 'direct' ? t('fin.releve', { periode: f.periode }) : t('rapport.periode', { p: f.periodeTexte || f.periode }) });
+	if (f.composition && String(f.composition)) L3.push({ texte: t('rapport.composition', { liste: f.composition }) });
+	L3.push({ texte: f.pireRetard ? t('fin.pireRetard', { min: f.pireRetard.minutes, ligne: f.pireRetard.ligne }) : t('fin.pireRetardInconnu') });
+	L3.push({ texte: t('fin.sources'), discret: true });
+	L3.push({ section: true, texte: t('rapport.sectionPartie') });
+	const bf = typeof bilanFin !== 'undefined' ? bilanFin : null;
+	if (bf && bf.record) L3.push({ texte: t('fin.record'), vert: true });
+	else if (bf && bf.meilleur) L3.push({ texte: t('fin.meilleur', { score: bf.meilleur.score, le: bf.meilleur.le }) });
+	const extra = [Jeu.defiChrono ? t('fin.defiChrono') : '', typeof Taches !== 'undefined' && Taches.grade ? t('fin.grade', { grade: t('grade.' + Taches.grade().i), xp: (Jeu.taches && Jeu.taches.xpPartie) || 0 }) : ''].filter((x) => String(x));
+	if (extra.length) L3.push({ texte: extra.map(String).join(' · ') });
+	L3.push({ texte: t('fin.mauvaisesSources', { n: b.mauvaisesSources || 0 }) });
+	if (Jeu.profilSemaine) L3.push({ texte: t('rapport.malus', { malus: Jeu.profilSemaine().malusFrequent }) });
+	return L3;
+}
+function fenetreRapportSources() {
+	const b = RAPPORT.bilan;
+	const l = 1040;
+	const h = 900;
+	const x = (L - l) / 2;
+	const y = 40;
+	const encre = '#1d1a16';
+	const gris = '#5a5348';
+	noStroke();
+	fill(0, 0, 0, 90);
+	rect(x + 14, y + 18, l, h);
+	fill('#f6f1e3');
+	rect(x, y, l, h);
+	textAlign(LEFT, TOP);
+	textFont(POLICE_DONNEES);
 	textSize(18);
-	if (g) text(t('rapport.gestion', { profil: t('profil.' + g.id), n: g.n, total: g.total, action: t('profilAction.' + g.id) }), x + 56, y + h - 80, l - 112, 50);
+	fill(gris);
+	text(t('rapport.entete') + ' · ' + t('rapport.page3court'), x + 56, y + 44);
+	textFont(POLICE_TEXTE);
+	textStyle(BOLD);
+	textSize(36);
+	fill(encre);
+	text(t('rapport.sourcesTitre'), x + 56, y + 76);
+	textStyle(NORMAL);
+	let ly = y + 150;
+	lignesSourcesRapport().forEach((li, i) => {
+		if (li.section) {
+			if (i) ly += 18;
+			ly += dessinerTexte(String(li.texte), x + 56, ly, l - 112, { taille: 22, style: BOLD, couleur: encre, maxLignes: 1, interligne: 30 }).h + 8;
+			return;
+		}
+		const o = li.discret ? { taille: 17, couleur: gris, interligne: 24 } : { taille: 19, couleur: li.vert ? '#1e5f30' : encre, interligne: 27 };
+		ly += dessinerTexte(String(li.texte), x + 56, ly, l - 112, Object.assign({ maxLignes: 4 }, o)).h + 10;
+	});
 	boutonPageRapport(x + l, y);
 	const by = y + h + 20;
 	bouton(L / 2 - 220, by + 10, 440, 64, t(RAPPORT.cine ? 'finSemaine.cine' : RAPPORT.chapitre && !b.demission ? 'rapport.suivante' : 'fin.rejouer'), actionRapport);

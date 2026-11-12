@@ -213,13 +213,13 @@ const st = vm.runInContext(
 	const suite = ['devier', 'retenir', 'renfort', 'rien', 'temps'];
 	let n = 0;
 	while (!Jeu.terminee && n < 500) { const d = Jeu.prochainDuJour(); if (d) { Jeu.decider(suite[n % 5], d.contradiction ? d.contradiction.bonne : undefined); n++; } else { Jeu.finDeJourneeTactique(); if (!Jeu.jours[Jeu.jourIndex + 1]) break; Jeu.journeeSuivante(); } }
-	const attendu = { devier: 0, retenir: 0, renfort: 0, rien: 0, temps: 0 };
-	for (let i = 0; i < n; i++) attendu[suite[i % 5]]++;
+	const attendu = { renfort: 0, devier: 0, retenir: 0, rien: 0 };
+	for (let i = 0; i < n; i++) if (suite[i % 5] !== 'temps') attendu[suite[i % 5]]++; // prompt 163 : par famille (anciennes clés = leur famille)
 	return { s: Jeu.statsSemaine(), attendu, n, mail: Jeu.mailFinSemaine().lignes.map(String) }; })()`,
 	fr,
 );
 verifier(st.s.recus === st.n && st.s.traites + st.s.expires === st.n, `rapport : reçus ${st.s.recus}, traités ${st.s.traites}, expirés ${st.s.expires}, décisions ${st.n}`);
-verifier(JSON.stringify(st.s.parAction) === JSON.stringify(st.attendu), `rapport : décisions par action ${JSON.stringify(st.s.parAction)} ≠ ${JSON.stringify(st.attendu)}`);
+verifier(JSON.stringify(st.s.parFamille) === JSON.stringify(st.attendu), `rapport : décisions par famille ${JSON.stringify(st.s.parFamille)} ≠ ${JSON.stringify(st.attendu)}`);
 verifier(st.s.score === st.s.jauges.fluidite + st.s.jauges.reputation + st.s.jauges.budget, 'rapport : score ≠ somme des jauges');
 verifier(st.mail.length >= 2 && st.mail[0].includes(String(st.s.score)) && !st.mail.join(' ').includes('[À COMPLÉTER]'), 'mail du dernier soir : chiffres absents ou texte manquant');
 const stockage = new Map();
@@ -2306,6 +2306,57 @@ for (const [langue, pre] of [['fr', 'Fictif · '], ['en', 'Fictional · ']]) {
 	verifier(/marquerFictif\(e, titre\)/.test(readFileSync(join(pub, 'journal.js'), 'utf8')), 'prompt 162 : Journal, titre du dossier fictif marqué');
 	verifier(/marquerFictif\(Jeu\.paquet\[p\.index\]/.test(readFileSync(join(pub, 'community.js'), 'utf8')), 'prompt 162 : info trafic publiée sur le dossier fictif marquée');
 	verifier(/compositionDossiers/.test(readFileSync(join(pub, 'immersion.js'), 'utf8')), 'prompt 162 : transition et pile de dossiers disent la composition');
+}
+
+// Prompt 163 : le rapport de fin de semaine compte juste (familles des réponses jouées) et cite ses sources
+for (const langue of ['fr', 'en']) {
+	for (const lundi of semaines) {
+		const c163 = contexte(langue, new Map(), true);
+		const r = vm.runInContext(
+			`(() => { Jeu.chargerSemaine(${JSON.stringify(lundi)}); Jeu.nouvellePartie();
+			let n = 0;
+			while (!Jeu.terminee && n < 500) { const d = Jeu.prochainDuJour(); if (d) { const a = Jeu.actionsPossibles(d); Jeu.decider(a[n % a.length], d.contradiction ? d.contradiction.bonne : undefined); n++; } else { Jeu.finDeJourneeTactique(); if (!Jeu.jours[Jeu.jourIndex + 1]) break; Jeu.journeeSuivante(); } }
+			const s = Jeu.statsSemaine(); const b = Jeu.bilan(); const d = Jeu.resultatsDefis ? (Jeu.defis = ['plaintes', 'budget60', 'fluidite60'], Jeu.resultatsDefis()) : [];
+			RAPPORT = { bilan: b, mode: 'semaine', page: 0, stats: s, chapitre: 1 };
+			const l3 = lignesSourcesRapport().map((x) => String(x.texte));
+			const rang = Jeu.RANG_EVALUATION;
+			const cles = b.decisionsCles.map((k) => ({ q: k.qualite, ev: k.evaluation, r: rang[k.evaluation], txt: texteDecisionCle(k), ec: ecartsDecisionCle(k) }));
+			const evals = Jeu.historique.filter((h) => h.action && h.action !== 'temps').map((h) => h.evaluation);
+			return JSON.parse(JSON.stringify({ s, n, cles, evals, l3, periode: String(b.faits.periodeTexte), compo: String(b.faits.composition), plaintes: Jeu.bilanPlaintes(), defis: d, mail: Jeu.mailFinSemaine().lignes.map(String), fait: String(Jeu.faitSourceSemaine() || ''), profil: texteProfilRapport(), fictifs: Jeu.paquet.filter((x) => estFictif(x)).length })); })()`,
+			c163,
+		);
+		const nom = `prompt 163 ${lundi} (${langue})`;
+		const somme = Object.values(r.s.parFamille).reduce((a, v) => a + v, 0);
+		verifier(somme === r.s.traites && r.s.traites + r.s.expires === r.n && r.s.traites > 0, `${nom} : familles ${JSON.stringify(r.s.parFamille)} ≠ traités ${r.s.traites}`);
+		verifier(Object.values(r.s.parFamille).filter((v) => v > 0).length >= 2, `${nom} : une seule famille comptée ${JSON.stringify(r.s.parFamille)}`);
+		verifier(r.evals.every((e) => ['bon', 'rate', 'aucun_detour'].includes(e)), `${nom} : évaluation absente du résultat ${JSON.stringify(r.evals.slice(0, 5))}`);
+		const best = r.cles.find((k) => k.q === 'meilleure');
+		const worst = r.cles.find((k) => k.q === 'pire' || k.q === 'moins bonne');
+		verifier(best && worst && best.r <= worst.r && Math.min(...r.evals.map((e) => ({ bon: 0, aucun_detour: 1, rate: 2 })[e])) === best.r, `${nom} : décisions clés mal classées ${JSON.stringify(r.cles)}`);
+		verifier(!worst || (worst.q === 'pire') === (worst.r > 0), `${nom} : « pire » donné à un bon choix ${JSON.stringify(worst)}`);
+		verifier(r.cles.every((k) => !/—\s*$/.test(k.txt) && /\(.+\)$/.test(k.txt) && k.ec.split(' · ').length === 3), `${nom} : décision clé incomplète ${JSON.stringify(r.cles.map((k) => k.txt + ' | ' + k.ec))}`);
+		verifier(langue === 'fr' ? /^du \d\d\/\d\d au \d\d\/\d\d\/\d{4} · \d jour\(s\) joué\(s\)$/.test(r.periode) : /^\d\d\/\d\d to \d\d\/\d\d\/\d{4} · \d day/.test(r.periode), `${nom} : période ${r.periode}`);
+		verifier(r.l3.length >= 7 && r.l3.some((x) => x === r.compo || x.includes(r.compo)) && r.l3.some((x) => /Open-Meteo/.test(x)) && r.l3.some((x) => /archives/.test(x)) && r.l3.filter((x) => /Période|Period/.test(x)).every((x) => (x.match(/Période|Period/g) || []).length === 1), `${nom} : page des sources incomplète ${JSON.stringify(r.l3)}`);
+		if (r.fictifs) verifier(/fictif|fictional/i.test(r.compo), `${nom} : composition sans l'incident fictif (${r.compo})`);
+		verifier(!r.l3.join(' ').includes('[À COMPLÉTER]') && !r.l3.join(' ').includes('undefined'), `${nom} : texte manquant page 3`);
+		const pl = r.defis.find((x) => x.id === 'plaintes');
+		if (pl && !r.plaintes.total) verifier(pl.sansObjet && !pl.tenu && pl.bonus === 0, `${nom} : défi des plaintes 0/0 compté tenu ${JSON.stringify(pl)}`);
+		verifier(r.fait && r.mail.includes(r.fait) && /Open|réel|real/.test(r.fait), `${nom} : le mail de fin de semaine ne cite aucune donnée de la source`);
+		verifier(r.profil && !r.profil.includes('[À COMPLÉTER]') && (r.profil.match(/Profil|Profile/g) || []).length === 1, `${nom} : profil du rapport ${r.profil}`);
+	}
+	const dico = vm.runInContext(`TRADUCTIONS[${JSON.stringify(langue)}]`, contexte(langue));
+	for (const k of ['famille.renfort', 'famille.devier', 'famille.retenir', 'famille.rien', 'rapport.sourcesTitre', 'rapport.versPage3', 'rapport.page3', 'rapport.periodeSemaine', 'rapport.typeFin.bonne', 'rapport.typeFin.moyenne', 'rapport.typeFin.mauvaise', 'defi.sansObjet', 'stats.sansObjet', 'qualite.moins bonne', 'finSemaine.faitAgenda'])
+		verifier(typeof dico[k] === 'string' && dico[k].length > 0, `prompt 163 : clé ${k} absente (${langue})`);
+	verifier(!/sept jours|seven days/.test(['bonne', 'moyenne', 'mauvaise'].map((ty) => dico['fin.' + ty + '.texte']).join(' ')), `prompt 163 : « sept jours » dans le texte de fin (${langue})`);
+	verifier(/240/.test(vm.runInContext(`String(T('rapport.typeFin.bonne', { s: Jeu.SEUILS_FIN.bonne }))`, contexte(langue))), `prompt 163 : seuil de la bonne fin absent (${langue})`);
+}
+{
+	const h163 = readFileSync(join(pub, 'histoire.js'), 'utf8');
+	verifier(!/parAction|action\.devier|stats\.final|rapport\.defis/.test(h163), 'prompt 163 : le rapport utilise encore les anciennes clés (parAction, action.devier, jauges finales, défis en page 1)');
+	verifier(/fenetreRapportSources/.test(h163) && /PAGES_RAPPORT = 3/.test(h163), 'prompt 163 : page « Sources et faits de la semaine » absente');
+	verifier((h163.match(/dessinerCourbesJauges\(/g) || []).length === 1 && (h163.match(/stats\.defis/g) || []).length === 1, 'prompt 163 : courbes ou défis en double dans le rapport');
+	verifier(/changerPageRapport\(keyIsDown\(SHIFT\) \? -1 : 1\)/.test(readFileSync(join(pub, 'journee.js'), 'utf8')), 'prompt 163 : Maj + Tab ne recule pas dans le rapport');
+	verifier(/rapport page 3/.test(readFileSync(join(pub, 'audit-textes.js'), 'utf8')), 'prompt 163 : audit des textes sans la page 3 du rapport');
 }
 
 // Service worker : chaque script de index.html est dans la liste hors ligne de sw.js
