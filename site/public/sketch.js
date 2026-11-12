@@ -412,6 +412,7 @@ function ouvrir(nom) {
 	Confort.Son.bip('choix');
 }
 function fermer() {
+	if (fenetre === 'telephone' && typeof noterTelephoneLu === 'function') noterTelephoneLu(); // prompt 179 : première lecture du téléphone faite
 	fenetre = null;
 }
 

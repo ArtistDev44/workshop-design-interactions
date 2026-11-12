@@ -46,7 +46,7 @@ réels du flux GTFS-RT de Naolib (seuil : 10 min, en temps réel), les perturbat
 semaine choisie deviennent vos dossiers à trancher.
 
 - **~15 décisions** sous compte à rebours, avec 3 actions + « ne rien faire »
-- **3 jauges** à préserver : fluidité du réseau, réputation de la salle de contrôle, budget (depuis le prompt 22, qui a remplacé la satisfaction des usagers)
+- **3 jauges** à préserver : fluidité du réseau, réputation du réseau, budget (depuis le prompt 22, qui a remplacé la satisfaction des usagers)
 - **Plusieurs fins** selon le bilan des jauges
 - Ambiance immersive : bureau en pixel art, PC qui démarre, SMS, journaux, horloge accélérée…
 - **Jouable 100 % hors ligne** grâce à un jeu de données de secours (`site/public/data/fallback/`)

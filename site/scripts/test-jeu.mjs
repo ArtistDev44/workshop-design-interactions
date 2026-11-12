@@ -2892,6 +2892,54 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	verifier(/meilleurs-bilans/.test(garder177) && !/prise-en-main/.test(garder177), 'prompt 177 : la purge du mode exposition ne doit pas garder les clés du guide');
 }
 
+// Prompt 179 : téléphone — marges des bulles sur la grille 8 px, heure de jeu, bulles découpées entre l'en-tête et le
+// pied, plus de mention du chrono dans sms.2, « réputation du réseau », temps gelé à la première lecture
+{
+	const lire179 = (f) => readFileSync(join(pub, f), 'utf8');
+	const telMain = lire179('telephone-main.js');
+	const conv = telMain.slice(telMain.indexOf('function contenuConversation'));
+	const G = (telMain.match(/const CONV = \{([^}]*)\}/) || [])[1] || '';
+	const val = (k) => Number((G.match(new RegExp(k + ': (\\d+)')) || [])[1]);
+	verifier(['enTete', 'pied', 'bord', 'marge', 'ecart', 'heure'].every((k) => val(k) > 0 && val(k) % 8 === 0) && val('marge') >= 16 && val('bord') >= 16, `prompt 179 : marges des bulles hors grille 8 px (${G})`);
+	verifier(!/textWidth\([^)]*\) \* 1\.\d/.test(conv) && /couperLignes\(/.test(conv), 'prompt 179 : la hauteur des bulles doit venir du vrai retour à la ligne (couperLignes), pas d\'une estimation');
+	const iClip = conv.indexOf('drawingContext.clip()');
+	const iFin = conv.indexOf('drawingContext.restore()');
+	verifier(iClip > 0 && iFin > iClip && conv.indexOf('rect(bx, y, b.w, b.h') > iClip && conv.indexOf('rect(bx, y, b.w, b.h') < iFin && conv.indexOf('circle(') > iClip && conv.indexOf('circle(') < iFin, 'prompt 179 : bulles et « … » doivent être dessinés dans la zone découpée (clip) entre l\'en-tête et le pied');
+	verifier(/zoneTexteDebut\('conversationTel'[^\n]*clip: true/.test(conv) && conv.indexOf('zoneTexteFin()') < iFin, 'prompt 179 : la zone des bulles doit être déclarée « clip » à l\'audit des textes');
+	verifier(conv.indexOf("t('tel.poser')") > iFin && conv.indexOf("t('intro.suivant')") > iFin, 'prompt 179 : les commandes du pied se dessinent hors de la zone découpée');
+	verifier(/text\(heureTelephone\(\)/.test(conv) && /dessinerTexte\(b\.heure/.test(conv) && /heureAffichee\(\)/.test(telMain.slice(telMain.indexOf('function heureTelephone'), telMain.indexOf('const CONV'))), 'prompt 179 : heure de jeu dans la barre d\'état et sous chaque bulle');
+	for (const [langue, attendu, chrono, salle, reseau] of [
+		['fr', '8 h 02', /chrono/i, /réputation de la salle/i, /réputation du réseau/i],
+		['en', '8:02', /timer/i, /room(’s|'s)? reputation/i, /network(’s)? reputation/i],
+	]) {
+		const c179 = contexte(langue);
+		const dico = vm.runInContext(`TRADUCTIONS[${JSON.stringify(langue)}]`, c179);
+		verifier(vm.runInContext(`t('tel.heure', { h: 8, m: '02' })`, c179) === attendu, `prompt 179 : format de l'heure du téléphone (${langue})`);
+		verifier(!chrono.test(dico['sms.2']) && dico['sms.2'].length > 40, `prompt 179 : sms.2 ne parle plus de chrono et garde la consigne (${langue}) : « ${dico['sms.2']} »`);
+		const fautes = Object.keys(dico).filter((k) => salle.test(dico[k]));
+		verifier(!fautes.length, `prompt 179 : « réputation de la salle » subsiste (${langue}) : ${fautes.join(', ')}`);
+		verifier(['jaugeLong.reputation', 'fin.jauge.reputation', 'sms.3'].every((k) => reseau.test(dico[k])), `prompt 179 : « réputation du réseau » attendu dans jaugeLong.reputation, fin.jauge.reputation et sms.3 (${langue})`);
+	}
+	// Temps gelé à la première lecture du téléphone, puis comportement normal ; clé purgée par le mode exposition
+	verifier(/function tempsSuspendu\(\) \{\n\treturn [^\n]*telephonePremiereLecture\(\)/.test(lire179('immersion.js')), 'prompt 179 : tempsSuspendu() doit tenir compte de la première lecture du téléphone');
+	verifier(/function fermer\(\) \{\n\tif \(fenetre === 'telephone'[^\n]*noterTelephoneLu\(\)/.test(lire179('sketch.js')), 'prompt 179 : reposer le téléphone doit noter la première lecture');
+	const tel = lire179('telephone.js');
+	const st = new Map();
+	const ctx179 = (stockage) => {
+		const c = vm.createContext({ fenetre: null, TEL: {}, localStorage: { getItem: (k) => (stockage.has(k) ? stockage.get(k) : null), setItem: (k, v) => stockage.set(k, String(v)) } });
+		vm.runInContext(tel.slice(tel.indexOf('const CLE_TEL_LU'), tel.indexOf('/** Vue téléphone')) + ';globalThis.CLE = CLE_TEL_LU;', c);
+		return c;
+	};
+	let c = ctx179(st);
+	const gel = (cx, f) => vm.runInContext(`fenetre = ${JSON.stringify(f)}; telephonePremiereLecture()`, cx);
+	verifier(gel(c, null) === false && gel(c, 'aide') === false && gel(c, 'telephone') === true, 'prompt 179 : seule la première lecture du téléphone gèle le temps');
+	vm.runInContext('noterTelephoneLu()', c);
+	verifier(gel(c, 'telephone') === false && st.get(c.CLE) === 'oui' && gel(ctx179(st), 'telephone') === false, 'prompt 179 : après la première fermeture (clé mémorisée), le temps ne se gèle plus, même au lancement suivant');
+	verifier(gel(ctx179(new Map()), 'telephone') === true, 'prompt 179 : stockage vidé (mode exposition) → la première lecture gèle de nouveau le temps');
+	const garder179 = (lire179('expo.js').match(/const GARDER = \[([^\]]*)\]/) || [])[1] || '';
+	verifier(c.CLE.startsWith('pxe-nte001') && !garder179.includes(c.CLE) && !/telephone/.test(garder179), 'prompt 179 : la clé de première lecture doit être purgée par le mode exposition');
+}
+
 if (erreurs.length) {
 	console.error(`Test du jeu : ${erreurs.length} erreur(s) sur ${controles + erreurs.length} contrôles`);
 	for (const e of erreurs) console.error(`  ✗ ${e}`);
