@@ -1,11 +1,22 @@
 /* Nantes en régulation — mode histoire, rapport papier et cinématiques de fin (prompt 41).
- * Mode histoire : semaine réelle « facile » → « normale » → « difficile », un élément de jeu de plus chaque
- * semaine ; mode temps réel débloqué quand l'histoire est terminée. Le bilan de chaque semaine est une feuille
+ * Mode histoire : semaine réelle « facile » → « normale » → « difficile » ; la semaine 3 ajoute imprévus et conflits
+ * de lignes (les équipes sont là dès la semaine 1, prompt 108) ; mode temps réel débloqué quand l'histoire est terminée. Le bilan de chaque semaine est une feuille
  * imprimée posée sur la table ; le dernier est remplacé par une cinématique (bonne / moyenne / mauvaise fin).
  * Tous les chiffres affichés sont ceux de la partie jouée. Tout est dessiné par le code ; textes via t().
  */
 const CLE_HISTOIRE = 'pxe-nte001-histoire';
 const ELEMENTS_CHAPITRE = { 1: 'plaintes', 2: 'equipes', 3: 'crise' };
+/** Prompt 161 : élément réellement nouveau au chapitre n — seul « crise » reste verrouillé avant la semaine 3
+ * (Jeu.elementDebloque) ; les équipes sont actives dès la semaine 1 depuis le prompt 108. */
+const elementNouveauChapitre = (n) => (n > 1 && ELEMENTS_CHAPITRE[n] === 'crise' ? 'crise' : null);
+/** Prompt 161 : « un signalement à la fois » / « jusqu'à n signalements en même temps » (texte différé) */
+const texteActifs = (n) => (n === 1 ? T('mp.actifs.un') : T('mp.actifs.plusieurs', { n }));
+/** Niveau de difficulté de la semaine n du mode histoire (index des semaines) */
+function niveauChapitre(n) {
+	const lundi = semainesHistoire()[n - 1];
+	const s = Jeu.semainesProposees().find((x) => x.lundi === lundi);
+	return (s && s.niveau) || 'normale';
+}
 
 function progressionHistoire() {
 	try {
@@ -57,7 +68,12 @@ function lancerChapitre(n) {
 }
 /** Ouverture d'une semaine : le patron présente, au téléphone, le nouvel élément de jeu */
 function conversationChapitre(n) {
-	const messages = [0, 1, 2].map((k) => ({ de: k === 2 ? 'moi' : 'patron', texte: T('histoire.c' + n + '.' + k) }));
+	// Prompt 161 : le patron annonce la règle réellement jouée (signalements simultanés de multitache.js, budget de
+	// départ de game.js, compteur seulement en défi chrono) — plus de durée par dossier annoncée sans chrono
+	const sem = Jeu.etat && Jeu.etat.semaine;
+	const v = { actifs: texteActifs(Jeu.defiChrono ? 3 : Jeu.difficulte().actifs), budget: Math.round(Jeu.jauges.budget), s: (sem && sem.difficulte && sem.difficulte.compteur_s) || 30 };
+	const cle = (k) => 'histoire.c' + n + '.' + k + (k === 0 && n > 1 && Jeu.defiChrono ? 'Chrono' : '');
+	const messages = [0, 1, 2].map((k) => ({ de: k === 2 ? 'moi' : 'patron', texte: T(cle(k), v) }));
 	lancerConversation({ contact: T('histoire.patron'), sous: T('histoire.semaine', { n, total: 3 }), messages, auFin: () => interaction() });
 }
 
@@ -317,7 +333,9 @@ function fenetreRapport() {
 		textAlign(CENTER, TOP);
 		fill('#ffffff');
 		textSize(18);
-		text(t('histoire.prochain', { n: RAPPORT.chapitre + 1, element: t('histoire.element.' + ELEMENTS_CHAPITRE[RAPPORT.chapitre + 1]) }), L / 2 - 500, by - 2, 1000, 30);
+		const n = RAPPORT.chapitre + 1;
+		const nouveau = elementNouveauChapitre(n); // prompt 161 : « nouvel élément » seulement s'il l'est vraiment
+		text(nouveau ? t('histoire.prochain', { n, element: t('histoire.element.' + nouveau) }) : t('histoire.prochainSans', { n, niveau: t('niveau.' + niveauChapitre(n)) }), L / 2 - 500, by - 2, 1000, 30);
 		bouton(L / 2 - 220, by + 30, 440, 64, t('rapport.suivante'), actionRapport);
 	} else {
 		bouton(L / 2 - 690, by + 10, 440, 64, t('fin.rejouer'), actionRapport);

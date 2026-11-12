@@ -509,14 +509,17 @@ function touchePartage() {
 }
 
 /* Prompt 41 : « Nouvelle partie » = deux modes. Histoire (recommandé) : semaine facile, normale, difficile,
-   un élément de jeu de plus chaque semaine. Temps réel : débloqué quand l'histoire est terminée. */
+   imprévus et conflits de lignes en semaine 3. Temps réel : débloqué quand l'histoire est terminée. */
 /** Prompt 97 : difficulté de la semaine, lisible avant de jouer (réglages verrouillés de game.js, non modifiés) */
 function texteDifficulteChapitre(lundi) {
 	const s = Jeu.semainesProposees().find((x) => x.lundi === lundi);
 	const niveau = (s && s.niveau) || 'normale';
 	const d = (Jeu.REGLAGES && Jeu.REGLAGES.difficultes && Jeu.REGLAGES.difficultes[niveau]) || null;
 	if (!d) return '';
-	return t('mp.difficulte', { niveau: t('niveau.' + niveau), budget: d.budget, actifs: d.actifs, aggravation: String(d.aggravation).replace('.', Langue.actuelle === 'fr' ? ',' : '.') });
+	// Prompt 161 : pas de « retards × » (aucun effet sur les archives, sans minutes de retard) ; en défi chrono, les
+	// réglages réellement joués (3 signalements, budget 50, compteur de la semaine — game.js / multitache.js)
+	if (Confort.Reglages.defiChrono) return t('mp.difficulteChrono', { niveau: t('niveau.' + niveau), budget: 50, actifs: texteActifs(3), s: (s && s.compteur_s) || 30 });
+	return t('mp.difficulte', { niveau: t('niveau.' + niveau), budget: d.budget, actifs: texteActifs(d.actifs) });
 }
 function modesNouvellePartie() {
 	const p = progressionHistoire();
@@ -528,7 +531,7 @@ function modesNouvellePartie() {
 			cle: 'histoire',
 			titre: t('mp.mode.histoire'),
 			detail: t('mp.mode.histoire.sous'),
-			info: t('mp.mode.histoire.etat', { n: prochain, element: t('histoire.element.' + ELEMENTS_CHAPITRE[prochain]) }) + '\n' + texteDifficulteChapitre(semaines[prochain - 1]), // prompt 97 : le canal de flow visible avant de jouer
+			info: (elementNouveauChapitre(prochain) ? t('mp.mode.histoire.etatNouveau', { n: prochain, element: t('histoire.element.' + elementNouveauChapitre(prochain)) }) : t('mp.mode.histoire.etat', { n: prochain })) + '\n' + texteDifficulteChapitre(semaines[prochain - 1]), // prompt 161 : « nouveau » seulement s'il l'est // prompt 97 : le canal de flow visible avant de jouer
 			chapitre: prochain,
 			recommande: true,
 			desactive: semaines.length < 3,

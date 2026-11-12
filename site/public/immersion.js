@@ -51,7 +51,7 @@ const OBJETS_BUREAU = [
 	{ nom: 'fenetre', piece: true, label: T('piece.fenetre'), infobulle: T('piece.fenetre.survol'), x: 334, y: 14, l: 64, h: 96 }, // prompt 31 : la baie s'arrête au pan de mur
 	{ nom: 'horloge', label: T('objet.horloge'), infobulle: T('objet.horloge.survol'), x: 404, y: 30, l: 28, h: 29 }, // prompt 51 : finir sa journée
 	{ nom: 'webcam', label: T('objet.webcam'), infobulle: T('objet.webcam.survol'), x: 234, y: 39, l: 13, h: 8 }, // prompt 57 : webcam posée sur l'écran
-	{ nom: 'micro', label: T('objet.micro'), infobulle: T('objet.micro.survol'), x: 150, y: 170, l: 12, h: 24, visible: () => typeof objetPresent !== 'function' || objetPresent('micro') }, // prompt 54 : micro du poste (appui maintenu) ; prompt 104
+	{ nom: 'micro', label: T('objet.micro'), infobulle: { toString: () => t(Jeu.defiChrono ? 'objet.micro.survolChrono' : 'objet.micro.survol') }, x: 150, y: 170, l: 12, h: 24, visible: () => typeof objetPresent !== 'function' || objetPresent('micro') }, // prompt 54 : micro du poste (appui maintenu) ; prompt 104 ; prompt 161 : infobulle « compteur » seulement en défi chrono
 	{ nom: 'sortie', label: T('soir.sortie'), infobulle: T('soir.infobulle'), x: 41, y: 92, l: 34, h: 56, visible: () => typeof sortieVisible === 'function' && sortieVisible() }, // prompt 69 : flèche du soir (soir.js)
 ];
 
@@ -1155,12 +1155,14 @@ function dessinerFil(x, y, l, h) {
 }
 
 // ——— Explication du poste : à la première ouverture de l'écran de jeu de la partie (gardée dans la sauvegarde) ———
+const GESTES_POSTE = ['carte', 'repondre', 'equipes', 'menu']; // prompt 161 : même liste à l'écran et au lecteur d'écran
 function majExplicationPoste() {
 	if (FIL.explicationVue || fenetre || tutoriel || smsActif || TRANSITION_JOUR || MENU.actif) return;
 	if (ecran !== 'jeu' || vue !== 'poste' || PC.etat !== 'appli' || phase === 'fin') return;
 	FIL.explicationVue = true;
 	ouvrir('poste');
-	annoncer(t('poste.titre') + '. ' + t('poste.role') + ' ' + ['devier', 'retenir', 'renfort', 'rien'].map((a) => t('action.desc.' + a)).join(' '));
+	// Prompt 161 : le lecteur d'écran entend les gestes affichés (poste.geste.*), plus l'ancienne table Dévier / Retenir…
+	annoncer(t('poste.titre') + '. ' + t('poste.role') + ' ' + t('poste.decisions') + ' : ' + GESTES_POSTE.map((g) => t('poste.geste.' + g + '.k') + ' — ' + t('poste.geste.' + g)).join(' ') + ' ' + t('poste.apprendre'));
 }
 function fenetrePoste() {
 	const l = 1240;
@@ -1183,8 +1185,8 @@ function fenetrePoste() {
 	textSize(24);
 	text(t('poste.decisions'), x + 56, y + 262);
 	textStyle(NORMAL);
-	// Prompt 131 : les gestes réels du jeu (carte, répliques 1 à 4, équipes glissées, menu à gauche), plus l'ancienne table Q5–Q7
-	['carte', 'repondre', 'equipes', 'menu'].forEach((g, i) => {
+	// Prompt 131 : les gestes réels du jeu (carte, répliques 1 à 3, équipes glissées, menu à gauche), plus l'ancienne table Q5–Q7
+	GESTES_POSTE.forEach((g, i) => {
 		const k = t('poste.geste.' + g + '.k');
 		const yy = y + 310 + i * 72;
 		textFont(POLICE_DONNEES);
