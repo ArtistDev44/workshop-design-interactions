@@ -47,7 +47,7 @@ function toucheMRelachee() {
 	if (millis() - MICRO.appuiM < MICRO_APPUI_MS) basculerSon();
 }
 function keyReleased() {
-	if (Sauvegarde.dialogueOuvert || saisieOuRaccourciNavigateur()) return; // on tape dans une boîte de texte (prompt 174 : ou un champ HTML)
+	if (Sauvegarde.dialogueOuvert || saisieOuRaccourciNavigateur() || (typeof rechercheMailsActive === 'function' && rechercheMailsActive())) return; // on tape dans une boîte de texte (prompt 174 : ou un champ HTML ; prompt 195 : ou la recherche de Mails)
 	if (key === 'm' || key === 'M') toucheMRelachee();
 }
 function mouseReleased() {

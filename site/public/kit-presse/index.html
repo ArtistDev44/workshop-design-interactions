@@ -78,7 +78,7 @@
 					<h3>« Nantes en régulation » : un jeu web pour rejouer une semaine réelle du réseau de transports nantais</h3>
 					<p><strong>Nantes, novembre 2026.</strong> Deux étudiants de l'ESD Nantes, Mattéo Brevet et Guillaume Renoult, publient « Nantes en régulation », un jeu gratuit qui se joue dans le navigateur. Conçu pendant l'atelier B3 Design des 9, 10 et 12 novembre 2026, il installe le joueur au poste d'un régulateur, en salle de contrôle, face aux incidents du réseau Naolib.</p>
 					<p>Le principe : choisir une semaine réelle, puis trancher, dossier après dossier, les situations qui l'ont marquée. Les dossiers viennent de données ouvertes : les perturbations datées et l'offre du réseau publiées sur le portail Open Data de Nantes Métropole, la météo de la semaine (Open-Meteo) et, en temps réel, les retards d'au moins 10 minutes. Aucun événement n'est inventé, hormis au plus un incident fictif par semaine, marqué « Fictif » à l'écran.</p>
-					<p>Chaque dossier propose quatre réponses, dont « attendre ». Chaque choix fait bouger trois jauges à préserver : la fluidité du réseau, sa réputation et le budget. La pression ne vient pas d'un chronomètre : un retard non traité s'aggrave dans la file, et les dossiers restants à la fin du service comptent comme non traités. Plusieurs fins dépendent du bilan des trois jauges.</p>
+					<p>Chaque dossier propose trois répliques mélangées, dont une qui clashe l'usager, au prix de la réputation. Chaque choix fait bouger trois jauges à préserver : la fluidité du réseau, sa réputation et le budget. La pression ne vient pas d'un chronomètre : un retard non traité s'aggrave dans la file, et les dossiers restants à la fin du service comptent comme non traités. Plusieurs fins dépendent du bilan des trois jauges.</p>
 					<p>Le jeu, écrit en p5.js, se lance en ligne ou hors ligne, s'installe comme une application et se joue au clavier, à la souris ou au toucher, en français et en anglais. Son code est publié sous licence MIT, avec l'historique complet des prompts qui l'ont construit.</p>
 					<h3>En bref</h3>
 					<ul>
@@ -104,19 +104,19 @@
 				<p>Vrai rendu du jeu, sans retouche. Conditions de réutilisation des images : [À COMPLÉTER].</p>
 				<div class="galerie">
 					<figure>
-						<img src="hero.jpg" width="1920" height="1080" loading="lazy" alt="La salle de régulation en pixel art : l'écran du poste affiche le bureau de RégulOS, la Loire et la grue en fond, l'horloge à 10 h 00 ; une consigne invite à cliquer sur l'écran pour traiter un incident en cours." />
-						<figcaption>hero.jpg — la salle de contrôle, avant de s'installer au poste (1920 × 1080). <a href="hero.jpg" download>Télécharger hero.jpg</a></figcaption>
+						<img src="hero.jpg" width="1920" height="1080" loading="lazy" alt="Le poste de régulation en pixel art : en haut les jauges fluidité, réputation et budget, les priorités et l'objectif du jour ; à gauche le menu des applis (Carte, Mails, Community, Journal, Données) ; au centre le dossier 1 / 16 « Affluence supposée · Gravité moyenne » d'un événement réel de l'agenda (Ateliers parents-enfants), la plainte de l'usager et trois répliques avec leurs tendances sur les jauges ; à droite les équipes à glisser sur la carte ; horloge en pause à 10 h 00." />
+						<figcaption>hero.jpg — un signalement réel ouvert au poste : trois répliques, les équipes à droite (1920 × 1080). <a href="hero.jpg" download>Télécharger hero.jpg</a></figcaption>
 					</figure>
 					<figure>
-						<img src="detail-01.jpg" width="1920" height="1080" loading="lazy" alt="Le poste de régulation : en haut les jauges fluidité, réputation et budget ; au centre le dossier « Affluence signalée · Gravité moyenne », la plainte d'un usager, l'onglet Enquête avec l'info trafic consultée et quatre réponses possibles ; à droite les équipes police, ambulance, techniciens et pompiers." />
-						<figcaption>detail-01.jpg — un signalement réel, enquêté source par source avant de répondre (1920 × 1080). <a href="detail-01.jpg" download>Télécharger detail-01.jpg</a></figcaption>
+						<img src="detail-01.jpg" width="1920" height="1080" loading="lazy" alt="L'appli Mails : colonne Boîte de réception, catégories et Archives avec leurs compteurs ; liste des mails de la Direction de la régulation groupés sous « Aujourd'hui » ; à droite la consigne du jour ouverte (5 dossiers attendus le 14/09/2026, objectif fluidité ≥ 40, budget 60) et la zone Répondre avec deux réponses rapides." />
+						<figcaption>detail-01.jpg — l'appli Mails : consigne du jour et messages de la direction (1920 × 1080). <a href="detail-01.jpg" download>Télécharger detail-01.jpg</a></figcaption>
 					</figure>
 					<figure>
 						<img src="process.jpg" width="1920" height="1080" loading="lazy" alt="Le rapport hebdomadaire papier de la semaine 1 (14 au 20 septembre 2026), tamponné « À surveiller » : score 185 sur 300, jauges fluidité, réputation et budget, décisions clés et courbe des jauges décision par décision." />
 						<figcaption>process.jpg — le rapport papier de fin de semaine, mode histoire (1920 × 1080). <a href="process.jpg" download>Télécharger process.jpg</a></figcaption>
 					</figure>
 					<figure>
-						<img src="thumb.jpg" width="640" height="360" loading="lazy" alt="Vignette du jeu : image réduite de la vidéo de démonstration." />
+						<img src="thumb.jpg" width="640" height="360" loading="lazy" alt="Vignette du jeu : réduction de hero.jpg, un signalement ouvert au poste de régulation." />
 						<figcaption>thumb.jpg — vignette (640 × 360), image d'attente de la vidéo. <a href="thumb.jpg" download>Télécharger thumb.jpg</a></figcaption>
 					</figure>
 				</div>
@@ -128,6 +128,11 @@
 					<!-- La vidéo n'est pas dupliquée dans le kit : elle reste dans ../captures/ (même fichier que le cartel) -->
 					<video src="../captures/demo.mp4" controls muted playsinline preload="none" poster="thumb.jpg" width="1280" height="720" aria-describedby="video-legende"></video>
 					<figcaption id="video-legende">demo.mp4 — 29 s d'une vraie partie, du menu au rapport de la semaine, sans son (enregistrement automatisé, accéléré × 1,25). <a href="../captures/demo.mp4" download="nantes-en-regulation-demo.mp4">Télécharger la vidéo (MP4)</a></figcaption>
+				</figure>
+				<figure>
+					<!-- Trailer du prompt 187 : lu depuis ../captures/ sans copie (8 Mo, hors précache : en ligne seulement) -->
+					<video src="../captures/trailer.mp4" controls playsinline preload="none" poster="../captures/trailer-poster.jpg" width="1920" height="1080" aria-describedby="trailer-legende"><track kind="descriptions" src="../captures/trailer.fr.vtt" srclang="fr" label="Description (français)" /></video>
+					<figcaption id="trailer-legende">trailer.mp4 — trailer de 30 s (1920 × 1080) monté sur une vraie partie, avec musique ; description textuelle : <a href="../captures/trailer.fr.vtt">trailer.fr.vtt</a>. En ligne seulement. <a href="../captures/trailer.mp4" download="nantes-en-regulation-trailer.mp4">Télécharger le trailer (MP4, 8 Mo)</a><br />Musique : "Heroic Age" Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 4.0 License — <a href="http://creativecommons.org/licenses/by/4.0/">http://creativecommons.org/licenses/by/4.0/</a></figcaption>
 				</figure>
 			</section>
 

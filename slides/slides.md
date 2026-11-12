@@ -263,8 +263,8 @@ level: 2
 
 - Un signalement s'ouvre : l'**horloge se met en pause**
 - Trois blocs : ce qui se passe, pourquoi, ce qu'on sait
-- Quatre réponses propres à la catégorie
-- La pression vient de la journée : le retard s'aggrave en file
+- Trois répliques mélangées, tirées des réponses de la catégorie — dont un clash, tentant mais coûteux
+- La pression vient de la journée : en temps réel, le retard s'aggrave en file
 
 </v-clicks>
 
@@ -280,7 +280,8 @@ level: 2
 
 <!--
 Depuis le prompt 87, plus de compteur par décision : on lit à son rythme.
-[click] La pause. [click] Les trois blocs. [click] Les réponses. [click] La pression vient du retard qui grimpe.
+[click] La pause. [click] Les trois blocs. [click] Les répliques (prompts 117 et 196 : l'une clashe le plaignant, réputation −8). [click] La pression vient du retard qui grimpe.
+La capture date d'avant les prompts 117 et 184 (cartes de réponse, liste des décisions).
 -->
 
 ---
@@ -335,7 +336,8 @@ level: 2
 
 <!--
 Une pièce vue depuis la chaise : baie sur la ville, la Loire, la grue Titan, la météo réelle à la fenêtre.
-On s'installe au PC, on se lève pour téléphoner, on finit la journée d'un geste (« Quitter la journée », Q) ou à l'horloge.
+On s'installe au PC, on se lève pour téléphoner ; à l'heure de fin, un clic sur l'horloge (ou Q) termine la journée (prompt 194) et le mail du soir arrive dans l'appli Mails.
+Depuis le prompt 183, le PC n'a plus de bureau d'icônes : on arrive directement sur la carte.
 -->
 
 ---
@@ -378,8 +380,8 @@ level: 2
 <v-clicks>
 
 - Pastilles des journées, objectif tenu ou raté
-- Tuiles : signalements, bons choix, jauges en mini-courbes
-- Frise horaire des décisions, filtres, vue Semaine
+- Tuiles : signalements, bons choix, objectif du jour
+- Frise horaire des décisions, filtres en contrôle segmenté
 - Enquête après coup : source, contexte, dés, effets
 
 </v-clicks>

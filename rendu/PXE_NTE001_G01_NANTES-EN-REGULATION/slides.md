@@ -1,5 +1,10 @@
 # Nantes en régulation
 
+> **Support périmé, gardé comme trace** (vérifié le 12/11/2026) : ce diaporama date d'avant le prompt 82. Il décrit des
+> écrans et règles disparus (compteur par décision, touche 0 « ne rien faire », bureau d'icônes RégulOS, appli
+> « Patron », mail du soir sur le PC…). La présentation à jour est https://workshop-design-interactions.pages.dev/presentation/
+> (source `slides/slides.md` du dépôt) ; l'état actuel du jeu est décrit dans `jeu/170-193-refonte-du-12-11.md`.
+
 **PATRIMOINE.EXE · NTE001** — ESD Nantes, B3 Design, 9, 10 & 12 novembre 2026
 
 Œuvre `PXE-NTE001-G01-W01` · groupe G01 (à confirmer)

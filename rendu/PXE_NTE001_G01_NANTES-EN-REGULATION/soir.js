@@ -1,5 +1,6 @@
 /* Nantes en régulation — prompt 69 : fin de journée, la nuit tombe, une flèche montre la sortie du bureau.
- * - Le mail du soir se ferme par « Ranger le poste » : phase « soir » (ni incident, ni sieste).
+ * - Prompt 194 : le clic sur l'horloge (ou Q) à l'heure de fin mène directement ici (terminerJournee → rangerPoste) :
+ *   phase « soir » (ni incident, ni sieste). Le mail du soir est dans l'appli Mails, non lu.
  * - Le joueur se lève, le PC passe en veille, l'horloge simulée file jusqu'à 21 h en ~4 s (crépuscule
  *   accéléré ; nuit directe si les animations sont réduites). Les règles et la boucle (Q1–Q61) ne changent pas.
  * - Nuit installée : flèche « Sortie » au bord gauche de la vue bureau (Tab, Entrée ou S, clic, tactile).
@@ -17,9 +18,9 @@ const MINUTES_NUIT = 21 * 60;
 const DELAI_SORTIE_AUTO = 8000; // prompt 94
 const CLE_SOIR_GUIDE = 'pxe-nte001:jeu:soir-vu';
 
-/** « Ranger le poste » : ferme le mail du soir sans passer au lendemain */
-function rangerPoste() {
-	if (phase !== 'mail') return;
+/** Le poste est rangé, la nuit tombe (sans passer au lendemain). annonce : texte lu avant « Fin de journée. » */
+function rangerPoste(annonce) {
+	if (phase === 'soir' || phase === 'fin') return;
 	phase = 'soir';
 	SOIR.debut = millis();
 	SOIR.depart = Jeu.horloge ? Jeu.horloge.minutes : MINUTES_NUIT;
@@ -33,7 +34,7 @@ function rangerPoste() {
 	Confort.Son.bip('choix');
 	if (Confort.Son.musique && Confort.Son.musique.attenuer) Confort.Son.musique.attenuer(0.55); // musique plus basse le soir
 	Sauvegarde.auto(false);
-	annoncer(t('soir.respiration')); // prompt 191
+	annoncer((annonce ? annonce + ' ' : '') + t('soir.respiration')); // prompt 191
 }
 /** Reprise d'une sauvegarde faite le soir : la nuit est déjà tombée, la flèche est là */
 function reprendreSoir() {

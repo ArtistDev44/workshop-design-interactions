@@ -50,7 +50,7 @@
   "datasets": [
     "244400404_reseau-transports-collectifs-naolib"
   ],
-  "cartel": "Nantes en régulation place le visiteur dans une salle de contrôle des transports en commun nantais. Il y rejoue une semaine réelle du réseau de tram et de bus : chaque fait daté de la source, une perturbation, une météo extrême ou un événement de l'agenda, devient un dossier à trancher ; en temps réel, un retard mesuré d'au moins dix minutes aussi. Quatre réponses adaptées à la situation sont possibles, dont attendre. Chaque décision modifie trois jauges, la fluidité du réseau, la réputation du réseau et le budget, selon le contexte météo et l'heure. Hormis un incident fictif par semaine, signalé comme tel, rien n'est inventé ; l'affluence d'un événement reste une hypothèse.",
+  "cartel": "Nantes en régulation place le visiteur dans une salle de contrôle des transports en commun nantais. Il y rejoue une semaine réelle du réseau de tram et de bus : chaque fait daté de la source, une perturbation, une météo extrême ou un événement de l'agenda, devient un dossier à trancher ; en temps réel, un retard mesuré d'au moins dix minutes aussi. Trois répliques mélangées sont proposées, dont une qui clashe l'usager. Chaque décision modifie trois jauges, la fluidité du réseau, la réputation du réseau et le budget, selon le contexte météo et l'heure. Hormis un incident fictif par semaine, signalé comme tel, rien n'est inventé ; l'affluence d'un événement reste une hypothèse.",
   "assets": {},
   "lien_oeuvre": "index.html"
 }
