@@ -65,6 +65,7 @@ class: diapo-cover
 <p class="pied-cover">9, 10 & 12 novembre 2026 · œuvre <code>PXE-NTE001-G01-W01</code></p>
 
 <!--
+Diapo 01 · Présentateur : Guillaume.
 Bonjour. Nous présentons « Nantes en régulation », notre œuvre du workshop PATRIMOINE.EXE.
 [click] Le projet en une phrase : chaque incident vient d'une donnée ouverte réelle.
 [click] Les auteurs, crédits du jeu, licence MIT.
@@ -88,6 +89,7 @@ class: diapo-sommaire
 </div>
 
 <!--
+Diapo 02 · Présentateur : Guillaume.
 Cinq actes : notre objectif, la chaîne, les sources, le jeu, à vous de réguler. Le sommaire est cliquable.
 -->
 
@@ -106,6 +108,7 @@ class: diapo-objectif
 </blockquote>
 
 <!--
+Diapo 03 · Présentateur : Mathéo.
 Premier acte : notre objectif tient en une question et une contrainte.
 -->
 
@@ -126,6 +129,7 @@ class: diapo-question
 </div>
 
 <!--
+Diapo 04 · Présentateur : Mathéo.
 La phrase-problématique est restée stable depuis le premier jour (jeu/00-concept.md).
 [click] Le thème. [click] Le rôle. [click] La durée.
 -->
@@ -155,6 +159,7 @@ class: diapo-chaine
 </div>
 
 <!--
+Diapo 05 · Présentateur : Mathéo.
 Deuxième acte. Notre contrainte la plus forte : zéro événement inventé. Quand la source ne dit pas la ligne ou la durée, le jeu affiche « non précisé ».
 [click] La source : uniquement des données ouvertes.
 [click] La grammaire : des règles explicites.
@@ -182,6 +187,7 @@ class: diapo-seuil
 </div>
 
 <!--
+Diapo 06 · Présentateur : Mathéo.
 Le seuil est l'invariant central de la grammaire. Il vient du flux temps réel (GTFS-RT).
 [click] En dessous, le réseau absorbe ; au-dessus, c'est au régulateur de décider.
 -->
@@ -199,6 +205,7 @@ class: acte-03
 Données ouvertes, licences vérifiées
 
 <!--
+Diapo 07 · Présentateur : Guillaume.
 Troisième acte : d'où viennent les données, et sous quelles licences.
 -->
 
@@ -227,6 +234,7 @@ class: diapo-sources
 </div>
 
 <!--
+Diapo 08 · Présentateur : Guillaume.
 Licences vérifiées à la source le 10 et le 11 novembre (fiche-source, manifest.json).
 [click] Offre et perturbations. [click] Temps réel. [click] Agenda. [click] Météo. [click] Loire.
 [click] Le téléphone n'interroge le direct qu'au clic ; hors ligne, des instantanés réels datés.
@@ -245,6 +253,7 @@ class: acte-04
 Lire, décider, assumer
 
 <!--
+Diapo 09 · Présentateur : Mathéo.
 Quatrième acte : ce que le joueur voit et fait.
 -->
 
@@ -277,6 +286,7 @@ level: 2
 <Arrow x1="540" y1="126" x2="580" y2="238" color="#FFC138" width="3" />
 
 <!--
+Diapo 10 · Présentateur : Mathéo.
 Depuis le prompt 87, plus de compteur par décision : on lit à son rythme.
 [click] La pause. [click] Les trois blocs. [click] Les réponses. [click] La pression vient du retard qui grimpe.
 -->
@@ -308,6 +318,7 @@ level: 2
 <Arrow x1="180" y1="428" x2="266" y2="262" color="#FFC138" width="3" />
 
 <!--
+Diapo 11 · Présentateur : Mathéo.
 Le prompt 92 a rendu les textes d'enquête lisibles : cartes hiérarchisées, coupure réelle, « Lire tout ».
 [click] Les sources. [click] La carte. [click] La citation intacte. [click] L'accessibilité.
 -->
@@ -332,6 +343,7 @@ level: 2
 <Arrow x1="740" y1="498" x2="784" y2="474" color="#FFC138" width="3" />
 
 <!--
+Diapo 12 · Présentateur : Guillaume.
 Une pièce vue depuis la chaise : baie sur la ville, la Loire, la grue Titan, la météo réelle à la fenêtre.
 On s'installe au PC, on se lève pour téléphoner, on finit la journée d'un geste (« Quitter la journée », Q) ou à l'horloge.
 -->
@@ -361,37 +373,8 @@ level: 2
 <Arrow x1="660" y1="428" x2="722" y2="238" color="#FFC138" width="3" />
 
 <!--
+Diapo 13 · Présentateur : Guillaume.
 Le téléphone donne la ville en arrière-plan, sans jamais interrompre une décision.
--->
-
----
-layout: image-left
-image: /img/journal.webp
-backgroundSize: contain
-level: 2
----
-
-# Le journal de bord
-
-<v-clicks>
-
-- Pastilles des journées, objectif tenu ou raté
-- Tuiles : signalements, bons choix, jauges en mini-courbes
-- Frise horaire des décisions, filtres, vue Semaine
-- Enquête après coup : source, contexte, dés, effets
-
-</v-clicks>
-
-<div class="sr-only" role="img" aria-label="Capture de l'appli Journal de bord. Flèches vers les tuiles de résumé avec mini-courbes, vers la frise horaire des décisions et vers le bouton « Enquêter »."></div>
-<span class="etiquette" style="left: 180px; top: 108px">tuiles</span>
-<Arrow x1="210" y1="126" x2="234" y2="190" color="#FFC138" width="3" />
-<span class="etiquette" style="left: 60px; top: 430px">frise de la journée</span>
-<Arrow x1="130" y1="428" x2="172" y2="262" color="#FFC138" width="3" />
-<span class="etiquette" style="left: 360px; top: 430px">enquêter</span>
-<Arrow x1="400" y1="428" x2="418" y2="258" color="#FFC138" width="3" />
-
-<!--
-Le journal raconte la journée avec les vraies valeurs : on comprend après coup pourquoi une réponse était meilleure.
 -->
 
 ---
@@ -416,6 +399,7 @@ class: diapo-avous
 </div>
 
 <!--
+Diapo 14 · Présentateur : Mathéo.
 Cinquième acte. On lance le jeu en direct si le temps le permet ; sinon, la vidéo de démonstration du cartel.
 -->
 
@@ -443,6 +427,7 @@ class: diapo-equipe
 <p class="equipe-pied">Atelier ESD Nantes · B3 Design · novembre 2026</p>
 
 <!--
+Diapo 15 · Présentateur : Mathéo.
 Nous deux. Les mêmes portraits sont dans l'écran « Crédits » du jeu (menu principal).
 -->
 
@@ -476,6 +461,7 @@ class: diapo-livrables
 </div>
 
 <!--
+Diapo 16 · Présentateur : Guillaume.
 Tout est versionné dans le dépôt ; la version archivée se lance sans réseau en double-cliquant index.html.
 La part humaine et la relecture seront précisées par le groupe (README, section AI usage).
 -->
@@ -493,6 +479,7 @@ class: diapo-fin
 </div>
 
 <!--
+Diapo 17 · Présentateur : Guillaume.
 Questions.
 [click] Le bouton ouvre la page d'accueil du jeu (même style que les boutons primaires du jeu).
 -->
