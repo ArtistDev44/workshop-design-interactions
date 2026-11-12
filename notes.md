@@ -25,7 +25,7 @@ supplémentaire. Un mapping justifié avant une API.
 
 - `todo.md` — protocole des 3 jours, jalons, checklist de robustesse et barème.
 - `contexte/` — livret étudiant, framework PATRIMOINE.EXE, règles de travail.
-- `prompts/` — 93 prompts numérotés (01 à 91, deux prompts 33 et deux prompts 89) pour créer le site Astro.js et le jeu p5.js ; statut ✅ / ◻ dans `prompts/README.md`.
+- `prompts/` — 102 prompts numérotés (01 à 99, deux prompts 33, deux prompts 89 et deux prompts 94) pour créer le site Astro.js et le jeu p5.js ; statut ✅ / ◻ dans `prompts/README.md`.
 - `journal.md` — journal des pushes (une ligne par push, la plus récente en tête).
 - `notes.md` — cette page wiki, les liens des API et les pistes d'animation.
 
@@ -79,6 +79,46 @@ Le site est statique et doit rester fluide sans API distante. Trois leviers, dan
 3. **View Transitions API** d'Astro (`<ViewTransitions />`) pour des changements de page fluides entre la galerie et les cartels.
 
 Contraintes d'accessibilité (prompts 04 et 12) : toujours respecter `prefers-reduced-motion` (désactiver ou réduire les animations), jamais d'animation flashante ni d'effet stroboscopique, durées courtes et easing doux. Une animation doit rendre la chaîne source → grammaire → système → œuvre plus lisible, jamais l'inverse.
+
+## Check-up du 12/11/2026 (prompt 59, réexécution après les prompts 92 à 99 et les polices du DS)
+
+Seuls les points réellement exécutés et observés sont cochés (Chromium 156 automatisé via Playwright, scripts Node/Python).
+
+### 1. Vérifications
+- [x] **Build et tests** : `npm run build` sans erreur (Slidev compris) ; `npm test` = smoke 353 contrôles +
+  `test-jeu.mjs` 533 contrôles, verts après chaque correction.
+- [x] **Navigation réelle** : jeu FR et EN au clavier (menu → partie), `file://…/site/public/index.html`, `/cartel/`,
+  `/making-of/`, `/presentation/` : **0 erreur ni avertissement console** (après correctifs, voir § 2).
+- [x] **Hors ligne** : après une visite, réseau coupé → jeu (189 fichiers en cache, service worker actif) et
+  `/presentation/` rechargés ; seuls échecs : les appels Hub'Eau et Open-Meteo, attendus, avec repli local.
+- [x] **Textes hors cadre** (`?audit=textes&parcours=1`, FR/EN, contraste normal/renforcé) : 0 défaut à 1920×1080 et
+  1366×768 ; 412×915 : 28 chevauchements « E » (29 dans la référence `jeu/89-audit-textes-apres.json`), 0 défaut A–D —
+  le passage à JetBrains Mono en webfont ne crée aucun débordement.
+- [x] **Contraste** (calcul WCAG sur les jetons de `ds.js` / `sketch.js`) : blanc 19,5:1, blanc 75 % 11:1, gris 60 % 7,3:1,
+  blanc 50 % 5,3:1, succès 7,3:1, alerte 12:1, erreur claire 13:1, info claire 12,6:1 sur `#0D0C0C` ; blanc sur
+  primaire 5,5:1. Couleurs < 4,5:1 sur fond sombre (primaire 3,6, erreur 3,5, info 4,0) : aucun texte courant
+  dessiné avec elles (recherche `fill(…)` → `text(…)`) ; seul cas, le tampon « RÉSILIÉ » (44 px gras) sur papier
+  `#f2ead8` ≈ 4,6:1.
+- [x] **Liens** : 0 lien interne cassé dans `dist/` ; 0 lien Markdown cassé (racine, `jeu/`, `prompts/README.md`,
+  `site/README.md`, `design-system/`).
+- [x] **Sécurité** : aucun motif `api[_-]?key|bearer|password|secret` dans notre code (hors `lib/` et build Slidev).
+- [x] **Poids** : audio 26 Mo, captures 2,4 Mo, présentation 1,6 Mo, p5 1,1 Mo, données 0,4 Mo, polices 128 Ko ;
+  aucun `fetch` dans un fichier qui définit `draw()`.
+- [x] **Doc ↔ code** : `jeu/README.md` liste les 95 `jeu/*.md` ; symboles cités absents du code tous signalés comme
+  retirés dans leur doc (ou API p5 / Slidev) ; compte de prompts mis à jour (102 fichiers, 01 à 99 ; il annonçait encore 93).
+- [ ] Essais humains (pouce, clavier seul par un novice, micro, webcam, test croisé) : [À COMPLÉTER].
+
+### 2. Problèmes trouvés et corrigés
+- **Polices du DS** (modification locale non commitée trouvée en début de séance) : dossier `site/public/fonts/`
+  absent alors que `fonts.css` et `sw.js` le référençaient → restauré depuis les fichiers du deck ; `BitsyPixels.woff2`
+  (non fourni) → 404 + rejet non intercepté de `document.fonts.load` : Bitsy en `local()` seulement ; en `file://`,
+  le navigateur bloque les polices (origine `null`) → `fonts.css` et preload injectés seulement en http(s).
+- **Présentation** : le favicon par défaut de Slidev venait de `cdn.jsdelivr.net` (échec hors ligne) → `/favicon.svg`.
+- **Code mort** : cache `enCache` / `signature` de `journal-donnees.js` déclaré mais jamais appelé, retiré.
+- **Smoke test** : contrôle des polices (fichiers référencés par `fonts.css`, chargement par `index.html`).
+
+### 3. Reste ouvert
+- Fichier `BitsyPixels.woff2` à déposer par le groupe (`site/public/fonts/README.md`) ; tests humains ci-dessus.
 
 ## Check-up du 11/11/2026 (prompt 59, réexécution après les prompts 82 à 91)
 
