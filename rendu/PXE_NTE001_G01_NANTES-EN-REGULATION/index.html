@@ -18,6 +18,22 @@
 		<link rel="icon" href="./favicon.ico" sizes="48x48" />
 		<link rel="apple-touch-icon" href="./apple-touch-icon.png" />
 		<link rel="manifest" href="./manifest.webmanifest" />
+		<!-- Polices du Pixel Design System, auto-hébergées (fonts.css + fonts/) : seulement en http(s) — en file://
+		     le navigateur bloque les polices (origine null) ; le jeu garde alors la police système de repli -->
+		<script>
+			if (location.protocol !== 'file:') {
+				['jetbrains-mono-var-latin', 'jetbrains-mono-var-latin-ext'].forEach(function (f) {
+					var l = document.createElement('link');
+					l.rel = 'preload'; l.as = 'font'; l.type = 'font/woff2'; l.crossOrigin = ''; l.href = './fonts/' + f + '.woff2';
+					document.head.appendChild(l);
+				});
+				var css = document.createElement('link');
+				css.rel = 'stylesheet'; css.href = './fonts.css';
+				document.head.appendChild(css);
+				// Déclenche le chargement (écran de chargement + re-détection ds.js / sketch.js) ; échec silencieux
+				if (document.fonts && document.fonts.load) ['400 16px "JetBrains Mono"', '700 16px "JetBrains Mono"'].forEach(function (f) { document.fonts.load(f).catch(function () {}); });
+			}
+		</script>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="PATRIMOINE.EXE · NTE001" />
 		<meta property="og:title" content="Nantes en régulation" />

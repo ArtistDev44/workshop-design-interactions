@@ -1,8 +1,9 @@
 /* Nantes en régulation — « Pixel Design System » (fourni par le groupe, PDF) appliqué au PC.
  * Jetons repris du document : fond #0D0C0C, primaire rouge #D4031C, blanc et ses opacités (75/50/15/05/03),
  * fonctionnels succès / alerte / erreur / info, arrondi 0, unité 4 px, espacements 2/4/8/16/20/24 px.
- * Polices : titres « Bitsy Pixels », texte « JetBrains Mono » — utilisées si installées ; sinon les titres sont
- * rendus en pixels (texte dessiné petit puis agrandi ×4 sans lissage) et le texte passe en monospace système.
+ * Polices : titres « Bitsy Pixels », texte « JetBrains Mono » — chargées en webfont auto-hébergée (fonts.css, dossier fonts/)
+ * ou installées localement ; sinon les titres sont rendus en pixels (texte dessiné petit puis agrandi ×4 sans lissage)
+ * et le texte passe en monospace système.
  * Composants : boutons (primaire, secondaire, contour, fantôme ; focus en double bordure), badge, panneau/dialogue.
  */
 const DS = {
@@ -25,8 +26,13 @@ const DS = {
 	u: 4, // unité
 	esp: { xxs: 2, xs: 4, sm: 8, md: 16, xl: 20, xxl: 24 },
 };
-DS.policeTexte = policeInstallee(['JetBrains Mono', 'IBM Plex Mono', 'Menlo', 'Consolas', 'Courier New'], 'serif');
-DS.policeTitreInstallee = policeInstallee(['Bitsy Pixels', '__aucune__'], 'serif') === 'Bitsy Pixels';
+function detecterPolicesDS() {
+	DS.policeTexte = policeInstallee(['JetBrains Mono', 'IBM Plex Mono', 'Menlo', 'Consolas', 'Courier New'], 'serif');
+	DS.policeTitreInstallee = policeInstallee(['Bitsy Pixels', '__aucune__'], 'serif') === 'Bitsy Pixels';
+}
+detecterPolicesDS();
+// Les polices web (fonts.css) peuvent arriver après le premier parse : re-détection une fois chargées
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(detecterPolicesDS);
 
 // ——— Titres en pixels ———
 const cacheTitres = new Map();

@@ -10,6 +10,12 @@
   - `diff -rq site/public rendu/…` ;
   - `ffprobe` sur la vidéo de démonstration.
 - **Mise à jour du 11/11/2026 (après-midi)** : les leviers 4 à 7 de la section 5 ont été appliqués. Les critères concernés sont rescorés et les manques levés sont barrés.
+- **Mise à jour du 12/11/2026 (prompt 100, vérification intégrale contre le brief)** : `grammar.md` / `.pdf` suivent
+  maintenant les 7 champs de la fiche du livret (primitives, relations, invariants, variables, temps, déclencheur,
+  limites) et l'espace génératif (graine) ; le README de `rendu/` suit les 12 rubriques du « README minimal » ;
+  le cartel de `rendu/` porte Système, Données et la chaîne ; un test prouve que la difficulté est un paramètre
+  opérant ; l'archive est resynchronisée. **Aucun score modifié** : les manques qui pèsent (test croisé,
+  contributions, part humaine de l'AI usage, oral) dépendent toujours du groupe.
 - **Règle** : un point n'est attribué que s'il est prouvable dans le dépôt aujourd'hui. Ce qui dépend d'une saisie humaine, d'un test en salle ou de l'oral est compté comme manque.
 
 ---
@@ -94,7 +100,7 @@ Source : `contexte/PATRIMOINE.EXE - Nantes 001 — Cours étudiant B3 Design —
   - le mapping justifié en une phrase.
 - `site/public/grammar.md` (et `grammar.pdf` dans `rendu/`) :
   - règle structurante : un retard ≥ 10 min, une perturbation datée ou une alerte météo au-delà du 95e percentile devient un dossier ;
-  - invariants : seuil de 10 min, 3 actions + « ne rien faire », 3 jauges de départ 50, aucun événement inventé ;
+  - invariants : seuil de 10 min, 4 réponses par catégorie dont « attendre », 3 jauges de départ 50, aucun événement inventé (corrigé le 12/11 : la note citait encore « 3 actions + ne rien faire ») ;
   - variables : semaine, météo, heure de pointe, 1d6.
 - **Singularité** : la proposition rejoue une vraie semaine du réseau nantais, vue depuis un poste de régulateur.
   - Le joueur a un bureau en pixel art et un PC immersif.
@@ -201,8 +207,8 @@ Source : `contexte/PATRIMOINE.EXE - Nantes 001 — Cours étudiant B3 Design —
 **Manques / risques (−4)**
 
 - **Test croisé silencieux** par un autre groupe (30 à 60 s, 3 observations) : non coché dans `todo.md` (ligne 57), aucune trace ailleurs.
-- **README incomplet** dans `site/README.md` et sa copie de `rendu/` : Auteurs (ligne 11), Contributions (ligne 127) et AI usage (ligne 136) sont encore `[À COMPLÉTER]`.
-- **Cartel** : `auteurs` et `groupe` sont `[À COMPLÉTER]` (`pxe-nte001-g01-w01.json`, `rendu/…/cartel.md`) ; la relecture finale par le groupe n'est pas cochée.
+- **README incomplet** : le README de `rendu/` suit les 12 rubriques du livret depuis le 12/11 et nomme les auteurs, mais Contributions, rôles et part humaine de l'AI usage restent `[À COMPLÉTER]`.
+- ~~**Cartel** : `auteurs` et `groupe` sont `[À COMPLÉTER]`~~ renseignés (Mattéo Brevet, Guillaume Renoult, G01 — vérifié le 12/11) ; la relecture finale par le groupe n'est pas cochée.
 - ~~**Licence incohérente** : `LICENSE` choisit déjà MIT au nom de « Mattéo Brevet & Guillaume Renoult ». Pourtant le `README.md` racine (ligne 64), `site/README.md` (ligne 141) et `manifest.json` (`"license"`) disent encore « [À COMPLÉTER] ».~~ Alignés le 11/11/2026. Les auteurs et le groupe du cartel sont aussi renseignés (levier 4).
 - **QR codes** : scan en conditions réelles non fait (`todo.md`).
 - **Déploiement** non documenté : `.github/workflows/deploy.yml` publie sur GitHub Pages, une adresse en 404, alors que le site canonique est sur Cloudflare Pages.
