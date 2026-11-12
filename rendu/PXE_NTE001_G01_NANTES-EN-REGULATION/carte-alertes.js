@@ -269,7 +269,7 @@ function dessinerCarteAlertes() {
 	const sv = CARTE.marqueurs.find((m) => m.survol) || (phase === 'selection' ? CARTE.marqueurs[SELECTION.focus] : null);
 	const svAtt = CARTE.suivis.find((m) => m.survol);
 	if (svAtt) infobulleCarte(texteSuivi(svAtt), svAtt.x + 14, svAtt.y);
-	else if (sv && sv.x !== undefined) infobulleCarte(Jeu.formaterHeure(sv.it.d.minute) + ' · ' + t('enq.signalement.' + sv.it.d.type) + ' · ' + texteLieu(sv.lieu, sv.it.d), sv.x + 14, sv.y);
+	else if (sv && sv.x !== undefined) infobulleCarte(Jeu.formaterHeure(sv.it.d.minute) + ' · ' + t('enq.signalement.' + sv.it.d.type) + ' · ' + t('carte.gravite', { g: t('gravite.' + Jeu.gravite(sv.it.d)) }) + ' · ' + texteLieu(sv.lieu, sv.it.d), sv.x + 14, sv.y); // prompt 133 : gravité écrite
 	else if (CARTE.centreSurvol) infobulleCarte(CARTE.centreSurvol, mouseX, mouseY - 10);
 	else if (CARTE.ligneSurvol && dansZone({ x: mouseX, y: mouseY }, z)) infobulleCarte(t('sujet.ligne', { ligne: CARTE.ligneSurvol.nom }) + ' · ' + CARTE.ligneSurvol.libelle, mouseX, mouseY - 10);
 	if (f.length && CARTE.marqueurs[0].x !== undefined) cibleGuide('fileSignalements', CARTE.marqueurs[0].x - 8, CARTE.marqueurs[0].y - 8, 44, 44);
@@ -378,9 +378,19 @@ function dessinerMarqueur(m) {
 	}
 	m.survol = mouseX >= x - 6 && mouseX <= x + 34 && mouseY >= y - 6 && mouseY <= y + 34;
 	noStroke();
-	fill(couleurGravite(Jeu.gravite(d)));
-	rect(x, y, 28, 28);
-	fill(DS.fond);
+	// Prompt 133 : la gravité est doublée par la taille (élevée 36 px avec liseré blanc, moyenne 28, faible 20),
+	// jamais par la seule couleur ; le carré reste centré sur la même position
+	const g = Jeu.gravite(d);
+	const tm = g === 'elevee' ? 36 : g === 'moyenne' ? 28 : 20;
+	const xm = x + 14 - tm / 2;
+	const ym = y + 14 - tm / 2;
+	if (g === 'elevee') {
+		fill(DS.blanc);
+		rect(xm - 3, ym - 3, tm + 6, tm + 6);
+	}
+	fill(couleurGravite(g));
+	rect(xm, ym, tm, tm);
+	fill(g === 'elevee' ? DS.blanc : DS.fond);
 	rect(x + 10, y + 10, 8, 8);
 	if (m.courant || m.actif || (phase === 'selection' && m.r === SELECTION.focus)) {
 		noFill();

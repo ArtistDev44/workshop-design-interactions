@@ -148,7 +148,8 @@ function dsBadge(x, y, txt, type) {
 	noStroke();
 	fill(DS[type || 'erreur']);
 	rect(x - l / 2, y - 14, l, 28);
-	fill(type === 'alerte' || type === 'succes' ? DS.fond : DS.blanc);
+	const daltonien = typeof Confort !== 'undefined' && Confort.Reglages && ['protan', 'deutan'].includes(Confort.Reglages.daltonisme); // prompt 133 : #FF7A00 + blanc = 2,61:1 → texte sombre 7,48:1 (tritan #E8003D garde le blanc, 4,67:1)
+	fill(type === 'alerte' || type === 'succes' || (daltonien && (type || 'erreur') === 'erreur') ? DS.fond : DS.blanc);
 	textAlign(CENTER, CENTER);
 	zoneTexteDebut('badge', x - l / 2, y - 14, l, 28); // prompt 93
 	text(txt, x, y);
