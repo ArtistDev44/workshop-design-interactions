@@ -2447,6 +2447,15 @@ for (const langue of ['fr', 'en']) {
 	}
 }
 
+// Demande du 12/11/2026 : plus de mention « conseillé » sous les répliques ; infobulles de la barre Mails sur sa ligne
+{
+	const pan = readFileSync(join(pub, 'panneau.js'), 'utf8');
+	verifier(!/rep\.conseillee|reponsesConseillees\(d\)/.test(pan), 'répliques : la mention « conseillé » est encore affichée');
+	for (const langue of ['fr', 'en']) verifier(vm.runInContext(`TRADUCTIONS[${JSON.stringify(langue)}]['rep.conseillee'] === undefined`, contexte(langue)), `clé rep.conseillee encore présente (${langue})`);
+	const pat = readFileSync(join(pub, 'patron.js'), 'utf8');
+	verifier(!/PATRON\.bulle = \{[^}]*y: y \+ 56/.test(pat) && /x: finBarre, y: y \+ 6/.test(pat), 'Mails : l\'infobulle d\'une action recouvre encore la ligne du dessous');
+}
+
 // Prompt 171 : menu principal épuré — plus d'entrée « Aide et tutoriel » ni « Crédits », plus de mention « PXE- »,
 // logo et bloc langue + installation sur la même ligne, « Retour » sans flèche, interlignage du sous-titre
 {

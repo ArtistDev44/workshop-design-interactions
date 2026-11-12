@@ -293,7 +293,7 @@ function appPatron(z) {
 		textSize(18);
 		const b = PATRON.bulle;
 		const lb = textWidth(b.txt) + 28;
-		const bx = Math.min(b.x, z.x + z.l - lb);
+		const bx = Math.max(z.x, Math.min(b.ancre === 'gauche' ? b.x - lb : b.x, z.x + z.l - lb));
 		infobulle(b.txt, bx, b.y);
 		noFill();
 		stroke(DS.blanc15);
@@ -340,11 +340,12 @@ function barreOutils(x, y, l, rech) {
 	if (q) {
 		const ex = x + lr - 44;
 		iconeLucide('x', ex + 10, y + 14, 24, DS.blanc75);
-		if (survole(ex, y + 4, 44, 44)) PATRON.bulle = { txt: t('patron.recherche.effacer'), x: ex, y: y + 56 };
+		if (survole(ex, y + 4, 44, 44)) PATRON.bulle = { txt: t('patron.recherche.effacer'), x: ex - 6, y: y + 6, ancre: 'gauche' }; // sur la ligne de la barre, à gauche du × : ne couvre pas la liste
 		boutons.push({ x: ex, y: y + 4, l: 44, h: 44, action: () => ((PATRON.recherche = ''), majRecherche()) });
 	}
 	// Actions : icônes 24 px dans des cibles 44 × 44, infobulle au survol et au focus
 	let ax = x + lr + 16;
+	const finBarre = ax + actions.length * pas; // infobulles des actions : sur la ligne de la barre, à droite des icônes (elles couvraient l'objet du mail ouvert)
 	actions.forEach((a, k) => {
 		const foc = focusBarre && PATRON.outil === k + 1;
 		const sur = survole(ax, y + 4, 44, 44);
@@ -355,7 +356,7 @@ function barreOutils(x, y, l, rech) {
 		}
 		iconeLucide(a.icone, ax + 10, y + 14, 24, a.actif ? DS.blanc : DS.blanc50);
 		if (foc) contourFocus(ax, y + 4, 44, 44);
-		if (sur || foc) PATRON.bulle = { txt: a.lib, x: ax, y: y + 56 };
+		if (sur || foc) PATRON.bulle = { txt: a.lib, x: finBarre, y: y + 6 };
 		if (a.actif) boutons.push({ x: ax, y: y + 4, l: 44, h: 44, action: a.faire });
 		ax += pas;
 	});
