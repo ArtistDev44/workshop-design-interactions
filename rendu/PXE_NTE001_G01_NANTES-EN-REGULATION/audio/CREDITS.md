@@ -7,9 +7,9 @@ nous la donnons quand même.
 
 | Fichier | Titre | Auteur | Source (page Commons) | SHA-1 de l'original |
 |---|---|---|---|---|
-| `chillin-poupi.ogg` / `.mp3` | Chillin' Poupi (morceau par défaut, prompt 62) | Komiku | https://commons.wikimedia.org/wiki/File:Komiku_-_50_-_Chillin_Poupi.ogg | 7978451df77d7f2492ca09b19b6d5e376cc608c7 |
+| `chillin-poupi.ogg` / `.mp3` | Chillin' Poupi (morceau par défaut du prompt 62 au 12/11/2026) | Komiku | https://commons.wikimedia.org/wiki/File:Komiku_-_50_-_Chillin_Poupi.ogg | 7978451df77d7f2492ca09b19b6d5e376cc608c7 |
 | `travel-to-the-horizon.ogg` / `.mp3` | Travel to the Horizon | Komiku | https://commons.wikimedia.org/wiki/File:Komiku_-_43_-_Travel_to_the_Horizon.ogg | 6c19b95dc8892f82094f6ae6df90d408851aa58d |
-| `night-in-a-seashell.ogg` / `.mp3` | Night in a seashell | Komiku | https://commons.wikimedia.org/wiki/File:Komiku_-_42_-_Night_in_a_seashell.ogg | b50586c817f820cf03e0db95b49d267571112ded |
+| `night-in-a-seashell.ogg` / `.mp3` | Night in a seashell (**morceau par défaut** depuis le 12/11/2026) | Komiku | https://commons.wikimedia.org/wiki/File:Komiku_-_42_-_Night_in_a_seashell.ogg | b50586c817f820cf03e0db95b49d267571112ded |
 | `lofi-softly.ogg` / `.mp3` | Softly (lo-fi ; par défaut du prompt 49 au prompt 62) | Loyalty Freak Music | https://commons.wikimedia.org/wiki/File:Loyalty_Freak_Music_-_06_-_Softly.ogg | 45d8a2a0e8654486b05a186db28ece66c8fb17ca |
 | `lofi-work.ogg` / `.mp3` | Work (lo-fi) | Loyalty Freak Music | https://commons.wikimedia.org/wiki/File:Loyalty_Freak_Music_-_13_-_Work.ogg | ae13e092e39d7d1f90a3404d13ecd115af085264 |
 | `lofi-standing.ogg` / `.mp3` | Standing (lo-fi) | Loyalty Freak Music | https://commons.wikimedia.org/wiki/File:Loyalty_Freak_Music_-_11_-_Standing.ogg | 2e5271074ed4b0ac2638331331e4e4d679ad075a |
