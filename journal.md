@@ -4,6 +4,7 @@ Règle : chaque push sur la branche main ajoute une entrée dans le tableau, la 
 
 | Date | Commit | Fichiers | Résumé |
 |---|---|---|---|
+| 2026-11-12 | ce commit | journal.md | Fusion dans main de l'image de la planche des logos (`logo/planche.png`), sans conflit |
 | 2026-11-12 | ce commit | logo/planche.png (nouveau) | Planche des pistes de logo (prompt 126) exportée en image PNG 1280 × 3290, rendue par Chrome sans interface depuis `logo/planche.html` |
 | 2026-11-12 | ce commit | logo/planche.html (nouveau dossier `logo/` à la racine), prompts/126 (nouveau, numéroté 120 à l'origine), prompts/README.md, prompts/auteurs.json, site/public/sw.js | Planche de comparaison des 4 pistes de logo (pin d'alerte, bulle-pin recommandée, écran de régulation, logotype pixel) avec le logo actuel, 3 tailles, fond sombre et clair, 6 palettes ; fusion de `design/120-planche-logos` dans main |
 | 2026-11-12 | ce commit | site/public/{menu,i18n,sw}.js (+ copie rendu/), site/scripts/test-jeu.mjs, jeu/121-125-signalements-aide-menu.md (section 125), prompts/README.md | Prompt 125 : pied du menu principal réduit à nos noms — les deux lignes au-dessus et le lien « Code sous licence MIT » supprimés ; licence et sources dans les Crédits (Naolib ajouté à la ligne Données). Build, tests, audit textes 0 défaut |
