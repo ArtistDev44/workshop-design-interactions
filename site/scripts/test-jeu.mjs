@@ -2288,7 +2288,9 @@ for (const [langue, pre] of [['fr', 'Fictif · '], ['en', 'Fictional · ']]) {
 	}
 	verifier(/fictif|fictional/i.test(d['credits.ia.donnees.v']) && /suppos|assumed/i.test(d['credits.ia.donnees.v']), `prompt 162 : crédits sans l'incident fictif ni l'affluence supposée (${langue})`);
 	verifier(/fictif|fictional/i.test(d['fin.sources']), `prompt 162 : fin.sources sans l'incident fictif (${langue})`);
-	verifier(/fictif|fictional/i.test(d['mp.mode.sous']) && /2 (à|to) 4/.test(d['mp.mode.sous']), `prompt 162 : mp.mode.sous sans la part réelle / fictive (${langue})`);
+	// Prompt 177 : le sous-titre de « Nouvelle partie » est réduit à « Choisissez un mode de jeu. » — la part réelle /
+	// fictive reste dite dans les crédits et les sources de fin (contrôles ci-dessus)
+	verifier(d['mp.mode.sous'] === (langue === 'fr' ? 'Choisissez un mode de jeu.' : 'Choose a game mode.') && !('mp.semaines.sous' in d), `prompt 177 : sous-titre de « Nouvelle partie » réduit (${langue} : ${d['mp.mode.sous']})`);
 	verifier(/suppos|assum/i.test(d['enq.signalement.événement']) && /suppos|assum/i.test(d['phrase.affluence']) && /suppos|assum/i.test(d['tache.prep.contexte']) && /hypoth|assumption/i.test(d['enq.fait.evenement']), `prompt 162 : affluence non dite comme une hypothèse (${langue})`);
 }
 {
@@ -2799,6 +2801,95 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	verifier(!/"reprise\.(titre|texte|reprendre|nouvelle|annuler)"|"accueil\.continuerDetail"/.test(i18n178) && !/fenetreReprise|reprendreSemaineChoisie|'reprise'/.test(sk + lire('portrait.js')), 'prompt 178 : la modale de rappel / d\'écrasement et ses textes doivent avoir disparu');
 	const garder = (lire('expo.js').match(/const GARDER = \[([^\]]*)\]/) || [])[1] || '';
 	verifier(!/partie/.test(garder) && /const PREFIXE = 'pxe-nte001-partie-'/.test(lire('sauvegarde.js')), 'prompt 178 : la purge du mode exposition doit vider les emplacements de sauvegarde');
+}
+
+// Prompt 177 : page « Nouvelle partie » — mode temps réel verrouillé / hors ligne hors focus et non activable,
+// « Prendre en main » coché d'office tant qu'aucune partie n'est terminée ni le guide achevé
+{
+	const menu = readFileSync(join(pub, 'menu.js'), 'utf8');
+	const guide = readFileSync(join(pub, 'guide.js'), 'utf8');
+	const CLE_H = 'pxe-nte001-histoire';
+	/** Contexte avec la vraie progression (histoire.js), les vraies fonctions du menu et de guide.js */
+	const ctx177 = (stockage, enLigne = true) => {
+		const c = contexte('fr', stockage, true);
+		c.__annonces = [];
+		c.__lancees = 0;
+		vm.runInContext(
+			`var MENU = { ecran: 'semaines', choixSemaine: 0, debut: 0 }; var boutons = []; var keyCode = 0, key = '';
+			const TAB = 9, SHIFT = 16, ENTER = 13, RETURN = 13, ESCAPE = 27, BACKSPACE = 8, LEFT_ARROW = 37, UP_ARROW = 38, RIGHT_ARROW = 39, DOWN_ARROW = 40;
+			var __maj = false; function keyIsDown() { return __maj; } function millis() { return 0; }
+			function annoncer(x) { __annonces.push(x); }
+			function texteMeilleur() { return ''; } function texteDifficulteChapitre() { return ''; }
+			function optionsAccueil() { return Jeu.semainesProposees().map((s) => ({ lundi: s.lundi })).concat([{ type: 'direct' }]); }
+			var choixAccueil = -1; function avantDeJouer() { __lancees++; }
+			var Sauvegarde = { lister: () => [] };
+			Confort.Son = Confort.Son || {}; Confort.Son.bip = () => {};
+			Jeu.enLigne = ${enLigne};`,
+			c,
+		);
+		const extrait = (src, debut, fin) => src.slice(src.indexOf(debut), src.indexOf(fin, src.indexOf(debut)));
+		vm.runInContext(extrait(menu, 'function allerChoixSemaine', '// ——— Dessin ———'), c);
+		vm.runInContext(extrait(menu, 'function modesNouvellePartie', 'function dessinerChoixSemaine'), c);
+		vm.runInContext(extrait(menu, '/** Clavier du menu principal', '\tconst e = entreesMenu();') + '}', c);
+		vm.runInContext(extrait(guide, 'const CLE_GUIDE_OPTION', '// ———') , c);
+		return c;
+	};
+	const touche = (c, code, maj = false) => vm.runInContext(`keyCode = ${code}; __maj = ${maj}; toucheMenu(); MENU.choixSemaine`, c);
+	const TOUCHES = [9, 39, 40, 37, 38];
+
+	// 1. Temps réel verrouillé (histoire non terminée) : Tab, Maj+Tab et flèches ne s'y arrêtent jamais
+	let c = ctx177(new Map());
+	vm.runInContext('allerChoixSemaine()', c);
+	let modes = vm.runInContext('modesNouvellePartie().map((m) => ({ cle: m.cle, desactive: !!m.desactive, info: m.info }))', c);
+	verifier(modes.length === 2 && modes[1].cle === 'direct' && modes[1].desactive && !modes[0].desactive, `prompt 177 : temps réel attendu verrouillé sans progression (${JSON.stringify(modes)})`);
+	verifier(TOUCHES.every((k) => touche(c, k) === 0) && touche(c, 9, true) === 0, 'prompt 177 : Tab et flèches ne doivent jamais focaliser « Mode temps réel » verrouillé');
+	const annonce = c.__annonces[0] || '';
+	verifier(/indisponible/.test(annonce) && annonce.includes(modes[1].info) && /Mode temps réel/.test(annonce), `prompt 177 : le mode verrouillé doit être annoncé indisponible, avec sa raison (${annonce})`);
+	verifier(c.__annonces.slice(1).every((a) => !/Mode temps réel/.test(a)), 'prompt 177 : le focus clavier ne doit jamais annoncer le mode verrouillé comme sélectionné');
+	// Sélection forcée sur la carte désactivée : non activable, et recalée sur le mode jouable
+	vm.runInContext('MENU.choixSemaine = 1; lancerDepuisMenu()', c);
+	verifier(c.__lancees === 0, 'prompt 177 : un mode verrouillé ne doit pas pouvoir être lancé');
+	verifier(vm.runInContext('MENU.choixSemaine = 1; recalerChoixMode(modesNouvellePartie()); MENU.choixSemaine', c) === 0, 'prompt 177 : une sélection posée sur la carte désactivée doit revenir au mode jouable');
+	vm.runInContext('MENU.choixSemaine = 0; lancerDepuisMenu()', c);
+	verifier(c.__lancees === 1, 'prompt 177 : le mode histoire doit rester lançable');
+
+	// 2. Histoire terminée, en ligne : le temps réel redevient focalisable ; hors ligne : de nouveau sauté, raison affichée
+	const fini = () => new Map([[CLE_H, JSON.stringify({ termine: true, scores: { 1: 50, 2: 50, 3: 50 } })]]);
+	c = ctx177(fini());
+	vm.runInContext('allerChoixSemaine()', c);
+	verifier(touche(c, 9) === 1 && touche(c, 9) === 0 && touche(c, 37) === 1 && c.__annonces.length && !/indisponible/.test(c.__annonces[0]), 'prompt 177 : le temps réel jouable doit redevenir focalisable (Tab, flèches)');
+	c = ctx177(fini(), false);
+	vm.runInContext('MENU.choixSemaine = 1; allerChoixSemaine()', c);
+	verifier(TOUCHES.every((k) => touche(c, k) === 0) && c.__annonces[0].includes(vm.runInContext(`t('mp.mode.direct.horsLigne')`, c)), 'prompt 177 : hors ligne, le temps réel est sauté et sa raison annoncée');
+
+	// 3. Dessin : la raison reste affichée, la carte désactivée n'est ni sélectionnée ni activable au clic
+	const dessin = menu.slice(menu.indexOf('function dessinerChoixSemaine'), menu.indexOf('// ——— Prompt 178 : écran « Reprendre une partie »'));
+	verifier(/recalerChoixMode\(modes\)/.test(dessin) && /const sel = i === MENU\.choixSemaine && !o\.desactive/.test(dessin) && /text\(o\.info,/.test(dessin) && /o\.desactive \? annoncer\(annonceModeIndisponible\(o\)\)/.test(dessin), 'prompt 177 : carte désactivée — raison affichée, ni sélection ni activation au clic');
+	for (const langue of ['fr', 'en']) {
+		const d = vm.runInContext(`TRADUCTIONS[${JSON.stringify(langue)}]`, contexte(langue));
+		verifier(/\{titre\}/.test(d['mp.mode.indispo'] || '') && /\{raison\}/.test(d['mp.mode.indispo'] || ''), `prompt 177 : mp.mode.indispo absent (${langue})`);
+	}
+
+	// 4. « Prendre en main » : coché d'office au premier lancement, décochable, puis dernier état
+	const option = (entrees) => vm.runInContext('optionGuide()', ctx177(new Map(entrees)));
+	const BILANS = ['pxe-nte001:jeu:meilleurs-bilans', JSON.stringify({ direct: { score: 50 } })];
+	verifier(option([]) === true, 'prompt 177 : stockage vidé → « Prendre en main » doit être coché');
+	verifier(option([BILANS]) === false, 'prompt 177 : après une partie terminée (palmarès), « Prendre en main » ne doit plus être coché par défaut');
+	verifier(option([[CLE_H, JSON.stringify({ termine: false, scores: { 1: 40 } })]]) === false, 'prompt 177 : une semaine d\'histoire terminée vaut partie terminée');
+	verifier(option([['pxe-nte001-prise-en-main-fini', 'oui']]) === false, 'prompt 177 : guide achevé → plus coché par défaut');
+	verifier(option([['pxe-nte001-prise-en-main', 'non']]) === false && option([BILANS, ['pxe-nte001-prise-en-main', 'oui']]) === true, 'prompt 177 : le dernier état choisi par le joueur doit être repris');
+	// Une partie seulement sauvegardée (non terminée) ne retire pas la case
+	c = ctx177(new Map());
+	vm.runInContext('Sauvegarde.lister = () => [{ id: "a" }]', c);
+	verifier(vm.runInContext('optionGuide()', c) === true, 'prompt 177 : une partie en cours, jamais terminée, laisse « Prendre en main » coché');
+	// Décocher : mémorisé, et relu au lancement suivant
+	const st = new Map();
+	c = ctx177(st);
+	vm.runInContext('optionGuide(); basculerOptionGuide()', c);
+	verifier(vm.runInContext('optionGuide()', c) === false && st.get('pxe-nte001-prise-en-main') === 'non' && vm.runInContext('optionGuide()', ctx177(st)) === false, 'prompt 177 : la case doit pouvoir être décochée, et le rester');
+	// Mode exposition : la purge garde le palmarès et retire les clés du guide (comportement du prompt 160 inchangé)
+	const garder177 = (readFileSync(join(pub, 'expo.js'), 'utf8').match(/const GARDER = \[([^\]]*)\]/) || [])[1] || '';
+	verifier(/meilleurs-bilans/.test(garder177) && !/prise-en-main/.test(garder177), 'prompt 177 : la purge du mode exposition ne doit pas garder les clés du guide');
 }
 
 if (erreurs.length) {

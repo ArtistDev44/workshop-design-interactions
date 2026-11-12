@@ -23,13 +23,21 @@ function ecrireStockage(cle, v) {
 		localStorage.setItem(cle, v);
 	} catch (e) {}
 }
-/** Case cochée par défaut si le joueur n'a encore jamais joué (aucune sauvegarde, aucun bilan, guide jamais fini) */
+/** Prompt 177 : une partie a-t-elle déjà été menée au bout sur cet appareil ? Lu dans ce qui existe déjà : le
+ * palmarès (un bilan enregistré) ou la progression du mode histoire. Une partie seulement sauvegardée ne compte pas. */
+function partieDejaTerminee() {
+	if (lireStockage('pxe-nte001:jeu:meilleurs-bilans')) return true;
+	if (typeof progressionHistoire !== 'function') return false;
+	const p = progressionHistoire();
+	return !!(p.termine || Object.keys(p.scores || {}).length);
+}
+/** Prompt 177 : case cochée d'office tant qu'aucune partie n'a été terminée ni le guide achevé ; le joueur peut la
+ * décocher (son choix est gardé) ; ensuite elle reprend son dernier état */
 function optionGuide() {
 	if (GUIDE.option !== null) return GUIDE.option;
 	const memo = lireStockage(CLE_GUIDE_OPTION);
 	if (memo === 'oui' || memo === 'non') return (GUIDE.option = memo === 'oui');
-	const dejaJoue = lireStockage(CLE_GUIDE_FINI) === 'oui' || Sauvegarde.lister().length > 0 || lireStockage('pxe-nte001:jeu:meilleurs-bilans');
-	return (GUIDE.option = !dejaJoue);
+	return (GUIDE.option = !(lireStockage(CLE_GUIDE_FINI) === 'oui' || partieDejaTerminee()));
 }
 function basculerOptionGuide() {
 	GUIDE.option = !optionGuide();

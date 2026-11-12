@@ -69,7 +69,10 @@ function allerChoixSemaine() {
 	MENU.ecran = 'semaines';
 	MENU.debut = millis();
 	MENU.choixSemaine = 0; // prompt 41 : le mode histoire (recommandé) est présélectionné
-	annoncer(t('mp.semaines.titre'));
+	const modes = modesNouvellePartie();
+	recalerChoixMode(modes);
+	// Prompt 177 : un mode verrouillé ou indisponible n'est jamais focalisé — il est annoncé ici, avec sa raison
+	annoncer([t('mp.semaines.titre') + '. ' + t('mp.mode.sous')].concat(modes.filter((m) => m.desactive).map(annonceModeIndisponible)).join(' '));
 	Confort.Son.bip('choix');
 }
 function lancerDepuisMenu() {
@@ -535,9 +538,31 @@ function modesNouvellePartie() {
 		},
 	];
 }
+/** Prompt 177 : un mode verrouillé ou indisponible (`desactive`) ne reçoit jamais le focus. Si la sélection pointe
+ * sur lui (mode devenu indisponible, hors ligne…), elle revient au premier mode jouable ; dès qu'il est jouable,
+ * Tab et les flèches s'y arrêtent de nouveau. */
+function recalerChoixMode(modes) {
+	if (MENU.choixSemaine >= modes.length) MENU.choixSemaine = 0;
+	if (modes[MENU.choixSemaine].desactive) {
+		const i = modes.findIndex((m) => !m.desactive);
+		if (i >= 0) MENU.choixSemaine = i;
+	}
+}
+/** Déplace la sélection de `d` (±1) en sautant les modes désactivés ; sans autre mode jouable, elle ne bouge pas */
+function pasChoixMode(modes, d) {
+	const n = modes.length;
+	let i = MENU.choixSemaine;
+	for (let k = 0; k < n; k++) {
+		i = (i + n + d) % n;
+		if (!modes[i].desactive) return (MENU.choixSemaine = i);
+	}
+	return MENU.choixSemaine;
+}
+/** Équivalent d'aria-disabled dans la zone d'annonces : « Mode temps réel, indisponible. » + la raison affichée */
+const annonceModeIndisponible = (m) => t('mp.mode.indispo', { titre: m.titre, raison: m.info });
 function dessinerChoixSemaine() {
 	const modes = modesNouvellePartie();
-	if (MENU.choixSemaine >= modes.length) MENU.choixSemaine = 0;
+	recalerChoixMode(modes);
 	noStroke();
 	dsTitre(t('mp.semaines.titre'), 160, 100, 60, MENU_C.blanc, 'left');
 	noStroke();
@@ -554,9 +579,9 @@ function dessinerChoixSemaine() {
 	modes.forEach((o, i) => {
 		const x = 160 + i * (lc + 40);
 		const y = 280;
-		const sel = i === MENU.choixSemaine;
+		const sel = i === MENU.choixSemaine && !o.desactive;
 		const survol = mouseX >= x && mouseX <= x + lc && mouseY >= y && mouseY <= y + hc;
-		const actif = (sel || survol) && !o.verrou;
+		const actif = (sel || survol) && !o.desactive; // prompt 177 : ni survol ni sélection sur une carte indisponible
 		noStroke();
 		fill(actif ? MENU_C.blanc : 'rgba(255,255,255,0.06)');
 		rect(x, y, lc, hc);
@@ -574,7 +599,7 @@ function dessinerChoixSemaine() {
 			rect(x - 6, y - 6, lc + 12, hc + 12);
 			noStroke();
 		}
-		const encre = o.verrou ? 'rgba(255,255,255,0.55)' : actif ? MENU_C.encre : MENU_C.blanc;
+		const encre = o.desactive ? 'rgba(255,255,255,0.55)' : actif ? MENU_C.encre : MENU_C.blanc;
 		if (o.recommande) {
 			fill(MENU_C.bleu);
 			rect(x, y, 300, 40);
@@ -603,13 +628,14 @@ function dessinerChoixSemaine() {
 		textStyle(NORMAL);
 		textSize(22);
 		textLeading(32);
-		fill(o.verrou ? encre : actif ? MENU_C.bleu : MENU_C.doux);
+		fill(o.desactive ? encre : actif ? MENU_C.bleu : MENU_C.doux);
 		text(o.detail, x + 40, y + 140, lc - 80, 140);
 		textSize(19);
 		textLeading(26); // prompt 97 : 3 lignes (étape + difficulté) tiennent dans la case
-		fill(o.verrou ? encre : actif ? 'rgba(13,12,12,0.75)' : MENU_C.doux);
+		fill(o.desactive ? encre : actif ? 'rgba(13,12,12,0.75)' : MENU_C.doux);
 		text(o.info, x + 40, y + 278, lc - 80, 116);
-		boutons.push({ x, y, l: lc, h: hc, action: () => (MENU.choixSemaine === i ? lancerDepuisMenu() : (MENU.choixSemaine = i)) });
+		// Prompt 177 : une carte indisponible n'est ni sélectionnable ni activable — le clic redit seulement pourquoi
+		boutons.push({ x, y, l: lc, h: hc, action: () => (o.desactive ? annoncer(annonceModeIndisponible(o)) : MENU.choixSemaine === i ? lancerDepuisMenu() : (MENU.choixSemaine = i)) });
 	});
 	if (typeof dessinerOptionsNouvellePartie === 'function') dessinerOptionsNouvellePartie(160, H - 250); // prompt 37
 	const o = modes[MENU.choixSemaine];
@@ -817,13 +843,15 @@ function toucheMenu() {
 	if (MENU.ecran === 'credits') return toucheCredits(); // prompt 113
 	if (MENU.ecran === 'sauvegardes') return toucheSauvegardes(); // prompt 178
 	if (MENU.ecran === 'semaines') {
-		const n = modesNouvellePartie().length;
-		if (keyCode === LEFT_ARROW || keyCode === UP_ARROW || (keyCode === TAB && keyIsDown(SHIFT))) MENU.choixSemaine = (MENU.choixSemaine + n - 1) % n;
-		else if (keyCode === RIGHT_ARROW || keyCode === DOWN_ARROW || keyCode === TAB) MENU.choixSemaine = (MENU.choixSemaine + 1) % n;
+		const modes = modesNouvellePartie();
+		recalerChoixMode(modes);
+		// Prompt 177 : Tab et les flèches sautent un mode verrouillé ou indisponible
+		if (keyCode === LEFT_ARROW || keyCode === UP_ARROW || (keyCode === TAB && keyIsDown(SHIFT))) pasChoixMode(modes, -1);
+		else if (keyCode === RIGHT_ARROW || keyCode === DOWN_ARROW || keyCode === TAB) pasChoixMode(modes, 1);
 		else if (keyCode === ENTER || keyCode === RETURN) lancerDepuisMenu();
 		else if (keyCode === ESCAPE || keyCode === BACKSPACE) (MENU.ecran = 'titre'), (MENU.debut = millis());
 		else if (typeof toucheOptionsNouvellePartie === 'function') toucheOptionsNouvellePartie(); // prompt 37
-		const o = modesNouvellePartie()[MENU.choixSemaine];
+		const o = modes[MENU.choixSemaine];
 		if (o && (keyCode === TAB || keyCode === UP_ARROW || keyCode === DOWN_ARROW || keyCode === LEFT_ARROW || keyCode === RIGHT_ARROW)) annoncer(String(o.titre) + ' — ' + String(o.detail));
 		return true;
 	}
