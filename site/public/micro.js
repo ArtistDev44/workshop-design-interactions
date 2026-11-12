@@ -26,7 +26,7 @@ const MICRO = {
 	prochainGrain: 0,
 };
 const MICRO_APPUI_MS = 250;
-const microActive = () => Confort.Reglages.micro !== false;
+const microActive = () => Confort.Reglages.micro !== false && (typeof objetPresent !== 'function' || objetPresent('micro')); // prompt 104 : pas de micro avant qu'il soit posé
 
 // ——— Touche M : brève = son (comme avant), maintenue = micro ———
 function toucheMEnfoncee() {

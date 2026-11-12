@@ -63,7 +63,7 @@ const ETAPES_GUIDE = [
 	// Prompt 66 : étape dédiée au signalement (prendre le dossier lance le compteur)
 	{ id: 'prendre', cible: () => (vue === 'poste' && PC.etat === 'appli' ? 'fileSignalements' : vue === 'poste' ? 'iconeSignalements' : 'ecranPC'), fait: () => PHASES_DOSSIER.includes(phase) || phase === 'narration' || (Jeu.historique || []).length > 0 },
 	{ id: 'actions', cible: () => (vue === 'poste' && PC.etat === 'appli' ? 'actions' : vue === 'poste' ? 'iconeSignalements' : 'ecranPC'), fait: () => (Jeu.historique || []).length > 0 || phase === 'narration' },
-	{ id: 'apps', cible: () => (vue !== 'poste' ? 'ecranPC' : PC.etat === 'appli' ? 'fermerAppli' : 'iconesOS'), fait: () => PC.etat === 'os' && (!!PC.fenetre || PC.flottant) },
+	{ id: 'apps', cible: () => (vue !== 'poste' ? 'ecranPC' : 'iconesOS'), fait: () => PC.etat === 'os' && (!!PC.fenetre || PC.flottant) }, // prompt 103 : les autres applis sont dans le menu à gauche
 	{ id: 'quitter', cible: () => 'quitterPC', fait: () => vue === 'bureau' },
 	{ id: 'livre', cible: () => 'livreAide', fait: () => !!tutoriel || fenetre === 'livre-stress' || (typeof PIECE !== 'undefined' && !!PIECE.message) },
 ];
