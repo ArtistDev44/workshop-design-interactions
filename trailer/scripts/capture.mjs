@@ -7,7 +7,8 @@
 //   headless), il suit les vrais événements souris envoyés au jeu ;
 // - images de la page via le screencast CDP (JPEG q90, ~30 i/s) envoyées à FFmpeg, horodatées à l'horloge murale,
 //   ré-échantillonnées à 30 i/s en H.264 → trailer/assets/clips/partie-complete.mp4 ;
-// - journal horodaté des gestes → trailer/assets/clips/partie-complete.log.json (sert au dérushage).
+// - journal horodaté des gestes → trailer/assets/clips/partie-complete.log.txt (sert au dérushage) ;
+// - fenêtre « Inspection surprise » : réponse 1 puis Entrée (Échap ne la ferme pas) ; garde-fou si un état reste figé 40 s.
 import { createRequire } from 'node:module';
 import { spawn } from 'node:child_process';
 import { writeFileSync, mkdirSync } from 'node:fs';
@@ -193,12 +194,22 @@ await pause(1500);
 
 // ——— Le reste de la semaine : gestes au clavier, curseur sur les répliques ———
 let dernier = '';
+let depuis = Date.now();
 let choix = 0;
 const fin = Date.now() + MAX_S * 1000;
 while (Date.now() < fin) {
 	const s = await etat();
 	const cle = [s.ecran, s.phase, s.vue, s.pc, s.sms, s.fen, s.tdj, s.tuto, s.cine, s.go, s.sieste, s.jour, s.menu, s.rapport].join('|');
-	if (cle !== dernier) note(`état ${cle} · ${Math.floor(s.min / 60)}h${String(s.min % 60).padStart(2, '0')} · file ${s.file}`);
+	if (cle !== dernier) {
+		note(`état ${cle} · ${Math.floor(s.min / 60)}h${String(s.min % 60).padStart(2, '0')} · file ${s.file}`);
+		depuis = Date.now();
+	} else if (Date.now() - depuis > 40000) {
+		// garde-fou : même état depuis 40 s → Entrée puis 1, et on le note (repère pour le dérushage)
+		await touche('Enter', 'garde-fou : état figé, Entrée');
+		await pause(600);
+		await touche('1', 'garde-fou : 1');
+		depuis = Date.now();
+	}
 	dernier = cle;
 	if (s.go || s.cine || s.menu) break;
 	if (s.phase === 'fin') {
@@ -234,6 +245,16 @@ while (Date.now() < fin) {
 		await touche('Enter', 'message suivant');
 	} else if (s.tuto) {
 		await touche('Escape');
+	} else if (s.fen === 'inspection') {
+		// Inspection du directeur (prompt 47) : il faut répondre (1–3), Échap ne ferme pas ; puis Entrée = reprendre
+		const r = await page.evaluate(() => !!(Jeu.inspection && Jeu.inspection.reponse));
+		await pause(2500);
+		if (!r) {
+			await aller(700, 820, 600);
+			await pause(400);
+			await touche('1', 'inspection : réponse 1');
+			await pause(2800);
+		} else await touche('Enter', 'inspection : reprendre');
 	} else if (s.fen) {
 		await pause(2200);
 		await touche(s.fen === 'tache' ? 'Escape' : 'Escape', `fenêtre ${s.fen} fermée`);
@@ -270,6 +291,6 @@ await pause(1000);
 await cdp.send('Page.stopScreencast');
 ff.stdin.end();
 await new Promise((r) => ff.on('close', r));
-writeFileSync(resolve(CLIPS, SEMAINE ? 'partie-semaine.log.json' : 'partie-complete.log.json'), JSON.stringify(journal, null, 1));
+writeFileSync(resolve(CLIPS, SEMAINE ? 'partie-semaine.log.txt' : 'partie-complete.log.txt'), journal.map((e) => `${e.t.toFixed(1).padStart(6)} ${e.quoi}\n`).join(''));
 await browser.close();
 console.log('→', sortie);

@@ -7,20 +7,20 @@
       font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 64px; letter-spacing: -0.01em; }
   </style>
   <div id="root" data-composition-id="tension" data-width="1920" data-height="1080">
-    <div id="tension-cam0" class="cam" data-layout-allow-overflow style="transform-origin:50% 30%"><video id="tension-v0" class="clip" src="assets/clips/partie-complete.mp4" muted playsinline data-start="0.000" data-duration="0.930" data-media-start="16.30" data-track-index="0"></video></div>
-    <div id="tension-cam1" class="cam" data-layout-allow-overflow style="transform-origin:80% 36%"><video id="tension-v1" class="clip" src="assets/clips/partie-complete.mp4" muted playsinline data-start="0.930" data-duration="0.930" data-media-start="20.60" data-track-index="1"></video></div>
-    <div id="tension-cam2" class="cam" data-layout-allow-overflow style="transform-origin:80% 30%"><video id="tension-v2" class="clip" src="assets/clips/partie-complete.mp4" muted playsinline data-start="1.860" data-duration="0.930" data-media-start="24.20" data-track-index="0"></video></div>
-    <div id="tension-cam3" class="cam" data-layout-allow-overflow style="transform-origin:14% 86%"><video id="tension-v3" class="clip" src="assets/clips/partie-complete.mp4" muted playsinline data-start="2.790" data-duration="0.930" data-media-start="44.20" data-track-index="1"></video></div>
+    <div id="tension-cam0" class="cam" data-layout-allow-overflow style="transform-origin:50% 30%"><video id="tension-v0" class="clip" src="assets/clips/partie-complete.mp4" muted playsinline data-start="0.000" data-duration="0.930" data-media-start="17.60" data-track-index="0"></video></div>
+    <div id="tension-cam1" class="cam" data-layout-allow-overflow style="transform-origin:55% 50%"><video id="tension-v1" class="clip" src="assets/clips/partie-complete.mp4" muted playsinline data-start="0.930" data-duration="0.930" data-media-start="23.50" data-track-index="1"></video></div>
+    <div id="tension-cam2" class="cam" data-layout-allow-overflow style="transform-origin:55% 50%"><video id="tension-v2" class="clip" src="assets/clips/partie-complete.mp4" muted playsinline data-start="1.860" data-duration="0.930" data-media-start="26.50" data-track-index="0"></video></div>
+    <div id="tension-cam3" class="cam" data-layout-allow-overflow style="transform-origin:25% 84%"><video id="tension-v3" class="clip" src="assets/clips/partie-complete.mp4" muted playsinline data-start="2.790" data-duration="0.930" data-media-start="49.60" data-track-index="1"></video></div>
     <div id="tension-titre" class="clip" data-start="0.05" data-duration="2.70" data-var-text="titreSemaine">Une vraie semaine</div>
   </div>
   <script>
     const tl = gsap.timeline({ paused: true });
     tl.fromTo('#tension-cam0', { scale: 1.325 }, { scale: 1.250, duration: 0.3, ease: 'expo.out' }, 0.000);
     tl.to('#tension-cam0', { scale: 1.320, duration: 0.630, ease: 'none' }, 0.300);
-    tl.fromTo('#tension-cam1', { scale: 1.802 }, { scale: 1.700, duration: 0.3, ease: 'expo.out' }, 0.930);
-    tl.to('#tension-cam1', { scale: 1.780, duration: 0.630, ease: 'none' }, 1.230);
-    tl.fromTo('#tension-cam2', { scale: 1.802 }, { scale: 1.700, duration: 0.3, ease: 'expo.out' }, 1.860);
-    tl.to('#tension-cam2', { scale: 1.780, duration: 0.630, ease: 'none' }, 2.160);
+    tl.fromTo('#tension-cam1', { scale: 1.590 }, { scale: 1.500, duration: 0.3, ease: 'expo.out' }, 0.930);
+    tl.to('#tension-cam1', { scale: 1.580, duration: 0.630, ease: 'none' }, 1.230);
+    tl.fromTo('#tension-cam2', { scale: 1.590 }, { scale: 1.500, duration: 0.3, ease: 'expo.out' }, 1.860);
+    tl.to('#tension-cam2', { scale: 1.580, duration: 0.630, ease: 'none' }, 2.160);
     tl.fromTo('#tension-cam3', { scale: 1.696 }, { scale: 1.600, duration: 0.3, ease: 'expo.out' }, 2.790);
     tl.to('#tension-cam3', { scale: 1.700, duration: 0.630, ease: 'none' }, 3.090);
     tl.fromTo('#tension-titre', { opacity: 0, filter: 'blur(8px)' }, { opacity: 1, filter: 'blur(0px)', duration: 0.18, ease: 'power4.out' }, 0.10);

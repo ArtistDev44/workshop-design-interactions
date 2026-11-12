@@ -14,11 +14,11 @@ MOTION:  punch-in : arrivée à +6 % qui se pose en 0,3 s `expo.out`, puis pouss
          0,15 s `power3.in` ; 3D : plongée `cubic inOut` 1,86 s ; secousse du climax 3 px max, 0,2 s par plan.
 SHOTS:
   0,00–1,86  hook — 3D Three.js : 96 lignes réelles (lignes.json) s'allument, trams en rouge d'abord ; « Tracés réels Naolib · Open Data » ; cut sec sur le temps.
-  1,86–4,65  accroche — capture 32,6 s : la salle de contrôle, poussée 1,0 → 1,22 vers le PC.
-  4,65–8,37  tension — 4 plans d'un temps double (0,93 s) : JOUR 1/6 (16,3), téléphone (20,6), téléphone (24,2), signalement Couëron (44,2) ; titre « Une vraie semaine » en haut à gauche.
-  8,37–11,63 révélation — capture 40,3 s : le clic sur l'écran, la caméra du jeu entre dans le PC (transition causée par l'objet).
-  11,63–22,33 preuve — dossier 1/16 (48,4), équipe Police glissée (52,0, ×2), réplique 1 choisie (76,4), jauges + journal (79,3, titre « Chaque dossier, un choix »), dossier Fictif ligne 1 (119,6).
-  22,33–26,51 climax — 9 plans d'un temps (0,465 s) : carte ligne 1, journal, alerte météo, journal, entrée dans le PC, JOUR 1/6, journal, carte, sieste.
+  1,86–4,65  accroche — capture 34,0 s : la salle de contrôle, poussée 1,0 → 1,22 vers le PC.
+  4,65–8,37  tension — 4 plans d'un temps double (0,93 s) : JOUR 1/6 (17,6), téléphone (23,5), téléphone (26,5), signalement Couëron (49,6) ; titre « Une vraie semaine » en haut à gauche.
+  8,37–11,63 révélation — capture 42,3 s : le clic sur l'écran, la caméra du jeu entre dans le PC (transition causée par l'objet).
+  11,63–22,33 preuve — dossier 1/16 (51,3), équipe Police glissée (56,0, ×2), réponse choisie (80,2), jauges + journal (83,3, titre « Chaque dossier, un choix »), inspection surprise (204,8).
+  22,33–26,51 climax — 7 plans d'un temps (0,465 s) puis 0,92 s : Fictif ligne 1 (127,0), journal (130,5), alerte météo (150,5), SMS de nuit (190,8), JOUR 3/6 (194,5), inspection (203,0), Fin de journée +67 XP (175,0), rapport semaine 1 tamponné (349,3).
   26,51–30,00 carton — logo construit rangée par rangée depuis la pointe (0,05–0,7 s), titre pixel essuyé en 24 pas (0,78 s), sous-titre, URL, données, musique ; tenu ≥ 2 s ; fondu musical 1,6 s.
 Transitions (4 types) : coupe sur le temps, zoom à travers l'écran (celui du jeu), punch-in, logo « joué ».
 BANNED:  titre sur capture assombrie ; logo dans un coin ; liste de fonctionnalités en cartes ; halo / bloom / particules ;

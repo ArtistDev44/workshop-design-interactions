@@ -7,11 +7,11 @@
       font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 64px; letter-spacing: -0.01em; }
   </style>
   <div id="root" data-composition-id="preuve" data-width="1920" data-height="1080">
-    <div id="preuve-cam0" class="cam" data-layout-allow-overflow style="transform-origin:50% 22%"><video id="preuve-v0" class="clip" src="assets/clips/partie-complete.mp4" muted playsinline data-start="0.000" data-duration="2.330" data-media-start="48.40" data-track-index="0"></video></div>
-    <div id="preuve-cam1" class="cam" data-layout-allow-overflow style="transform-origin:30% 70%"><video id="preuve-v1" class="clip" src="assets/clips/partie-complete.mp4" muted playsinline data-start="2.330" data-duration="1.860" data-media-start="52.00" data-playback-rate="2" data-track-index="1"></video></div>
-    <div id="preuve-cam2" class="cam" data-layout-allow-overflow style="transform-origin:50% 52%"><video id="preuve-v2" class="clip" src="assets/clips/partie-complete.mp4" muted playsinline data-start="4.190" data-duration="2.790" data-media-start="76.40" data-track-index="0"></video></div>
-    <div id="preuve-cam3" class="cam" data-layout-allow-overflow style="transform-origin:18% 4%"><video id="preuve-v3" class="clip" src="assets/clips/partie-complete.mp4" muted playsinline data-start="6.980" data-duration="1.860" data-media-start="79.30" data-track-index="1"></video></div>
-    <div id="preuve-cam4" class="cam" data-layout-allow-overflow style="transform-origin:50% 30%"><video id="preuve-v4" class="clip" src="assets/clips/partie-complete.mp4" muted playsinline data-start="8.840" data-duration="1.860" data-media-start="119.60" data-track-index="0"></video></div>
+    <div id="preuve-cam0" class="cam" data-layout-allow-overflow style="transform-origin:70% 28%"><video id="preuve-v0" class="clip" src="assets/clips/partie-complete.mp4" muted playsinline data-start="0.000" data-duration="2.330" data-media-start="51.30" data-track-index="0"></video></div>
+    <div id="preuve-cam1" class="cam" data-layout-allow-overflow style="transform-origin:30% 70%"><video id="preuve-v1" class="clip" src="assets/clips/partie-complete.mp4" muted playsinline data-start="2.330" data-duration="1.860" data-media-start="56.00" data-playback-rate="2" data-track-index="1"></video></div>
+    <div id="preuve-cam2" class="cam" data-layout-allow-overflow style="transform-origin:65% 62%"><video id="preuve-v2" class="clip" src="assets/clips/partie-complete.mp4" muted playsinline data-start="4.190" data-duration="2.790" data-media-start="80.20" data-track-index="0"></video></div>
+    <div id="preuve-cam3" class="cam" data-layout-allow-overflow style="transform-origin:18% 4%"><video id="preuve-v3" class="clip" src="assets/clips/partie-complete.mp4" muted playsinline data-start="6.980" data-duration="1.860" data-media-start="83.30" data-track-index="1"></video></div>
+    <div id="preuve-cam4" class="cam" data-layout-allow-overflow style="transform-origin:50% 45%"><video id="preuve-v4" class="clip" src="assets/clips/partie-complete.mp4" muted playsinline data-start="8.840" data-duration="1.860" data-media-start="204.80" data-track-index="0"></video></div>
     <div id="preuve-titre" class="clip" data-start="6.98" data-duration="1.82" data-var-text="titreChoix">Chaque dossier, un choix</div>
   </div>
   <script>
@@ -24,8 +24,8 @@
     tl.to('#preuve-cam2', { scale: 1.800, duration: 2.490, ease: 'none' }, 4.490);
     tl.fromTo('#preuve-cam3', { scale: 1.908 }, { scale: 1.800, duration: 0.3, ease: 'expo.out' }, 6.980);
     tl.to('#preuve-cam3', { scale: 1.900, duration: 1.560, ease: 'none' }, 7.280);
-    tl.fromTo('#preuve-cam4', { scale: 1.696 }, { scale: 1.600, duration: 0.3, ease: 'expo.out' }, 8.840);
-    tl.to('#preuve-cam4', { scale: 1.700, duration: 1.560, ease: 'none' }, 9.140);
+    tl.fromTo('#preuve-cam4', { scale: 1.431 }, { scale: 1.350, duration: 0.3, ease: 'expo.out' }, 8.840);
+    tl.to('#preuve-cam4', { scale: 1.450, duration: 1.560, ease: 'none' }, 9.140);
     tl.fromTo('#preuve-titre', { opacity: 0, filter: 'blur(8px)' }, { opacity: 1, filter: 'blur(0px)', duration: 0.18, ease: 'power4.out' }, 7.03);
     tl.to('#preuve-titre', { opacity: 0, filter: 'blur(6px)', duration: 0.15, ease: 'power3.in' }, 8.60);
     window.__timelines['preuve'] = tl;
