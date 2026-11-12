@@ -74,6 +74,18 @@ const titre = 'Cartels — PATRIMOINE.EXE · NTE001';
 						<dt>Présentation</dt><dd><a href="/presentation/">Le projet en slides</a></dd>
 					</dl>
 					{o.id === 'PXE-NTE001-G01-W01' && (
+						<section aria-labelledby="bande-annonce">
+							<h3 id="bande-annonce">Bande-annonce (30 s)</h3>
+							<figure>
+								<video controls playsinline preload="none" poster="/captures/trailer-poster.jpg" width="1920" height="1080" aria-describedby="trailer-legende">
+									<source src="/captures/trailer.mp4" type="video/mp4" />
+									<track kind="descriptions" src="/captures/trailer.fr.vtt" srclang="fr" label="Description (français)" default />
+								</video>
+								<figcaption id="trailer-legende">trailer.mp4 — 30 s montées sur une vraie partie du jeu (plus de 80 % de capture), avec un accent 3D sur les tracés réels des lignes Naolib ; description textuelle des plans et des sons : <a href="/captures/trailer.fr.vtt">trailer.fr.vtt</a>. Musique : « Heroic Age » Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 4.0 License — <a href="http://creativecommons.org/licenses/by/4.0/">creativecommons.org/licenses/by/4.0</a>. En ligne seulement (hors du cache hors ligne).</figcaption>
+							</figure>
+						</section>
+					)}
+					{o.id === 'PXE-NTE001-G01-W01' && (
 						<section aria-labelledby="captation">
 							<h3 id="captation">Captation (vrai rendu du jeu, 1920 × 1080)</h3>
 							<figure>
