@@ -84,7 +84,7 @@ function composerPortrait() {
 		region({ x: (L - W) / 2, y: 0, l: W, h: H }, 0, (PH - (H * PL) / W) / 2, PL);
 	} else if (scene === 'menu') {
 		const hm = region({ x: 110, y: 60, l: BLOC_PARTAGE.x - 120, h: 1000 }, 0, 440, PL); // colonne du menu, titre entier (s'arrête avant le bloc de partage)
-		region({ x: BLOC_PARTAGE.x - 12, y: BLOC_PARTAGE.y - 12, l: 3 * BLOC_PARTAGE.l + 56, h: BLOC_PARTAGE.h + 24 }, 20, 440 + hm + 24, PL - 40); // prompt 81 : dépôt et partage sous le menu (≥ 44 px)
+		region({ x: BLOC_PARTAGE.x - 12, y: BLOC_PARTAGE.y - BLOC_PARTAGE.h - 16 - 12, l: 3 * BLOC_PARTAGE.l + 56, h: 2 * BLOC_PARTAGE.h + 16 + 24 }, 20, 440 + hm + 24, PL - 40); // prompt 81 : dépôt et partage sous le menu (≥ 44 px) ; prompt 136 : + rangée Livrables
 	}
 	else if (scene === 'bureau') {
 		region({ x: 0, y: 0, l: L, h: H }, 0, 150, PL);

@@ -18,6 +18,11 @@ function ouvrirPresentation() {
 	annoncer(t('mp.presentation.annonce'));
 	ouvrirLien('./presentation/');
 }
+/** Prompt 136 : diapositive « Les livrables » du diaporama (routeAlias livrables), même page /presentation/ */
+function ouvrirLivrables() {
+	annoncer(t('mp.livrables.annonce'));
+	ouvrirLien('./presentation/#/livrables');
+}
 const MENU_C = {
 	nuit: '#0D0C0C', // Background du Pixel DS (prompt 39)
 	encre: '#0D0C0C', // Secondary-Foreground
@@ -299,6 +304,7 @@ function dessinerMenuPrincipal() {
 // ——— Prompt 81 : crédits, dépôt et partage (écran titre uniquement) ; prompt 125 : la licence est dans les Crédits ———
 /** Éléments focalisables après les cartes du menu (↑ ↓ / Tab) : dépôt, partager, présentation (prompt 125 : plus de licence) */
 const EXTRAS_MENU = [
+	{ cle: 'livrables', action: () => ouvrirLivrables() }, // prompt 136 : au-dessus des trois boutons, donc en premier
 	{ cle: 'depot', action: () => ouvrirLien(DEPOT_URL) },
 	{ cle: 'partager', action: () => ouvrirPartage() },
 	{ cle: 'presentation', action: () => ouvrirPresentation() }, // page /presentation/ (diaporama Slidev, prompt 82)
@@ -363,11 +369,13 @@ function blocPartage(n) {
 	const s1 = boutonIcone(b.x, b.y, b.l, b.h, 'github', t('mp.depot'), () => ouvrirLien(DEPOT_URL), focusExtra(n, 'depot'));
 	const s2 = boutonIcone(b.x + b.l + 16, b.y, b.l, b.h, 'partage', t('mp.partager'), ouvrirPartage, focusExtra(n, 'partager'));
 	const s3 = boutonIcone(b.x + 2 * (b.l + 16), b.y, b.l, b.h, 'presentation', t('mp.presentation'), ouvrirPresentation, focusExtra(n, 'presentation'));
-	const bulle = s1 || focusExtra(n, 'depot') ? t('mp.depot.infobulle') : s2 || focusExtra(n, 'partager') ? t('mp.partager.infobulle') : s3 || focusExtra(n, 'presentation') ? t('mp.presentation.infobulle') : null;
+	// Prompt 136 : « Livrables » sur toute la largeur des trois boutons, une rangée au-dessus
+	const s0 = boutonIcone(b.x, b.y - b.h - 16, 3 * b.l + 32, b.h, 'carnet', t('mp.livrables'), ouvrirLivrables, focusExtra(n, 'livrables'));
+	const bulle = s0 || focusExtra(n, 'livrables') ? t('mp.livrables.infobulle') : s1 || focusExtra(n, 'depot') ? t('mp.depot.infobulle') : s2 || focusExtra(n, 'partager') ? t('mp.partager.infobulle') : s3 || focusExtra(n, 'presentation') ? t('mp.presentation.infobulle') : null;
 	if (bulle) {
 		textFont(POLICE_DONNEES);
 		textSize(18);
-		infobulle(bulle, Math.min(b.x, L - 24 - (textWidth(bulle) + 28)), b.y - 52); // reste dans l'écran
+		infobulle(bulle, Math.min(b.x, L - 24 - (textWidth(bulle) + 28)), b.y - b.h - 16 - 52); // reste dans l'écran
 	}
 	textAlign(LEFT, TOP);
 }
