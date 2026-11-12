@@ -18,16 +18,20 @@
 		<link rel="icon" href="./favicon.ico" sizes="48x48" />
 		<link rel="apple-touch-icon" href="./apple-touch-icon.png" />
 		<link rel="manifest" href="./manifest.webmanifest" />
-		<!-- Polices du Pixel Design System, auto-hébergées (fonts.css + fonts/) : préchargées pour l'écran de chargement -->
-		<link rel="preload" href="./fonts/jetbrains-mono-var-latin.woff2" as="font" type="font/woff2" crossorigin />
-		<link rel="preload" href="./fonts/jetbrains-mono-var-latin-ext.woff2" as="font" type="font/woff2" crossorigin />
-		<link rel="stylesheet" href="./fonts.css" />
+		<!-- Polices du Pixel Design System, auto-hébergées (fonts.css + fonts/) : seulement en http(s) — en file://
+		     le navigateur bloque les polices (origine null) ; le jeu garde alors la police système de repli -->
 		<script>
-			// Déclenche immédiatement le chargement des polices web (écran de chargement + détection ds.js/sketch.js)
-			if (document.fonts && document.fonts.load) {
-				document.fonts.load('700 32px "Bitsy Pixels"');
-				document.fonts.load('400 16px "JetBrains Mono"');
-				document.fonts.load('700 16px "JetBrains Mono"');
+			if (location.protocol !== 'file:') {
+				['jetbrains-mono-var-latin', 'jetbrains-mono-var-latin-ext'].forEach(function (f) {
+					var l = document.createElement('link');
+					l.rel = 'preload'; l.as = 'font'; l.type = 'font/woff2'; l.crossOrigin = ''; l.href = './fonts/' + f + '.woff2';
+					document.head.appendChild(l);
+				});
+				var css = document.createElement('link');
+				css.rel = 'stylesheet'; css.href = './fonts.css';
+				document.head.appendChild(css);
+				// Déclenche le chargement (écran de chargement + re-détection ds.js / sketch.js) ; échec silencieux
+				if (document.fonts && document.fonts.load) ['400 16px "JetBrains Mono"', '700 16px "JetBrains Mono"'].forEach(function (f) { document.fonts.load(f).catch(function () {}); });
 			}
 		</script>
 		<meta property="og:type" content="website" />

@@ -38,11 +38,11 @@
 
 /* Bitsy Pixels — police pixel de Paolo Munna « paolomu », usage personnel et commercial gratuit :
    https://paolomu.itch.io/bitsy-pixels · Figma Community « Bitsy Pixels Fontface » (file 1473730390916567413).
-   La police installée localement est reconnue (local) ; sinon déposer `BitsyPixels.woff2` dans ./fonts/. */
+   La police installée localement est reconnue (local) ; le fichier n'est pas dans le dépôt (pas d'erreur 404). */
 @font-face {
 	font-family: 'Bitsy Pixels';
 	font-style: normal;
 	font-weight: 400 700;
 	font-display: swap;
-	src: local('Bitsy Pixels'), url('./fonts/BitsyPixels.woff2') format('woff2');
+	src: local('Bitsy Pixels'), local('BitsyPixels'); /* fichier BitsyPixels.woff2 non fourni : ajouter url('./fonts/BitsyPixels.woff2') quand il sera déposé */
 }
