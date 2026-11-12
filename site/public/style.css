@@ -118,7 +118,7 @@ h3 {
 	display: inline-block;
 	padding: 10px 18px;
 	font: 700 16px 'JetBrains Mono', ui-monospace, monospace;
-	color: #ffffff;
+	color: var(--sur-primaire, #ffffff); /* prompt 176 : texte choisi pour l'accent */
 	background: var(--primaire, #d4031c); /* prompt 115 : couleur principale choisie */
 	border: 2px solid var(--primaire, #d4031c);
 	border-radius: 0;

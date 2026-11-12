@@ -112,7 +112,7 @@ function etapeGuideSuivante() {
 
 // ——— Dessin : flèche + bulle ———
 function flecheGuide(px, py, versBas) {
-	// Flèche épaisse jaune à contour sombre (contraste sur fonds clairs et sombres), pointe sur (px, py)
+	// Flèche épaisse à la couleur d'accent (prompt 176 : plus de jaune), à contour sombre (contraste sur fonds clairs et sombres), pointe sur (px, py)
 	// versBas : true (vers le bas), false (vers le haut) ou 'droite' (prompt 66)
 	if (versBas === 'droite') {
 		push();
@@ -132,10 +132,10 @@ function flecheGuide(px, py, versBas) {
 		[14, -40 * s],
 		[34, -40 * s],
 	];
-	stroke('#0D0C0C');
+	stroke(DS.fond);
 	strokeWeight(8);
 	strokeJoin(ROUND);
-	fill('#FFC138'); // Warning Primary du DS
+	fill(DS.primaireTrait);
 	beginShape();
 	pts.forEach(([x, y]) => vertex(px + x, py + y));
 	endShape(CLOSE);

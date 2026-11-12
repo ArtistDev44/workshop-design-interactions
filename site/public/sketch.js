@@ -15,7 +15,19 @@ const C = {
 	panneau: '#171616', // fond + blanc 05 %
 	texte: '#FFFFFF',
 	accent: '#FFFFFF', // titres et bordures accentuées (le rouge primaire est réservé aux fonds de boutons)
-	primaire: '#D4031C',
+	// Prompt 176 : la couleur d'accent n'a qu'une source, DS (ds.js / theme.js)
+	get primaire() {
+		return DS.primaire;
+	},
+	get surPrimaire() {
+		return DS.surPrimaire;
+	},
+	get primaireTrait() {
+		return DS.primaireTrait;
+	},
+	get primaireTexte() {
+		return DS.primaireTexte;
+	},
 	vert: '#00B74F',
 	orange: '#FFC138',
 	rouge: '#FFC5C2', // Error Light : lisible en texte sur fond sombre
@@ -1092,14 +1104,14 @@ function bouton(x, y, l, h, label, action, desactive, secondaire) {
 	}
 	if (survol) {
 		noFill();
-		stroke(secondaire ? '#FFFFFF' : C.primaire);
+		stroke(secondaire ? '#FFFFFF' : C.primaireTrait);
 		strokeWeight(2);
 		rect(x - 5, y - 5, l + 10, h + 10);
 		stroke(C.fond);
 		rect(x - 2, y - 2, l + 4, h + 4);
 	}
 	noStroke();
-	fill(desactive ? 'rgba(255,255,255,0.5)' : '#FFFFFF');
+	fill(desactive ? 'rgba(255,255,255,0.5)' : secondaire ? '#FFFFFF' : C.surPrimaire);
 	textFont(POLICE_TEXTE);
 	textStyle(BOLD);
 	textSize(Math.min(28, h * 0.34));

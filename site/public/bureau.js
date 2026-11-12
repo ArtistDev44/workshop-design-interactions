@@ -699,7 +699,7 @@ function contourSurvol(x, y, l, h) {
 	stroke('#1c2733');
 	strokeWeight(PIX + 4);
 	rect(x, y, l, h);
-	stroke(DS.primaire);
+	stroke(DS.primaireTrait);
 	strokeWeight(PIX);
 	rect(x, y, l, h);
 	noStroke();

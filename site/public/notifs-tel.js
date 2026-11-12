@@ -266,7 +266,7 @@ function contenuGroupesTel(x, y0, l, h) {
 			rect(x + 16, y, l - 32, nh, 18);
 			if (focus) {
 				noFill();
-				stroke('#ffc138');
+				stroke(DS.primaire); // prompt 176 : focus à la couleur d'accent (carte blanche : l'aplat tient 4,5:1)
 				strokeWeight(4);
 				rect(x + 16, y, l - 32, nh, 18);
 				noStroke();

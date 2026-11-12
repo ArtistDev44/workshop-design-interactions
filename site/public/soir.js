@@ -145,7 +145,7 @@ function dessinerFlecheSortie() {
 	const pulse = reduireAnimations ? 1 : 0.6 + 0.4 * Math.sin((millis() / 1000) * Math.PI * 2); // 1 pulsation/s
 	noStroke();
 	// halo doux qui pulse (jamais de flash : variation d'opacité seulement)
-	fill(255, 193, 56, Math.round(60 * pulse));
+	fill(primaireRGBA((0.35 * pulse).toFixed(3))); // prompt 176 : mise en avant à la couleur d'accent
 	rect(r.x - 10, r.y - 10, r.l + 20, r.h + 20);
 	fill(13, 12, 12, 245);
 	rect(r.x, r.y, r.l, r.h);
@@ -156,12 +156,12 @@ function dessinerFlecheSortie() {
 	noStroke();
 	const u = Math.floor((r.l - 24) / 12);
 	pictoSortie(r.x + (r.l - u * 12) / 2, r.y + 14, u);
-	// grande flèche pixel vers la gauche (jaune Warning du DS, contour sombre)
+	// grande flèche pixel vers la gauche (couleur d'accent, prompt 176)
 	const fy = r.y + 14 + u * 8 + 22;
 	const fh = Math.max(40, r.h * 0.26);
 	const fx = r.x + 14;
 	const fl = r.l - 28;
-	fill('#FFC138');
+	fill(DS.primaireTrait);
 	triangle(fx, fy + fh / 2, fx + fh * 0.7, fy, fx + fh * 0.7, fy + fh);
 	rect(fx + fh * 0.7 - 1, fy + fh * 0.3, fl - fh * 0.7 + 1, fh * 0.4);
 	// libellé

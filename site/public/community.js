@@ -407,12 +407,12 @@ function boutonTexte(x, y, l, label, action, actif) {
 	noStroke();
 	fill(actif ? DS.primaire : survol ? DS.blanc15 : DS.blanc05);
 	rect(x, y, l, h);
-	stroke(actif ? DS.primaire : DS.blanc);
+	stroke(actif ? DS.primaireTrait : DS.blanc);
 	strokeWeight(2);
 	noFill();
 	rect(x + 1, y + 1, l - 2, h - 2);
 	noStroke();
-	fill(DS.blanc);
+	fill(actif ? DS.surPrimaire : DS.blanc);
 	textAlign(LEFT, TOP);
 	textLeading(26);
 	text(label, x + 16, y + 10, l - 32, h);
