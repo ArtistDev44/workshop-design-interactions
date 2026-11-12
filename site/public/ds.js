@@ -188,10 +188,12 @@ function dsBadge(x, y, txt, type) {
 	textSize(18);
 	const l = Math.max(28, textWidth(txt) + 16);
 	noStroke();
-	fill(DS[type || 'erreur']);
+	const aplat = DS[type || 'erreur'];
+	fill(aplat);
 	rect(x - l / 2, y - 14, l, 28);
-	const daltonien = typeof Confort !== 'undefined' && Confort.Reglages && ['protan', 'deutan'].includes(Confort.Reglages.daltonisme); // prompt 133 : #FF7A00 + blanc = 2,61:1 → texte sombre 7,48:1 (tritan #E8003D garde le blanc, 4,67:1)
-	fill(type === 'alerte' || type === 'succes' || (daltonien && (type || 'erreur') === 'erreur') ? DS.fond : DS.blanc);
+	// Prompt 193 : texte blanc ou sombre CALCULÉ sur l'aplat (theme.js) — protan / deutan #FF7A00 → sombre 7,48:1 ;
+	// tritan #E8003D et normal #D10B00 → blanc ; ≥ 4,5:1 pour chaque palette de accessibilite.js (test-jeu.mjs)
+	fill(texteSurAplat(aplat));
 	textAlign(CENTER, CENTER);
 	zoneTexteDebut('badge', x - l / 2, y - 14, l, 28); // prompt 93
 	text(txt, x, y);

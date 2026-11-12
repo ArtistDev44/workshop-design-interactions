@@ -2114,7 +2114,7 @@ for (const s of semaines) {
 		verifier(/annoncer\(/.test(be) && !/text\(|rect\(/.test(be), 'prompt 124 : l\'état du jeu est annoncé (aria-live), plus dessiné');
 	}
 	verifier(/g === 'elevee' \? C\.rougeFonce/.test(readFileSync(join(pub, 'carte.js'), 'utf8')) && /const tm = g === 'elevee' \? 36/.test(readFileSync(join(pub, 'carte-alertes.js'), 'utf8')), 'prompt 133 : gravité élevée en rouge franc et plus grande');
-	verifier(/\['protan', 'deutan'\]\.includes\(Confort\.Reglages\.daltonisme\)/.test(readFileSync(join(pub, 'ds.js'), 'utf8')), 'prompt 133 : badge lisible en protan / deutan');
+	// Prompt 193 : la liste protan / deutan en dur est remplacée par un texte calculé sur l'aplat (contrôlé plus bas)
 	verifier(/function basculerPleinEcran/.test(readFileSync(join(pub, 'sketch.js'), 'utf8')), 'prompt 133 : touche F, plein écran');
 }
 
@@ -2458,7 +2458,7 @@ for (const langue of ['fr', 'en']) {
 	verifier(/mp\.aide/.test(lire('immersion.js')) && (lire('sketch.js').match(/ouvrir\('aide'\)/g) || []).length >= 2 && /function fenetreAide/.test(lire('aide.js')), 'prompt 171 : l\'aide doit rester atteignable en partie (H, menu pause)');
 	verifier(!/PXE-NTE001/.test(menu171) && /dessinerLogoPXE\(HAUT_MENU\.marge, HAUT_MENU\.y, HAUT_MENU\.h\)/.test(menu171) && /const JEU = 'PXE-NTE001-G01-W01'/.test(lire('sauvegarde.js')), 'prompt 171 : mention « PXE- » encore affichée au menu (ou clé de stockage renommée)');
 	verifier(/const HAUT_MENU = \{ y: 56, h: 60, marge: 80 \}/.test(menu171) && /selecteurLangue\([^;]*HAUT_MENU\.y, HAUT_MENU\.h\)/.test(menu171) && /boutonInstaller\(xi, HAUT_MENU\.y, HAUT_MENU\.h/.test(menu171), 'prompt 171 : logo, langue et installation ne partagent plus y, hauteur et marge');
-	verifier(/iconeLucide\('download'/.test(menu171) && /infobulle\(bulle/.test(menu171.slice(menu171.indexOf('function boutonInstaller'))) && /cle: 'installer', action: \(\) => installerJeu\(\)/.test(menu171), 'prompt 171 : icône « télécharger » absente, sans infobulle ou hors du parcours clavier');
+	verifier(/boutonCarreHaut\(x, y, c, focus, 'download', t\('mp\.installer'\), installerJeu\)/.test(menu171) && /iconeLucide\(icone,/.test(menu171) && /infobulle\(bulle/.test(menu171.slice(menu171.indexOf('function boutonCarreHaut'))) && /cle: 'installer', action: \(\) => installerJeu\(\)/.test(menu171), 'prompt 171 : icône « télécharger » absente, sans infobulle ou hors du parcours clavier');
 	const inst171 = lire('installation.js');
 	verifier(/function installerJeu\(\) \{[^}]*installationPossible\(\)\) return installerApplication\(\);[^}]*ouvrirInstallation\(\);/.test(inst171) && /fenetre === 'installation'\) return fenetreInstallation\(\)/.test(lire('sketch.js')), 'prompt 171 : l\'icône doit installer le jeu (beforeinstallprompt) ou ouvrir l\'explication');
 	// Comportement : avec une invitation du navigateur, elle est jouée ; sans, la fenêtre d'explication s'ouvre
@@ -3407,7 +3407,7 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	const menu = readFileSync(join(pub, 'menu.js'), 'utf8');
 	const extras = menu.slice(menu.indexOf('const EXTRAS_MENU'), menu.indexOf('const HAUT_MENU'));
 	const ordre = [...extras.matchAll(/cle: '(\w+)'/g)].map((x) => x[1]).join();
-	verifier(ordre === 'livrables,kitpresse,depot,partager,presentation,installer', `prompt 188 : ordre des extras du menu (${ordre})`);
+	verifier(ordre === 'livrables,kitpresse,depot,partager,presentation,pleinEcran,installer', `prompt 188 : ordre des extras du menu (${ordre})`);
 	verifier(/function ouvrirKitPresse\(\) \{\s*annoncer\(t\('mp\.kitpresse\.annonce'\)\);\s*ouvrirLien\('\.\/kit-presse\/'\);/.test(menu) && /presse: 'newspaper'/.test(menu), 'prompt 188 : ouvrirKitPresse (annonce + ./kit-presse/ en nouvel onglet) et icône Lucide newspaper');
 	// De haut en bas : Livrables, Kit de presse, puis les trois boutons — même largeur, 16 px d'écart
 	verifier(/boutonIcone\(b\.x, b\.y - 2 \* \(b\.h \+ 16\), 3 \* b\.l \+ 32, b\.h, 'carnet'/.test(menu) && /boutonIcone\(b\.x, b\.y - b\.h - 16, 3 \* b\.l \+ 32, b\.h, 'presse', t\('mp\.kitpresse'\), ouvrirKitPresse, focusExtra\(n, 'kitpresse'\)\)/.test(menu), 'prompt 188 : rangées Livrables puis Kit de presse au-dessus du bloc');
@@ -3609,6 +3609,70 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	const imm = readFileSync(join(pub, 'immersion.js'), 'utf8');
 	verifier(/function tempsSuspendu\(\) \{\n\treturn [^\n]*phase === 'soir'[^\n]*\n\}/.test(imm), 'prompt 191 : tempsSuspendu() reste un return sur une ligne et suspend le soir');
 	verifier(/Jeu\.accrocheMeteo\(j\.date\)/.test(imm.slice(imm.indexOf('function lignesTransitionJour'))), 'prompt 191 : accroche météo sur l\'écran « Jour N »');
+}
+
+// Prompt 193 : badge lisible dans chaque palette daltonienne, bouton plein écran au menu, musique hors ligne
+{
+	const lire193 = (f) => readFileSync(join(pub, f), 'utf8');
+	// 1. Badge : texte calculé (texteSurAplat, theme.js) ≥ 4,5:1 sur chaque aplat de chaque palette de accessibilite.js
+	const c193 = { DS: { fond: '#0D0C0C' }, C: {}, MENU_C: {}, document: { documentElement: { style: { setProperty: () => {} } } }, localStorage: { getItem: () => null, setItem: () => {} }, location: { search: '' } };
+	vm.createContext(c193);
+	const acc = lire193('accessibilite.js');
+	const blocPal = acc.slice(acc.indexOf('const PALETTES = {'), acc.indexOf('const ORDRE_DALTONISME'));
+	vm.runInContext(lire193('theme.js') + ';' + blocPal + ';globalThis.T = { PALETTES, texteSurAplat, rapportContraste };', c193);
+	const { PALETTES: pals, texteSurAplat: sur, rapportContraste: rc } = c193.T;
+	const ds = lire193('ds.js');
+	const info = /info: '(#[0-9A-Fa-f]{6})'/.exec(ds)[1];
+	verifier(Object.keys(pals).length >= 4 && ['normal', 'protan', 'deutan', 'tritan'].every((k) => pals[k]), 'prompt 193 : les quatre palettes de daltonisme');
+	for (const [id, p] of Object.entries(pals)) {
+		for (const [type, fond] of [['erreur', p.critique], ['succes', p.bon], ['alerte', p.alerte], ['info', info]]) {
+			const txt = sur(fond);
+			verifier(rc(txt, fond) >= 4.5, `prompt 193 : badge ${type} en palette ${id} — ${txt} sur ${fond} = ${rc(txt, fond).toFixed(2)}:1 (< 4,5)`);
+		}
+	}
+	verifier(sur(pals.protan.critique) === '#0D0C0C' && sur(pals.normal.critique) === '#FFFFFF', 'prompt 193 : badge sombre sur l\'orange protan / deutan, blanc sur le rouge normal');
+	const badge = ds.slice(ds.indexOf('function dsBadge'), ds.indexOf('/** Interrupteur'));
+	verifier(/fill\(texteSurAplat\(aplat\)\)/.test(badge) && !/'#[0-9A-Fa-f]{6}'|daltonisme/.test(badge), 'prompt 193 : dsBadge choisit son texte par texteSurAplat, sans hexadécimal ni liste de palettes en dur');
+	verifier(/texte: texteSurAplat\(hex\)/.test(lire193('theme.js')), 'prompt 193 : accentDerive et le badge partagent texteSurAplat');
+	// 2. Plein écran : bouton de la ligne du haut, même logique que F, avant « installer » dans l'ordre clavier, masqué sans API
+	const menu = lire193('menu.js');
+	const extras = menu.slice(menu.indexOf('const EXTRAS_MENU'), menu.indexOf('/** Prompt 171 : ligne du haut'));
+	verifier(/pleinEcranPossible\(\) \? \[\{ cle: 'pleinEcran'[^\n]*basculerPleinEcran\(\)/.test(extras) && extras.indexOf("cle: 'pleinEcran'") < extras.indexOf("cle: 'installer'"), 'prompt 193 : entrée plein écran dans EXTRAS_MENU, juste avant installer, seulement si l\'API existe');
+	verifier(/boutonCarreHaut\(xLangue - LANGUES\.length \* \(84 \+ 8\) - 8 - HAUT_MENU\.h, HAUT_MENU\.y, HAUT_MENU\.h, focusExtra\(e\.length, 'pleinEcran'\), pleinEcranActif\(\) \? 'minimize' : 'maximize', libellePleinEcranMenu\(\), basculerPleinEcran\)/.test(menu), 'prompt 193 : bouton plein écran à gauche de FR / EN, icône maximize / minimize, basculerPleinEcran réutilisé');
+	verifier(/annoncer\(choisi\(\)\.libelle \? choisi\(\)\.libelle\(\) : t\('mp\.' \+ choisi\(\)\.cle\)\)/.test(menu), 'prompt 193 : l\'annonce clavier suit l\'état du plein écran');
+	verifier((lire193('sketch.js').match(/requestFullscreen\(\)/g) || []).length === 1 && !/requestFullscreen|exitFullscreen/.test(menu), 'prompt 193 : une seule logique de plein écran (sketch.js)');
+	const ic = lire193('icones-lucide.js');
+	verifier(/'maximize':/.test(ic) && /'minimize':/.test(ic), 'prompt 193 : icônes maximize / minimize disponibles');
+	for (const langue of ['fr', 'en']) {
+		const d = vm.runInContext(`TRADUCTIONS[${JSON.stringify(langue)}]`, contexte(langue));
+		verifier(/\(F\)$/.test(d['mp.pleinEcran'] || '') && /\(F\)$/.test(d['mp.pleinEcran.quitter'] || '') && d['mp.pleinEcran'] !== d['mp.pleinEcran.quitter'], `prompt 193 : libellés du bouton plein écran (${langue})`);
+	}
+	// 3. Musique hors ligne : Range servi depuis le cache (206), morceaux précachés, repli WebAudio si le fichier échoue
+	const sw = lire193('sw.js');
+	verifier(/headers\.has\('range'\)\) \{\n\t\te\.respondWith\(caches\.match\(req\.url, \{ ignoreSearch: true \}\)\.then\(\(enCache\) => \(enCache \? reponsePartielle\(req, enCache\) : fetch\(req\)\)\)\);/.test(sw), 'prompt 193 : requêtes Range servies depuis le cache');
+	for (const f of readdirSync(join(pub, 'audio')).filter((f) => /\.(ogg|mp3)$/.test(f))) verifier(sw.includes(`"./audio/${f}"`), `prompt 193 : ${f} doit être précaché`);
+	verifier(readFileSync(join(pub, '..', 'scripts', 'generer-sw.mjs'), 'utf8').includes('reponsePartielle\\(req, enCache\\)'), 'prompt 193 : le générateur refuse un sw.js sans lecture partielle depuis le cache');
+	if (typeof Response === 'function' && typeof Blob === 'function') {
+		const fn = sw.slice(sw.indexOf('function reponsePartielle'));
+		const rp = new Function('Response', fn + ';return reponsePartielle;')(Response);
+		const req = (r) => ({ headers: { get: (k) => (k === 'range' ? r : null) } });
+		const plein = () => new Response(new Blob([new Uint8Array(100).map((_, i) => i)]), { headers: { 'content-type': 'audio/ogg' } });
+		const essais = [
+			['bytes=0-', 206, 'bytes 0-99/100', 100, 0],
+			['bytes=10-19', 206, 'bytes 10-19/100', 10, 10],
+			['bytes=-5', 206, 'bytes 95-99/100', 5, 95],
+			['bytes=90-500', 206, 'bytes 90-99/100', 10, 90],
+			['bytes=200-', 416, 'bytes */100', 0, null],
+			['n\'importe quoi', 200, null, 100, 0],
+		];
+		for (const [r, statut, plage, longueur, premier] of essais) {
+			const rep = await rp(req(r), plein());
+			const octets = new Uint8Array(await rep.arrayBuffer());
+			verifier(rep.status === statut && rep.headers.get('content-range') === plage && octets.length === longueur && (premier === null || octets[0] === premier) && (statut === 416 || rep.headers.get('content-type') === 'audio/ogg'), `prompt 193 : réponse partielle « ${r} » (${rep.status}, ${rep.headers.get('content-range')}, ${octets.length} octets)`);
+		}
+	}
+	const conf = lire193('confort.js');
+	verifier(/a\.addEventListener\('error', \(\) => \{\n\t\t\t\tif \(Musique\.audio !== a\) return;\n\t\t\t\tMusique\.enPanne\.add\(p\.fichier\);[\s\S]{0,260}Musique\.demarrer\(\);/.test(conf) && /Musique\.enPanne\.has\(p\.fichier\) \? PISTES\.origine : p/.test(conf), 'prompt 193 : musique en fichier injouable → repli sur le morceau WebAudio');
 }
 
 if (erreurs.length) {

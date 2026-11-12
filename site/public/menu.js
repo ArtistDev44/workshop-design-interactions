@@ -258,8 +258,11 @@ function dessinerMenuPrincipal() {
 	// Prompt 171 : FR / EN puis l'icône « télécharger » (installer le jeu, prompt 65), bord droit à la marge
 	const avecInstaller = EXTRAS_MENU.some((x) => x.cle === 'installer'); // pas en exposition (prompt 160)
 	const xi = L - HAUT_MENU.marge - HAUT_MENU.h;
-	selecteurLangue(avecInstaller ? xi : L - HAUT_MENU.marge + 8, HAUT_MENU.y, HAUT_MENU.h); // selecteurLangue laisse 8 px à droite du dernier bouton
+	const xLangue = avecInstaller ? xi : L - HAUT_MENU.marge + 8;
+	selecteurLangue(xLangue, HAUT_MENU.y, HAUT_MENU.h); // selecteurLangue laisse 8 px à droite du dernier bouton
 	if (avecInstaller) boutonInstaller(xi, HAUT_MENU.y, HAUT_MENU.h, focusExtra(e.length, 'installer'));
+	// Prompt 193 : plein écran (même logique que la touche F et l'interrupteur des paramètres) à gauche de FR / EN
+	if (EXTRAS_MENU.some((x) => x.cle === 'pleinEcran')) boutonCarreHaut(xLangue - LANGUES.length * (84 + 8) - 8 - HAUT_MENU.h, HAUT_MENU.y, HAUT_MENU.h, focusExtra(e.length, 'pleinEcran'), pleinEcranActif() ? 'minimize' : 'maximize', libellePleinEcranMenu(), basculerPleinEcran);
 	textAlign(LEFT, BOTTOM);
 	textFont(POLICE_DONNEES);
 	textSize(18);
@@ -297,13 +300,22 @@ const EXTRAS_MENU = typeof EXPO !== 'undefined' && EXPO.actif ? [] : [
 	{ cle: 'depot', action: () => ouvrirLien(DEPOT_URL) },
 	{ cle: 'partager', action: () => ouvrirPartage() },
 	{ cle: 'presentation', action: () => ouvrirPresentation() }, // page /presentation/ (diaporama Slidev, prompt 82)
+	// Prompt 193 : bouton plein écran de la ligne du haut (à gauche de FR / EN), seulement si l'API Fullscreen existe
+	...(pleinEcranPossible() ? [{ cle: 'pleinEcran', libelle: () => libellePleinEcranMenu(), action: () => basculerPleinEcran() }] : []),
 	{ cle: 'installer', action: () => installerJeu() }, // prompt 171 : icône « télécharger » en haut à droite, dernière avant de reboucler sur « Nouvelle partie »
 ];
 /** Prompt 171 : ligne du haut de l'écran titre (logo à gauche, langue + installation à droite) */
 const HAUT_MENU = { y: 56, h: 60, marge: 80 };
+/** Prompt 193 : libellé du bouton plein écran, selon l'état RÉEL (pleinEcranActif, sketch.js) */
+const libellePleinEcranMenu = () => t(pleinEcranActif() ? 'mp.pleinEcran.quitter' : 'mp.pleinEcran');
 /** Prompt 171 : bouton carré à icône « télécharger » (style contour des boutons de langue) — installe le jeu ;
  * l'icône n'est jamais seule : infobulle au survol et au focus, annonce « Installer le jeu » au clavier */
 function boutonInstaller(x, y, c, focus) {
+	boutonCarreHaut(x, y, c, focus, 'download', t('mp.installer'), installerJeu);
+}
+/** Prompts 171 / 193 : bouton carré à icône de la ligne du haut (installer, plein écran) — infobulle au survol et au
+ * focus, sous le bouton et alignée sur son bord droit */
+function boutonCarreHaut(x, y, c, focus, icone, bulle, action) {
 	const survol = mouseX >= x && mouseX <= x + c && mouseY >= y && mouseY <= y + c;
 	fill(survol || focus ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.05)');
 	stroke('#FFFFFF');
@@ -317,10 +329,9 @@ function boutonInstaller(x, y, c, focus) {
 		rect(x - 6, y - 6, c + 12, c + 12);
 	}
 	noStroke();
-	iconeLucide('download', x + (c - 32) / 2, y + (c - 32) / 2, 32, '#FFFFFF');
-	boutons.push({ x, y, l: c, h: c, action: installerJeu });
+	iconeLucide(icone, x + (c - 32) / 2, y + (c - 32) / 2, 32, '#FFFFFF');
+	boutons.push({ x, y, l: c, h: c, action });
 	if (survol || focus) {
-		const bulle = t('mp.installer');
 		textFont(POLICE_DONNEES);
 		textSize(18);
 		infobulle(bulle, x + c - (textWidth(bulle) + 28), y + c + 14); // sous le bouton, alignée sur le bord droit
@@ -875,7 +886,7 @@ function toucheMenu() {
 	else if (keyCode === DOWN_ARROW || keyCode === TAB) pas(1);
 	else if ((keyCode === ENTER || keyCode === RETURN || key === ' ') && !choisi().desactive) choisi().action();
 	// Prompt 171 : plus de raccourci H au menu titre (l'aide s'ouvre en partie)
-	if (keyCode === UP_ARROW || keyCode === DOWN_ARROW || keyCode === TAB) annoncer(t('mp.' + choisi().cle));
+	if (keyCode === UP_ARROW || keyCode === DOWN_ARROW || keyCode === TAB) annoncer(choisi().libelle ? choisi().libelle() : t('mp.' + choisi().cle)); // prompt 193 : libellé selon l'état (plein écran)
 	return true;
 }
 

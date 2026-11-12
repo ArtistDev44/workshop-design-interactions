@@ -27,6 +27,11 @@ fichiers.forEach((f) => hash.update(f).update(readFileSync(join(pub, f))));
 const version = 'nte-regulation-' + hash.digest('hex').slice(0, 10);
 const liste = ['./', ...fichiers.map((f) => './' + f), ...PAGES_DOSSIER, ...PAGES_ASTRO];
 
+// Prompt 193 : la musique en fichier doit être jouable hors ligne — chaque morceau (OGG et MP3) est précaché, et sw.js
+// (partie écrite à la main, hors repères) sert les lectures partielles (Range) depuis ce cache
+const audio = liste.filter((u) => /^\.\/audio\/.+\.(ogg|mp3)$/.test(u));
+if (!audio.length) throw new Error('sw.js : aucun morceau audio/*.ogg|mp3 à précacher');
+
 const swChemin = join(pub, 'sw.js');
 const sw = readFileSync(swChemin, 'utf8');
 const debut = '/* précache:début (généré par scripts/generer-sw.mjs — ne pas modifier à la main) */';
@@ -34,6 +39,7 @@ const fin = '/* précache:fin */';
 const i = sw.indexOf(debut);
 const j = sw.indexOf(fin);
 if (i < 0 || j < 0) throw new Error('sw.js : repères précache:début / précache:fin introuvables');
+if (!/headers\.has\('range'\)[\s\S]*reponsePartielle\(req, enCache\)/.test(sw)) throw new Error('sw.js : les lectures partielles (Range) de la musique doivent être servies depuis le cache (prompt 193)');
 const bloc = `${debut}\nconst VERSION = '${version}';\nconst ESSENTIELS = ${JSON.stringify(liste, null, '\t')};\n`;
 writeFileSync(swChemin, sw.slice(0, i) + bloc + sw.slice(j));
-console.log(`sw.js : ${liste.length} entrées en précache, ${version}`);
+console.log(`sw.js : ${liste.length} entrées en précache (dont ${audio.length} morceaux audio), ${version}`);
