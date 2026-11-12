@@ -249,7 +249,7 @@ function heureAffichee() {
 // Prompt 179 : la toute première lecture du téléphone aussi (telephone.js) ; aux ouvertures suivantes, le temps file
 // Prompt 181 : et le guide « Prendre en main » tant qu'une étape attend le joueur (guideSuspendTemps, guide.js)
 function tempsSuspendu() {
-	return ecran !== 'jeu' || !Jeu.horloge || phase === 'fin' || phase === 'mail' || phase === 'soir' || pcDemarre() || smsActif || enPause || tutoriel || TRANSITION_JOUR || mecaniquesSuspendentTemps() || fenetre === 'poste' || fenetre === 'aide' || (typeof telephonePremiereLecture === 'function' && telephonePremiereLecture()) || lecturePanneau() || (typeof guideSuspendTemps === 'function' && guideSuspendTemps()) || (typeof expoEnPause === 'function' && expoEnPause()); // prompt 160 : voile « Partie en pause » de l'exposition ; prompt 74 : explication du poste ; prompt 87 : lecture d'un signalement
+	return ecran !== 'jeu' || !Jeu.horloge || phase === 'fin' || phase === 'mail' || phase === 'soir' || pcDemarre() || smsActif || enPause || tutoriel || TRANSITION_JOUR || mecaniquesSuspendentTemps() || fenetre === 'aide' || (typeof telephonePremiereLecture === 'function' && telephonePremiereLecture()) || lecturePanneau() || (typeof guideSuspendTemps === 'function' && guideSuspendTemps()) || (typeof expoEnPause === 'function' && expoEnPause()); // prompt 160 : voile « Partie en pause » de l'exposition ; prompt 74 : explication du poste ; prompt 87 : lecture d'un signalement
 }
 function tempsCompresse() {
 	return ecran === 'jeu' && (phase === 'attente' || phase === 'reveil') && !tempsSuspendu(); // « ×100 » seulement quand le temps file vraiment
@@ -1019,7 +1019,7 @@ function infobulle(texte, x, y) {
 // =====================================================================
 // Prompt 74 — comprendre le poste, et une journée qui « vit » (rythme.js : logique pure, reproductible)
 // =====================================================================
-const FIL = { messages: [], serieDepuis: 0, rythmeFaits: {}, jourCle: '', explicationVue: false };
+const FIL = { messages: [], serieDepuis: 0, rythmeFaits: {}, jourCle: '' };
 /** Remise à zéro pour une nouvelle partie (le mélange des arrivées est fait juste après Jeu.nouvellePartie) */
 function nouvellePartieRythme() {
 	Rythme.clamperDebut(); // prompt 76 : aucun dossier avant 8 h
@@ -1033,7 +1033,6 @@ function nouvellePartieRythme() {
 	FIL.serieDepuis = 0;
 	FIL.rythmeFaits = {};
 	FIL.jourCle = '';
-	FIL.explicationVue = false;
 }
 /** Ajoute une ligne au fil de la journée (texte traduit au dessin) ; annoncée en aria-live */
 function ajouterFil(m, sorte) {
@@ -1110,59 +1109,8 @@ function dessinerFil(x, y, l, h) {
 	});
 }
 
-// ——— Explication du poste : à la première ouverture de l'écran de jeu de la partie (gardée dans la sauvegarde) ———
-const GESTES_POSTE = ['carte', 'repondre', 'equipes', 'menu']; // prompt 161 : même liste à l'écran et au lecteur d'écran
-function majExplicationPoste() {
-	if (FIL.explicationVue || fenetre || tutoriel || smsActif || TRANSITION_JOUR || MENU.actif) return;
-	if (ecran !== 'jeu' || vue !== 'poste' || PC.etat !== 'appli' || phase === 'fin') return;
-	FIL.explicationVue = true;
-	ouvrir('poste');
-	// Prompt 161 : le lecteur d'écran entend les gestes affichés (poste.geste.*), plus l'ancienne table Dévier / Retenir…
-	annoncer(t('poste.titre') + '. ' + t('poste.role') + ' ' + t('poste.decisions') + ' : ' + GESTES_POSTE.map((g) => t('poste.geste.' + g + '.k') + ' — ' + t('poste.geste.' + g)).join(' ') + ' ' + t('poste.apprendre'));
-}
-function fenetrePoste() {
-	const l = DS.fenetre.large; // prompt 173 (était 1240)
-	const h = 860;
-	const x = (L - l) / 2;
-	const y = (H - h) / 2;
-	panneau(x, y, l, h, C.accent);
-	noStroke();
-	textAlign(LEFT, TOP);
-	fill(C.texte);
-	textFont(POLICE_TEXTE);
-	textStyle(BOLD);
-	textSize(36);
-	text(t('poste.titre'), x + 56, y + 44, l - 112, 50);
-	textStyle(NORMAL);
-	textSize(22);
-	textLeading(32);
-	text(t('poste.role'), x + 56, y + 108, l - 112, 140);
-	textStyle(BOLD);
-	textSize(24);
-	text(t('poste.decisions'), x + 56, y + 262);
-	textStyle(NORMAL);
-	// Prompt 131 : les gestes réels du jeu (carte, répliques 1 à 3, équipes glissées, menu à gauche), plus l'ancienne table Q5–Q7
-	GESTES_POSTE.forEach((g, i) => {
-		const k = t('poste.geste.' + g + '.k');
-		const yy = y + 310 + i * 72;
-		textFont(POLICE_DONNEES);
-		textStyle(BOLD);
-		textSize(22);
-		fill(C.orange);
-		text(k, x + 56, yy);
-		textStyle(NORMAL);
-		textFont(POLICE_TEXTE);
-		textSize(21);
-		textLeading(27);
-		fill(C.texte);
-		text(t('poste.geste.' + g), x + 230, yy, l - 290, 66);
-	});
-	textSize(20);
-	textLeading(28);
-	fill(C.gris);
-	text(t('poste.apprendre'), x + 56, y + h - 196, l - 112, 90);
-	bouton(x + l - 56 - 360, y + h - 96, 360, 64, t('poste.compris'), fermer);
-}
+// Fenêtre « Votre poste » (prompts 74 / 131 / 161) supprimée le 12/11/2026 à la demande du groupe : le guide
+// « Prendre en main » (coché à la 1re partie) et l'aide (H) présentent les gestes.
 /** Prompt 87 : hors défi chrono, l'horloge du jeu s'arrête pendant la lecture d'un signalement ouvert (panneau de décision
  * affiché) ; elle tourne sur la liste, dans les autres applis et au bureau. */
 function lecturePanneau() {

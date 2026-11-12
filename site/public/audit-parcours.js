@@ -29,7 +29,6 @@
 			choixAccueil = c;
 			lancerNouvellePartie();
 			H.raz();
-			if (typeof FIL !== 'undefined') FIL.explicationVue = true;
 			if (typeof TACHE !== 'undefined') (TACHE.courante = null), (TACHE.file = []);
 		},
 		poste() {

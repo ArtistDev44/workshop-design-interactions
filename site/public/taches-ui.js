@@ -31,7 +31,6 @@ function verifierTaches() {
 	if (MENU.actif || ecran !== 'jeu' || fenetre || smsActif || tutoriel || TRANSITION_JOUR || enPause) return false;
 	if (!['attente', 'selection'].includes(phase) || vue !== 'poste' || PC.etat !== 'appli' || (typeof pcDemarre === 'function' && pcDemarre())) return false;
 	if (typeof CINE !== 'undefined' && CINE) return false;
-	if (typeof FIL !== 'undefined' && !FIL.explicationVue) return false; // l'explication du poste passe d'abord
 	if (TACHE.courante) return ouvrir('tache'), true; // tâche interrompue par une autre fenêtre : on la reprend
 	const b = Taches.briefing();
 	if (b) return ouvrirTache({ type: 'briefing', donnees: b }), true;

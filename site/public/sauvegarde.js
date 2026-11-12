@@ -139,7 +139,7 @@ const Sauvegarde = (function () {
 				modeHorsLigne: s.mode === 'hors ligne',
 				parametres: { son: !!R.son, contraste: !!R.contrasteRenforce, reduireAnimations: !!R.reduireAnimations, tailleTexte: 1 },
 				// Où en était l'écran : la phase, et le temps déjà écoulé du compte à rebours (recalculé à la reprise)
-				interface: { phase, ecoule: PHASES_COMPTEUR.includes(phase) ? Math.max(0, maintenant - debutCompteur) : 0, pcJour: typeof JOUR_PC !== 'undefined' ? JOUR_PC.fait : '', explication: typeof FIL !== 'undefined' && FIL.explicationVue, somnolence: typeof SOMNO !== 'undefined' ? Math.round(SOMNO.v) : 0, community: typeof COMMU !== 'undefined' ? COMMU.onglet : 'fil', patron: typeof PATRON !== 'undefined' ? { filtre: PATRON.filtre, defil: PATRON.defil } : null, pile: typeof APPLIS !== 'undefined' ? APPLIS.pile.slice() : [], brouillon: typeof COMMU !== 'undefined' ? COMMU.brouillon : null, telephone: typeof TELN !== 'undefined' ? { jour: TELN.jour, recues: TELN.recues.filter((n) => !n.heureReelle).map((n) => Object.assign({}, n)), vus: Object.assign({}, TELN.vus), spontanees: TELN.spontanees, dernier: TELN.dernier } : null, journal: typeof JOURNAL !== 'undefined' ? { jour: JOURNAL.jour, filtre: JOURNAL.filtre, defil: Math.round(JOURNAL.defil) } : null }, // prompt 71 : journée dont le PC a déjà démarré ; prompt 74 : explication du poste vue
+				interface: { phase, ecoule: PHASES_COMPTEUR.includes(phase) ? Math.max(0, maintenant - debutCompteur) : 0, pcJour: typeof JOUR_PC !== 'undefined' ? JOUR_PC.fait : '', somnolence: typeof SOMNO !== 'undefined' ? Math.round(SOMNO.v) : 0, community: typeof COMMU !== 'undefined' ? COMMU.onglet : 'fil', patron: typeof PATRON !== 'undefined' ? { filtre: PATRON.filtre, defil: PATRON.defil } : null, pile: typeof APPLIS !== 'undefined' ? APPLIS.pile.slice() : [], brouillon: typeof COMMU !== 'undefined' ? COMMU.brouillon : null, telephone: typeof TELN !== 'undefined' ? { jour: TELN.jour, recues: TELN.recues.filter((n) => !n.heureReelle).map((n) => Object.assign({}, n)), vus: Object.assign({}, TELN.vus), spontanees: TELN.spontanees, dernier: TELN.dernier } : null, journal: typeof JOURNAL !== 'undefined' ? { jour: JOURNAL.jour, filtre: JOURNAL.filtre, defil: Math.round(JOURNAL.defil) } : null }, // prompt 71 : journée dont le PC a déjà démarré ; prompt 74 : explication du poste vue
 				complet: encoder(s),
 			},
 		};
@@ -353,7 +353,6 @@ const Sauvegarde = (function () {
 				FIL.messages = [];
 				FIL.serieDepuis = (Jeu.evenementsJournee || []).length;
 				FIL.jourCle = ''; // les heures de rythme déjà passées ne sont pas rejouées (majRythme)
-				FIL.explicationVue = ui.explication !== undefined ? !!ui.explication : true; // anciennes sauvegardes : déjà joué
 			}
 			if (typeof JOUR_PC !== 'undefined') {
 				// Prompt 71 : reprise en cours de journée → pas de nouveau démarrage (anciennes sauvegardes : idem)

@@ -3,7 +3,7 @@
  * - Au chargement : efface les clés « pxe-nte001* » du visiteur précédent (partie, progression, tutoriel vu,
  *   carrière, intros…) SAUF les réglages de confort, la langue et le palmarès.
  * - Démarrage court (sketch.js, autorisations.js, os.js) : ni écran « Avant de jouer », ni SMS, ni démarrage du PC,
- *   ni fenêtre « Votre poste » — le joueur arrive assis devant la carte. Le guide « Prendre en main » reste proposé.
+ *   — le joueur arrive assis devant la carte. Le guide « Prendre en main » reste proposé.
  * - Inactivité EN PARTIE : après 90 s sans geste, un voile « Partie en pause » avec un compte à rebours de 15 s, puis
  *   rechargement de la page (même URL, donc nouvelle purge) : retour à l'écran titre, prêt pour le visiteur suivant.
  *   L'écran titre n'est pas concerné (sa démo automatique tourne déjà). Délai réglable pour les tests : ?inactif=20.
@@ -36,7 +36,6 @@ const EXPO = (() => {
 /** Appelé par lancerNouvellePartie (sketch.js) : le joueur arrive assis devant la carte, sans intro */
 function expoAuPoste() {
 	introVue = true;
-	if (typeof FIL !== 'undefined') FIL.explicationVue = true; // pas de fenêtre « Votre poste »
 	if (typeof JOUR_PC !== 'undefined') JOUR_PC.attendu = false; // pas de démarrage du PC
 	// Prompt 160 : fermer le menu ICI, sinon sketch.js le ferme à l'image suivante et remet vue = 'bureau'
 	if (typeof MENU !== 'undefined' && MENU.actif) fermerMenuPrincipal();
