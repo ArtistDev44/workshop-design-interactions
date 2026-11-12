@@ -63,7 +63,7 @@ function fermerMenuPrincipal() {
  * sauvegarde, l'entrée reste visible mais grisée, non cliquable et sautée au clavier */
 function entreesMenu() {
 	const n = Sauvegarde.lister().length;
-	const e = [{ cle: 'nouvelle', icone: 'plus', action: () => allerChoixSemaine() }];
+	const e = [{ cle: 'nouvelle', icone: 'plus', sous: t('mp.accroche.duree'), action: () => allerChoixSemaine() }]; // prompt 190 : public et durée de session
 	e.push({ cle: 'reprendre', icone: 'lecture', sous: n ? t('sauv.compte', { n, max: Sauvegarde.MAX }) : t('sauv.vide'), desactive: !n, action: () => allerSauvegardes() });
 	e.push({ cle: 'palmares', icone: 'trophee', action: () => ouvrir('palmares') }); // prompt 47
 	e.push({ cle: 'parametres', icone: 'reglages', action: () => ouvrir('parametres') });

@@ -2434,6 +2434,18 @@ for (const langue of ['fr', 'en']) {
 	verifier(/TRANSITION_JOUR/.test((im180.match(/function tempsSuspendu\(\) \{\n[^\n]*/) || [''])[0]), 'prompt 180 : le temps de jeu n\'est plus suspendu pendant la transition');
 }
 
+// Prompt 190 : public cible et durée de session — concept, README, menu (carte « Nouvelle partie »)
+{
+	const racine = join(pub, '..', '..');
+	verifier(/## Public cible et session/.test(readFileSync(join(racine, 'jeu', '00-concept.md'), 'utf8')), 'prompt 190 : section « Public cible et session » absente du concept');
+	verifier(/10 à 20 minutes/.test(readFileSync(join(racine, 'README.md'), 'utf8')) && /10 à 20 minutes/.test(readFileSync(join(racine, 'site', 'README.md'), 'utf8')), 'prompt 190 : durée de session absente des README');
+	verifier(/cle: 'nouvelle'[^\n]*sous: t\('mp\.accroche\.duree'\)/.test(readFileSync(join(pub, 'menu.js'), 'utf8')), 'prompt 190 : accroche de durée absente de la carte « Nouvelle partie »');
+	for (const langue of ['fr', 'en']) {
+		const v = vm.runInContext(`TRADUCTIONS[${JSON.stringify(langue)}]['mp.accroche.duree']`, contexte(langue));
+		verifier(typeof v === 'string' && /10/.test(v) && /20/.test(v), `prompt 190 : mp.accroche.duree absente ou sans durée (${langue})`);
+	}
+}
+
 // Prompt 171 : menu principal épuré — plus d'entrée « Aide et tutoriel » ni « Crédits », plus de mention « PXE- »,
 // logo et bloc langue + installation sur la même ligne, « Retour » sans flèche, interlignage du sous-titre
 {

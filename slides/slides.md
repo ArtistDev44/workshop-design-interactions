@@ -105,6 +105,8 @@ class: diapo-objectif
   <p>Une question, une contrainte : rien d'inventé.</p>
 </blockquote>
 
+<p class="note-public">Pour les 12 ans et plus, amateurs de jeux de gestion — une semaine rejouée en 10 à 20 minutes.</p>
+
 <!--
 Premier acte : notre objectif tient en une question et une contrainte.
 -->

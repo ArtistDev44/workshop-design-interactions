@@ -2,7 +2,9 @@
 
 **Nantes, novembre 2026.** Un atelier de design (ESD Nantes, B3) devenu terrain de jeu :
 un site web statique dédié au patrimoine nantais, et un jeu où chaque incident réel du
-réseau de transports devient un dossier à trancher sous pression.
+réseau de transports devient un dossier à trancher sous pression. Public visé : 12 ans et plus, amateurs de
+jeux de gestion ; une partie (une semaine rejouée) dure 10 à 20 minutes, le mode histoire 30 à 45 minutes
+(durées visées, à confirmer par les tests humains).
 
 🎮 [**Jouer à « Nantes en régulation »**](https://workshop-design-interactions.pages.dev/) — le jeu est servi à la racine du site déployé
 📖 [**Découvrir le projet en détail**](#explorer-le-dépôt) — site de l'édition, corpus patrimonial, œuvres des étudiant·es
