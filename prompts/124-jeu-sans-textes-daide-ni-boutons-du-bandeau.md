@@ -20,12 +20,16 @@ Suite des prompts 43 (bandeau d'état), 94 (bouton « Quitter la journée ») et
 - Menu principal : la ligne `mp.clavier` n'est plus dessinée.
 - En jeu : le bandeau d'état (`bandeauEtat`) n'est plus dessiné. La jauge de somnolence, dessinée au même
   endroit, **reste**.
+- Au bureau : la consigne « Cliquez sur le PC ou Entrée pour vous installer · Tab : objets · Échap : menu »
+  n'est plus affichée en permanence ; elle ne revient qu'après 10 s sans geste. Les messages d'état (incident,
+  mail, soir) restent.
 - Bandeau du haut : les trois boutons sont supprimés. La ligne 2 (priorités, objectif, équipes, heure)
   récupère leur largeur ; elle n'est plus tronquée.
 
 ## 3. Rien n'est perdu
 
 - **Clavier inchangé** : Q, H et R gardent leur effet ; l'onglet « Raccourcis » de l'aide les liste.
+- **Mobile (tactile)** : un seul bouton « ≡ » à droite du bandeau ouvre le menu, faute de touche Échap.
 - **Souris et tactile** : le menu Échap (pause) reçoit deux entrées — « Quitter la journée » et
   « Recommencer la semaine » (avec la confirmation existante) — à côté de « Aide et tutoriel ».
   « Quitter la journée » n'y figure que lorsque l'action est possible (au poste, pendant une journée).

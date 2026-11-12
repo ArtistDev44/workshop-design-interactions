@@ -280,23 +280,19 @@ let curseurMain = false;
 // Prompt 59 : l'ancien écran d'accueil du PC (dessinerAccueil, hors parcours depuis le prompt 35) et le résumé des
 // effets sous les actions (effetsResumes, retiré au prompt 50) ont été supprimés : ils n'étaient plus appelés.
 
-/** Prompt 43 : bandeau d'état en bas de l'écran du jeu — ce qu'il faut faire maintenant */
+/** Prompt 43 : état du jeu — ce qu'il faut faire maintenant. Prompt 124 : ce texte n'est plus affiché (il nuisait à
+ * l'immersion) ; il reste annoncé aux lecteurs d'écran à chaque changement d'état (aria-live). */
+let dernierEtatAnnonce = '';
 function bandeauEtat() {
 	if (ecran !== 'jeu') return;
 	const cle = { attente: 'attente', reveil: 'attente', selection: 'selection', decision: 'decision', contradiction: 'contradiction', conflit: 'conflit', narration: 'narration', mail: 'mail', soir: 'soir', fin: 'fin' }[phase];
 	if (!cle) return;
-	const txt = phase === 'attente' && Jeu.journeeFinie && Jeu.journeeFinie() ? t('etat.finJournee', { fin: Jeu.formaterHeure(Jeu.finJournee()) }) : t('etat.' + cle + (cle === 'decision' && Jeu.defiChrono ? 'Chrono' : ''), { x: IMMERSION.compression }); // prompt 51 ; prompt 87 : consigne du défi chrono
-	const urgent = ['decision', 'contradiction', 'conflit'].includes(phase);
-	noStroke();
-	fill(urgent ? C.primaire : 'rgba(255,255,255,0.08)');
-	rect(40, H - 38, 1500, 32);
-	fill('#ffffff');
-	textFont(POLICE_TEXTE);
-	textStyle(BOLD);
-	ajusterTaille(txt, 1470, 18);
-	textAlign(LEFT, CENTER);
-	text(txt, 54, H - 22);
-	textStyle(NORMAL);
+	const fin = phase === 'attente' && Jeu.journeeFinie && Jeu.journeeFinie();
+	const id = fin ? 'finJournee' : cle + (cle === 'decision' && Jeu.defiChrono ? 'Chrono' : '');
+	if (id !== dernierEtatAnnonce) {
+		dernierEtatAnnonce = id;
+		if (!fenetre && !tutoriel) annoncer(fin ? t('etat.finJournee', { fin: Jeu.formaterHeure(Jeu.finJournee()) }) : t('etat.' + id, { x: IMMERSION.compression }));
+	}
 	dessinerSomnolence(); // prompt 78 : jauge de somnolence, cliquable (se reposer)
 	dessinerStatutPatron(); // prompt 84 : pastille « Sous surveillance » / « Dernier avertissement »
 }
@@ -1184,6 +1180,7 @@ function keyPressed() {
 		if (fenetre === 'rapportVeille' && (keyCode === ENTER || keyCode === RETURN || keyCode === ESCAPE)) return fermer(), false; // prompt 89 bis
 		if (fenetre === 'menu') {
 			// Prompt 35 : menu Échap modernisé — ↑ ↓ / Tab pour choisir, Entrée pour valider
+			const ENTREES_PAUSE = entreesPause(); // prompt 124
 			const n = ENTREES_PAUSE.length;
 			if (keyCode === UP_ARROW || (keyCode === TAB && keyIsDown(SHIFT))) choixPause = (choixPause + n - 1) % n;
 			else if (keyCode === DOWN_ARROW || keyCode === TAB) choixPause = (choixPause + 1) % n;

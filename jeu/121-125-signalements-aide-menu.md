@@ -66,3 +66,25 @@ Date : 12/11/2026. Une branche par prompt, au nom du fichier du prompt.
   Cinq étapes ajoutées au parcours de l'audit des textes (les quatre onglets et la page 2 des règles).
 - **Écart avec le prompt :** les corps des cartes ne sont pas recopiés dans de nouvelles clés ; ils restent
   dans `aide.texte` (une seule source, déjà traduite et testée).
+
+## 124 — Plus de lignes d'aide à l'écran, ni les trois boutons du bandeau
+
+- **Retiré de l'écran :**
+  - menu principal : la ligne « ↑ ↓ choisir · Entrée valider · L langue · H aide » ;
+  - en jeu : le bandeau d'état du bas (« À VOUS · répondez au plaignant… ») ; la jauge de somnolence reste ;
+  - bandeau du haut : « Quitter la journée (Q) », « Aide (H) », « Recommencer (R) » ;
+  - au bureau : la consigne « Cliquez sur le PC… » ne s'affiche plus qu'après 10 s sans geste.
+- **Bandeau du haut :** les trois jauges s'élargissent (370 → 580 px) et la ligne 2 (priorités, thème, objectif,
+  heure) tient entière.
+- **Rien n'est perdu :**
+  - touches Q, H et R inchangées (listées dans l'onglet « Raccourcis » de l'aide) ;
+  - menu Échap : deux entrées de plus, « Quitter la journée (Q) » (seulement pendant une journée) et
+    « Recommencer (R) » (avec la confirmation existante), soit 7 cartes ;
+  - mobile : un bouton « ≡ » à droite du bandeau ouvre ce menu (pas de touche Échap au toucher) ;
+  - lecteurs d'écran : le texte d'état est annoncé (`aria-live`) à chaque changement, hors fenêtre et tutoriel.
+- **Textes ajustés :** `transition.finir` et `etat.finJournee` citent la touche Q et l'horloge murale, plus le
+  bouton.
+- **Tests :** l'ancien contrôle du prompt 133 (bouton « Quitter la journée » secondaire dans le bandeau) est
+  remplacé par quatre contrôles du prompt 124.
+- **Non fait :** les clés `etat.*`, `quitter.bouton`, `jeu.recommencer` restent (annonces, menu Échap) ;
+  `mp.clavier` est supprimée au prompt 125.

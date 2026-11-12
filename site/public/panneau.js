@@ -10,14 +10,15 @@ const BANDEAU = { x: 40, y: 36, l: 1840, h: 84 };
 const PANNEAU = { x: 756, y: 132, l: 1124, h: 900 };
 const PLUS = { ouvert: false };
 
-// ——— Bandeau fin : jauges (ligne 1), objectif · équipes · horloge (ligne 2), Aide et Recommencer à droite ———
+// ——— Bandeau fin : jauges (ligne 1), objectif · équipes · horloge (ligne 2) ; plus de boutons (prompt 124) ———
 function dessinerBandeau() {
 	const z = BANDEAU;
 	panneau(z.x, z.y, z.l, z.h);
 	cibleGuide('jauges', z.x, z.y, z.l, z.h);
 	const jauges = Jeu.jauges || { fluidite: 50, reputation: 50, budget: 50 };
 	const aff = jaugesAffichees();
-	const lb = 370; // trois jauges, puis Quitter la journée, Aide et Recommencer à droite (prompt 94 : 420 → 370)
+	const mobileMenu = typeof MOBILE !== 'undefined' && MOBILE.actif; // prompt 124 : bouton ≡ (menu) au toucher seulement
+	const lb = mobileMenu ? 556 : 580; // prompt 124 : les trois jauges prennent la largeur des boutons supprimés (370 → 580)
 	['fluidite', 'reputation', 'budget'].forEach((cle, i) => {
 		const x = z.x + 16 + i * (lb + 24);
 		noStroke();
@@ -54,7 +55,7 @@ function dessinerBandeau() {
 	const crise = typeof Taches !== 'undefined' && Taches.crise() && !Taches.crise().resultat; // prompt 88 : cellule de crise du jour
 	// Prompt 93 : la ligne coupait l'heure quand elle était trop longue (texte en boîte, 2e ligne masquée) → l'heure
 	// reste entière à droite, le début se termine par « … » en fin de mot, la ligne complète s'affiche au survol
-	const lbandeau = z.l - (crise ? 940 : 670); // prompt 94 : place du bouton « Quitter la journée »
+	const lbandeau = z.l - 32 - (mobileMenu ? 70 : 0) - (crise ? 270 : 0); // prompt 124 : la place des trois boutons est rendue à la ligne // prompt 94 : place du bouton « Quitter la journée »
 	const complet = morceaux.join('  ·  ');
 	const heureBandeau = morceaux[morceaux.length - 1];
 	if (textWidth(complet) <= lbandeau) {
@@ -74,21 +75,19 @@ function dessinerBandeau() {
 		const actif = Taches.criseActive();
 		noStroke();
 		fill(actif ? C.primaire : primaireRGBA(0.25)); // prompt 115
-		rect(z.x + z.l - 920, z.y + 42, 254, 32);
+		rect(z.x + z.l - 270 - (mobileMenu ? 70 : 0), z.y + 42, 254, 32);
 		fill('#FFFFFF');
 		textFont(POLICE_TEXTE);
 		textStyle(BOLD);
 		textAlign(CENTER, CENTER);
 		ajusterTaille(t('crise.bandeau'), 236, 18, 14);
-		text(t('crise.bandeau'), z.x + z.l - 793, z.y + 58);
+		text(t('crise.bandeau'), z.x + z.l - 143 - (mobileMenu ? 70 : 0), z.y + 58);
 		textStyle(NORMAL);
 		textAlign(LEFT, TOP);
 	}
-	// Aide et Recommencer (souris / tactile) — équivalents des touches H et R
-	bouton(z.x + z.l - 648, z.y + 14, 280, 56, t('quitter.bouton'), quitterJourneeRapide, false, true); // prompt 94 : toujours visible, touche Q ; prompt 133 : secondaire (le rouge plein reste à l'urgence)
-	bouton(z.x + z.l - 358, z.y + 14, 128, 56, t('accueil.aide'), () => ouvrir('aide'), false, true);
-	bouton(z.x + z.l - 220, z.y + 14, 206, 56, // prompt 98 : boutons du bandeau 48 → 56 px (≈ 45 px à l'écran)
-		 t('jeu.recommencer'), () => ouvrir('reset'), false, true);
+	// Prompt 124 : plus de boutons dans le bandeau (Quitter la journée, Aide, Recommencer) — touches Q, H et R
+	// inchangées ; à la souris et au toucher, ces actions sont dans le menu (Échap, ou le bouton ≡ en mode mobile)
+	if (typeof MOBILE !== 'undefined' && MOBILE.actif) bouton(z.x + z.l - 70, z.y + 14, 56, 56, '≡', () => ouvrir('menu'), false, true);
 	textAlign(LEFT, TOP);
 }
 
