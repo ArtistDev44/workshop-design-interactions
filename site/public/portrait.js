@@ -46,7 +46,7 @@ function region(src, dx, dy, dl, defile) {
 	PORTRAIT.regions.push({ src, dst: { x: dx, y: dy, l: dl, h: dh }, defile: !!defile });
 	return dh;
 }
-const LARGEUR_FENETRE = { partage: 900, installation: 1000, palmares: 1440, 'livre-stress': 1400, aide: 1260, accessibilite: 1260, parametres: 1040, menu: 760, inspection: 1140, demission: 940, partir: 1040, blame: 1140, mailFin: 1140, reset: 1000, reprise: 1100, tache: 1260, optionsJeu: 1520, deblocage: 1020 }; // prompt 88
+const LARGEUR_FENETRE = { partage: 900, installation: 1000, palmares: 1440, aide: 1260, accessibilite: 1260, parametres: 1040, menu: 760, inspection: 1140, demission: 940, partir: 1040, blame: 1140, mailFin: 1140, reset: 1000, reprise: 1100, tache: 1260, optionsJeu: 1520, deblocage: 1020 }; // prompt 88
 
 function scenePortrait() {
 	if (typeof CINE !== 'undefined' && CINE) return 'plein';

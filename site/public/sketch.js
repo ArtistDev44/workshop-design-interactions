@@ -1410,7 +1410,6 @@ function dessinerFenetre() {
 	if (fenetre === 'parametres') return fenetreParametres();
 	if (fenetre === 'reprise') return fenetreReprise();
 	if (fenetre === 'menu') return fenetreMenu();
-	if (fenetre === 'livre-stress') return fenetreLivreStress();
 	if (fenetre === 'telephone') return fenetreTelephone(); // prompt 38
 }
 

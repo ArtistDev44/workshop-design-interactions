@@ -24,7 +24,6 @@ const SMS = [
 	{ de: 'moi', texte: T('sms.5') },
 ];
 
-const LIVRE_STRESS = [0, 1, 2, 3, 4, 5].map((n) => T('stress.' + n));
 
 let smsActif = false;
 let smsIndex = 0;
@@ -245,8 +244,9 @@ function heureAffichee() {
 }
 
 /** Le temps de jeu est-il arrêté ? (fin, mail, soir, démarrage du PC, SMS, pause, tutoriel, transition, fenêtres) */
+// Prompt 172 : la lecture de l'aide (livre du bureau, H, menu pause) suspend le temps, comme le tutoriel
 function tempsSuspendu() {
-	return ecran !== 'jeu' || !Jeu.horloge || phase === 'fin' || phase === 'mail' || phase === 'soir' || pcDemarre() || smsActif || enPause || tutoriel || TRANSITION_JOUR || mecaniquesSuspendentTemps() || fenetre === 'poste' || lecturePanneau() || (typeof expoEnPause === 'function' && expoEnPause()); // prompt 160 : voile « Partie en pause » de l'exposition ; prompt 74 : explication du poste ; prompt 87 : lecture d'un signalement
+	return ecran !== 'jeu' || !Jeu.horloge || phase === 'fin' || phase === 'mail' || phase === 'soir' || pcDemarre() || smsActif || enPause || tutoriel || TRANSITION_JOUR || mecaniquesSuspendentTemps() || fenetre === 'poste' || fenetre === 'aide' || lecturePanneau() || (typeof expoEnPause === 'function' && expoEnPause()); // prompt 160 : voile « Partie en pause » de l'exposition ; prompt 74 : explication du poste ; prompt 87 : lecture d'un signalement
 }
 function tempsCompresse() {
 	return ecran === 'jeu' && (phase === 'attente' || phase === 'reveil') && !tempsSuspendu(); // « ×100 » seulement quand le temps file vraiment
@@ -694,7 +694,7 @@ function dessinerSMS() {
 	dessinerTelephoneEnMain(contenuConversation);
 }
 
-// ——— Fenêtres du bureau : menu Échap (§ 1) et livre « stress » (§ 7) ———
+// ——— Fenêtres du bureau : menu Échap (§ 1) ; les livres ouvrent l'aide (aide.js, prompt 172) ———
 // Prompt 35 : menu Échap modernisé (même style que le menu principal)
 let choixPause = 0;
 // Prompt 124 : « Quitter la journée » et « Recommencer » ne sont plus dans le bandeau — ils sont ici (souris, toucher)
@@ -737,38 +737,6 @@ function quitterPartie() {
 	enSieste = false;
 	reveil = null;
 	retourAccueil();
-}
-
-function fenetreLivreStress() {
-	// Le livre « Bien gérer son stress » s'ouvre : couverture verte, deux pages
-	const livre = dessinerLivreOuvert(L / 2 - 680, 110, 1360, 720, '#3f7a43', '#2f5d3a');
-	if (livre.pret) {
-		const g = livre.gauche;
-		const d = livre.droite;
-		noStroke();
-		textAlign(LEFT, TOP);
-		fill('#2f5d3a');
-		textFont(POLICE_TEXTE);
-		textStyle(BOLD);
-		textSize(40);
-		textLeading(50);
-		text(LIVRE_STRESS[0], g.x, g.y, g.l, 120);
-		textStyle(NORMAL);
-		textSize(23);
-		textLeading(32);
-		fill('#1c2733');
-		let ty = g.y + 150;
-		LIVRE_STRESS.slice(1, 3).forEach((p) => {
-			text(p, g.x, ty, g.l, 180);
-			ty += 190;
-		});
-		ty = d.y;
-		LIVRE_STRESS.slice(3).forEach((p) => {
-			text(p, d.x, ty, d.l, 180);
-			ty += 190;
-		});
-	}
-	bouton(L / 2 + 680 - 260, 110 + 720 + 40, 260, 64, t('commun.fermer'), fermer);
 }
 
 // ——— Overlay de réveil (§ 4) ———
@@ -987,8 +955,7 @@ function ouvrirObjetBureau(nom) {
 	if (nom === 'sortie') return quitterBureau(); // prompt 69
 	if (nom === 'rapport') return ouvrirRapport(); // prompt 41
 	if (nom === 'telephone') return ouvrirTelephone(); // prompt 38 : notifications de l'Agenda Nantes Métropole
-	if (nom === 'aide') return lancerTutoriel(); // prompt 34 / 70 : le livre « Aide » ouvre le tutoriel
-	if (nom === 'stress') return (livreOuverture = millis()), ouvrir('livre-stress');
+	if (nom === 'aide' || nom === 'stress') return ouvrir('aide'); // prompt 172 : les livres ouvrent la fenêtre d'aide illustrée (le tutoriel s'y lance, touche T)
 	if (nom === 'horloge') return clicHorloge(); // prompt 51
 	if (nom === 'tasse') return boireCafe(); // prompt 52 : le café en main, puis le boost
 	if (nom === 'micro') return clicMicro(); // prompt 54 : push-to-talk
