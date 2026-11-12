@@ -9,7 +9,7 @@
  * Enregistré seulement en http(s), jamais en file:// (index.html).
  */
 /* précache:début (généré par scripts/generer-sw.mjs — ne pas modifier à la main) */
-const VERSION = 'nte-regulation-1cc4cefbd5';
+const VERSION = 'nte-regulation-8d8d5db178';
 const ESSENTIELS = [
 	"./",
 	"./accessibilite.js",
@@ -100,6 +100,7 @@ const ESSENTIELS = [
 	"./icon-512.png",
 	"./icon-maskable-192.png",
 	"./icon-maskable-512.png",
+	"./icones-lucide.js",
 	"./immersion.js",
 	"./index.html",
 	"./installation.js",
@@ -108,6 +109,7 @@ const ESSENTIELS = [
 	"./journee.js",
 	"./juice.js",
 	"./lib/p5.min.js",
+	"./licences/lucide-LICENSE.txt",
 	"./manifest.json",
 	"./manifest.webmanifest",
 	"./mecaniques.js",

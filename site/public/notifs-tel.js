@@ -210,31 +210,25 @@ function contenuCentreNotifications(e, pret) {
 	else if (TELN.onglet === 'direct') contenuDirectTel(x, yc, l, hc);
 	else contenuGroupesTel(x, yc, l, hc);
 	if (pret) {
-		bouton(x + 16, e.y + e.h - 112, (l - 40) / 2, 56, (Confort.Reglages.npd ? '☾ ' : '') + t('tel.npd') + ' : ' + t(Confort.Reglages.npd ? 'commun.oui' : 'commun.non'), basculerNpd, false, !Confort.Reglages.npd);
+		// Prompt 170 : la lune (Lucide) remplace le glyphe « ☾ » — des espaces lui réservent sa place devant le libellé
+		const libNpd = (Confort.Reglages.npd ? '\u2003\u2009' : '') + t('tel.npd') + ' : ' + t(Confort.Reglages.npd ? 'commun.oui' : 'commun.non');
+		bouton(x + 16, e.y + e.h - 112, (l - 40) / 2, 56, libNpd, basculerNpd, false, !Confort.Reglages.npd);
+		if (Confort.Reglages.npd) {
+			textStyle(BOLD); // même police, même taille que le libellé que bouton() vient de dessiner
+			const ti = textSize();
+			iconeLucide('moon', x + 16 + (l - 40) / 4 - textWidth(libNpd) / 2, e.y + e.h - 84 - ti / 2, ti, '#ffffff');
+			textStyle(NORMAL);
+		}
 		bouton(x + 24 + (l - 40) / 2, e.y + e.h - 112, (l - 40) / 2, 56, t('commun.fermer'), fermer);
 	}
 }
-/** Icônes d'appli pixel 8 × 8 (dessins originaux, ×3) ; toujours accompagnées du nom de l'appli */
-const ICONES_TEL = {
-	agenda: ['########', '#.#..#.#', '########', '#......#', '#.##.#.#', '#......#', '#.#.##.#', '########'],
-	meteo: ['..##....', '.####...', '########', '........', '.#.#.#..', '#.#.#...', '........', '........'],
-	travaux: ['...##...', '..####..', '..#..#..', '.######.', '.#....#.', '########', '#......#', '########'],
-	loire: ['........', '.##..##.', '#..##..#', '........', '.##..##.', '#..##..#', '........', '........'],
-	messages: ['########', '#......#', '#.####.#', '#......#', '#.###..#', '########', '.##.....', '#.......'],
-	regul: ['########', '#.....##', '#.###.##', '#.....##', '#.##..##', '#.....##', '########', '...##...'],
-	quai: ['.######.', '#......#', '#.#..#.#', '#......#', '#.####.#', '#......#', '.######.', '........'],
-	rappels: ['..####..', '.#....#.', '#..#...#', '#..##..#', '#......#', '.#....#.', '..####..', '.#....#.'],
-	parkings: ['#####...', '#....#..', '#....#..', '#####...', '#.......', '#.......', '#.......', '........'],
-	velos: ['........', '....#...', '...##...', '.##.#.#.', '#..#.#.#', '#..#.#.#', '.##...#.', '........'],
-	trafic: ['..####..', '.#....#.', '.#.##.#.', '.#....#.', '.#.##.#.', '.#....#.', '..####..', '...##...'],
-	pollens: ['...#....', '..###...', '...#....', '.#.#.#..', '..###...', '...#....', '...#....', '..###...'],
-};
+/** Prompt 170 : icônes d'appli Lucide (icones-lucide.js) sur pastille blanche ; toujours accompagnées du nom de l'appli */
+const ICONES_TEL = { agenda: 'calendar', meteo: 'cloud-rain', travaux: 'construction', loire: 'waves', messages: 'message-square', regul: 'monitor', quai: 'tram-front', rappels: 'alarm-clock', parkings: 'square-parking', velos: 'bike', trafic: 'traffic-cone', pollens: 'flower-2' };
 function iconeTel(app, x, y, s) {
-	const mo = ICONES_TEL[app] || ICONES_TEL.regul;
+	noStroke();
 	fill('#ffffff');
 	rect(x - 3, y - 3, 8 * s + 6, 8 * s + 6, 6);
-	fill('#0b1b33');
-	mo.forEach((ligne, r) => [...ligne].forEach((c, k) => c === '#' && rect(x + k * s, y + r * s, s, s)));
+	iconeLucide(ICONES_TEL[app] || ICONES_TEL.regul, x, y, 8 * s, '#0b1b33');
 }
 function contenuGroupesTel(x, y0, l, h) {
 	const gs = NotifsTel.groupes(TELN);
@@ -277,14 +271,10 @@ function contenuGroupesTel(x, y0, l, h) {
 			fill('#0b1b33');
 			text(court(NotifsTel.texte(n), 96), x + 30, y + 44, l - 130, 76); // prompt 114 : 3 lignes au plus (texte complet à l’ouverture)
 			boutons.push({ x: x + 16, y, l: l - 132, h: nh, action: () => ouvrirNotifTel(n) });
-			// Ignorer : carré sombre « ✕ » (cible 56 px), libellé lu par l'annonce
+			// Ignorer : carré sombre, croix Lucide (cible 56 px), libellé lu par l'annonce
 			fill('#0b1b33');
 			rect(x + l - 84, y + 34, 56, 56, 10);
-			fill('#ffffff');
-			textAlign(CENTER, CENTER);
-			textSize(22);
-			text('✕', x + l - 56, y + 62);
-			textAlign(LEFT, TOP);
+			iconeLucide('x', x + l - 68, y + 50, 24, '#ffffff'); // prompt 170
 			boutons.push({ x: x + l - 84, y: y + 34, l: 56, h: 56, action: () => ignorerNotifTel(n) });
 			y += nh + 8;
 		});

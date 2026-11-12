@@ -279,9 +279,12 @@ function fenetreAide() {
 	// ——— Pied : pages à gauche, tutoriel et fermeture à droite ———
 	const by = y + h - 92;
 	if (AIDE.pages > 1) {
-		bouton(cx, by, 64, 60, '←', () => pageAide(-1), AIDE.page === 0, true);
+		// Prompt 170 : flèches Lucide (page précédente / suivante), nommées par « Page n / total » juste à côté
+		bouton(cx, by, 64, 60, '', () => pageAide(-1), AIDE.page === 0, true);
+		iconeLucide('arrow-left', cx + 20, by + 18, 24, AIDE.page === 0 ? 'rgba(255,255,255,0.5)' : '#FFFFFF');
 		dsTexte(t('aide.page', { n: AIDE.page + 1, total: AIDE.pages }), cx + 84, by + 18, 20, DS.blanc75, 'left');
-		bouton(cx + 240, by, 64, 60, '→', () => pageAide(1), AIDE.page >= AIDE.pages - 1, true);
+		bouton(cx + 240, by, 64, 60, '', () => pageAide(1), AIDE.page >= AIDE.pages - 1, true);
+		iconeLucide('arrow-right', cx + 260, by + 18, 24, AIDE.page >= AIDE.pages - 1 ? 'rgba(255,255,255,0.5)' : '#FFFFFF');
 	} else if (!portrait) dsTexte(t('aide.clavier'), cx, by + 20, 18, DS.blanc50, 'left');
 	bouton(x + l - 48 - 240, by, 240, 60, t('commun.fermer'), fermer, false, true);
 	if (onglet !== 'demarrer') bouton(x + l - 48 - 240 - 20 - 380, by, 380, 60, t('tuto.relancer'), lancerTutoriel, false, true);

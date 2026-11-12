@@ -319,4 +319,13 @@ Observed box-shadow styles: rgb(84, 84, 84) 0px 40px 60px 0px; rgba(0, 0, 0, 0.2
 ## Shapes
 Observed rounded-corner tokens: sm 1px, md 4px, lg 7px, xl 8px.
 
+## Icons (jeu « Nantes en régulation », prompt 170)
+Section rédigée à la main (hors extraction dembrandt). Les icônes d'interface du jeu viennent de **Lucide** (https://lucide.dev, licence ISC ; texte dans `site/public/licences/lucide-LICENSE.txt`) : un sous-ensemble copié dans `site/public/icones-lucide.js`, sans CDN ni dépendance, disponible hors ligne.
+- **Dessin** : `iconeLucide(nom, x, y, taille, couleur)` — `(x, y)` = coin haut gauche du carré, dans le repère courant (menu, pièce, écran du PC, téléphone). Grille 24 × 24, trait 2 (proportionnel à la taille), extrémités et jonctions arrondies. Nom inconnu : rien n'est dessiné, un avertissement dans la console.
+- **Tailles autorisées** : 16, 20, 24 ou 32 px (coordonnées 1920 × 1080). Seule exception : 48 px dans les cartes du menu principal (`iconeMenu`).
+- **Couleur** : celle du texte voisin (couleur omise → remplissage courant ; sinon passer la couleur du libellé). Contraste ≥ 4,5:1 sur le fond, comme le texte. Jamais la couleur seule pour porter une information.
+- **Accessibilité** : jamais d'icône seule sans nom — un bouton à icône seule porte une infobulle (`titre`) et une annonce (`annoncer`, équivalent d'`aria-label`) ; sinon l'icône accompagne un libellé visible.
+- **Ajouter une icône** : son nom Lucide dans `NOMS` de `site/scripts/generer-icones-lucide.mjs`, relancer le script sur le paquet `lucide-static` (aucun tracé dessiné à la main), puis `npm run build` et `npm test`.
+- **Ce qui reste en pixel art** : le décor et les objets de la pièce (`bureau.js`), les icônes d'applis du PC (`iconePixel`), les pictogrammes de catégories (Journal, enquête, équipes) et les logos de marque (dépôt, réseaux sociaux), absents de Lucide.
+
 <!-- dembrandt v0.39.2 -->

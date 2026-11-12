@@ -116,70 +116,14 @@ function fondMenu() {
 	drawingContext.fillRect(0, 0, L, H);
 }
 
-/** Petite icône dessinée par le code (traits blancs ou bleus) */
+/** Prompt 170 : icônes d'interface Lucide (icones-lucide.js), 48 px centrées dans le carré 56 × 56 ; les logos de
+ * marque, absents de Lucide, restent en pixel art (iconeReseau) */
+const ICONES_MENU = { plus: 'plus', lecture: 'play', reglages: 'settings', aide: 'circle-question-mark', livre: 'book-open', presentation: 'presentation', retour: 'arrow-left', trophee: 'trophy', carnet: 'notebook-text', menu: 'menu', partage: 'share-2', lien: 'link' };
 function iconeMenu(type, x, y, c) {
 	push();
 	translate(x, y);
-	stroke(c);
-	strokeWeight(5);
-	noFill();
-	strokeCap(ROUND);
-	if (type === 'plus') {
-		line(28, 10, 28, 46);
-		line(10, 28, 46, 28);
-	} else if (type === 'lecture') {
-		fill(c);
-		noStroke();
-		triangle(16, 10, 16, 46, 46, 28);
-	} else if (type === 'reglages') {
-		circle(28, 28, 22);
-		for (let k = 0; k < 8; k++) {
-			const a = (k / 8) * TWO_PI;
-			line(28 + cos(a) * 16, 28 + sin(a) * 16, 28 + cos(a) * 24, 28 + sin(a) * 24);
-		}
-	} else if (type === 'aide') {
-		circle(28, 28, 44);
-		noStroke();
-		fill(c);
-		textAlign(CENTER, CENTER);
-		textFont(POLICE_TEXTE);
-		textStyle(BOLD);
-		textSize(28);
-		text('?', 28, 29);
-		textStyle(NORMAL);
-	} else if (type === 'livre') {
-		rect(8, 12, 20, 32, 3);
-		rect(28, 12, 20, 32, 3);
-	} else if (type === 'presentation') {
-		// Écran de projection : cadre, pied, et une flèche « lecture »
-		rect(6, 8, 44, 30);
-		line(28, 38, 28, 48);
-		line(18, 48, 38, 48);
-		noStroke();
-		fill(c);
-		triangle(23, 15, 23, 31, 36, 23);
-	} else if (type === 'retour') {
-		line(14, 28, 44, 28);
-		line(14, 28, 26, 16);
-		line(14, 28, 26, 40);
-	} else if (type === 'trophee') {
-		rect(16, 8, 24, 20);
-		line(28, 28, 28, 40);
-		line(16, 44, 40, 44);
-		line(16, 14, 8, 14);
-		line(8, 14, 10, 22);
-		line(40, 14, 48, 14);
-		line(48, 14, 46, 22);
-	} else if (type === 'carnet') {
-		rect(12, 8, 32, 40);
-		line(20, 20, 36, 20);
-		line(20, 28, 36, 28);
-		line(20, 36, 30, 36);
-	} else if (type === 'menu') {
-		line(12, 16, 44, 16);
-		line(12, 28, 44, 28);
-		line(12, 40, 44, 40);
-	} else iconeReseau(type, c); // prompt 81 : dépôt, partage, réseaux sociaux, lien
+	if (ICONES_MENU[type]) iconeLucide(ICONES_MENU[type], 4, 4, 48, c);
+	else iconeReseau(type, c); // prompt 81 : dépôt et réseaux sociaux
 	pop();
 }
 /** Prompt 81 : icônes pixel art (rectangles de 4 px, dans le carré 56 × 56 de iconeMenu), dessinées par le code */
@@ -190,12 +134,10 @@ function iconeReseau(type, c) {
 	const MOTIFS = {
 		// Chat-pieuvre stylisé (dépôt de code) — dessin original, pas le logo d'une marque
 		github: ['....######....', '..##########..', '.############.', '.##.######.##.', '##..######..##', '##############', '##############', '##############', '.############.', '.############.', '..##..##..##..', '...#..##..#...', '..............'],
-		partage: ['..........##..', '.........####.', '.......#.##...', '.....##.......', '..##..........', '.####.........', '..##..........', '.....##.......', '.......#.##...', '.........####.', '..........##..', '..............'],
 		x: ['##........##..', '.##......##...', '..##....##....', '...##..##.....', '....####......', '.....##.......', '....####......', '...##..##.....', '..##....##....', '.##......##...', '##........##..'],
 		facebook: ['.....####.....', '....######....', '....##........', '....##........', '..########....', '..########....', '....##........', '....##........', '....##........', '....##........', '....##........'],
 		linkedin: ['.##...........', '.##...........', '..............', '.##..#.####...', '.##..########.', '.##..##....##.', '.##..##....##.', '.##..##....##.', '.##..##....##.', '.##..##....##.'],
 		mastodon: ['.###########..', '##.........##.', '#..##...##..#.', '#..##...##..#.', '#..##.#.##..#.', '#..##.#.##..#.', '#.....#.....#.', '##.........##.', '.###########..', '.....##.......', '..####........'],
-		lien: ['......####....', '.....#....#...', '....#..##..#..', '....#.#..#.#..', '.....#..#.#...', '...#.#..#.....', '..#.#..#.#....', '..#..##..#....', '...#....#.....', '....####......'],
 	};
 	if (MOTIFS[type]) px(MOTIFS[type]);
 }

@@ -331,25 +331,18 @@ function ligneSous(pr, mx, my) {
 function dessinerControlesCarte(z) {
 	const x = z.x + z.l - 64;
 	let y = z.y + z.h - 196; // prompt 147 : plus de place réservée à la case « Lieu à préciser »
-	// Prompt 146 : « Recentrer » devient le 3e bouton carré blanc 48 × 48 (pictogramme carré), libellé en infobulle
+	// Prompt 146 : « Recentrer » devient le 3e bouton carré blanc 48 × 48 (icône Lucide depuis le prompt 170), libellé en infobulle
 	let infobulle = null;
 	[
-		['+', () => zoomer(1.4)],
-		['−', () => zoomer(1 / 1.4)],
-		['□', recentrer, t('carte.recentrer')],
+		['plus', () => zoomer(1.4), t('carte.zoomer')],
+		['minus', () => zoomer(1 / 1.4), t('carte.dezoomer')],
+		['locate-fixed', recentrer, t('carte.recentrer')],
 	].forEach(([lib, action, titre]) => {
 		const sv = mouseX >= x && mouseX <= x + 48 && mouseY >= y && mouseY <= y + 48;
 		noStroke();
 		fill(sv ? DS.blanc75 : DS.blanc);
 		rect(x, y, 48, 48);
-		if (lib === '□') {
-			// carré dessiné (pas de glyphe : rendu identique quelle que soit la police)
-			noFill();
-			stroke(DS.fond);
-			strokeWeight(3);
-			rect(x + 15, y + 15, 18, 18);
-			noStroke();
-		} else dsTexte(lib, x + 24, y + 10, 24, DS.fond, 'center');
+		iconeLucide(lib, x + 12, y + 12, 24, DS.fond); // prompt 170 : icônes Lucide, chacune avec son infobulle
 		boutons.push({ x, y, l: 48, h: 48, action, titre });
 		CARTE.controles.push({ x, y, l: 48, h: 48 });
 		if (sv && titre) {
