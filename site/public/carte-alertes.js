@@ -149,6 +149,7 @@ function tracerLigne(pr, tr) {
 function dessinerCarteAlertes() {
 	const z = ZONE_CARTE;
 	CARTE.zone = z;
+	CARTE.zoneLibre = null;
 	CARTE.depots = [];
 	CARTE.controles = [];
 	noStroke();
@@ -224,21 +225,22 @@ function dessinerCarteAlertes() {
 		CARTE.survolFrame = frameCount;
 		CARTE.ligneSurvol = ligneSous(pr, mouseX, mouseY);
 	}
-	// Case « Lieu à préciser »
+	// Case « Lieu à préciser » (dans la partie libre de la carte, prompt 110)
+	const zl = zoneLibreCarte();
 	const sans = CARTE.marqueurs.filter((m) => !m.lieu.pt);
 	if (sans.length) {
-		const lc = Math.min(z.l - 32, 32 + sans.length * 44 + 220);
+		const lc = Math.min(zl.l - 32, 32 + sans.length * 44 + 220);
 		const yc = z.y + z.h - 76;
 		fill(13, 12, 12, 230);
-		rect(z.x + 16, yc, lc, 60);
+		rect(zl.x + 16, yc, lc, 60);
 		stroke(DS.blanc15);
 		strokeWeight(1);
 		noFill();
-		rect(z.x + 16, yc, lc, 60);
+		rect(zl.x + 16, yc, lc, 60);
 		noStroke();
-		dsTexte(t('carte.lieuAPreciser'), z.x + 32, yc + 18, 16, DS.blanc75, 'left');
+		dsTexte(t('carte.lieuAPreciser'), zl.x + 32, yc + 18, 16, DS.blanc75, 'left');
 		sans.forEach((m, i) => {
-			Object.assign(m, { x: z.x + 32 + 210 + i * 44, y: yc + 16 });
+			Object.assign(m, { x: zl.x + 32 + 210 + i * 44, y: yc + 16 });
 			dessinerMarqueur(m);
 		});
 	}
@@ -249,8 +251,8 @@ function dessinerCarteAlertes() {
 		const pv = typeof Taches !== 'undefined' ? Taches.prevision() : null;
 		etat = pv ? t('deblocage.prevision', { heure: Jeu.formaterHeure(pv.minute), type: t('enq.signalement.' + pv.type), g: t('gravite.' + pv.gravite) }) : texteResteJournee() || t('sig.vide');
 	}
-	panneauTexte(etat, z.x + 16, z.y + 16, z.l - 300);
-	dessinerControlesCarte(z);
+	panneauTexte(etat, zl.x + 16, z.y + 16, zl === z ? z.l - 300 : zl.l - 32);
+	dessinerControlesCarte(zl);
 	// Infobulles : marqueur, sinon centre, sinon ligne
 	const sv = CARTE.marqueurs.find((m) => m.survol) || (phase === 'selection' ? CARTE.marqueurs[SELECTION.focus] : null);
 	if (sv && sv.x !== undefined) infobulleCarte(Jeu.formaterHeure(sv.it.d.minute) + ' · ' + t('enq.signalement.' + sv.it.d.type) + ' · ' + texteLieu(sv.lieu, sv.it.d), sv.x + 14, sv.y);
@@ -258,6 +260,15 @@ function dessinerCarteAlertes() {
 	else if (CARTE.ligneSurvol && dansZone({ x: mouseX, y: mouseY }, z)) infobulleCarte(t('sujet.ligne', { ligne: CARTE.ligneSurvol.nom }) + ' · ' + CARTE.ligneSurvol.libelle, mouseX, mouseY - 10);
 	if (f.length && CARTE.marqueurs[0].x !== undefined) cibleGuide('fileSignalements', CARTE.marqueurs[0].x - 8, CARTE.marqueurs[0].y - 8, 44, 44);
 	dessinerPanneauEquipes();
+}
+/** Prompt 110 : partie de la carte non couverte par la fenêtre flottante (les commandes et textes s'y placent) */
+function zoneLibreCarte() {
+	const z = ZONE_CARTE;
+	const ouverte = dossierOuvert() && typeof PANNEAU !== 'undefined' && !(typeof DIALOGUE !== 'undefined' && DIALOGUE.reduit) && PANNEAU.x >= z.x && PANNEAU.x < z.x + z.l;
+	if (!ouverte) return z;
+	const gauche = PANNEAU.x - z.x; // place à gauche de la fenêtre
+	const droite = z.x + z.l - (PANNEAU.x + PANNEAU.l); // place à droite
+	return gauche >= droite ? { x: z.x, y: z.y, l: gauche - 8, h: z.h } : { x: PANNEAU.x + PANNEAU.l + 8, y: z.y, l: droite - 8, h: z.h };
 }
 function panneauTexte(txt, x, y, lmax) {
 	textFont(DS.policeTexte);
@@ -269,7 +280,7 @@ function panneauTexte(txt, x, y, lmax) {
 	dsTexte(couperLargeurCarte(txt, l - 24, 18), x + 12, y + 8, 18, DS.blanc75, 'left');
 }
 function infobulleCarte(txt, cx, cy) {
-	const z = CARTE.zone;
+	const z = CARTE.zoneLibre || CARTE.zone; // prompt 110 : jamais sous la fenêtre flottante
 	textFont(DS.policeTexte);
 	textSize(16);
 	const lt = Math.min(z.l - 24, textWidth(txt) + 20);
@@ -303,7 +314,7 @@ function ligneSous(pr, mx, my) {
 /** Boutons + / − / Recentrer (bas droite de la carte), zoom et légende des trajets */
 function dessinerControlesCarte(z) {
 	const x = z.x + z.l - 64;
-	let y = z.y + z.h - 196;
+	let y = z.y + z.h - 196 - (CARTE.marqueurs.some((m) => !m.lieu.pt) && z.l < 900 ? 84 : 0); // au-dessus de « Lieu à préciser » si la place manque
 	[
 		['+', () => zoomer(1.4)],
 		['−', () => zoomer(1 / 1.4)],
@@ -322,8 +333,10 @@ function dessinerControlesCarte(z) {
 	const lr = textWidth(t('carte.recentrer')) + 64;
 	dsBouton(z.x + z.l - 16 - lr, y, lr, 48, t('carte.recentrer'), recentrer, 'contour');
 	CARTE.controles.push({ x: z.x + z.l - 16 - lr, y, l: lr, h: 48 });
-	dsTexte(t('carte.niveauZoom', { z: (CARTE.vue.ech / CARTE.ech0).toFixed(1).replace('.', ',') }), z.x + z.l - 16, z.y + 24, 16, DS.blanc50, 'right');
-	if ((Jeu.equipes || []).some((q) => !q.inutile && Jeu.phaseEquipe(q, tempsCarte()) !== 'libre')) dsTexte(t('carte.volOiseau'), z.x + z.l - 16, z.y + 52, 16, DS.blanc50, 'right');
+	// zoom et légende : sous la ligne d'état (y + 64), à droite de la partie libre
+	dsTexte(t('carte.niveauZoom', { z: (CARTE.vue.ech / CARTE.ech0).toFixed(1).replace('.', ',') }), z.x + z.l - 16, z.y + 64, 16, DS.blanc50, 'right');
+	if ((Jeu.equipes || []).some((q) => !q.inutile && Jeu.phaseEquipe(q, tempsCarte()) !== 'libre')) dsTexte(couperLargeurCarte(t('carte.volOiseau'), z.l - 32, 20), z.x + z.l - 16, z.y + 92, 16, DS.blanc50, 'right');
+	CARTE.zoneLibre = z;
 }
 function couperLargeurCarte(txt, l, taille) {
 	textFont(DS.policeTexte);

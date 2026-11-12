@@ -194,7 +194,7 @@ function dessinerLogoPXE(x, y, taille) {
 	const k = Math.max(1, Math.floor(taille / 20));
 	noStroke();
 	LOGO_PXE.forEach(([rx, ry, rl, rh, c]) => {
-		fill(c);
+		fill(c === '#d4031c' ? DS.primaire : c); // prompt 111 : l'écran du logo prend la couleur principale
 		rect(Math.round(x) + rx * k, Math.round(y) + ry * k, rl * k, rh * k);
 	});
 	return { l: 24 * k, h: 20 * k };

@@ -217,7 +217,7 @@ function dessinerOptionsNouvellePartie(x, y) {
 	rect(x, y, l, h);
 	stroke('#ffffff');
 	strokeWeight(3);
-	fill(on ? '#D4031C' : 'rgba(0,0,0,0)');
+	fill(on ? DS.primaire : 'rgba(0,0,0,0)'); // prompt 111
 	rect(x + 20, y + 16, 32, 32);
 	if (on) {
 		stroke('#ffffff');

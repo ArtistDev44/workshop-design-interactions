@@ -165,7 +165,7 @@ function contenuConversation(e, pret) {
 		const b = bulles[i];
 		y -= b.h;
 		const bx = b.moi ? e.x + e.l - 24 - b.w : e.x + 24;
-		fill(b.moi ? '#D4031C' : '#2a2828');
+		fill(b.moi ? DS.primaire : '#2a2828'); // prompt 111
 		rect(bx, y, b.w, b.h, 18);
 		fill('#ffffff');
 		textAlign(LEFT, TOP);

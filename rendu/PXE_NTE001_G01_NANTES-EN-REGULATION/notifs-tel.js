@@ -274,7 +274,7 @@ function contenuGroupesTel(x, y0, l, h) {
 			textFont(POLICE_TEXTE);
 			textSize(17);
 			fill('#0b1b33');
-			text(court(NotifsTel.texte(n), 120), x + 30, y + 44, l - 130, 76);
+			text(court(NotifsTel.texte(n), 96), x + 30, y + 44, l - 130, 76); // prompt 110 : 3 lignes au plus (texte complet à l’ouverture)
 			boutons.push({ x: x + 16, y, l: l - 132, h: nh, action: () => ouvrirNotifTel(n) });
 			// Ignorer : carré sombre « ✕ » (cible 56 px), libellé lu par l'annonce
 			fill('#0b1b33');
