@@ -141,3 +141,39 @@ branche `jeu/110-113-autorisations-badges-intro-credits`.
 - Copie `rendu/PXE_NTE001_G01_NANTES-EN-REGULATION/` synchronisée : fichiers modifiés et images.
 - Reste à faire par le groupe : un essai avec un vrai micro et une vraie webcam (Chrome, Firefox, Safari), et
   les champs [À COMPLÉTER] ci-dessus.
+
+## 114 — Écran Crédits redessiné, aucun texte coupé dans le menu
+
+Prompt `prompts/114-jeu-credits-design-menu-sans-texte-coupe.md`, branche `jeu/114-credits-design-menu-sans-texte-coupe`.
+
+- **Texte coupé trouvé** (captures 1920×1080, avec une sauvegarde) :
+  - le sous-titre de « Reprendre la partie (C) » passait sur deux lignes dans une boîte de 40 px ;
+  - on lisait donc « 14/09/2026 · dossier 1/15 · sauvegardée à » **sans l'heure** ;
+  - l'audit des textes ne le voyait pas, car la zone n'était pas déclarée.
+  - **Correction :** une seule ligne, taille ajustée de 18 à 14 px (`ajusterTaille`), et zone déclarée
+    `sousTitreMenu`.
+- **Pile de cartes du menu calculée** :
+  - les cartes et les écarts se répartissent entre y 370 et le haut du pied de page, avec 16 px de marge ;
+  - cartes normales si elles tiennent, sinon compactes ; écart entre 6 et 30 px ;
+  - avec 7 cartes, « Crédits » ne touche plus « ↑ ↓ choisir ».
+- **Vérifié sans aucun texte coupé :**
+  - menu à 1920 et 1366, en FR et en EN, avec et sans sauvegarde ;
+  - écran « Nouvelle partie » en FR et en EN.
+- **Écran Crédits redessiné** (`credits.js`) avec les fenêtres du Pixel DS, comme la diapositive « L'équipe » :
+  - barre de titre en capitales et deux carrés pixel ;
+  - une fenêtre « Portrait » par personne, avec la plaque du nom ;
+  - les fenêtres **Licence** et **Utilisation de l'IA** en lignes **libellé / valeur** : libellé jaune DS
+    en capitales, valeur en blanc 75 %, filet entre les lignes.
+  - Les valeurs reprennent les mêmes faits que le prompt 113 ; Hub'Eau et la part humaine restent
+    [À COMPLÉTER].
+  - Les valeurs passent à la ligne au mot près, avec une hauteur calculée. La taille descend de 19 à 15 px
+    si les fenêtres ne tiennent pas au-dessus des boutons.
+  - Focus clavier en double bordure du DS.
+  - Les anciennes clés `credits.licence.texte` et `credits.ia.texte` sont remplacées par
+    `credits.lic.*` et `credits.ia.*`, en FR et en EN.
+- **Au passage, deux corrections sur l'écran « Jour n » :**
+  - ses lignes faisaient 1120 px de large, plus que le canevas en portrait (1080 px). Elles prennent
+    maintenant `min(1120, L − 80)` ;
+  - l'écran est déclaré comme conteneur pour l'audit (`transitionJour`). L'audit le voyait parfois
+    par-dessus l'écran SMS, selon le moment de la capture.
+- `npm test` : 501 + 552 contrôles. Audit des textes : 0 défaut aux 3 tailles.

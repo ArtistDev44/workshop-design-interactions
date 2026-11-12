@@ -212,6 +212,7 @@ function dessinerTransitionJour() {
 	noStroke();
 	fill(0, 0, 0, 255 * a);
 	rect(0, 0, L, H);
+	zoneTexteDeclarer('transitionJour', 0, 0, L, H); // prompt 114 : écran plein cadre, conteneur de ses textes (audit)
 	if (a > 0.6) {
 		dsTitre(texteTransitionJour(), L / 2, H / 2 - 220, 72, '#ffffff', 'center'); // prompt 95 : remonté pour l'explication
 		noStroke();
@@ -224,10 +225,11 @@ function dessinerTransitionJour() {
 		// Prompt 112 : transition courte de l'intro → titre et date seuls (l'explication reste annoncée, et le tutoriel la reprend)
 		if (TRANSITION_JOUR.court) return true;
 		let yl = H / 2 - 40;
+		const lt = Math.min(1120, L - 80); // prompt 114 : en portrait (L = 1080), les lignes restent dans l'écran
 		lignesTransitionJour().forEach((ln) => {
-			yl += dessinerTexte(ln, L / 2 - 560, yl, 1120, { taille: 22, couleur: '#FFFFFF', align: 'center', interligne: 32 }).h + 6;
+			yl += dessinerTexte(ln, L / 2 - lt / 2, yl, lt, { taille: 22, couleur: '#FFFFFF', align: 'center', interligne: 32 }).h + 6;
 		});
-		dessinerTexte(t('transition.passer'), L / 2 - 560, yl + 18, 1120, { taille: 18, couleur: 'rgba(255,255,255,0.75)', align: 'center', maxLignes: 1 });
+		dessinerTexte(t('transition.passer'), L / 2 - lt / 2, yl + 18, lt, { taille: 18, couleur: 'rgba(255,255,255,0.75)', align: 'center', maxLignes: 1 });
 	}
 	return true;
 }
