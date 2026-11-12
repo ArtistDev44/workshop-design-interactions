@@ -1117,6 +1117,40 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 	verifier(r.agressifs > 0 && r.agressifs < r.total, `plaintes agressives : ${r.agressifs} sur ${r.total} plaignants (ni aucune, ni toutes)`);
 }
 
+// Prompt 196 : clash violent et tentant, réaction de connard du plaignant, masques hors alphabet (&#(, §¤…)
+{
+	const c194 = contexte('fr');
+	vm.runInContext(readFileSync(join(pub, 'panneau.js'), 'utf8').replace(/^const (BANDEAU|PANNEAU|PLUS|TOUCHES_REPONSES|RAISONS)\b/gm, 'var $1'), c194, { filename: 'panneau.js' });
+	const r194 = vm.runInContext(`(() => {
+		const cats = ['retard', 'travaux', 'affluence', 'meteo', 'accident', 'securite', 'autre'];
+		const clair = /\\b(merde|putain|connard|connasse|enculé|salope|bordel|foutre|fuck|shit|bastard|bitch|asshole|crap|damn)\\b/i;
+		const hors = /[@#$%&!?(§¤]{2,}/;
+		const out = { sansCle: [], enClair: [], sansMasque: [], lire: null, narr: null, reaction: null, repMin: null };
+		for (const lg of ['fr', 'en']) for (const c of cats) for (let k = 1; k <= 3; k++) for (const p of ['clash', 'reactionClash']) {
+			const cle = p + '.' + c + '.' + k;
+			const txt = TRADUCTIONS[lg][cle];
+			if (txt === undefined) { out.sansCle.push(lg + ':' + cle); continue; }
+			if (clair.test(txt)) out.enClair.push(lg + ':' + cle);
+			if (!hors.test(txt)) out.sansMasque.push(lg + ':' + cle);
+		}
+		out.lire = lireMasques('bravo &#( et encore §¤ voila');
+		Jeu.chargerSemaine('2026-10-12'); Jeu.nouvellePartie(); Jeu.modificateur = null;
+		const d = Jeu.dossierCourant(); const c = reponsesDialogue(d).find((x) => x.clash);
+		Jeu.initialiserAlea(7, 0); Jeu.clashSuivant = true; const r1 = Jeu.decider(c.cle);
+		out.narr = String(r1.narration.texte);
+		out.reaction = Jeu.reactionClash(d, 0);
+		out.repMin = r1.deltas[1];
+		return out;
+	})()`, c194);
+	verifier(!r194.sansCle.length, `196 : clés clash/reactionClash manquantes ${JSON.stringify(r194.sansCle.slice(0, 6))}`);
+	verifier(!r194.enClair.length, `196 : mot grossier en clair ${JSON.stringify(r194.enClair.slice(0, 6))}`);
+	verifier(!r194.sansMasque.length, `196 : texte sans masque hors alphabet ${JSON.stringify(r194.sansMasque.slice(0, 6))}`);
+	verifier(/mot masqué/.test(r194.lire) && !/[@#$%&!?(§¤]{2,}/.test(r194.lire), `196 : lireMasques ne couvre pas &#( / §¤ : ${r194.lire}`);
+	verifier(r194.narr.includes('«') && r194.narr.length > 30, `196 : narration du clash sans réaction : ${r194.narr}`);
+	verifier(!!r194.reaction && !/\{\w+\}/.test(r194.reaction), `196 : réaction du dossier : ${r194.reaction}`);
+	verifier(r194.repMin <= -8, `196 : malus de réputation du clash changé : ${r194.repMin}`);
+}
+
 // Prompt 119 : incidents inventés — au plus un par semaine, marqués fictifs, sur une ligne réelle, catégorie « securite »,
 // témoin trouvé ; désactivés (tests de règles) → paquet inchangé
 {
@@ -2002,7 +2036,7 @@ for (const f of ['enquete.js', 'carte.js', 'journal.js']) verifier(!/\*\s*1\.05\
 	);
 	for (const [k, v] of Object.entries(j)) verifier(v === true, `game feel (prompt 96) : ${k}`);
 	const sk96 = readFileSync(join(pub, 'sketch.js'), 'utf8');
-	verifier(/feedback\(Juice\.tierDeltas\(dernierResultat\.deltas\)\)/.test(sk96) && /Juice\.decalage\(millis\(\)\)/.test(sk96) && /Juice\.echelleTemps\(maintenant\)/.test(readFileSync(join(pub, 'immersion.js'), 'utf8')), 'game feel : décision, secousse et hit-stop branchés');
+	verifier(/feedback\(dernierResultat\.clash \? 'large' : Juice\.tierDeltas\(dernierResultat\.deltas\)\)/.test(sk96) && /Juice\.decalage\(millis\(\)\)/.test(sk96) && /Juice\.echelleTemps\(maintenant\)/.test(readFileSync(join(pub, 'immersion.js'), 'utf8')), 'game feel : décision, secousse et hit-stop branchés (prompt 196 : un clash force le tier « large »)');
 	verifier(!/Jeu\.|game\.js/.test(readFileSync(join(pub, 'juice.js'), 'utf8').replace(/\/\*[\s\S]*?\*\//, '')), 'game feel : juice.js ne doit pas toucher la simulation (Jeu)');
 	verifier(vm.runInContext("t('acc.intensite')", contexte('fr')) !== '[À COMPLÉTER]' && vm.runInContext("t('acc.intensite')", contexte('en')) !== '[À COMPLÉTER]', 'game feel : clé acc.intensite FR / EN');
 }
