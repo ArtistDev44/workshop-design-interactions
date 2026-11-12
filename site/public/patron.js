@@ -14,18 +14,19 @@ const FILTRES_PATRON = [
 	{ cle: 'alertes', types: ['alerte', 'conseil'] },
 	{ cle: 'reproches', types: ['reproche'] },
 	{ cle: 'budget', types: ['budget'] },
+	{ cle: 'soirs', types: ['soir'] }, // prompt 194 : les mails du soir (fait marquant, mot du patron, bilan)
 ];
-const COULEURS_TYPES = { consigne: () => DS.info, alerte: () => DS.erreur, conseil: () => DS.alerte, budget: (m) => (m.meta && m.meta.palier === 'haut' ? DS.succes : DS.alerte), reproche: () => DS.primaire, equipes: () => DS.info, info: () => DS.blanc75 };
-const REPONSES_RAPIDES = { consigne: ['recu', 'jemen'], alerte: ['redresse', 'compris'], conseil: ['compris'], reproche: ['corrige'], budget: ['recu'], equipes: ['recu'], info: ['recu'] };
+const COULEURS_TYPES = { consigne: () => DS.info, alerte: () => DS.erreur, conseil: () => DS.alerte, budget: (m) => (m.meta && m.meta.palier === 'haut' ? DS.succes : DS.alerte), reproche: () => DS.primaire, equipes: () => DS.info, info: () => DS.blanc75, soir: (m) => (m.meta && m.meta.positif ? DS.succes : DS.blanc75) };
+const REPONSES_RAPIDES = { consigne: ['recu', 'jemen'], alerte: ['redresse', 'compris'], conseil: ['compris'], reproche: ['corrige'], budget: ['recu'], equipes: ['recu'], info: ['recu'], soir: ['recu'] };
 /** Prompt 101 : blocs enrichis repliés en une ligne (déplier : clic, ou V pour tous) ; le dernier message reste déplié */
-const BLOCS_PLIABLES = ['consigne', 'reproche', 'budget', 'equipes'];
+const BLOCS_PLIABLES = ['consigne', 'reproche', 'budget', 'equipes', 'soir'];
 const aUnBloc = (m) => (typeDe(m) === 'reproche' ? (m.meta || {}).index !== undefined : Object.keys(m.meta || {}).some((k) => k !== 'important')); // prompt 185 : un reproche sans dossier (départ anticipé) n'a ni bloc ni lien
 const blocDeplie = (m) => !BLOCS_PLIABLES.includes(typeDe(m)) || !aUnBloc(m) || PATRON.toutDeplie || PATRON.deplies.has(m) || m === PATRON.dernier;
 const typeDe = (m) => (Jeu.TYPES_MESSAGES.includes(m.type) ? m.type : 'info');
 const enPanne = () => !!(Jeu.modificateurActif && Jeu.modificateurActif() === 'panne_messagerie');
 
 /** Prompt 170 : pictogramme Lucide 24 px pour chaque type de message (icones-lucide.js) ; aucun emoji système */
-const PICTOS = { consigne: 'clipboard-list', alerte: 'triangle-alert', conseil: 'lightbulb', budget: 'coins', reproche: 'message-square-warning', equipes: 'users', info: 'message-square' };
+const PICTOS = { consigne: 'clipboard-list', alerte: 'triangle-alert', conseil: 'lightbulb', budget: 'coins', reproche: 'message-square-warning', equipes: 'users', info: 'message-square', soir: 'moon' };
 function picto(type, x, y, c) {
 	iconeLucide(PICTOS[type] || PICTOS.info, x + 1, y, 24, c);
 }
@@ -111,7 +112,7 @@ function majPatron() {
 	}
 	PATRON.vus = n;
 }
-const objetMail = (m) => t('patron.type.' + typeDe(m)) + (groupeDe(m).length > 1 ? ' ×' + groupeDe(m).length : '') + (m.enRetard ? ' · ' + t('patron.retard') : '');
+const objetMail = (m) => (typeDe(m) === 'soir' && m.meta && m.meta.objet ? String(m.meta.objet) : t('patron.type.' + typeDe(m))) + (groupeDe(m).length > 1 ? ' ×' + groupeDe(m).length : '') + (m.enRetard ? ' · ' + t('patron.retard') : '');
 /** Heure de jeu ; date courte si le mail n'est pas du jour */
 function heureMail(m) {
 	const auj = ((Jeu.jourCourant && Jeu.jourCourant()) || {}).date;
@@ -343,7 +344,7 @@ function voletLecture(m, x, y, l, h, panne, avecRetour) {
 	textSize(20);
 	yc += Math.max(1, couperLignes(String(m.texte), lt, DS.policeTexte, 20).length) * 28 + 16;
 	if (aUnBloc(m)) {
-		const hb = typeDe(m) === 'reproche' || !blocDeplie(m) ? 32 : { consigne: 56, alerte: 44, conseil: 44, reproche: 60, budget: 44, equipes: 40, info: 0 }[typeDe(m)] || 0;
+		const hb = typeDe(m) === 'reproche' || !blocDeplie(m) ? 32 : typeDe(m) === 'soir' ? blocSoir(m, x, 0, Math.min(lt, 720), false) : { consigne: 56, alerte: 44, conseil: 44, reproche: 60, budget: 44, equipes: 40, info: 0 }[typeDe(m)] || 0;
 		blocEnrichi(m, x, yc, Math.min(lt, 720), panne);
 		yc += hb + 16;
 	}
@@ -421,9 +422,31 @@ function blocEnrichi(m, x, y, l, panne) {
 	} else if (type === 'budget' && me.b !== undefined) {
 		dsTexte(t('patron.budgetValeur', { b: me.b }), x, y + 8, 18, DS.blanc, 'left');
 		dsBadge(x + 220, y + 18, t('patron.palier.' + (me.palier || 'moyen')), me.palier === 'haut' ? 'succes' : me.palier === 'bas' ? 'erreur' : 'alerte');
+	} else if (type === 'soir' && me.lignes) {
+		blocSoir(m, x, y, l, true);
 	} else if (type === 'equipes' && me.effectifs) {
 		dsTexte(Object.keys(me.effectifs).map((k) => String(Jeu.EQUIPES[k].nom) + ' ' + me.effectifs[k]).join(' · '), x, y + 6, 18, DS.infoClair, 'left', l);
 	}
+}
+/** Prompt 194 : bilan compact du mail du soir (prompt 191) — lignes réelles gardées à l'envoi ; renvoie la hauteur */
+function blocSoir(m, x, y, l, dessiner) {
+	const o = { taille: 18, interligne: 26, maxLignes: 3 };
+	let h = 28;
+	if (dessiner) dsTexte(t('mailf.bilan'), x, y, 16, DS.blanc50, 'left');
+	for (const ligne of m.meta.lignes || []) {
+		const txt = String(ligne.texte);
+		const hl = hauteurTexte(txt, l - 18, o);
+		if (dessiner) {
+			if (ligne.fait) {
+				noStroke();
+				fill(ligne.ok ? DS.succes : DS.primaire);
+				rect(x, y + h + 3, 4, 18);
+			}
+			dessinerTexte(txt, x + 18, y + h, l - 18, Object.assign({ couleur: ligne.fait ? (ligne.ok ? DS.succesClair : DS.erreurClair) : DS.blanc75 }, o));
+		}
+		h += hl + 6;
+	}
+	return h;
 }
 function miniJauge(lib, v, max, seuil, x, y, l) {
 	dsTexte(lib + ' ' + v, x, y + 4, 18, DS.blanc, 'left');

@@ -145,7 +145,7 @@ function etapeGuideSuivante() {
 function guideEnCours() {
 	if (!GUIDE.actif || ecran !== 'jeu' || MENU.actif || fenetre || smsActif || tutoriel) return false;
 	if ((typeof CINE !== 'undefined' && CINE) || (typeof GAMEOVER !== 'undefined' && GAMEOVER) || (typeof TRANSITION_JOUR !== 'undefined' && TRANSITION_JOUR)) return false;
-	if (['mail', 'soir', 'fin', 'reveil'].includes(phase) || enSieste || (typeof SOMMEIL !== 'undefined' && SOMMEIL.k > 0.001)) return false;
+	if (['soir', 'fin', 'reveil'].includes(phase) || enSieste || (typeof SOMMEIL !== 'undefined' && SOMMEIL.k > 0.001)) return false;
 	return !!ETAPES_GUIDE[GUIDE.etape];
 }
 /** Filtre actif ? En portrait (image recomposée, bulle pas toujours entière), le guide reste indicatif : jamais de blocage */
@@ -288,7 +288,7 @@ function dessinerGuide() {
 	if (MENU.actif || ecran !== 'jeu') return;
 	const e = ETAPES_GUIDE[GUIDE.etape];
 	if (e.fait()) return etapeGuideSuivante(); // validée dès que le joueur a fait l'action, même sous une fenêtre
-	if (!guideEnCours() || clignement) return; // fenêtre, SMS, tutoriel, sieste (yeux fermés), mail du soir : pas de bulle
+	if (!guideEnCours() || clignement) return; // fenêtre, SMS, tutoriel, sieste (yeux fermés) : pas de bulle
 	const c = cibleReelle(e.cible());
 	if (!surveillerCibleGuide(e, c)) return; // prompt 181 : étape sans cible atteignable → déclarée faite
 	GUIDE.image = frameCount; // prompt 181 : la bulle est à l'écran → le filtre laisse passer la cible et ses boutons

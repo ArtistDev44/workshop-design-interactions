@@ -1009,9 +1009,7 @@ function composerVue() {
 		? t('bureau.incident')
 		: phase === 'soir'
 			? t(sortieVisible() ? 'soir.annonce' : 'soir.tombe') // prompt 69
-		: phase === 'mail'
-			? t('bureau.mail')
-			: ecran === 'jeu' && phase === 'attente' && Jeu.journeeFinie && Jeu.journeeFinie()
+		: ecran === 'jeu' && phase === 'attente' && Jeu.journeeFinie && Jeu.journeeFinie()
 				? t('bureau.finJournee') // prompt 51
 				: t(typeof MOBILE !== 'undefined' && MOBILE.actif ? 'bureau.installerMobile' : 'bureau.installer'); // prompt 60 : consigne tactile
 	if (phase === 'soir' && (SOIR.sortie || respirationSoir())) return; // prompt 69 : pendant la sortie, pas de consigne ; prompt 191 : ni pendant « Fin de journée. »
@@ -1104,7 +1102,7 @@ function scrollSortiePC(delta) {
 	const bloque = clignement || fenetre || smsActif || (typeof tutoriel !== 'undefined' && tutoriel) || (typeof MENU !== 'undefined' && MENU.actif);
 	// Prompt 182 : un choix attend (raisonRetenuAuPC) → la molette ne fait jamais quitter le PC ; elle est avalée ici
 	// (le contenu qui défile a déjà pris le geste dans mouseWheel), sans message : aucune sortie involontaire
-	if (bloque || (!versPC && !versBureau) || (versBureau && (PC.fenetre || phase === 'mail' || phase === 'reveil' || raisonRetenuAuPC()))) {
+	if (bloque || (!versPC && !versBureau) || (versBureau && (PC.fenetre || phase === 'reveil' || raisonRetenuAuPC()))) {
 		cumulScroll = 0;
 		return vue === 'poste' && !bloque && !PC.fenetre ? true : false; // au poste, le scroll ne fait pas défiler la page
 	}

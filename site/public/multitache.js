@@ -134,7 +134,7 @@ function expirerEnFond(d, enFile) {
 
 /** Une fois par image : arrivées (notifications), compteurs en arrière-plan, expirations en file */
 function majMultitache() {
-	if (ecran !== 'jeu' || !Jeu.paquet || ['fin', 'mail', 'soir', 'reveil'].includes(phase) || enPause) return;
+	if (ecran !== 'jeu' || !Jeu.paquet || ['fin', 'soir', 'reveil'].includes(phase) || enPause) return;
 	multiReset();
 	fileIncidents(); // détecte les arrivées (notification à la première apparition)
 	if (!Jeu.defiChrono) return; // prompt 87 : sans chrono, aucune expiration en cours de journée (fin de journée : immersion.js)

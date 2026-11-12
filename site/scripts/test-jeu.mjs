@@ -384,7 +384,7 @@ for (const [nom, ctx] of [['fr', contexte('fr')], ['en', contexte('en')]]) {
 		while (Jeu.prochainDuJour()) Jeu.decider('renfort');
 		Jeu.finDeJourneeTactique();
 		Jeu.horloge.minutes = Jeu.finJournee();
-		phase = 'mail';
+		phase = 'attente';
 		const jauges = JSON.stringify(Jeu.jauges);
 		rangerPoste();
 		res.soir = phase === 'soir' && __leve === 1 && vue === 'bureau' && !enSieste && PC.fenetre === null && __saves === 1;
@@ -400,7 +400,7 @@ for (const [nom, ctx] of [['fr', contexte('fr')], ['en', contexte('en')]]) {
 		res.lendemain = phase === 'attente' && Jeu.jourIndex === jour + 1 && Jeu.horloge.minutes === Jeu.debutJournee() && CAMERA.x === 0;
 		// départ anticipé le jour 2 : malus inchangé, puis le soir
 		Jeu.partirAvantLaFin('10:00');
-		phase = 'mail'; rangerPoste(); res.departSoir = phase === 'soir';
+		phase = 'attente'; rangerPoste(); res.departSoir = phase === 'soir';
 		__t += 4100; majSoir(); quitterBureau(); __t += 5000; majSoir();
 		res.departMalus = phase === 'attente' && !!Jeu.blame && Jeu.blame.malus === -8; // malus inchangé, le lendemain
 		// reprise d'une sauvegarde faite le soir : nuit installée, flèche visible
@@ -1878,7 +1878,7 @@ for (const f of ['enquete.js', 'carte.js', 'journal.js']) verifier(!/\*\s*1\.05\
 		cg,
 	);
 	for (const [k, v] of Object.entries(g)) verifier(v === true, `glisser-déposer (prompt 94) : ${k}`);
-	// Quitter la journée : fin de service → mail → soir → sortie → lendemain, jauges intactes
+	// Quitter la journée : fin de service → soir (prompt 194 : sans mail plein écran) → sortie → lendemain, jauges intactes
 	const cq = contexte('fr');
 	vm.runInContext(
 		`var phase = 'attente', ecran = 'jeu', vue = 'poste', fenetre = null, enPause = false, enSieste = false, reveil = null, reduireAnimations = false, tutoriel = null;
@@ -1900,15 +1900,16 @@ for (const f of ['enquete.js', 'carte.js', 'journal.js']) verifier(!/\*\s*1\.05\
 		quitterJourneeRapide(); r.avantHeure = fenetre === 'partir'; fenetre = null;
 		while (Jeu.prochainDuJour()) Jeu.decider('renfort');
 		Jeu.horloge.minutes = Jeu.finJournee();
-		quitterJourneeRapide(); r.mail = phase === 'mail';
-		const jauges = JSON.stringify(Jeu.jauges), jour = Jeu.jourIndex;
+		const jour = Jeu.jourIndex;
 		quitterJourneeRapide(); r.soir = phase === 'soir';
+		const jauges = JSON.stringify(Jeu.jauges); // prompt 194 : la fin de service (objectif du jour) est appliquée au même geste
+		r.mailDansMails = Jeu.messagesPatron.filter((m) => m.type === 'soir' && !m.lu).length === 1;
 		quitterJourneeRapide(); r.sortie = !!SOIR.sortie && vue === 'bureau';
 		__t += 5000; majSoir();
 		r.lendemain = phase === 'attente' && Jeu.jourIndex === jour + 1;
 		r.jaugesIntactes = JSON.stringify(Jeu.jauges) === jauges;
 		// sortie automatique peu après la nuit (ranger le poste suffit)
-		phase = 'mail'; rangerPoste(); __t += 4100; majSoir(); r.nuit = SOIR.annonce && !SOIR.sortie;
+		phase = 'attente'; rangerPoste(); __t += 4100; majSoir(); r.nuit = SOIR.annonce && !SOIR.sortie;
 		__t += 8100; majSoir(); r.auto = !!SOIR.sortie;
 		r.toucheQ = /key === 'q' \\|\\| key === 'Q'/.test(${JSON.stringify(readFileSync(join(pub, 'journee.js'), 'utf8'))});
 		return r;
@@ -1918,7 +1919,7 @@ for (const f of ['enquete.js', 'carte.js', 'journal.js']) verifier(!/\*\s*1\.05\
 	for (const [k, v] of Object.entries(q)) verifier(v === true, `quitter la journée (prompt 94) : ${k}`);
 	const fr94 = contexte('fr');
 	const en94 = contexte('en');
-	for (const cle of ['quitter.bouton', 'quitter.range', 'glisser.deposer', 'glisser.annule']) {
+	for (const cle of ['quitter.bouton', 'glisser.deposer', 'glisser.annule']) {
 		const a = vm.runInContext(`t(${JSON.stringify(cle)}, { reponse: 'X' })`, fr94);
 		const b = vm.runInContext(`t(${JSON.stringify(cle)}, { reponse: 'X' })`, en94);
 		verifier(a !== '[À COMPLÉTER]' && b !== '[À COMPLÉTER]' && a !== b, `prompt 94 : clé ${cle} absente en FR ou en EN`);
@@ -3579,7 +3580,7 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	verifier(/dessinerRespirationSoir\(\)/.test(readFileSync(join(pub, 'sketch.js'), 'utf8')), 'prompt 191 : respiration dessinée');
 	const cr = contexte('fr');
 	vm.runInContext(
-		`var phase = 'mail', ecran = 'jeu', vue = 'bureau', fenetre = null, enPause = false, enSieste = false, reveil = null, reduireAnimations = false, smsActif = false;
+		`var phase = 'attente', ecran = 'jeu', vue = 'bureau', fenetre = null, enPause = false, enSieste = false, reveil = null, reduireAnimations = false, smsActif = false;
 		var MENU = { actif: false }, PC = { fenetre: null }, CAMERA = { x: 0, y: 0 }, METEO_VISU = { nuit: 1 }, PIECE = { lampe: false }, focusBureau = -1, OBJETS_BUREAU = [];
 		var L = 1920, H = 1080, __t = 0, ENTER = 13, RETURN = 13, ESCAPE = 27, keyCode = 0, key = '', __annonces = [];
 		var millis = () => __t, constrain = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -3596,11 +3597,11 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 		o.debut = respirationSoir() && !lampeAllumee() && __annonces.includes('Fin de journée.');
 		__t = 1500; o.lampe = lampeAllumee() && respirationSoir() && !sortieVisible();
 		__t = 3001; o.finie = !respirationSoir();
-		phase = 'mail'; __t = 5000; rangerPoste(); __t = 5200;
+		phase = 'attente'; __t = 5000; rangerPoste(); __t = 5200;
 		keyCode = 0; key = ' '; o.espace = toucheSoir() === true && !respirationSoir() && sortieVisible();
-		phase = 'mail'; __t = 9000; rangerPoste(); keyCode = 13; key = 'Enter'; toucheSoir(); o.entree = !respirationSoir() && !SOIR.sortie;
-		phase = 'mail'; __t = 12000; rangerPoste(); passerRespiration(); o.clic = !respirationSoir();
-		phase = 'mail'; reduireAnimations = true; __t = 15000; rangerPoste(); o.reduit = nuitSoir() === 1 && lampeAllumee() && respirationSoir();
+		phase = 'attente'; __t = 9000; rangerPoste(); keyCode = 13; key = 'Enter'; toucheSoir(); o.entree = !respirationSoir() && !SOIR.sortie;
+		phase = 'attente'; __t = 12000; rangerPoste(); passerRespiration(); o.clic = !respirationSoir();
+		phase = 'attente'; reduireAnimations = true; __t = 15000; rangerPoste(); o.reduit = nuitSoir() === 1 && lampeAllumee() && respirationSoir();
 		return o;
 	})()`,
 		cr,
@@ -3673,6 +3674,68 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	}
 	const conf = lire193('confort.js');
 	verifier(/a\.addEventListener\('error', \(\) => \{\n\t\t\t\tif \(Musique\.audio !== a\) return;\n\t\t\t\tMusique\.enPanne\.add\(p\.fichier\);[\s\S]{0,260}Musique\.demarrer\(\);/.test(conf) && /Musique\.enPanne\.has\(p\.fichier\) \? PISTES\.origine : p/.test(conf), 'prompt 193 : musique en fichier injouable → repli sur le morceau WebAudio');
+}
+
+// Prompt 194 : finir la journée = cliquer sur l'horloge (ou Q) → le soir directement, sans phase « mail » ; le mail du
+// soir est déposé non lu dans l'appli Mails (dossier « Soirs ») ; clés devenues inutiles retirées ; tutoriel sur l'horloge
+{
+	const lire194 = (f) => readFileSync(join(pub, f), 'utf8');
+	const c194 = contexte('fr');
+	vm.runInContext(
+		`var phase = 'attente', ecran = 'jeu', vue = 'poste', fenetre = null, enPause = false, enSieste = false, reveil = null, reduireAnimations = false, tutoriel = null;
+		var MENU = { actif: false }, PC = { fenetre: 'patron' }, CAMERA = { x: 0, y: 0 }, METEO_VISU = { nuit: 1 }, focusBureau = -1, OBJETS_BUREAU = [], PIECE = {};
+		var L = 1920, H = 1080, __t = 1000, __ann = [];
+		var millis = () => __t, constrain = (v, a, b) => Math.max(a, Math.min(b, v)), heureAffichee = () => ({ h: 20, m: 0 });
+		var seLever = () => { vue = 'bureau'; }, annoncer = (x) => __ann.push(String(x)), interaction = () => {}, ouvrir = (f) => { fenetre = f; };
+		var Confort = { Son: { bip: () => {}, musique: { attenuer: () => {} } } }, Sauvegarde = { auto: () => {} };
+		var dateLongue = (d) => d, localStorage = { getItem: () => null, setItem: () => {} };
+		var allerFin = () => { phase = 'fin'; }, lancerLicenciement = () => {};
+		var journeeSuivante = () => { Jeu.journeeSuivante(); phase = 'attente'; };`,
+		c194,
+	);
+	for (const f of ['soir.js', 'journee.js']) vm.runInContext(lire194(f), c194, { filename: f });
+	const r = vm.runInContext(
+		`(() => {
+		Jeu.chargerSemaine(Jeu.semainesProposees()[0].lundi); Jeu.nouvellePartie();
+		const o = {}, phases = [];
+		while (Jeu.prochainDuJour()) Jeu.decider('renfort');
+		Jeu.horloge.minutes = Jeu.finJournee();
+		clicHorloge(); phases.push(phase);
+		o.horloge = phase === 'soir' && vue === 'bureau' && PC.fenetre === null;
+		const soirs = Jeu.messagesPatron.filter((m) => m.type === 'soir');
+		o.mail = soirs.length === 1 && !soirs[0].lu && soirs[0].jour === Jeu.jourCourant().date && Jeu.nonLus.patron >= 1 && soirs[0].meta.lignes.length > 0;
+		const sc = Jeu.mailDuJour().scene;
+		o.annonce = __ann.some((a) => a.includes(String(sc.patron)) && a.includes('Mails'));
+		o.texte = String(soirs[0].texte).includes(String(sc.patron));
+		o.json = !!JSON.parse(JSON.stringify(Jeu.messagesPatron)).find((m) => m.type === 'soir' && typeof m.texte === 'string' && typeof m.meta.objet === 'string');
+		Jeu.deposerMailDuSoir(); o.unique = Jeu.messagesPatron.filter((m) => m.type === 'soir').length === 1;
+		quitterJourneeRapide(); __t += 5000; majSoir();
+		// jour 2 : Q à l'heure de fin → le soir directement aussi
+		while (Jeu.prochainDuJour()) Jeu.decider('renfort');
+		Jeu.horloge.minutes = Jeu.finJournee();
+		// « renfort » partout vide le budget : un licenciement (prompt 84, testé ailleurs) passerait avant le soir
+		Jeu.statutPatron.licencie = null;
+		quitterJourneeRapide(); phases.push(phase);
+		o.q = phase === 'soir' && Jeu.messagesPatron.filter((m) => m.type === 'soir').length === 2;
+		o.jamaisMail = !phases.includes('mail');
+		return o;
+	})()`,
+		c194,
+	);
+	for (const [k, v] of Object.entries(r)) verifier(v === true, `prompt 194 : ${k} = ${v}`);
+	// Code : plus de phase « mail », plus de mail plein écran ni d'Entrée associée ; reprise d'une ancienne sauvegarde au soir
+	const tout = readdirSync(pub).filter((f) => f.endsWith('.js') && !/^(sw|icones-lucide)/.test(f)).map(lire194).join('\n');
+	verifier(!/phase === 'mail'|phase = 'mail'|function dessinerMail|dessinerMail\(\)/.test(tout.replace(/ui\.phase === 'mail'/g, '')), 'prompt 194 : plus de phase « mail » ni de dessinerMail');
+	verifier(/ui\.phase === 'mail'[^\n]*\n[^\n]*deposerMailDuSoir[^\n]*\n[^\n]*ancienMail\) && !Jeu\.terminee \? 'soir'/.test(lire194('sauvegarde.js')), 'prompt 194 : une sauvegarde en phase « mail » reprend au soir, mail déposé');
+	verifier(/\{ cle: 'soirs', types: \['soir'\] \}/.test(lire194('patron.js')) && /soir: 'moon'/.test(lire194('patron.js')), 'prompt 194 : dossier « Soirs » et pictogramme du mail du soir dans Mails');
+	for (const langue of ['fr', 'en']) {
+		const dico = vm.runInContext(`TRADUCTIONS.${langue}`, contexte(langue));
+		const retirees = ['bureau.mail', 'etat.mail', 'horloge.mail', 'mailf.titre', 'mailf.nouveau', 'mailf.de', 'mailf.a', 'mailf.signature', 'soir.ranger', 'quitter.range'].filter((k) => k in dico);
+		verifier(!retirees.length, `prompt 194 (${langue}) : clés à retirer encore présentes : ${retirees.join(', ')}`);
+		const ajoutees = ['patron.type.soir', 'patron.filtre.soirs', 'mailf.patronCite'].filter((k) => !dico[k]);
+		verifier(!ajoutees.length, `prompt 194 (${langue}) : clés manquantes : ${ajoutees.join(', ')}`);
+		verifier(/horlog|clock/i.test(dico['tuto.6.texte']) && /\bQ\b/.test(dico['tuto.6.texte']) && /Mail/.test(dico['tuto.6.texte']) && !/PC/.test(dico['horloge.fin']), `prompt 194 (${langue}) : le tutoriel explique l'horloge et Mails`);
+	}
 }
 
 if (erreurs.length) {

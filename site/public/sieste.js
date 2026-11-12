@@ -24,7 +24,7 @@ const SOMNO = { v: 0, jourCle: '', forcee: false, bilan: null, alarmes: new Set(
 const cleJourSomno = () => (Jeu.etat && Jeu.etat.semaine ? Jeu.etat.semaine.lundi : Jeu.etat ? Jeu.etat.mode : '') + '|' + Jeu.jourIndex;
 /** Peut-on s'endormir maintenant ? (journée de travail, pas de fenêtre ni de narration) */
 function peutDormir() {
-	return ecran === 'jeu' && !!Jeu.horloge && !MENU.actif && !fenetre && !smsActif && !tutoriel && !TRANSITION_JOUR && !['fin', 'mail', 'soir', 'reveil', 'narration'].includes(phase);
+	return ecran === 'jeu' && !!Jeu.horloge && !MENU.actif && !fenetre && !smsActif && !tutoriel && !TRANSITION_JOUR && !['fin', 'soir', 'reveil', 'narration'].includes(phase);
 }
 /** Appelée par avancerTemps (temps non suspendu) : dt réel (ms), minutes de jeu écoulées */
 function majSomnolence(dt, dMinutes) {

@@ -35,7 +35,7 @@ chaque touche qu'il cite est lue par le code et qu'aucune clé `aide.k.*` n'est 
 | Paramètres | Tab / ↑ ↓ · ← → · Entrée / Espace · Page préc. / suiv. · Échap · M | Focus · régler · basculer · pages · fermer · son | — |
 | Aide | ← → / Tab · 1–4 · ↑ ↓ / Page préc. / suiv. · T · H / ? / Échap | Onglets · pages · tutoriel · fermer | « Lancer le tutoriel (T) », « Fermer (Échap) » |
 | Menu du jeu (pause) | ↑ ↓ / Tab · Entrée · Échap | Parcourir · valider · fermer | « Reprendre (Échap) » |
-| Fenêtres modales (rapport, mail de fin, partir, blâme, démission, inspection, tâche, téléphone, recommencer) | Entrée · Échap · Tab (pages du rapport) · 1–3 (inspection) · 1–4 (tâche) · ↑ ↓ / Suppr (notifications du téléphone) | Valider · annuler | libellés « (Entrée) » / « (Échap) » / « (Tab) » |
+| Fenêtres modales (rapport, partir, blâme, démission, inspection, tâche, téléphone, recommencer) | Entrée · Échap · Tab (pages du rapport) · 1–3 (inspection) · 1–4 (tâche) · ↑ ↓ / Suppr (notifications du téléphone) | Valider · annuler | libellés « (Entrée) » / « (Échap) » / « (Tab) » |
 | Bureau | ← → ↑ ↓ (maintenues) · Tab · Entrée / Espace · Échap · H / ? · M · Z · Q · D | Regarder · objets · ouvrir / s'installer · menu du jeu · aide · son / micro · sieste · quitter la journée · démission (jauges sous 20) | aide ; « Quitter la journée (Q) » ; « rendre votre badge (D) » |
 | Soir, au bureau | Entrée | Sortir (quand la sortie est visible) | « Quitter le bureau (Entrée) » |
 | Poste, carte | Échap | Retour d'écran, sinon `quitterPC()` (refusé si un choix attend) | « Quitter le PC (Échap) » |
