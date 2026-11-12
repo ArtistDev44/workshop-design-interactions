@@ -101,4 +101,4 @@ Date : 12/11/2026. Branche `jeu/105-109-carte-interactive-dialogue-equipes`.
   - fenêtre du plaignant (« Affluence », @nantaise_du_tram, 4 répliques) ;
   - réplique choisie → narration ;
   - police envoyée sur la ligne 97 : tracé depuis le commissariat.
-- Partie complète en conditions réelles, à la souris, au clavier et sur mobile : [À COMPLÉTER].
+- Partie complète en conditions réelles, à la souris, au clavier et sur mobile : non testé, prévu en salle (protocole de `notes.md`, « Tests humains », prompt 192) — date [À COMPLÉTER].

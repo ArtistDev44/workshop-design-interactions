@@ -64,4 +64,4 @@ Dans les deux cas, la première décision arrive bien sous la minute visée. Le 
 - `npm test` passe : 442 contrôles smoke et 529 contrôles du jeu. Il vérifie, en FR et en EN, que l'aide et le guide contiennent glisser / clic, 1-4, Q, les 3 jauges, « pourquoi ma décision a raté » et la difficulté, et ne décrivent plus le briefing ni l'info trafic.
 - Chromium, en FR et en EN : écran du mode, aide, première décision.
 - Audit des textes : 0 défaut A à D. Deux défauts créés par ce prompt ont été corrigés aussitôt : la consigne SMS (+15 px) et la case d'info du mode (4e ligne coupée).
-- **Test humain** (joueur novice hors projet, semaine 1 : 3e décision en moins de 2 min sans aide, et dit ce qu'il faut préserver) : [À COMPLÉTER]. Les 3 verbatims sont à noter dans `notes.md`.
+- **Test humain** (joueur novice hors projet, semaine 1 : 3e décision en moins de 2 min sans aide, et dit ce qu'il faut préserver) : non testé, prévu en salle (protocole de `notes.md`, « Tests humains », prompt 192) — date [À COMPLÉTER]. Les 3 verbatims seront notés dans `notes.md`.
