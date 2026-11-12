@@ -249,7 +249,6 @@ function dessinerPanneauSignalement(d, x, base) {
 	const bloquee = Jeu.actionBloquee ? Jeu.actionBloquee() : null;
 	// Prompt 130 : tendance des 3 jauges sous chaque réplique (symbole + couleur, jamais la couleur seule) ;
 	// option « Pression visible » : pastille « conseillé » sur la ou les réponses que l'évaluation jugerait bonnes
-	const conseillees = typeof Traces !== 'undefined' && Traces.option('pressionVisible') && Jeu.reponsesConseillees ? Jeu.reponsesConseillees(d) : [];
 	rs.forEach((r, i) => {
 		const ry = yr + 36 + i * pas;
 		const off = r.cle === bloquee;
@@ -262,7 +261,7 @@ function dessinerPanneauSignalement(d, x, base) {
 		dsTexte(TOUCHES_REPONSES[i], x + 54, ry + (hL - 26) / 2, 20, DS.fond, 'center');
 		const rep = repliquesDuDossier(rs, d)[i];
 		dessinerTexte('« ' + rep + ' »', x + 92, ry + 6, l - 76, { taille: 20, couleur: off ? C.gris : C.texte, maxLignes: 2, interligne: 25 });
-		if (!compact) dessinerTendanceReponse(r, d, x + 92, ry + 58, !r.clash && conseillees.includes(r.cle)); // sous la réplique
+		if (!compact) dessinerTendanceReponse(r, d, x + 92, ry + 58); // sous la réplique (plus de mention « conseillé », demande du 12/11/2026)
 		if (!off) boutons.push({ x: x + 32, y: ry, l, h: hL, action: () => choisirReplique(r) });
 		if (i === 0) cibleGuide('actions', x + 32, yr + 36, l, rs.length * pas);
 	});
@@ -313,7 +312,7 @@ const PAS_REPONSE = 92;
 /** Prompt 130 : tendance d'une réplique sur les 3 jauges — « Flu. ▲ » en vert, « ≈ » en gris, « ▼ » en orange ; le
  * symbole porte le sens, la couleur le double. Le clash (prompt 117) compte son malus de réputation : la tendance
  * reste honnête. Pastille « conseillé » en option (Pression visible). */
-function dessinerTendanceReponse(r, d, x, y, conseillee) {
+function dessinerTendanceReponse(r, d, x, y) {
 	const e = Jeu.effetsAttendus(r.cle, d).slice();
 	if (r.clash) e[1] += Jeu.REGLAGES.malusClash || 0;
 	let xx = x;
@@ -325,7 +324,6 @@ function dessinerTendanceReponse(r, d, x, y, conseillee) {
 		dsTexte(sym, xx, y, 16, sym === '≈' ? C.gris : sym.includes('▲') ? C.vert : C.orange, 'left');
 		xx += textWidth(sym) + 18;
 	});
-	if (conseillee) dsTexte('✓ ' + t('rep.conseillee'), xx + 8, y, 16, C.vert, 'left');
 	zoneTexteDeclarer('tendanceReponse', x, y, xx - x, 22); // prompt 93 : audit des textes
 }
 /** Prompt 102 : bulle de dialogue — la plainte écrite par le groupe (data/messages.json) que les faits réels du
