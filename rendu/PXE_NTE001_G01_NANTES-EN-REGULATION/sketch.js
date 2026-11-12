@@ -479,7 +479,6 @@ function indicateurSauvegarde() {
 	noStroke();
 	fill(C.gris);
 	const zc = typeof CARTE !== 'undefined' && (CARTE.zoneLibre || CARTE.zone) ? CARTE.zoneLibre || CARTE.zone : FILE_SIG; // prompt 114 : partie libre de la carte
-	if (zc.l < 900) return; // carte resserrée (dossier ouvert) : la case « Lieu à préciser » occupe le bas, l'indicateur se tait
 	text(couperLargeurCarte(s, zc.l - 32, 20), zc.x + zc.l - 16, zc.y + zc.h - 212); // prompt 114 : au-dessus des boutons de zoom (les notifications occupent le haut) // prompt 114 : sous le zoom et la légende ; correctif : en haut à droite de la carte, sous le zoom (H_PLATEAU n'existe plus depuis le prompt 108 — l'erreur figeait l'écran)
 }
 

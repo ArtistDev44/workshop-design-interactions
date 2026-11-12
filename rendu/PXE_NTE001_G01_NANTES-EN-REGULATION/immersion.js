@@ -542,7 +542,7 @@ function illustrationTutoriel(n, x, y, l, h) {
 			px(2, 2 + i * 3.4, v, 2, c);
 		});
 	} else if (n === 2) {
-		// Carte : fleuve, ligne, deux repères (l'un « à préciser » en pointillés)
+		// Carte : fleuve, ligne, deux repères (l'un en pointillés : sans lieu connu, prompt 147)
 		px(0, 7, 27, 2, '#9db7c9');
 		for (let i = 0; i < 22; i++) px(2 + i, 3 + Math.round(Math.sin(i / 3) * 1.5), 1, 1, encre);
 		px(12, 1, 3, 3, rouge);

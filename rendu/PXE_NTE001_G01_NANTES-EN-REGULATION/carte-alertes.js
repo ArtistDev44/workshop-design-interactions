@@ -5,7 +5,7 @@
  *   là où le joueur la met. Les signalements sont à leur lieu réel (jamais inventé) :
  *     · ligne(s) citée(s) par le dossier → un point du tracé GTFS de la ligne (choisi de façon déterministe) ;
  *     · événement de l'agenda → le lieu géocodé (data/lieux.json, OpenStreetMap via Nominatim) ;
- *     · alerte météo → toute la métropole ; sinon → case « Lieu à préciser ».
+ *     · alerte météo → toute la métropole ; sinon → marqueurs regroupés sans libellé en bas à gauche (prompt 147).
  * - Prompt 108 : panneau des équipes à droite (x 1576 → 1880) ; une pastille par équipe ; glisser une pastille
  *   disponible sur N'IMPORTE QUEL marqueur (ou sur la fenêtre du dossier ouvert) = Jeu.envoyerEquipe. Clic sur une
  *   pastille puis sur un marqueur = même chose ; Maj + 1–4 envoient au dossier ouvert.
@@ -79,8 +79,7 @@ function texteLieu(lieu, d) {
 	if (lieu.sorte === 'ligne') return lieu.lignes.map((l) => t('sujet.ligne', { ligne: l.nom })).join(', ');
 	if (lieu.sorte === 'metropole') return t('carte.metropole');
 	if (lieu.sorte === 'lieu') return lieu.nom;
-	const v = lieuEvenement(d);
-	return t('carte.lieuAPreciser') + (v ? ' · ' + v : '');
+	return lieuEvenement(d) || ''; // prompt 147 : jamais « Lieu à préciser » ; le nom cité par la source s'il existe
 }
 
 // ——— Vue : centre et échelle, interactifs (prompt 106) ———
@@ -235,22 +234,25 @@ function dessinerCarteAlertes() {
 		CARTE.survolFrame = frameCount;
 		CARTE.ligneSurvol = ligneSous(pr, mouseX, mouseY);
 	}
-	// Case « Lieu à préciser » (dans la partie libre de la carte, prompt 114)
+	// Signalements sans lieu connu (dans la partie libre de la carte, prompt 114) — prompt 147 : regroupés en bas à
+	// gauche, sur un fond discret, SANS libellé ; leur infobulle dit l'heure, le type et la gravité
 	const zl = zoneLibreCarte();
 	const sans = CARTE.marqueurs.filter((m) => !m.lieu.pt).concat(CARTE.suivis.filter((m) => !m.lieu.pt)); // prompt 121 : en attente, sans lieu connu
 	if (sans.length) {
-		const lc = Math.min(zl.l - 32, 32 + sans.length * 44 + 220);
-		const yc = z.y + z.h - 76;
+		const parLigne = Math.max(1, Math.floor((zl.l - 112) / 44)); // la colonne des boutons de zoom reste libre
+		const lignes = Math.ceil(sans.length / parLigne);
+		const lc = 16 + Math.min(sans.length, parLigne) * 44;
+		const hc = 16 + lignes * 44;
+		const yc = z.y + z.h - 16 - hc;
 		fill(13, 12, 12, 230);
-		rect(zl.x + 16, yc, lc, 60);
+		rect(zl.x + 16, yc, lc, hc);
 		stroke(DS.blanc15);
 		strokeWeight(1);
 		noFill();
-		rect(zl.x + 16, yc, lc, 60);
+		rect(zl.x + 16, yc, lc, hc);
 		noStroke();
-		dsTexte(t('carte.lieuAPreciser'), zl.x + 32, yc + 18, 16, DS.blanc75, 'left');
 		sans.forEach((m, i) => {
-			Object.assign(m, { x: zl.x + 32 + 210 + i * 44, y: yc + 16 });
+			Object.assign(m, { x: zl.x + 32 + (i % parLigne) * 44, y: yc + 16 + Math.floor(i / parLigne) * 44 });
 			if (m.equipes) dessinerMarqueurSuivi(m);
 			else dessinerMarqueur(m);
 		});
@@ -269,7 +271,7 @@ function dessinerCarteAlertes() {
 	const sv = CARTE.marqueurs.find((m) => m.survol) || (phase === 'selection' ? CARTE.marqueurs[SELECTION.focus] : null);
 	const svAtt = CARTE.suivis.find((m) => m.survol);
 	if (svAtt) infobulleCarte(texteSuivi(svAtt), svAtt.x + 14, svAtt.y);
-	else if (sv && sv.x !== undefined) infobulleCarte(Jeu.formaterHeure(sv.it.d.minute) + ' · ' + t('enq.signalement.' + sv.it.d.type) + ' · ' + t('carte.gravite', { g: t('gravite.' + Jeu.gravite(sv.it.d)) }) + ' · ' + texteLieu(sv.lieu, sv.it.d), sv.x + 14, sv.y); // prompt 133 : gravité écrite
+	else if (sv && sv.x !== undefined) infobulleCarte(Jeu.formaterHeure(sv.it.d.minute) + ' · ' + t('enq.signalement.' + sv.it.d.type) + ' · ' + t('carte.gravite', { g: t('gravite.' + Jeu.gravite(sv.it.d)) }) + (texteLieu(sv.lieu, sv.it.d) ? ' · ' + texteLieu(sv.lieu, sv.it.d) : ''), sv.x + 14, sv.y); // prompt 133 : gravité écrite
 	else if (CARTE.centreSurvol) infobulleCarte(CARTE.centreSurvol, mouseX, mouseY - 10);
 	else if (CARTE.ligneSurvol && dansZone({ x: mouseX, y: mouseY }, z)) infobulleCarte(t('sujet.ligne', { ligne: CARTE.ligneSurvol.nom }) + ' · ' + CARTE.ligneSurvol.libelle, mouseX, mouseY - 10);
 	if (f.length && CARTE.marqueurs[0].x !== undefined) cibleGuide('fileSignalements', CARTE.marqueurs[0].x - 8, CARTE.marqueurs[0].y - 8, 44, 44);
@@ -328,7 +330,7 @@ function ligneSous(pr, mx, my) {
 /** Boutons + / − / Recentrer (bas droite de la carte), zoom et légende des trajets */
 function dessinerControlesCarte(z) {
 	const x = z.x + z.l - 64;
-	let y = z.y + z.h - 196 - (CARTE.marqueurs.some((m) => !m.lieu.pt) && z.l < 900 ? 84 : 0); // au-dessus de « Lieu à préciser » si la place manque
+	let y = z.y + z.h - 196; // prompt 147 : plus de place réservée à la case « Lieu à préciser »
 	// Prompt 146 : « Recentrer » devient le 3e bouton carré blanc 48 × 48 (pictogramme carré), libellé en infobulle
 	let infobulle = null;
 	[
