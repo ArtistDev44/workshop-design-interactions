@@ -88,3 +88,26 @@ Date : 12/11/2026. Une branche par prompt, au nom du fichier du prompt.
   remplacé par quatre contrôles du prompt 124.
 - **Non fait :** les clés `etat.*`, `quitter.bouton`, `jeu.recommencer` restent (annonces, menu Échap) ;
   `mp.clavier` est supprimée au prompt 125.
+
+## 125 — Pied du menu principal réduit à nos noms
+
+- **Menu principal :** les deux lignes au-dessus des noms (« ↑ ↓ choisir… », « Données réelles… ») et le lien
+  « Code sous licence MIT » avec son séparateur ne sont plus dessinés. Il reste une ligne : nos noms,
+  soulignés, qui ouvrent l'écran Crédits.
+- **Clavier :** `licence` sort de `EXTRAS_MENU` ; après les cartes : Dépôt → Partager → Présentation.
+- **Pile de cartes :** `basPile` passe de `H − 144` à `H − 90` ; les cartes normales tiennent avec un écart
+  plus large.
+- **Crédits :** la ligne « Données » cite maintenant le réseau Naolib (« Open Data Nantes Métropole, dont le
+  réseau Naolib… »), seule source du pied de page qui n'y figurait pas. Aucune licence ajoutée. `LICENCE_URL`
+  reste défini une fois (`menu.js`) et utilisé par l'écran Crédits.
+- **i18n :** `mp.clavier`, `mp.sources`, `mp.licence`, `mp.licence.infobulle` supprimées en FR et en EN.
+- **Tests :** deux contrôles ajoutés (pied réduit aux noms, clés supprimées, Naolib dans les Crédits).
+- **Vérifié :** captures du menu (1366×768) et des Crédits (1920×1080), `npm run build`, `npm test`, audit des
+  textes à 1920×1080 : 0 défaut.
+
+## Limites des vérifications (121 à 125)
+
+- Audit des textes lancé à 1920×1080 seulement (FR / EN, contraste renforcé ou non) ; pas à 1366×768 ni en
+  portrait mobile.
+- Menu avec sauvegarde (« Reprendre »), bouton « ≡ » mobile et aide en portrait : non regardés à l'écran.
+- Aucun essai avec un lecteur d'écran.
