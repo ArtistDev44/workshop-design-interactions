@@ -284,12 +284,13 @@ function repondrePlainte(i, cible) {
 	const r = Jeu.repondrePlainte(p, i, millis()); // prompt 79 : réponse rapide ou tardive
 	if (!r) return;
 	focusReponse = 0;
+	if (r.clash && typeof feedback === 'function') feedback('large'); // prompt 197 : le clash est récompensé à l'instant (choc « large »), conséquences inchangées (réputation −8, réponse « mauvaise »)
 	const fx = Object.keys(r.effets)
 		.map((k) => t('jauge.' + k) + ' ' + (r.effets[k] > 0 ? '+' : '') + r.effets[k])
 		.join(' · ');
-	const texte = t(r.bonne ? 'plainte.bonne' : 'plainte.mauvaise', { effets: fx || '0' }) + (r.tardive ? ' ' + t('plainte.tardive') : '');
+	const texte = t(r.bonne ? 'plainte.bonne' : 'plainte.mauvaise', { effets: fx || '0' }) + (r.tardive ? ' ' + t('plainte.tardive') : '') + (r.clash && r.reaction ? ' ' + t('commu.reactionClash', { auteur: p.auteur, reaction: r.reaction }) : ''); // prompt 197 : réaction de connard du plaignant
 	retourPlainte = { texte, bonne: r.bonne, jusqua: millis() + 5000 };
-	annoncer(texte); // aria-live
+	annoncer(typeof lireMasques === 'function' ? lireMasques(texte) : texte); // aria-live ; prompt 197 : masques hors alphabet lus « mot masqué »
 	Confort.Son.bip(r.bonne ? 'action' : 'alerte');
 }
 
@@ -324,7 +325,7 @@ function appCorbeille(z) {
 			rect(z.x, y, 4, 104);
 			dsTexte(p.auteur + ' · ' + p.heure, z.x + 18, y + 10, 16, DS.blanc50, 'left');
 			dsTexte(Jeu.textePlainte(p), z.x + 18, y + 32, 18, DS.blanc, 'left', z.l - 200);
-			dsTexte('↳ ' + Jeu.texteMessage(r.texte, p.vars), z.x + 18, y + 66, 17, DS.blanc75, 'left', z.l - 200);
+			dsTexte('↳ ' + Jeu.texteReponse(p, r), z.x + 18, y + 66, 17, DS.blanc75, 'left', z.l - 200); // prompt 197 : texte du clash généré
 			const rep = Number((r.effets || {}).reputation) || 0;
 			dsBadge(z.x + z.l - 90, y + 40, t(p.bonne ? 'app.corbeille.bonne' : 'app.corbeille.mauvaise') + ' ' + (rep > 0 ? '+' : '') + rep, p.bonne ? 'succes' : 'alerte');
 			y += 116;

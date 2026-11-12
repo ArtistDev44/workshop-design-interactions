@@ -1286,7 +1286,8 @@ function keyPressed() {
 			const n = plainte.def.reponses.length;
 			if (keyCode === TAB) {
 				focusReponse = (focusReponse + (keyIsDown(SHIFT) ? n - 1 : 1)) % n;
-				annoncer(Jeu.texteMessage(plainte.def.reponses[focusReponse].texte, plainte.vars));
+				const rTab = plainte.def.reponses[Jeu.ordreReponses(plainte)[focusReponse]]; // prompt 197 : ordre mélangé + texte du clash, lu « mot masqué »
+				annoncer(typeof lireMasques === 'function' ? lireMasques(Jeu.texteReponse(plainte, rTab)) : Jeu.texteReponse(plainte, rTab));
 				return false;
 			}
 			if (keyCode === ENTER || keyCode === RETURN || key === ' ') return repondrePlainte(focusReponse), false;

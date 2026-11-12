@@ -1493,6 +1493,7 @@ const TRADUCTIONS = {
 		"commu.expiree": "Restée sans réponse : le ton est monté.",
 		"commu.transmise": "Transmis au patron.",
 		"commu.transmettre": "Transmettre au patron",
+		"commu.reactionClash": "{auteur}, d’habitude si gentil, répond : « {reaction} »", // prompt 197 : réaction de connard après un clash (mots masqués hors alphabet)
 		"commu.mentionsIntro": "Mentions à traiter : {n}. Répondez vite (délai affiché).",
 		"commu.aucunPrive": "Aucun message privé pour l’instant.",
 		"commu.stats.delais": "Réponses à temps {temps} · tardives {tard} · restées sans réponse {expire}",
@@ -3554,6 +3555,7 @@ const TRADUCTIONS = {
 		"commu.expiree": "Left unanswered: tempers rose.",
 		"commu.transmise": "Forwarded to the boss.",
 		"commu.transmettre": "Forward to the boss",
+		"commu.reactionClash": "{auteur}, usually so kind, replies: “{reaction}”", // prompt 197 : mean comment after a clash (words masked off-alphabet)
 		"commu.mentionsIntro": "Mentions to handle: {n}. Reply quickly (deadline shown).",
 		"commu.aucunPrive": "No private message yet.",
 		"commu.stats.delais": "Replies on time {temps} · late {tard} · unanswered {expire}",

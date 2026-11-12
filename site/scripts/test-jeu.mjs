@@ -870,7 +870,7 @@ for (const [nom, ctx] of [['fr', contexte('fr')], ['en', contexte('en')]]) {
 {
 	const brut = JSON.parse(readFileSync(join(pub, 'data', 'messages.json'), 'utf8'));
 	const CLES_COND = ['type', 'retard_min', 'ligne', 'nature_contient', 'pointe', 'meteo'];
-	const invalides = brut.plaintes.filter((p) => !p.texte.en || p.reponses.length < 2 || !p.reponses.some((r) => r.bonne) || !p.reponses.some((r) => !r.bonne) || p.reponses.some((r) => !r.texte.en) || Object.keys(p.condition || {}).some((k) => !CLES_COND.includes(k)));
+	const invalides = brut.plaintes.filter((p) => !p.texte.en || p.reponses.length !== 3 || !p.reponses.some((r) => r.bonne) || !p.reponses.some((r) => !r.bonne && !r.clash) || p.reponses.filter((r) => r.clash).length !== 1 || p.reponses.some((r) => !r.clash && !r.texte.en) || Object.keys(p.condition || {}).some((k) => !CLES_COND.includes(k))); // prompt 197 : exactement 3 réponses dont une bonne et une clash
 	verifier(invalides.length === 0 && brut.plaintes.length >= 21 && brut.plaintes.filter((p) => p.prive).length >= 3, `community : plaintes invalides ${invalides.map((p) => p.id)}`);
 	verifier((brut.modeles || []).length === 3 && brut.modeles.every((m) => m.texte.fr && m.texte.en && m.coherent.length), 'community : 3 modèles d\'info trafic FR + EN');
 	const cs = vm.runInContext(
@@ -1149,6 +1149,73 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 	verifier(r194.narr.includes('«') && r194.narr.length > 30, `196 : narration du clash sans réaction : ${r194.narr}`);
 	verifier(!!r194.reaction && !/\{\w+\}/.test(r194.reaction), `196 : réaction du dossier : ${r194.reaction}`);
 	verifier(r194.repMin <= -8, `196 : malus de réputation du clash changé : ${r194.repMin}`);
+}
+
+// Prompt 197 : Community — 3 réponses mélangées dont un clash violent et tentant, réaction de connard, masques hors alphabet
+{
+	const c197 = contexte('fr');
+	vm.runInContext(readFileSync(join(pub, 'panneau.js'), 'utf8').replace(/^const (BANDEAU|PANNEAU|PLUS|TOUCHES_REPONSES|RAISONS)\b/gm, 'var $1'), c197, { filename: 'panneau.js' }); // pour lireMasques
+	const r197 = vm.runInContext(`(() => {
+		const clair = /\\b(merde|putain|connard|connasse|enculé|salope|bordel|foutre|fuck|shit|bastard|bitch|asshole|crap|damn)\\b/i;
+		const hors = /[@#$%&!?(§¤]{2,}/;
+		const out = { Structure: [], ordre: [], texteClash: null, sansVar: null, rep: null, bonne: null, clash: null, reaction: null, commClash: null, relancePrivee: null, masques: null, enClair: [], commuCle: [] };
+		// structure : chaque plainte = 3 réponses, 1 bonne, 1 clash (réputation -8)
+		for (const p of Jeu.MESSAGES.plaintes) {
+			const clash = p.reponses.filter((r) => r.clash);
+			if (p.reponses.length !== 3 || p.reponses.filter((r) => r.bonne).length !== 1 || clash.length !== 1 || Number((clash[0].effets || {}).reputation) > -8 || clash[0].bonne === true) out.Structure.push(p.id);
+		}
+		// ordre mélangé : permutation déterministe de [0,1,2], au moins 2 ordres distincts sur une semaine
+		Jeu.chargerSemaine('2026-10-12'); Jeu.nouvellePartie(); Jeu.modificateur = null;
+		const vus = new Set();
+		Jeu.paquet.forEach((d, i) => {
+			const plainte = { id: 'retard_10', def: Jeu.MESSAGES.plaintes.find((x) => x.id === 'retard_10'), vars: { ligne: '1', retard: 12 }, index: i, heure: '8 h 00', auteur: '@usager_44', reponse: null };
+			const o1 = Jeu.ordreReponses(plainte); const o2 = Jeu.ordreReponses(plainte);
+			if (JSON.stringify(o1) !== JSON.stringify(o2) || o1.slice().sort().join('') !== '012') out.ordre.push(i);
+			vus.add(o1.join(''));
+		});
+		out.nbOrdres = vus.size;
+		// texte du clash : masque hors alphabet, aucune variable restante
+		const pl0 = { id: 'retard_10', def: Jeu.MESSAGES.plaintes.find((x) => x.id === 'retard_10'), vars: { ligne: '1', retard: 12 }, index: 0, heure: '8 h 00', auteur: '@usager_44', reponse: null };
+		const rClash = pl0.def.reponses.find((r) => r.clash);
+		out.texteClash = Jeu.texteReponse(pl0, rClash);
+		out.sansVar = /\\{\\w+\\}/.test(out.texteClash);
+		if (clair.test(out.texteClash)) out.enClair.push('texteClash');
+		if (!hors.test(out.texteClash)) out.enClair.push('texteClash:sansMasque');
+		// répondre le clash : index affiché → réel, clash true, bonne false, réputation -8, commentaire de connard
+		const ordre = Jeu.ordreReponses(pl0); const iAff = ordre.indexOf(pl0.def.reponses.indexOf(rClash));
+		const avant = Jeu.jauges.reputation; const commAvant = Jeu.commentaires.length; const nonLusAvant = Jeu.nonLus.community;
+		const res = Jeu.repondrePlainte(pl0, iAff, undefined);
+		out.clash = res && res.clash; out.bonne = res && res.bonne; out.rep = res ? res.effets.reputation : null;
+		out.repJauge = Math.round(Jeu.jauges.reputation - avant);
+		out.reponseStockee = pl0.reponse === pl0.def.reponses.indexOf(rClash);
+		out.reaction = res && res.reaction;
+		out.commClash = Jeu.commentaires.length - commAvant; // 1 = sa propre réponse + 1 = la réaction de connard
+		const dernier = Jeu.commentaires[Jeu.commentaires.length - 1];
+		out.dernierAuteur = dernier && dernier.auteur; out.dernierDelta = dernier && dernier.delta;
+		if (dernier && clair.test(String(dernier.texte))) out.enClair.push('reaction');
+		if (dernier && !hors.test(String(dernier.texte))) out.enClair.push('reaction:sansMasque');
+		out.nonLus = Jeu.nonLus.community - nonLusAvant;
+		// plainte privée : la réaction de connard part en relance privée
+		const defPrive = Jeu.MESSAGES.plaintes.find((x) => x.prive);
+		const plP = { id: defPrive.id, def: defPrive, vars: { nature: 'incident' }, index: 2, heure: '8 h 05', auteur: '@usager_9', reponse: null };
+		const rC2 = plP.def.reponses.find((r) => r.clash);
+		const resP = Jeu.repondrePlainte(plP, Jeu.ordreReponses(plP).indexOf(plP.def.reponses.indexOf(rC2)), undefined);
+		out.relancePrivee = resP && resP.clash && (plP.relances || []).length === 1 && hors.test(String(plP.relances[0].texte));
+		// lecture : masques hors alphabet lus « mot masqué »
+		out.masques = typeof lireMasques === 'function' ? lireMasques(out.texteClash + ' §¤') : null;
+		// clés i18n : commu.reactionClash FR + EN
+		out.commuCle = ['fr', 'en'].filter((lg) => TRADUCTIONS[lg]['commu.reactionClash'] === undefined);
+		return out;
+	})()`, c197);
+	verifier(!r197.Structure.length, `197 : plaintes sans trio bonne/autre/clash(-8) : ${JSON.stringify(r197.Structure.slice(0, 6))}`);
+	verifier(!r197.ordre.length && r197.nbOrdres >= 2, `197 : ordre des réponses non mélangé/déterministe : ${JSON.stringify(r197.ordre.slice(0, 4))}, ordres vus = ${r197.nbOrdres}`);
+	verifier(!!r197.texteClash && !r197.sansVar && /[@#$%&!?(§¤]{2,}/.test(r197.texteClash), `197 : texte du clash sans masque ou avec variable : ${r197.texteClash}`);
+	verifier(r197.clash === true && r197.bonne === false && r197.rep <= -8 && r197.reponseStockee, `197 : réponse clash (clash=${r197.clash}, bonne=${r197.bonne}, rep=${r197.rep}, stockée=${r197.reponseStockee})`);
+	verifier(r197.repJauge <= -8, `197 : malus de réputation appliqué au clash : ${r197.repJauge}`);
+	verifier(!!r197.reaction && !/\{\w+\}/.test(r197.reaction) && r197.commClash === 2 && r197.dernierAuteur === '@usager_44' && r197.dernierDelta === -3 && r197.nonLus === 1, `197 : réaction de connard (${JSON.stringify({ reaction: r197.reaction, comm: r197.commClash, auteur: r197.dernierAuteur, delta: r197.dernierDelta, nonLus: r197.nonLus })})`);
+	verifier(r197.relancePrivee === true, '197 : clash en privé → relance privée méchante');
+	verifier(/mot masqué/.test(String(r197.masques)) && !/[@#$%&!?(§¤]{2,}/.test(String(r197.masques)), `197 : lireMasques sur le clash Community : ${r197.masques}`);
+	verifier(!r197.enClair.length && !r197.commuCle.length, `197 : mot grossier en clair ou clé manquante : ${JSON.stringify(r197.enClair)} ${JSON.stringify(r197.commuCle)}`);
 }
 
 // Prompt 119 : incidents inventés — au plus un par semaine, marqués fictifs, sur une ligne réelle, catégorie « securite »,
