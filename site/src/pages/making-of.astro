@@ -42,6 +42,7 @@ const description = `Les ${prompts.length} prompts qui ont construit l'œuvre, d
 		<link rel="icon" href="/favicon.ico" sizes="48x48" />
 		<link rel="canonical" href="https://workshop-design-interactions.pages.dev/making-of/" />
 		<meta name="theme-color" content="#0d0c0c" />
+		<link rel="stylesheet" href="/fonts.css" />
 		<meta property="og:type" content="article" />
 		<meta property="og:title" content={titre} />
 		<meta property="og:description" content={description} />
@@ -50,16 +51,17 @@ const description = `Les ${prompts.length} prompts qui ont construit l'œuvre, d
 		<style>
 			:root { color-scheme: light; --texte: #000000; --fond: #ffffff; --lien: #005ae1; --trait: #5c5c5c; }
 			* { box-sizing: border-box; }
-			body { margin: 0; background: var(--fond); color: var(--texte); font: 1.0625rem/1.55 system-ui, sans-serif; }
+			body { margin: 0; background: var(--fond); color: var(--texte); font: 1.0625rem/1.55 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace; } /* Pixel DS §1.3 */
 			main { max-width: 52rem; margin: 0 auto; padding: 2rem 1rem 4rem; }
 			a { color: var(--lien); }
 			a:focus-visible { outline: 3px solid var(--texte); outline-offset: 2px; }
+			h1, h2 { font-family: 'Bitsy Pixels', 'JetBrains Mono', ui-monospace, monospace; } /* Pixel DS §1.3 : titres en Bitsy Pixels */
 			h1 { font-size: 1.75rem; line-height: 1.2; }
 			h2 { font-size: 1.375rem; border-top: 2px solid var(--texte); padding-top: 1rem; margin-top: 2.5rem; }
 			nav ol { display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; padding: 0; list-style: none; }
 			ol.prompts { padding: 0; list-style: none; }
 			ol.prompts li { display: grid; grid-template-columns: 3rem 1fr; gap: .25rem 1rem; padding: .75rem 0; border-bottom: 1px solid #d6d6d6; }
-			.n { font-family: ui-monospace, monospace; font-weight: 700; }
+			.n { font-family: 'JetBrains Mono', ui-monospace, monospace; font-weight: 700; }
 			.statut { font-size: .9375rem; color: var(--trait); }
 			code { font-size: .9em; overflow-wrap: anywhere; }
 			@media (max-width: 30rem) { ol.prompts li { grid-template-columns: 1fr; } }

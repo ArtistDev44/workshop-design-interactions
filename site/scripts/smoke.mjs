@@ -93,6 +93,12 @@ for (const f of sources) {
 	else ok();
 }
 
+// 3 ter. Polices du Pixel DS auto-hébergées (prompt 100) : fonts.css lié par le jeu, fichiers référencés présents
+{
+	const css = readFileSync(join(pub, 'fonts.css'), 'utf8');
+	/href="\.\/fonts\.css"/.test(readFileSync(join(pub, 'index.html'), 'utf8')) ? ok() : echec('index.html : fonts.css non lié');
+	for (const [, f] of css.matchAll(/url\('\.\/(fonts\/[^']+)'\)/g)) f.includes('BitsyPixels') || existsSync(join(pub, f)) ? ok() : echec(`fonts.css : ${f} absent`);
+}
 // 3 bis. Webapp installable (prompt 65) : manifest complet, icônes présentes, précache couvrant tout public/
 {
 	let m = null;

@@ -27,7 +27,7 @@ const C = {
 	bord: 'rgba(255,255,255,0.15)',
 	piste: 'rgba(255,255,255,0.15)', // fond des barres de progression
 };
-// Polices : Inter / IBM Plex Mono si installées, sinon une police système équivalente (aucun téléchargement).
+// Polices : JetBrains Mono en webfont auto-hébergée (fonts.css) ou installée, sinon une police système équivalente.
 // p5 entoure le nom de guillemets : on lui passe donc UN seul nom, celui de la première police réellement installée.
 function policeInstallee(candidats, generique) {
 	const ctx = document.createElement('canvas').getContext('2d');
@@ -35,8 +35,15 @@ function policeInstallee(candidats, generique) {
 	const ref = mesure(generique);
 	return candidats.find((n) => mesure('"' + n + '", ' + generique) !== ref) || candidats[candidats.length - 1];
 }
-const POLICE_TEXTE = policeInstallee(['JetBrains Mono', 'IBM Plex Mono', 'Menlo', 'Consolas', 'DejaVu Sans Mono', 'Courier New'], 'serif'); // prompt 39 : paragraphes en JetBrains Mono
-const POLICE_DONNEES = POLICE_TEXTE;
+let POLICE_TEXTE = policeInstallee(['JetBrains Mono', 'IBM Plex Mono', 'Menlo', 'Consolas', 'DejaVu Sans Mono', 'Courier New'], 'serif'); // prompt 39 : paragraphes en JetBrains Mono
+let POLICE_DONNEES = POLICE_TEXTE;
+// La webfont (fonts.css) peut arriver après le premier parse : re-détection une fois les polices chargées
+if (document.fonts && document.fonts.ready) {
+	document.fonts.ready.then(() => {
+		POLICE_TEXTE = policeInstallee(['JetBrains Mono', 'IBM Plex Mono', 'Menlo', 'Consolas', 'DejaVu Sans Mono', 'Courier New'], 'serif');
+		POLICE_DONNEES = POLICE_TEXTE;
+	});
+}
 
 const reduireAnimationsSysteme = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 let reduireAnimations = reduireAnimationsSysteme;
