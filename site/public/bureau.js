@@ -1186,8 +1186,8 @@ function sAsseoir() {
 function seLever() {
 	if (vue !== 'poste' || clignement) return;
 	focusQuitter = false;
-	if (typeof focusDemarrer !== 'undefined') focusDemarrer = false; // prompt 75
-	if (typeof PC !== 'undefined') PC.fenetre = null; // prompt 22 : se lever referme l'app ouverte
+	if (typeof MENU_FOCUS !== 'undefined') MENU_FOCUS.actif = false;
+	if (typeof PC !== 'undefined' && (PC.etat === 'os' || PC.etat === 'appli')) versAppliPrincipale(); // prompt 22 : se lever referme l'app ouverte ; prompt 183 : on retrouvera la carte
 	clignement = { debut: millis(), sens: 'arriere', bascule: false }; // la vue bascule à mi-clignement
 	Confort.Son.bip('choix');
 }

@@ -74,20 +74,20 @@ const ETAPES_GUIDE = [
 	{ id: 'installer', cible: () => 'ecranPC', fait: () => vue === 'poste', issue: guideAuPoste },
 	// Prompt 161 : validée seulement après lecture effective de la bulle des jauges (seuils 120 / 90 du patron), plus à
 	// l'arrivée du premier signalement — qui précédait presque toujours l'arrivée au poste
-	{ id: 'jauges', cible: () => (vue === 'poste' && PC.etat === 'appli' ? 'jauges' : vue === 'poste' ? 'iconeSignalements' : 'ecranPC'), fait: () => GUIDE.vu > (typeof EXPO !== 'undefined' && EXPO.actif ? 3000 : 8000), lecture: true, issue: guideAuPoste },
+	{ id: 'jauges', cible: () => (vue === 'poste' ? 'jauges' : 'ecranPC'), fait: () => GUIDE.vu > (typeof EXPO !== 'undefined' && EXPO.actif ? 3000 : 8000), lecture: true, issue: guideAuPoste },
 	// Prompt 78 : la somnolence et le compromis de la sieste (validée en se reposant, ou après 10 s de lecture)
-	{ id: 'somnolence', cible: () => (vue === 'poste' && PC.etat === 'appli' ? 'somnolence' : vue === 'poste' ? 'iconeSignalements' : 'ecranPC'), fait: () => enSieste || (vue === 'poste' && PC.etat === 'appli' && millis() - GUIDE.debutEtape > (typeof EXPO !== 'undefined' && EXPO.actif ? 3000 : 10000)), lecture: true, issue: guideAuPoste, touches: () => key === 'z' || key === 'Z' },
+	{ id: 'somnolence', cible: () => (vue === 'poste' ? 'somnolence' : 'ecranPC'), fait: () => enSieste || (vue === 'poste' && PC.etat === 'appli' && millis() - GUIDE.debutEtape > (typeof EXPO !== 'undefined' && EXPO.actif ? 3000 : 10000)), lecture: true, issue: guideAuPoste, touches: () => key === 'z' || key === 'Z' },
 	// Prompt 66 : étape dédiée au signalement (prendre le dossier lance le compteur)
-	{ id: 'prendre', cible: () => (vue === 'poste' && PC.etat === 'appli' ? 'fileSignalements' : vue === 'poste' ? 'iconeSignalements' : 'ecranPC'), fait: () => PHASES_DOSSIER.includes(phase) || phase === 'narration' || (Jeu.historique || []).length > 0, issue: guideAuPoste, attendre: () => vue === 'poste' && PC.etat === 'appli' && !fileIncidents().length, touches: () => [UP_ARROW, DOWN_ARROW, ENTER, RETURN].includes(keyCode) || key === ' ' },
-	{ id: 'actions', cible: () => (vue === 'poste' && PC.etat === 'appli' ? 'actions' : vue === 'poste' ? 'iconeSignalements' : 'ecranPC'), fait: () => (Jeu.historique || []).length > 0 || phase === 'narration', issue: guideAuPoste, touches: () => ['1', '2', '3', '4', 'a', 'A', 'b', 'B'].includes(key) || [UP_ARROW, DOWN_ARROW, ENTER, RETURN].includes(keyCode) },
-	{ id: 'apps', cible: () => (vue !== 'poste' ? 'ecranPC' : 'iconesOS'), fait: () => PC.etat === 'os' && (!!PC.fenetre || PC.flottant), issue: guideAuPoste }, // prompt 103 : les autres applis sont dans le menu à gauche
+	{ id: 'prendre', cible: () => (vue === 'poste' ? 'fileSignalements' : 'ecranPC'), fait: () => PHASES_DOSSIER.includes(phase) || phase === 'narration' || (Jeu.historique || []).length > 0, issue: guideAuPoste, attendre: () => vue === 'poste' && PC.etat === 'appli' && !fileIncidents().length, touches: () => [UP_ARROW, DOWN_ARROW, ENTER, RETURN].includes(keyCode) || key === ' ' },
+	{ id: 'actions', cible: () => (vue === 'poste' ? 'actions' : 'ecranPC'), fait: () => (Jeu.historique || []).length > 0 || phase === 'narration', issue: guideAuPoste, touches: () => ['1', '2', '3', '4', 'a', 'A', 'b', 'B'].includes(key) || [UP_ARROW, DOWN_ARROW, ENTER, RETURN].includes(keyCode) },
+	{ id: 'apps', cible: () => (vue !== 'poste' ? 'ecranPC' : 'iconesOS'), fait: () => vue === 'poste' && ((PC.etat === 'os' && !!PC.fenetre) || PC.flottant), issue: guideAuPoste }, // prompt 103 : les autres applis sont dans le menu à gauche
 	{ id: 'quitter', cible: () => 'quitterPC', fait: () => vue === 'bureau', issue: guideAuBureau },
 	{ id: 'livre', cible: () => 'livreAide', fait: () => !!tutoriel || fenetre === 'aide' || (typeof PIECE !== 'undefined' && !!PIECE.message), issue: guideAuBureau, touches: () => key === 'h' || key === 'H' || key === '?' },
 ];
-/** Issues : la vue où se trouve la cible. S'asseoir et rouvrir l'appli principale, ou se lever. */
+/** Issues : la vue où se trouve la cible. S'asseoir et revenir à l'appli principale (prompt 183 : plus de bureau d'icônes), ou se lever. */
 function guideAuPoste() {
 	if (vue === 'bureau') return sAsseoir();
-	if (vue === 'poste' && PC.etat === 'os') (PC.fenetre = null), (PC.etat = 'appli');
+	if (vue === 'poste' && PC.etat === 'os') versAppliPrincipale(); // une autre appli est ouverte : retour à la carte
 }
 function guideAuBureau() {
 	if (vue === 'poste') seLever();
@@ -122,8 +122,7 @@ function texteEtapeGuide(e) {
 	const c = e.cible();
 	if (e.attendre && e.attendre()) return t('guide.attente'); // prompt 181 : rien à faire, le signalement arrive
 	if (c === 'ecranPC' && e.id !== 'installer' && e.id !== 'apps') return t('guide.retourPC');
-	if (c === 'iconeSignalements') return t('guide.ouvrirSignalements');
-	if (e.id === 'apps') return t(c === 'fermerAppli' ? 'guide.apps.fermer' : c === 'ecranPC' ? 'guide.retourPC' : 'guide.apps.ouvrir');
+	if (e.id === 'apps') return t(c === 'ecranPC' ? 'guide.retourPC' : 'guide.apps.ouvrir');
 	return t('guide.' + e.id + (e.id === 'somnolence' && Jeu.defiChrono ? 'Chrono' : ''), { x: IMMERSION.compression }); // prompt 77 : « ×100 » suit la valeur réelle ; prompt 161 : règle du mode joué
 }
 function etapeGuideSuivante() {
@@ -185,7 +184,6 @@ const focusGuide = () => {
 /** Entrée / Espace sur la cible focalisée : le geste de la cible, par nom de cible */
 const ACTIONS_CIBLE_GUIDE = {
 	ecranPC: () => sAsseoir(),
-	iconeSignalements: () => guideAuPoste(),
 	quitterPC: () => quitterPC(),
 	livreAide: () => ouvrirObjetBureau('aide'),
 	iconesOS: () => {

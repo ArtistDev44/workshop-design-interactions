@@ -9,13 +9,13 @@
  *   l'entrée active ; plus aucune carte de notification à l'écran.
  * - Mobile portrait : le menu devient une barre d'onglets en bas (dessinée sous le contenu, y 1036).
  */
-const VUES_APP = ['patron', 'community', 'journal', 'donnees'];
+const VUES_APP = ['patron', 'community', 'journal', 'donnees', 'corbeille']; // prompt 183 : la Corbeille (hors menu depuis le prompt 103) se dessine aussi en vue intégrée
 const ENTREES_MENU = ['signalements', 'patron', 'community', 'journal', 'donnees'];
 const ZONE_VUE = { x: 184, y: 92, l: 1696, h: 940 }; // prompt 145
 const MENU_FOCUS = { actif: false }; // Tab dans le menu (Entrée ouvre l'entrée focalisée)
 const MENU_BAS = { x: 40, y: 1036, l: 1840, h: 40 }; // portrait : barre d'onglets
 
-/** Une vue intégrée est affichée (au lieu d'une fenêtre posée sur le bureau) */
+/** Une vue intégrée est affichée (une autre appli, dans l'appli principale) */
 function vueIntegree() {
 	return typeof ecran !== 'undefined' && ecran === 'jeu' && VUES_APP.includes(PC.fenetre) && (PC.etat === 'os' || PC.etat === 'appli') && typeof phase !== 'undefined' && phase !== 'fin';
 }
@@ -60,7 +60,7 @@ function dessinerMenuApp() {
 			if (verrou && typeof voileVerrou === 'function') voileVerrou(cle, r.x, r.y, r.l, r.h);
 		}
 		// Focus clavier (Tab dans le menu, prompt 103) : double bordure du DS
-		if (PC.etat === 'os' && PC.selection === i && vueIntegree() && MENU_FOCUS.actif) {
+		if (PC.selection === i && MENU_FOCUS.actif && vue === 'poste') {
 			noFill();
 			stroke(DS.blanc);
 			strokeWeight(2);
@@ -88,12 +88,24 @@ function ouvrirEntreeMenu(cle) {
 	if (i < 0) return;
 	if (cle !== 'signalements' && !appliDebloquee(cle)) return refuserAppliVerrouillee(cle);
 	if (entreeActive() === cle) return;
-	if (cle === 'signalements') {
-		PC.fenetre = null;
-		PC.etat = 'appli';
-		Confort.Son.bip('choix');
-	} else ouvrirIconeOS(i);
+	ouvrirIconeOS(i); // « signalements » : retour à l'appli principale (carte)
 	annoncer(t('menuApp.annonce', { vue: cle === 'signalements' ? t('menuApp.carte') : t('menuApp.' + cle) }));
+}
+
+/** Prompt 183 — Tab au poste : aucun focus → entrées du menu (sauf l'entrée affichée) → « Quitter le PC » → aucun
+ * focus ; Maj + Tab dans l'autre sens. Entrée / Espace ouvre l'entrée focalisée (sketch.js). */
+function tabMenuApp() {
+	const recul = keyIsDown(SHIFT);
+	const arrets = ENTREES_MENU.map((cle) => ICONES_OS.findIndex((ic) => ic.cle === cle)).filter((i) => i >= 0 && ICONES_OS[i].cle !== entreeActive());
+	const tout = [null, ...arrets, 'quitter'];
+	const ici = focusQuitter ? tout.length - 1 : MENU_FOCUS.actif ? Math.max(0, tout.indexOf(PC.selection)) : 0;
+	const suivant = tout[(ici + (recul ? tout.length - 1 : 1)) % tout.length];
+	MENU_FOCUS.actif = typeof suivant === 'number';
+	if (focusQuitter !== (suivant === 'quitter')) basculerFocusQuitter(suivant === 'quitter');
+	if (MENU_FOCUS.actif) {
+		PC.selection = suivant;
+		annoncer(libelleEntreeMenu(ICONES_OS[suivant].cle)); // prompt 111 : libellé + badge
+	}
 }
 
 /** Contenu de la vue intégrée, à droite du menu et sous le bandeau */
@@ -109,4 +121,5 @@ function dessinerVueApp() {
 	else if (PC.fenetre === 'community') appCommunity(z);
 	else if (PC.fenetre === 'journal') appJournal(z);
 	else if (PC.fenetre === 'donnees') dessinerAppliDonnees(z);
+	else if (PC.fenetre === 'corbeille') appCorbeille(z);
 }

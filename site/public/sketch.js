@@ -193,7 +193,6 @@ function draw() {
 	verifierMecaniques(); // prompt 47 : inspection surprise (avant l'horloge, qui s'arrête alors)
 	verifierTaches(); // prompt 88 : briefing du matin, tâches courtes
 	majAmbianceTaches(); // prompt 88 : humeur musicale de la crise
-	verifierDeblocages(); // prompt 91 § 2 (option) : carte d'intro d'une appli débloquée
 	majSeuilSomnolence(); // prompt 91 § 5 (option)
 	majMultitache(); // prompts 68 / 77 : arrivées, compteurs des signalements actifs, expirations en arrière-plan
 	majNotifsTel(); // prompt 90 : notifications spontanées du téléphone (aucun appel réseau ici)
@@ -421,7 +420,7 @@ function fermer() {
 // FENETRES_BLOQUANTES : elles exigent une réponse (décision, confirmation, bilan à lire, animation) et ne se ferment
 // JAMAIS au clic sur le fond. FERMETURE_FOND : ce que fait Échap dans chaque fenêtre qui se ferme ainsi.
 // Une fenêtre absente des deux listes est traitée comme bloquante.
-const FENETRES_BLOQUANTES = ['reset', 'demission', 'partir', 'blame', 'inspection', 'tache', 'mailFin', 'rapport', 'rapportVeille', 'deblocage', 'poste', 'cafe'];
+const FENETRES_BLOQUANTES = ['reset', 'demission', 'partir', 'blame', 'inspection', 'tache', 'mailFin', 'rapport', 'rapportVeille', 'poste', 'cafe'];
 const FERMETURE_FOND = {
 	aide: fermer,
 	parametres: fermer,
@@ -833,9 +832,8 @@ function dessinerNarration() {
 		fill(couleurTon);
 		rect(z.x + 32, z.y + z.h - 140, (z.l - 64) * tA, 6, 3);
 	}
-	const lb = (z.l - 64 - 16) * 0.68;
-	bouton(z.x + 32, z.y + z.h - 112, lb, 72, t(Jeu.terminee ? 'narration.bilan' : 'narration.suivant'), continuer);
-	bouton(z.x + 48 + lb, z.y + z.h - 112, z.l - 64 - 16 - lb, 72, t(enPause ? 'pause.reprendre' : 'pause.pause'), basculerPause, false, true);
+	// Prompt 183 : plus de bouton « Pause » dans l'appli (la touche P et le menu du jeu restent)
+	bouton(z.x + 32, z.y + z.h - 112, z.l - 64, 72, t(Jeu.terminee ? 'narration.bilan' : 'narration.suivant'), continuer);
 	if (auto && tA >= 1 && !enPause && !fenetre) continuer();
 }
 
@@ -1199,7 +1197,7 @@ function keyPressed() {
 	// Langue (prompt 24) : L bascule partout, sans toucher à la partie
 	if (key === 'l' || key === 'L') return Langue.suivante(), false;
 	// Prompt 47 : inspection, démission, palmarès ; J = journal de bord, D = rendre son badge
-	if (toucheDeblocage() || toucheParametres() || toucheTelephone() || toucheTaches() || toucheMecaniques() || toucheJournee()) return false; // prompts 47 et 51 ; prompt 175 : la fenêtre des paramètres capte le clavier (Tab, flèches, Entrée, Espace)
+	if (toucheParametres() || toucheTelephone() || toucheTaches() || toucheMecaniques() || toucheJournee()) return false; // prompts 47 et 51 ; prompt 175 : la fenêtre des paramètres capte le clavier (Tab, flèches, Entrée, Espace)
 	if (appliInteractive() && typeof toucheCarte === 'function' && toucheCarte()) return false; // prompt 102 : Échap annule un jeton d'équipe choisi ; prompt 182 : raccourcis de l'appli seulement au poste
 	// Fenêtres ouvertes : elles captent le clavier
 	if (fenetre) {
@@ -1250,25 +1248,25 @@ function keyPressed() {
 	if (key === 'i' || key === 'I') return basculerIndicateurs(), false;
 	// Prompt 101 (D2) : V déplie / replie les détails des Indicateurs (le Journal et le Patron gardent leur V quand ils sont ouverts)
 	if ((key === 'v' || key === 'V') && PC.flottant && PC.fenetre !== 'journal' && PC.fenetre !== 'patron') return basculerDetailsIndicateurs(), false;
-	// Prompt 91 § 1 : une fenêtre RégulOS ouverte par-dessus l'appli de jeu reçoit les touches d'abord (Échap la ferme)
-	if (PC.fenetre && PC.etat === 'appli') PC.etat = 'os';
-	// Au poste, système du PC (bureau RégulOS) : Tab = icônes, Entrée = ouvrir, Échap = fermer l'app puis se lever
+	// Prompt 183 : plus de bureau d'icônes — au poste, PC.etat vaut 'appli' (carte) ou 'os' (une autre appli en vue
+	// intégrée, PC.fenetre) ; éteint ou en démarrage, seul « Quitter le PC » répond
+	if (PC.fenetre && PC.etat === 'appli') PC.etat = 'os'; // prompt 91 § 1 : la vue ouverte reçoit les touches d'abord
+	if (PC.etat === 'os' && !PC.fenetre) versAppliPrincipale();
 	if (PC.etat !== 'appli') {
 		if (PC.etat === 'os' && typeof toucheJournal === 'function' && toucheJournal()) return false; // prompt 89 : jours, filtres, cartes, enquête (Échap revient)
-		if (keyCode === ESCAPE) return (depilerNavigation() || (PC.fenetre ? fermerFenetreApp() : quitterPC())), false; // prompt 91 § 3 : Échap revient d'abord à l'écran d'origine ; prompt 182 : sortie par quitterPC (retenue si un choix attend)
+		if (keyCode === ESCAPE) return (depilerNavigation() || (PC.etat === 'os' ? fermerFenetreApp() : quitterPC())), false; // prompt 91 § 3 : Échap revient d'abord à l'écran d'origine, puis à la carte (prompt 183) ; prompt 182 : sortie par quitterPC
 		if (focusQuitter && (keyCode === ENTER || keyCode === RETURN || key === ' ')) return quitterPC(), false; // prompt 26
-		if (focusDemarrer && (keyCode === ENTER || keyCode === RETURN || key === ' ')) return basculerFocusDemarrer(false), retourAccueilPC(), false; // prompt 75
 		if (PC.etat !== 'os') {
 			if (keyCode === TAB) basculerFocusQuitter(!focusQuitter);
 			return false;
 		}
-		// Prompt 28 : plainte en attente dans l'app Community — Tab parcourt les réponses, Entrée / 1-2-3 répond
 		// Prompt 103 : le menu a le focus (Tab) → Entrée ouvre l'entrée choisie avant les raccourcis de la vue
-		if (typeof MENU_FOCUS !== 'undefined' && MENU_FOCUS.actif && (keyCode === ENTER || keyCode === RETURN || key === ' ') && vueIntegree()) return (MENU_FOCUS.actif = false), ouvrirEntreeMenu(ICONES_OS[PC.selection].cle), false;
+		if (MENU_FOCUS.actif && (keyCode === ENTER || keyCode === RETURN || key === ' ')) return ouvrirEntreeMenu(ICONES_OS[PC.selection].cle), false;
 		if (ecran === 'jeu' && toucheCommunity()) return false; // prompt 85 : onglets, défilement, publication
 		if (ecran === 'jeu' && touchePatron()) return false; // prompt 86 : filtres, défilement, réponses rapides
+		// Prompt 28 : plainte en attente dans l'app Community — Tab parcourt les réponses, Entrée / 1-2-3 répond
 		const plainte = PC.fenetre === 'community' && ecran === 'jeu' ? cibleCommunity() : null;
-		if (plainte && !focusQuitter && !focusDemarrer) {
+		if (plainte && !focusQuitter) {
 			const n = plainte.def.reponses.length;
 			if (keyCode === TAB) {
 				focusReponse = (focusReponse + (keyIsDown(SHIFT) ? n - 1 : 1)) % n;
@@ -1278,44 +1276,20 @@ function keyPressed() {
 			if (keyCode === ENTER || keyCode === RETURN || key === ' ') return repondrePlainte(focusReponse), false;
 			if (Number(key) >= 1 && Number(key) <= n) return repondrePlainte(Number(key) - 1), false;
 		}
-		if (keyCode === TAB) {
-			// Prompt 26 : le cycle Tab passe par les icônes, le bouton « Quitter le PC », puis (prompt 75) le logo
-			// en bas à gauche de la barre des tâches (accueil de RégulOS)
-			const n = ecran === 'jeu' && !(typeof vueIntegree === 'function' && vueIntegree()) ? 1 : ICONES_OS.length; // prompt 103 : bureau = une icône ; dans l'appli, Tab parcourt le menu
-			const recul = keyIsDown(SHIFT);
-			if (typeof MENU_FOCUS !== 'undefined') MENU_FOCUS.actif = typeof vueIntegree === 'function' && vueIntegree(); // prompt 103
-			if (focusQuitter) {
-				basculerFocusQuitter(false);
-				if (recul) PC.selection = n - 1;
-				else basculerFocusDemarrer(true);
-			} else if (focusDemarrer) {
-				basculerFocusDemarrer(false);
-				if (recul) basculerFocusQuitter(true);
-				else PC.selection = 0;
-			} else if (!recul && PC.selection === n - 1) basculerFocusQuitter(true);
-			else if (recul && PC.selection === 0) basculerFocusDemarrer(true);
-			else PC.selection = (PC.selection + (recul ? n - 1 : 1)) % n;
-			if (typeof MENU_FOCUS !== 'undefined' && MENU_FOCUS.actif && !focusQuitter && !focusDemarrer && typeof libelleEntreeMenu === 'function') annoncer(libelleEntreeMenu(ICONES_OS[PC.selection].cle)); // prompt 111 : libellé + badge
-			return false;
-		}
-		if (keyCode === ENTER || keyCode === RETURN || (key === ' ' && !PC.fenetre)) ouvrirIconeOS(PC.selection);
-		if (phase === 'mail' && PC.fenetre === null && (keyCode === ENTER || keyCode === RETURN)) return false;
+		if (keyCode === TAB) return tabMenuApp(), false; // prompts 26 / 103 : entrées du menu, puis « Quitter le PC »
 		return false;
 	}
 	// Au poste : Échap fait se lever (sauf à l'écran de fin)
 	if (keyCode === ESCAPE && !(ecran === 'jeu' && phase === 'fin')) return (depilerNavigation() || quitterPC()), false; // prompt 91 § 3 ; prompt 182 : sortie retenue si un choix attend
+	// Prompt 183 : le menu de l'appli a le focus (Tab) → Entrée / Espace ouvre l'appli choisie
+	if (MENU_FOCUS.actif && ecran === 'jeu' && (keyCode === ENTER || keyCode === RETURN || key === ' ')) return ouvrirEntreeMenu(ICONES_OS[PC.selection].cle), false;
 	// Prompt 72 : réponses d'une alerte — ↑ ↓ / Tab les parcourent, Entrée valide (le focus « Quitter le PC » d'abord s'il est pris)
-	if (!focusQuitter && !focusDemarrer && ecran === 'jeu' && toucheSourcesEnquete()) return false; // prompt 92 : Tab / Entrée / ↑ ↓ dans les sources d'« En savoir plus »
-	if (!focusQuitter && !focusDemarrer && ecran === 'jeu' && toucheMultitache()) return false; // prompt 77 : Tab passe d'un signalement actif à l'autre
-	// Prompt 26 : Tab place le focus sur « Quitter le PC », puis (prompt 75) sur le logo de la barre des tâches, puis l'en retire
-	if (keyCode === TAB) {
-		if (focusQuitter) basculerFocusQuitter(false), basculerFocusDemarrer(true);
-		else if (focusDemarrer) basculerFocusDemarrer(false);
-		else basculerFocusQuitter(true);
-		return false;
-	}
+	if (!focusQuitter && !MENU_FOCUS.actif && ecran === 'jeu' && toucheSourcesEnquete()) return false; // prompt 92 : Tab / Entrée / ↑ ↓ dans les sources d'« En savoir plus »
+	if (!focusQuitter && !MENU_FOCUS.actif && ecran === 'jeu' && toucheMultitache()) return false; // prompt 77 : Tab passe d'un signalement actif à l'autre
+	// Prompt 26 : Tab place le focus sur « Quitter le PC » ; prompt 183 : il passe d'abord par le menu de l'appli
+	// (Patron, Community, Journal, Données) — seul chemin au clavier vers les autres applis depuis la carte
+	if (keyCode === TAB) return ecran === 'jeu' && phase !== 'fin' ? tabMenuApp() : basculerFocusQuitter(!focusQuitter), false;
 	if (focusQuitter && (keyCode === ENTER || keyCode === RETURN || key === ' ')) return quitterPC(), false;
-	if (focusDemarrer && (keyCode === ENTER || keyCode === RETURN || key === ' ')) return basculerFocusDemarrer(false), retourAccueilPC(), false; // prompt 75
 	if (phase === 'mail' && (keyCode === ENTER || keyCode === RETURN)) return rangerPoste(), false; // prompt 69 : on range le poste, la nuit tombe
 	// Touches valables partout
 	if (key === 'h' || key === 'H' || key === '?') return ouvrir('aide'), false;
@@ -1422,7 +1396,6 @@ function contenuFenetre() {
 	if (fenetre === 'mailFin') return fenetreMailFin(); // prompt 56
 	if (fenetre === 'inspection') return fenetreInspection(); // prompt 47
 	if (fenetre === 'tache') return fenetreTache(); // prompt 88
-	if (fenetre === 'deblocage') return fenetreDeblocage(); // prompt 91
 	if (fenetre === 'demission') return fenetreDemission(); // prompt 47
 	if (fenetre === 'palmares') return fenetrePalmares(); // prompt 47
 	if (fenetre === 'partir') return fenetrePartir(); // prompt 51

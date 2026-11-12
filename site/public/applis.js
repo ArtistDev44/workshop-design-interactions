@@ -1,13 +1,12 @@
 /* Nantes en régulation — prompt 91 : applis reliées et déblocage par semaine.
  * § 2 (option du groupe, désactivée par défaut : Paramètres → Options de jeu) : semaine 1 = Signalements seule ;
  *     Community (et la Corbeille) en semaine 2, Messages en 3, Journal et Indicateurs en 4, Données en 5. Icônes
- *     verrouillées grisées avec cadenas, secousse et infobulle ; carte d'intro d'une phrase au déblocage (une fois).
+ *     verrouillées grisées avec cadenas, secousse et infobulle (prompt 183 : plus de fenêtre d'intro au déblocage).
  * § 3 : pile de navigation — chaque redirection (« Voir le dossier », « Publier sur Community », lien vers le Journal)
  *     empile l'écran d'origine ; Échap dépile et revient à l'écran précédent.
  */
 const PLANNING_APPLIS = { signalements: 1, community: 2, corbeille: 2, patron: 3, journal: 4, indicateurs: 4, donnees: 5 };
-const APPLIS = { tremble: null, introVues: null, pile: [] };
-const CLE_INTRO_APPLIS = 'pxe-nte001-applis-intro';
+const APPLIS = { tremble: null, pile: [] };
 
 /** Numéro de semaine du déblocage : chapitre du mode histoire (1 à 3) ; temps réel / hors ligne → 4, ou tout si l'option l'autorise */
 function semaineApplis() {
@@ -47,57 +46,6 @@ function dessinerBulleVerrou() {
 	if (b) infobulle(b.txt, b.x, b.y);
 }
 
-// ——— Carte d'intro au déblocage (une fois par appli, persisté) ———
-function introsApplis() {
-	if (!APPLIS.introVues) {
-		try {
-			APPLIS.introVues = JSON.parse(localStorage.getItem(CLE_INTRO_APPLIS) || '{}') || {};
-		} catch (e) {
-			APPLIS.introVues = {};
-		}
-	}
-	return APPLIS.introVues;
-}
-/** Au bureau RégulOS : une appli fraîchement débloquée (planning > 1) est présentée en une phrase */
-function verifierDeblocages() {
-	if (!Confort.Reglages.deblocageApplis || fenetre || ecran !== 'jeu' || vue !== 'poste' || PC.etat !== 'os') return;
-	const vues = introsApplis();
-	const neuve = Object.keys(PLANNING_APPLIS).find((cle) => PLANNING_APPLIS[cle] > 1 && cle !== 'corbeille' && appliDebloquee(cle) && !vues[cle]);
-	if (!neuve) return;
-	APPLIS.intro = neuve;
-	ouvrir('deblocage');
-	annoncer(t('applis.nouvelle', { appli: t('app.' + neuve) }) + ' ' + t('applis.intro.' + neuve));
-}
-function fermerIntroAppli() {
-	const vues = introsApplis();
-	vues[APPLIS.intro] = true;
-	try {
-		localStorage.setItem(CLE_INTRO_APPLIS, JSON.stringify(vues));
-	} catch (e) {}
-	fermer();
-}
-function fenetreDeblocage() {
-	const l = DS.fenetre.moyenne; // prompt 173 (était 1000)
-	const h = 420;
-	const x = (L - l) / 2;
-	const y = (H - h) / 2;
-	panneau(x, y, l, h, C.accent);
-	noStroke();
-	dsTitre(t('applis.nouvelle', { appli: t('app.' + APPLIS.intro) }).toUpperCase(), x + 48, y + 40, 32, C.texte, 'left');
-	textAlign(LEFT, TOP);
-	textFont(POLICE_TEXTE);
-	textSize(24);
-	textLeading(34);
-	fill(C.texte);
-	text(t('applis.intro.' + APPLIS.intro), x + 48, y + 120, l - 96, 160);
-	bouton(x + l - 48 - 300, y + h - 100, 300, 64, t('tache.continuer'), fermerIntroAppli);
-}
-function toucheDeblocage() {
-	if (fenetre !== 'deblocage') return false;
-	if (keyCode === ENTER || keyCode === RETURN || keyCode === ESCAPE) fermerIntroAppli();
-	return true;
-}
-
 // ——— § 3 : pile de navigation des redirections ———
 /** Écran courant (ce qu'on empile) */
 function ecranCourantPC() {
@@ -124,12 +72,12 @@ function redirigerVers(cle, prep) {
 function depilerNavigation() {
 	const o = APPLIS.pile.pop();
 	if (!o) return false;
-	PC.etat = o.etat;
+	PC.etat = o.fenetre ? 'os' : 'appli'; // prompt 183 : jamais de bureau d'icônes
 	PC.fenetre = o.fenetre;
 	if (o.journal && typeof JOURNAL !== 'undefined') Object.assign(JOURNAL, o.journal);
 	if (o.commu && typeof COMMU !== 'undefined') COMMU.onglet = o.commu;
 	Confort.Son.clic();
-	annoncer(t('applis.retour', { appli: t('app.' + (o.fenetre || (o.etat === 'appli' ? 'signalements' : 'bureau'))) }));
+	annoncer(t('applis.retour', { appli: t('app.' + (o.fenetre || 'signalements')) }));
 	return true;
 }
 /** « Voir le dossier » depuis n'importe quelle appli : Signalements, sur le dossier s'il est encore ouvert, sinon le Journal */

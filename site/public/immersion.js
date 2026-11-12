@@ -137,7 +137,7 @@ function demarrerJournee() {
 	interaction();
 	annoncerJournee(); // prompt 43 : écran noir « JOUR n — SEMAINE n »
 	demarrageDuJour(); // prompt 71 : le PC redémarre les 3 premiers jours
-	filDebutJournee(); // prompt 74 : objectif du jour et bilan de la veille, avant le premier signalement
+	filDebutJournee(); // prompt 74 : bilan de la veille, avant le premier signalement
 }
 
 // ——— Prompt 43 : transition entre journées — fond noir, « JOUR n — SEMAINE n » et la date, centrés ———
@@ -420,20 +420,8 @@ function dessinerAttente() {
 		textSize(22);
 		text(t('surv.sieste'), z.x + 32, z.y + 440);
 	}
-	// Prompt 74 : objectif du jour avec sa règle, puis le fil de la journée (objectif, bilan, liaisons, rythme)
-	const o = Jeu.objectifDuJour ? Jeu.objectifDuJour() : null;
-	if (o) {
-		fill(255, 255, 255, 13);
-		rect(z.x + 32, z.y + 484, z.l - 64, 92);
-		fill(C.accent);
-		rect(z.x + 32, z.y + 484, 4, 92);
-		textFont(POLICE_TEXTE);
-		textSize(19);
-		textLeading(26);
-		fill(C.texte);
-		text(t('fil.objectifRegle', { libelle: String(o.libelle), v: Math.round(Jeu.jauges[o.jauge]) }), z.x + 48, z.y + 494, z.l - 96, 78);
-	}
-	dessinerFil(z.x + 32, z.y + 598, z.l - 64, z.h - 618);
+	// Prompt 183 : plus de texte d'objectif dans l'appli (le bandeau le porte) ; le fil de la journée remonte
+	dessinerFil(z.x + 32, z.y + 484, z.l - 64, z.h - 504);
 }
 
 // ——— Mail de fin de journée (§ 6), affiché dans l'écran du PC ———
@@ -1054,11 +1042,9 @@ function ajouterFil(m, sorte) {
 	if (FIL.messages.length > 6) FIL.messages.shift();
 	annoncer(t(m.cle, m.vars));
 }
-/** Début de journée : objectif concret avec sa règle, et bilan de la veille (chiffres réels) */
+/** Début de journée : bilan de la veille (chiffres réels) */
 function filDebutJournee() {
-	const o = Jeu.objectifDuJour ? Jeu.objectifDuJour() : null;
-	if (o) ajouterFil({ cle: 'fil.objectif', vars: { libelle: String(o.libelle) } }, 'objectif');
-	ajouterFil(Rythme.bilanVeille(), 'veille');
+	ajouterFil(Rythme.bilanVeille(), 'veille'); // prompt 183 : l'objectif du jour n'est plus répété ici (bandeau)
 }
 /** Après chaque décision : texte de liaison (après la narration) */
 function filApresDecision() {
@@ -1095,7 +1081,7 @@ function verifierSerie() {
 }
 /** Fil de la journée, dans le panneau d'attente : objectif, bilan, liaisons, rythme, séries (les plus récents en bas) */
 function dessinerFil(x, y, l, h) {
-	const couleurs = { objectif: C.accent, veille: C.gris, liaison: C.texte, rythme: C.orange, bravo: C.vert, courage: C.orange, info: C.texte };
+	const couleurs = { veille: C.gris, liaison: C.texte, rythme: C.orange, bravo: C.vert, courage: C.orange, info: C.texte };
 	noStroke();
 	textAlign(LEFT, TOP);
 	textFont(POLICE_TEXTE);

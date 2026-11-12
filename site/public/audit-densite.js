@@ -3,8 +3,7 @@
  * paramètre, ce fichier n'est jamais téléchargé et le jeu est inchangé.
  *
  * Pendant chaque image, les primitives (text, rect, image) et les composants du design system (dsTexte, dsTitre,
- * dsBouton, dsBadge) sont comptés dans la ZONE de dessin en cours : fenêtre d'appli (dessinerFenetreApp), bureau
- * et barre des tâches (dessinerOS sans fenêtre), Indicateurs (dessinerIndicateurs), Signalements (dessinerJeu).
+ * dsBouton, dsBadge) sont comptés dans la ZONE de dessin en cours : vue d'appli (dessinerVueApp), Indicateurs (dessinerIndicateurs), Signalements (dessinerJeu).
  * Pour chaque vue : éléments visibles (textes, titres, boutons, badges, blocs colorés, images), boutons primaires
  * (variante pleine rouge), tailles de texte distinctes, surface rouge (#D4031C / #D10B00, % de la zone) et cadres
  * imbriqués (profondeur maximale de rectangles bordés). Les primitives dessinées à l'intérieur d'un composant
@@ -47,10 +46,9 @@
 			}
 		};
 	}
-	zone('dessinerFenetreApp', nomAppli, () => FENETRE_APP.l * FENETRE_APP.h);
-	zone('dessinerOS', () => (PC.etat === 'os' && !PC.fenetre ? 'Bureau + barre des tâches' : null), () => L * H);
+	zone('dessinerVueApp', nomAppli, () => ZONE_VUE.l * ZONE_VUE.h); // prompt 183 : plus de bureau ni de fenêtre posée dessus — vues de l'appli
 	zone('dessinerIndicateurs', () => (PC.flottant && PC.etat !== 'eteint' && PC.etat !== 'demarrage' ? 'Indicateurs' : null), () => INDIC.l * INDIC.h);
-	zone('dessinerJeu', () => (PC.etat === 'appli' ? 'Signalements' : null), () => L * (H - BARRE_OS));
+	zone('dessinerJeu', () => (PC.etat === 'appli' ? 'Signalements' : null), () => L * H);
 	const zc = () => A.pile[A.pile.length - 1];
 
 	// Rectangle logique → coordonnées de la zone (transformation courante relative à l'entrée dans la zone)
@@ -225,7 +223,6 @@
 			const os = (f) => (P.raz(), P.poste(), (PC.etat = 'os'), (PC.fenetre = f || null));
 			add([], () => (P.partie(0), (PC.flottant = false)), 40);
 			if (avancer) add([], avancer, 10);
-			add('Bureau + barre des tâches', () => os(null));
 			add('Patron', () => os('patron'));
 			ONGLETS_COMMU.forEach((o) => add('Community · ' + o, () => (os('community'), (COMMU.onglet = o), (COMMU.ouvert = null))));
 			add('Journal · jour', () => (os('journal'), (JOURNAL.enquete = null)));
@@ -237,7 +234,7 @@
 				if (e) ouvrirEnqueteJournal(e);
 			});
 			add('Corbeille', () => os('corbeille'));
-			add('Indicateurs', () => (os(null), (PC.flottant = true)));
+			add('Indicateurs', () => (P.raz(), P.poste(), (PC.flottant = true)));
 			add('Signalements', () => ((PC.flottant = false), P.raz(), P.poste(), typeof FIL !== 'undefined' && (FIL.explicationVue = true)));
 		});
 		return E;
