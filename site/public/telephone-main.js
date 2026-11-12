@@ -1,6 +1,6 @@
 /* Nantes en régulation — le téléphone pris en main (prompt 42).
  * Animation RÉUTILISABLE : le joueur saisit son téléphone, qui monte du bas de l'écran, tenu par une main
- * dessinée par le code, devant la pièce ; il redescend quand on le pose. Le contenu de l'écran est une
+ * en pixel art dessinée par le code, devant la pièce ; il redescend quand on le pose. Le contenu de l'écran est une
  * fonction (conversation, notifications…). Animations réduites : apparition / disparition directes.
  * Utilisé par : l'intro (Camille), l'ouverture des semaines 2 et 3 (le patron, prompt 41) et le téléphone
  * de la pièce (notifications de l'Agenda Nantes Métropole, prompt 38).
@@ -63,33 +63,55 @@ function dessinerTelephoneEnMain(contenu, objet) {
 	}
 	zoneTexteDeclarer('telephone', e.x, e.y, e.l, e.h); // prompt 93 : cadre de l'écran du téléphone
 	if (contenu) contenu(e, k >= 1);
-	dessinerMain(x, y, pl, ph);
+	dessinerMain(x, y);
 }
 
-/** Main qui tient le téléphone : pouce à gauche, doigts à droite, paume et manche en bas (formes simples) */
-function dessinerMain(x, y, pl, ph) {
-	const peau = '#d9a07f';
-	const ombre = '#b97f60';
+/** Main qui tient le téléphone, en pixel art (même grain et même palette que la tasse en main, cafe.js) :
+ * doigts à droite, pouce et éminence à gauche (le pouce ne couvre que la coque), paume et manche en bas.
+ * Tout est posé sur une grille de PIX_MAIN px, aplats nets, contour sombre, coins en escalier. */
+const PIX_MAIN = 15;
+const PAL_MAIN = { peau: '#e2ab84', ombre: '#c08461', contour: '#6b3f2a', ongle: '#f3cdb0', manche: '#1d2a3a', mancheClair: '#2c3f57', mancheContour: '#101a26' };
+function dessinerMain(x, y) {
+	const P = PAL_MAIN;
+	const s = PIX_MAIN;
+	const bx = Math.round(x);
+	const by = Math.round(y);
+	// Rectangle en cases de la grille (origine : coin haut gauche du téléphone)
+	const r = (gx, gy, gl, gh, c) => {
+		fill(c);
+		rect(bx + gx * s, by + gy * s, gl * s, gh * s);
+	};
+	// Forme pleine aux coins en escalier (« coin » cases rognées), puis bloc = contour + aplat
+	const forme = (gx, gy, gl, gh, coin, c) => {
+		for (let i = 0; i <= coin; i++) r(gx + coin - i, gy + i, gl - 2 * (coin - i), gh - 2 * i, c);
+	};
+	const bloc = (gx, gy, gl, gh, coin, c, contour) => {
+		forme(gx, gy, gl, gh, coin, contour || P.contour);
+		forme(gx + 1, gy + 1, gl - 2, gh - 2, coin, c);
+	};
 	noStroke();
-	// Doigts derrière le bord droit
-	[520, 600, 680, 760].forEach((dy, i) => {
-		fill(i % 2 ? ombre : peau);
-		rect(x + pl - 18, y + dy, 56, 62, 28);
-	});
-	// Paume et manche
-	fill(peau);
-	rect(x - 70, y + ph - 34, pl + 120, 200, 90);
-	fill(ombre);
-	rect(x - 70, y + ph + 40, pl + 120, 30, 15);
-	fill('#1d2a3a'); // manche
-	rect(x - 110, y + ph + 70, pl + 200, 200, 30);
-	// Pouce posé sur le bord gauche (il ne couvre que la coque)
-	fill(ombre);
-	rect(x - 74, y + 640, 96, 190, 48);
-	fill(peau);
-	rect(x - 70, y + 630, 88, 180, 44);
-	fill('#ecc3a8');
-	rect(x - 22, y + 642, 30, 40, 14); // ongle
+	// Quatre doigts repliés sur le bord droit (contours partagés), ombre sous chaque phalange
+	for (let i = 0; i < 4; i++) {
+		const gy = 34 + i * 5;
+		bloc(34, gy, 5, 6, 1, P.peau);
+		r(35, gy + 4, 3, 1, P.ombre);
+		r(37, gy + 1, 1, 1, P.ongle); // reflet de la jointure
+	}
+	// Paume, son ombre, puis la manche et son revers
+	bloc(-7, 60, 46, 9, 2, P.peau);
+	r(-6, 65, 44, 2, P.ombre);
+	bloc(-9, 67, 50, 14, 1, P.manche, P.mancheContour);
+	r(-8, 68, 48, 1, P.mancheClair);
+	// Éminence du pouce, le long du téléphone, fondue dans la paume
+	bloc(-7, 51, 7, 12, 1, P.peau);
+	r(-5, 61, 4, 2, P.peau); // fondu dans la paume (sans trait de contour)
+	r(-6, 52, 1, 11, P.ombre);
+	// Pouce posé sur le bord gauche, ongle en haut
+	bloc(-5, 42, 6, 13, 1, P.peau);
+	r(-4, 43, 1, 9, P.ombre);
+	r(-5, 52, 1, 2, P.peau); // raccord pouce / éminence (sans trait de contour)
+	r(-4, 54, 3, 1, P.peau);
+	r(-2, 43, 2, 3, P.ongle);
 }
 
 // ——— Contenu « conversation » (intro, ouverture de semaine) ———
