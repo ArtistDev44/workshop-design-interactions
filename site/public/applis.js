@@ -49,12 +49,13 @@ function dessinerBulleVerrou() {
 // ——— § 3 : pile de navigation des redirections ———
 /** Écran courant (ce qu'on empile) */
 function ecranCourantPC() {
-	return { etat: PC.etat, fenetre: PC.fenetre, journal: typeof JOURNAL !== 'undefined' ? { jour: JOURNAL.jour, enquete: JOURNAL.enquete } : null, commu: typeof COMMU !== 'undefined' ? COMMU.onglet : null };
+	const mail = PC.fenetre === 'patron' && typeof PATRON !== 'undefined' ? { sel: (Jeu.messagesPatron || []).indexOf(PATRON.sel), filtre: PATRON.filtre, lecture: PATRON.lecture } : null; // prompt 185 : le retour rouvre le mail d'origine
+	return { etat: PC.etat, fenetre: PC.fenetre, journal: typeof JOURNAL !== 'undefined' ? { jour: JOURNAL.jour, enquete: JOURNAL.enquete } : null, commu: typeof COMMU !== 'undefined' ? COMMU.onglet : null, mail };
 }
 /** Redirection vers une appli avec contexte : l'origine est empilée ; Échap y revient */
 function redirigerVers(cle, prep) {
 	if (cle !== 'signalements' && !appliDebloquee(cle)) return refuserAppliVerrouillee(cle), false;
-	APPLIS.pile.push(ecranCourantPC());
+	APPLIS.pile.push(Object.assign(ecranCourantPC(), { cible: cle })); // prompt 185 : la cible dit quel écran ramène ici
 	if (APPLIS.pile.length > 12) APPLIS.pile.shift();
 	if (cle === 'signalements') {
 		PC.fenetre = null;
@@ -76,18 +77,28 @@ function depilerNavigation() {
 	PC.fenetre = o.fenetre;
 	if (o.journal && typeof JOURNAL !== 'undefined') Object.assign(JOURNAL, o.journal);
 	if (o.commu && typeof COMMU !== 'undefined') COMMU.onglet = o.commu;
+	if (o.mail && typeof PATRON !== 'undefined') Object.assign(PATRON, { filtre: o.mail.filtre || 'tout', sel: (Jeu.messagesPatron || [])[o.mail.sel] || null, lecture: !!o.mail.lecture, ouvert: true, voirSel: true, defilLecture: 0 });
 	Confort.Son.clic();
 	annoncer(t('applis.retour', { appli: t('app.' + (o.fenetre || 'signalements')) }));
 	return true;
 }
-/** « Voir le dossier » depuis n'importe quelle appli : Signalements, sur le dossier s'il est encore ouvert, sinon le Journal */
+/** Prompt 185 : « Retour » / Échap sur l'écran ouvert par une redirection vers `cle` → écran d'origine ; true si pris */
+function retourRedirection(cle) {
+	const o = APPLIS.pile[APPLIS.pile.length - 1];
+	return !!(o && o.cible === cle && depilerNavigation());
+}
+/** « Voir le dossier » depuis n'importe quelle appli : Signalements, sur le dossier s'il est encore ouvert, sinon sa
+ * fiche dans le Journal. Prompt 185 : la trace est retrouvée par le RANG du dossier (e.index), pas par l'identité de
+ * l'objet — après une sauvegarde rechargée, resultat.dossier est une copie et l'ancienne comparaison (===) échouait :
+ * le lien ramenait à la carte au lieu de la fiche. */
 function voirDossierDepuis(index) {
+	if (index === undefined || index === null) return;
 	const d = Jeu.paquet && Jeu.paquet[index];
-	if (!d) return;
-	const e = (Jeu.evenementsJournee || []).find((x) => x.resultat && x.resultat.dossier === d);
+	const e = (Jeu.evenementsJournee || []).find((x) => x.index === index) || (d && (Jeu.evenementsJournee || []).find((x) => x.resultat && x.resultat.dossier === d));
 	if (!e) {
-		// Pas encore décidé : on revient à la liste des signalements (le dossier y est, ou arrivera)
-		return redirigerVers('signalements');
+		if (!d) return;
+		// Pas encore décidé : Signalements, sur ce dossier s'il est dans la file (sinon la liste : il arrivera)
+		return redirigerVers('signalements', () => typeof ouvrirSignalements === 'function' && ouvrirSignalements(d));
 	}
 	redirigerVers('journal', () => {
 		const ji = (Jeu.jours || []).findIndex((j) => j.date === e.jour);

@@ -391,7 +391,7 @@ function dessinerPictoJournal(cle, x, y, taille) {
 function ficheEnquete(z, e) {
 	const f = JournalDonnees.enquete(e);
 	let y = z.y;
-	dsBouton(z.x, y - 6, 200, 44, '← ' + t('journal.retourCourt'), () => (JOURNAL.enquete = null), 'contour');
+	dsBouton(z.x, y - 6, 200, 44, '← ' + t('journal.retourCourt'), () => retourRedirection('journal') || (JOURNAL.enquete = null), 'contour'); // prompt 185 : ouverte depuis un mail → retour au mail
 	dessinerPictoJournal(e.categorie || 'autre', z.x + 220, y, 28);
 	const titre = t('journal.titreEnquete', { date: e.jour.split('-').reverse().join('/'), heure: e.heure || '—' });
 	dsTitre(titre, z.x + 262, y + 2, 24, DS.blanc, 'left');
@@ -592,7 +592,7 @@ function toucheJournal() {
 	if (PC.fenetre !== 'journal' || !Jeu.paquet || ecran !== 'jeu') return false;
 	const e = enqueteCourante();
 	if (e) {
-		if (keyCode === ESCAPE) return (JOURNAL.enquete = null), Confort.Son.clic(), true;
+		if (keyCode === ESCAPE) return retourRedirection('journal') || ((JOURNAL.enquete = null), Confort.Son.clic()), true; // prompt 185 : depuis un mail, Échap y revient
 		if (keyCode === RIGHT_ARROW || keyCode === LEFT_ARROW) return choisirVoletJournal(JOURNAL.volet + (keyCode === RIGHT_ARROW ? 1 : -1)), true;
 		const n = ['1', '2', '3', '4'].indexOf(key);
 		if (n >= 0) return choisirVoletJournal(n), true;

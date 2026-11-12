@@ -49,7 +49,7 @@ chaque touche qu'il cite est lue par le code et qu'aucune clé `aide.k.*` n'est 
 | Poste, défi chrono | R | Ralenti pendant un dossier | « Ralenti (R) » |
 | Poste | I · V · H / ? · M · Z · Q · D | Indicateurs · détails des Indicateurs · aide · son · sieste · quitter la journée · démission | « Détails (V) » |
 | Poste, fin de semaine | Entrée · Échap / Retour arrière | Rejouer · accueil | « Rejouer (Entrée) » |
-| Appli Patron | ← → · ↑ ↓ · Entrée · V · 1–n | Filtres · défiler · épingler · tout déplier · réponses rapides | — |
+| Appli Mails (prompt 185) | Tab · ← → · ↑ ↓ · Entrée · Échap · V · 1–n | Zones (dossiers, liste, lecture) · dossiers · mails / défiler · ouvrir · retour à la liste (zone étroite) · tout déplier · réponses rapides | — |
 | Appli Community | ← → · ↑ ↓ · Tab · Entrée / Espace · 1–n | Onglets · défiler · réponses · répondre / publier | « Publier (Entrée) » |
 | Appli Journal | Tab · ← → · ↑ ↓ · Entrée · V · C · Échap | Zones · jour / filtre · cartes · enquête · détails · copier le résumé · retour | C **à retirer au prompt 186** |
 

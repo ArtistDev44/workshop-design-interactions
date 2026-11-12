@@ -1,4 +1,4 @@
-/* Nantes en régulation — prompt 103 : une seule appli sur le PC. Les autres (Patron, Community, Journal, Données)
+/* Nantes en régulation — prompt 103 : une seule appli sur le PC. Les autres (Mails, Community, Journal, Données)
  * deviennent des VUES de l'appli principale, choisies dans un menu à gauche (x 40 → 168, réservé au prompt 102).
  * - Le logo du jeu (en haut du menu) = la carte (accueil). Puis la messagerie du patron (en premier), Community,
  *   Journal de bord, Données.
@@ -76,7 +76,7 @@ function dessinerMenuApp() {
 		if (k === 1) cibleGuide('iconesOS', M.x, M.y + 112, M.l, 4 * 112); // prompt 37 : le guide montre le menu
 	});
 }
-/** Prompt 111 : libellé accessible d'une entrée, avec son badge (« Patron, 3 nouveautés ») */
+/** Prompt 111 : libellé accessible d'une entrée, avec son badge (« Mails, nouveautés : 3 ») */
 function libelleEntreeMenu(cle) {
 	const lib = cle === 'signalements' ? t('menuApp.carte') : t('menuApp.' + cle);
 	const n = typeof nombreBadge === 'function' && entreeActive() !== cle ? nombreBadge(cle) : 0;
@@ -114,7 +114,7 @@ function dessinerVueApp() {
 	noStroke();
 	fill(DS.fond);
 	rect(Z.x, Z.y, Z.l, Z.h);
-	const l = Math.min(Z.l - 48, 1440); // largeur de lecture
+	const l = PC.fenetre === 'patron' ? Z.l - 48 : Math.min(Z.l - 48, 1440); // largeur de lecture ; prompt 185 : Mails prend toute la largeur (3 zones)
 	const z = { x: Z.x + (Z.l - l) / 2, y: Z.y + 24, l, h: Z.h - 48 };
 	if (Jeu.nonLus && Jeu.nonLus[PC.fenetre] !== undefined) Jeu.nonLus[PC.fenetre] = 0; // lu
 	if (PC.fenetre === 'patron') appPatron(z);

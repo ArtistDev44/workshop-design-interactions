@@ -1264,6 +1264,7 @@ function keyPressed() {
 	if (PC.etat === 'os' && !PC.fenetre) versAppliPrincipale();
 	if (PC.etat !== 'appli') {
 		if (PC.etat === 'os' && typeof toucheJournal === 'function' && toucheJournal()) return false; // prompt 89 : jours, filtres, cartes, enquête (Échap revient)
+		if (keyCode === ESCAPE && typeof echapPatron === 'function' && echapPatron()) return false; // prompt 185 : Mails en zone étroite, la lecture revient à la liste
 		if (keyCode === ESCAPE) return (depilerNavigation() || (PC.etat === 'os' ? fermerFenetreApp() : quitterPC())), false; // prompt 91 § 3 : Échap revient d'abord à l'écran d'origine, puis à la carte (prompt 183) ; prompt 182 : sortie par quitterPC
 		if (focusQuitter && (keyCode === ENTER || keyCode === RETURN || key === ' ')) return quitterPC(), false; // prompt 26
 		if (PC.etat !== 'os') {

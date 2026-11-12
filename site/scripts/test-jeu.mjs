@@ -3180,6 +3180,63 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 }
 
 
+// Prompt 185 : l'appli « Patron » devient « Mails » — messagerie en zones, compteurs par dossier, badge = non lus,
+// « Voir le dossier » (cause du défaut : identité d'objet perdue après une sauvegarde rechargée → retour à la carte)
+{
+	const ap = readFileSync(join(pub, 'applis.js'), 'utf8');
+	const pj = readFileSync(join(pub, 'patron.js'), 'utf8');
+	const c = vm.createContext({});
+	vm.runInContext(
+		`var PC = { etat: 'os', fenetre: 'patron' }, JOURNAL = { jour: null, enquete: null, volet: 0 }, COMMU = { onglet: 'fil' }, __sig = [];
+		const Confort = { Reglages: {}, Son: { clic() {}, bip() {} } }; function annoncer() {} function t(k) { return k; } function millis() { return 0; }
+		function ouvrirSignalements(d) { PC.fenetre = null; PC.etat = 'appli'; __sig.push(d.id); }
+		var Jeu = { TYPES_MESSAGES: ['consigne', 'alerte', 'conseil', 'budget', 'reproche', 'equipes', 'info'], paquet: [{ id: 'A', date: 'J1' }, { id: 'B', date: 'J1' }], jours: [{ date: 'J0' }, { date: 'J1' }], evenementsJournee: [], messagesPatron: [] };
+		Jeu.evenementsJournee.push({ jour: 'J1', index: 0, resultat: { dossier: JSON.parse(JSON.stringify(Jeu.paquet[0])) } }); // copie : comme après une sauvegarde rechargée
+		Jeu.messagesPatron.push({ type: 'reproche', meta: { index: 0 }, texte: 'clos' }, { type: 'reproche', meta: { blame: true, malus: -5 }, texte: 'sans dossier' }, { type: 'reproche', meta: { index: 1 }, texte: 'ouvert' });
+		var PATRON = { filtre: 'reproches', sel: null, lecture: false, deplies: new Set() };`,
+		c,
+	);
+	vm.runInContext(ap.slice(ap.indexOf('const APPLIS')), c);
+	vm.runInContext(pj.slice(pj.indexOf('const aUnBloc'), pj.indexOf('const enPanne')), c);
+	const r = vm.runInContext(
+		`(() => {
+		const r = {};
+		PATRON.sel = Jeu.messagesPatron[0];
+		voirDossierDepuis(Jeu.messagesPatron[0].meta.index);
+		r.clos = PC.fenetre + ' ' + JOURNAL.jour + ' ' + JOURNAL.enquete;
+		r.retourClos = retourRedirection('journal') && PC.fenetre === 'patron' && PATRON.sel === Jeu.messagesPatron[0] && PATRON.filtre === 'reproches';
+		r.retourVide = retourRedirection('journal');
+		PATRON.sel = Jeu.messagesPatron[2];
+		voirDossierDepuis(Jeu.messagesPatron[2].meta.index);
+		r.ouvert = PC.etat + ' ' + PC.fenetre + ' ' + __sig.join(',');
+		r.retourOuvert = depilerNavigation() && PC.fenetre === 'patron' && PATRON.sel === Jeu.messagesPatron[2];
+		r.sansDossier = aUnBloc(Jeu.messagesPatron[1]);
+		r.avecDossier = aUnBloc(Jeu.messagesPatron[0]);
+		return r;
+	})()`,
+		c,
+	);
+	verifier(r.clos === 'journal 1 0', `prompt 185 : « Voir le dossier » d'un dossier clos (sauvegarde rechargée) doit ouvrir sa fiche du Journal (${r.clos})`);
+	verifier(r.retourClos === true && r.retourVide === false, 'prompt 185 : « Retour » / Échap sur la fiche doit rouvrir le mail d\'origine, et seulement après une redirection');
+	verifier(r.ouvert === 'appli null B', `prompt 185 : dossier encore ouvert → Signalements sur ce dossier (${r.ouvert})`);
+	verifier(r.retourOuvert === true, 'prompt 185 : Échap depuis Signalements doit revenir au mail d\'origine');
+	verifier(r.sansDossier === false && r.avecDossier === true && /type === 'reproche' && me\.index !== undefined\) \{[\s\S]{0,700}?voirDossier\(me\)/.test(pj), 'prompt 185 : un mail sans dossier ne montre pas de lien « Voir le dossier »');
+	verifier(/retourRedirection\('journal'\) \|\| \(JOURNAL\.enquete = null\)/.test(readFileSync(join(pub, 'journal.js'), 'utf8')), 'prompt 185 : le bouton Retour de la fiche revient d\'abord au mail');
+	// Nom affiché, compteurs, badge, clip de la liste
+	const c185 = contexte('fr');
+	for (const [langue, nom] of [['fr', 'Mails'], ['en', 'Mail']]) {
+		const dico = vm.runInContext(`TRADUCTIONS.${langue}`, c185);
+		verifier(dico['app.patron'] === nom && dico['menuApp.patron'] === nom, `prompt 185 : l'appli doit s'appeler « ${nom} » (${langue})`);
+		const restes = Object.entries(dico).filter(([k, v]) => /^(tuto\.5\.texte|guide\.apps\.ouvrir)$/.test(k) && /\b(Patron|Boss),/.test(v));
+		verifier(!restes.length, `prompt 185 : « Patron » / « Boss » encore cité comme nom d'appli (${langue}) : ${restes.map((x) => x[0])}`);
+		verifier(['patron.compteur', 'patron.annonceMail', 'patron.zone.liste', 'patron.aucunSel', 'patron.retourListe'].every((k) => dico[k]), `prompt 185 : clés de la messagerie manquantes (${langue})`);
+		verifier(!['patron.epingle', 'patron.nouveaux', 'patron.lu', 'patron.envoye', 'patron.vu'].some((k) => k in dico), `prompt 185 : clés orphelines de l'ancienne conversation (${langue})`);
+	}
+	verifier(/if \(cle === 'patron'\) return typeof mailsNonLus === 'function' \? mailsNonLus\(\)/.test(readFileSync(join(pub, 'multitache.js'), 'utf8')), 'prompt 185 : le badge de Mails doit compter les mails non lus');
+	verifier(/zoneTexteDebut\('listeMails', [^)]*\{ clip: true \}\)/.test(pj) && /function zoneDossiers[\s\S]*compteursMails\(f\.cle\)/.test(pj), 'prompt 185 : liste masquée et déclarée à l\'audit, compteurs sur chaque dossier');
+	verifier(/iconeLucide\('mail'/.test(pj) && /'inbox'/.test(pj) && /primaireRGBA\(0\.16\)/.test(pj), 'prompt 185 : icônes Lucide et accent du DS');
+}
+
 // Prompt 174 : raccourcis — l'onglet Raccourcis de l'aide (RACCOURCIS_AIDE) ne cite que des touches lues par le code,
 // aucune clé aide.k.* orpheline ; plus de touche pour les actions rares (R = recommencer, B = publier, S = sortie,
 // J = journal du game over) ; Ctrl / Cmd / Alt et les champs de saisie laissés au navigateur ; menu du jeu = pause
