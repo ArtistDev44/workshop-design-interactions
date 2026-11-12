@@ -224,7 +224,7 @@ function carteMenu(x, y, l, h, titre, sous, action, sel, icone) {
 	text(titre, tx, sous ? y + h / 2 + 4 : y + h / 2);
 	textStyle(NORMAL);
 	if (sous) {
-		// Prompt 117 : une seule ligne, taille ajustée à la largeur (18 → 14 px) — plus jamais de 2e ligne masquée
+		// Prompt 120 : une seule ligne, taille ajustée à la largeur (18 → 14 px) — plus jamais de 2e ligne masquée
 		textAlign(LEFT, TOP);
 		textFont(POLICE_DONNEES);
 		ajusterTaille(sous, l - (tx - x) - 24, 18, 14);
@@ -263,7 +263,7 @@ function dessinerMenuPrincipal() {
 	text(t('accueil.sousTitre'), x0, 276, 900, 80);
 	const e = entreesMenu();
 	if (MENU.choix >= e.length + EXTRAS_MENU.length) MENU.choix = 0;
-	// Prompt 117 : pile calculée dans l'espace disponible (sous-titre du jeu → pied de page, 16 px de marge) :
+	// Prompt 120 : pile calculée dans l'espace disponible (sous-titre du jeu → pied de page, 16 px de marge) :
 	// cartes normales si elles tiennent, sinon compactes ; l'écart se répartit (6 px au moins, 30 au plus)
 	let yc = 370;
 	const basPile = H - 128 - 16; // haut du pied de page (« ↑ ↓ choisir… ») moins la marge
