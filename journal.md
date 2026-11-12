@@ -4,6 +4,7 @@ Règle : chaque push sur la branche main ajoute une entrée dans le tableau, la 
 
 | Date | Commit | Fichiers | Résumé |
 |---|---|---|---|
+| 2026-11-12 | ce commit | prompts/136-jeu-menu-bouton-livrables.md (nouveau), prompts/README.md, prompts/auteurs.json, site/public/menu.js, site/public/portrait.js, site/public/i18n.js, site/public/sw.js | Prompt 136 : bouton « Livrables » dans le menu principal, de la largeur du bloc dépôt · partage · présentation et placé au-dessus ; ouvre `presentation/#/livrables` ; build et tests verts (530 + 605 contrôles) |
 | 2026-11-12 | ce commit | journal.md | Fusion dans main de l'image de la planche des logos (`logo/planche.png`), sans conflit |
 | 2026-11-12 | ce commit | logo/planche.png (nouveau) | Planche des pistes de logo (prompt 126) exportée en image PNG 1280 × 3290, rendue par Chrome sans interface depuis `logo/planche.html` |
 | 2026-11-12 | ce commit | logo/planche.html (nouveau dossier `logo/` à la racine), prompts/126 (nouveau, numéroté 120 à l'origine), prompts/README.md, prompts/auteurs.json, site/public/sw.js | Planche de comparaison des 4 pistes de logo (pin d'alerte, bulle-pin recommandée, écran de régulation, logotype pixel) avec le logo actuel, 3 tailles, fond sombre et clair, 6 palettes ; fusion de `design/120-planche-logos` dans main |
