@@ -1,0 +1,18 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; background: var(--fond, #0d0c0c); overflow: hidden; }
+    #root .cam { position: absolute; inset: 0; }
+    #root video { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
+    #accroche-titre { position: absolute; left: 96px; bottom: 96px; padding: 18px 28px; background: #d4031c; color: #ffffff;
+      font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 64px; letter-spacing: -0.01em; }
+  </style>
+  <div id="root" data-composition-id="accroche" data-width="1920" data-height="1080">
+    <div id="accroche-cam0" class="cam" data-layout-allow-overflow style="transform-origin:50% 32%"><video id="accroche-v0" class="clip" src="assets/clips/partie-complete.mp4" muted playsinline data-start="0.000" data-duration="2.790" data-media-start="32.60" data-track-index="0"></video></div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo('#accroche-cam0', { scale: 1.060 }, { scale: 1.000, duration: 0.3, ease: 'expo.out' }, 0.000);
+    tl.to('#accroche-cam0', { scale: 1.220, duration: 2.490, ease: 'none' }, 0.300);
+    window.__timelines['accroche'] = tl;
+  </script>
+</template>
