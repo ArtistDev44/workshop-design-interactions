@@ -3101,7 +3101,7 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	const kp = sk.slice(sk.indexOf('function keyPressed()'), sk.indexOf('function mouseWheel('));
 	verifier(!/seLever\(\)/.test(kp) && (kp.match(/quitterPC\(\)/g) || []).length >= 4, 'prompt 182 : au clavier, toute sortie du PC doit passer par quitterPC() (Échap, Entrée sur le bouton), jamais par seLever()');
 	verifier(/scrollSortiePC\(dy < 0 \? -150 : 150\)/.test(lire182('mobile.js')) && /action: quitterPC, primaire: false, desactive: !!raisonRetenuAuPC\(\)/.test(lire182('portrait.js')), 'prompt 182 : balayage (mobile) et bouton « Se lever » (portrait) doivent suivre la même règle de sortie');
-	verifier(/bouton\(b\.x, b\.y, b\.l, b\.h, t\('poste\.quitter_pc'\), quitterPC, !!raison\)/.test(bu), 'prompt 182 : le bouton « Quitter le PC » doit être désactivé tant qu\'un choix attend');
+	verifier(/bouton\(b\.x, b\.y, b\.l, b\.h, t\(GUIDE\.actif \? 'poste\.quitter_pc_guide' : 'poste\.quitter_pc'\), quitterPC, !!raison\)/.test(bu), 'prompt 182 : le bouton « Quitter le PC » doit être désactivé tant qu\'un choix attend');
 	verifier(/t\('bureau\.inviteInstaller'\)/.test(bu) && /else if \(vue === 'bureau'\) \{[\s\S]{0,200}fill\(13, 12, 12, 96\)/.test(bu), 'prompt 182 : en vue bureau, écran assombri et invite « S\'installer au PC »');
 	const c = vm.createContext({ Math });
 	vm.runInContext(
@@ -3177,6 +3177,52 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 		const restes = Object.keys(dico).filter((k) => /^(applis\.intro\.|os\.demarrer|app\.titre\.|os\.aideClavier$|os\.jauges$|pause\.pause$|fil\.objectif|guide\.ouvrirSignalements$|guide\.apps\.fermer$|app\.bureau$|applis\.nouvelle$)/.test(k));
 		verifier(!restes.length, `prompt 183 : clés orphelines (${langue}) : ${restes.join(', ')}`);
 	}
+}
+
+
+// Prompt 174 : raccourcis — l'onglet Raccourcis de l'aide (RACCOURCIS_AIDE) ne cite que des touches lues par le code,
+// aucune clé aide.k.* orpheline ; plus de touche pour les actions rares (R = recommencer, B = publier, S = sortie,
+// J = journal du game over) ; Ctrl / Cmd / Alt et les champs de saisie laissés au navigateur ; menu du jeu = pause
+{
+	const lire174 = (f) => readFileSync(join(pub, f), 'utf8');
+	const fichiers174 = readdirSync(pub).filter((f) => f.endsWith('.js') && !/^(i18n|sw|audit-|icones-lucide)/.test(f));
+	const code = fichiers174.map(lire174).join('\n');
+	const aide = lire174('aide.js');
+	const lettre = (k) => new RegExp(`key === '${k.toLowerCase()}' \\|\\| key === '${k}'`);
+	const LUES = {
+		'Entrée|Enter': /keyCode === ENTER/, '1 à 3|1 to 3': /TOUCHES_REPONSES\.indexOf\(key\)/, 'A / B': /key === 'a' \|\| key === 'A'\) choisirSource/,
+		'E / 5–8': /key === 'e' \|\| key === 'E'\) return basculerPlus[\s\S]*touche: '8'|touche: '8'[\s\S]*key === 'e' \|\| key === 'E'\) return basculerPlus/, 'Glisser|Drag': /function mouseDragged/, 'Maj + 1 à 4|Shift + 1–4': /keyIsDown\(SHIFT\) \|\| keyCode < 49 \|\| keyCode > 52/,
+		'↑ ↓': /SELECTION\.focus = \(SELECTION\.focus \+ \(keyCode === UP_ARROW/, '+ / −': /key === '\+' \|\| key === '='\) return zoomer/, 'Origine|Home': /keyCode === 36\) return recentrer/,
+		'Tab': /keyCode === TAB/, '← → ↑ ↓': /keyIsDown\(LEFT_ARROW\)/, 'Molette / Échap|Wheel / Esc': /function mouseWheel[\s\S]*keyCode === ESCAPE/, 'H ou ?|H or ?': /key === 'h' \|\| key === 'H' \|\| key === '\?'\) return ouvrir\('aide'\)/,
+		'Z': /key === 'z' \|\| key === 'Z'\) && ecran === 'jeu'/, 'Q': /key === 'q' \|\| key === 'Q'\) && !fenetre/, 'I': /key === 'i' \|\| key === 'I'\) return basculerIndicateurs/,
+		'P': /key === 'p' \|\| key === 'P'\) return basculerPause/, 'R': /key === 'r' \|\| key === 'R'\) && Jeu\.defiChrono/, 'M': lettre('M'), 'T': /key === 't' \|\| key === 'T'\)+ return lancerTutoriel/, 'E': /key === 'e' \|\| key === 'E'\) return basculerPlus/,
+		'L': /key === 'l' \|\| key === 'L'\) return Langue\.suivante/, 'F': /key === 'f' \|\| key === 'F'\) && !keyIsDown/,
+	};
+	const regleDe = (k) => Object.entries(LUES).find(([m]) => m.split('|').includes(k));
+	const corpsRacc = aide.slice(aide.indexOf('const RACCOURCIS_AIDE'), aide.indexOf('];', aide.indexOf('const RACCOURCIS_AIDE')) + 2);
+	verifier(corpsRacc.length > 100 && /RACCOURCIS_AIDE\.map/.test(aide), 'prompt 174 : l\'onglet Raccourcis doit être tiré de RACCOURCIS_AIDE (aide.js)');
+	for (const langue of ['fr', 'en']) {
+		const c = contexte(langue);
+		vm.runInContext(corpsRacc, c);
+		const lignes = vm.runInContext('RACCOURCIS_AIDE.flatMap(([g, l]) => l.map(([k, d]) => [k.startsWith("aide.k.") ? t(k) : k, t(d), g]))', c);
+		for (const [k, d] of lignes) {
+			const r = regleDe(k);
+			verifier(!!r, `prompt 174 (${langue}) : touche « ${k} » citée dans l'aide, inconnue du test (ajouter sa lecture dans LUES)`);
+			if (r) verifier(r[1].test(code), `prompt 174 (${langue}) : la touche « ${k} » citée dans l'aide n'est plus lue par le code`);
+			for (const m of String(d).match(/\(([A-Z])\)/g) || []) verifier(LUES[m[1]] && LUES[m[1]].test(code), `prompt 174 (${langue}) : la touche ${m} citée dans « ${d} » n'est pas lue par le code`);
+		}
+		const dico = vm.runInContext(`TRADUCTIONS.${langue}`, c);
+		const orphelines = Object.keys(dico).filter((k) => /^aide\.k\./.test(k) && !corpsRacc.includes(`'${k}'`));
+		verifier(!orphelines.length, `prompt 174 (${langue}) : clés aide.k.* orphelines : ${orphelines.join(', ')}`);
+		verifier(!/\((R|J|B)\)/.test([dico['jeu.recommencer'], dico['gameover.journal']].join(' ')) && !/\bS ?: /.test(dico['tuto.6.touches']), `prompt 174 (${langue}) : libellés encore porteurs d'un raccourci retiré`);
+		verifier(dico['poste.quitter_pc_guide'] && !/Échap|Esc/.test(dico['poste.quitter_pc_guide']), `prompt 174 (${langue}) : pendant le guide, « Quitter le PC » ne doit pas promettre Échap`);
+	}
+	const sk = lire174('sketch.js');
+	const kp = sk.slice(sk.indexOf('function keyPressed()'), sk.indexOf('function mouseWheel('));
+	verifier(/^function keyPressed\(\) \{\n[^\n]*\n\tif \(Sauvegarde\.dialogueOuvert\) return;\n\tif \(saisieOuRaccourciNavigateur\(\)\) return;/.test(kp) && /activeElement[\s\S]{0,120}INPUT\|TEXTAREA\|SELECT[\s\S]{0,200}keyIsDown\(CONTROL\) \|\| keyIsDown\(ALT\) \|\| keyIsDown\(91\)/.test(sk), 'prompt 174 : keyPressed doit d\'abord laisser au navigateur les champs de saisie et Ctrl / Cmd / Alt');
+	verifier(!/ouvrir\('reset'\)/.test(kp) && !/publierDepuisDossier/.test(kp) && !/key === 's'/.test(lire174('soir.js')) && !/key === 'j'/.test(lire174('gameover.js')) && !/' \(B\)'/.test(lire174('panneau.js')), 'prompt 174 : raccourcis retirés (R recommencer, B publier, S sortie, J journal du game over) encore lus ou affichés');
+	verifier(/function tempsSuspendu\(\) \{\n\treturn [^\n]*fenetre === 'menu'/.test(lire174('immersion.js')), 'prompt 174 : ouvrir le menu du jeu doit suspendre le temps');
+	verifier(/bouton\(b\.x, b\.y, b\.l, b\.h, t\(GUIDE\.actif \? 'poste\.quitter_pc_guide'/.test(lire174('bureau.js')), 'prompt 174 : libellé de « Quitter le PC » adapté au guide');
 }
 
 if (erreurs.length) {

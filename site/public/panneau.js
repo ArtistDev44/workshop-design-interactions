@@ -239,7 +239,7 @@ function dessinerPanneauSignalement(d, x, base) {
 	// Prompt 116 : « En savoir plus » devient la réplique « Dites-m'en plus » (dernière de la liste) ; plus de bouton en double
 	if (PLUS.ouvert) corpsEnquete(d, x + 32, y, l, Math.max(120, yr - 16 - y));
 	else if (peutPublierDossier(d)) {
-		bouton(x + 32, y, Math.min(400, l), 52, '→ ' + t('applis.publier') + ' (B)', () => publierDepuisDossier(d), false, true);
+		bouton(x + 32, y, Math.min(400, l), 52, '→ ' + t('applis.publier'), () => publierDepuisDossier(d), false, true);
 		textAlign(LEFT, TOP);
 	}
 	if (phase === 'contradiction') return dessinerChoixSource(d, x + 32, yr, l);

@@ -8,6 +8,7 @@
  *   4 Malus : nom, condition → conséquence.
  * Texte courant à 20 px au moins, interligne 1,4 : une rubrique trop longue se pagine, elle ne rétrécit jamais.
  * Clavier : ← → ou Tab (onglets), 1 à 4, ↑ ↓ (pages), T (tutoriel), H / ? / Échap (fermer, sketch.js).
+ * Prompt 174 : les raccourcis affichés viennent de RACCOURCIS_AIDE (tableau unique, vérifié par test-jeu.mjs).
  *
  * Prompt 172 : chaque carte de règle et chaque malus porte une illustration dessinée en code (illustrationAide) —
  * les composants réels du jeu en réduction (jauge du bandeau, pin de la carte, jauge de somnolence, répliques) ou
@@ -208,6 +209,15 @@ function carteGlossaireAide(titre, texte) {
 		},
 	};
 }
+/** Prompt 174 : l'onglet Raccourcis, tiré du même tableau que jeu/174-raccourcis.md — [groupe, [[touche, description]]] ;
+ * la touche est une clé i18n (aide.k.*Touche, traduite) ou un libellé identique dans les deux langues. Un test
+ * (test-jeu.mjs, bloc « Prompt 174 ») vérifie que chaque touche citée ici est lue par le code. */
+const RACCOURCIS_AIDE = [
+	['signalement', [['aide.k.entreeTouche', 'aide.k.entree'], ['aide.k.actionsTouche', 'aide.k.actions'], ['A / B', 'aide.k.ab'], ['E / 5–8', 'aide.k.sources']]], // prompt 161 : une seule vérité avec le tutoriel (E ouvre, 5 à 8 révèlent)
+	['equipes', [['aide.k.glisserTouche', 'aide.k.glisser'], ['aide.k.majTouche', 'aide.k.equipes'], ['↑ ↓', 'aide.k.semaine'], ['aide.k.zoomTouche', 'aide.k.zoom'], ['aide.k.origineTouche', 'aide.k.origine'], ['Tab', 'aide.k.objets']]],
+	['bureau', [['← → ↑ ↓', 'aide.k.regarder'], ['aide.k.quitterTouche', 'aide.k.quitter'], ['Z', 'aide.k.sieste'], ['aide.k.quitterJourneeTouche', 'aide.k.quitterJournee'], ['I', 'aide.k.indicateurs']]],
+	['general', [['P', 'aide.k.pause'], ['R', 'aide.k.reset'], ['M', 'aide.k.son'], ['aide.k.aideTouche', 'aide.k.aide'], ['T', 'aide.k.tuto'], ['L', 'aide.k.langue']]],
+];
 /** Groupe de raccourcis : la touche dans une capsule, la description à côté */
 function carteRaccourcisAide(titre, lignes) {
 	const lt = 250;
@@ -253,35 +263,7 @@ function carteMalusAide(m) {
 function cartesAide(onglet) {
 	const p = paragraphesAide();
 	if (onglet === 'regles') return ORDRE_REGLES_AIDE.filter((i) => p[i]).map((i) => carteTexteAide(t('aide.carte.' + i), p[i], i)).concat(p[GLOSSAIRE_AIDE] ? [carteGlossaireAide(t('aide.carte.' + GLOSSAIRE_AIDE), p[GLOSSAIRE_AIDE])] : []);
-	if (onglet === 'raccourcis')
-		return [
-			carteRaccourcisAide(t('aide.groupe.signalement'), [
-				[t('aide.k.entreeTouche'), t('aide.k.entree')],
-				[t('aide.k.actionsTouche'), t('aide.k.actions')],
-				['A / B', t('aide.k.ab')],
-				['E / 5–8', t('aide.k.sources')], // prompt 161 : une seule vérité avec le tutoriel (E ouvre, 5 à 8 révèlent) ; plus de ligne « 0 ou Espace » (raccourci retiré au prompt 117)
-			]),
-			carteRaccourcisAide(t('aide.groupe.equipes'), [
-				[t('aide.k.glisserTouche'), t('aide.k.glisser')],
-				[t('aide.k.majTouche'), t('aide.k.equipes')],
-				['↑ ↓', t('aide.k.semaine')],
-				['Tab', t('aide.k.objets')],
-			]),
-			carteRaccourcisAide(t('aide.groupe.bureau'), [
-				['← → ↑ ↓', t('aide.k.regarder')],
-				[t('aide.k.quitterTouche'), t('aide.k.quitter')],
-				['Z', t('aide.k.sieste')],
-				[t('aide.k.quitterJourneeTouche'), t('aide.k.quitterJournee')],
-			]),
-			carteRaccourcisAide(t('aide.groupe.general'), [
-				['P', t('aide.k.pause')],
-				['R', t('aide.k.reset')],
-				['M', t('aide.k.son')],
-				[t('aide.k.aideTouche'), t('aide.k.aide')],
-				['T', t('aide.k.tuto')],
-				['L', t('aide.k.langue')],
-			]),
-		];
+	if (onglet === 'raccourcis') return RACCOURCIS_AIDE.map(([g, lignes]) => carteRaccourcisAide(t('aide.groupe.' + g), lignes.map(([k, d]) => [k.startsWith('aide.k.') ? t(k) : k, t(d)])));
 	if (onglet === 'malus') return (Jeu.MALUS || []).map(carteMalusAide);
 	return [];
 }
