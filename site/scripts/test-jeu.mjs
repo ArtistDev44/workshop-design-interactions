@@ -998,6 +998,34 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 	vm.runInContext(readFileSync(join(pub, 'panneau.js'), 'utf8').replace(/^const (BANDEAU|PANNEAU|PLUS|TOUCHES_REPONSES|RAISONS)\b/gm, 'var $1'), cp, { filename: 'panneau.js' });
 	const tend = vm.runInContext("[tendance(0), tendance(3), tendance(-3), tendance(9), tendance(-9)].join(' ')", cp);
 	verifier(tend === '≈ ▲ ▼ ▲▲ ▼▼', `panneau : tendance ${tend}`);
+	// Prompt 116 : répliques au plaignant — variantes FR/EN, jamais de variable vide, au moins 2 phrases différentes par catégorie
+	for (const lg of ['fr', 'en']) {
+		const cr = contexte(lg);
+		vm.runInContext(readFileSync(join(pub, 'panneau.js'), 'utf8').replace(/^const (BANDEAU|PANNEAU|PLUS|TOUCHES_REPONSES|RAISONS)\b/gm, 'var $1'), cr, { filename: 'panneau.js' });
+		const r = vm.runInContext(`(() => {
+			const out = { n: 0, vides: [], parCat: {} };
+			for (const sem of ['2026-09-14', '2026-10-12', '2026-11-02']) {
+				Jeu.chargerSemaine(sem); Jeu.nouvellePartie();
+				Jeu.paquet.forEach((d, i) => {
+					Jeu.index = i;
+					const cat = Jeu.categorie(d);
+					const rs = reponsesAffichees(d);
+					const txts = repliquesDuDossier(rs, d);
+					if (txts.filter((x) => /@\\w/.test(x)).length > 1) out.vides.push('pseudo cité plusieurs fois');
+					rs.forEach((rp, k) => {
+						const txt = txts[k];
+						out.n++;
+						if (!txt || /\{\w+\}/.test(txt) || txt === '[À COMPLÉTER]') out.vides.push(rp.cle + ' : ' + txt);
+						(out.parCat[cat] = out.parCat[cat] || new Set()).add(txt);
+					});
+				});
+			}
+			out.diff = Object.entries(out.parCat).filter(([, s]) => s.size < 2).map(([c]) => c);
+			return { n: out.n, vides: out.vides.slice(0, 3), diff: out.diff };
+		})()`, cr);
+		verifier(r.n > 0 && !r.vides.length, `répliques (${lg}) : ${r.n} affichées, variables vides ${JSON.stringify(r.vides)}`);
+		verifier(!r.diff.length, `répliques (${lg}) : une seule formulation pour ${r.diff}`);
+	}
 }
 
 // Prompt 88 : aucun texte identique deux fois dans une même journée (mesure du § 0, FR et EN), variantes reproductibles

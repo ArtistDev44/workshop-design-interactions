@@ -1288,6 +1288,15 @@
 		return s.replace(/\{(\w+)\}/g, (m, k) => (vars && vars[k] !== undefined ? String(vars[k]) : m));
 	};
 
+	/** Prompt 116 : variables d'une réplique au plaignant (lecture seule) — faits réels du dossier + pseudo du plaignant */
+	Jeu.variablesReplique = function (index) {
+		const d = (Jeu.paquet || [])[index];
+		if (!d) return {};
+		const v = variablesDossier(d);
+		const pl = Jeu.plaignantPour ? Jeu.plaignantPour(index) : null;
+		if (pl && pl.auteur) v.auteur = pl.auteur;
+		return v;
+	};
 	/** Prompt 102 : le plaignant d'un dossier, SANS effet de bord (lecture seule) — la plainte Community déjà
 	 * déclenchée pour ce dossier, sinon la plus spécifique qui correspond à ses faits réels (choix déterministe,
 	 * comme declencherPlainte), sinon null (c'est alors la source réelle qui « parle » dans le dialogue). */
