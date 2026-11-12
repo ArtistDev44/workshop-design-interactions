@@ -1357,12 +1357,12 @@
 
 	// Prompt 79 — délai de réponse Community (REGLAGES.community) : répondre vite évite la dégradation
 	/** Millisecondes restantes avant que la plainte s'envenime (le délai démarre à sa première vue par majPlaintes) */
-	Jeu.resteReponse = (p, maintenant) => (p.depuis === undefined ? REGLAGES.community.delaiMs : Math.max(0, REGLAGES.community.delaiMs - (maintenant - p.depuis)));
+	Jeu.resteReponse = (p, maintenant) => (p.depuis === undefined || p.depuis > maintenant ? REGLAGES.community.delaiMs : Math.max(0, REGLAGES.community.delaiMs - (maintenant - p.depuis)));
 	/** À chaque image : les plaintes sans réponse à l'expiration s'enveniment (malus d'un mauvais commentaire, prompt 22) */
 	Jeu.majPlaintes = function (maintenant) {
 		const expirees = [];
 		Jeu.plaintesEnAttente().forEach((p) => {
-			if (p.depuis === undefined) p.depuis = maintenant;
+			if (p.depuis === undefined || p.depuis > maintenant) p.depuis = maintenant; // prompt 116 : horloge remise à zéro (rechargement) → le délai repart
 			if (maintenant - p.depuis < REGLAGES.community.delaiMs) return;
 			p.expiree = true;
 			p.statut = 'expire';

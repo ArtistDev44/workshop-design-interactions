@@ -1937,6 +1937,20 @@ for (const s of semaines) {
 	verifier(r114.score >= 180, `prompt 115 : suivre l'évaluation doit finir au moins « moyenne » (${s} : ${r114.score})`);
 }
 
+// Prompt 116 : l'intro décrit le jeu actuel (pas de chrono par défaut, la sieste est une mécanique), la narration ne
+// passe plus seule hors défi chrono, et le délai des plaintes Community suit le temps de jeu actif
+{
+	const f116 = contexte('fr');
+	const e116 = contexte('en');
+	const sms = (c) => vm.runInContext(`[0, 1, 2, 3, 4, 5].map((i) => t('sms.' + i)).join(' ')`, c);
+	verifier(!/chrono tourne|pas de sieste/i.test(sms(f116)) && !/clock is ticking|no napping/i.test(sms(e116)), 'prompt 116 : les SMS d\'intro parlent encore de chrono ou interdisent la sieste');
+	const sk116 = readFileSync(join(pub, 'sketch.js'), 'utf8');
+	verifier(/if \(auto && tA >= 1/.test(sk116) && /const auto = !!Jeu\.defiChrono/.test(sk116), 'prompt 116 : la narration ne doit passer seule qu\'en défi chrono');
+	verifier(/majPlaintes\(tempsPlaintes\(\)\)/.test(sk116) && /resteReponse\(pl, typeof tempsPlaintes/.test(readFileSync(join(pub, 'community.js'), 'utf8')), 'prompt 116 : délai des plaintes en temps de jeu actif');
+	const reste = vm.runInContext(`Jeu.resteReponse({ depuis: 90000 }, 1000)`, f116);
+	verifier(reste === vm.runInContext('Jeu.REGLAGES.community.delaiMs', f116), `prompt 116 : une plainte datée du futur doit repartir du délai complet (${reste})`);
+}
+
 // Service worker : chaque script de index.html est dans la liste hors ligne de sw.js
 const html = readFileSync(join(pub, 'index.html'), 'utf8');
 const sw = readFileSync(join(pub, 'sw.js'), 'utf8');

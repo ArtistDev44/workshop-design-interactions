@@ -166,6 +166,14 @@ function dessinerGuide() {
 	strokeWeight(4);
 	rect(c.x - 10, c.y - 10, c.l + 20, c.h + 20);
 	noStroke();
+	// Prompt 116 : dossier ou conséquences ouverts → la bulle va sur la carte, à gauche, jamais sur le plaignant ni les répliques
+	const fenetreDossier = vue === 'poste' && PC.etat === 'appli' && (PHASES_DOSSIER.includes(phase) || phase === 'narration');
+	if (fenetreDossier) {
+		if (aGauche) flecheGuide(c.x - 14 - rebond, constrain(c.y + c.h / 2, 120, H - 120), 'droite');
+		else flecheGuide(cx, py, versBas);
+		const cibleAGauche = c.x + c.l < 420; // menu de gauche : la bulle passe dessous, sans le cacher
+		return bulleGuide(texte, 0, cibleAGauche ? constrain(c.y + c.h + 200, 260, H - 110) : constrain(c.y + c.h / 2, 260, H - 260), false, 24, true);
+	}
 	if (aGauche) {
 		const px = c.x - 14 - rebond;
 		const pyG = constrain(c.y + c.h / 2, 120, H - 120);

@@ -71,7 +71,7 @@ let phase = 'decision'; // 'conflit' | 'contradiction' | 'decision' | 'narration
 let sourceChoisie = null; // 'a' | 'b' quand le dossier contient une contradiction (Q9)
 let dernierResultat = null;
 let debutNarration = 0;
-const DUREE_NARRATION = 6000;
+const DUREE_NARRATION = 10000; // prompt 116 : défi chrono seulement (6 s → 10 s) ; sinon pas de suite automatique
 let arriveeDossier = 0; // millis() d'arrivée du dossier (glissement, Q10)
 let debutCompteur = 0;
 let boutons = []; // zones cliquables recalculées à chaque image
@@ -473,7 +473,7 @@ function indicateurSauvegarde() {
 	const messageFile = SELECTION.message && millis() - SELECTION.message.t < 5000; // le message de la file (bas) a la priorité
 	// Prompt 102 : « reste de la journée » dans la ligne d'état de la carte (carte-alertes.js) ; plus de doublon ici
 	const s = Sauvegarde.texteIndicateur();
-	if (!s) return;
+	if (!s || phase === 'narration') return; // prompt 116 : il chevauchait le titre de la narration
 	textFont(POLICE_DONNEES);
 	textSize(16);
 	textAlign(RIGHT, BOTTOM);
@@ -683,7 +683,7 @@ function dessinerDossier(d, meteo) {
 let dernierRetardAnnonce = { d: null, v: null };
 function majRetardsEtCommunity() {
 	if (ecran !== 'jeu' || !Jeu.paquet || phase === 'fin' || enPause || tempsSuspendu()) return;
-	(Jeu.majPlaintes ? Jeu.majPlaintes(millis()) : []).forEach((p) => {
+	(Jeu.majPlaintes ? Jeu.majPlaintes(tempsPlaintes()) : []).forEach((p) => {
 		annoncer(t('community.envenimeAnnonce', { auteur: p.auteur }));
 		Confort.Son.bip('alerte');
 	});
@@ -794,15 +794,19 @@ function dessinerNarration() {
 	text(expl.join('\n'), z.x + 32, z.y + 612, z.l - 64, 150);
 
 	// Suite automatique, ou Entrée / clic
-	const tA = constrain((millis() - debutNarration) / DUREE_NARRATION, 0, 1);
-	fill(C.piste);
-	rect(z.x + 32, z.y + z.h - 140, z.l - 64, 6, 3);
-	fill(couleurTon);
-	rect(z.x + 32, z.y + z.h - 140, (z.l - 64) * tA, 6, 3);
+	// Prompt 116 : plus de suite automatique hors défi chrono — le joueur lit à son rythme (Entrée, clic ou « Suivant »)
+	const auto = !!Jeu.defiChrono;
+	const tA = auto ? constrain((millis() - debutNarration) / DUREE_NARRATION, 0, 1) : 0;
+	if (auto) {
+		fill(C.piste);
+		rect(z.x + 32, z.y + z.h - 140, z.l - 64, 6, 3);
+		fill(couleurTon);
+		rect(z.x + 32, z.y + z.h - 140, (z.l - 64) * tA, 6, 3);
+	}
 	const lb = (z.l - 64 - 16) * 0.68;
 	bouton(z.x + 32, z.y + z.h - 112, lb, 72, t(Jeu.terminee ? 'narration.bilan' : 'narration.suivant'), continuer);
 	bouton(z.x + 48 + lb, z.y + z.h - 112, z.l - 64 - 16 - lb, 72, t(enPause ? 'pause.reprendre' : 'pause.pause'), basculerPause, false, true);
-	if (tA >= 1 && !enPause && !fenetre) continuer();
+	if (auto && tA >= 1 && !enPause && !fenetre) continuer();
 }
 
 // ——— Écran de fin (Q47–Q55) : 3 fins, bilan détaillé, décor selon la fin (Q53) ———
