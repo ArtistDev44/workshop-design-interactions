@@ -375,10 +375,10 @@ function decider(action) {
 	dernierResultat.contexteNarr = Rythme.contexteNarration(dernierResultat, Jeu.index - 1); // prompt 74 : phrase de contexte réelle
 	if (action !== 'temps') tachesApresDecision(dernierResultat); // prompt 88 : rotation des tâches
 	if (typeof tracerDecision === 'function') tracerDecision(dernierResultat); // prompt 89 bis : trace dans la file
-	annoncer(t('annonce.decision', { titre: dernierResultat.narration.titre, texte: typeof lireMasques === 'function' ? lireMasques(dernierResultat.narration.texte) : dernierResultat.narration.texte }) + ' ' + phraseEcarts(dernierResultat.deltas)); // prompt 53 ; prompt 184 : une phrase « fluidité en hausse, budget en baisse » ; prompt 194 : les masques hors alphabet sont lus « mot masqué »
+	annoncer(t('annonce.decision', { titre: dernierResultat.narration.titre, texte: typeof lireMasques === 'function' ? lireMasques(dernierResultat.narration.texte) : dernierResultat.narration.texte }) + ' ' + phraseEcarts(dernierResultat.deltas)); // prompt 53 ; prompt 184 : une phrase « fluidité en hausse, budget en baisse » ; prompt 196 : les masques hors alphabet sont lus « mot masqué »
 	Confort.Son.clicAction(Jeu.familleDe ? Jeu.familleDe(action) : action); // prompt 44 § 4 : un clic de console par action ; prompt 89 bis : famille de la réponse (son distinct)
 	Confort.Son.jauges(dernierResultat.deltas); // § 5 : chute brutale ou remontée nette, audibles
-	if (typeof feedback === 'function') feedback(dernierResultat.clash ? 'large' : Juice.tierDeltas(dernierResultat.deltas)); // prompts 94 / 96 : tier selon l'effet réel (small / medium / large) ; prompt 194 : le clash déclenche un choc « large » (qui donne envie de le choisir), conséquences inchangées
+	if (typeof feedback === 'function') feedback(dernierResultat.clash ? 'large' : Juice.tierDeltas(dernierResultat.deltas)); // prompts 94 / 96 : tier selon l'effet réel (small / medium / large) ; prompt 196 : le clash déclenche un choc « large » (qui donne envie de le choisir), conséquences inchangées
 	phase = 'narration';
 	debutNarration = millis();
 	if (dernierResultat.contexteNarr) annoncer(t(dernierResultat.contexteNarr.cle, dernierResultat.contexteNarr.vars));

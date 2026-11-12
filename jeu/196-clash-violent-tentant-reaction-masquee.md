@@ -1,6 +1,6 @@
-# Prompt 194 — Clash violent et tentant, réaction de connard du plaignant, masques hors alphabet
+# Prompt 196 — Clash violent et tentant, réaction de connard du plaignant, masques hors alphabet
 
-Date : 12/11/2026. Branche `jeu/194-clash-violent-tentant-reaction-masquee`.
+Date : 12/11/2026. Branche `jeu/196-clash-violent-tentant-reaction-masquee`.
 Demande d'origine : « 3 réponses, le tout mélangé et indiscernable ; un des 3 choix clashe le
 plaignant assez violemment pour inciter le joueur à choisir cette option indépendamment des
 conséquences ; les plaignants sont toujours gentils, rajouter des commentaires de connard peut
@@ -36,13 +36,13 @@ Sur la base des prompts 117–118.
 - `site/public/sketch.js` : `decider()` → `feedback('large')` si clash ; annonce de la narration avec
   `lireMasques`.
 - `site/public/panneau.js` : `lireMasques` élargi aux caractères hors alphabet.
-- `site/scripts/test-jeu.mjs` : bloc 194 (clés FR/EN présentes, aucun mot en clair, au moins un masque
+- `site/scripts/test-jeu.mjs` : bloc 196 (clés FR/EN présentes, aucun mot en clair, au moins un masque
   hors alphabet par texte, `lireMasques` couvre `&#(`/`§¤`, narration du clash avec réaction, malus
   réputation ≤ −8 inchangé).
 
 ## Vérifications
 
-- `npm run build` vert ; `npm test` : smoke + `test-jeu.mjs` (blocs 116–119 et 194 verts).
+- `npm run build` vert ; `npm test` : smoke + `test-jeu.mjs` (blocs 116–119 et 196 verts).
   - Note : le smoke signale encore le prompt 164 (fichier posé par une autre session, non enregistré
     dans `prompts/README.md` / `auteurs.json`) — hors périmètre de ce prompt.
 - Audit des textes (`?audit=textes`) à 0 défaut A–D sur les nouveaux textes FR/EN : [À COMPLÉTER].

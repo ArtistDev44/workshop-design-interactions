@@ -657,14 +657,14 @@
 			resultat.aggravation = { lignes: d.lignes.slice(), plus: A.durable };
 		}
 		resultat.narration = Jeu.narrer(resultat);
-		if (clash) resultat.narration.texte = T('narr.avecClash', { texte: resultat.narration.texte, reaction: Jeu.reactionClash(d, Jeu.index) }); // prompt 184 : le malus se voit sur la jauge (segment rouge) ; prompt 194 : le plaignant répond par un commentaire masqué
+		if (clash) resultat.narration.texte = T('narr.avecClash', { texte: resultat.narration.texte, reaction: Jeu.reactionClash(d, Jeu.index) }); // prompt 184 : le malus se voit sur la jauge (segment rouge) ; prompt 196 : le plaignant répond par un commentaire masqué
 		Jeu.historique.push(resultat);
 		Jeu.index++;
 		Jeu.terminee = Jeu.index >= Jeu.paquet.length;
 		return resultat;
 	};
 
-	/** Prompt 194 : réaction du plaignant après un clash — commentaire méchant (mots masqués hors alphabet),
+	/** Prompt 196 : réaction du plaignant après un clash — commentaire méchant (mots masqués hors alphabet),
 	 * variante tirée de façon déterministe (catégorie + index du dossier), comme repliqueDe (panneau.js) */
 	Jeu.reactionClash = function (d, index) {
 		const cat = (Jeu.categorie && Jeu.categorie(d)) || 'autre';
