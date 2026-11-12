@@ -251,14 +251,14 @@ const sv = vm.runInContext(
 	const delta = Jeu.plaintes.reduce((s, p) => s + (p.suivis || []).reduce((t, x) => t + x.delta, 0), 0);
 	Jeu.horloge.minutes = Jeu.debutJournee(); const avant = Jeu.majSuivis();
 	Jeu.horloge.minutes = 99999; const livres = Jeu.majSuivis(); const encore = Jeu.majSuivis();
-	return { a, b, nbs, total, delta, avant, livres, encore, rep: Jeu.jauges.reputation - rep0, comm: Jeu.commentaires.filter((c) => c.suivi).map((c) => String(c.texte)) };
+	return { a, b, nbs, total, delta, avant, livres, encore, rep: Jeu.jauges.reputation - rep0, comm: Jeu.commentaires.filter((c) => c.suivi).map((c) => String(c.texte)), rel: Jeu.plaintes.reduce((s, p) => s + (p.relances || []).length, 0) };
 	})()`,
 	fr,
 );
 verifier(JSON.stringify(sv.a) === JSON.stringify(sv.b) && sv.a.length > 0, 'réactions : tirage non reproductible ou aucune plainte');
 verifier(sv.nbs.every((n) => n >= 0 && n <= 3), `réactions : plus de 3 pour une réponse (${sv.nbs})`);
 verifier(sv.livres + sv.avant === sv.total && sv.encore === 0, `réactions : ${sv.avant} + ${sv.livres} livrées sur ${sv.total}, ${sv.encore} en double`);
-verifier(sv.comm.length === sv.total && sv.comm.every((x) => x && !x.includes('[À COMPLÉTER]') && !x.includes('« »')), 'réactions : texte manquant ou vide');
+verifier(sv.comm.length + sv.rel === sv.total && sv.comm.every((x) => x && !x.includes('[À COMPLÉTER]') && !x.includes('« »')), 'réactions : texte manquant ou vide (réactions publiques + relances privées du prompt 85)');
 
 // Prompt 68 : gravité, pertinence, équipes limitées (effectif, cycle, refus, remise à zéro, effet hors sujet, sauvegarde)
 const eq = vm.runInContext(
@@ -998,6 +998,83 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 	vm.runInContext(readFileSync(join(pub, 'panneau.js'), 'utf8').replace(/^const (BANDEAU|PANNEAU|PLUS|TOUCHES_REPONSES|RAISONS)\b/gm, 'var $1'), cp, { filename: 'panneau.js' });
 	const tend = vm.runInContext("[tendance(0), tendance(3), tendance(-3), tendance(9), tendance(-9)].join(' ')", cp);
 	verifier(tend === '≈ ▲ ▼ ▲▲ ▼▼', `panneau : tendance ${tend}`);
+	// Prompt 116 : répliques au plaignant — variantes FR/EN, jamais de variable vide, au moins 2 phrases différentes par catégorie
+	for (const lg of ['fr', 'en']) {
+		const cr = contexte(lg);
+		vm.runInContext(readFileSync(join(pub, 'panneau.js'), 'utf8').replace(/^const (BANDEAU|PANNEAU|PLUS|TOUCHES_REPONSES|RAISONS)\b/gm, 'var $1'), cr, { filename: 'panneau.js' });
+		const r = vm.runInContext(`(() => {
+			const out = { n: 0, vides: [], parCat: {} };
+			for (const sem of ['2026-09-14', '2026-10-12', '2026-11-02']) {
+				Jeu.chargerSemaine(sem); Jeu.nouvellePartie();
+				Jeu.paquet.forEach((d, i) => {
+					Jeu.index = i;
+					const cat = Jeu.categorie(d);
+					const rs = reponsesDialogue(d); // prompt 117 : 3 répliques mélangées, dont 1 clash et la meilleure réponse
+					if (rs.length !== 3 || rs.filter((x) => x.clash).length !== 1 || !rs.some((x) => !x.clash && x.cle === Jeu.meilleureReponse(d))) out.vides.push('trio invalide ' + i);
+					out.ordres = out.ordres || new Set();
+					out.ordres.add(rs.findIndex((x) => x.clash));
+					const txts = repliquesDuDossier(rs, d);
+					if (txts.filter((x) => /@\\w/.test(x)).length > 1) out.vides.push('pseudo cité plusieurs fois');
+					rs.forEach((rp, k) => {
+						const txt = txts[k];
+						out.n++;
+						if (!txt || /\{\w+\}/.test(txt) || txt === '[À COMPLÉTER]') out.vides.push(rp.cle + ' : ' + txt);
+						(out.parCat[cat] = out.parCat[cat] || new Set()).add(txt);
+					});
+				});
+			}
+			out.diff = Object.entries(out.parCat).filter(([, s]) => s.size < 2).map(([c]) => c);
+			return { n: out.n, vides: out.vides.slice(0, 3), diff: out.diff, positionsClash: out.ordres.size };
+		})()`, cr);
+		verifier(r.n > 0 && !r.vides.length, `répliques (${lg}) : ${r.n} affichées, variables vides ${JSON.stringify(r.vides)}`);
+		verifier(!r.diff.length, `répliques (${lg}) : une seule formulation pour ${r.diff}`);
+		verifier(r.positionsClash >= 2, `répliques (${lg}) : le clash est toujours à la même place`);
+		// Prompt 117 : une décision « clash » = attendre + malus de réputation, comptée ratée
+		const cl = vm.runInContext(`(() => {
+			Jeu.chargerSemaine('2026-10-12'); Jeu.nouvellePartie(); Jeu.modificateur = null;
+			const d = Jeu.dossierCourant(); const c = reponsesDialogue(d).find((x) => x.clash);
+			Jeu.initialiserAlea(7, 0); const rep0 = Jeu.jauges.reputation; Jeu.clashSuivant = true; const r1 = Jeu.decider(c.cle);
+			return { clash: r1.clash, eval: Jeu.evaluer(Jeu.evenementsJournee[Jeu.evenementsJournee.length - 1]), dRep: r1.deltas[1] };
+		})()`, cr);
+		verifier(cl.clash === true && cl.eval === 'rate' && cl.dRep <= -8, `clash (${lg}) : ${JSON.stringify(cl)}`);
+	}
+}
+
+// Prompt 118 : plaintes agressives — FR et EN, aucun gros mot en clair (masqués par des symboles), conditions réelles, ≈ 1 sur 3
+{
+	const c118 = contexte('fr');
+	const r = vm.runInContext(`(() => {
+		const ag = Jeu.MESSAGES.plaintes.filter((p) => p.ton === 'agressif');
+		const textes = ag.flatMap((p) => [p.texte.fr, p.texte.en || '']);
+		const clair = /\\b(merde|putain|connard|connasse|enculé|salope|bordel|foutre|fuck|shit|bastard|bitch|asshole|crap|damn)\\b/i;
+		const out = { n: ag.length, sansEn: ag.filter((p) => !p.texte.en).map((p) => p.id), enClair: textes.filter((x) => clair.test(x)), sansSymbole: ag.filter((p) => !/[@#$%&!]{2,}/.test(p.texte.fr)).map((p) => p.id), agressifs: 0, total: 0 };
+		for (const sem of ['2026-09-14', '2026-10-12', '2026-11-02']) {
+			Jeu.chargerSemaine(sem); Jeu.nouvellePartie();
+			Jeu.paquet.forEach((d, i) => { const pl = Jeu.plaignantPour(i); if (pl) { out.total++; if (pl.ton === 'agressif') out.agressifs++; } });
+		}
+		return out;
+	})()`, c118);
+	verifier(r.n >= 6 && !r.sansEn.length && !r.enClair.length && !r.sansSymbole.length, `plaintes agressives : ${JSON.stringify(r)}`);
+	verifier(r.agressifs > 0 && r.agressifs < r.total, `plaintes agressives : ${r.agressifs} sur ${r.total} plaignants (ni aucune, ni toutes)`);
+}
+
+// Prompt 119 : incidents inventés — au plus un par semaine, marqués fictifs, sur une ligne réelle, catégorie « securite »,
+// témoin trouvé ; désactivés (tests de règles) → paquet inchangé
+{
+	const c119 = contexte('fr');
+	const r = vm.runInContext(`(() => {
+		const out = [];
+		for (const sem of ['2026-09-14', '2026-10-12', '2026-11-02']) {
+			Jeu.incidentsFictifs = false; Jeu.chargerSemaine(sem); Jeu.nouvellePartie(); const sans = Jeu.paquet.length;
+			Jeu.incidentsFictifs = true; Jeu.chargerSemaine(sem); Jeu.nouvellePartie();
+			const f = Jeu.paquet.filter((d) => d.fictif);
+			const d = f[0];
+			out.push({ sans, avec: Jeu.paquet.length, n: f.length, ok: !!d && d.type === 'incident fictif' && /fictif/i.test(d.source) && Jeu.lignes.lignes.some((l) => l.nom === d.lignes[0]) && Jeu.categorie(d) === 'securite' && Jeu.gravite(d) === 'elevee' && Jeu.equipesPertinentes(d).includes('police') && !!Jeu.plaignantPour(Jeu.paquet.indexOf(d)) });
+		}
+		Jeu.incidentsFictifs = false;
+		return out;
+	})()`, c119);
+	verifier(r.every((x) => x.n === 1 && x.avec === x.sans + 1 && x.ok), `incidents fictifs : ${JSON.stringify(r)}`);
 }
 
 // Prompt 88 : aucun texte identique deux fois dans une même journée (mesure du § 0, FR et EN), variantes reproductibles
@@ -1225,7 +1302,7 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 	const r = vm.runInContext(
 		`(() => {
 		const out = { sansOption: 0, chaines: [], erreurs: [], sauve: null, deblocage: null, arbitrage: null };
-		const pire = (d) => { const ks = Jeu.actionsPossibles(d); const p = Jeu.poidsBesoin(Jeu.jauges); return ks.map((k) => [k, Jeu.effetsAttendus(k, d).reduce((a, v, i) => a + v * p[i], 0)]).sort((a, b) => a[1] - b[1])[0][0]; }; // prompt 115 : la pire réponse au sens de l'évaluation pondérée
+		const pire = (d) => { const ks = Jeu.actionsPossibles(d); const p = Jeu.poidsBesoin(Jeu.jauges); return ks.map((k) => [k, Jeu.effetsAttendus(k, d).reduce((a, v, i) => a + v * p[i], 0)]).sort((a, b) => a[1] - b[1])[0][0]; }; // prompt 120 : la pire réponse au sens de l'évaluation pondérée
 		const jouer = (opts) => {
 			Jeu.chargerSemaine('2026-09-14'); Jeu.nouvellePartie(); Taches.nouvellePartie(opts);
 			let n = 0, garde = 0;
@@ -1877,8 +1954,8 @@ for (const f of ['enquete.js', 'carte.js', 'journal.js']) verifier(!/\*\s*1\.05\
 // Prompt 97 (skill game-design-theory) : apprendre vite — l'aide H et le guide nomment les gestes (glisser / clic,
 // 1-4, Q) et les 3 jauges, et répondent à « pourquoi ma décision a raté ? » ; la difficulté est lisible avant de jouer
 for (const [langue, mots] of [
-	['fr', { glisser: /Glisser/, touches: /1 à 4/, q: /Quitter la journée/, jauges: /fluidité, réputation et budget/, rate: /Pourquoi une décision a raté/, guide: /répondez-lui/, diff: /Difficulté facile : budget 60 · 3 signalement/ }],
-	['en', { glisser: /Drag/, touches: /1 to 4/, q: /End the day/, jauges: /flow, reputation and budget/, rate: /Why did a decision fail/, guide: /then reply/, diff: /easy difficulty: budget 60 · 3 report/ }],
+	['fr', { glisser: /Glisser/, touches: /1 à 3/, q: /Quitter la journée/, jauges: /fluidité, réputation et budget/, rate: /Pourquoi une décision a raté/, guide: /répondez-lui/, diff: /Difficulté facile : budget 60 · 3 signalement/ }],
+	['en', { glisser: /Drag/, touches: /1 to 3/, q: /End the day/, jauges: /flow, reputation and budget/, rate: /Why did a decision fail/, guide: /then reply/, diff: /easy difficulty: budget 60 · 3 report/ }],
 ]) {
 	const c97 = contexte(langue);
 	const a = vm.runInContext(
@@ -1909,7 +1986,7 @@ verifier(/aide\.k\.glisserTouche/.test(readFileSync(join(pub, 'sketch.js'), 'utf
 	verifier(/boutons\.push\(\{ x: x - 12, y: 0, l: 58, h: 52, action: fermerAppli \}\)/.test(readFileSync(join(pub, 'os.js'), 'utf8')) && /y: z\.y - 18, l: z\.l, h: z\.h \+ 18, action: basculerSieste/.test(readFileSync(join(pub, 'sieste.js'), 'utf8')), 'zones de clic ≥ 44 px : ✕ des applis et somnolence');
 }
 
-// Prompt 115 : l'évaluation suit le besoin des jauges — jouer toujours une réponse jugée « bonne » ne mène plus au
+// Prompt 120 : l'évaluation suit le besoin des jauges — jouer toujours une réponse jugée « bonne » ne mène plus au
 // licenciement (avant : fluidité vidée par « attendre », licenciement au 10e–14e dossier) et finit au moins « moyenne »
 for (const s of semaines) {
 	const c114 = contexte('fr');
@@ -1932,48 +2009,48 @@ for (const s of semaines) {
 	})()`,
 		c114,
 	);
-	verifier(!r114.licencie, `prompt 115 : suivre l'évaluation mène au licenciement (${s}, ${r114.licencie})`);
-	verifier(r114.bons === r114.total, `prompt 115 : une réponse conseillée doit être évaluée « bon » (${s} : ${r114.bons}/${r114.total})`);
-	verifier(r114.score >= 180, `prompt 115 : suivre l'évaluation doit finir au moins « moyenne » (${s} : ${r114.score})`);
+	verifier(!r114.licencie, `prompt 120 : suivre l'évaluation mène au licenciement (${s}, ${r114.licencie})`);
+	verifier(r114.bons === r114.total, `prompt 120 : une réponse conseillée doit être évaluée « bon » (${s} : ${r114.bons}/${r114.total})`);
+	verifier(r114.score >= 180, `prompt 120 : suivre l'évaluation doit finir au moins « moyenne » (${s} : ${r114.score})`);
 }
 
-// Prompt 116 : l'intro décrit le jeu actuel (pas de chrono par défaut, la sieste est une mécanique), la narration ne
+// Prompt 121 : l'intro décrit le jeu actuel (pas de chrono par défaut, la sieste est une mécanique), la narration ne
 // passe plus seule hors défi chrono, et le délai des plaintes Community suit le temps de jeu actif
 {
 	const f116 = contexte('fr');
 	const e116 = contexte('en');
 	const sms = (c) => vm.runInContext(`[0, 1, 2, 3, 4, 5].map((i) => t('sms.' + i)).join(' ')`, c);
-	verifier(!/chrono tourne|pas de sieste/i.test(sms(f116)) && !/clock is ticking|no napping/i.test(sms(e116)), 'prompt 116 : les SMS d\'intro parlent encore de chrono ou interdisent la sieste');
+	verifier(!/chrono tourne|pas de sieste/i.test(sms(f116)) && !/clock is ticking|no napping/i.test(sms(e116)), 'prompt 121 : les SMS d\'intro parlent encore de chrono ou interdisent la sieste');
 	const sk116 = readFileSync(join(pub, 'sketch.js'), 'utf8');
-	verifier(/if \(auto && tA >= 1/.test(sk116) && /const auto = !!Jeu\.defiChrono/.test(sk116), 'prompt 116 : la narration ne doit passer seule qu\'en défi chrono');
-	verifier(/majPlaintes\(tempsPlaintes\(\)\)/.test(sk116) && /resteReponse\(pl, typeof tempsPlaintes/.test(readFileSync(join(pub, 'community.js'), 'utf8')), 'prompt 116 : délai des plaintes en temps de jeu actif');
+	verifier(/if \(auto && tA >= 1/.test(sk116) && /const auto = !!Jeu\.defiChrono/.test(sk116), 'prompt 121 : la narration ne doit passer seule qu\'en défi chrono');
+	verifier(/majPlaintes\(tempsPlaintes\(\)\)/.test(sk116) && /resteReponse\(pl, typeof tempsPlaintes/.test(readFileSync(join(pub, 'community.js'), 'utf8')), 'prompt 121 : délai des plaintes en temps de jeu actif');
 	const reste = vm.runInContext(`Jeu.resteReponse({ depuis: 90000 }, 1000)`, f116);
-	verifier(reste === vm.runInContext('Jeu.REGLAGES.community.delaiMs', f116), `prompt 116 : une plainte datée du futur doit repartir du délai complet (${reste})`);
+	verifier(reste === vm.runInContext('Jeu.REGLAGES.community.delaiMs', f116), `prompt 121 : une plainte datée du futur doit repartir du délai complet (${reste})`);
 }
 
-// Prompt 117 : mode exposition — expo.js chargé en premier (la purge précède toute lecture du stockage), réglages et
+// Prompt 122 : mode exposition — expo.js chargé en premier (la purge précède toute lecture du stockage), réglages et
 // langue gardés, sauvegardes et tutoriel effacés ; filet de rechargement après une erreur qui fige le rendu
 {
 	const html117 = readFileSync(join(pub, 'index.html'), 'utf8');
 	const premier = (html117.match(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/i) || [])[1];
-	verifier(premier === './expo.js', `prompt 117 : expo.js doit être le premier script (${premier})`);
+	verifier(premier === './expo.js', `prompt 122 : expo.js doit être le premier script (${premier})`);
 	const st = new Map([['pxe-nte001:jeu:reglages', '{}'], ['pxe-nte001-langue', 'en'], ['pxe-nte001-tutoriel-vu', 'oui'], ['pxe-nte001-partie-2026-09-14', '{}'], ['autre-site', 'x']]);
 	const ls = { getItem: (k) => (st.has(k) ? st.get(k) : null), setItem: (k, v) => st.set(k, String(v)), removeItem: (k) => st.delete(k), key: (i) => [...st.keys()][i] };
 	const c117 = { localStorage: new Proxy(ls, { ownKeys: () => [...st.keys()], getOwnPropertyDescriptor: (o, k) => (st.has(k) ? { enumerable: true, configurable: true, value: st.get(k) } : Reflect.getOwnPropertyDescriptor(o, k)) }), location: { search: '?expo=1', hash: '' }, URLSearchParams, Date, window: { addEventListener: () => {} }, setInterval: () => 0, document: {} };
 	c117.window = Object.assign(c117.window, c117);
 	vm.createContext(c117);
 	vm.runInContext(readFileSync(join(pub, 'expo.js'), 'utf8') + ';globalThis.__E = EXPO;', c117);
-	verifier(c117.__E.actif && [...st.keys()].sort().join(',') === 'autre-site,pxe-nte001-langue,pxe-nte001:jeu:reglages', `prompt 117 : purge du mode exposition (${[...st.keys()].join(',')})`);
-	verifier(/filetErreur/.test(readFileSync(join(pub, 'installation.js'), 'utf8')) && /sessionStorage\.setItem\(CLE/.test(readFileSync(join(pub, 'installation.js'), 'utf8')), 'prompt 117 : filet de rechargement (une fois par minute au plus)');
+	verifier(c117.__E.actif && [...st.keys()].sort().join(',') === 'autre-site,pxe-nte001-langue,pxe-nte001:jeu:reglages', `prompt 122 : purge du mode exposition (${[...st.keys()].join(',')})`);
+	verifier(/filetErreur/.test(readFileSync(join(pub, 'installation.js'), 'utf8')) && /sessionStorage\.setItem\(CLE/.test(readFileSync(join(pub, 'installation.js'), 'utf8')), 'prompt 122 : filet de rechargement (une fois par minute au plus)');
 }
 
-// Prompt 118 : « Quitter la journée » en secondaire, gravité « élevée » en rouge franc doublée par la taille,
+// Prompt 123 : « Quitter la journée » en secondaire, gravité « élevée » en rouge franc doublée par la taille,
 // badge à texte sombre en palette protan / deutan, touche F (plein écran)
 {
-	verifier(/t\('quitter\.bouton'\), quitterJourneeRapide, false, true\)/.test(readFileSync(join(pub, 'panneau.js'), 'utf8')), 'prompt 118 : « Quitter la journée » doit être secondaire');
-	verifier(/g === 'elevee' \? C\.rougeFonce/.test(readFileSync(join(pub, 'carte.js'), 'utf8')) && /const tm = g === 'elevee' \? 36/.test(readFileSync(join(pub, 'carte-alertes.js'), 'utf8')), 'prompt 118 : gravité élevée en rouge franc et plus grande');
-	verifier(/\['protan', 'deutan'\]\.includes\(Confort\.Reglages\.daltonisme\)/.test(readFileSync(join(pub, 'ds.js'), 'utf8')), 'prompt 118 : badge lisible en protan / deutan');
-	verifier(/function basculerPleinEcran/.test(readFileSync(join(pub, 'sketch.js'), 'utf8')), 'prompt 118 : touche F, plein écran');
+	verifier(/t\('quitter\.bouton'\), quitterJourneeRapide, false, true\)/.test(readFileSync(join(pub, 'panneau.js'), 'utf8')), 'prompt 123 : « Quitter la journée » doit être secondaire');
+	verifier(/g === 'elevee' \? C\.rougeFonce/.test(readFileSync(join(pub, 'carte.js'), 'utf8')) && /const tm = g === 'elevee' \? 36/.test(readFileSync(join(pub, 'carte-alertes.js'), 'utf8')), 'prompt 123 : gravité élevée en rouge franc et plus grande');
+	verifier(/\['protan', 'deutan'\]\.includes\(Confort\.Reglages\.daltonisme\)/.test(readFileSync(join(pub, 'ds.js'), 'utf8')), 'prompt 123 : badge lisible en protan / deutan');
+	verifier(/function basculerPleinEcran/.test(readFileSync(join(pub, 'sketch.js'), 'utf8')), 'prompt 123 : touche F, plein écran');
 }
 
 // Service worker : chaque script de index.html est dans la liste hors ligne de sw.js

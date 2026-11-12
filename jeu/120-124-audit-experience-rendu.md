@@ -1,11 +1,12 @@
-# Prompts 115 à 119 : tirés de l'audit du 12/11/2026 (expérience de jeu et rendu)
+# Prompts 120 à 124 : tirés de l'audit du 12/11/2026 (expérience de jeu et rendu)
 
 Ces cinq prompts appliquent les constats de `audit-2026-11-12.md` (racine). Ils ont été exécutés le 12/11/2026 sur la
-branche `jeu/115-119-audit-experience-rendu`, dans un worktree séparé : une autre session travaillait en même temps
-sur le prompt 114 (écran Crédits et menu), d'où la numérotation à partir de 115 et l'absence de toute modification
-de `menu.js` et `credits.js`.
+branche `jeu/120-124-audit-experience-rendu`, dans un worktree séparé : d'autres sessions travaillaient en même temps
+(prompts 114 à 119 fusionnés dans `main` pendant ce travail, et une refonte de l'écran Crédits et du menu en cours),
+d'où la numérotation à partir de 120 (les prompts ont d'abord été numérotés 115 à 119) et l'absence de toute
+modification de `menu.js` et `credits.js`. Le travail a été fusionné avec `main` après coup : voir « Fusion ».
 
-## 115 — Une évaluation qui suit les jauges, des tendances avant de choisir
+## 120 — Une évaluation qui suit les jauges, des tendances avant de choisir
 
 - **Constat rejoué par simulation** (vrais `game.js`, `taches.js`, `rythme.js` et données, dans Node) : la réponse
   jugée « bonne » était celle dont la **somme brute** des effets attendus était la plus haute. Avec le bonus ×1,25 de
@@ -34,7 +35,7 @@ de `menu.js` et `credits.js`.
 - **Test** : `test-jeu.mjs` joue les 3 semaines en suivant le conseil (aucun licenciement, 15/15 « bon », score
   ≥ 180). Le test des « chaînes » choisit désormais la pire réponse au sens pondéré.
 
-## 116 — Un retour lisible, une intro qui décrit le vrai jeu
+## 121 — Un retour lisible, une intro qui décrit le vrai jeu
 
 - **Textes** (FR et EN) : `sms.2` ne parle plus de « dévier, retenir, renfort… le chrono tourne » ; `sms.4` ne dit
   plus « pas de sieste au poste ». La fenêtre « Votre poste » décrit les gestes réels : clic sur la carte (horloge
@@ -49,7 +50,7 @@ de `menu.js` et `credits.js`.
   (sous le menu si c'est lui qu'elle désigne) ; elle couvrait la plainte, puis les répliques.
 - **Indicateur de sauvegarde** masqué pendant la narration : il chevauchait son titre.
 
-## 117 — Mode exposition et filet en cas d'erreur
+## 122 — Mode exposition et filet en cas d'erreur
 
 - **`?expo=1`** (nouveau `expo.js`, premier script de la page) :
   - purge des clés `pxe-nte001*` du visiteur précédent, sauf réglages, langue, palmarès et marqueurs de migration
@@ -65,7 +66,7 @@ de `menu.js` et `credits.js`.
   (`sessionStorage`). Testé en remplaçant `draw()` par une fonction qui lève une erreur.
 - README de `site/` et de `rendu/` : l'adresse d'exposition.
 
-## 118 — Hiérarchie du bandeau, gravité lisible, plein écran
+## 123 — Hiérarchie du bandeau, gravité lisible, plein écran
 
 - « Quitter la journée » en bouton secondaire (contour) : le rouge plein reste à l'urgence et aux badges.
 - Gravité sur la carte : « élevée » en rouge franc `#D10B00` (3,5:1 sur le fond, au-dessus des 3:1 d'un élément
@@ -76,9 +77,9 @@ de `menu.js` et `credits.js`.
   plus tronquée en 1920×1080.
 - Touche **F** : plein écran (entrée et sortie), annoncée ; ajoutée à la ligne « L » de l'aide.
 - **Hors champ** : l'écran Crédits (mise en page portrait, licence Hub'Eau encore « [À COMPLÉTER] » dans
-  `credits.licence.texte` alors que `manifest.json` la donne) est laissé au prompt 114, qui le redessine.
+  `credits.licence.texte` alors que `manifest.json` la donne) est laissé à la session qui redessine les Crédits (prompt « Crédits et menu », non fusionné à cette heure).
 
-## 119 — Décrire la règle que le jeu joue vraiment
+## 124 — Décrire la règle que le jeu joue vraiment
 
 - **Vérifié dans les données** : `retard: null` sur les 15, 23 et 28 entrées des trois semaines et les 6 du repli.
   Le seuil de 10 minutes et l'aggravation du retard ne jouent qu'en temps réel.
@@ -91,9 +92,9 @@ de `menu.js` et `credits.js`.
 
 ## Vérifications
 
-- `npm run build` ; `npm test` : smoke et test du jeu (contrôles ajoutés pour 115 à 118) ; `node --check` sur tous
+- `npm run build` ; `npm test` : smoke et test du jeu (contrôles ajoutés pour 120 à 123) ; `node --check` sur tous
   les scripts (le test du jeu ne charge pas `sketch.js` : une erreur de syntaxe y passait inaperçue pendant le
-  prompt 116, rattrapée par le navigateur).
+  prompt 121, rattrapée par le navigateur).
 - Parcours dans Chromium sans tête : fenêtre du dossier, narration, mode exposition, voile d'inactivité, filet,
   carte avec les trois gravités.
 - Audit des textes (`?audit=textes&parcours=1`) à 1920×1080, 1366×768 et 412×915 : voir le résultat dans

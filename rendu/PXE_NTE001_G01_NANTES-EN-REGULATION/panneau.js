@@ -41,7 +41,7 @@ function dessinerBandeau() {
 	});
 	// Ligne 2 : objectif du jour, équipes disponibles, date et heure du jeu
 	const o = Jeu.objectifDuJour ? Jeu.objectifDuJour() : null;
-	// Prompt 118 : la disponibilité des équipes n'est plus répétée ici (elle est dans le panneau Équipes, à droite)
+	// Prompt 123 : la disponibilité des équipes n'est plus répétée ici (elle est dans le panneau Équipes, à droite)
 	const h = heureAffichee();
 	const th = typeof Taches !== 'undefined' && Jeu.jourCourant() ? Taches.theme(Jeu.jourCourant().date) : null; // prompt 88 : thème du jour
 	const pj = typeof Taches !== 'undefined' && Jeu.jourCourant() ? Taches.prioritesDuJour(Jeu.jourCourant().date) : [];
@@ -73,7 +73,7 @@ function dessinerBandeau() {
 	if (crise) {
 		const actif = Taches.criseActive();
 		noStroke();
-		fill(actif ? C.primaire : 'rgba(212,3,28,0.25)');
+		fill(actif ? C.primaire : primaireRGBA(0.25)); // prompt 115
 		rect(z.x + z.l - 920, z.y + 42, 254, 32);
 		fill('#FFFFFF');
 		textFont(POLICE_TEXTE);
@@ -85,7 +85,7 @@ function dessinerBandeau() {
 		textAlign(LEFT, TOP);
 	}
 	// Aide et Recommencer (souris / tactile) — équivalents des touches H et R
-	bouton(z.x + z.l - 648, z.y + 14, 280, 56, t('quitter.bouton'), quitterJourneeRapide, false, true); // prompt 94 : toujours visible, touche Q ; prompt 118 : secondaire (le rouge plein reste à l'urgence)
+	bouton(z.x + z.l - 648, z.y + 14, 280, 56, t('quitter.bouton'), quitterJourneeRapide, false, true); // prompt 94 : toujours visible, touche Q ; prompt 123 : secondaire (le rouge plein reste à l'urgence)
 	bouton(z.x + z.l - 358, z.y + 14, 128, 56, t('accueil.aide'), () => ouvrir('aide'), false, true);
 	bouton(z.x + z.l - 220, z.y + 14, 206, 56, // prompt 98 : boutons du bandeau 48 → 56 px (≈ 45 px à l'écran)
 		 t('jeu.recommencer'), () => ouvrir('reset'), false, true);
@@ -184,23 +184,18 @@ function dessinerPanneauSignalement(d, x, base) {
 	textAlign(LEFT, TOP);
 	y += 48;
 	y = bulleDuPlaignant(d, x + 32, y, l);
-	// Répliques : en bas de la fenêtre
-	const rs = reponsesAffichees(d);
-	// Prompt 115 : une ligne de plus par réponse (tendance) — sauf sources ouvertes (« En savoir plus ») : lignes compactes
+	// Répliques : en bas de la fenêtre (prompt 116 : + « Dites-m'en plus » ; prompt 117 : 3 répliques mélangées dont un clash)
+	const rs = reponsesDialogue(d);
+	// Prompt 120 : une ligne de plus par réplique (tendance des jauges) — sauf sources ouvertes : lignes compactes
 	const compact = PLUS.ouvert;
 	const hL = compact ? 62 : H_REPONSE;
 	const pas = compact ? 70 : PAS_REPONSE;
-	const hRep = 44 + rs.length * pas;
+	const hRep = 44 + rs.length * pas + 70;
 	const yr = base.y + base.h - 24 - hRep;
-	if (PLUS.ouvert) {
-		bouton(x + 32, y, 320, 52, t('plus.fermer'), basculerPlus, false, true);
-		textAlign(LEFT, TOP);
-		corpsEnquete(d, x + 32, y + 60, l, Math.max(120, yr - 16 - (y + 60)));
-	} else {
-		bouton(x + 32, y, 320, 52, t('plus.ouvrir'), basculerPlus, false, true);
-		textAlign(LEFT, TOP);
-		cibleGuide('sources', x + 32, y, 320, 52);
-		if (peutPublierDossier(d)) bouton(x + 372, y, Math.min(400, l - 340), 52, '→ ' + t('applis.publier') + ' (B)', () => publierDepuisDossier(d), false, true);
+	// Prompt 116 : « En savoir plus » devient la réplique « Dites-m'en plus » (dernière de la liste) ; plus de bouton en double
+	if (PLUS.ouvert) corpsEnquete(d, x + 32, y, l, Math.max(120, yr - 16 - y));
+	else if (peutPublierDossier(d)) {
+		bouton(x + 32, y, Math.min(400, l), 52, '→ ' + t('applis.publier') + ' (B)', () => publierDepuisDossier(d), false, true);
 		textAlign(LEFT, TOP);
 	}
 	if (phase === 'contradiction') return dessinerChoixSource(d, x + 32, yr, l);
@@ -208,7 +203,7 @@ function dessinerPanneauSignalement(d, x, base) {
 	ZONE_DEPOT = null;
 	dsTexte(t('dialogue.titre'), x + 32, yr, 18, DS.blanc75, 'left');
 	const bloquee = Jeu.actionBloquee ? Jeu.actionBloquee() : null;
-	// Prompt 115 : tendance des 3 jauges à droite de chaque réplique (symbole + couleur, jamais la couleur seule) ;
+	// Prompt 120 : tendance des 3 jauges sous chaque réplique (symbole + couleur, jamais la couleur seule) ;
 	// option « Pression visible » : pastille « conseillé » sur la ou les réponses que l'évaluation jugerait bonnes
 	const conseillees = typeof Traces !== 'undefined' && Traces.option('pressionVisible') && Jeu.reponsesConseillees ? Jeu.reponsesConseillees(d) : [];
 	rs.forEach((r, i) => {
@@ -221,20 +216,62 @@ function dessinerPanneauSignalement(d, x, base) {
 		fill(off ? DS.blanc15 : DS.blanc);
 		rect(x + 32, ry, 44, hL);
 		dsTexte(TOUCHES_REPONSES[i], x + 54, ry + (hL - 26) / 2, 20, DS.fond, 'center');
-		const rep = tSi('repl.' + r.cle, String(r.lib));
+		const rep = repliquesDuDossier(rs, d)[i];
 		dessinerTexte('« ' + rep + ' »', x + 92, ry + 6, l - 76, { taille: 20, couleur: off ? C.gris : C.texte, maxLignes: 2, interligne: 25 });
-		if (!compact) dessinerTendanceReponse(r.cle, d, x + 92, ry + 58, conseillees.includes(r.cle)); // sous la réplique
-		if (!off) boutons.push({ x: x + 32, y: ry, l, h: hL, action: () => decider(r.cle) });
+		if (!compact) dessinerTendanceReponse(r, d, x + 92, ry + 58, !r.clash && conseillees.includes(r.cle)); // sous la réplique
+		if (!off) boutons.push({ x: x + 32, y: ry, l, h: hL, action: () => choisirReplique(r) });
 		if (i === 0) cibleGuide('actions', x + 32, yr + 36, l, rs.length * pas);
 	});
+	// « Dites-m'en plus » : pas une décision — ouvre / referme les sources de l'enquête (comme E)
+	const py = yr + 36 + rs.length * pas;
+	const survolP = mouseX >= x + 32 && mouseX <= x + 32 + l && mouseY >= py && mouseY <= py + 62;
+	noStroke();
+	fill(survolP ? DS.blanc15 : DS.blanc05);
+	rect(x + 32, py, l, 62);
+	fill(DS.blanc15);
+	rect(x + 32, py, 44, 62);
+	dsTexte('E', x + 54, py + 18, 20, DS.blanc, 'center');
+	dessinerTexte('« ' + t(PLUS.ouvert ? 'dialogue.plusFerme' : 'dialogue.plus') + ' »', x + 92, py + 6, l - 76, { taille: 20, couleur: C.texte, maxLignes: 1, interligne: 25 });
+	dsTexte(t('dialogue.plusAide'), x + 92, py + 34, 16, DS.blanc50, 'left');
+	boutons.push({ x: x + 32, y: py, l, h: 62, action: basculerPlus });
+	cibleGuide('sources', x + 32, py, l, 62);
 }
-/** Prompt 115 : tendance d'une réponse sur les 3 jauges — « Flu. ▲ » en vert, « ≈ » en gris, « ▼ » en orange ; le
- * symbole porte le sens, la couleur le double. Pastille « conseillé » en option (Pression visible). */
-/** Prompt 115 : hauteur d'une ligne de réponse (2 lignes de réplique + la tendance) et pas entre deux lignes */
+/** Prompt 116 : les répliques d'un dossier, le pseudo du plaignant cité une seule fois */
+function repliquesDuDossier(rs, d) {
+	let cite = false;
+	return rs.map((r) => {
+		const txt = repliqueDe(r, d, cite);
+		if (!cite && /@\w/.test(txt)) cite = true;
+		return txt;
+	});
+}
+/** Prompt 116 : une des trois variantes de la réplique, choisie de façon déterministe (dossier + réponse), parmi
+ * celles dont toutes les variables sont connues pour ce dossier ; repli : réplique unique (prompt 107), puis libellé */
+function repliqueDe(r, d, sansAuteur) {
+	const vars = Object.assign({}, Jeu.variablesReplique ? Jeu.variablesReplique(Jeu.index) : {});
+	if (sansAuteur) delete vars.auteur; // le pseudo n'est cité qu'une fois par dossier
+	const ok = [];
+	const prefixe = r.clash ? 'clash.' + (Jeu.categorie(d) || 'autre') : 'repl.' + r.cle; // prompt 117
+	for (let k = 1; k <= 3; k++) {
+		const cle = prefixe + '.' + k;
+		if (TRADUCTIONS.fr[cle] === undefined) continue;
+		const brut = String(t(cle));
+		if ((brut.match(/\{(\w+)\}/g) || []).every((m) => vars[m.slice(1, -1)] !== undefined && vars[m.slice(1, -1)] !== '')) ok.push(brut);
+	}
+	if (!ok.length) return sansAuteur ? (r.clash ? t('clash.autre.1') : tSi('repl.' + r.cle, String(r.lib))) : repliqueDe(r, d, true);
+	let h = Jeu.index * 7;
+	for (const c of String(r.cle) + (r.clash ? '!' : '')) h = (h * 31 + c.charCodeAt(0)) % 1000003;
+	return ok[h % ok.length].replace(/\{(\w+)\}/g, (m, k) => String(vars[k]));
+}
+/** Prompt 120 : hauteur d'une ligne de réponse (2 lignes de réplique + la tendance) et pas entre deux lignes */
 const H_REPONSE = 84;
 const PAS_REPONSE = 92;
-function dessinerTendanceReponse(cle, d, x, y, conseillee) {
-	const e = Jeu.effetsAttendus(cle, d);
+/** Prompt 120 : tendance d'une réplique sur les 3 jauges — « Flu. ▲ » en vert, « ≈ » en gris, « ▼ » en orange ; le
+ * symbole porte le sens, la couleur le double. Le clash (prompt 117) compte son malus de réputation : la tendance
+ * reste honnête. Pastille « conseillé » en option (Pression visible). */
+function dessinerTendanceReponse(r, d, x, y, conseillee) {
+	const e = Jeu.effetsAttendus(r.cle, d).slice();
+	if (r.clash) e[1] += Jeu.REGLAGES.malusClash || 0;
 	let xx = x;
 	['fluidite', 'reputation', 'budget'].forEach((k, j) => {
 		const sym = tendance(e[j]);
@@ -268,14 +305,25 @@ function bulleDuPlaignant(d, x, y, l) {
 	}
 	fill(DS.blanc05);
 	rect(x + 76, y, lt + 8, hb);
+	if (pl && pl.ton === 'agressif') {
+		fill(DS.alerte); // prompt 118 : ton agressif voulu — liseré d'alerte
+		rect(x + 76, y, 4, hb);
+	}
 	triangle(x + 76, y + 22, x + 66, y + 30, x + 76, y + 38); // pointe de la bulle vers l'avatar
 	dsTexte(couperLargeurCarte(auteur, lt - 24, 16), x + 94, y + 14, 16, DS.blanc50, 'left');
 	dsTexte(texte, x + 94, y + 42, 20, DS.blanc, 'left', lt - 32);
 	if (PC.etat === 'appli' && BULLE.dossier !== d) {
 		BULLE.dossier = d;
-		annoncer(t('plaignant.annonce', { auteur, texte }));
+		annoncer(t('plaignant.annonce', { auteur, texte: lireMasques(texte) })); // prompt 118 : « mot masqué » à la place des symboles
 	}
 	let yy = y + hb + 10;
+	if (d.fictif) {
+		noStroke();
+		fill(DS.alerte);
+		rect(x, yy + 2, 4, 22);
+		dsTexte(t('fictif.badge'), x + 14, yy, 16, DS.alerteClair, 'left'); // prompt 119 : un incident inventé est toujours signalé comme tel
+		yy += 34;
+	}
 	if (pl) {
 		dsTexte(couperLargeurCarte(String(phraseSituation(d)), l, 16), x, yy, 16, DS.blanc50, 'left');
 		yy += 28;
@@ -283,6 +331,10 @@ function bulleDuPlaignant(d, x, y, l) {
 	return yy + 12;
 }
 const BULLE = { dossier: null };
+/** Prompt 118 : pour la synthèse vocale, un mot masqué par des symboles (&#@!%$) est lu « mot masqué » */
+function lireMasques(txt) {
+	return String(txt).replace(/[\wÀ-ÿ]*[@#$%&!]{2,}[\wÀ-ÿ]*/g, t('plaignant.motMasque'));
+}
 function bloc(titre, lignes, x, y, l, couleur) {
 	noStroke();
 	textFont(POLICE_DONNEES);
@@ -323,13 +375,37 @@ function dessinerChoixSource(d, x, y, l) {
 }
 
 // ——— Cartes de réponse : libellé, explication, tendance des effets, coût, équipe liée ———
-const TOUCHES_REPONSES = ['1', '2', '3', '4'];
+const TOUCHES_REPONSES = ['1', '2', '3']; // prompt 117 : trois répliques
 function reponsesAffichees(d) {
 	const cat = Jeu.categorie(d);
 	const rs = Jeu.reponsesDe(d);
 	if (rs) return rs.map((r) => ({ cle: cat + '.' + r.id, lib: t('rep.' + cat + '.' + r.id), expl: t('repx.' + cat + '.' + r.id), equipe: r.equipe || null }));
 	// Repli (dossier sans catégorie) : la table Q57–Q60 et ses descriptions en langage métier (prompt 74)
 	return ['devier', 'retenir', 'renfort', 'rien'].map((a) => ({ cle: a, lib: t('action.' + a), expl: t('action.desc.' + a), equipe: null }));
+}
+/** Prompt 117 : les trois répliques du dialogue — la meilleure réponse, une autre réponse de la catégorie, et le clash
+ * (réponse « attendre » + malus de réputation, game.js) — dans un ordre mélangé, déterministe pour le dossier */
+const PERMUTATIONS_3 = [[0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0]];
+function reponsesDialogue(d) {
+	const tout = reponsesAffichees(d);
+	if (!tout.length) return [];
+	const idx = Math.max(0, Jeu.paquet ? Jeu.paquet.indexOf(d) : 0);
+	const best = Jeu.meilleureReponse ? Jeu.meilleureReponse(d) : tout[0].cle;
+	const a = tout.find((r) => r.cle === best) || tout[0];
+	const rien = (r) => Jeu.familleDe(r.cle) === 'rien';
+	let autres = tout.filter((r) => r !== a && !rien(r));
+	if (!autres.length) autres = tout.filter((r) => r !== a);
+	const b = autres[(idx * 3) % autres.length];
+	const attendre = tout.find(rien) || tout[tout.length - 1];
+	const c = Object.assign({}, attendre, { clash: true });
+	const trio = [a, b, c];
+	return PERMUTATIONS_3[(idx * 5 + 2) % 6].map((k) => trio[k]);
+}
+/** Choisir une réplique (clic ou touche) : le clash est signalé au moteur juste avant la décision */
+function choisirReplique(r) {
+	Jeu.clashSuivant = !!r.clash;
+	decider(r.cle);
+	Jeu.clashSuivant = false;
 }
 /** Tendance honnête d'un effet attendu : signe et ordre de grandeur */
 function tendance(v) {
@@ -406,8 +482,8 @@ function toucheReponses() {
 	const i = TOUCHES_REPONSES.indexOf(key);
 	const d = Jeu.dossierCourant();
 	if (i < 0 || !d) return false;
-	const r = reponsesAffichees(d)[i];
-	if (r) decider(r.cle);
+	const r = reponsesDialogue(d)[i]; // prompt 117 : les 3 répliques affichées, dans leur ordre
+	if (r) choisirReplique(r);
 	return !!r;
 }
 
@@ -422,7 +498,7 @@ function explicationDecision(r) {
 	if (des) lignes.push(des);
 	const sit = e.categorie ? Jeu.situation(r.dossier) : null;
 	let pourquoi = sit ? sit.split('+').map((s) => t(RAISONS[s] || 'raison.calme')).join(', ') : '';
-	// Prompt 115 : le conseil suit aussi la jauge en manque — le dire quand elle est basse (sous 45)
+	// Prompt 120 : le conseil suit aussi la jauge en manque — le dire quand elle est basse (sous 45)
 	if (e.jaugeBasse && e.valeurBasse !== undefined && e.valeurBasse < 45) pourquoi = t('raison.besoin', { jauge: t('jaugeTitre.' + e.jaugeBasse), v: e.valeurBasse }) + (pourquoi ? ', ' + pourquoi : '');
 	const ev = Jeu.evaluer(e);
 	if (ev === 'bon') lignes.push(t('retour.bon', { pourquoi: pourquoi || t('raison.calme') }));

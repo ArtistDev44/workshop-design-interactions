@@ -176,9 +176,9 @@ function boutonsBureau() {
 }
 function dessinerBoutonPortrait(b) {
 	const ctx = PORTRAIT.ctx;
-	ctx.fillStyle = b.primaire ? '#D4031C' : '#171616';
+	ctx.fillStyle = b.primaire ? DS.primaire : '#171616'; // prompt 115
 	ctx.fillRect(b.x, b.y, b.l, b.h);
-	ctx.strokeStyle = b.primaire ? '#D4031C' : 'rgba(255,255,255,0.6)';
+	ctx.strokeStyle = b.primaire ? DS.primaire : 'rgba(255,255,255,0.6)';
 	ctx.lineWidth = 3;
 	ctx.strokeRect(b.x + 1.5, b.y + 1.5, b.l - 3, b.h - 3);
 	ctx.fillStyle = '#FFFFFF';

@@ -1,4 +1,4 @@
-# Prompt 118 — Jeu « Nantes en régulation » : hiérarchie du bandeau, gravité lisible, plein écran
+# Prompt 123 — Jeu « Nantes en régulation » : hiérarchie du bandeau, gravité lisible, plein écran
 
 Demande d'origine (12/11/2026) : prompts tirés de `audit-2026-11-12.md`, section 4.
 
@@ -17,10 +17,10 @@ Demande d'origine (12/11/2026) : prompts tirés de `audit-2026-11-12.md`, sectio
    Équipes à droite). Vérifier que la ligne n'est plus tronquée en 1920×1080.
 5. **Plein écran** : touche F (hors saisie), via `document.documentElement.requestFullscreen()`, et de nouveau F
    pour en sortir ; la touche est listée dans l'Aide (H). Rien si l'API est absente. FR et EN. Le menu titre n'est
-   pas modifié ici : il est refait en parallèle par le prompt 114 (autre session), comme l'écran Crédits.
+   pas modifié ici : il est refait en parallèle par une autre session (prompt « Crédits et menu »), comme l'écran Crédits.
 
 Hors champ : l'écran Crédits (mise en page portrait, licence Hub'Eau encore « [À COMPLÉTER] » alors que
-`manifest.json` la donne) est laissé au prompt 114, qui le redessine ; le signaler à son auteur.
+`manifest.json` la donne) est laissé à la session qui redessine les Crédits ; le lui signaler.
 
 ## Vérifications
 
@@ -28,4 +28,4 @@ Hors champ : l'écran Crédits (mise en page portrait, licence Hub'Eau encore «
   doc.
 - Contrastes recalculés pour le badge et le nouveau marqueur.
 - `npm run build`, `npm test`, audit des textes à 0 défaut.
-- Doc commune `jeu/115-119-audit-experience-rendu.md`, `prompts/README.md`, `journal.md`.
+- Doc commune `jeu/120-124-audit-experience-rendu.md`, `prompts/README.md`, `journal.md`.

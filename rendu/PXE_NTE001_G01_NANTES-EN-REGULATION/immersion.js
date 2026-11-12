@@ -255,7 +255,7 @@ function tempsCompresse() {
 // pendant la lecture d'un signalement. game.js reçoit cette valeur comme « maintenant » (API inchangée).
 const TEMPS_EQUIPES = { ms: 0, actif: 0 };
 const tempsEquipes = () => TEMPS_EQUIPES.ms;
-/** Prompt 116 : ms réelles de jeu actif — une plainte n'expire plus pendant la lecture d'un signalement */
+/** Prompt 121 : ms réelles de jeu actif — une plainte n'expire plus pendant la lecture d'un signalement */
 const tempsPlaintes = () => TEMPS_EQUIPES.actif;
 /** État de la vitesse du temps : 'pause' | 'normal' | 'accelere' */
 function vitesseTemps() {
@@ -269,7 +269,7 @@ function avancerTemps() {
 	if (tempsSuspendu()) return; // prompt 34 / 43 : tutoriel et transition suspendent le temps
 	const vitesse = IMMERSION.minutesParSeconde * (tempsCompresse() ? IMMERSION.compression : 1) * (typeof Juice !== 'undefined' ? Juice.echelleTemps(maintenant) : 1); // prompt 78 : sieste ×100 ; prompt 96 : hit-stop (horloge seule, entrées libres)
 	TEMPS_EQUIPES.ms += dt * (vitesse / IMMERSION.minutesParSeconde); // prompt 95 (le hit-stop la ralentit aussi)
-	TEMPS_EQUIPES.actif += dt; // prompt 116 : temps réel de jeu ACTIF (×1, arrêté quand le temps est suspendu) — délai des plaintes
+	TEMPS_EQUIPES.actif += dt; // prompt 121 : temps réel de jeu ACTIF (×1, arrêté quand le temps est suspendu) — délai des plaintes
 	const avant = Jeu.horloge.minutes;
 	Jeu.horloge.minutes += (dt / 1000) * vitesse;
 	// Prompt 78 : l'horloge ne dépasse pas la fin de journée tant que des signalements restent (sieste ×100)
@@ -444,7 +444,7 @@ function dessinerMail() {
 	noStroke();
 	fill(13, 12, 12, 200);
 	rect(0, 0, L, H);
-	dsPanneau(x, y, l, h, t('mailf.titre'), m.positif ? 'rgba(0,251,116,0.12)' : 'rgba(212,3,28,0.25)');
+	dsPanneau(x, y, l, h, t('mailf.titre'), m.positif ? 'rgba(0,251,116,0.12)' : primaireRGBA(0.25)); // prompt 115
 	dsBadge(x + l - 120, y + 30, t('mailf.nouveau'), m.positif ? 'succes' : 'erreur');
 	dsTexte(t('mailf.de', { de: m.de }), x + 32, y + 84, 20, DS.blanc50, 'left');
 	dsTexte(t('mailf.a'), x + 32, y + 114, 20, DS.blanc50, 'left');
@@ -1174,7 +1174,7 @@ function fenetrePoste() {
 	textSize(24);
 	text(t('poste.decisions'), x + 56, y + 262);
 	textStyle(NORMAL);
-	// Prompt 116 : les gestes réels du jeu (carte, répliques 1 à 4, équipes glissées, menu à gauche), plus l'ancienne table Q5–Q7
+	// Prompt 121 : les gestes réels du jeu (carte, répliques 1 à 4, équipes glissées, menu à gauche), plus l'ancienne table Q5–Q7
 	['carte', 'repondre', 'equipes', 'menu'].forEach((g, i) => {
 		const k = t('poste.geste.' + g + '.k');
 		const yy = y + 310 + i * 72;

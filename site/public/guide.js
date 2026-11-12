@@ -166,7 +166,7 @@ function dessinerGuide() {
 	strokeWeight(4);
 	rect(c.x - 10, c.y - 10, c.l + 20, c.h + 20);
 	noStroke();
-	// Prompt 116 : dossier ou conséquences ouverts → la bulle va sur la carte, à gauche, jamais sur le plaignant ni les répliques
+	// Prompt 121 : dossier ou conséquences ouverts → la bulle va sur la carte, à gauche, jamais sur le plaignant ni les répliques
 	const fenetreDossier = vue === 'poste' && PC.etat === 'appli' && (PHASES_DOSSIER.includes(phase) || phase === 'narration');
 	if (fenetreDossier) {
 		if (aGauche) flecheGuide(c.x - 14 - rebond, constrain(c.y + c.h / 2, 120, H - 120), 'droite');
@@ -225,7 +225,7 @@ function dessinerOptionsNouvellePartie(x, y) {
 	rect(x, y, l, h);
 	stroke('#ffffff');
 	strokeWeight(3);
-	fill(on ? '#D4031C' : 'rgba(0,0,0,0)');
+	fill(on ? DS.primaire : 'rgba(0,0,0,0)'); // prompt 115
 	rect(x + 20, y + 16, 32, 32);
 	if (on) {
 		stroke('#ffffff');

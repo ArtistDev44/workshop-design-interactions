@@ -40,7 +40,7 @@ const autorisationsReglees = () => LIGNES_AUTOR.every((k) => AUTOR.etat[k] !== '
 
 /** Point d'entrée : avant de lancer `suite`, montrer l'écran une fois par session si une autorisation manque */
 function avantDeJouer(suite) {
-	if (AUTOR.vu || (typeof EXPO !== 'undefined' && EXPO.actif)) return suite(); // prompt 117 : pas d'écran en exposition (jeu jouable sans)
+	if (AUTOR.vu || (typeof EXPO !== 'undefined' && EXPO.actif)) return suite(); // prompt 122 : pas d'écran en exposition (jeu jouable sans)
 	AUTOR.suite = suite;
 	lireAutorisations().then(() => {
 		if (autorisationsReglees()) {

@@ -20,7 +20,7 @@
 	const { attendreImages, H: P } = window.AUDIT_PARCOURS; // P : aides du parcours (H reste la hauteur du PC)
 
 	const A = { pile: [], composant: 0, image: {}, vues: {}, etape: null, enregistre: false, erreurs: [] };
-	const ROUGES = ['#d4031c', '#d10b00'];
+	const ROUGES = ['#d4031c', '#d10b00', typeof DS !== 'undefined' ? String(DS.primaire).toLowerCase() : '#d4031c']; // prompt 115 : couleur principale active
 	const SOMBRES = ['#0d0c0c', '#171616', '#0c1016', '#050607'];
 
 	// ——— Zones : enveloppe des fonctions de dessin des vues ———

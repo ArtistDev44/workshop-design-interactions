@@ -1,4 +1,4 @@
-# Prompt 117 — Jeu « Nantes en régulation » : mode exposition et filet en cas d'erreur
+# Prompt 122 — Jeu « Nantes en régulation » : mode exposition et filet en cas d'erreur
 
 Demande d'origine (12/11/2026) : prompts tirés de `audit-2026-11-12.md`, sections 3.3 et 6.
 
@@ -50,5 +50,5 @@ Une exception dans `draw()` arrête p5 : l'écran reste figé pour de bon (bug `
   après inactivité (tester avec un délai réduit par un paramètre de test).
 - Erreur provoquée volontairement dans `draw()` (console) : message puis rechargement, une seule fois.
 - `npm run build`, `npm test`.
-- Doc commune `jeu/115-119-audit-experience-rendu.md`, `prompts/README.md`, `journal.md` ; ajouter l'URL
+- Doc commune `jeu/120-124-audit-experience-rendu.md`, `prompts/README.md`, `journal.md` ; ajouter l'URL
   d'exposition au `README.md` de `site/` et de `rendu/`.

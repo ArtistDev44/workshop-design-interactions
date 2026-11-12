@@ -228,7 +228,8 @@ function carteMenu(x, y, l, h, titre, sous, action, sel, icone) {
 		textFont(POLICE_DONNEES);
 		textSize(18);
 		fill(actif ? 'rgba(13,12,12,0.75)' : MENU_C.doux);
-		text(sous, tx, y + h / 2 + 10, l - (tx - x) - 24, 40);
+		textLeading(22);
+		text(sous, tx, y + h / 2 + 8, l - (tx - x) - 24, 48);
 	}
 	boutons.push({ x, y, l, h, action });
 	if (sel) {
@@ -264,7 +265,7 @@ function dessinerMenuPrincipal() {
 	let yc = 370; // prompt 81 : cartes empilées (écart 12 à 6 entrées) — le pied de page a une ligne de plus
 	const compact = e.length > 6; // prompt 113 : + « Crédits » — cartes resserrées pour tenir au-dessus du pied de page
 	e.forEach((it, i) => {
-		const h = it.sous ? (compact ? 92 : 104) : compact ? 72 : 84;
+		const h = it.sous ? (compact ? 104 : 116) : compact ? 72 : 84; // prompt 114 : deux lignes de sous-titre (date · dossier · sauvegarde) sans coupure
 		carteMenu(x0, yc, 620, h, t('mp.' + it.cle), it.sous, it.action, i === MENU.choix, it.icone);
 		yc += h + (compact ? 10 : e.length > 5 ? 12 : 30);
 	});

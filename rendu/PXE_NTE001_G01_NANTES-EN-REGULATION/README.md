@@ -25,8 +25,8 @@ Fiche complète (contexte, provenance, droits, relevés, propriétés observable
 Le visiteur prend un poste dans une salle de contrôle des transports nantais et rejoue une semaine réelle du
 réseau : chaque fait daté de la source (perturbation, météo extrême, événement de l'agenda) devient un dossier à
 trancher ; en temps réel, un retard mesuré d'au moins 10 minutes aussi, et il s'aggrave tant qu'il attend. Ses
-réponses font bouger trois jauges (fluidité, réputation, budget). Aucun événement n'est inventé ; l'affluence
-attribuée à un événement est une hypothèse du jeu. Cartel de 113 mots : `cartel.md`.
+réponses font bouger trois jauges (fluidité, réputation, budget). Hormis au plus un incident fictif par semaine,
+marqué « Fictif », aucun événement n'est inventé ; l'affluence attribuée à un événement est une hypothèse du jeu. Cartel de 113 mots : `cartel.md`.
 
 ## Grammaire / règles
 

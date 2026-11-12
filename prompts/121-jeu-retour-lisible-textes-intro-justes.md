@@ -1,4 +1,4 @@
-# Prompt 116 — Jeu « Nantes en régulation » : un retour lisible et une intro qui décrit le vrai jeu
+# Prompt 121 — Jeu « Nantes en régulation » : un retour lisible et une intro qui décrit le vrai jeu
 
 Demande d'origine (12/11/2026) : prompts tirés de `audit-2026-11-12.md`, sections 3.4 et 3.5.
 
@@ -56,4 +56,4 @@ fenêtre (sur la carte, à gauche) ou sous les répliques, jamais sur la bulle d
 - Les textes relus dans les deux langues ; audit des textes à 0 défaut.
 - Un contrôle dans `test-jeu.mjs` : les textes `sms.*` ne parlent plus de chrono ni de « pas de sieste ».
 - `npm run build`, `npm test`.
-- Doc commune `jeu/115-119-audit-experience-rendu.md`, `prompts/README.md`, `journal.md`.
+- Doc commune `jeu/120-124-audit-experience-rendu.md`, `prompts/README.md`, `journal.md`.

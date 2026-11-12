@@ -10,7 +10,7 @@ réseau de transports devient un dossier à trancher sous pression.
 ## 🎮 Le jeu — « Nantes en régulation »
 
 Façon *Paper Please*, vous rejouez **une semaine réelle du réseau de transports nantais**
-(tram, bus) depuis une salle de contrôle. Aucun événement n'est inventé : les retards
+(tram, bus) depuis une salle de contrôle. Hormis au plus un incident fictif par semaine, marqué « Fictif », aucun événement n'est inventé : les retards
 réels du flux GTFS-RT de Naolib (seuil : 10 min, en temps réel), les perturbations datées des archives et les alertes météo d'Open-Meteo de la
 semaine choisie deviennent vos dossiers à trancher.
 

@@ -1,8 +1,8 @@
 # 36 — Trois tests de difficulté et rééquilibrage (10/11/2026)
 
-> **Historique (prompt 119, 12/11/2026).** Ces résultats décrivent la table `devier / retenir / renfort / rien` et le
+> **Historique (prompt 124, 12/11/2026).** Ces résultats décrivent la table `devier / retenir / renfort / rien` et le
 > compteur par décision, remplacés au prompt 87. Ils ne décrivent plus le jeu. L'équilibrage actuel est vérifié dans
-> `site/scripts/test-jeu.mjs` (prompt 115) ; voir `jeu/115-119-audit-experience-rendu.md`.
+> `site/scripts/test-jeu.mjs` (prompt 120) ; voir `jeu/120-124-audit-experience-rendu.md`.
 
 ## Méthode
 Simulation dans Chromium, sur la vraie logique du jeu (`game.js`), sans interface ni temps réel. Script : `site/scripts/test-difficulte.mjs`.
