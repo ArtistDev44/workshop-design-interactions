@@ -1105,6 +1105,16 @@ function basculerSon() {
 	Confort.Reglages.basculer('son');
 }
 
+/** Prompt 118 : plein écran du document (1920×1080 du brief sans barres du navigateur) */
+function basculerPleinEcran() {
+	const doc = document;
+	try {
+		if (doc.fullscreenElement) doc.exitFullscreen();
+		else if (doc.documentElement.requestFullscreen) doc.documentElement.requestFullscreen().catch(() => {});
+		else return;
+		annoncer(t(doc.fullscreenElement ? 'pleinEcran.sortie' : 'pleinEcran.entree'));
+	} catch (e) {}
+}
 function keyPressed() {
 	// Prompt 33 : boîte d'import ouverte (champ texte, fichier) → le clavier lui appartient
 	if (Sauvegarde.dialogueOuvert || CARNET.ouvert) return;
@@ -1136,6 +1146,8 @@ function keyPressed() {
 	if ((key === 'g' || key === 'G') && GUIDE.actif && !MENU.actif) return arreterGuide(), false;
 	// Prompt 34 : le tutoriel capte le clavier (L reste disponible pour changer de langue)
 	if (tutoriel && !(key === 'l' || key === 'L')) return toucheTutoriel(), false;
+	// Prompt 118 : F = plein écran (entrée / sortie), partout hors saisie ; rien si l'API est absente
+	if ((key === 'f' || key === 'F') && !keyIsDown(CONTROL) && !keyIsDown(91)) return basculerPleinEcran(), false;
 	// Langue (prompt 24) : L bascule partout, sans toucher à la partie
 	if (key === 'l' || key === 'L') return Langue.suivante(), false;
 	// Prompt 47 : inspection, démission, palmarès ; J = journal de bord, D = rendre son badge
@@ -1416,7 +1428,7 @@ function fenetreAide() {
 		['M', t('aide.k.son')],
 		[t('aide.k.aideTouche'), t('aide.k.aide')],
 		['T', t('aide.k.tuto')],
-		['L', t('aide.k.langue')],
+		['L · F', t('aide.k.langue')], // prompt 118 : F = plein écran
 		['Tab', t('aide.k.objets')],
 		['← → ↑ ↓', t('aide.k.regarder')],
 		[t('aide.k.quitterTouche'), t('aide.k.quitter')],

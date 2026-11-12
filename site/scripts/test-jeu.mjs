@@ -1967,6 +1967,15 @@ for (const s of semaines) {
 	verifier(/filetErreur/.test(readFileSync(join(pub, 'installation.js'), 'utf8')) && /sessionStorage\.setItem\(CLE/.test(readFileSync(join(pub, 'installation.js'), 'utf8')), 'prompt 117 : filet de rechargement (une fois par minute au plus)');
 }
 
+// Prompt 118 : « Quitter la journée » en secondaire, gravité « élevée » en rouge franc doublée par la taille,
+// badge à texte sombre en palette protan / deutan, touche F (plein écran)
+{
+	verifier(/t\('quitter\.bouton'\), quitterJourneeRapide, false, true\)/.test(readFileSync(join(pub, 'panneau.js'), 'utf8')), 'prompt 118 : « Quitter la journée » doit être secondaire');
+	verifier(/g === 'elevee' \? C\.rougeFonce/.test(readFileSync(join(pub, 'carte.js'), 'utf8')) && /const tm = g === 'elevee' \? 36/.test(readFileSync(join(pub, 'carte-alertes.js'), 'utf8')), 'prompt 118 : gravité élevée en rouge franc et plus grande');
+	verifier(/\['protan', 'deutan'\]\.includes\(Confort\.Reglages\.daltonisme\)/.test(readFileSync(join(pub, 'ds.js'), 'utf8')), 'prompt 118 : badge lisible en protan / deutan');
+	verifier(/function basculerPleinEcran/.test(readFileSync(join(pub, 'sketch.js'), 'utf8')), 'prompt 118 : touche F, plein écran');
+}
+
 // Service worker : chaque script de index.html est dans la liste hors ligne de sw.js
 const html = readFileSync(join(pub, 'index.html'), 'utf8');
 const sw = readFileSync(join(pub, 'sw.js'), 'utf8');

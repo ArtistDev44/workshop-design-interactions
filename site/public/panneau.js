@@ -41,12 +41,12 @@ function dessinerBandeau() {
 	});
 	// Ligne 2 : objectif du jour, équipes disponibles, date et heure du jeu
 	const o = Jeu.objectifDuJour ? Jeu.objectifDuJour() : null;
-	const eq = Jeu.elementDebloque('equipes') ? Jeu.TYPES_EQUIPES.map((k) => String(Jeu.EQUIPES[k].nom) + ' ' + Jeu.equipesDisponibles(k, (typeof tempsEquipes === 'function' ? tempsEquipes() : millis())) + '/' + Jeu.REGLAGES.equipes[k].effectif).join(' · ') : '';
+	// Prompt 118 : la disponibilité des équipes n'est plus répétée ici (elle est dans le panneau Équipes, à droite)
 	const h = heureAffichee();
 	const th = typeof Taches !== 'undefined' && Jeu.jourCourant() ? Taches.theme(Jeu.jourCourant().date) : null; // prompt 88 : thème du jour
 	const pj = typeof Taches !== 'undefined' && Jeu.jourCourant() ? Taches.prioritesDuJour(Jeu.jourCourant().date) : [];
 	const gr = pj.length ? t('bandeau.priorites', { liste: pj.map((p) => t('tache.prioCourt.' + p.id, p.vars)).join(' · ') }) : ''; // prompt 91 § 4 : priorités imposées (le grade reste dans Indicateurs)
-	const morceaux = [gr, th && th !== 'ordinaire' ? t('theme.' + th) : '', o ? t('bandeau.objectifCourt', { libelle: String(o.libelle), v: Math.round(Jeu.jauges[o.jauge]) }) : '', eq, t('temps.' + vitesseTemps()) + ' ' + String(h.h).padStart(2, '0') + ':' + String(h.m).padStart(2, '0') + (Jeu.etat.horsLigne ? ' · ' + t('jeu.horsLigne') : '')].filter(Boolean); // prompt 95 : état de la vitesse du temps devant l'heure
+	const morceaux = [gr, th && th !== 'ordinaire' ? t('theme.' + th) : '', o ? t('bandeau.objectifCourt', { libelle: String(o.libelle), v: Math.round(Jeu.jauges[o.jauge]) }) : '', t('temps.' + vitesseTemps()) + ' ' + String(h.h).padStart(2, '0') + ':' + String(h.m).padStart(2, '0') + (Jeu.etat.horsLigne ? ' · ' + t('jeu.horsLigne') : '')].filter(Boolean); // prompt 95 : état de la vitesse du temps devant l'heure
 	textFont(POLICE_DONNEES);
 	textSize(16);
 	fill(C.gris);
@@ -85,7 +85,7 @@ function dessinerBandeau() {
 		textAlign(LEFT, TOP);
 	}
 	// Aide et Recommencer (souris / tactile) — équivalents des touches H et R
-	bouton(z.x + z.l - 648, z.y + 14, 280, 56, t('quitter.bouton'), quitterJourneeRapide, false, false); // prompt 94 : toujours visible, touche Q
+	bouton(z.x + z.l - 648, z.y + 14, 280, 56, t('quitter.bouton'), quitterJourneeRapide, false, true); // prompt 94 : toujours visible, touche Q ; prompt 118 : secondaire (le rouge plein reste à l'urgence)
 	bouton(z.x + z.l - 358, z.y + 14, 128, 56, t('accueil.aide'), () => ouvrir('aide'), false, true);
 	bouton(z.x + z.l - 220, z.y + 14, 206, 56, // prompt 98 : boutons du bandeau 48 → 56 px (≈ 45 px à l'écran)
 		 t('jeu.recommencer'), () => ouvrir('reset'), false, true);
