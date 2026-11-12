@@ -571,9 +571,7 @@ function basculerIndicateurs() {
 }
 /** Souris dans les coordonnées de l'écran du PC (utile dans une action de clic, appelée hors de draw) */
 function sourisEcranPC() {
-	if (vue !== 'poste') return { x: mouseX, y: mouseY };
-	const r = ECRAN_POSTE;
-	return { x: ((mouseX - r.x) * L) / r.l, y: ((mouseY - r.y) * H) / r.h };
+	return pointeurEcranPC(mouseX, mouseY); // prompt 182 (bureau.js)
 }
 function couleurJauge(v) {
 	return v < 20 ? DS.erreur : v < 40 ? DS.alerte : DS.succes;

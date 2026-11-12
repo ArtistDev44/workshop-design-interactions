@@ -155,7 +155,7 @@ function regionsAppli() {
 	}
 	PORTRAIT.defil = constrain(PORTRAIT.defil, 0, PORTRAIT.defilMax);
 	region(pcVersImage({ x: 0, y: H - BARRE_OS, l: L, h: BARRE_OS }), 20, PH - 182, PL - 40);
-	PORTRAIT.boutons.push({ x: 20, y: PH - 110, l: PL - 40, h: 96, texte: t('portrait.seLever'), action: quitterPC, primaire: false });
+	PORTRAIT.boutons.push({ x: 20, y: PH - 110, l: PL - 40, h: 96, texte: t('portrait.seLever'), action: quitterPC, primaire: false, desactive: !!raisonRetenuAuPC() }); // prompt 182 : estompé tant qu'un choix attend (le toucher annonce la raison)
 }
 /** Bureau : tous les objets de la pièce en grosses cibles (2 colonnes), plus « S'installer au PC » */
 function boutonsBureau() {
@@ -178,6 +178,8 @@ function boutonsBureau() {
 }
 function dessinerBoutonPortrait(b) {
 	const ctx = PORTRAIT.ctx;
+	ctx.save();
+	if (b.desactive) ctx.globalAlpha = 0.5; // prompt 182
 	ctx.fillStyle = b.primaire ? DS.primaire : '#171616'; // prompt 115
 	ctx.fillRect(b.x, b.y, b.l, b.h);
 	ctx.strokeStyle = b.primaire ? DS.primaire : 'rgba(255,255,255,0.6)';
@@ -193,6 +195,7 @@ function dessinerBoutonPortrait(b) {
 		ctx.font = '600 ' + taille + 'px "JetBrains Mono", ui-monospace, monospace';
 	}
 	ctx.fillText(b.texte, b.x + b.l / 2, b.y + b.h / 2 + 2);
+	ctx.restore();
 }
 
 // ——— Entrées : portrait → image principale ———

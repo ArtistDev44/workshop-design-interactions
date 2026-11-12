@@ -1200,7 +1200,7 @@ function keyPressed() {
 	if (key === 'l' || key === 'L') return Langue.suivante(), false;
 	// Prompt 47 : inspection, démission, palmarès ; J = journal de bord, D = rendre son badge
 	if (toucheDeblocage() || toucheParametres() || toucheTelephone() || toucheTaches() || toucheMecaniques() || toucheJournee()) return false; // prompts 47 et 51 ; prompt 175 : la fenêtre des paramètres capte le clavier (Tab, flèches, Entrée, Espace)
-	if (typeof toucheCarte === 'function' && toucheCarte()) return false; // prompt 102 : Échap annule un jeton d'équipe choisi
+	if (appliInteractive() && typeof toucheCarte === 'function' && toucheCarte()) return false; // prompt 102 : Échap annule un jeton d'équipe choisi ; prompt 182 : raccourcis de l'appli seulement au poste
 	// Fenêtres ouvertes : elles captent le clavier
 	if (fenetre) {
 		if (keyCode === ESCAPE || (fenetre === 'aide' && (key === 'h' || key === 'H' || key === '?'))) return fermer(), false;
@@ -1255,7 +1255,7 @@ function keyPressed() {
 	// Au poste, système du PC (bureau RégulOS) : Tab = icônes, Entrée = ouvrir, Échap = fermer l'app puis se lever
 	if (PC.etat !== 'appli') {
 		if (PC.etat === 'os' && typeof toucheJournal === 'function' && toucheJournal()) return false; // prompt 89 : jours, filtres, cartes, enquête (Échap revient)
-		if (keyCode === ESCAPE) return (depilerNavigation() || (PC.fenetre ? fermerFenetreApp() : seLever())), false; // prompt 91 § 3 : Échap revient d'abord à l'écran d'origine
+		if (keyCode === ESCAPE) return (depilerNavigation() || (PC.fenetre ? fermerFenetreApp() : quitterPC())), false; // prompt 91 § 3 : Échap revient d'abord à l'écran d'origine ; prompt 182 : sortie par quitterPC (retenue si un choix attend)
 		if (focusQuitter && (keyCode === ENTER || keyCode === RETURN || key === ' ')) return quitterPC(), false; // prompt 26
 		if (focusDemarrer && (keyCode === ENTER || keyCode === RETURN || key === ' ')) return basculerFocusDemarrer(false), retourAccueilPC(), false; // prompt 75
 		if (PC.etat !== 'os') {
@@ -1303,7 +1303,7 @@ function keyPressed() {
 		return false;
 	}
 	// Au poste : Échap fait se lever (sauf à l'écran de fin)
-	if (keyCode === ESCAPE && !(ecran === 'jeu' && phase === 'fin')) return (depilerNavigation() || seLever()), false; // prompt 91 § 3
+	if (keyCode === ESCAPE && !(ecran === 'jeu' && phase === 'fin')) return (depilerNavigation() || quitterPC()), false; // prompt 91 § 3 ; prompt 182 : sortie retenue si un choix attend
 	// Prompt 72 : réponses d'une alerte — ↑ ↓ / Tab les parcourent, Entrée valide (le focus « Quitter le PC » d'abord s'il est pris)
 	if (!focusQuitter && !focusDemarrer && ecran === 'jeu' && toucheSourcesEnquete()) return false; // prompt 92 : Tab / Entrée / ↑ ↓ dans les sources d'« En savoir plus »
 	if (!focusQuitter && !focusDemarrer && ecran === 'jeu' && toucheMultitache()) return false; // prompt 77 : Tab passe d'un signalement actif à l'autre
@@ -1353,6 +1353,7 @@ function keyPressed() {
 }
 
 // Prompt 26 : au poste, la molette fait quitter le PC (anti-rebond dans bureau.js) ; ailleurs, scroll normal
+// Prompt 182 : le contenu qui défile prend la molette d'abord ; la sortie n'est possible que si aucun choix n'attend
 function mouseWheel(event) {
 	interaction();
 	if (typeof guideBloque === 'function' && guideBloque(mouseX, mouseY)) return rappelerConsigneGuide(), false; // prompt 181 : molette hors de la cible du guide

@@ -3089,6 +3089,58 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	verifier(vm.runInContext('guideSuspendTemps() && guideBloque(150, 150) === false', c), 'prompt 181 : signalement arrivé → temps suspendu, cible cliquable');
 }
 
+// Prompt 182 : vue bureau ≠ vue PC — l'appli n'est interactive qu'au poste (un seul prédicat, un seul convertisseur de
+// pointeur) ; sortie volontaire du PC (bouton, Échap, molette, balayage) seulement quand aucun choix n'attend.
+{
+	const lire182 = (f) => readFileSync(join(pub, f), 'utf8');
+	const bu = lire182('bureau.js');
+	const sk = lire182('sketch.js');
+	verifier(/function sourisVersEcran\(\) \{[\s\S]{0,120}pointeurEcranPC\(mouseX, mouseY\)/.test(bu), 'prompt 182 : le survol du contenu du PC doit passer par pointeurEcranPC (aucun survol en vue bureau)');
+	verifier(/function sourisPC\(\) \{\n\treturn typeof pointeurEcranPC === 'function' \? pointeurEcranPC\(mouseX, mouseY\)/.test(lire182('glisser.js')) && /function sourisEcranPC\(\) \{\n\treturn pointeurEcranPC\(mouseX, mouseY\)/.test(lire182('os.js')), 'prompt 182 : sourisPC / sourisEcranPC doivent passer par pointeurEcranPC (aucun geste sur l\'appli en vue bureau)');
+	verifier(/if \(auPoste\) \{[\s\S]{0,260}\} else boutons = \[\];/.test(bu), 'prompt 182 : hors du poste, les boutons du contenu du PC doivent être vidés (composerVue)');
+	verifier(/appliInteractive\(\) && typeof toucheCarte === 'function' && toucheCarte\(\)/.test(sk), 'prompt 182 : les raccourcis de la carte ne doivent répondre qu\'au poste');
+	const kp = sk.slice(sk.indexOf('function keyPressed()'), sk.indexOf('function mouseWheel('));
+	verifier(!/seLever\(\)/.test(kp) && (kp.match(/quitterPC\(\)/g) || []).length >= 4, 'prompt 182 : au clavier, toute sortie du PC doit passer par quitterPC() (Échap, Entrée sur le bouton), jamais par seLever()');
+	verifier(/scrollSortiePC\(dy < 0 \? -150 : 150\)/.test(lire182('mobile.js')) && /action: quitterPC, primaire: false, desactive: !!raisonRetenuAuPC\(\)/.test(lire182('portrait.js')), 'prompt 182 : balayage (mobile) et bouton « Se lever » (portrait) doivent suivre la même règle de sortie');
+	verifier(/bouton\(b\.x, b\.y, b\.l, b\.h, t\('poste\.quitter_pc'\), quitterPC, !!raison\)/.test(bu), 'prompt 182 : le bouton « Quitter le PC » doit être désactivé tant qu\'un choix attend');
+	verifier(/t\('bureau\.inviteInstaller'\)/.test(bu) && /else if \(vue === 'bureau'\) \{[\s\S]{0,200}fill\(13, 12, 12, 96\)/.test(bu), 'prompt 182 : en vue bureau, écran assombri et invite « S\'installer au PC »');
+	const c = vm.createContext({ Math });
+	vm.runInContext(
+		`var vue = 'poste', phase = 'decision', ecran = 'jeu', fenetre = null, smsActif = false, clignement = null, __t = 100000, __actions = [], __annonces = [];
+		var L = 1920, H = 1080, PC = { fenetre: null, etat: 'appli' }, MENU = { actif: false }, PHASES_ACTIVES = ['decision', 'contradiction', 'conflit'];
+		var GUIDE = { actif: false, etape: 0 }, ETAPES_GUIDE = [{ id: 'quitter' }];
+		function guideEnCours() { return GUIDE.actif; } function millis() { return __t; } function annoncer(x) { __annonces.push(x); } function t(k) { return k; }
+		function seLever() { __actions.push('seLever'); vue = 'bureau'; } function sAsseoir() { __actions.push('sAsseoir'); vue = 'poste'; }
+		const ECRAN_POSTE = { x: 96, y: 40, l: 1728, h: 972 };` +
+			bu.slice(bu.indexOf('const appliInteractive'), bu.indexOf('function sourisVersEcran()')) +
+			bu.slice(bu.indexOf('// ——— Prompt 26 : sortir du PC'), bu.indexOf('// ——— Prompt 21 § 2')),
+		c,
+	);
+	const ex = (code) => vm.runInContext(code, c);
+	// Dossier ouvert : dix crans de molette vers le bas ne font pas quitter le PC (et ne font pas défiler la page)
+	for (const ph of ['decision', 'contradiction', 'conflit']) {
+		ex(`phase = '${ph}'; vue = 'poste'; __actions = []; var __r = []; for (let i = 0; i < 10; i++) { __t += 700; __r.push(scrollSortiePC(120)); }`);
+		verifier(ex(`vue === 'poste' && __actions.length === 0 && __r.every((x) => x === true)`), `prompt 182 : ${ph} — dix crans de molette ne doivent pas faire quitter le PC`);
+		ex(`__annonces = []; var __q = quitterPC();`);
+		verifier(ex(`__q === false && vue === 'poste' && __actions.length === 0 && __annonces.length === 1 && __annonces[0].indexOf('poste.quitter_retenu') === 0`), `prompt 182 : ${ph} — « Quitter le PC » (bouton, Échap) doit être refusé avec sa raison annoncée`);
+	}
+	verifier(ex(`raisonRetenuAuPC() === 'poste.quitter_retenu'`), 'prompt 182 : un choix en attente doit retenir au PC');
+	// Guide « Prendre en main », étape « quitter » : jamais d'impasse
+	verifier(ex(`GUIDE.actif = true; const __g = raisonRetenuAuPC(); GUIDE.actif = false; __g === null`), 'prompt 182 : l\'étape « quitter » du guide ne doit jamais être retenue');
+	// Aucun choix : un cran suffit ; le bouton et Échap font se lever
+	for (const ph of ['attente', 'selection', 'narration']) {
+		ex(`phase = '${ph}'; vue = 'poste'; __actions = []; __t += 5000; scrollSortiePC(120);`);
+		verifier(ex(`__actions.join() === 'seLever'`), `prompt 182 : ${ph} — un cran de molette vers le bas doit suffire à quitter le PC`);
+		ex(`vue = 'poste'; __actions = []; var __q = quitterPC();`);
+		verifier(ex(`__q === true && __actions.join() === 'seLever'`), `prompt 182 : ${ph} — « Quitter le PC » doit faire se lever`);
+	}
+	// Vue bureau : la molette vers le haut installe, vers le bas ne fait rien ; le pointeur n'existe pas pour l'appli
+	ex(`phase = 'decision'; vue = 'bureau'; __actions = []; __t += 5000; scrollSortiePC(120); __t += 5000; scrollSortiePC(-120);`);
+	verifier(ex(`__actions.join() === 'sAsseoir'`), 'prompt 182 : au bureau, la molette vers le haut installe au PC, même avec un dossier ouvert');
+	verifier(ex(`vue = 'bureau'; pointeurEcranPC(960, 400).x < -1000 && !appliInteractive()`) && ex(`vue = 'zoom-avant'; pointeurEcranPC(960, 400).x < -1000`), 'prompt 182 : hors du poste (bureau, zoom), le pointeur doit être hors de l\'écran du PC');
+	verifier(ex(`vue = 'poste'; const __p = pointeurEcranPC(96 + 864, 40 + 486); Math.round(__p.x) === 960 && Math.round(__p.y) === 540`), 'prompt 182 : au poste, le pointeur doit être ramené dans le repère 1920×1080 de l\'écran');
+}
+
 if (erreurs.length) {
 	console.error(`Test du jeu : ${erreurs.length} erreur(s) sur ${controles + erreurs.length} contrôles`);
 	for (const e of erreurs) console.error(`  ✗ ${e}`);
