@@ -227,7 +227,16 @@ Preuves dans le code (grep ; 14–34 relevées au prompt 33, revérifiées et co
 | 136 | `136-jeu-menu-bouton-livrables.md` | Jeu : bouton **« Livrables »** dans le menu principal, de la largeur du bloc dépôt · partage · présentation, au-dessus de lui ; ouvre la diapositive `presentation/#/livrables` | ✅ fusionné dans main |
 | 137 | `137-ux-questionner-informations.md` | Skill de projet **UX `ux-questionner-informations`** et revue de **chaque information** du jeu (≈ 310 questionnées, 41 P1) : `ux-informations-2026-11-12.md` + 4 volets | ✅ fusionné dans main (revue seule, aucun changement du jeu) |
 | 138 | `138-jeu-livrables-lien-clics.md` | Jeu : le bouton « Livrables » ouvre `presentation/#/livrables?clicks=5` (diapositive entièrement dévoilée) | ✅ fusionné dans main |
+| 139 | `139-jeu-journal-jours-sans-date.md` | Jeu : appli Journal — **plus de date JJ/MM sous les pastilles J1, J2** (redondant) | ✅ fusionné dans main |
+| 140 | `140-jeu-journal-supprimer-vue-semaine.md` | Jeu : appli Journal — **supprimer le bouton « Semaine »** et tout le code de la vue Semaine (grille, courbe, carnet de la semaine, touches S/K) | ◻ à exécuter (avec 142) |
+| 141 | `141-jeu-journal-details-au-minimum.md` | Jeu : appli Journal — la vue « Détails » ne garde que **signalements N/N, bons choix N/N et objectif du jour** (tuiles jauges, équipes, thème, patron supprimées) | ◻ à exécuter |
+| 142 | `142-jeu-journal-supprimer-notes-et-carnet.md` | Jeu : **supprimer la fonctionnalité de notes et de carnets** et tous les boutons dédiés (filtre « Mes notes », « Écrire une note », touches J/K, carnet du joueur et de la semaine) | ◻ à exécuter (avec 140) |
 | 143 | `143-jeu-main-telephone-pixel-art.md` | Jeu : la **main qui tient le téléphone** redessinée en pixel art (grille de 15 px, palette de la tasse en main) | ✅ fusionné dans main |
+| 143 | `143-jeu-jauges-sans-pourcentage.md` | Jeu : **plus de pourcentage sur les jauges** (bandeau + fenêtre Indicateurs) ; une **barre blanche de seuil** uniquement quand la jauge est l'objectif du jour (ex. réputation ≥ 60) | ◻ à exécuter |
+| 144 | `144-jeu-bandeau-fusion-priorites-objectif-date-haut-droite.md` | Jeu : bandeau — **fusionner priorités et objectif** en un seul élément (sans valeur chiffrée) ; **date du jour en haut à droite de l'écran** (coin supérieur) | ◻ à exécuter (avec 145) |
+| 145 | `145-jeu-bandeau-jauges-compactes.md` | Jeu : bandeau — **barres de jauges plus fines, à la même hauteur que la ligne du dessous** (priorités, objectif & date) ; bandeau réduit de moitié | ◻ à exécuter (avec 144) |
+| 146 | `146-jeu-carte-bouton-recentrer-carree-blanc.md` | Jeu : appli Carte — remplacer le bouton texte « Recentrer » (fond sombre) par un **bouton carré blanc 48×48 « □ »**, même action `recentrer()` | ◻ à exécuter |
+| 147 | `147-jeu-carte-supprimer-lieu-a-preciser.md` | Jeu : **aucun texte « Lieu à préciser » à l'écran** (case de la carte, clé i18n, tutoriel, décalages de position associés) | ◻ à exécuter |
 
 > **Audit des textes (prompt 93)** : avant chaque fusion qui touche à l'interface, relancer `index.html?audit=textes&parcours=1` (1920×1080, 1366×768, mobile portrait) et garder 0 défaut A à D — voir `jeu/89-textes-hors-cadre.md` et `CONTRIBUTING.md`.
 

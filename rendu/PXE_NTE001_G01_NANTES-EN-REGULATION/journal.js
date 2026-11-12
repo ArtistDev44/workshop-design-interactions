@@ -102,24 +102,23 @@ function barreJours(z) {
 		const futur = etat === 'futur';
 		noStroke();
 		fill(actif ? DS.primaire : futur ? DS.blanc05 : DS.fond);
-		rect(x, z.y - 6, lp, 52);
+		rect(x, z.y - 6, lp, 44); // prompt 139 : plus de date JJ/MM sous « J1 » (redondant), 52 → 44 px
 		if (!actif) {
 			stroke(futur ? DS.blanc15 : JOURNAL.zone === 0 ? DS.blanc : DS.blanc50);
 			strokeWeight(2);
 			noFill();
-			rect(x + 1, z.y - 5, lp - 2, 50);
+			rect(x + 1, z.y - 5, lp - 2, 42);
 			noStroke();
 		}
-		dsTexte(nomJour(i), x + 10, z.y, 17, futur ? DS.blanc50 : DS.blanc, 'left');
-		dsTexte(dateCourte(j.date), x + 10, z.y + 22, 14, futur ? DS.blanc50 : actif ? DS.blanc : DS.blanc75, 'left');
+		dsTexte(nomJour(i), x + 10, z.y + 4, 17, futur ? DS.blanc50 : DS.blanc, 'left');
 		// Pastille d'état : couleur + symbole (la couleur seule ne porte pas le sens)
 		const sym = { succes: '✓', erreur: '✗', courant: '•', futur: '' }[etat];
 		if (sym) {
 			fill(etat === 'succes' ? DS.succes : etat === 'erreur' ? DS.erreur : DS.blanc50);
-			rect(x + lp - 26, z.y + 2, 18, 18);
-			dsTexte(sym, x + lp - 17, z.y + 2, 14, etat === 'succes' ? DS.fond : DS.blanc, 'center');
+			rect(x + lp - 26, z.y + 4, 18, 18);
+			dsTexte(sym, x + lp - 17, z.y + 4, 14, etat === 'succes' ? DS.fond : DS.blanc, 'center');
 		}
-		if (!futur) boutons.push({ x, y: z.y - 6, l: lp, h: 52, action: () => choisirJourJournal(i) });
+		if (!futur) boutons.push({ x, y: z.y - 6, l: lp, h: 44, action: () => choisirJourJournal(i) });
 	});
 	const xs = z.x + z.l - 380;
 	dsBouton(xs, z.y - 6, 150, 48, t('journal.vue.jour'), () => choisirVueJournal('jour'), JOURNAL.vue === 'jour' ? 'secondaire' : 'contour'); // prompt 101 : vue active en blanc, le rouge reste rare
