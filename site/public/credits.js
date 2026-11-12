@@ -37,7 +37,7 @@ const LIENS_CREDITS = [
 	{ cle: 'makingof', action: () => ouvrirLien(URL_JEU + 'making-of/') },
 	{ cle: 'depot', action: () => ouvrirLien(DEPOT_URL) },
 	{ cle: 'retour', action: fermerCredits },
-];
+].filter((b) => b.cle === 'retour' || typeof EXPO === 'undefined' || !EXPO.actif); // prompt 160 : en exposition, seul « Retour »
 
 // ——— Prompt 120 : fenêtres du Pixel DS (comme la diapositive « L'équipe ») et lignes libellé / valeur ———
 const LIGNES_LICENCE = ['code', 'donnees', 'lieux', 'biblio', 'musiques'];
@@ -170,8 +170,9 @@ function dessinerCredits() {
 	// Liens et retour (focus : double bordure du DS)
 	const lb = 300;
 	LIENS_CREDITS.forEach((b, i) => {
-		const bx = i === 3 ? L - 120 - lb : x0 + i * (lb + 16);
-		dsBouton(bx, yb, lb, 64, t('credits.' + b.cle), b.action, i === 3 ? 'secondaire' : 'contour');
+		const retour = b.cle === 'retour';
+		const bx = retour ? L - 120 - lb : x0 + i * (lb + 16);
+		dsBouton(bx, yb, lb, 64, t('credits.' + b.cle), b.action, retour ? 'secondaire' : 'contour');
 		if (CREDITS.choix === i) {
 			noFill();
 			stroke(DS.blanc);
