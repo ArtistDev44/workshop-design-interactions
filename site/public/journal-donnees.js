@@ -43,27 +43,19 @@ const JournalDonnees = (() => {
 		const recus = i < Jeu.jourIndex ? j.dossiers.length : j.dossiers.filter((d) => Jeu.paquet.indexOf(d) < Jeu.index || (Jeu.horloge && d.minute <= Jeu.horloge.minutes)).length;
 		const nonTraites = ev.filter((e) => e.cleAction === 'temps').length;
 		const bons = ev.filter((e) => Jeu.evaluer(e) === 'bon').length;
-		const pts = courbes(j.date);
+		const pts = courbes(j.date); // prompt 141 : plus de mini-courbes ; fin et écart du jour restent (résumé, copie)
 		const fin = pts.length ? pts[pts.length - 1] : null;
 		const ecart = {};
 		if (pts.length) JAUGES.forEach((k) => (ecart[k] = fin[k] - pts[0][k]));
 		const obj = (Jeu.objectifsResultats || []).find((o) => o.jourIndex === i);
 		const objCourant = i === Jeu.jourIndex && Jeu.objectifDuJour ? Jeu.objectifDuJour() : null;
-		const eq = (Jeu.equipes || []).filter((q) => q.jour === j.date);
-		const parType = {};
-		eq.forEach((q) => (parType[q.cle] = (parType[q.cle] || 0) + 1));
-		const tj = Jeu.taches && Jeu.taches.jours && Jeu.taches.jours[j.date];
 		const S = Jeu.statutPatron || { dates: [] };
 		return {
 			date: j.date,
 			signalements: { traites: ev.length - nonTraites, recus: Math.max(recus, ev.length), nonTraites },
 			bonnes: { n: bons, total: ev.length },
-			jauges: { points: pts, fin, ecart },
+			jauges: { fin, ecart },
 			objectif: obj ? { libelle: String(obj.libelle), atteint: obj.atteint, effet: obj.effet ? String(obj.effet) : null, enCours: false } : objCourant ? { libelle: String(objCourant.libelle), atteint: null, effet: null, enCours: true } : null,
-			equipes: { total: eq.length, parType, inutiles: eq.filter((q) => q.inutile).length },
-			theme: typeof Taches !== 'undefined' && Jeu.taches ? Taches.theme(j.date) : null,
-			fait: tj && tj.rapport ? String(tj.rapport.fait) : null,
-			xp: tj && tj.recap && tj.recap.xp ? tj.recap.xp.total : null,
 			avertissements: (S.dates || []).filter((d) => String(d).split('|')[1] === j.date).length,
 		};
 	}

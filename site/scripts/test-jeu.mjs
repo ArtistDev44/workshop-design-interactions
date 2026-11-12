@@ -1438,9 +1438,9 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 			if (tu.bonnes.n !== ev.filter((e) => Jeu.evaluer(e) === 'bon').length || tu.bonnes.total !== ev.length) out.erreurs.push(j.date + ' bonnes');
 			const o = Jeu.objectifsResultats.find((x) => x.jourIndex === i);
 			if (!tu.objectif || tu.objectif.atteint !== o.atteint) out.erreurs.push(j.date + ' objectif');
-			if (tu.equipes.total !== (Jeu.equipes || []).filter((q) => q.jour === j.date).length) out.erreurs.push(j.date + ' équipes');
+			if (tu.equipes || tu.theme !== undefined || tu.jauges.points) out.erreurs.push(j.date + ' tuiles retirées encore calculées (prompt 141)');
 			// Courbes : un point au début, puis exactement les jauges après chaque événement réel
-			const pts = tu.jauges.points;
+			const pts = JournalDonnees.courbes(j.date);
 			if (pts.length !== ev.length + 1 || ev.some((e, n) => JSON.stringify(pts[n + 1]) !== JSON.stringify(e.resultat.jaugesApres))) out.erreurs.push(j.date + ' courbes');
 			if (JSON.stringify(pts[0]) !== JSON.stringify(Jeu.jaugesDebutJour[j.date] || pts[0])) out.erreurs.push(j.date + ' début');
 			// Filtres : comptes et contenu

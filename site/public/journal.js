@@ -122,25 +122,11 @@ function tuileFond(x, y, l, h, titre) {
 	noStroke();
 	dsTexte(titre.toUpperCase(), x + 12, y + 10, 14, DS.blanc75, 'left');
 }
-function sparkline(pts, k, x, y, l, h, couleur) {
-	if (!pts.length) return;
-	const n = pts.length;
-	const px = (i) => x + (n === 1 ? l / 2 : (i * l) / (n - 1));
-	const py = (v) => y + h - (v / 100) * h; // échelle 0–100 (non tronquée), comme les jauges
-	const p = animJ(JOURNAL.ouvertA, 300);
-	stroke(couleur);
-	strokeWeight(3);
-	const fin = Math.max(1, Math.ceil((n - 1) * p));
-	for (let i = 0; i < Math.min(fin, n - 1); i++) line(px(i), py(pts[i][k]), px(i + 1), py(pts[i + 1][k]));
-	noStroke();
-	fill(couleur);
-	pts.slice(0, fin + 1).forEach((q, i) => rect(px(i) - 2, py(q[k]) - 2, 4, 4)); // un point par événement réel
-}
 function vueJour(z) {
 	const tu = JournalDonnees.tuiles(JOURNAL.jour);
 	if (!tu) return;
-	// Prompt 101 : à l'ouverture, UNE ligne de chiffres ; les tuiles (sparklines, détail des équipes…) au clic sur
-	// « Détails » ou touche V — rien n'est retiré, seulement replié
+	// Prompt 101 : à l'ouverture, UNE ligne de chiffres ; au clic sur « Détails » ou touche V, trois tuiles (prompt 141 :
+	// signalements, bons choix, objectif du jour)
 	const yr = z.y + 84; // prompt 101 b : 24 px d'air sous la barre des jours
 	const s0 = tu.signalements;
 	// Prompt 101 b : seulement l'écart du jour — les valeurs des jauges sont déjà dans la barre des tâches
@@ -159,10 +145,9 @@ function vueJour(z) {
 	dsBouton(z.x + z.l - 210, yr - 12, 210, 44, t(JOURNAL.details ? 'journal.detailsMasquer' : 'journal.details'), basculerDetailsJournal, 'fantome');
 	const y0 = yr + 56;
 	if (!JOURNAL.details) return frise(z, y0);
-	const liste = ['signalements', 'bonnes', 'jauges', 'objectif', 'equipes'];
-	if (tu.theme) liste.push('theme');
-	if (tu.avertissements) liste.push('patron');
-	const largeurs = liste.map((k) => (k === 'jauges' ? 2.6 : k === 'objectif' ? 1.3 : 1));
+	// Prompt 141 : les Détails se limitent à trois tuiles — signalements, bons choix, objectif du jour
+	const liste = ['signalements', 'bonnes', 'objectif'];
+	const largeurs = liste.map((k) => (k === 'objectif' ? 1.6 : 1));
 	const unite = (z.l - (liste.length - 1) * 12) / largeurs.reduce((a, b) => a + b, 0);
 	let x = z.x;
 	const h = 140;
@@ -179,18 +164,6 @@ function vueJour(z) {
 			rect(x + 12, y0 + 100, l - 24, 10);
 			fill(DS.succes);
 			if (tu.bonnes.total) rect(x + 12, y0 + 100, ((l - 24) * tu.bonnes.n) / tu.bonnes.total, 10);
-		} else if (k === 'jauges') {
-			const cl = (l - 24 - 2 * 12) / 3;
-			DS_JAUGES.forEach(([cle, court, couleur], n) => {
-				const cx = x + 12 + n * (cl + 12);
-				const fin = tu.jauges.fin ? tu.jauges.fin[cle] : null;
-				dsTexte(court + ' ' + (fin === null ? '—' : fin), cx, y0 + 32, 15, DS.blanc, 'left');
-				if (tu.jauges.ecart[cle] !== undefined) dsTexte(sgn(tu.jauges.ecart[cle]), cx + cl, y0 + 32, 15, tu.jauges.ecart[cle] < 0 ? DS.erreurClair : DS.succesClair, 'right');
-				fill(DS.blanc05);
-				rect(cx, y0 + 58, cl, 70);
-				sparkline(tu.jauges.points, cle, cx + 4, y0 + 60, cl - 8, 66, couleur);
-			});
-			dsTexte(t('journal.echelle'), x + l - 12, y0 + 10, 14, DS.blanc50, 'right');
 		} else if (k === 'objectif') {
 			const o = tu.objectif;
 			if (!o) dsTexte(nonRenseigne(), x + 12, y0 + 40, 16, DS.blanc50, 'left', l - 24);
@@ -198,16 +171,6 @@ function vueJour(z) {
 				dsTexte(o.libelle, x + 12, y0 + 34, 15, DS.blanc, 'left', l - 24);
 				dsBadge(x + 12 + 70, y0 + 116, o.enCours ? '• ' + t('journal.enCours') : (o.atteint ? '✓ ' : '✗ ') + t(o.atteint ? 'journal.atteint' : 'journal.rate'), o.enCours ? 'info' : o.atteint ? 'succes' : 'erreur');
 			}
-		} else if (k === 'equipes') {
-			dsTitre(String(tu.equipes.total), x + 12, y0 + 38, 36, DS.blanc, 'left');
-			const det = Object.keys(tu.equipes.parType).map((c) => String((Jeu.EQUIPES[c] || {}).nom || c) + ' ' + tu.equipes.parType[c]).join(' · ');
-			if (det) dsTexte(court(det, 40), x + 12, y0 + 92, 14, DS.blanc75, 'left', l - 24); // 0 : le chiffre suffit
-		} else if (k === 'theme') {
-			dsTexte(t('theme.' + tu.theme), x + 12, y0 + 34, 16, DS.blanc, 'left', l - 24);
-			if (tu.xp !== null) dsTexte('+' + tu.xp + ' XP', x + 12, y0 + 104, 16, DS.succesClair, 'left'); // fait marquant : vue Semaine (carnet)
-		} else if (k === 'patron') {
-			dsTitre(String(tu.avertissements), x + 12, y0 + 38, 36, DS.alerte, 'left');
-			dsTexte(t('journal.tuile.avertissements'), x + 12, y0 + 98, 14, DS.blanc75, 'left', l - 24);
 		}
 		x += l + 12;
 	});
