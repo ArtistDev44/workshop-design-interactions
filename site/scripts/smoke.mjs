@@ -148,6 +148,11 @@ for (const f of sources) {
 // 4. Build (facultatif)
 const dist = join(racine, 'dist');
 if (existsSync(dist)) {
+	// Bande-annonce intégrée au cartel (demande du 13/11/2026) : vidéo, image d'attente, description et crédit musical
+	{
+		const cartel = readFileSync(join(dist, 'cartel', 'index.html'), 'utf8');
+		for (const ref of ['/captures/trailer.mp4', '/captures/trailer-poster.jpg', '/captures/trailer.fr.vtt', 'Heroic Age', 'Kevin MacLeod', 'creativecommons.org/licenses/by/4.0']) cartel.includes(ref) ? ok() : echec(`cartel : bande-annonce incomplète (${ref} absent)`);
+	}
 	for (const page of ['index.html', 'cartel/index.html', 'making-of/index.html', 'presentation/index.html', 'manifest.json', 'captures/hero.jpg', 'captures/demo.mp4', 'kit-presse/index.html', 'kit-presse/logo.svg']) {
 		if (existsSync(join(dist, page))) ok();
 		else echec(`dist/${page} absent : relancer npm run build`);
