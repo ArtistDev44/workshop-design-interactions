@@ -1,4 +1,4 @@
-# Prompt 123 — Jeu « Nantes en régulation » : hiérarchie du bandeau, gravité lisible, plein écran
+# Prompt 128 — Jeu « Nantes en régulation » : hiérarchie du bandeau, gravité lisible, plein écran
 
 Demande d'origine (12/11/2026) : prompts tirés de `audit-2026-11-12.md`, section 4.
 
@@ -28,4 +28,4 @@ Hors champ : l'écran Crédits (mise en page portrait, licence Hub'Eau encore «
   doc.
 - Contrastes recalculés pour le badge et le nouveau marqueur.
 - `npm run build`, `npm test`, audit des textes à 0 défaut.
-- Doc commune `jeu/120-124-audit-experience-rendu.md`, `prompts/README.md`, `journal.md`.
+- Doc commune `jeu/125-129-audit-experience-rendu.md`, `prompts/README.md`, `journal.md`.

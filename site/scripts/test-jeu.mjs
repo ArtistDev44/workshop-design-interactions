@@ -1302,7 +1302,7 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 	const r = vm.runInContext(
 		`(() => {
 		const out = { sansOption: 0, chaines: [], erreurs: [], sauve: null, deblocage: null, arbitrage: null };
-		const pire = (d) => { const ks = Jeu.actionsPossibles(d); const p = Jeu.poidsBesoin(Jeu.jauges); return ks.map((k) => [k, Jeu.effetsAttendus(k, d).reduce((a, v, i) => a + v * p[i], 0)]).sort((a, b) => a[1] - b[1])[0][0]; }; // prompt 120 : la pire réponse au sens de l'évaluation pondérée
+		const pire = (d) => { const ks = Jeu.actionsPossibles(d); const p = Jeu.poidsBesoin(Jeu.jauges); return ks.map((k) => [k, Jeu.effetsAttendus(k, d).reduce((a, v, i) => a + v * p[i], 0)]).sort((a, b) => a[1] - b[1])[0][0]; }; // prompt 125 : la pire réponse au sens de l'évaluation pondérée
 		const jouer = (opts) => {
 			Jeu.chargerSemaine('2026-09-14'); Jeu.nouvellePartie(); Taches.nouvellePartie(opts);
 			let n = 0, garde = 0;
@@ -1986,7 +1986,7 @@ verifier(/aide\.k\.glisserTouche/.test(readFileSync(join(pub, 'sketch.js'), 'utf
 	verifier(/boutons\.push\(\{ x: x - 12, y: 0, l: 58, h: 52, action: fermerAppli \}\)/.test(readFileSync(join(pub, 'os.js'), 'utf8')) && /y: z\.y - 18, l: z\.l, h: z\.h \+ 18, action: basculerSieste/.test(readFileSync(join(pub, 'sieste.js'), 'utf8')), 'zones de clic ≥ 44 px : ✕ des applis et somnolence');
 }
 
-// Prompt 120 : l'évaluation suit le besoin des jauges — jouer toujours une réponse jugée « bonne » ne mène plus au
+// Prompt 125 : l'évaluation suit le besoin des jauges — jouer toujours une réponse jugée « bonne » ne mène plus au
 // licenciement (avant : fluidité vidée par « attendre », licenciement au 10e–14e dossier) et finit au moins « moyenne »
 for (const s of semaines) {
 	const c114 = contexte('fr');
@@ -2009,48 +2009,48 @@ for (const s of semaines) {
 	})()`,
 		c114,
 	);
-	verifier(!r114.licencie, `prompt 120 : suivre l'évaluation mène au licenciement (${s}, ${r114.licencie})`);
-	verifier(r114.bons === r114.total, `prompt 120 : une réponse conseillée doit être évaluée « bon » (${s} : ${r114.bons}/${r114.total})`);
-	verifier(r114.score >= 180, `prompt 120 : suivre l'évaluation doit finir au moins « moyenne » (${s} : ${r114.score})`);
+	verifier(!r114.licencie, `prompt 125 : suivre l'évaluation mène au licenciement (${s}, ${r114.licencie})`);
+	verifier(r114.bons === r114.total, `prompt 125 : une réponse conseillée doit être évaluée « bon » (${s} : ${r114.bons}/${r114.total})`);
+	verifier(r114.score >= 180, `prompt 125 : suivre l'évaluation doit finir au moins « moyenne » (${s} : ${r114.score})`);
 }
 
-// Prompt 121 : l'intro décrit le jeu actuel (pas de chrono par défaut, la sieste est une mécanique), la narration ne
+// Prompt 126 : l'intro décrit le jeu actuel (pas de chrono par défaut, la sieste est une mécanique), la narration ne
 // passe plus seule hors défi chrono, et le délai des plaintes Community suit le temps de jeu actif
 {
 	const f116 = contexte('fr');
 	const e116 = contexte('en');
 	const sms = (c) => vm.runInContext(`[0, 1, 2, 3, 4, 5].map((i) => t('sms.' + i)).join(' ')`, c);
-	verifier(!/chrono tourne|pas de sieste/i.test(sms(f116)) && !/clock is ticking|no napping/i.test(sms(e116)), 'prompt 121 : les SMS d\'intro parlent encore de chrono ou interdisent la sieste');
+	verifier(!/chrono tourne|pas de sieste/i.test(sms(f116)) && !/clock is ticking|no napping/i.test(sms(e116)), 'prompt 126 : les SMS d\'intro parlent encore de chrono ou interdisent la sieste');
 	const sk116 = readFileSync(join(pub, 'sketch.js'), 'utf8');
-	verifier(/if \(auto && tA >= 1/.test(sk116) && /const auto = !!Jeu\.defiChrono/.test(sk116), 'prompt 121 : la narration ne doit passer seule qu\'en défi chrono');
-	verifier(/majPlaintes\(tempsPlaintes\(\)\)/.test(sk116) && /resteReponse\(pl, typeof tempsPlaintes/.test(readFileSync(join(pub, 'community.js'), 'utf8')), 'prompt 121 : délai des plaintes en temps de jeu actif');
+	verifier(/if \(auto && tA >= 1/.test(sk116) && /const auto = !!Jeu\.defiChrono/.test(sk116), 'prompt 126 : la narration ne doit passer seule qu\'en défi chrono');
+	verifier(/majPlaintes\(tempsPlaintes\(\)\)/.test(sk116) && /resteReponse\(pl, typeof tempsPlaintes/.test(readFileSync(join(pub, 'community.js'), 'utf8')), 'prompt 126 : délai des plaintes en temps de jeu actif');
 	const reste = vm.runInContext(`Jeu.resteReponse({ depuis: 90000 }, 1000)`, f116);
-	verifier(reste === vm.runInContext('Jeu.REGLAGES.community.delaiMs', f116), `prompt 121 : une plainte datée du futur doit repartir du délai complet (${reste})`);
+	verifier(reste === vm.runInContext('Jeu.REGLAGES.community.delaiMs', f116), `prompt 126 : une plainte datée du futur doit repartir du délai complet (${reste})`);
 }
 
-// Prompt 122 : mode exposition — expo.js chargé en premier (la purge précède toute lecture du stockage), réglages et
+// Prompt 127 : mode exposition — expo.js chargé en premier (la purge précède toute lecture du stockage), réglages et
 // langue gardés, sauvegardes et tutoriel effacés ; filet de rechargement après une erreur qui fige le rendu
 {
 	const html117 = readFileSync(join(pub, 'index.html'), 'utf8');
 	const premier = (html117.match(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/i) || [])[1];
-	verifier(premier === './expo.js', `prompt 122 : expo.js doit être le premier script (${premier})`);
+	verifier(premier === './expo.js', `prompt 127 : expo.js doit être le premier script (${premier})`);
 	const st = new Map([['pxe-nte001:jeu:reglages', '{}'], ['pxe-nte001-langue', 'en'], ['pxe-nte001-tutoriel-vu', 'oui'], ['pxe-nte001-partie-2026-09-14', '{}'], ['autre-site', 'x']]);
 	const ls = { getItem: (k) => (st.has(k) ? st.get(k) : null), setItem: (k, v) => st.set(k, String(v)), removeItem: (k) => st.delete(k), key: (i) => [...st.keys()][i] };
 	const c117 = { localStorage: new Proxy(ls, { ownKeys: () => [...st.keys()], getOwnPropertyDescriptor: (o, k) => (st.has(k) ? { enumerable: true, configurable: true, value: st.get(k) } : Reflect.getOwnPropertyDescriptor(o, k)) }), location: { search: '?expo=1', hash: '' }, URLSearchParams, Date, window: { addEventListener: () => {} }, setInterval: () => 0, document: {} };
 	c117.window = Object.assign(c117.window, c117);
 	vm.createContext(c117);
 	vm.runInContext(readFileSync(join(pub, 'expo.js'), 'utf8') + ';globalThis.__E = EXPO;', c117);
-	verifier(c117.__E.actif && [...st.keys()].sort().join(',') === 'autre-site,pxe-nte001-langue,pxe-nte001:jeu:reglages', `prompt 122 : purge du mode exposition (${[...st.keys()].join(',')})`);
-	verifier(/filetErreur/.test(readFileSync(join(pub, 'installation.js'), 'utf8')) && /sessionStorage\.setItem\(CLE/.test(readFileSync(join(pub, 'installation.js'), 'utf8')), 'prompt 122 : filet de rechargement (une fois par minute au plus)');
+	verifier(c117.__E.actif && [...st.keys()].sort().join(',') === 'autre-site,pxe-nte001-langue,pxe-nte001:jeu:reglages', `prompt 127 : purge du mode exposition (${[...st.keys()].join(',')})`);
+	verifier(/filetErreur/.test(readFileSync(join(pub, 'installation.js'), 'utf8')) && /sessionStorage\.setItem\(CLE/.test(readFileSync(join(pub, 'installation.js'), 'utf8')), 'prompt 127 : filet de rechargement (une fois par minute au plus)');
 }
 
-// Prompt 123 : « Quitter la journée » en secondaire, gravité « élevée » en rouge franc doublée par la taille,
+// Prompt 128 : « Quitter la journée » en secondaire, gravité « élevée » en rouge franc doublée par la taille,
 // badge à texte sombre en palette protan / deutan, touche F (plein écran)
 {
-	verifier(/t\('quitter\.bouton'\), quitterJourneeRapide, false, true\)/.test(readFileSync(join(pub, 'panneau.js'), 'utf8')), 'prompt 123 : « Quitter la journée » doit être secondaire');
-	verifier(/g === 'elevee' \? C\.rougeFonce/.test(readFileSync(join(pub, 'carte.js'), 'utf8')) && /const tm = g === 'elevee' \? 36/.test(readFileSync(join(pub, 'carte-alertes.js'), 'utf8')), 'prompt 123 : gravité élevée en rouge franc et plus grande');
-	verifier(/\['protan', 'deutan'\]\.includes\(Confort\.Reglages\.daltonisme\)/.test(readFileSync(join(pub, 'ds.js'), 'utf8')), 'prompt 123 : badge lisible en protan / deutan');
-	verifier(/function basculerPleinEcran/.test(readFileSync(join(pub, 'sketch.js'), 'utf8')), 'prompt 123 : touche F, plein écran');
+	verifier(/t\('quitter\.bouton'\), quitterJourneeRapide, false, true\)/.test(readFileSync(join(pub, 'panneau.js'), 'utf8')), 'prompt 128 : « Quitter la journée » doit être secondaire');
+	verifier(/g === 'elevee' \? C\.rougeFonce/.test(readFileSync(join(pub, 'carte.js'), 'utf8')) && /const tm = g === 'elevee' \? 36/.test(readFileSync(join(pub, 'carte-alertes.js'), 'utf8')), 'prompt 128 : gravité élevée en rouge franc et plus grande');
+	verifier(/\['protan', 'deutan'\]\.includes\(Confort\.Reglages\.daltonisme\)/.test(readFileSync(join(pub, 'ds.js'), 'utf8')), 'prompt 128 : badge lisible en protan / deutan');
+	verifier(/function basculerPleinEcran/.test(readFileSync(join(pub, 'sketch.js'), 'utf8')), 'prompt 128 : touche F, plein écran');
 }
 
 // Service worker : chaque script de index.html est dans la liste hors ligne de sw.js

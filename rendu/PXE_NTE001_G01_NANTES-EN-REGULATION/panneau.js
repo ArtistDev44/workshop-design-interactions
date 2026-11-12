@@ -41,7 +41,7 @@ function dessinerBandeau() {
 	});
 	// Ligne 2 : objectif du jour, équipes disponibles, date et heure du jeu
 	const o = Jeu.objectifDuJour ? Jeu.objectifDuJour() : null;
-	// Prompt 123 : la disponibilité des équipes n'est plus répétée ici (elle est dans le panneau Équipes, à droite)
+	// Prompt 128 : la disponibilité des équipes n'est plus répétée ici (elle est dans le panneau Équipes, à droite)
 	const h = heureAffichee();
 	const th = typeof Taches !== 'undefined' && Jeu.jourCourant() ? Taches.theme(Jeu.jourCourant().date) : null; // prompt 88 : thème du jour
 	const pj = typeof Taches !== 'undefined' && Jeu.jourCourant() ? Taches.prioritesDuJour(Jeu.jourCourant().date) : [];
@@ -85,7 +85,7 @@ function dessinerBandeau() {
 		textAlign(LEFT, TOP);
 	}
 	// Aide et Recommencer (souris / tactile) — équivalents des touches H et R
-	bouton(z.x + z.l - 648, z.y + 14, 280, 56, t('quitter.bouton'), quitterJourneeRapide, false, true); // prompt 94 : toujours visible, touche Q ; prompt 123 : secondaire (le rouge plein reste à l'urgence)
+	bouton(z.x + z.l - 648, z.y + 14, 280, 56, t('quitter.bouton'), quitterJourneeRapide, false, true); // prompt 94 : toujours visible, touche Q ; prompt 128 : secondaire (le rouge plein reste à l'urgence)
 	bouton(z.x + z.l - 358, z.y + 14, 128, 56, t('accueil.aide'), () => ouvrir('aide'), false, true);
 	bouton(z.x + z.l - 220, z.y + 14, 206, 56, // prompt 98 : boutons du bandeau 48 → 56 px (≈ 45 px à l'écran)
 		 t('jeu.recommencer'), () => ouvrir('reset'), false, true);
@@ -186,7 +186,7 @@ function dessinerPanneauSignalement(d, x, base) {
 	y = bulleDuPlaignant(d, x + 32, y, l);
 	// Répliques : en bas de la fenêtre (prompt 116 : + « Dites-m'en plus » ; prompt 117 : 3 répliques mélangées dont un clash)
 	const rs = reponsesDialogue(d);
-	// Prompt 120 : une ligne de plus par réplique (tendance des jauges) — sauf sources ouvertes : lignes compactes
+	// Prompt 125 : une ligne de plus par réplique (tendance des jauges) — sauf sources ouvertes : lignes compactes
 	const compact = PLUS.ouvert;
 	const hL = compact ? 62 : H_REPONSE;
 	const pas = compact ? 70 : PAS_REPONSE;
@@ -203,7 +203,7 @@ function dessinerPanneauSignalement(d, x, base) {
 	ZONE_DEPOT = null;
 	dsTexte(t('dialogue.titre'), x + 32, yr, 18, DS.blanc75, 'left');
 	const bloquee = Jeu.actionBloquee ? Jeu.actionBloquee() : null;
-	// Prompt 120 : tendance des 3 jauges sous chaque réplique (symbole + couleur, jamais la couleur seule) ;
+	// Prompt 125 : tendance des 3 jauges sous chaque réplique (symbole + couleur, jamais la couleur seule) ;
 	// option « Pression visible » : pastille « conseillé » sur la ou les réponses que l'évaluation jugerait bonnes
 	const conseillees = typeof Traces !== 'undefined' && Traces.option('pressionVisible') && Jeu.reponsesConseillees ? Jeu.reponsesConseillees(d) : [];
 	rs.forEach((r, i) => {
@@ -263,10 +263,10 @@ function repliqueDe(r, d, sansAuteur) {
 	for (const c of String(r.cle) + (r.clash ? '!' : '')) h = (h * 31 + c.charCodeAt(0)) % 1000003;
 	return ok[h % ok.length].replace(/\{(\w+)\}/g, (m, k) => String(vars[k]));
 }
-/** Prompt 120 : hauteur d'une ligne de réponse (2 lignes de réplique + la tendance) et pas entre deux lignes */
+/** Prompt 125 : hauteur d'une ligne de réponse (2 lignes de réplique + la tendance) et pas entre deux lignes */
 const H_REPONSE = 84;
 const PAS_REPONSE = 92;
-/** Prompt 120 : tendance d'une réplique sur les 3 jauges — « Flu. ▲ » en vert, « ≈ » en gris, « ▼ » en orange ; le
+/** Prompt 125 : tendance d'une réplique sur les 3 jauges — « Flu. ▲ » en vert, « ≈ » en gris, « ▼ » en orange ; le
  * symbole porte le sens, la couleur le double. Le clash (prompt 117) compte son malus de réputation : la tendance
  * reste honnête. Pastille « conseillé » en option (Pression visible). */
 function dessinerTendanceReponse(r, d, x, y, conseillee) {
@@ -498,7 +498,7 @@ function explicationDecision(r) {
 	if (des) lignes.push(des);
 	const sit = e.categorie ? Jeu.situation(r.dossier) : null;
 	let pourquoi = sit ? sit.split('+').map((s) => t(RAISONS[s] || 'raison.calme')).join(', ') : '';
-	// Prompt 120 : le conseil suit aussi la jauge en manque — le dire quand elle est basse (sous 45)
+	// Prompt 125 : le conseil suit aussi la jauge en manque — le dire quand elle est basse (sous 45)
 	if (e.jaugeBasse && e.valeurBasse !== undefined && e.valeurBasse < 45) pourquoi = t('raison.besoin', { jauge: t('jaugeTitre.' + e.jaugeBasse), v: e.valeurBasse }) + (pourquoi ? ', ' + pourquoi : '');
 	const ev = Jeu.evaluer(e);
 	if (ev === 'bon') lignes.push(t('retour.bon', { pourquoi: pourquoi || t('raison.calme') }));

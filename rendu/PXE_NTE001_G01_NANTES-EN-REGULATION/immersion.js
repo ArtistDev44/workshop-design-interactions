@@ -212,6 +212,7 @@ function dessinerTransitionJour() {
 	noStroke();
 	fill(0, 0, 0, 255 * a);
 	rect(0, 0, L, H);
+	zoneTexteDeclarer('transitionJour', 0, 0, L, H); // prompt 120 : écran plein cadre, conteneur de ses textes (audit)
 	if (a > 0.6) {
 		dsTitre(texteTransitionJour(), L / 2, H / 2 - 220, 72, '#ffffff', 'center'); // prompt 95 : remonté pour l'explication
 		noStroke();
@@ -224,10 +225,11 @@ function dessinerTransitionJour() {
 		// Prompt 112 : transition courte de l'intro → titre et date seuls (l'explication reste annoncée, et le tutoriel la reprend)
 		if (TRANSITION_JOUR.court) return true;
 		let yl = H / 2 - 40;
+		const lt = Math.min(1120, L - 80); // prompt 120 : en portrait (L = 1080), les lignes restent dans l'écran
 		lignesTransitionJour().forEach((ln) => {
-			yl += dessinerTexte(ln, L / 2 - 560, yl, 1120, { taille: 22, couleur: '#FFFFFF', align: 'center', interligne: 32 }).h + 6;
+			yl += dessinerTexte(ln, L / 2 - lt / 2, yl, lt, { taille: 22, couleur: '#FFFFFF', align: 'center', interligne: 32 }).h + 6;
 		});
-		dessinerTexte(t('transition.passer'), L / 2 - 560, yl + 18, 1120, { taille: 18, couleur: 'rgba(255,255,255,0.75)', align: 'center', maxLignes: 1 });
+		dessinerTexte(t('transition.passer'), L / 2 - lt / 2, yl + 18, lt, { taille: 18, couleur: 'rgba(255,255,255,0.75)', align: 'center', maxLignes: 1 });
 	}
 	return true;
 }
@@ -255,7 +257,7 @@ function tempsCompresse() {
 // pendant la lecture d'un signalement. game.js reçoit cette valeur comme « maintenant » (API inchangée).
 const TEMPS_EQUIPES = { ms: 0, actif: 0 };
 const tempsEquipes = () => TEMPS_EQUIPES.ms;
-/** Prompt 121 : ms réelles de jeu actif — une plainte n'expire plus pendant la lecture d'un signalement */
+/** Prompt 126 : ms réelles de jeu actif — une plainte n'expire plus pendant la lecture d'un signalement */
 const tempsPlaintes = () => TEMPS_EQUIPES.actif;
 /** État de la vitesse du temps : 'pause' | 'normal' | 'accelere' */
 function vitesseTemps() {
@@ -269,7 +271,7 @@ function avancerTemps() {
 	if (tempsSuspendu()) return; // prompt 34 / 43 : tutoriel et transition suspendent le temps
 	const vitesse = IMMERSION.minutesParSeconde * (tempsCompresse() ? IMMERSION.compression : 1) * (typeof Juice !== 'undefined' ? Juice.echelleTemps(maintenant) : 1); // prompt 78 : sieste ×100 ; prompt 96 : hit-stop (horloge seule, entrées libres)
 	TEMPS_EQUIPES.ms += dt * (vitesse / IMMERSION.minutesParSeconde); // prompt 95 (le hit-stop la ralentit aussi)
-	TEMPS_EQUIPES.actif += dt; // prompt 121 : temps réel de jeu ACTIF (×1, arrêté quand le temps est suspendu) — délai des plaintes
+	TEMPS_EQUIPES.actif += dt; // prompt 126 : temps réel de jeu ACTIF (×1, arrêté quand le temps est suspendu) — délai des plaintes
 	const avant = Jeu.horloge.minutes;
 	Jeu.horloge.minutes += (dt / 1000) * vitesse;
 	// Prompt 78 : l'horloge ne dépasse pas la fin de journée tant que des signalements restent (sieste ×100)
@@ -1174,7 +1176,7 @@ function fenetrePoste() {
 	textSize(24);
 	text(t('poste.decisions'), x + 56, y + 262);
 	textStyle(NORMAL);
-	// Prompt 121 : les gestes réels du jeu (carte, répliques 1 à 4, équipes glissées, menu à gauche), plus l'ancienne table Q5–Q7
+	// Prompt 126 : les gestes réels du jeu (carte, répliques 1 à 4, équipes glissées, menu à gauche), plus l'ancienne table Q5–Q7
 	['carte', 'repondre', 'equipes', 'menu'].forEach((g, i) => {
 		const k = t('poste.geste.' + g + '.k');
 		const yy = y + 310 + i * 72;

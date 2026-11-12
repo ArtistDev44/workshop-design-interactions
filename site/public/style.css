@@ -27,7 +27,7 @@ h3 {
 	display: block;
 }
 
-/* Prompt 122 : voile d'inactivité (mode exposition) et message du filet d'erreur — contraste blanc sur #0d0c0c > 18:1 */
+/* Prompt 127 : voile d'inactivité (mode exposition) et message du filet d'erreur — contraste blanc sur #0d0c0c > 18:1 */
 #expo-pause,
 #filet-erreur {
 	position: fixed;

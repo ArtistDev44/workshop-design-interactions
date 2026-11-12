@@ -1,6 +1,7 @@
 /* Nantes en régulation — prompt 113 : écran « Crédits » du menu principal (MENU.ecran = 'credits').
  * L'équipe (portraits fournis par le groupe, ./assets/credits/), la licence (d'après LICENSE et audio/CREDITS.md)
- * et l'usage de l'IA (d'après l'historique du dépôt). Dessiné par le code avec le Pixel DS ; aucun fait inventé :
+ * et l'usage de l'IA (d'après l'historique du dépôt). Dessiné par le code avec le Pixel DS (prompt 120 : fenêtres et
+ * lignes libellé / valeur) ; aucun fait inventé :
  * ce que le dépôt ne dit pas reste « [À COMPLÉTER] ». Échap / « Retour » ramènent au menu.
  */
 const CREDITS = { choix: 0, images: {} };
@@ -38,70 +39,146 @@ const LIENS_CREDITS = [
 	{ cle: 'retour', action: fermerCredits },
 ];
 
+// ——— Prompt 120 : fenêtres du Pixel DS (comme la diapositive « L'équipe ») et lignes libellé / valeur ———
+const LIGNES_LICENCE = ['code', 'donnees', 'lieux', 'biblio', 'musiques'];
+const LIGNES_IA = ['outils', 'methode', 'donnees', 'visuels', 'humain'];
+const BARRE_FEN = 40;
+/** Fenêtre du DS : fond, bordure blanc 15 %, barre de titre en capitales et deux carrés pixel */
+function fenetreCredits(x, y, l, h, titre) {
+	noStroke();
+	fill(DS.fond);
+	rect(x, y, l, h);
+	fill(DS.blanc05);
+	rect(x, y, l, BARRE_FEN);
+	stroke(DS.blanc15);
+	strokeWeight(2);
+	noFill();
+	rect(x + 1, y + 1, l - 2, h - 2);
+	line(x + 2, y + BARRE_FEN, x + l - 2, y + BARRE_FEN);
+	noStroke();
+	textFont(DS.policeTexte);
+	textStyle(BOLD);
+	textSize(16);
+	textAlign(LEFT, CENTER);
+	fill(DS.blanc);
+	text(String(titre).toUpperCase().split('').join(String.fromCharCode(8202)), x + 16, y + BARRE_FEN / 2); // espacement des capitales
+	textStyle(NORMAL);
+	fill(DS.blanc15);
+	rect(x + l - 40, y + 16, 9, 9);
+	fill(DS.primaire);
+	rect(x + l - 26, y + 16, 9, 9);
+	zoneTexteDeclarer('fenetreCredits', x, y, l, h);
+}
+/** Découpe en lignes (mots entiers) à la taille courante */
+function lignesCredits(txt, l) {
+	const out = [];
+	let ligne = '';
+	String(txt)
+		.split(' ')
+		.forEach((m) => {
+			const essai = ligne ? ligne + ' ' + m : m;
+			if (ligne && textWidth(essai) > l) out.push(ligne), (ligne = m);
+			else ligne = essai;
+		});
+	if (ligne) out.push(ligne);
+	return out;
+}
+/** Hauteur (ou dessin si dessine) d'une fenêtre de lignes libellé / valeur, à la taille t */
+function blocLignesCredits(x, y, l, titre, prefixe, cles, taille, dessine) {
+	const lab = Math.round(taille * 10);
+	const inter = Math.round(taille * 1.45);
+	textFont(DS.policeTexte);
+	textSize(taille);
+	const lignes = cles.map((k) => lignesCredits(t(prefixe + k + '.v'), l - 48 - lab));
+	const hRangs = lignes.map((ls) => ls.length * inter + 16);
+	const h = BARRE_FEN + 12 + hRangs.reduce((a, b) => a + b, 0) + 12;
+	if (!dessine) return h;
+	fenetreCredits(x, y, l, h, titre);
+	let yr = y + BARRE_FEN + 12;
+	cles.forEach((k, i) => {
+		if (i) {
+			stroke(DS.blanc15);
+			strokeWeight(1);
+			line(x + 24, yr, x + l - 24, yr);
+			noStroke();
+		}
+		textFont(DS.policeTexte);
+		textStyle(BOLD);
+		textSize(Math.max(14, taille - 4));
+		textAlign(LEFT, TOP);
+		fill(DS.alerte);
+		text(t(prefixe + k).toUpperCase(), x + 24, yr + 10);
+		textStyle(NORMAL);
+		textSize(taille);
+		fill(DS.blanc75);
+		lignes[i].forEach((ln, j) => text(ln, x + 24 + lab, yr + 8 + j * inter));
+		yr += hRangs[i];
+	});
+	return h;
+}
 function portraitCredits(p, x, y, c) {
+	const hNom = 56;
+	fenetreCredits(x, y, c, BARRE_FEN + c + hNom, t('credits.portrait'));
+	const yi = y + BARRE_FEN;
 	noStroke();
 	fill(DS.primaire);
-	rect(x, y, c, c); // fond rouge du portrait, aussi tant que l'image charge
+	rect(x + 2, yi, c - 4, c); // fond rouge du portrait, aussi tant que l'image charge
 	const img = imageCredits(p.image);
 	if (img) {
 		drawingContext.imageSmoothingEnabled = false; // rendu pixel conservé
-		drawingContext.drawImage(img, x, y, c, c);
+		drawingContext.drawImage(img, x + 2, yi, c - 4, c);
 		drawingContext.imageSmoothingEnabled = true;
 	}
 	stroke(DS.blanc15);
 	strokeWeight(2);
-	noFill();
-	rect(x + 1, y + 1, c - 2, c - 2);
+	line(x + 2, yi + c, x + c - 2, yi + c);
 	noStroke();
 	textFont(DS.policeTexte);
 	textStyle(BOLD);
-	dsTexte(p.nom, x + c / 2, y + c + 18, 24, DS.blanc, 'center');
+	ajusterTaille(p.nom, c - 24, 24, 16);
+	textAlign(CENTER, CENTER);
+	fill(DS.blanc);
+	text(p.nom, x + c / 2, yi + c + hNom / 2);
 	textStyle(NORMAL);
-}
-function sectionCredits(titre, corps, x, y, l) {
-	noStroke();
-	fill(DS.primaire);
-	rect(x, y + 4, 6, 26);
-	textFont(DS.policeTexte);
-	textStyle(BOLD);
-	dsTexte(titre, x + 20, y, 26, DS.blanc, 'left');
-	textStyle(NORMAL);
-	return y + 46 + dessinerTexte(corps, x, y + 46, l, { taille: 20, couleur: DS.blanc75, interligne: 30 }).h;
 }
 function dessinerCredits() {
-	const portrait = L < H;
 	const k = reduireAnimations ? 1 : easeOut(constrain((millis() - MENU.debut) / 400, 0, 1));
-	const x0 = (portrait ? 60 : 160) - (1 - k) * 30;
+	const dy = (1 - k) * 24;
+	const x0 = 160;
 	noStroke();
-	fill('rgba(13,12,12,0.6)');
+	fill('rgba(13,12,12,0.72)');
 	rect(0, 0, L, H);
-	dsTitre(t('credits.titre'), x0, portrait ? 60 : 90, portrait ? 60 : 72, DS.blanc, 'left');
-	// 1. L'équipe
-	const c = portrait ? 300 : 280;
-	const yE = portrait ? 180 : 220;
-	EQUIPE.forEach((p, i) => portraitCredits(p, x0 + i * (c + 40), yE, c));
+	dsTitre(t('credits.titre'), x0, 80 + dy, 72, DS.blanc, 'left');
 	textFont(POLICE_DONNEES);
 	textSize(20);
 	fill(DS.blanc75);
 	textAlign(LEFT, TOP);
-	text(t('credits.atelier'), x0, yE + c + 70, 2 * c + 40, 60);
-	// 2. Licence, 3. Usage de l'IA
-	const xD = portrait ? x0 : x0 + 2 * c + 120;
-	const lD = portrait ? L - 2 * x0 : L - xD - 120;
-	let y = portrait ? yE + c + 150 : 220;
-	y = sectionCredits(t('credits.licence.titre'), t('credits.licence.texte'), xD, y, lD) + 32;
-	sectionCredits(t('credits.ia.titre'), t('credits.ia.texte'), xD, y, lD);
-	// Liens et retour
-	const lb = portrait ? (L - 2 * x0 - 3 * 16) / 4 : 300;
-	const yb = H - (portrait ? 140 : 130);
+	text(t('credits.atelier'), x0, 176 + dy);
+	// 1. L'équipe : deux fenêtres « Portrait »
+	const c = 280;
+	const yE = 236 + dy;
+	EQUIPE.forEach((p, i) => portraitCredits(p, x0 + i * (c + 32), yE, c));
+	// 2. Licence et 3. IA : fenêtres de lignes, taille ajustée pour tenir au-dessus des boutons (jamais coupées)
+	const xD = x0 + 2 * c + 32 + 64;
+	const lD = L - 120 - xD;
+	const yb = H - 130;
+	let taille = 19;
+	const hTotal = (tl) => blocLignesCredits(xD, 0, lD, '', 'credits.lic.', LIGNES_LICENCE, tl, false) + 24 + blocLignesCredits(xD, 0, lD, '', 'credits.ia.', LIGNES_IA, tl, false);
+	while (taille > 15 && yE + hTotal(taille) > yb - 32) taille--;
+	const h1 = blocLignesCredits(xD, yE, lD, t('credits.licence.titre'), 'credits.lic.', LIGNES_LICENCE, taille, true);
+	blocLignesCredits(xD, yE + h1 + 24, lD, t('credits.ia.titre'), 'credits.ia.', LIGNES_IA, taille, true);
+	// Liens et retour (focus : double bordure du DS)
+	const lb = 300;
 	LIENS_CREDITS.forEach((b, i) => {
-		const bx = portrait ? x0 + i * (lb + 16) : i === 3 ? L - 120 - lb : x0 + i * (lb + 16);
+		const bx = i === 3 ? L - 120 - lb : x0 + i * (lb + 16);
 		dsBouton(bx, yb, lb, 64, t('credits.' + b.cle), b.action, i === 3 ? 'secondaire' : 'contour');
 		if (CREDITS.choix === i) {
 			noFill();
-			stroke(MENU_C.bleu);
-			strokeWeight(4);
-			rect(bx - 8, yb - 8, lb + 16, 80);
+			stroke(DS.blanc);
+			strokeWeight(2);
+			rect(bx - 6, yb - 6, lb + 12, 76);
+			stroke(DS.fond);
+			rect(bx - 3, yb - 3, lb + 6, 70);
 			noStroke();
 		}
 	});

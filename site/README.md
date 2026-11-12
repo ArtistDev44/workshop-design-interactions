@@ -60,7 +60,7 @@ npm test          # smoke test (scripts, données, motifs de secret, dist)
 
 Le site s'ouvre à `http://localhost:4321/` (jeu) ; le cartel à `http://localhost:4321/cartel/`. Hors ligne, sans rien installer : double clic sur `public/index.html`.
 
-**Exposition (prompt 122)** : ouvrir `https://workshop-design-interactions.pages.dev/?expo=1` (ou `…/index.html?expo=1` en local). Le stockage du visiteur précédent est effacé (réglages, langue et palmarès gardés), le joueur arrive directement devant la carte, et après 90 s sans geste en partie le jeu revient à l'écran titre (15 s de compte à rebours, un geste l'annule). Touche F11 pour le plein écran.
+**Exposition (prompt 127)** : ouvrir `https://workshop-design-interactions.pages.dev/?expo=1` (ou `…/index.html?expo=1` en local). Le stockage du visiteur précédent est effacé (réglages, langue et palmarès gardés), le joueur arrive directement devant la carte, et après 90 s sans geste en partie le jeu revient à l'écran titre (15 s de compte à rebours, un geste l'annule). Touche F11 pour le plein écran.
 
 ## Robustesse
 
