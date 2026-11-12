@@ -2950,6 +2950,145 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	verifier(c.CLE.startsWith('pxe-nte001') && !garder179.includes(c.CLE) && !/telephone/.test(garder179), 'prompt 179 : la clé de première lecture doit être purgée par le mode exposition');
 }
 
+// Prompt 181 : guide « Prendre en main » contraignant — un filtre par type d'entrée (pointeur, clavier) fondé sur le
+// rectangle de la cible, « Quitter le guide » rend tout, temps suspendu, aucune étape sans cible ni issue
+{
+	const lire181 = (f) => readFileSync(join(pub, f), 'utf8');
+	const sk = lire181('sketch.js');
+	// Points de filtrage uniques, placés avant toute action
+	verifier(/function mousePressed\(\) \{[\s\S]*?guideBloque\(mouseX, mouseY\)\) return rappelerConsigneGuide\(\);[^\n]*\n\tif \(typeof debutJeton/.test(sk), 'prompt 181 : mousePressed doit filtrer le clic (guideBloque) avant les jetons, les cartes et les boutons');
+	verifier(/interaction\(\);\n\tif \(typeof guideFiltre === 'function' && guideFiltre\(\) && toucheGuide\(\)\) return false;/.test(sk), 'prompt 181 : keyPressed doit passer par toucheGuide avant tout raccourci du jeu');
+	verifier(/function mouseWheel\(event\) \{\n\tinteraction\(\);\n\tif \(typeof guideBloque === 'function' && guideBloque\(mouseX, mouseY\)\)/.test(sk), 'prompt 181 : la molette doit être filtrée par guideBloque');
+	verifier(/function mouseDragged\(\) \{\n\tif \(typeof guideBloque === 'function' && guideBloque\(pmouseX, pmouseY\)\) return;/.test(lire181('enquete.js')), 'prompt 181 : le glisser doit être filtré par guideBloque');
+	verifier(/guideBloque\(d\.x, d\.y\)\) return rappelerConsigneGuide\(\);[^\n]*\n\t\tscrollSortiePC/.test(lire181('mobile.js')), 'prompt 181 : le swipe tactile doit passer par le même filtre, à la position du toucher');
+	verifier(/function tempsSuspendu\(\) \{\n\treturn [^\n]*guideSuspendTemps\(\)/.test(lire181('immersion.js')), 'prompt 181 : tempsSuspendu() doit tenir compte du guide');
+	for (const langue of ['fr', 'en']) {
+		const manquantes = vm.runInContext(`['guide.arreter', 'guide.arrete', 'guide.rappel', 'guide.confirmer', 'guide.attente'].filter((k) => !TRADUCTIONS.${langue}[k])`, contexte(langue));
+		verifier(!manquantes.length, `prompt 181 : textes du guide absents (${langue}) : ${manquantes.join(', ')}`);
+	}
+	// Noms de cibles réellement relevés au dessin (cibleGuide('nom', …) dans les scripts du jeu)
+	const relevees = new Set();
+	for (const f of ['bureau.js', 'carte.js', 'carte-alertes.js', 'menu-app.js', 'os.js', 'immersion.js', 'panneau.js', 'sieste.js']) for (const m of lire181(f).matchAll(/cibleGuide\('([A-Za-z]+)'/g)) relevees.add(m[1]);
+	/** Contexte : le vrai guide.js, un modèle minimal des vues (quelles cibles sont dessinées où) et des actions */
+	const ctx181 = () => {
+		const c = vm.createContext({});
+		vm.runInContext(
+			`var L = 1920, H = 1080, ECRAN_POSTE = { x: 0, y: 0, l: 1920, h: 1080 };
+			var vue = 'bureau', PC = { etat: 'appli', fenetre: null, flottant: false }, phase = 'attente', ecran = 'jeu', MENU = { actif: false }, fenetre = null, smsActif = false, tutoriel = null;
+			var enSieste = false, SOMMEIL = { k: 0 }, clignement = null, Jeu = { historique: [], defiChrono: false }, IMMERSION = { compression: 100 }, PORTRAIT = { actif: false };
+			var frameCount = 10, deltaTime = 100, __t = 100000, __annonces = [], __actions = [], __file = [], __bas = [], key = '', keyCode = 0;
+			const TAB = 9, SHIFT = 16, CONTROL = 17, ALT = 18, ENTER = 13, RETURN = 13, ESCAPE = 27, UP_ARROW = 38, DOWN_ARROW = 40;
+			function millis() { return __t; } function keyIsDown(k) { return __bas.includes(k); } function annoncer(x) { __annonces.push(x); } function t(k) { return k; }
+			var Confort = { Son: { bip() {} } }; var localStorage = { getItem: () => null, setItem() {} };
+			function sAsseoir() { __actions.push('sAsseoir'); if (vue === 'bureau') vue = 'poste'; } function seLever() { __actions.push('seLever'); if (vue === 'poste') { vue = 'bureau'; PC.fenetre = null; } }
+			function quitterPC() { seLever(); } function ouvrirObjetBureau(n) { __actions.push('objet:' + n); if (n === 'aide') fenetre = 'aide'; }
+			function fileIncidents() { return __file; } const ENTREES_MENU = ['signalements', 'patron', 'community', 'journal', 'donnees']; function appliDebloquee() { return true; }
+			function ouvrirEntreeMenu(k) { __actions.push('menu:' + k); PC.etat = 'os'; PC.fenetre = k; } function pcDemarre() { return PC.etat === 'demarrage'; }`,
+			c,
+		);
+		vm.runInContext(lire181('guide.js'), c);
+		// Modèle du dessin : les cibles présentes à cette image, selon la vue (mêmes noms que le jeu)
+		vm.runInContext(
+			`function __dessiner() {
+				ciblesGuide = {}; frameCount++; __t += 100;
+				const pose = (nom, espace) => { espaceDessin = espace; cibleGuide(nom, 100, 100, 200, 100); espaceDessin = 'ecran'; };
+				if (vue === 'bureau') ['ecranPC', 'livreAide'].forEach((n) => pose(n, 'ecran'));
+				if (vue === 'poste') pose('quitterPC', 'ecran');
+				if (vue === 'poste' && PC.etat === 'appli') { ['jauges', 'somnolence', 'iconesOS'].forEach((n) => pose(n, 'pc')); if (__file.length) pose('fileSignalements', 'pc'); if (PHASES_DOSSIER.includes(phase)) pose('actions', 'pc'); }
+				if (vue === 'poste' && PC.etat === 'os') { pose('iconesOS', 'pc'); if (!PC.fenetre) pose('iconeSignalements', 'pc'); }
+			}
+			function __afficher() { __dessiner(); const e = ETAPES_GUIDE[GUIDE.etape]; const z = e && cibleReelle(e.cible()); GUIDE.image = frameCount; GUIDE.trou = z ? { x: z.x - 10, y: z.y - 10, l: z.l + 20, h: z.h + 20 } : null; GUIDE.zones = [{ x: 1300, y: 900, l: 300, h: 48 }]; }
+			function __touche(k, code, bas) { key = k; keyCode = code; __bas = bas || []; return toucheGuide(); }`,
+			c,
+		);
+		return c;
+	};
+	// 1. Chaque étape a une cible relevée par le jeu et une issue ; depuis n'importe quelle vue, la cible redevient
+	//    atteignable (le guide ramène la vue), l'étape attend le jeu (temps non suspendu) ou elle est déclarée faite
+	const DEPARTS = ["vue = 'bureau'", "vue = 'poste'; PC.etat = 'appli'", "vue = 'poste'; PC.etat = 'os'; PC.fenetre = 'journal'", "vue = 'poste'; PC.etat = 'os'; PC.fenetre = null", "vue = 'poste'; PC.etat = 'appli'; phase = 'decision'; __file = [{}]"];
+	const nbEtapes = vm.runInContext('ETAPES_GUIDE.length', ctx181());
+	verifier(nbEtapes >= 6, `prompt 181 : étapes du guide introuvables (${nbEtapes})`);
+	for (let i = 0; i < nbEtapes; i++) {
+		for (const depart of DEPARTS) {
+			const c = ctx181();
+			const r = vm.runInContext(
+				`demarrerGuide(); GUIDE.etape = ${i}; ${depart};
+				(() => {
+					const e = ETAPES_GUIDE[${i}];
+					const noms = new Set();
+					let issue = '';
+					for (let n = 0; n < 120 && !issue; n++) {
+						__dessiner();
+						noms.add(e.cible());
+						if (e.fait()) issue = 'faite';
+						else if (cibleReelle(e.cible())) issue = 'cible';
+						else if (e.attendre && e.attendre()) issue = guideSuspendTemps() ? '' : 'attente';
+						else if (!surveillerCibleGuide(e, null)) issue = 'passee';
+					}
+					return { id: e.id, issueFn: typeof e.issue === 'function', noms: [...noms], issue, etape: GUIDE.etape };
+				})()`,
+				c,
+			);
+			verifier(r.issueFn, `prompt 181 : l'étape « ${r.id} » du guide n'a pas d'issue`);
+			verifier(r.noms.length && r.noms.every((n) => relevees.has(n)), `prompt 181 : l'étape « ${r.id} » vise une cible que le jeu ne relève pas (${r.noms.join(', ')})`);
+			verifier(!!r.issue, `prompt 181 : étape « ${r.id} » bloquante depuis « ${depart} » (ni cible, ni attente, ni étape passée)`);
+		}
+	}
+	// 2. Filtre du pointeur : hors cible ignoré (et consigne rappelée), cible et bouton de la bulle passés
+	let c = ctx181();
+	vm.runInContext('demarrerGuide(); __afficher(); __annonces.length = 0', c);
+	const bloque = (x, y) => vm.runInContext(`guideBloque(${x}, ${y})`, c);
+	verifier(bloque(600, 600) === true && bloque(20, 20) === true, 'prompt 181 : un clic hors de la cible doit être ignoré pendant le guide');
+	verifier(bloque(150, 150) === false, 'prompt 181 : un clic sur la cible éclairée doit passer');
+	verifier(bloque(1400, 920) === false, 'prompt 181 : le bouton « Quitter le guide » doit rester cliquable');
+	vm.runInContext('rappelerConsigneGuide()', c);
+	verifier(vm.runInContext("__annonces.length === 1 && __annonces[0].startsWith('guide.rappel') && __annonces[0].includes('guide.installer') && GUIDE.rappel === __t", c), 'prompt 181 : un geste hors cible doit rappeler la consigne (bulle signalée, annonce)');
+	verifier(vm.runInContext('guideSuspendTemps()', c) === true, 'prompt 181 : le temps doit être suspendu tant qu\'une étape attend le joueur');
+	// Bulle absente de l'image (clignement, changement de vue) : rien ne passe, pas même l'ancienne cible
+	vm.runInContext('frameCount += 5', c);
+	verifier(bloque(150, 150) === true, 'prompt 181 : sans bulle affichée, l\'ancienne cible ne doit plus laisser passer le clic');
+	// Écrans qui ont leur propre interaction : le filtre se retire (pas d'impasse), puis revient
+	vm.runInContext("__afficher(); fenetre = 'telephone'", c);
+	verifier(bloque(600, 600) === false && vm.runInContext('guideSuspendTemps()', c) === false, 'prompt 181 : une fenêtre ouverte doit rester utilisable pendant le guide');
+	vm.runInContext('fenetre = null; enSieste = true', c);
+	verifier(bloque(600, 600) === false, 'prompt 181 : la sieste et le réveil ne doivent pas être bloqués par le guide');
+	vm.runInContext('enSieste = false; PORTRAIT.actif = true', c);
+	verifier(bloque(600, 600) === false, 'prompt 181 : en portrait, le guide ne doit jamais bloquer');
+	vm.runInContext('PORTRAIT.actif = false', c);
+	verifier(bloque(600, 600) === true, 'prompt 181 : le filtre doit reprendre après la fenêtre');
+	// « Quitter le guide » rend tout
+	vm.runInContext('arreterGuide()', c);
+	verifier(bloque(600, 600) === false && bloque(20, 20) === false && vm.runInContext('guideFiltre() || guideSuspendTemps()', c) === false, 'prompt 181 : « Quitter le guide » doit rendre toutes les interactions et le temps');
+	// 3. Filtre du clavier
+	c = ctx181();
+	vm.runInContext('demarrerGuide(); __afficher()', c);
+	const touche = (k, code, bas = []) => vm.runInContext(`__touche(${JSON.stringify(k)}, ${code}, ${JSON.stringify(bas)})`, c);
+	verifier(touche('p', 80) === true && touche('h', 72) === true && touche('z', 90) === true && vm.runInContext("vue === 'bureau' && !fenetre && __actions.length === 0", c), 'prompt 181 : une touche qui n\'actionne pas la cible doit être ignorée');
+	verifier(touche('l', 76) === false && touche('f', 70) === false && touche('r', 82, [17]) === false, 'prompt 181 : langue, plein écran et raccourcis du navigateur ne doivent pas être avalés');
+	// Tab piégé entre la cible et « Quitter le guide » ; Entrée sur « Quitter » quitte
+	const focus = () => vm.runInContext('focusGuide()', c);
+	verifier(focus() === 'cible' && touche('Tab', 9) === true && focus() === 'quitter' && touche('Tab', 9) === true && focus() === 'cible' && touche('Tab', 9, [16]) === true && focus() === 'quitter', 'prompt 181 : Tab / Maj+Tab doivent tourner entre la cible et « Quitter le guide »');
+	vm.runInContext('GUIDE.etape = 1; razEtapeGuide(); vue = "poste"; __afficher()', c);
+	verifier(touche('Tab', 9) && focus() === 'suivante' && touche('Tab', 9) && focus() === 'quitter' && touche('Tab', 9) && focus() === 'cible', 'prompt 181 : étape de lecture — Tab passe par « Étape suivante » puis « Quitter le guide »');
+	vm.runInContext('GUIDE.etape = 0; razEtapeGuide(); vue = "bureau"; __afficher()', c);
+	verifier(touche('Enter', 13) === true && vm.runInContext("__actions.join() === 'sAsseoir' && vue === 'poste'", c), 'prompt 181 : Entrée sur la cible focalisée doit actionner la cible (s\'installer)');
+	// Touches de l'étape : 1 à 3 passent au jeu quand les répliques sont la cible ; flèches / Entrée pour la file
+	vm.runInContext("GUIDE.etape = ETAPES_GUIDE.findIndex((e) => e.id === 'actions'); razEtapeGuide(); PC.etat = 'appli'; phase = 'decision'; __file = [{}]; __afficher()", c);
+	verifier(touche('1', 49) === false && touche('5', 53) === true && touche('e', 69) === true, 'prompt 181 : seules les touches des répliques doivent passer à l\'étape « actions »');
+	// Échap : confirmation courte (deux pressions en moins de 5 s), sinon le guide continue
+	verifier(touche('Escape', 27) === true && vm.runInContext("GUIDE.actif && __annonces[__annonces.length - 1] === 'guide.confirmer'", c), 'prompt 181 : Échap doit demander confirmation avant de quitter le guide');
+	vm.runInContext('__t += 6000', c);
+	verifier(touche('Escape', 27) === true && vm.runInContext('GUIDE.actif', c) === true, 'prompt 181 : la confirmation d\'Échap doit expirer (5 s)');
+	verifier(touche('Escape', 27) === true && vm.runInContext('GUIDE.actif', c) === false && vm.runInContext('guideBloque(600, 600)', c) === false, 'prompt 181 : Échap deux fois doit quitter le guide et tout rendre');
+	// 4. Temps : suspendu quand l'étape attend le joueur, libre quand elle attend le jeu (premier signalement)
+	c = ctx181();
+	vm.runInContext("demarrerGuide(); GUIDE.etape = ETAPES_GUIDE.findIndex((e) => e.id === 'prendre'); vue = 'poste'; PC.etat = 'appli'; __file = []; __afficher()", c);
+	verifier(vm.runInContext('guideSuspendTemps()', c) === false && vm.runInContext("texteEtapeGuide(ETAPES_GUIDE[GUIDE.etape]) === 'guide.attente'", c), 'prompt 181 : en attendant le premier signalement, le temps doit couler et la bulle le dire');
+	verifier(bloque.call(null, 0, 0) !== undefined && vm.runInContext('guideBloque(600, 600)', c) === true, 'prompt 181 : pendant l\'attente du signalement, les autres interactions restent ignorées');
+	vm.runInContext('__file = [{}]; __afficher()', c);
+	verifier(vm.runInContext('guideSuspendTemps() && guideBloque(150, 150) === false', c), 'prompt 181 : signalement arrivé → temps suspendu, cible cliquable');
+}
+
 if (erreurs.length) {
 	console.error(`Test du jeu : ${erreurs.length} erreur(s) sur ${controles + erreurs.length} contrôles`);
 	for (const e of erreurs) console.error(`  ✗ ${e}`);

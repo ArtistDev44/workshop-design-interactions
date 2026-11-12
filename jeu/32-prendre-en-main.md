@@ -20,7 +20,12 @@
 
 - Si le joueur n'est pas là où l'étape l'attend, la flèche le ramène : vers l'écran du PC ou vers l'icône « Régulation ».
 - Une étape se valide dès que le joueur a fait l'action, même sous une fenêtre ouverte.
-- « Étape suivante » saute une étape. G ou « Arrêter le guide » l'arrête.
+- **Prompt 181 — guide contraignant.** Tant qu'une étape attend le joueur, seule sa cible (la zone éclairée par le voile percé) et les boutons de la bulle répondent : clic, toucher, molette, glisser et touches hors cible sont ignorés, la bulle se signale 0,6 s et la consigne est relue (`guideBloque`, `toucheGuide`, `rappelerConsigneGuide` dans `guide.js`).
+- Sortie : bouton « Quitter le guide (Échap) », toujours présent ; Échap (ou G) deux fois en 5 s. Quitter rend toutes les interactions.
+- Clavier : Tab / Maj+Tab tournent entre la cible et les boutons de la bulle ; Entrée ou Espace actionne la cible focalisée ; seules passent les touches de l'étape (↑ ↓ Entrée pour le signalement, 1 à 3 pour les répliques, Z, H), plus L et F.
+- « Étape suivante » n'existe plus que pour les deux étapes de lecture (jauges, somnolence).
+- Le temps de jeu est suspendu pendant le guide (`guideSuspendTemps`, lu par `tempsSuspendu()`), sauf en attendant le premier signalement.
+- Aucune impasse : chaque étape a une `issue` — cible introuvable 2 s → le guide ramène la vue (s'asseoir, rouvrir l'appli, se lever) ; introuvable 8 s → étape déclarée faite. Fenêtres, SMS, sieste, réveil et soir se traitent normalement, puis le guide reprend. En portrait, le guide reste indicatif (pas de blocage).
 - À la fin, le message « Vous avez pris en main la salle de régulation ! » s'affiche 4 s. Le guide ne revient pas, sauf si la case est recochée.
 - Chaque étape est annoncée en `aria-live`.
 

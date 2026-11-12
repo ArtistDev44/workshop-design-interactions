@@ -247,8 +247,9 @@ function heureAffichee() {
 /** Le temps de jeu est-il arrêté ? (fin, mail, soir, démarrage du PC, SMS, pause, tutoriel, transition, fenêtres) */
 // Prompt 172 : la lecture de l'aide (livre du bureau, H, menu pause) suspend le temps, comme le tutoriel
 // Prompt 179 : la toute première lecture du téléphone aussi (telephone.js) ; aux ouvertures suivantes, le temps file
+// Prompt 181 : et le guide « Prendre en main » tant qu'une étape attend le joueur (guideSuspendTemps, guide.js)
 function tempsSuspendu() {
-	return ecran !== 'jeu' || !Jeu.horloge || phase === 'fin' || phase === 'mail' || phase === 'soir' || pcDemarre() || smsActif || enPause || tutoriel || TRANSITION_JOUR || mecaniquesSuspendentTemps() || fenetre === 'poste' || fenetre === 'aide' || (typeof telephonePremiereLecture === 'function' && telephonePremiereLecture()) || lecturePanneau() || (typeof expoEnPause === 'function' && expoEnPause()); // prompt 160 : voile « Partie en pause » de l'exposition ; prompt 74 : explication du poste ; prompt 87 : lecture d'un signalement
+	return ecran !== 'jeu' || !Jeu.horloge || phase === 'fin' || phase === 'mail' || phase === 'soir' || pcDemarre() || smsActif || enPause || tutoriel || TRANSITION_JOUR || mecaniquesSuspendentTemps() || fenetre === 'poste' || fenetre === 'aide' || (typeof telephonePremiereLecture === 'function' && telephonePremiereLecture()) || lecturePanneau() || (typeof guideSuspendTemps === 'function' && guideSuspendTemps()) || (typeof expoEnPause === 'function' && expoEnPause()); // prompt 160 : voile « Partie en pause » de l'exposition ; prompt 74 : explication du poste ; prompt 87 : lecture d'un signalement
 }
 function tempsCompresse() {
 	return ecran === 'jeu' && (phase === 'attente' || phase === 'reveil') && !tempsSuspendu(); // « ×100 » seulement quand le temps file vraiment
