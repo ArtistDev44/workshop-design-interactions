@@ -276,12 +276,16 @@ function bulleDuPlaignant(d, x, y, l) {
 	}
 	fill(DS.blanc05);
 	rect(x + 76, y, lt + 8, hb);
+	if (pl && pl.ton === 'agressif') {
+		fill(DS.alerte); // prompt 118 : ton agressif voulu — liseré d'alerte
+		rect(x + 76, y, 4, hb);
+	}
 	triangle(x + 76, y + 22, x + 66, y + 30, x + 76, y + 38); // pointe de la bulle vers l'avatar
 	dsTexte(couperLargeurCarte(auteur, lt - 24, 16), x + 94, y + 14, 16, DS.blanc50, 'left');
 	dsTexte(texte, x + 94, y + 42, 20, DS.blanc, 'left', lt - 32);
 	if (PC.etat === 'appli' && BULLE.dossier !== d) {
 		BULLE.dossier = d;
-		annoncer(t('plaignant.annonce', { auteur, texte }));
+		annoncer(t('plaignant.annonce', { auteur, texte: lireMasques(texte) })); // prompt 118 : « mot masqué » à la place des symboles
 	}
 	let yy = y + hb + 10;
 	if (pl) {
@@ -291,6 +295,10 @@ function bulleDuPlaignant(d, x, y, l) {
 	return yy + 12;
 }
 const BULLE = { dossier: null };
+/** Prompt 118 : pour la synthèse vocale, un mot masqué par des symboles (&#@!%$) est lu « mot masqué » */
+function lireMasques(txt) {
+	return String(txt).replace(/[\wÀ-ÿ]*[@#$%&!]{2,}[\wÀ-ÿ]*/g, t('plaignant.motMasque'));
+}
 function bloc(titre, lignes, x, y, l, couleur) {
 	noStroke();
 	textFont(POLICE_DONNEES);

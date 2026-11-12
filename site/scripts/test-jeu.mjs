@@ -251,14 +251,14 @@ const sv = vm.runInContext(
 	const delta = Jeu.plaintes.reduce((s, p) => s + (p.suivis || []).reduce((t, x) => t + x.delta, 0), 0);
 	Jeu.horloge.minutes = Jeu.debutJournee(); const avant = Jeu.majSuivis();
 	Jeu.horloge.minutes = 99999; const livres = Jeu.majSuivis(); const encore = Jeu.majSuivis();
-	return { a, b, nbs, total, delta, avant, livres, encore, rep: Jeu.jauges.reputation - rep0, comm: Jeu.commentaires.filter((c) => c.suivi).map((c) => String(c.texte)) };
+	return { a, b, nbs, total, delta, avant, livres, encore, rep: Jeu.jauges.reputation - rep0, comm: Jeu.commentaires.filter((c) => c.suivi).map((c) => String(c.texte)), rel: Jeu.plaintes.reduce((s, p) => s + (p.relances || []).length, 0) };
 	})()`,
 	fr,
 );
 verifier(JSON.stringify(sv.a) === JSON.stringify(sv.b) && sv.a.length > 0, 'réactions : tirage non reproductible ou aucune plainte');
 verifier(sv.nbs.every((n) => n >= 0 && n <= 3), `réactions : plus de 3 pour une réponse (${sv.nbs})`);
 verifier(sv.livres + sv.avant === sv.total && sv.encore === 0, `réactions : ${sv.avant} + ${sv.livres} livrées sur ${sv.total}, ${sv.encore} en double`);
-verifier(sv.comm.length === sv.total && sv.comm.every((x) => x && !x.includes('[À COMPLÉTER]') && !x.includes('« »')), 'réactions : texte manquant ou vide');
+verifier(sv.comm.length + sv.rel === sv.total && sv.comm.every((x) => x && !x.includes('[À COMPLÉTER]') && !x.includes('« »')), 'réactions : texte manquant ou vide (réactions publiques + relances privées du prompt 85)');
 
 // Prompt 68 : gravité, pertinence, équipes limitées (effectif, cycle, refus, remise à zéro, effet hors sujet, sauvegarde)
 const eq = vm.runInContext(
@@ -1038,6 +1038,24 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 		})()`, cr);
 		verifier(cl.clash === true && cl.eval === 'rate' && cl.dRep <= -8, `clash (${lg}) : ${JSON.stringify(cl)}`);
 	}
+}
+
+// Prompt 118 : plaintes agressives — FR et EN, aucun gros mot en clair (masqués par des symboles), conditions réelles, ≈ 1 sur 3
+{
+	const c118 = contexte('fr');
+	const r = vm.runInContext(`(() => {
+		const ag = Jeu.MESSAGES.plaintes.filter((p) => p.ton === 'agressif');
+		const textes = ag.flatMap((p) => [p.texte.fr, p.texte.en || '']);
+		const clair = /\\b(merde|putain|connard|connasse|enculé|salope|bordel|foutre|fuck|shit|bastard|bitch|asshole|crap|damn)\\b/i;
+		const out = { n: ag.length, sansEn: ag.filter((p) => !p.texte.en).map((p) => p.id), enClair: textes.filter((x) => clair.test(x)), sansSymbole: ag.filter((p) => !/[@#$%&!]{2,}/.test(p.texte.fr)).map((p) => p.id), agressifs: 0, total: 0 };
+		for (const sem of ['2026-09-14', '2026-10-12', '2026-11-02']) {
+			Jeu.chargerSemaine(sem); Jeu.nouvellePartie();
+			Jeu.paquet.forEach((d, i) => { const pl = Jeu.plaignantPour(i); if (pl) { out.total++; if (pl.ton === 'agressif') out.agressifs++; } });
+		}
+		return out;
+	})()`, c118);
+	verifier(r.n >= 6 && !r.sansEn.length && !r.enClair.length && !r.sansSymbole.length, `plaintes agressives : ${JSON.stringify(r)}`);
+	verifier(r.agressifs > 0 && r.agressifs < r.total, `plaintes agressives : ${r.agressifs} sur ${r.total} plaignants (ni aucune, ni toutes)`);
 }
 
 // Prompt 88 : aucun texte identique deux fois dans une même journée (mesure du § 0, FR et EN), variantes reproductibles

@@ -1288,6 +1288,14 @@
 	}
 	const specificite = (p) => Object.keys(p.condition || {}).filter((k) => !(k === 'type' && p.condition.type === '*')).length;
 
+	/** Prompt 118 : environ 1 dossier sur 3 a un plaignant au ton agressif (si une plainte agressive correspond) ;
+	 * choix déterministe par numéro de dossier, sans dé */
+	function choisirSelonTon(meilleures, index) {
+		const agressif = (index * 7 + 3) % 3 === 0;
+		const pool = meilleures.filter((p) => (p.ton === 'agressif') === agressif);
+		const liste = pool.length ? pool : meilleures.filter((p) => p.ton !== 'agressif').length ? meilleures.filter((p) => p.ton !== 'agressif') : meilleures;
+		return liste[index % liste.length];
+	}
 	/** Texte d'une plainte ou d'une réponse dans la langue active (repli : français), variables remplies */
 	Jeu.texteMessage = function (champ, vars) {
 		const langue = typeof Langue !== 'undefined' ? Langue.actuelle : 'fr'; // const de i18n.js (pas une propriété de window)
@@ -1319,14 +1327,13 @@
 		const d = (Jeu.paquet || [])[index];
 		if (!d || !Jeu.MESSAGES) return null;
 		const deja = (Jeu.plaintes || []).find((p) => p.index === index);
-		if (deja) return { id: deja.id, auteur: deja.auteur, texte: Jeu.texteMessage(deja.def.texte, deja.vars) };
+		if (deja) return { id: deja.id, auteur: deja.auteur, texte: Jeu.texteMessage(deja.def.texte, deja.vars), ton: deja.def.ton || 'normal' };
 		const vars = variablesDossier(d);
 		const candidates = (Jeu.MESSAGES.plaintes || []).filter((p) => plainteCorrespond(p, d, vars));
 		if (!candidates.length) return null;
 		const max = Math.max(...candidates.map(specificite));
-		const meilleures = candidates.filter((p) => specificite(p) === max);
-		const def = meilleures[index % meilleures.length];
-		return { id: def.id, auteur: def.auteur || '@usager_44', texte: Jeu.texteMessage(def.texte, vars) };
+		const def = choisirSelonTon(candidates.filter((p) => specificite(p) === max), index);
+		return { id: def.id, auteur: def.auteur || '@usager_44', texte: Jeu.texteMessage(def.texte, vars), ton: def.ton || 'normal' };
 	};
 	/** À la présentation d'un dossier : au plus une plainte, la plus spécifique parmi celles qui correspondent */
 	Jeu.declencherPlainte = function (index) {
@@ -1340,8 +1347,7 @@
 		const neuves = candidates.filter((p) => !dejaVues.has(p.id));
 		const pool = neuves.length ? neuves : candidates;
 		const max = Math.max(...pool.map(specificite));
-		const meilleures = pool.filter((p) => specificite(p) === max);
-		const def = meilleures[index % meilleures.length]; // déterministe : ne touche pas au tirage des dés
+		const def = choisirSelonTon(pool.filter((p) => specificite(p) === max), index); // déterministe : ne touche pas au tirage des dés
 		const plainte = { id: def.id, def, vars, index, heure: maintenantSim(), auteur: def.auteur || '@usager_44', reponse: null };
 		Jeu.plaintes.push(plainte);
 		Jeu.nonLus.community++;
