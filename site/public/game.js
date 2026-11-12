@@ -410,7 +410,7 @@
 		Jeu.plaintes = (s.plaintes || [])
 			.map((p) => Object.assign({}, p, { def: Jeu.MESSAGES.plaintes.find((x) => x.id === p.id), depuis: p.depuis === undefined || p.depuis === null ? undefined : p.depuis + maintenant }))
 			.filter((p) => p.def); // une plainte retirée de messages.json depuis la sauvegarde est ignorée
-		Jeu.equipes = (s.equipes || []).map((q) => Object.assign({}, q, { depart: q.depart + maintenant, arrivee: q.arrivee + maintenant, finIntervention: (q.finIntervention === undefined ? q.arrivee : q.finIntervention) + maintenant, libre: (q.libre === undefined ? q.arrivee : q.libre) + maintenant }));
+		Jeu.equipes = (s.equipes || []).map((q) => Object.assign({}, q, { depart: q.depart + maintenant, arrivee: q.arrivee + maintenant, finIntervention: (q.finIntervention === undefined ? q.arrivee : q.finIntervention) + maintenant, libre: (q.libre === undefined ? q.arrivee : q.libre) + maintenant, remercie: q.remercie === undefined ? q.arrivee_sim !== null : q.remercie })); // prompt 121 : ancienne sauvegarde → pas de remerciement en double
 		Jeu.refusEquipes = s.refusEquipes || 0;
 		Jeu.aggravationLignes = Object.assign({}, s.aggravationLignes || {}); // prompt 79
 		Jeu.statutPatron = Object.assign(nouveauStatut(), s.statutPatron || {}); // prompt 84 (ancienne sauvegarde : statut neuf)
@@ -842,6 +842,8 @@
 		return d && j && d.date === j.date ? d : null;
 	};
 	Jeu.journeeSuivante = function () {
+		// Prompt 121 : les interventions déjà sur place la veille au soir reçoivent leur retour avant le matin
+		Jeu.signalementsEnAttente().forEach((s) => s.equipes.every((q) => q.arrivee_sim !== null) && Jeu.retourPlaignant(s.index));
 		Jeu.jourIndex++;
 		Jeu.variantesDuJour = {}; // prompt 88 : les variantes repartent chaque matin
 		Jeu.alertesJauges = {};
@@ -1235,7 +1237,7 @@
 
 	// Commentaires nantais : modèles courts remplis avec les données réelles du dossier (pseudonymes fictifs)
 	const PSEUDOS = ['@usager_44', '@nantaise_du_tram', '@velo_et_bus', '@ile_de_nantes', '@quai_de_la_fosse', '@chantenay_matin'];
-	const COMMENTAIRES = { bon: 3, mauvais: 3, equipe: 1 }; // nombre de modèles par sorte (textes : i18n.js, clés com.<sorte>.<n>)
+	const COMMENTAIRES = { bon: 3, mauvais: 3 }; // nombre de modèles par sorte (textes : i18n.js, clés com.<sorte>.<n>)
 	const DELTA_REPUTATION = { bon: 2, mauvais: -3, equipe: 1 };
 
 	Jeu.commenter = function (sorte, sujet, retard, equipe, index) {
@@ -1677,7 +1679,7 @@
 		const pertinente = Jeu.equipesPertinentes(d).includes(cle);
 		const arrivee = maintenant + Jeu.DELAI_EQUIPE_MS * (Jeu.somnolenceElevee ? 1.5 : 1); // prompt 91 (option) : fatigué, on coordonne moins vite
 		const finIntervention = arrivee + REGLAGES.equipes[cle].duree;
-		Jeu.equipes.push({ index, cle, nom: q.nom, cout: q.cout, depart: maintenant, arrivee, finIntervention, libre: finIntervention + Jeu.RETOUR_EQUIPE_MS, heure: maintenantSim(), arrivee_sim: null, jour: d.date, jourIndex: Jeu.jourIndex, pertinente, sujet });
+		Jeu.equipes.push({ index, cle, nom: q.nom, cout: q.cout, depart: maintenant, arrivee, finIntervention, libre: finIntervention + Jeu.RETOUR_EQUIPE_MS, heure: maintenantSim(), arrivee_sim: null, jour: d.date, jourIndex: Jeu.jourIndex, pertinente, sujet, remercie: false });
 		return { ok: true, message: T(pertinente ? 'equipe.enRoute' : 'equipe.enRouteHorsSujet', { nom: q.nom, cout: q.cout }) };
 	};
 
@@ -1689,8 +1691,53 @@
 				const effets = {};
 				Object.entries(EQUIPES[q.cle].effets).forEach(([k, v]) => (effets[k] = q.pertinente === false ? Math.round(v / 2) : v));
 				Jeu.appliquerDeltas(effets);
-				Jeu.commenter('equipe', q.sujet, null, q.nom, q.index);
 			}
+		});
+		Jeu.majRetours(maintenant); // prompt 121 : le plaignant remercie quand l'intervention est finie
+	};
+
+	// ——— Prompt 121 : statut d'un signalement après la réponse du joueur ———
+	// clos (aucune équipe utile) · attente (équipe envoyée, intervention pas finie) · termine (retour du plaignant reçu)
+	const RETOURS_MERCI = 3; // variantes retour.merci.<n> (i18n.js)
+	const equipesUtiles = (index) => (Jeu.equipes || []).filter((q) => q.index === index && !q.inutile);
+	/** Lecture seule : 'ouvert' tant que le joueur n'a pas répondu, puis 'clos', 'attente' ou 'termine' */
+	Jeu.statutSignalement = function (index) {
+		if (index >= Jeu.index) return 'ouvert';
+		const eq = equipesUtiles(index);
+		if (!eq.length) return 'clos';
+		return eq.every((q) => q.remercie) ? 'termine' : 'attente';
+	};
+	/** Signalements répondus dont on attend encore le retour du plaignant : [{ index, d, equipes }] */
+	Jeu.signalementsEnAttente = function () {
+		const vus = new Set();
+		const out = [];
+		(Jeu.equipes || []).forEach((q) => {
+			if (q.inutile || q.remercie || q.index >= Jeu.index || vus.has(q.index)) return;
+			vus.add(q.index);
+			out.push({ index: q.index, d: Jeu.paquet[q.index], equipes: equipesUtiles(q.index) });
+		});
+		return out;
+	};
+	/** Le plaignant du dossier remercie pour l'intervention : un seul retour par signalement, +1 de réputation par équipe */
+	Jeu.retourPlaignant = function (index) {
+		const eq = equipesUtiles(index).filter((q) => !q.remercie);
+		if (!eq.length) return null;
+		eq.forEach((q) => (q.remercie = true));
+		const pl = Jeu.plaignantPour ? Jeu.plaignantPour(index) : null;
+		const n = Jeu.commentaires.length;
+		const auteur = pl && pl.auteur ? pl.auteur : PSEUDOS[n % PSEUDOS.length];
+		const texte = T('retour.merci.' + (index % RETOURS_MERCI), { equipe: eq.map((q) => String(q.nom)).join(', '), sujet: eq[0].sujet });
+		const delta = DELTA_REPUTATION.equipe * eq.length;
+		const c = { heure: maintenantSim(), auteur, texte, delta, index, jour: Jeu.jourIndex, retour: true };
+		Jeu.commentaires.push(c);
+		Jeu.nonLus.community++;
+		Jeu.appliquerDeltas({ reputation: delta });
+		return c;
+	};
+	/** À chaque image (et à la fin de la journée) : retour dès que le joueur a répondu et que toutes les équipes ont fini */
+	Jeu.majRetours = function (maintenant) {
+		Jeu.signalementsEnAttente().forEach((s) => {
+			if (s.equipes.every((q) => q.arrivee_sim !== null && maintenant >= q.finIntervention)) Jeu.retourPlaignant(s.index);
 		});
 	};
 	/** Message du patron au début de chaque journée : effectifs réels (remis à zéro chaque matin) */

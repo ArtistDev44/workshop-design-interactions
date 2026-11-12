@@ -21,7 +21,7 @@ Jeu.incidentsFictifs = (() => {
 	}
 })();
 Jeu.plateauEquipesVisible = true; // prompt 103 : le panneau des équipes dit les effectifs (pas de doublon chez le patron)
-const CARTE = { zone: null, vue: null, cible: null, marqueurs: [], arrivees: {}, jeton: null, jetonChoisi: null, retour: null, jetons: [], depots: [], pan: null, centreSur: null, ligneSurvol: null, survolFrame: 0, controles: [] };
+const CARTE = { zone: null, vue: null, cible: null, marqueurs: [], arrivees: {}, jeton: null, jetonChoisi: null, retour: null, jetons: [], depots: [], suivis: [], pan: null, centreSur: null, ligneSurvol: null, survolFrame: 0, controles: [] };
 const MENU_APP = { x: 40, y: 132, l: 128, h: 900 }; // prompt 103 : colonne du menu
 const ZONE_CARTE = { x: 184, y: 132, l: 1376, h: 900 }; // prompt 108 : la carte laisse la droite aux équipes
 const PANNEAU_EQUIPES = { x: 1576, y: 132, l: 304, h: 900 };
@@ -166,6 +166,7 @@ function dessinerCarteAlertes() {
 	const f = fileIncidents();
 	const enCours = ['decision', 'contradiction', 'conflit'].includes(phase);
 	CARTE.marqueurs = f.map((it, r) => ({ it, r, lieu: lieuAlerte(it), courant: (enCours || phase === 'narration') && it.index === Jeu.index, actif: typeof actifDe === 'function' && !!actifDe(it.d) }));
+	CARTE.suivis = [];
 	if (!Jeu.lignes) return dessinerPanneauEquipes();
 	const pr = majVue(z);
 	CARTE.pr = pr;
@@ -225,6 +226,7 @@ function dessinerCarteAlertes() {
 		pris.push({ x, y });
 		Object.assign(m, { x: x - 14, y: y - 14 });
 	});
+	dessinerSuivis(pr, pris); // prompt 121 : signalements en attente du retour du plaignant
 	CARTE.marqueurs.filter((m) => m.lieu.pt).forEach(dessinerMarqueur);
 	drawingContext.restore();
 	pop();
@@ -235,7 +237,7 @@ function dessinerCarteAlertes() {
 	}
 	// Case « Lieu à préciser » (dans la partie libre de la carte, prompt 114)
 	const zl = zoneLibreCarte();
-	const sans = CARTE.marqueurs.filter((m) => !m.lieu.pt);
+	const sans = CARTE.marqueurs.filter((m) => !m.lieu.pt).concat(CARTE.suivis.filter((m) => !m.lieu.pt)); // prompt 121 : en attente, sans lieu connu
 	if (sans.length) {
 		const lc = Math.min(zl.l - 32, 32 + sans.length * 44 + 220);
 		const yc = z.y + z.h - 76;
@@ -249,12 +251,14 @@ function dessinerCarteAlertes() {
 		dsTexte(t('carte.lieuAPreciser'), zl.x + 32, yc + 18, 16, DS.blanc75, 'left');
 		sans.forEach((m, i) => {
 			Object.assign(m, { x: zl.x + 32 + 210 + i * 44, y: yc + 16 });
-			dessinerMarqueur(m);
+			if (m.equipes) dessinerMarqueurSuivi(m);
+			else dessinerMarqueur(m);
 		});
 	}
 	// Ligne d'état
 	let etat;
-	if (f.length) etat = t('sig.titre', { n: f.length }) + (MULTI.actifs.length ? ' · ' + t('multi.actifs', { n: MULTI.actifs.length, max: MULTI.MAX }) : '');
+	const nAtt = CARTE.suivis.length; // prompt 121
+	if (f.length || nAtt) etat = t('sig.titre', { n: f.length }) + (MULTI.actifs.length ? ' · ' + t('multi.actifs', { n: MULTI.actifs.length, max: MULTI.MAX }) : '') + (nAtt ? ' · ' + t('sig.attente', { n: nAtt }) : '');
 	else {
 		const pv = typeof Taches !== 'undefined' ? Taches.prevision() : null;
 		etat = pv ? t('deblocage.prevision', { heure: Jeu.formaterHeure(pv.minute), type: t('enq.signalement.' + pv.type), g: t('gravite.' + pv.gravite) }) : texteResteJournee() || t('sig.vide');
@@ -263,7 +267,9 @@ function dessinerCarteAlertes() {
 	dessinerControlesCarte(zl);
 	// Infobulles : marqueur, sinon centre, sinon ligne
 	const sv = CARTE.marqueurs.find((m) => m.survol) || (phase === 'selection' ? CARTE.marqueurs[SELECTION.focus] : null);
-	if (sv && sv.x !== undefined) infobulleCarte(Jeu.formaterHeure(sv.it.d.minute) + ' · ' + t('enq.signalement.' + sv.it.d.type) + ' · ' + texteLieu(sv.lieu, sv.it.d), sv.x + 14, sv.y);
+	const svAtt = CARTE.suivis.find((m) => m.survol);
+	if (svAtt) infobulleCarte(texteSuivi(svAtt), svAtt.x + 14, svAtt.y);
+	else if (sv && sv.x !== undefined) infobulleCarte(Jeu.formaterHeure(sv.it.d.minute) + ' · ' + t('enq.signalement.' + sv.it.d.type) + ' · ' + texteLieu(sv.lieu, sv.it.d), sv.x + 14, sv.y);
 	else if (CARTE.centreSurvol) infobulleCarte(CARTE.centreSurvol, mouseX, mouseY - 10);
 	else if (CARTE.ligneSurvol && dansZone({ x: mouseX, y: mouseY }, z)) infobulleCarte(t('sujet.ligne', { ligne: CARTE.ligneSurvol.nom }) + ' · ' + CARTE.ligneSurvol.libelle, mouseX, mouseY - 10);
 	if (f.length && CARTE.marqueurs[0].x !== undefined) cibleGuide('fileSignalements', CARTE.marqueurs[0].x - 8, CARTE.marqueurs[0].y - 8, 44, 44);
@@ -398,6 +404,38 @@ function dessinerMarqueur(m) {
 	CARTE.depots.push({ x: x - 16, y: y - 16, l: 60, h: 60, index: m.it.index });
 	if (CARTE.jetonChoisi) boutons.push({ x: x - 6, y: y - 6, l: 40, h: 40, action: () => deposerJeton(CARTE.jetonChoisi, m.it.index) });
 	else if (!m.courant || (typeof DIALOGUE !== 'undefined' && DIALOGUE.reduit)) boutons.push({ x: x - 6, y: y - 6, l: 40, h: 40, action: () => ouvrirMarqueur(m) });
+}
+/** Prompt 121 : signalements répondus dont une équipe intervient encore — marqueur CREUX (contour à la couleur de
+ * gravité, sablier pixel) à leur lieu réel, jusqu'au retour du plaignant ; ni cliquable ni cible d'une équipe */
+function dessinerSuivis(pr, pris) {
+	const j = Jeu.jourCourant();
+	CARTE.suivis = (Jeu.signalementsEnAttente ? Jeu.signalementsEnAttente() : []).filter((s) => s.d && j && s.d.date === j.date).map((s) => Object.assign(s, { lieu: lieuAlerte({ index: s.index, d: s.d }) }));
+	CARTE.suivis.filter((m) => m.lieu.pt).forEach((m) => {
+		let x = pr.x(m.lieu.pt[0]);
+		const y = pr.y(m.lieu.pt[1]);
+		while (pris.some((p) => Math.abs(p.x - x) < 30 && Math.abs(p.y - y) < 30)) x += 34;
+		pris.push({ x, y });
+		Object.assign(m, { x: x - 14, y: y - 14 });
+		dessinerMarqueurSuivi(m);
+	});
+}
+function dessinerMarqueurSuivi(m) {
+	m.survol = mouseX >= m.x - 6 && mouseX <= m.x + 34 && mouseY >= m.y - 6 && mouseY <= m.y + 34;
+	noStroke();
+	fill(DS.fond);
+	rect(m.x, m.y, 28, 28);
+	noFill();
+	stroke(couleurGravite(Jeu.gravite(m.d)));
+	strokeWeight(3);
+	rect(m.x + 1.5, m.y + 1.5, 25, 25);
+	noStroke();
+	fill(DS.blanc);
+	// sablier pixel (3 px par case)
+	['####', '.##.', '.##.', '####'].forEach((ligne, jy) => [...ligne].forEach((v, ix) => v === '#' && rect(m.x + 8 + ix * 3, m.y + 8 + jy * 3, 3, 3)));
+}
+function texteSuivi(m) {
+	const pl = Jeu.plaignantPour ? Jeu.plaignantPour(m.index) : null;
+	return t('carte.attenteRetour', { auteur: pl && pl.auteur ? pl.auteur : t('plaignant.source', { source: m.d.source || t('carte.nonRenseigne') }), equipe: m.equipes.map((q) => String(q.nom)).join(', ') });
 }
 /** Clic sur un marqueur : prendre le signalement (prompt 77), ou rouvrir sa fenêtre (prompt 107) */
 function ouvrirMarqueur(m) {
