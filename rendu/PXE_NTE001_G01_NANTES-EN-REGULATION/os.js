@@ -1,12 +1,13 @@
-/* Nantes en régulation — le PC du bureau : démarrage et bureau d'un système FICTIF (« RégulOS »).
+/* Nantes en régulation — le PC du bureau : démarrage d'un système FICTIF (« RégulOS »), puis l'appli principale.
+ * Prompt 183 : plus de bureau d'icônes ni de barre des tâches — s'installer au PC (et la fin du démarrage du jour)
+ * mène directement à l'appli principale (carte) ; les autres applis sont des vues de son menu (menu-app.js).
  * Fond d'écran ORIGINAL qui évoque l'esthétique bleue et lumineuse des bureaux d'ordinateur de la fin
  * des années 2000 (dégradé, traînées de lumière, bulles floues), pixelisé ; aucun logo ni visuel de
  * marque existant n'est reproduit. Tout est dessiné par le code (contenu 1920×1080 de l'écran du PC).
  */
 const PC = { etat: 'eteint', debut: 0, selection: 0, fenetre: null, message: '', flottant: false };
-// Prompt 36 : grille d'icônes agrandie et barre des tâches plus haute
-const GRILLE_OS = { x: 36, y: 36, l: 200, h: 200, ecart: 16, lignes: 4, echelle: 1.35 };
-const BARRE_OS = 84; // etat : 'eteint' | 'demarrage' | 'os' | 'appli' ; fenetre : null | 'patron' | 'community' | 'journal' | 'corbeille'
+// etat : 'eteint' | 'demarrage' | 'appli' (appli principale : carte et signalements) | 'os' (une autre appli est
+// ouverte en vue intégrée : fenetre = 'patron' | 'community' | 'journal' | 'donnees' — jamais 'os' sans fenêtre)
 const DUREE_DEMARRAGE = 3400;
 let gFondOS = null;
 
@@ -45,14 +46,10 @@ function majDemarrageJour() {
 }
 const pcDemarre = () => PC.etat === 'demarrage';
 
-function ouvrirAppli() {
-	PC.fenetre = null; // prompt 103 : la carte est la vue d'accueil de l'appli principale
-	if (PC.etat !== 'os') return;
+/** Prompt 183 : l'appli principale (carte et signalements) — l'écran d'accueil du PC, toute autre vue refermée */
+function versAppliPrincipale() {
+	PC.fenetre = null;
 	PC.etat = 'appli';
-	Confort.Son.bip('choix');
-}
-function fermerAppli() {
-	if (PC.etat === 'appli') PC.etat = 'os';
 }
 
 /** Fond d'écran pixelisé (calculé une fois, 240×135 agrandi ×8) */
@@ -92,56 +89,14 @@ function fondOS() {
 	return g;
 }
 
-/** Contenu de l'écran quand l'appli n'est pas ouverte (démarrage ou bureau du système) — Pixel Design System */
+/** Contenu de l'écran tant que l'appli n'est pas affichée : PC éteint ou séquence de démarrage */
 function dessinerOS() {
-	if (PC.etat === 'eteint') {
-		background('#050607');
-		return;
-	}
 	if (PC.etat === 'demarrage') return dessinerDemarrage();
-	if (PC.fenetre === 'donnees' && !(typeof vueIntegree === 'function' && vueIntegree())) return dessinerAppliDonnees(); // prompt 61 : plein écran hors partie ; en partie, vue intégrée (prompt 103)
-	drawingContext.imageSmoothingEnabled = false;
-	image(fondOS(), 0, 0, L, H);
-	drawingContext.imageSmoothingEnabled = true;
-	// Icônes du bureau (2 colonnes × 4) — prompt 36 : agrandies (icône 108 px au lieu de 80, libellé 22 px)
-	ICONES_OS.forEach((ic, i) => {
-		if (ic.cle !== 'signalements' && ecran === 'jeu') return; // prompt 103 : une seule appli sur le bureau (les autres sont dans son menu)
-		const g = GRILLE_OS;
-		const x = g.x + Math.floor(i / g.lignes) * (g.l + g.ecart);
-		const y = g.y + (i % g.lignes) * (g.h + g.ecart);
-		const sel = PC.selection === i;
-		const survol = mouseX >= x && mouseX <= x + g.l && mouseY >= y && mouseY <= y + g.h;
-		noStroke();
-		if (sel || survol) {
-			fill(DS.blanc15);
-			rect(x, y, g.l, g.h);
-			stroke(DS.blanc);
-			strokeWeight(2);
-			noFill();
-			rect(x + 1, y + 1, g.l - 2, g.h - 2);
-			noStroke();
-		}
-		ic.dessin(x + (g.l - 80 * g.echelle) / 2 + decalTremble(ic.cle), y + 14, g.echelle);
-		voileVerrou(ic.cle, x, y, g.l, g.h); // prompt 91 § 2 (option) : appli verrouillée grisée, cadenas
-		fill(DS.noir50);
-		textFont(DS.policeTexte);
-		textSize(22);
-		const tl = textWidth(String(ic.nom)) + 16;
-		rect(x + g.l / 2 - tl / 2, y + 138, tl, 36);
-		dsTexte(ic.nom, x + g.l / 2, y + 142, 22, DS.blanc, 'center');
-		boutons.push({ x, y, l: g.l, h: g.h, action: () => ouvrirIconeOS(i) });
-		if (i === 0) cibleGuide('iconeSignalements', x, y, g.l, g.h); // prompt 37 ; prompts 68 / 73 : « Signalements » est la première icône
-		if (i === 1) cibleGuide('iconesOS', x, y, g.l * 2 + g.ecart, g.h * 3 + g.ecart * 2); // patron, community, journal, indicateurs, corbeille
-		const b = !appliDebloquee(ic.cle) || ic.cle === 'indicateurs' ? '' : badgeIcone(ic.cle); // prompt 101 : plus de pastille « ● » (le panneau ouvert se voit) // prompt 91 : pas de pastille sur une appli verrouillée
-		if (b) dsBadge(x + g.l - 34, y + 20, b, ic.cle === 'indicateurs' ? 'succes' : 'erreur');
-	});
-	dessinerBulleVerrou(); // prompt 91 § 2
-	// Fenêtre d'application ouverte (prompt 22) — hors partie seulement ; en partie, vue intégrée (prompt 103, sketch.js)
-	if (PC.fenetre && !(typeof vueIntegree === 'function' && vueIntegree())) dessinerFenetreApp();
-	dessinerBarreTaches();
+	background('#050607');
+	if (PC.etat !== 'eteint') versAppliPrincipale(); // prompt 183 : aucun bureau d'icônes — état inattendu → appli principale
 }
 
-/** Fond d'écran seul (derrière l'appli Régulation en fenêtre, prompt 50) */
+/** Fond d'écran seul (derrière l'appli, prompt 50) */
 function dessinerFondOS() {
 	drawingContext.imageSmoothingEnabled = false;
 	image(fondOS(), 0, 0, L, H);
@@ -190,103 +145,18 @@ function sortirFenetreAppli(n0) {
 	rect(A.x - 1, A.y - 1, L * A.k + 2, H * A.k + 2);
 	noStroke();
 }
-/** Souris (hors draw) dans les coordonnées de l'appli Régulation */
-
-/** Barre des tâches de RégulOS (prompt 36), visible aussi sous l'appli Régulation (prompt 50) */
-function dessinerBarreTaches() {
-	// Barre des tâches (prompt 36 : agrandie, 84 px, icônes 72 px)
-	const tb = H - BARRE_OS;
-	noStroke();
-	fill(DS.fond);
-	rect(0, tb, L, BARRE_OS);
-	fill(DS.blanc15);
-	rect(0, tb, L, 2);
-	dessinerBoutonDemarrer(tb); // prompt 75 : le logo du chargement à la place du carré rouge « REGUL »
-	const barre = ICONES_OS.filter((ic) => ic.cle === 'signalements' || (ecran !== 'jeu' && appliDebloquee(ic.cle))); // prompt 103 : l'appli principale seule (prompt 91 § 2 hors partie)
-	barre.forEach((ic) => {
-		const i = ICONES_OS.indexOf(ic);
-		const k = barre.indexOf(ic);
-		const x = 164 + k * 84;
-		const actif = (ic.cle === 'signalements' && PC.etat === 'appli') || PC.fenetre === ic.cle || (ic.cle === 'indicateurs' && PC.flottant);
-		fill(actif ? DS.blanc15 : DS.blanc05);
-		rect(x, tb + 8, 76, BARRE_OS - 16);
-		if (actif) {
-			fill(DS.primaire);
-			rect(x, tb + BARRE_OS - 10, 76, 3);
-		}
-		ic.dessin(x + 10, tb + 12, 0.7);
-		boutons.push({ x, y: tb + 8, l: 76, h: BARRE_OS - 16, action: () => ouvrirIconeOS(i) });
-		const b = ic.cle === 'indicateurs' ? '' : badgeIcone(ic.cle);
-		if (b) dsBadge(x + 68, tb + 10, b, 'erreur');
-	});
-	const hA = heureAffichee();
-	const bandeauVisible = ecran === 'jeu' && (PC.etat === 'appli' || (typeof vueIntegree === 'function' && vueIntegree())); // prompt 103 : heure et jauges sont dans le bandeau
-	if (!bandeauVisible) dsTexte(String(hA.h).padStart(2, '0') + ':' + String(hA.m).padStart(2, '0'), L - 24, tb + 24, 28, DS.blanc, 'right');
-	indicateurWebcamBarre(700, tb + 22); // prompt 57 : « CAM » + point rouge tant que la webcam est active
-	if (bandeauVisible) {
-		// prompt 103 : rien de plus (bandeau visible)
-	} else if (Jeu.jauges && ecran === 'jeu') dsTexte(t('os.jauges', { b: Jeu.jauges.budget, r: Jeu.jauges.reputation, f: Jeu.jauges.fluidite }), L - 130, tb + 28, 20, DS.blanc75, 'right');
-	else dsTexte(t('os.aideClavier'), 790, tb + 28, 18, DS.blanc50, 'left');
-}
-
-// ——— Prompt 75 : bouton en bas à gauche de la barre des tâches = logo du jeu (même source que l'écran de chargement)
-// Clic, ou Tab jusqu'à lui puis Entrée : retour à l'accueil de RégulOS (appli et fenêtre fermées).
-let focusDemarrer = false;
-const BOUTON_DEMARRER = { x: 8, l: 140 };
-function dessinerBoutonDemarrer(tb) {
-	const b = { x: BOUTON_DEMARRER.x, y: tb + 8, l: BOUTON_DEMARRER.l, h: BARRE_OS - 16 };
-	const survol = mouseX >= b.x && mouseX <= b.x + b.l && mouseY >= b.y && mouseY <= b.y + b.h;
-	noStroke();
-	fill(survol || focusDemarrer ? DS.blanc15 : DS.blanc05);
-	rect(b.x, b.y, b.l, b.h);
-	dessinerLogoPXE(b.x + (b.l - 72) / 2, b.y + (b.h - 60) / 2, 60); // échelle 3 : 72 × 60 px
-	if (focusDemarrer || survol) {
-		noFill();
-		stroke(DS.blanc);
-		strokeWeight(2);
-		rect(b.x - 4, b.y - 4, b.l + 8, b.h + 8);
-		stroke(DS.fond);
-		rect(b.x - 1, b.y - 1, b.l + 2, b.h + 2);
-		noStroke();
-	}
-	boutons.push({ x: b.x, y: b.y, l: b.l, h: b.h, action: retourAccueilPC });
-	cibleGuide('demarrer', b.x, b.y, b.l, b.h);
-	if (survol || focusDemarrer) infobulle(t('os.demarrer'), b.x, b.y - 48);
-}
-/** Accueil de RégulOS : ferme l'appli de jeu et la fenêtre ouverte (rien ne s'arrête : le temps continue) */
-function retourAccueilPC() {
-	if (PC.etat !== 'appli' && PC.etat !== 'os') return;
-	PC.etat = 'os';
-	PC.fenetre = null;
-	Confort.Son.bip('choix');
-	annoncer(t('os.demarrer.annonce'));
-}
-function basculerFocusDemarrer(actif) {
-	focusDemarrer = actif;
-	if (actif) annoncer(t('os.demarrer'));
-}
-
 function dessinerDemarrage() {
 	const tB = millis() - PC.debut;
 	background(DS.fond);
 	if (tB < 1200) {
 		const lignes = [0, 1, 2, 3, 4].map((n) => t('os.bios.' + n));
-		lignes.slice(0, 1 + Math.floor(tB / 220)).forEach((l, i) => dsTexte(l, 80, 80 + i * 44, 26, i === 0 ? DS.primaire : DS.blanc75, 'left'));
+		lignes.slice(0, 1 + Math.floor(tB / 220)).forEach((l, i) => dsTexte(l, 80, 80 + i * 44, 26, i === 0 ? DS.primaireTexte : DS.blanc75, 'left'));
 	} else if (tB < DUREE_DEMARRAGE - 500) {
-		// Logo du système fictif (carré rouge, angles droits) + titre pixel + barre de progression
+		// Logo du système fictif + titre pixel + barre de progression
+		// Prompt 152 : l'écran de régulation de logo/planche.html (pin sur l'écran, Loire en escalier), 16 × 16 à l'échelle 8
 		const cx = L / 2;
 		const cy = H / 2 - 80;
-		noStroke();
-		fill(DS.primaire);
-		rect(cx - 64, cy - 64, 128, 128);
-		fill(DS.blanc);
-		rect(cx - 44, cy - 36, 88, 28);
-		rect(cx - 40, cy - 4, 80, 12);
-		rect(cx - 30, cy + 16, 16, 16);
-		rect(cx + 14, cy + 16, 16, 16);
-		fill(DS.primaire);
-		rect(cx - 36, cy - 30, 30, 14);
-		rect(cx + 6, cy - 30, 30, 14);
+		dessinerIconePixel(ICONE_ECRAN, cx - 64, cy - 64, 128, { P: DS.primaire, W: DS.blanc, G: '#8c8c8c', K: DS.fond });
 		dsTitre('RegulOS', cx, cy + 96, 56, DS.blanc, 'center');
 		const p = constrain((tB - 1200) / (DUREE_DEMARRAGE - 1700), 0, 1);
 		stroke(DS.blanc15);
@@ -305,56 +175,14 @@ function dessinerDemarrage() {
 		rect(L / 2 - 260, H / 2 - 60, 520, 120);
 		dsTitre(t('os.bienvenue'), L / 2, H / 2 - 30, 56, DS.blanc, 'center');
 	}
-	if (tB >= DUREE_DEMARRAGE) PC.etat = 'os';
-}
-
-function iconeCorbeille(x, y, s) {
-	push();
-	translate(x, y);
-	scale(s || 1);
-	x = 0;
-	y = 0;
-	noStroke();
-	fill('#cfd8e0');
-	rect(x + 14, y + 16, 52, 62, 6);
-	fill('#9aa8b6');
-	rect(x + 8, y + 8, 64, 10, 4);
-	fill('#7f8c99');
-	for (let k = 0; k < 3; k++) rect(x + 24 + k * 12, y + 26, 4, 44, 2);
-	pop();
-}
-
-/** Barre de titre de l'appli (Pixel Design System) : titre pixel + bouton fermer carré → retour au bureau du système */
-function dessinerFermerAppli() {
-	noStroke();
-	fill(DS.fond);
-	rect(0, 0, L, 34);
-	fill(DS.blanc15);
-	rect(0, 34, L, 2);
-	dsTitre(t('os.barreTitre'), DS.esp.xxl, 6, 24, DS.blanc, 'left'); // prompt 101 : même marge gauche (24 px) que le titre des autres applis
-	dsTexte(t('os.poste'), L / 2, 8, 16, DS.blanc50, 'center');
-	const x = L - 46;
-	const y = 3;
-	const survol = mouseX >= x && mouseX <= x + 40 && mouseY >= y && mouseY <= y + 28;
-	fill(survol ? DS.primaire : DS.fond);
-	rect(x, y, 40, 28);
-	stroke(survol ? DS.primaire : DS.blanc);
-	strokeWeight(2);
-	noFill();
-	rect(x + 1, y + 1, 38, 26);
-	stroke(DS.blanc);
-	strokeWeight(3);
-	line(x + 14, y + 8, x + 26, y + 20);
-	line(x + 26, y + 8, x + 14, y + 20);
-	noStroke();
-	boutons.push({ x: x - 12, y: 0, l: 58, h: 52, action: fermerAppli }); // prompt 98 : zone de clic ≥ 44 px (le dessin reste 40 × 28)
-	cibleGuide('fermerAppli', x, y, 40, 28); // prompt 37
+	if (tB >= DUREE_DEMARRAGE) versAppliPrincipale(); // prompt 183 : le démarrage mène directement à l'appli principale
 }
 
 // =====================================================================
 // Prompt 22 — applications du poste de travail (fenêtres RégulOS, Pixel Design System)
 // Le temps ne s'arrête pas pendant la lecture d'une app (comme les livres du prompt 20).
 // =====================================================================
+// Prompt 183 : ces icônes ne sont plus posées sur un bureau — ce sont celles du menu de l'appli (menu-app.js)
 const ICONES_OS = [
 	{ cle: 'signalements', nom: T('app.signalements'), dessin: (x, y, s) => iconePixel(x, y, s, 'signalements') }, // prompts 68 / 73 : l'écran de jeu (ex-« Carte », plus de carte)
 	{ cle: 'patron', nom: T('app.patron'), dessin: (x, y, s) => iconePixel(x, y, s, 'enveloppe') },
@@ -363,23 +191,22 @@ const ICONES_OS = [
 	// Prompt 103 : Indicateurs (jauges déjà dans le bandeau) et Corbeille (décorative) retirés du PC
 ];
 
+/** Ouvre une appli par son rang dans ICONES_OS (menu de l'appli, Tab + Entrée, notifications) */
 function ouvrirIconeOS(i) {
 	PC.selection = i;
 	const cle = ICONES_OS[i].cle;
 	if (!appliDebloquee(cle)) return refuserAppliVerrouillee(cle); // prompt 91 § 2
-	if (cle === 'signalements') return ouvrirAppli(); // prompts 68 / 73 : « Signalements » ouvre l'écran de jeu
-	if (cle === 'indicateurs') return basculerIndicateurs(); // prompt 36 : app flottante
-	if (cle === 'donnees') return ouvrirDonnees(); // prompt 61 : appli plein écran
-	if (PC.etat === 'appli') PC.etat = 'os';
-	PC.fenetre = typeof vueIntegree === 'function' && ecran === 'jeu' ? cle : PC.fenetre === cle ? null : cle; // prompt 103 : dans l'appli, le menu ne referme pas la vue
+	if (cle === 'signalements') return versAppliPrincipale(), Confort.Son.bip('choix');
+	if (cle === 'donnees') return ouvrirDonnees(); // prompt 61
+	PC.etat = 'os';
+	PC.fenetre = cle; // vue intégrée (prompt 103)
 	PC.message = '';
-	if (PC.fenetre && Jeu.nonLus && Jeu.nonLus[cle] !== undefined) Jeu.nonLus[cle] = 0;
+	if (Jeu.nonLus && Jeu.nonLus[cle] !== undefined) Jeu.nonLus[cle] = 0;
 	Confort.Son.bip('choix');
 }
+/** Fermer une appli (Échap) : retour à l'appli principale */
 function fermerFenetreApp() {
-	const integree = typeof vueIntegree === 'function' && vueIntegree();
-	PC.fenetre = null;
-	if (integree) PC.etat = 'appli'; // prompt 103 : Échap revient à la carte
+	versAppliPrincipale();
 }
 function badgeIcone(cle) {
 	if (cle === 'signalements') return typeof incidentActif === 'function' && (incidentActif() || phase === 'mail') ? '!' : ''; // prompt 68
@@ -442,37 +269,6 @@ function iconePixel(x, y, s, type) {
 	pop();
 }
 
-const FENETRE_APP = { x: 470, y: 40, l: 1410, h: 900 }; // prompt 36 : décalée pour les icônes agrandies
-const TITRES_APPS = { patron: T('app.titre.patron'), community: T('app.titre.community'), journal: T('app.titre.journal'), corbeille: T('app.titre.corbeille') };
-
-function dessinerFenetreApp() {
-	const f = FENETRE_APP;
-	dsPanneau(f.x, f.y, f.l, f.h, TITRES_APPS[PC.fenetre]);
-	// Croix de fermeture (carré, angles droits)
-	const cx = f.x + f.l - 52;
-	const cy = f.y + 12;
-	const survol = mouseX >= cx && mouseX <= cx + 36 && mouseY >= cy && mouseY <= cy + 36;
-	noStroke();
-	fill(survol ? DS.primaire : DS.fond);
-	rect(cx, cy, 36, 36);
-	stroke(DS.blanc);
-	strokeWeight(3);
-	line(cx + 11, cy + 11, cx + 25, cy + 25);
-	line(cx + 25, cy + 11, cx + 11, cy + 25);
-	noStroke();
-	boutons.push({ x: cx, y: cy, l: 36, h: 36, action: fermerFenetreApp });
-	if (Jeu.nonLus && Jeu.nonLus[PC.fenetre] !== undefined) Jeu.nonLus[PC.fenetre] = 0; // lu
-	const zone = { x: f.x + 48, y: f.y + 96, l: f.l - 96, h: f.h - 96 - 48 }; // prompt 101 b : marges d'air (48 px), plus de bouton Fermer en bas
-	if (!Jeu.paquet || ecran !== 'jeu') {
-		dsTexte(t('app.aucunePartie'), zone.x, zone.y, 22, DS.blanc75, 'left', zone.l);
-		dsBouton(zone.x, zone.y + 80, 340, 60, t('menu.menuPrincipal'), ouvrirMenuPrincipal); // prompt 36
-	} else if (PC.fenetre === 'corbeille') appCorbeille(zone);
-	else if (PC.fenetre === 'patron') appPatron(zone);
-	else if (PC.fenetre === 'community') appCommunity(zone);
-	else if (PC.fenetre === 'journal') appJournal(zone);
-	// Prompt 101 b : le bouton « Fermer (Échap) » du bas doublait la croix du titre (Échap ferme toujours)
-}
-
 function derniers(liste, n) {
 	return liste.slice(Math.max(0, liste.length - n));
 }
@@ -527,7 +323,7 @@ function appCorbeille(z) {
 			fill(p.bonne ? DS.succes : DS.alerte);
 			rect(z.x, y, 4, 104);
 			dsTexte(p.auteur + ' · ' + p.heure, z.x + 18, y + 10, 16, DS.blanc50, 'left');
-			dsTexte(Jeu.texteMessage(p.def.texte, p.vars), z.x + 18, y + 32, 18, DS.blanc, 'left', z.l - 200);
+			dsTexte(Jeu.textePlainte(p), z.x + 18, y + 32, 18, DS.blanc, 'left', z.l - 200);
 			dsTexte('↳ ' + Jeu.texteMessage(r.texte, p.vars), z.x + 18, y + 66, 17, DS.blanc75, 'left', z.l - 200);
 			const rep = Number((r.effets || {}).reputation) || 0;
 			dsBadge(z.x + z.l - 90, y + 40, t(p.bonne ? 'app.corbeille.bonne' : 'app.corbeille.mauvaise') + ' ' + (rep > 0 ? '+' : '') + rep, p.bonne ? 'succes' : 'alerte');
@@ -540,22 +336,6 @@ function viderCorbeille() {
 	});
 	annoncer(t('app.corbeille.videe'));
 	Confort.Son.bip('choix');
-}
-
-function iconeIndicateurs(x, y, s) {
-	push();
-	translate(x, y);
-	scale(s);
-	noStroke();
-	fill('#0e3b46');
-	rect(0, 0, 80, 80, 12);
-	[['#1e7a3c', 52], ['#d39a2e', 36], ['#3860ff', 24]].forEach(([c, h], i) => {
-		fill(c);
-		rect(14 + i * 20, 66 - h, 14, h, 2);
-	});
-	fill('#f5efe3');
-	rect(10, 68, 60, 4, 2);
-	pop();
 }
 
 // Fenêtre flottante, toujours au premier plan, déplaçable par sa barre de titre ; position mémorisée
@@ -583,14 +363,12 @@ function basculerIndicateurs() {
 }
 /** Souris dans les coordonnées de l'écran du PC (utile dans une action de clic, appelée hors de draw) */
 function sourisEcranPC() {
-	if (vue !== 'poste') return { x: mouseX, y: mouseY };
-	const r = ECRAN_POSTE;
-	return { x: ((mouseX - r.x) * L) / r.l, y: ((mouseY - r.y) * H) / r.h };
+	return pointeurEcranPC(mouseX, mouseY); // prompt 182 (bureau.js)
 }
 function couleurJauge(v) {
 	return v < 20 ? DS.erreur : v < 40 ? DS.alerte : DS.succes;
 }
-/** Dessinée par-dessus le bureau RégulOS et l'appli de régulation (coordonnées de l'écran du PC) */
+/** Dessinée par-dessus l'appli (coordonnées de l'écran du PC) */
 function dessinerIndicateurs() {
 	if (!PC.flottant || PC.etat === 'eteint' || PC.etat === 'demarrage') return;
 	const I = INDIC;
@@ -600,7 +378,7 @@ function dessinerIndicateurs() {
 	if (I.prise) {
 		if (mouseIsPressed) {
 			I.pos.x = constrain(mouseX - I.prise.dx, 0, L - I.l);
-			I.pos.y = constrain(mouseY - I.prise.dy, 0, H - BARRE_OS - I.h);
+			I.pos.y = constrain(mouseY - I.prise.dy, 0, H - I.h);
 		} else {
 			I.prise = null;
 			try {
@@ -649,14 +427,16 @@ function dessinerIndicateurs() {
 	}
 	// Variation due à la dernière décision (deltas réels du journal)
 	const dernier = (Jeu.evenementsJournee || [])[Jeu.evenementsJournee.length - 1];
+	const aff = jaugesAffichees(); // prompt 184 : mêmes valeurs animées et mêmes segments vert / rouge que le bandeau
 	['fluidite', 'reputation', 'budget'].forEach((k, i) => {
-		const v = Jeu.jauges[k];
+		const v = aff[k];
 		const ly = y + 62 + i * 74;
 		dsTexte(t('jaugeTitre.' + k), x + 18, ly, 20, DS.blanc, 'left');
 		fill(DS.blanc15);
 		rect(x + 18, ly + 32, I.l - 36, 14);
 		fill(couleurJauge(v));
 		rect(x + 18, ly + 32, ((I.l - 36) * v) / 100, 14);
+		dessinerDeltasJauge(k, x + 18, ly + 32, I.l - 36, 14);
 		// Prompt 143 : plus de « v / 100 » ; barre blanche de seuil sur la seule jauge objectif du jour, libellée dessous
 		if (dessinerSeuilObjectif(k, x + 18, ly + 32, I.l - 36, 14)) dsTexte('| ' + texteSeuilObjectif(k), x + I.l - 120, ly + 3, 15, DS.blanc, 'right'); // libellé sur la ligne du titre, avant le delta
 		const d = dernier && dernier.deltas ? dernier.deltas[k] : null;

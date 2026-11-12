@@ -7,8 +7,9 @@
  *   fondu au noir, écran de transition (passable), puis le lendemain 8 h (prompt 76) — ou le bilan le dernier jour.
  * Aucune donnée inventée : la météo de la nuit reste celle du jour joué (pluie comprise).
  */
-const SOIR = { debut: 0, depart: 0, annonce: false, sortie: 0, finie: false };
-const DUREE_CREPUSCULE = 4000;
+const SOIR = { debut: 0, depart: 0, annonce: false, sortie: 0, finie: false, respirationVue: false };
+const DUREE_CREPUSCULE = 2000; // prompt 191 : 4 → 2 s, le ciel vire au noir en 2 s
+const DUREE_RESPIRATION = 3000; // prompt 191 : « Fin de journée. » — la vallée du rythme, ≤ 3 s, passable
 const DUREE_PAN_SORTIE = 800;
 const DUREE_FONDU_SORTIE = 600;
 const DUREE_NOIR_SORTIE = 1500;
@@ -24,6 +25,7 @@ function rangerPoste() {
 	SOIR.depart = Jeu.horloge ? Jeu.horloge.minutes : MINUTES_NUIT;
 	SOIR.annonce = false;
 	SOIR.sortie = 0;
+	SOIR.respirationVue = false;
 	enSieste = false;
 	reveil = null;
 	if (typeof PC !== 'undefined') PC.fenetre = null;
@@ -31,6 +33,7 @@ function rangerPoste() {
 	Confort.Son.bip('choix');
 	if (Confort.Son.musique && Confort.Son.musique.attenuer) Confort.Son.musique.attenuer(0.55); // musique plus basse le soir
 	Sauvegarde.auto(false);
+	annoncer(t('soir.respiration')); // prompt 191
 }
 /** Reprise d'une sauvegarde faite le soir : la nuit est déjà tombée, la flèche est là */
 function reprendreSoir() {
@@ -38,6 +41,7 @@ function reprendreSoir() {
 	SOIR.depart = MINUTES_NUIT;
 	SOIR.annonce = false;
 	SOIR.sortie = 0;
+	SOIR.respirationVue = true; // prompt 191 : pas de « Fin de journée. » à la reprise
 	if (typeof METEO_VISU !== 'undefined') METEO_VISU.nuit = 1; // pas de crépuscule à rejouer
 	if (Confort.Son.musique && Confort.Son.musique.attenuer) Confort.Son.musique.attenuer(0.55);
 }
@@ -51,8 +55,44 @@ function nuitSoir() {
 	const p = progressionSoir();
 	return p * p * (3 - 2 * p);
 }
+/* Prompt 191 : respiration entre deux journées — les 3 premières secondes du soir (nuit qui tombe en 2 s, lampe qui
+ * s'allume, PC en veille, « Fin de journée. » discret en bas). Aucune jauge, aucun chrono ; le temps de jeu est déjà
+ * suspendu (phase « soir »). Clic, Entrée ou Espace passent à la nuit installée. Animations réduites : nuit directe. */
+function respirationSoir() {
+	return phase === 'soir' && !SOIR.sortie && !SOIR.respirationVue && millis() - SOIR.debut < DUREE_RESPIRATION;
+}
+function passerRespiration() {
+	if (!respirationSoir()) return false;
+	SOIR.respirationVue = true;
+	SOIR.debut = Math.min(SOIR.debut, millis() - DUREE_RESPIRATION); // crépuscule fini
+	if (typeof METEO_VISU !== 'undefined') METEO_VISU.nuit = 1;
+	interaction();
+	return true;
+}
+/** La lampe du bureau s'allume pendant que la nuit tombe (sans changer le réglage enregistré du joueur) */
+function lampeAllumee() {
+	return PIECE.lampe || (phase === 'soir' && (reduireAnimations || progressionSoir() >= 0.5));
+}
+function dessinerRespirationSoir() {
+	if (!respirationSoir() || ecran !== 'jeu' || fenetre || smsActif || MENU.actif) return;
+	const u = millis() - SOIR.debut;
+	const a = reduireAnimations ? 1 : constrain(u / 600, 0, 1) * constrain((DUREE_RESPIRATION - u) / 400, 0, 1); // fondu doux, jamais de flash
+	boutons = [{ x: 0, y: 0, l: L, h: H, action: passerRespiration }];
+	if (typeof zoneTexteDeclarer === 'function') zoneTexteDeclarer('respirationSoir', 0, H - 120, L, 120); // audit des textes
+	if (a <= 0) return;
+	push();
+	noStroke();
+	fill(13, 12, 12, Math.round(200 * a));
+	rect(0, H - 120, L, 120);
+	fill(255, 255, 255, Math.round(255 * a));
+	textFont(POLICE_TEXTE);
+	textSize(26);
+	textAlign(CENTER, CENTER);
+	text(t('soir.respiration'), L / 2, H - 60);
+	pop();
+}
 function nuitInstallee() {
-	return phase === 'soir' && progressionSoir() >= 1 && (reduireAnimations || METEO_VISU.nuit === null || METEO_VISU.nuit > 0.85);
+	return phase === 'soir' && progressionSoir() >= 1 && !respirationSoir() && (reduireAnimations || METEO_VISU.nuit === null || METEO_VISU.nuit > 0.85);
 }
 function sortieVisible() {
 	return ecran === 'jeu' && nuitInstallee() && !SOIR.sortie && !MENU.actif;
@@ -104,7 +144,10 @@ function finirSoir() {
 	CAMERA.x = 0;
 	CAMERA.y = 0;
 	if (Confort.Son.musique && Confort.Son.musique.attenuer) Confort.Son.musique.attenuer(1);
-	if (typeof smsVeilleInspection !== 'function' || !smsVeilleInspection(journeeSuivante)) journeeSuivante(); // inchangé : allerFin() le dernier jour ; prompt 88 : SMS de Camille la veille de l'inspection
+	// prompt 88 : SMS de Camille la veille de l'inspection ; prompt 189 : sinon, SMS de Camille sur la météo réelle du jour joué
+	if (typeof smsVeilleInspection === 'function' && smsVeilleInspection(journeeSuivante)) return;
+	if (typeof smsMeteoCamille === 'function' && smsMeteoCamille(journeeSuivante)) return;
+	journeeSuivante(); // inchangé : allerFin() le dernier jour
 }
 
 /** Caméra de la sortie (bureau.js : majCamera) : pan vers la gauche, ou null hors sortie */
@@ -267,6 +310,7 @@ function toucheSoir() {
 		if (millis() - SOIR.sortie >= dureePanSortie() + DUREE_FONDU_SORTIE && (keyCode === ENTER || keyCode === RETURN || key === ' ' || keyCode === ESCAPE)) finirSoir();
 		return true; // pendant la sortie, le clavier attend
 	}
+	if (respirationSoir() && !fenetre && !MENU.actif && (keyCode === ENTER || keyCode === RETURN || key === ' ')) return passerRespiration(), true; // prompt 191
 	if (vue !== 'bureau' || fenetre || MENU.actif) return false;
 	const surSortie = focusBureau > 0 && OBJETS_BUREAU[focusBureau] && OBJETS_BUREAU[focusBureau].nom === 'sortie';
 	// Prompt 174 : plus de touche S (doublon d'Entrée, et S servait ailleurs à « Semaine ») — Entrée sort

@@ -92,7 +92,7 @@ function dessinerBandeau() {
 		noStroke();
 		fill(actif ? C.primaire : primaireRGBA(0.25)); // prompt 115
 		rect(z.x + z.l - 266 - (mobileMenu ? 60 : 0), z.y + 6, 254, 32);
-		fill('#FFFFFF');
+		fill(actif ? C.surPrimaire : '#FFFFFF');
 		textFont(POLICE_TEXTE);
 		textStyle(BOLD);
 		textAlign(CENTER, CENTER);
@@ -147,7 +147,7 @@ function phraseSituation(d) {
 	if (cat === 'accident' || cat === 'travaux') return t('phrase.' + cat, { texte: d.texte_source, ligne: ligne || t('carte.nonRenseigne') });
 	if (cat === 'affluence') return t('phrase.affluence', { nom: String(d.texte_source).split(' — ')[0], lieu: String(d.texte_source).split(' — ')[1] || t('carte.nonRenseigne') });
 	if (cat === 'meteo') {
-		if (d.type === 'alerte météo') return t('phrase.alerteMeteo', { nature: d.nature, valeur: d.valeur || t('carte.nonRenseigne'), heure: d.heure || t('carte.nonRenseigne') });
+		if (d.type === 'alerte météo') return t('phrase.alerteMeteo', { nature: d.nature, valeur: d.valeur ? nombreFr(d.valeur) : t('carte.nonRenseigne'), heure: d.heure || t('carte.nonRenseigne') }); // prompt 162 : nombre à la française
 		const m = Jeu.meteoDuJour(d.date) || {};
 		return t('phrase.meteoForte', { pluie: nombreFr(m.pluie_mm), vent: nombreFr(m.rafales_max), texte: d.texte_source });
 	}
@@ -203,7 +203,7 @@ function reduireDialogue() {
 /** Fenêtre réduite : un onglet en bas de la carte pour la rouvrir */
 function dessinerOngletDialogue(d) {
 	const z = typeof ZONE_CARTE !== 'undefined' ? ZONE_CARTE : PANNEAU;
-	const txt = t('enq.signalement.' + d.type) + ' · ' + t('carte.gravite', { g: t('gravite.' + Jeu.gravite(d)) }) + '  ›';
+	const txt = String(marquerFictif(d, t('enq.signalement.' + d.type))) + ' · ' + t('carte.gravite', { g: t('gravite.' + Jeu.gravite(d)) }) + '  ›'; // prompt 162
 	textFont(DS.policeTexte);
 	textSize(20);
 	const l = textWidth(txt) + 48;
@@ -215,7 +215,7 @@ function dessinerOngletDialogue(d) {
 function dessinerPanneauSignalement(d, x, base) {
 	const l = base.l - 64;
 	let y = base.y + 64;
-	const titre = (d.lignes && d.lignes.length ? t('dossier.ligne', { lignes: d.lignes.join(', ') }) : t('enq.signalement.' + d.type)) + ' · ' + t('carte.gravite', { g: t('gravite.' + Jeu.gravite(d)) });
+	const titre = String(marquerFictif(d, d.lignes && d.lignes.length ? t('dossier.ligne', { lignes: d.lignes.join(', ') }) : t('enq.signalement.' + d.type))) + ' · ' + t('carte.gravite', { g: t('gravite.' + Jeu.gravite(d)) }); // prompt 162 : « Fictif · » dans le titre
 	noStroke();
 	textAlign(LEFT, TOP);
 	textFont(POLICE_TEXTE);
@@ -239,7 +239,7 @@ function dessinerPanneauSignalement(d, x, base) {
 	// Prompt 116 : « En savoir plus » devient la réplique « Dites-m'en plus » (dernière de la liste) ; plus de bouton en double
 	if (PLUS.ouvert) corpsEnquete(d, x + 32, y, l, Math.max(120, yr - 16 - y));
 	else if (peutPublierDossier(d)) {
-		bouton(x + 32, y, Math.min(400, l), 52, '→ ' + t('applis.publier') + ' (B)', () => publierDepuisDossier(d), false, true);
+		bouton(x + 32, y, Math.min(400, l), 52, '→ ' + t('applis.publier'), () => publierDepuisDossier(d), false, true);
 		textAlign(LEFT, TOP);
 	}
 	if (phase === 'contradiction') return dessinerChoixSource(d, x + 32, yr, l);
@@ -533,12 +533,15 @@ function toucheReponses() {
 
 // ——— Retour après décision : ce qui s'est passé, et pourquoi (la meilleure réponse si la vôtre l'était moins) ———
 const RAISONS = { meteo: 'raison.meteo', forte: 'raison.forte', pointe: 'raison.pointe', long: 'raison.long', calme: 'raison.calme' };
-function explicationDecision(r) {
+/** sansEffets (prompt 184) : retour affiché juste après la décision — ni la liste des écarts ni les dés (les jauges
+ * animées les montrent) ; le détail chiffré reste dans l'appli Journal, qui appelle sans ce drapeau */
+function explicationDecision(r, sansEffets) {
 	const e = (Jeu.evenementsJournee || []).filter((x) => x.resultat === r)[0];
 	if (!e) return [];
-	const effets = ['fluidite', 'reputation', 'budget'].filter((k, i) => r.deltas[i]).map((k, i) => t('jaugeTitre.' + k) + ' ' + (r.deltas[['fluidite', 'reputation', 'budget'].indexOf(k)] > 0 ? '+' : '') + r.deltas[['fluidite', 'reputation', 'budget'].indexOf(k)]);
-	const lignes = [t('retour.passe', { action: String(e.action || t('action.temps')), effets: effets.join(', ') || t('narr.aucunEffet') }) + (e.retardEffectif !== null && e.retardEffectif !== undefined ? ' ' + t('trace.retardFige', { retard: e.retardEffectif }) : '')]; // prompt 89 bis : retard retenu au moment du choix
-	const des = typeof Traces !== 'undefined' && Traces.option('deVisible') ? Traces.texteDes(r) : null; // option : le dé réellement tiré
+	const retard = e.retardEffectif !== null && e.retardEffectif !== undefined ? t('trace.retardFige', { retard: e.retardEffectif }) : ''; // prompt 89 bis : retard retenu au moment du choix
+	const effets = ['fluidite', 'reputation', 'budget'].map((k, i) => [k, r.deltas[i]]).filter(([, v]) => v).map(([k, v]) => t('jaugeTitre.' + k) + ' ' + (v > 0 ? '+' : '') + v);
+	const lignes = sansEffets ? (retard ? [retard] : []) : [t('retour.passe', { action: String(e.action || t('action.temps')), effets: effets.join(', ') || t('narr.aucunEffet') }) + (retard ? ' ' + retard : '')];
+	const des = !sansEffets && typeof Traces !== 'undefined' && Traces.option('deVisible') ? Traces.texteDes(r) : null; // option : le dé réellement tiré
 	if (des) lignes.push(des);
 	const sit = e.categorie ? Jeu.situation(r.dossier) : null;
 	let pourquoi = sit ? sit.split('+').map((s) => t(RAISONS[s] || 'raison.calme')).join(', ') : '';

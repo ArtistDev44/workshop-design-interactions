@@ -1,0 +1,72 @@
+<!doctype html>
+<html
+  lang="fr"
+  data-resolution="landscape"
+  data-composition-variables='[
+    {"id":"fond","type":"color","label":"Fond","default":"#0D0C0C"},
+    {"id":"rouge","type":"color","label":"Rouge (accent)","default":"#D4031C"},
+    {"id":"sourceLignes","type":"string","label":"Source des tracés","default":"Tracés réels Naolib · Open Data"},
+    {"id":"titreSemaine","type":"string","label":"Titre tension","default":"Une vraie semaine"},
+    {"id":"titreChoix","type":"string","label":"Titre preuve","default":"Chaque dossier, un choix"},
+    {"id":"sousTitre","type":"string","label":"Sous-titre du carton","default":"Rejouez une vraie semaine du réseau nantais"},
+    {"id":"url","type":"string","label":"Adresse","default":"workshop-design-interactions.pages.dev"},
+    {"id":"donnees","type":"string","label":"Crédit données","default":"Données : Open Data Nantes Métropole"},
+    {"id":"creditMusique","type":"string","label":"Crédit musique","default":"Musique : « Heroic Age », Kevin MacLeod (incompetech.com) · CC BY 4.0"}
+  ]'
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>Nantes en régulation — trailer</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+    <style>
+      @font-face {
+        font-family: 'JetBrains Mono';
+        font-style: normal;
+        font-weight: 100 800;
+        src: url('assets/fonts/jetbrains-mono-var-latin.woff2') format('woff2');
+      }
+      :root {
+        --fond: #0d0c0c;
+        --rouge: #d4031c;
+        --blanc: #ffffff;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: var(--fond);
+      }
+      #root {
+        position: relative;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        font-family: 'JetBrains Mono', monospace;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="30" data-width="1920" data-height="1080">
+      <!-- Une scène par beat, calées sur la grille de « Heroic Age » (129 BPM : 1 temps = 0,4651 s, 1 mesure = 1,8605 s ; impact à 22,33 s) -->
+      <div id="hook" data-composition-id="hook" data-composition-src="compositions/hook.html" data-start="0" data-duration="1.86" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="accroche" data-composition-id="accroche" data-composition-src="compositions/accroche.html" data-start="1.86" data-duration="2.79" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="tension" data-composition-id="tension" data-composition-src="compositions/tension.html" data-start="4.65" data-duration="3.72" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="revelation" data-composition-id="revelation" data-composition-src="compositions/revelation.html" data-start="8.37" data-duration="3.26" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="preuve" data-composition-id="preuve" data-composition-src="compositions/preuve.html" data-start="11.63" data-duration="10.70" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="climax" data-composition-id="climax" data-composition-src="compositions/climax.html" data-start="22.33" data-duration="4.18" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="carton" data-composition-id="carton" data-composition-src="compositions/carton.html" data-start="26.51" data-duration="3.49" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <audio id="music" class="clip" data-timeline-role="music" src="assets/music.mp3" data-start="0" data-duration="30" data-track-index="2" data-volume="1"></audio>
+    </div>
+    <script>
+      window.__timelines["main"] = gsap.timeline({ paused: true });
+    </script>
+  </body>
+</html>

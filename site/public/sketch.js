@@ -271,6 +271,7 @@ function draw() {
 	}
 	dessinerGuide(); // prompt 37 : flèches « Prendre en main »
 	dessinerTutoriel(); // prompt 34 : par-dessus l'écran et les fenêtres
+	if (typeof dessinerRespirationSoir === 'function') dessinerRespirationSoir(); // prompt 191 : « Fin de journée. », passable
 	dessinerNoirSoir(); // prompt 69 : fondu et écran noir de la sortie
 	dessinerTransitionJour(); // prompt 43 : écran noir entre les journées, au-dessus de tout
 	dessinerClignement(); // prompt 21 § 2 : par-dessus tout, purement visuel (n'intercepte aucune entrée)
@@ -1256,14 +1257,16 @@ function keyPressed() {
 	}
 	// Prompt 36 : I ouvre / ferme l'app flottante « Indicateurs » (au poste)
 	if (key === 'i' || key === 'I') return basculerIndicateurs(), false;
-	// Prompt 101 (D2) : V déplie / replie les détails des Indicateurs (le Journal et le Patron gardent leur V quand ils sont ouverts)
-	if ((key === 'v' || key === 'V') && PC.flottant && PC.fenetre !== 'journal' && PC.fenetre !== 'patron') return basculerDetailsIndicateurs(), false;
+	// Prompt 101 (D2) : V déplie / replie les détails des Indicateurs (le Patron / Mails garde son V quand il est ouvert ;
+	// prompt 186 : le Journal n'a plus de pli « Détails », V y garde ce sens)
+	if ((key === 'v' || key === 'V') && PC.flottant && PC.fenetre !== 'patron') return basculerDetailsIndicateurs(), false;
 	// Prompt 183 : plus de bureau d'icônes — au poste, PC.etat vaut 'appli' (carte) ou 'os' (une autre appli en vue
 	// intégrée, PC.fenetre) ; éteint ou en démarrage, seul « Quitter le PC » répond
 	if (PC.fenetre && PC.etat === 'appli') PC.etat = 'os'; // prompt 91 § 1 : la vue ouverte reçoit les touches d'abord
 	if (PC.etat === 'os' && !PC.fenetre) versAppliPrincipale();
 	if (PC.etat !== 'appli') {
 		if (PC.etat === 'os' && typeof toucheJournal === 'function' && toucheJournal()) return false; // prompt 89 : jours, filtres, cartes, enquête (Échap revient)
+		if (keyCode === ESCAPE && typeof echapPatron === 'function' && echapPatron()) return false; // prompt 185 : Mails en zone étroite, la lecture revient à la liste
 		if (keyCode === ESCAPE) return (depilerNavigation() || (PC.etat === 'os' ? fermerFenetreApp() : quitterPC())), false; // prompt 91 § 3 : Échap revient d'abord à l'écran d'origine, puis à la carte (prompt 183) ; prompt 182 : sortie par quitterPC
 		if (focusQuitter && (keyCode === ENTER || keyCode === RETURN || key === ' ')) return quitterPC(), false; // prompt 26
 		if (PC.etat !== 'os') {

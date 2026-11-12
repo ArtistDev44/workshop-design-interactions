@@ -1,17 +1,18 @@
 {
- "_lisezMoi": "Plaintes des Nantais (prompt 28). Fichier brut modifiable à la main : ajouter une plainte = ajouter une entrée dans « plaintes », sans toucher au code. Après modification, lancer « npm run messages » dans site/ pour régénérer messages.js (double clic hors ligne) ; servi par un serveur, le jeu relit directement ce JSON. condition : type (« ligne en difficulté », « perturbation », « événement », « alerte météo » ou « * »), retard_min (minutes), ligne (nom exact), nature_contient (texte), pointe (true = 7–9 h ou 17–19 h), meteo (« pluie » = au moins 1 mm ce jour-là). Variables remplies par le dossier réel joué : {ligne}, {retard}, {nature} (les dossiers d’archive et d’agenda n’ont souvent pas de ligne : préférer {nature}). Une plainte dont une variable n'existe pas pour le dossier n'est pas proposée. effets : points ajoutés aux jauges fluidite, reputation, budget (bornés à ±15, puis jauges bornées 0–100). bonne : true pour la réponse de bon sens (au moins une par plainte). Prompt 85 : « prive »: true envoie la plainte dans la messagerie privée du compte (une relance au plus) ; « modeles » = les 3 modèles d’info trafic que le joueur peut publier ({sujet}, {action}), « coherent » = actions (ou « meteo ») avec lesquelles le message est cohérent (+1 réputation, sinon −2).",
+ "_lisezMoi": "Plaintes des Nantais (prompt 28). Fichier brut modifiable à la main : ajouter une plainte = ajouter une entrée dans « plaintes », sans toucher au code. Après modification, lancer « npm run messages » dans site/ pour régénérer messages.js (double clic hors ligne) ; servi par un serveur, le jeu relit directement ce JSON. condition : type (« ligne en difficulté », « perturbation », « événement », « alerte météo » ou « * »), retard_min (minutes), ligne (nom exact), nature_contient (texte), pointe (true = 7–9 h ou 17–19 h), meteo (« pluie » = au moins 1 mm ce jour-là). Variables remplies par le dossier réel joué : {ligne}, {retard}, {nature} (les dossiers d’archive et d’agenda n’ont souvent pas de ligne : préférer {nature}). Une plainte dont une variable n'existe pas pour le dossier n'est pas proposée. effets : points ajoutés aux jauges fluidite, reputation, budget (bornés à ±15, puis jauges bornées 0–100). bonne : true pour la réponse de bon sens (au moins une par plainte). Prompt 85 : « prive »: true envoie la plainte dans la messagerie privée du compte (une relance au plus) ; « modeles » = les 3 modèles d’info trafic que le joueur peut publier ({sujet}, {action}), « coherent » = actions (ou « meteo ») avec lesquelles le message est cohérent (+1 réputation, sinon −2). Prompt 189 : « registre » (etudiant, senior, touriste, travailleur, parent) = registre de langage de l’usager ; seul le vocabulaire change, les faits restent ceux du dossier réel.",
  "version": 1,
  "plaintes": [
   {
    "id": "retard_10",
    "auteur": "@usager_44",
+   "registre": "travailleur",
    "condition": {
     "type": "ligne en difficulté",
     "retard_min": 10
    },
    "texte": {
-    "fr": "Ligne {ligne} : {retard} minutes de retard et aucune info à l’arrêt. On fait comment ?",
-    "en": "Line {ligne}: {retard} minutes late and no information at the stop. What are we supposed to do?"
+    "fr": "Ligne {ligne} : {retard} minutes de retard et aucune info à l’arrêt. Je vais encore arriver en retard au boulot, on fait comment ?",
+    "en": "Line {ligne}: {retard} minutes late and no information at the stop. I’ll be late for work again, what are we supposed to do?"
    },
    "reponses": [
     {
@@ -43,13 +44,14 @@
   {
    "id": "retard_20",
    "auteur": "@nantaise_du_tram",
+   "registre": "etudiant",
    "condition": {
     "type": "ligne en difficulté",
     "retard_min": 20
    },
    "texte": {
-    "fr": "{retard} minutes sur la {ligne}, c’est plus un retard, c’est une excursion. Vous faites quelque chose ?",
-    "en": "{retard} minutes on line {ligne} isn’t a delay anymore, it’s a day trip. Are you doing anything?"
+    "fr": "{retard} min sur la {ligne}, c’est plus un retard, c’est une excursion. Mon cours commence sans moi, vous faites quelque chose ?",
+    "en": "{retard} min on line {ligne} isn’t a delay anymore, it’s a day trip. My class is starting without me, are you doing anything?"
    },
    "reponses": [
     {
@@ -93,6 +95,7 @@
   {
    "id": "retard_pointe",
    "auteur": "@velo_et_bus",
+   "registre": "travailleur",
    "condition": {
     "type": "ligne en difficulté",
     "retard_min": 10,
@@ -132,13 +135,14 @@
   {
    "id": "correspondance",
    "auteur": "@chantenay_matin",
+   "registre": "touriste",
    "condition": {
     "type": "ligne en difficulté",
     "retard_min": 10
    },
    "texte": {
-    "fr": "À cause des {retard} min de retard sur la {ligne}, j’ai raté ma correspondance.",
-    "en": "Because line {ligne} was {retard} min late, I missed my connection."
+    "fr": "Bonjour, nous ne sommes pas d’ici : à cause des {retard} min de retard sur la {ligne}, nous avons raté notre correspondance. Que faut-il faire ?",
+    "en": "Hello, we’re not from here: because line {ligne} was {retard} min late, we missed our connection. What should we do?"
    },
    "reponses": [
     {
@@ -170,13 +174,14 @@
   {
    "id": "manifestation",
    "auteur": "@quai_de_la_fosse",
+   "registre": "touriste",
    "condition": {
     "type": "perturbation",
     "nature_contient": "manifestation"
    },
    "texte": {
-    "fr": "Manifestation aujourd’hui en centre-ville : mon bus passe ou pas ? Il y a une déviation ?",
-    "en": "There’s a demonstration in the city centre today: is my bus running? Is there a diversion?"
+    "fr": "Bonjour, je visite Nantes aujourd’hui et on me parle d’une manifestation en centre-ville : mon bus passe ou pas ? Il y a une déviation ?",
+    "en": "Hello, I’m visiting Nantes today and I hear there’s a demonstration in the city centre: is my bus running? Is there a diversion?"
    },
    "reponses": [
     {
@@ -208,13 +213,14 @@
   {
    "id": "mouvement_social",
    "auteur": "@ile_de_nantes",
+   "registre": "etudiant",
    "condition": {
     "type": "perturbation",
     "nature_contient": "mouvement social"
    },
    "texte": {
-    "fr": "Mouvement social annoncé : je ne sais pas si mon tram roule demain matin.",
-    "en": "Strike action announced: I don’t know if my tram will run tomorrow morning."
+    "fr": "Mouvement social annoncé : je sais pas si mon tram roule demain matin, et j’ai cours à la première heure.",
+    "en": "Strike action announced: no idea if my tram runs tomorrow morning, and I’ve got class first thing."
    },
    "reponses": [
     {
@@ -246,6 +252,7 @@
   {
    "id": "perturbation",
    "auteur": "@usager_44",
+   "registre": "travailleur",
    "condition": {
     "type": "perturbation"
    },
@@ -283,12 +290,13 @@
   {
    "id": "affluence",
    "auteur": "@nantaise_du_tram",
+   "registre": "parent",
    "condition": {
     "type": "événement"
    },
    "texte": {
-    "fr": "Avec « {nom} » aujourd’hui, les trams risquent d’être bondés. Vous avez prévu quelque chose ?",
-    "en": "With “{nom}” on today, the trams might be packed. Have you planned anything?"
+    "fr": "Avec « {nom} » aujourd’hui, les trams risquent d’être bondés. Avec la poussette et les enfants, vous avez prévu quelque chose ?",
+    "en": "With “{nom}” on today, the trams might be packed. With the pushchair and the kids, have you planned anything?"
    },
    "reponses": [
     {
@@ -320,12 +328,13 @@
   {
    "id": "affluence_proprete",
    "auteur": "@chantenay_matin",
+   "registre": "senior",
    "condition": {
     "type": "événement"
    },
    "texte": {
-    "fr": "Après « {nom} », les rames risquent d’être pleines de déchets. Un nettoyage est prévu ?",
-    "en": "After “{nom}”, the carriages may end up full of litter. Is cleaning planned?"
+    "fr": "Après « {nom} », les rames risquent d’être pleines de déchets. De mon temps, on nettoyait aussitôt : un nettoyage est prévu ?",
+    "en": "After “{nom}”, the carriages may end up full of litter. In my day they cleaned straight away: is cleaning planned?"
    },
    "reponses": [
     {
@@ -357,6 +366,7 @@
   {
    "id": "affluence_pluie",
    "auteur": "@velo_et_bus",
+   "registre": "parent",
    "condition": {
     "type": "événement",
     "meteo": "pluie"
@@ -395,6 +405,7 @@
   {
    "id": "affluence_pointe",
    "auteur": "@ile_de_nantes",
+   "registre": "travailleur",
    "condition": {
     "type": "événement",
     "pointe": true
@@ -433,13 +444,14 @@
   {
    "id": "vent",
    "auteur": "@ile_de_nantes",
+   "registre": "senior",
    "condition": {
     "type": "alerte météo",
     "nature_contient": "vent"
    },
    "texte": {
-    "fr": "Alerte {nature} : les bus roulent quand même ? Je dois traverser les ponts.",
-    "en": "Weather alert ({nature}): are the buses still running? I need to cross the bridges."
+    "fr": "Alerte {nature} : les bus roulent quand même ? Je dois traverser les ponts et, à mon âge, je n’aime pas rester bloqué dehors.",
+    "en": "Weather alert ({nature}): are the buses still running? I need to cross the bridges and, at my age, I don’t like being stuck outside."
    },
    "reponses": [
     {
@@ -471,6 +483,7 @@
   {
    "id": "temperature",
    "auteur": "@quai_de_la_fosse",
+   "registre": "senior",
    "condition": {
     "type": "alerte météo",
     "nature_contient": "température"
@@ -509,13 +522,14 @@
   {
    "id": "pluie_abri",
    "auteur": "@usager_44",
+   "registre": "senior",
    "condition": {
     "type": "*",
     "meteo": "pluie"
    },
    "texte": {
-    "fr": "Il pleut et mon arrêt n’a pas d’abri. Trempé·e en attendant le bus.",
-    "en": "It’s raining and my stop has no shelter. Soaked while waiting for the bus."
+    "fr": "Il pleut et mon arrêt n’a toujours pas d’abri. À mon âge, attendre le bus trempé, ce n’est plus possible.",
+    "en": "It’s raining and my stop still has no shelter. At my age, waiting for the bus soaked through just isn’t possible anymore."
    },
    "reponses": [
     {
@@ -547,6 +561,7 @@
   {
    "id": "travaux_deviation",
    "auteur": "@quai_de_la_fosse",
+   "registre": "travailleur",
    "condition": {
     "type": "perturbation",
     "nature_contient": "travaux"
@@ -585,6 +600,7 @@
   {
    "id": "affluence_soir",
    "auteur": "@nantaise_du_tram",
+   "registre": "etudiant",
    "condition": {
     "type": "événement"
    },
@@ -659,6 +675,7 @@
   {
    "id": "perturbation_horaires",
    "auteur": "@chantenay_matin",
+   "registre": "senior",
    "condition": {
     "type": "perturbation"
    },
@@ -696,12 +713,13 @@
   {
    "id": "prive_objet_oublie",
    "auteur": "@ile_de_nantes",
+   "registre": "touriste",
    "condition": {
     "type": "*"
    },
    "texte": {
-    "fr": "Bonjour, j’ai oublié mon sac dans un véhicule de la ligne {ligne}. Comment le récupérer ?",
-    "en": "Hello, I left my bag on a line {ligne} vehicle. How can I get it back?"
+    "fr": "Bonjour, je suis de passage à Nantes et j’ai oublié mon sac dans un véhicule de la ligne {ligne}. Comment le récupérer avant mon départ ?",
+    "en": "Hello, I’m just passing through Nantes and I left my bag on a line {ligne} vehicle. How can I get it back before I leave?"
    },
    "reponses": [
     {
@@ -772,6 +790,7 @@
   {
    "id": "prive_deviation",
    "auteur": "@quai_de_la_fosse",
+   "registre": "parent",
    "condition": {
     "type": "perturbation"
    },

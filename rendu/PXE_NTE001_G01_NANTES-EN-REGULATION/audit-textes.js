@@ -76,7 +76,7 @@
 			const f = typeof fenetre !== 'undefined' && fenetre ? ' fenetre:' + fenetre : '';
 			if (typeof MENU !== 'undefined' && MENU.actif) return 'menu:' + MENU.ecran + f;
 			const p = [ecran, phase, vue];
-			if (typeof PC !== 'undefined') p.push(PC.etat === 'appli' ? 'appli' + (PLUS && PLUS.ouvert ? ':plus:' + SELECTION.onglet : '') : 'os:' + (PC.fenetre || 'bureau') + (PC.fenetre === 'journal' && typeof JOURNAL !== 'undefined' ? ':jour' + (JOURNAL.enquete !== null ? ':enquete' + JOURNAL.volet : '') : ''));
+			if (typeof PC !== 'undefined') p.push(PC.etat === 'appli' ? 'appli' + (PLUS && PLUS.ouvert ? ':plus:' + SELECTION.onglet : '') : 'vue:' + (PC.fenetre || PC.etat) + (PC.fenetre === 'journal' && typeof JOURNAL !== 'undefined' ? ':jour' + (JOURNAL.enquete !== null ? ':enquete' + JOURNAL.volet : '') : ''));
 			if (typeof smsActif !== 'undefined' && smsActif) p.push('sms');
 			return p.join(' ') + f;
 		} catch (e) {
@@ -374,17 +374,29 @@
 		add('menu crédits', () => (H.raz(), (MENU.actif = true), ouvrirCredits()), 12); // prompt 113
 		add('menu autorisations · tout autorisé', () => (AUTOR.etat = { son: 'autorise', micro: 'autorise', camera: 'autorise' }));
 		[0, 1, 2].forEach((c) => add('menu semaines ' + c, () => (H.raz(), (MENU.actif = true), (MENU.ecran = 'semaines'), (MENU.choixSemaine = c))));
-		['parametres', 'aide', 'optionsJeu', 'accessibilite', 'palmares', 'partage'].forEach((f) => add('menu fenêtre ' + f, () => (H.raz(), (MENU.actif = true), (MENU.ecran = 'titre'), ouvrir(f))));
-		// Prompt 123 : les onglets de l'aide (la fenêtre s'ouvre sur le premier), page 2 des règles comprise
-		add('aide · bien démarrer', () => (H.raz(), (MENU.actif = true), (MENU.ecran = 'titre'), ouvrir('aide')), 16);
+		// Prompt 171 : l'aide ne s'ouvre plus depuis le menu titre (elle est auditée en partie, plus bas) ; + explication d'installation
+		['parametres', 'palmares', 'partage', 'installation'].forEach((f) => add('menu fenêtre ' + f, () => (H.raz(), (MENU.actif = true), (MENU.ecran = 'titre'), ouvrir(f))));
+		add('menu titre · focus installer', () => (H.raz(), (MENU.actif = true), (MENU.ecran = 'titre'), (MENU.choix = entreesMenu().length + EXTRAS_MENU.length - 1)));
+		add('menu titre · retour au premier choix', () => (MENU.choix = 0), 2);
+		// Prompt 123 : les onglets de l'aide (la fenêtre s'ouvre sur le premier), page 2 des règles comprise ; prompt 171 : ouverte en partie, au poste
+		add('aide · bien démarrer', () => (H.partie(0), H.poste(), ouvrir('aide')), 16);
 		add('aide · règles 1', () => changerOngletAide(1), 16);
 		add('aide · règles 2', () => pageAide(1), 16);
 		add('aide · raccourcis', () => changerOngletAide(2), 16);
 		add('aide · malus', () => changerOngletAide(3), 16);
+		// Prompt 175 : les quatre sections de la fenêtre des paramètres (page 2 de « Avancé » comprise), focus clavier compris
+		add('paramètres · écran', () => (H.raz(), H.poste(), ouvrirParametres(0)), 12);
+		add('paramètres · son', () => (ouvrirParametres(1), (PARAM.focus = 1)), 12);
+		add('paramètres · accessibilité', () => (ouvrirParametres(2), (PARAM.focus = 5)), 12);
+		add('paramètres · avancé', () => ouvrirParametres(3), 12);
+		add('paramètres · avancé 2', () => pageParam(1), 12);
+		add('paramètres · fermés', () => fermer(), 2);
 		// Partie : bureau, poste, applis
 		add('partie semaine 1 · bureau', () => (H.partie(0), (vue = 'bureau')), 20);
-		add('poste · RégulOS', () => (H.poste(), (PC.etat = 'os'), (PC.fenetre = null)));
-		['patron', 'community', 'journal', 'indicateurs', 'donnees', 'corbeille'].forEach((a) => add('appli ' + a, () => (H.poste(), (PC.etat = 'os'), (PC.fenetre = a))));
+		// Prompt 183 : plus de bureau d'icônes — les applis sont des vues de l'appli principale ; Indicateurs = panneau flottant (I)
+		['patron', 'community', 'journal', 'donnees', 'corbeille'].forEach((a) => add('appli ' + a, () => (H.poste(), (PC.etat = 'os'), (PC.fenetre = a))));
+		add('appli indicateurs', () => (H.poste(), (PC.flottant = true), (INDIC.deplie = true)));
+		add('appli indicateurs · fermée', () => ((PC.flottant = false), (INDIC.deplie = false)), 2);
 		add('Signalements · file', () => H.poste());
 		add('Signalements · équipes engagées (prompt 114)', () => (H.poste(), ['police', 'techniciens', 'ambulance'].forEach((c) => Jeu.envoyerEquipe(Jeu.index, c, typeof tempsCarte === 'function' ? tempsCarte() : millis()))));
 		// Un signalement de chaque type, sources révélées, onglets
@@ -416,7 +428,7 @@
 			}, 12);
 		});
 		// Fenêtres en partie
-		['aide', 'parametres', 'optionsJeu', 'reset', 'menu', 'demission', 'cafe', 'partir'].forEach((f) => add('fenêtre ' + f, () => (H.raz(), H.poste(), ouvrir(f))));
+		['aide', 'parametres', 'reset', 'menu', 'demission', 'cafe', 'partir'].forEach((f) => add('fenêtre ' + f, () => (H.raz(), H.poste(), ouvrir(f))));
 		add('pause', () => (H.raz(), H.poste(), (enPause = true)));
 		add('téléphone', () => {
 			H.raz();
@@ -427,7 +439,6 @@
 			leverTelephone();
 		}, 70);
 		add('SMS', () => (H.raz(), (smsActif = true)), 20);
-		add('déblocage d\'appli', () => (H.raz(), H.poste(), (PC.etat = 'os'), (APPLIS.intro = 'community'), ouvrir('deblocage')));
 		// Cas extrêmes : jauges, budget, retards, lignes multiples
 		add('jauges extrêmes', () => {
 			H.raz();
@@ -455,6 +466,8 @@
 		add('rapport de la veille', () => (H.raz(), (phase = 'attente'), (vue = 'bureau'), ouvrir('rapportVeille')));
 		add('fin de semaine · rapport', () => (H.raz(), allerFin()), 30);
 		add('fin de semaine · rapport ouvert', () => (fenetre === 'mailFin' && (fenetre = null), ouvrirRapport()), 20);
+		add('fin de semaine · rapport page 2', () => RAPPORT && fenetre === 'rapport' && changerPageRapport(1), 12); // prompt 163
+		add('fin de semaine · rapport page 3 (sources)', () => RAPPORT && fenetre === 'rapport' && changerPageRapport(1), 12); // prompt 163
 		['bonne', 'moyenne', 'mauvaise'].forEach((ty) => add('cinématique ' + ty, () => (H.raz(), lancerCinematique(ty, Object.assign({}, (RAPPORT && RAPPORT.bilan) || {}, { type: ty }))), 40));
 		add('licenciement · lettre', () => (H.raz(), (GAMEOVER = { debut: millis() - 5000, lettre: Jeu.lettreLicenciement(), vue: 'lettre', focus: 0 })), 20);
 		// Prompt 121 : signalement répondu avec une équipe en route — badge de statut, puis marqueur creux sur la carte
@@ -471,6 +484,10 @@
 		}, 12);
 		add('retour · marqueur en attente', () => continuer(), 12);
 		add('licenciement · journal', () => GAMEOVER && (GAMEOVER.vue = 'journal'), 20);
+		// Prompt 178 : écran « Reprendre une partie » (les parties jouées par l'audit ont laissé leurs emplacements), confirmation de suppression, limite atteinte
+		add('menu sauvegardes', () => (H.raz(), (MENU.actif = true), allerSauvegardes()));
+		add('menu sauvegardes · confirmation', () => demanderSuppressionSauvegarde());
+		add('menu sauvegardes · limite', () => allerSauvegardes(() => {}));
 		add('retour menu', () => (H.raz(), (MENU.actif = true), (MENU.ecran = 'titre')));
 		return E;
 	}

@@ -130,24 +130,10 @@ const JournalDonnees = (() => {
 			faits: { type: d.type, nature: d.nature || null, lignes: d.lignes && d.lignes.length ? d.lignes.join(', ') : null, retard: d.retard === null || d.retard === undefined ? null : d.retard, citation: d.texte_source || null, source: d.source || null, date: d.date, heure: d.heure || null, consequence: d.consequence || null },
 			contexte: { meteo: m ? { min: m.temp_min, max: m.temp_max, pluie: m.pluie_mm, vent: m.rafales_max } : null, pointe: !!ctx.pointe, meteoAggravante: !!ctx.meteo, agenda: ag.map((x) => String(x.texte_source).split(' — ')[0]), modificateur: r.modificateur || null },
 			decision: { action: e.action ? String(e.action) : null, deltas: Object.assign({}, e.deltas), des: (r.des || []).filter((x) => x), barres, echelle: Math.ceil(max), meilleure: String(e.meilleureAction) },
-			suites: { plaintes: p.map((x) => ({ auteur: x.auteur, texte: Jeu.texteMessage(x.def.texte, x.vars), reponse: x.reponse === null ? null : Jeu.texteMessage(x.def.reponses[x.reponse].texte, x.vars), bonne: !!x.bonne, suivis: (x.suivis || []).length, recus: (x.suivis || []).filter((s) => s.livre).length })), equipes: (Jeu.equipes || []).filter((q) => q.index === idx).map((q) => ({ nom: String(q.nom), inutile: !!q.inutile, pertinente: q.pertinente !== false, duree: q.finIntervention ? Math.round((q.finIntervention - q.arrivee) / 1000) : null })) },
+			suites: { plaintes: p.map((x) => ({ auteur: x.auteur, texte: Jeu.textePlainte(x), reponse: x.reponse === null ? null : Jeu.texteMessage(x.def.reponses[x.reponse].texte, x.vars), bonne: !!x.bonne, suivis: (x.suivis || []).length, recus: (x.suivis || []).filter((s) => s.livre).length })), equipes: (Jeu.equipes || []).filter((q) => q.index === idx).map((q) => ({ nom: String(q.nom), inutile: !!q.inutile, pertinente: q.pertinente !== false, duree: q.finIntervention ? Math.round((q.finIntervention - q.arrivee) / 1000) : null })) },
 		};
 	}
 
-	// ——— Résumé texte du jour (§ 6, « Copier le résumé du jour ») ———
-	function resume(i) {
-		const tu = tuiles(i);
-		if (!tu) return '';
-		const date = tu.date.split('-').reverse().join('/');
-		const l = [t('journal.resume.titre', { date })];
-		l.push(t('journal.resume.signalements', { traites: tu.signalements.traites, recus: tu.signalements.recus, non: tu.signalements.nonTraites }));
-		l.push(t('journal.resume.bonnes', { n: tu.bonnes.n, total: tu.bonnes.total }));
-		if (tu.jauges.fin) l.push(t('journal.resume.jauges', { f: tu.jauges.fin.fluidite, r: tu.jauges.fin.reputation, b: tu.jauges.fin.budget }));
-		if (tu.objectif) l.push(t('journal.resume.objectif', { libelle: tu.objectif.libelle, etat: t(tu.objectif.enCours ? 'journal.enCours' : tu.objectif.atteint ? 'journal.atteint' : 'journal.rate') }));
-		evDuJour(tu.date).forEach((e) => l.push('- ' + String(Jeu.ligneMail(e))));
-		return l.join('\n');
-	}
-
-	return { JAUGES, FILTRES, debutJour, courbes, tuiles, etatJour, cartes, filtrer, compteurs, enquete, resume, minutes };
+	return { JAUGES, FILTRES, debutJour, courbes, tuiles, etatJour, cartes, filtrer, compteurs, enquete, minutes };
 })();
 if (typeof window !== 'undefined') window.JournalDonnees = JournalDonnees;

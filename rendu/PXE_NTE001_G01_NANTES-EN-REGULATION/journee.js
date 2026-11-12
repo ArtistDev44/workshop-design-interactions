@@ -37,7 +37,8 @@ function terminerJournee() {
 	JOURNEE.finAnnoncee = false;
 	Confort.Son.bip('mail');
 	Sauvegarde.auto(true);
-	annoncer(t('horloge.fin'));
+	const sc = Jeu.sceneDuSoir ? Jeu.mailDuJour().scene : null; // prompt 191 : le moment de la journée et le mot du patron, aussi pour les lecteurs d'écran
+	annoncer(t('horloge.fin') + (sc ? ' ' + (sc.fait ? String(sc.fait.texte) : t('mailf.fait.aucun')) + ' « ' + String(sc.patron) + ' »' : ''));
 }
 function textePartir() {
 	return t('partir.texte', { n: Jeu.dossiersRestantsDuJour(), fin: Jeu.formaterHeure(Jeu.finJournee()), heure: texteHeure(), malus: Jeu.MALUS_DEPART });
@@ -52,7 +53,7 @@ function partirQuandMeme() {
 	terminerJournee();
 }
 function fenetrePartir() {
-	const l = 1000;
+	const l = DS.fenetre.moyenne; // prompt 173 (était 1000)
 	const h = 440;
 	const x = (L - l) / 2;
 	const y = (H - h) / 2;
@@ -112,7 +113,7 @@ function verifierBlame() {
 function fenetreBlame() {
 	const b = Jeu.blame;
 	if (!b) return fermer();
-	const l = 1100;
+	const l = DS.fenetre.large; // prompt 173 (était 1100)
 	const h = 560;
 	const x = (L - l) / 2;
 	const y = (H - h) / 2;
@@ -151,7 +152,7 @@ function toucheJournee() {
 		if (keyCode === ENTER || keyCode === RETURN || keyCode === ESCAPE) fermerMailFin();
 		return true;
 	}
-	if (fenetre === 'rapport' && keyCode === TAB) return changerPageRapport(), true;
+	if (fenetre === 'rapport' && keyCode === TAB) return changerPageRapport(keyIsDown(SHIFT) ? -1 : 1), true; // prompt 163 : Maj + Tab recule
 	if (fenetre === 'cafe') return true; // prompt 52 : on boit, le clavier attend
 	if (fenetre === 'partir') {
 		if (keyCode === ESCAPE) fermer();
@@ -182,12 +183,14 @@ function finJourneeAtteinte() {
 // ——— Lumière de la pièce : jour / nuit, stores, lampe ; l'écran éclaire le bureau dans le noir ———
 const ECLAIRAGE = { v: null, t: 0 };
 /** Lumière de la pièce entre 0 (noir) et 1 : jour (atténué par les stores) + lampe + un peu de lumière ambiante */
+/** Prompt 191 : la lampe s'allume d'elle-même pendant que la nuit tombe (soir.js : lampeAllumee) */
+const lampeJour = () => (typeof lampeAllumee === 'function' ? lampeAllumee() : PIECE.lampe);
 function lumiereCible() {
 	const nuit = METEO_VISU.nuit === null ? facteurNuit() : METEO_VISU.nuit;
 	const jour = (1 - nuit) * (PIECE.store ? 0.35 : 1);
 	const ville = phase === 'soir' ? 0.3 : 0.12; // prompt 69 : le soir, plafonnier éteint, la ville éclaire la pièce (lisible)
 	const baisse = typeof Traces !== 'undefined' ? Traces.baisseLumiere() : 0; // prompt 89 bis (option) : la salle s'assombrit quand des jauges passent sous 40
-	return constrain(ville + jour * 0.8 + (PIECE.lampe ? 0.45 : 0) - baisse, 0, 1);
+	return constrain(ville + jour * 0.8 + (lampeJour() ? 0.45 : 0) - baisse, 0, 1);
 }
 function lumierePiece() {
 	const cible = lumiereCible();
@@ -217,7 +220,7 @@ function dessinerEclairage(g) {
 		g.fill(170, 205, 255, Math.round((nuit - 0.15) * 40 * veille));
 		g.rect(ECRAN_PC.x - 4, ECRAN_PC.y - 4, ECRAN_PC.l + 8, ECRAN_PC.h + 8); // lueur autour de l'écran
 	}
-	if (PIECE.lampe && nuit > 0.1) {
+	if (lampeJour() && nuit > 0.1) {
 		// Sous l'applique allumée, le mur reste éclairé
 		const lampe = OBJETS_BUREAU.find((o) => o.nom === 'lampe');
 		g.fill(255, 226, 160, Math.round(nuit * 60));
@@ -227,8 +230,8 @@ function dessinerEclairage(g) {
 /** Ombre portée commune (livres, plante, dossiers, tasse) : même trame que le téléphone et la souris.
  * Plus marquée sous la lampe ; plus diffuse (plus large, plus claire) stores baissés. */
 function ombreObjet(g, x, y, l) {
-	const diffuse = PIECE.store && !PIECE.lampe;
-	const alpha = PIECE.lampe ? 115 : diffuse ? 60 : 90;
+	const diffuse = PIECE.store && !lampeJour();
+	const alpha = lampeJour() ? 115 : diffuse ? 60 : 90;
 	ombreTramee(g, x + 1, y, l, diffuse ? 3 : 2, alpha);
 }
 

@@ -388,7 +388,7 @@ for (const [nom, ctx] of [['fr', contexte('fr')], ['en', contexte('en')]]) {
 		const jauges = JSON.stringify(Jeu.jauges);
 		rangerPoste();
 		res.soir = phase === 'soir' && __leve === 1 && vue === 'bureau' && !enSieste && PC.fenetre === null && __saves === 1;
-		__t = 2000; majSoir(); res.mi = Jeu.horloge.minutes > Jeu.finJournee() && Jeu.horloge.minutes < 21 * 60 && !sortieVisible();
+		__t = 1000; majSoir(); res.mi = Jeu.horloge.minutes > Jeu.finJournee() && Jeu.horloge.minutes < 21 * 60 && !sortieVisible();
 		__t = 4100; majSoir(); res.h21 = Jeu.horloge.minutes === 21 * 60 && sortieVisible() && __annonces.some((a) => a.includes('sortie est à gauche'));
 		res.nuit = nuitSoir() === 1;
 		res.reglesIntactes = JSON.stringify(Jeu.jauges) === jauges; // le soir ne touche à aucune jauge
@@ -1460,14 +1460,13 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 		if (f.decision.barres.length !== Object.keys(e.attendus).length || f.decision.barres.some((b) => Math.abs(b.v - e.attendus[b.cle]) > 0.051)) out.erreurs.push('barres ≠ attendus');
 		if (f.decision.barres.filter((b) => b.choix).map((b) => b.cle).join() !== e.cleAction || f.decision.barres.filter((b) => b.meilleure).map((b) => b.cle).join() !== e.cleMeilleure) out.erreurs.push('choix / meilleure');
 		if (f.decision.barres.some((b) => Math.abs(b.v) > f.decision.echelle)) out.erreurs.push('échelle');
-		out.resume = JournalDonnees.resume(0);
-		out.lignesMail = Jeu.evenementsJournee.filter((x) => x.jour === Jeu.jours[0].date).length;
+		out.resume = typeof JournalDonnees.resume; // prompt 186 : « Copier le résumé du jour » retiré
 		return out;
 	})()`,
 		cj,
 	);
 	verifier(r.erreurs.length === 0, `journal : ${r.erreurs.slice(0, 5)}`);
-	verifier(/^Nantes en régulation — journée du 12\/10\/2026/.test(r.resume) && r.resume.split('\n').filter((l) => l.startsWith('- ')).length === r.lignesMail && !/\[À COMPLÉTER\]|undefined/.test(r.resume), `journal : résumé copié (${r.resume.slice(0, 120)})`);
+	verifier(r.resume === 'undefined', 'journal : le résumé copié doit avoir disparu (prompt 186)');
 	const sv = readFileSync(join(pub, 'sauvegarde.js'), 'utf8');
 	verifier(/journal: typeof JOURNAL[^\n]*\{ jour: JOURNAL\.jour, filtre: JOURNAL\.filtre, defil/.test(sv) && /ui\.journal/.test(sv), 'journal : jour, filtre et défilement sauvegardés (prompt 140 : plus de vue)');
 	verifier(!/function appJournal|function enqueteJournal/.test(readFileSync(join(pub, 'os.js'), 'utf8')), 'journal : ancien rendu retiré d’os.js');
@@ -2115,7 +2114,7 @@ for (const s of semaines) {
 		verifier(/annoncer\(/.test(be) && !/text\(|rect\(/.test(be), 'prompt 124 : l\'état du jeu est annoncé (aria-live), plus dessiné');
 	}
 	verifier(/g === 'elevee' \? C\.rougeFonce/.test(readFileSync(join(pub, 'carte.js'), 'utf8')) && /const tm = g === 'elevee' \? 36/.test(readFileSync(join(pub, 'carte-alertes.js'), 'utf8')), 'prompt 133 : gravité élevée en rouge franc et plus grande');
-	verifier(/\['protan', 'deutan'\]\.includes\(Confort\.Reglages\.daltonisme\)/.test(readFileSync(join(pub, 'ds.js'), 'utf8')), 'prompt 133 : badge lisible en protan / deutan');
+	// Prompt 193 : la liste protan / deutan en dur est remplacée par un texte calculé sur l'aplat (contrôlé plus bas)
 	verifier(/function basculerPleinEcran/.test(readFileSync(join(pub, 'sketch.js'), 'utf8')), 'prompt 133 : touche F, plein écran');
 }
 
@@ -2435,6 +2434,18 @@ for (const langue of ['fr', 'en']) {
 	verifier(/TRANSITION_JOUR/.test((im180.match(/function tempsSuspendu\(\) \{\n[^\n]*/) || [''])[0]), 'prompt 180 : le temps de jeu n\'est plus suspendu pendant la transition');
 }
 
+// Prompt 190 : public cible et durée de session — concept, README, menu (carte « Nouvelle partie »)
+{
+	const racine = join(pub, '..', '..');
+	verifier(/## Public cible et session/.test(readFileSync(join(racine, 'jeu', '00-concept.md'), 'utf8')), 'prompt 190 : section « Public cible et session » absente du concept');
+	verifier(/10 à 20 minutes/.test(readFileSync(join(racine, 'README.md'), 'utf8')) && /10 à 20 minutes/.test(readFileSync(join(racine, 'site', 'README.md'), 'utf8')), 'prompt 190 : durée de session absente des README');
+	verifier(/cle: 'nouvelle'[^\n]*sous: t\('mp\.accroche\.duree'\)/.test(readFileSync(join(pub, 'menu.js'), 'utf8')), 'prompt 190 : accroche de durée absente de la carte « Nouvelle partie »');
+	for (const langue of ['fr', 'en']) {
+		const v = vm.runInContext(`TRADUCTIONS[${JSON.stringify(langue)}]['mp.accroche.duree']`, contexte(langue));
+		verifier(typeof v === 'string' && /10/.test(v) && /20/.test(v), `prompt 190 : mp.accroche.duree absente ou sans durée (${langue})`);
+	}
+}
+
 // Prompt 171 : menu principal épuré — plus d'entrée « Aide et tutoriel » ni « Crédits », plus de mention « PXE- »,
 // logo et bloc langue + installation sur la même ligne, « Retour » sans flèche, interlignage du sous-titre
 {
@@ -2447,7 +2458,7 @@ for (const langue of ['fr', 'en']) {
 	verifier(/mp\.aide/.test(lire('immersion.js')) && (lire('sketch.js').match(/ouvrir\('aide'\)/g) || []).length >= 2 && /function fenetreAide/.test(lire('aide.js')), 'prompt 171 : l\'aide doit rester atteignable en partie (H, menu pause)');
 	verifier(!/PXE-NTE001/.test(menu171) && /dessinerLogoPXE\(HAUT_MENU\.marge, HAUT_MENU\.y, HAUT_MENU\.h\)/.test(menu171) && /const JEU = 'PXE-NTE001-G01-W01'/.test(lire('sauvegarde.js')), 'prompt 171 : mention « PXE- » encore affichée au menu (ou clé de stockage renommée)');
 	verifier(/const HAUT_MENU = \{ y: 56, h: 60, marge: 80 \}/.test(menu171) && /selecteurLangue\([^;]*HAUT_MENU\.y, HAUT_MENU\.h\)/.test(menu171) && /boutonInstaller\(xi, HAUT_MENU\.y, HAUT_MENU\.h/.test(menu171), 'prompt 171 : logo, langue et installation ne partagent plus y, hauteur et marge');
-	verifier(/iconeLucide\('download'/.test(menu171) && /infobulle\(bulle/.test(menu171.slice(menu171.indexOf('function boutonInstaller'))) && /cle: 'installer', action: \(\) => installerJeu\(\)/.test(menu171), 'prompt 171 : icône « télécharger » absente, sans infobulle ou hors du parcours clavier');
+	verifier(/boutonCarreHaut\(x, y, c, focus, 'download', t\('mp\.installer'\), installerJeu\)/.test(menu171) && /iconeLucide\(icone,/.test(menu171) && /infobulle\(bulle/.test(menu171.slice(menu171.indexOf('function boutonCarreHaut'))) && /cle: 'installer', action: \(\) => installerJeu\(\)/.test(menu171), 'prompt 171 : icône « télécharger » absente, sans infobulle ou hors du parcours clavier');
 	const inst171 = lire('installation.js');
 	verifier(/function installerJeu\(\) \{[^}]*installationPossible\(\)\) return installerApplication\(\);[^}]*ouvrirInstallation\(\);/.test(inst171) && /fenetre === 'installation'\) return fenetreInstallation\(\)/.test(lire('sketch.js')), 'prompt 171 : l\'icône doit installer le jeu (beforeinstallprompt) ou ouvrir l\'explication');
 	// Comportement : avec une invitation du navigateur, elle est jouée ; sans, la fenêtre d'explication s'ouvre
@@ -3180,6 +3191,63 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 }
 
 
+// Prompt 185 : l'appli « Patron » devient « Mails » — messagerie en zones, compteurs par dossier, badge = non lus,
+// « Voir le dossier » (cause du défaut : identité d'objet perdue après une sauvegarde rechargée → retour à la carte)
+{
+	const ap = readFileSync(join(pub, 'applis.js'), 'utf8');
+	const pj = readFileSync(join(pub, 'patron.js'), 'utf8');
+	const c = vm.createContext({});
+	vm.runInContext(
+		`var PC = { etat: 'os', fenetre: 'patron' }, JOURNAL = { jour: null, enquete: null, volet: 0 }, COMMU = { onglet: 'fil' }, __sig = [];
+		const Confort = { Reglages: {}, Son: { clic() {}, bip() {} } }; function annoncer() {} function t(k) { return k; } function millis() { return 0; }
+		function ouvrirSignalements(d) { PC.fenetre = null; PC.etat = 'appli'; __sig.push(d.id); }
+		var Jeu = { TYPES_MESSAGES: ['consigne', 'alerte', 'conseil', 'budget', 'reproche', 'equipes', 'info'], paquet: [{ id: 'A', date: 'J1' }, { id: 'B', date: 'J1' }], jours: [{ date: 'J0' }, { date: 'J1' }], evenementsJournee: [], messagesPatron: [] };
+		Jeu.evenementsJournee.push({ jour: 'J1', index: 0, resultat: { dossier: JSON.parse(JSON.stringify(Jeu.paquet[0])) } }); // copie : comme après une sauvegarde rechargée
+		Jeu.messagesPatron.push({ type: 'reproche', meta: { index: 0 }, texte: 'clos' }, { type: 'reproche', meta: { blame: true, malus: -5 }, texte: 'sans dossier' }, { type: 'reproche', meta: { index: 1 }, texte: 'ouvert' });
+		var PATRON = { filtre: 'reproches', sel: null, lecture: false, deplies: new Set() };`,
+		c,
+	);
+	vm.runInContext(ap.slice(ap.indexOf('const APPLIS')), c);
+	vm.runInContext(pj.slice(pj.indexOf('const aUnBloc'), pj.indexOf('const enPanne')), c);
+	const r = vm.runInContext(
+		`(() => {
+		const r = {};
+		PATRON.sel = Jeu.messagesPatron[0];
+		voirDossierDepuis(Jeu.messagesPatron[0].meta.index);
+		r.clos = PC.fenetre + ' ' + JOURNAL.jour + ' ' + JOURNAL.enquete;
+		r.retourClos = retourRedirection('journal') && PC.fenetre === 'patron' && PATRON.sel === Jeu.messagesPatron[0] && PATRON.filtre === 'reproches';
+		r.retourVide = retourRedirection('journal');
+		PATRON.sel = Jeu.messagesPatron[2];
+		voirDossierDepuis(Jeu.messagesPatron[2].meta.index);
+		r.ouvert = PC.etat + ' ' + PC.fenetre + ' ' + __sig.join(',');
+		r.retourOuvert = depilerNavigation() && PC.fenetre === 'patron' && PATRON.sel === Jeu.messagesPatron[2];
+		r.sansDossier = aUnBloc(Jeu.messagesPatron[1]);
+		r.avecDossier = aUnBloc(Jeu.messagesPatron[0]);
+		return r;
+	})()`,
+		c,
+	);
+	verifier(r.clos === 'journal 1 0', `prompt 185 : « Voir le dossier » d'un dossier clos (sauvegarde rechargée) doit ouvrir sa fiche du Journal (${r.clos})`);
+	verifier(r.retourClos === true && r.retourVide === false, 'prompt 185 : « Retour » / Échap sur la fiche doit rouvrir le mail d\'origine, et seulement après une redirection');
+	verifier(r.ouvert === 'appli null B', `prompt 185 : dossier encore ouvert → Signalements sur ce dossier (${r.ouvert})`);
+	verifier(r.retourOuvert === true, 'prompt 185 : Échap depuis Signalements doit revenir au mail d\'origine');
+	verifier(r.sansDossier === false && r.avecDossier === true && /type === 'reproche' && me\.index !== undefined\) \{[\s\S]{0,700}?voirDossier\(me\)/.test(pj), 'prompt 185 : un mail sans dossier ne montre pas de lien « Voir le dossier »');
+	verifier(/retourRedirection\('journal'\) \|\| \(JOURNAL\.enquete = null\)/.test(readFileSync(join(pub, 'journal.js'), 'utf8')), 'prompt 185 : le bouton Retour de la fiche revient d\'abord au mail');
+	// Nom affiché, compteurs, badge, clip de la liste
+	const c185 = contexte('fr');
+	for (const [langue, nom] of [['fr', 'Mails'], ['en', 'Mail']]) {
+		const dico = vm.runInContext(`TRADUCTIONS.${langue}`, c185);
+		verifier(dico['app.patron'] === nom && dico['menuApp.patron'] === nom, `prompt 185 : l'appli doit s'appeler « ${nom} » (${langue})`);
+		const restes = Object.entries(dico).filter(([k, v]) => /^(tuto\.5\.texte|guide\.apps\.ouvrir)$/.test(k) && /\b(Patron|Boss),/.test(v));
+		verifier(!restes.length, `prompt 185 : « Patron » / « Boss » encore cité comme nom d'appli (${langue}) : ${restes.map((x) => x[0])}`);
+		verifier(['patron.compteur', 'patron.annonceMail', 'patron.zone.liste', 'patron.aucunSel', 'patron.retourListe'].every((k) => dico[k]), `prompt 185 : clés de la messagerie manquantes (${langue})`);
+		verifier(!['patron.epingle', 'patron.nouveaux', 'patron.lu', 'patron.envoye', 'patron.vu'].some((k) => k in dico), `prompt 185 : clés orphelines de l'ancienne conversation (${langue})`);
+	}
+	verifier(/if \(cle === 'patron'\) return typeof mailsNonLus === 'function' \? mailsNonLus\(\)/.test(readFileSync(join(pub, 'multitache.js'), 'utf8')), 'prompt 185 : le badge de Mails doit compter les mails non lus');
+	verifier(/zoneTexteDebut\('listeMails', [^)]*\{ clip: true \}\)/.test(pj) && /function zoneDossiers[\s\S]*compteursMails\(f\.cle\)/.test(pj), 'prompt 185 : liste masquée et déclarée à l\'audit, compteurs sur chaque dossier');
+	verifier(/iconeLucide\('mail'/.test(pj) && /'inbox'/.test(pj) && /primaireRGBA\(0\.16\)/.test(pj), 'prompt 185 : icônes Lucide et accent du DS');
+}
+
 // Prompt 174 : raccourcis — l'onglet Raccourcis de l'aide (RACCOURCIS_AIDE) ne cite que des touches lues par le code,
 // aucune clé aide.k.* orpheline ; plus de touche pour les actions rares (R = recommencer, B = publier, S = sortie,
 // J = journal du game over) ; Ctrl / Cmd / Alt et les champs de saisie laissés au navigateur ; menu du jeu = pause
@@ -3280,6 +3348,331 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 		verifier(s1.length === 1 && s1[0].alpha > 0 && s1[0].alpha < 1 && s1[0].a === 44, `prompt 184 : sans mouvement (${regl}), fondu court en fin d'écart (${JSON.stringify(s1)})`);
 		ev('reduireAnimations = false; Juice.intensite = () => 1; Jeu.jauges = { fluidite: 54, reputation: 30, budget: 54 }; horloge = 9000; jaugesAffichees(); horloge = 20000; jaugesAffichees();');
 	}
+}
+
+// Prompt 186 : Community — bascule cartes / liste (icône Lucide, choix mémorisé) ; Journal — filtres en contrôle
+// segmenté du DS (dsSegments), plus de pli « Détails » ni de « Copier le résumé du jour » (touches V et C)
+{
+	const lire = (f) => readFileSync(join(pub, f), 'utf8');
+	const jn = lire('journal.js');
+	const cm = lire('community.js');
+	const ds = lire('ds.js');
+	verifier(!/copierResumeJour|afficherZoneCopie|zone-copie-journal|basculerDetailsJournal|JOURNAL\.details|JOURNAL\.copie/.test(jn), 'prompt 186 : copie du résumé et pli « Détails » retirés du Journal');
+	verifier(!/key === 'c' \|\| key === 'C'|key === 'v' \|\| key === 'V'/.test(jn), 'prompt 186 : touches C et V plus lues par le Journal');
+	verifier(!/function resume\(|resume, minutes/.test(lire('journal-donnees.js')), 'prompt 186 : JournalDonnees.resume retiré');
+	verifier(/function vueJour[\s\S]*?tuileFond\(x, y0[\s\S]*?frise\(z, y0 \+ h \+ 24\)/.test(jn) && !/if \(!JOURNAL\.details\) return frise/.test(jn), 'prompt 186 : les tuiles du jour s\'affichent d\'office');
+	verifier(/dsSegments\(z\.x, yf, lf, F\.map\(libelleFiltreJournal\), F\.indexOf\(JOURNAL\.filtre\)/.test(jn) && /dsSegmentVoisin\(f\.length/.test(jn) && /dsAnnonceSegment\(t\('journal\.filtres'\)/.test(jn), 'prompt 186 : filtres du Journal en contrôle segmenté (clic, ← →, annonce)');
+	verifier(/function dsSegments\([\s\S]*?DS\.primaire[\s\S]*?DS\.surPrimaire[\s\S]*?boutons\.push/.test(ds), 'prompt 186 : dsSegments (ds.js) à la couleur d\'accent');
+	verifier(!/dsSegments/.test(lire('patron.js')), 'prompt 186 : pas de contrôle segmenté dans Mails (colonne de dossiers du prompt 185)');
+	verifier(/#{3} Interrupteur et curseur[\s\S]*Contrôle segmenté[\s\S]*dsSegments/.test(readFileSync(join(pub, '..', '..', 'design-system', 'DESIGN.md'), 'utf8')), 'prompt 186 : DESIGN.md doit documenter le contrôle segmenté');
+	verifier(/iconeLucide\(liste \? 'layout-grid' : 'list'/.test(cm) && /infobulle\(txt/.test(cm) && !/COMMU\.grille/.test(cm), 'prompt 186 : bascule Community par icône Lucide avec infobulle');
+	const c = vm.createContext({});
+	vm.runInContext(
+		`var __st = new Map(), __ann = [], COMMU = { vue: null, defil: 50 }, boutons = [];
+		const Confort = { Son: { clic() {} } }; function annoncer(s) { __ann.push(s); } function t(k, v) { return v ? k + JSON.stringify(v) : k; }
+		function lireStockage(k) { return __st.has(k) ? __st.get(k) : null; } function ecrireStockage(k, v) { __st.set(k, v); }`,
+		c,
+	);
+	vm.runInContext(cm.slice(cm.indexOf('const CLE_VUE_COMMU'), cm.indexOf('/** Bouton à icône de la bascule')), c);
+	vm.runInContext(ds.slice(ds.indexOf('const dsSegmentVoisin'), ds.indexOf('/** Curseur à crans')), c);
+	const r = JSON.parse(
+		vm.runInContext(
+			`(() => {
+		const r = { d: vueCommunity() };
+		basculerVueCommunity();
+		r.apres = COMMU.vue; r.cle = __st.get('pxe-nte001-community-vue'); r.defil = COMMU.defil; r.ann = __ann.slice(-1)[0];
+		COMMU.vue = null; // appli fermée puis rouverte (ou partie rechargée)
+		r.relu = vueCommunity();
+		r.voisins = [dsSegmentVoisin(4, 0, -1), dsSegmentVoisin(4, 3, 1), dsSegmentVoisin(4, 1, 1)];
+		r.annSeg = dsAnnonceSegment('Filtre', 1, 4, 'Ratés (3)');
+		return JSON.stringify(r);
+	})()`,
+			c,
+		),
+	);
+	verifier(r.d === 'cartes' && r.apres === 'liste' && r.cle === 'liste' && r.relu === 'liste' && r.defil === 0, `prompt 186 : la vue Community doit basculer et rester mémorisée (${JSON.stringify(r)})`);
+	verifier(/commu\.vue\.annonce.*commu\.vue\.liste/.test(r.ann), `prompt 186 : annonce de la vue active (${r.ann})`);
+	verifier(r.voisins.join() === '3,0,2' && /ds\.segment\.annonce.*"i":2.*"n":4/.test(r.annSeg), `prompt 186 : ← → en boucle et annonce « n sur N » (${r.voisins} ${r.annSeg})`);
+	const ci = contexte('fr');
+	for (const langue of ['fr', 'en']) {
+		const dico = vm.runInContext(`TRADUCTIONS.${langue}`, ci);
+		verifier(['commu.vue.cartes', 'commu.vue.liste', 'commu.vue.annonce', 'commu.vue.versListe', 'commu.vue.versCartes', 'journal.filtres', 'journal.filtreNb', 'ds.segment.annonce', 'parametres.copier', 'parametres.copie.ok', 'parametres.copie.erreur'].every((k) => dico[k]), `prompt 186 : clés manquantes (${langue})`);
+		const orphelines = Object.keys(dico).filter((k) => /^(journal\.copi|journal\.resume\.|journal\.filtreActif|commu\.grille|commu\.fil$)/.test(k));
+		verifier(!orphelines.length, `prompt 186 : clés orphelines (${langue}) : ${orphelines}`);
+	}
+}
+
+// Prompt 188 : bouton « Kit de presse » du menu principal (modèle Livrables) — ordre clavier = ordre visuel, textes FR / EN
+{
+	const menu = readFileSync(join(pub, 'menu.js'), 'utf8');
+	const extras = menu.slice(menu.indexOf('const EXTRAS_MENU'), menu.indexOf('const HAUT_MENU'));
+	const ordre = [...extras.matchAll(/cle: '(\w+)'/g)].map((x) => x[1]).join();
+	verifier(ordre === 'livrables,kitpresse,depot,partager,presentation,pleinEcran,installer', `prompt 188 : ordre des extras du menu (${ordre})`);
+	verifier(/function ouvrirKitPresse\(\) \{\s*annoncer\(t\('mp\.kitpresse\.annonce'\)\);\s*ouvrirLien\('\.\/kit-presse\/'\);/.test(menu) && /presse: 'newspaper'/.test(menu), 'prompt 188 : ouvrirKitPresse (annonce + ./kit-presse/ en nouvel onglet) et icône Lucide newspaper');
+	// De haut en bas : Livrables, Kit de presse, puis les trois boutons — même largeur, 16 px d'écart
+	verifier(/boutonIcone\(b\.x, b\.y - 2 \* \(b\.h \+ 16\), 3 \* b\.l \+ 32, b\.h, 'carnet'/.test(menu) && /boutonIcone\(b\.x, b\.y - b\.h - 16, 3 \* b\.l \+ 32, b\.h, 'presse', t\('mp\.kitpresse'\), ouvrirKitPresse, focusExtra\(n, 'kitpresse'\)\)/.test(menu), 'prompt 188 : rangées Livrables puis Kit de presse au-dessus du bloc');
+	verifier(/BLOC_PARTAGE\.y - 2 \* \(BLOC_PARTAGE\.h \+ 16\) - 12, l: 3 \* BLOC_PARTAGE\.l \+ 56, h: 3 \* BLOC_PARTAGE\.h \+ 32 \+ 24/.test(readFileSync(join(pub, 'portrait.js'), 'utf8')), 'prompt 188 : la région portrait du bloc inclut les deux rangées');
+	const c = contexte('fr');
+	for (const langue of ['fr', 'en']) {
+		const dico = vm.runInContext(`TRADUCTIONS.${langue}`, c);
+		verifier(['mp.kitpresse', 'mp.kitpresse.infobulle', 'mp.kitpresse.annonce'].every((k) => dico[k]), `prompt 188 : clés mp.kitpresse manquantes (${langue})`);
+	}
+	verifier(existsSync(join(pub, 'kit-presse', 'index.html')) && existsSync(join(pub, 'kit-presse', 'communique-de-presse.txt')) && existsSync(join(pub, 'kit-presse', 'logo.svg')), 'prompt 188 : fichiers du kit de presse présents');
+}
+
+// Prompt 189 : personnages — ton du patron par semaine, trait (esquive / assume), SMS météo de Camille, registres
+{
+	const perso = readFileSync(join(pub, 'personnages.js'), 'utf8');
+	const html = readFileSync(join(pub, 'index.html'), 'utf8');
+	verifier(html.indexOf('./personnages.js') > html.indexOf('./histoire.js') && html.indexOf('./personnages.js') > html.indexOf('./game.js'), 'prompt 189 : personnages.js chargé après game.js et histoire.js');
+	verifier(/smsMeteoCamille\(journeeSuivante\)/.test(readFileSync(join(pub, 'soir.js'), 'utf8')), 'prompt 189 : finirSoir propose le SMS météo de Camille entre deux journées');
+	const TONS = { 0: 'professionnel', 1: 'pedagogue', 2: 'professionnel', 3: 'pression' };
+	const avecPerso = (ch) => {
+		const c = contexte('fr');
+		vm.runInContext(`var chapitreCourant = () => ${ch};`, c);
+		vm.runInContext(perso, c, { filename: 'personnages.js' });
+		return c;
+	};
+	const lundi = semaines[0];
+	const vus = new Set();
+	for (const ch of [0, 1, 2, 3]) {
+		const c = avecPerso(ch);
+		const r = vm.runInContext(
+			`(() => {
+			Jeu.chargerSemaine(${JSON.stringify(lundi)});
+			Jeu.nouvellePartie();
+			const consigne = Jeu.messagesPatron.find((m) => m.type === 'consigne');
+			const variantes = ['', '.v1', '.v2'].map((v) => TRADUCTIONS.fr['patron.ton.' + Jeu.tonPatron() + '.consigne' + v]);
+			const n0 = Jeu.messagesPatron.length;
+			Jeu.messagePatron('Test reproche', 'reproche', {});
+			const apresReproche = Jeu.messagesPatron.length - n0;
+			const e1 = Jeu.reactionPatronCommunity({ bonne: false }, { auteur: '@x' });
+			const e2 = Jeu.reactionPatronCommunity({ bonne: false }, { auteur: '@x' });
+			const a1 = Jeu.reactionPatronCommunity({ bonne: true }, { auteur: '@x' });
+			const sev = Jeu.messagesPatron.filter((m) => m.meta && m.meta.severe);
+			const fel = Jeu.messagesPatron.filter((m) => m.meta && m.meta.felicitation);
+			return { ton: Jeu.tonPatron(), champ: consigne && consigne.ton, texte: consigne ? String(consigne.texte) : '', variantes, apresReproche, e1, e2, a1, sev: sev.length, sevType: sev[0] && sev[0].type, fel: fel.length, jauges: JSON.stringify(Jeu.jauges) };
+		})()`,
+			c,
+		);
+		verifier(r.ton === TONS[ch] && r.champ === TONS[ch], `prompt 189 : ton du patron au chapitre ${ch} (${r.ton} / champ ${r.champ}, attendu ${TONS[ch]})`);
+		verifier(r.variantes.every(Boolean) && r.variantes.some((v) => r.texte.endsWith(v)), `prompt 189 : consigne du jour au chapitre ${ch} sans formulation du ton`);
+		vus.add(r.variantes.join('|'));
+		verifier(r.apresReproche === (ch === 3 ? 2 : 1), `prompt 189 : semaine 3 = deux messages après un reproche, sinon un (chapitre ${ch} : ${r.apresReproche})`);
+		verifier(r.e1 === 'esquive' && r.e2 === null && r.a1 === 'assume' && r.sev === 1 && r.sevType === 'reproche' && r.fel === 1, `prompt 189 : trait du patron (esquive / assume, une fois par jour) au chapitre ${ch}`);
+	}
+	verifier(vus.size === 3, 'prompt 189 : trois tons distincts sur les trois semaines');
+	// Camille : SMS seulement si la donnée météo du jour franchit un seuil explicite ; jamais sans la donnée du jour
+	const c = avecPerso(1);
+	for (const s of semaines) {
+		const r = vm.runInContext(
+			`(() => {
+			Jeu.chargerSemaine(${JSON.stringify(s)});
+			Jeu.nouvellePartie();
+			const S = Jeu.SEUILS_METEO_CAMILLE;
+			const meteo = Jeu.etat.semaine.meteo || [];
+			const erreurs = [];
+			Jeu.jours.forEach((j) => {
+				const m = meteo.find((x) => x.date === j.date);
+				const attendu = !m ? null : m.pluie_mm >= S.pluie_mm ? 'pluie' : m.rafales_max >= S.rafales_max ? 'vent' : m.temp_max >= S.temp_max ? 'chaleur' : null;
+				const obtenu = (Jeu.conditionMeteoCamille(j.date) || {}).condition || null;
+				if (attendu !== obtenu) erreurs.push(j.date + ' ' + attendu + '≠' + obtenu);
+			});
+			if (Jeu.conditionMeteoCamille('1999-01-01') !== null) erreurs.push('date sans donnée');
+			Jeu.jourIndex = Jeu.jours.length - 1;
+			if (Jeu.smsMeteoCamille() !== null) erreurs.push('SMS le dernier soir');
+			return erreurs;
+		})()`,
+			c,
+		);
+		verifier(r.length === 0, `prompt 189 : SMS météo de Camille (${s}) : ${r.join(', ')}`);
+	}
+	// Registres des plaintes (source : messages.json, généré en messages.js)
+	const msg = JSON.parse(readFileSync(join(pub, 'data', 'messages.json'), 'utf8'));
+	const regs = new Set(msg.plaintes.map((p) => p.registre).filter(Boolean));
+	verifier(regs.size >= 4 && [...regs].every((x) => ['etudiant', 'senior', 'touriste', 'travailleur', 'parent'].includes(x)), `prompt 189 : au moins 4 registres connus (${[...regs]})`);
+	// Clés FR / EN : chaque clé de personnages.js existe avec ses deux variantes dans les deux langues
+	const bases = [];
+	for (const ton of ['pedagogue', 'professionnel', 'pression']) for (const sorte of ['consigne', 'reproche', 'felicitation']) bases.push(`patron.ton.${ton}.${sorte}`);
+	bases.push('patron.ton.pression.relance', 'patron.trait.esquive', 'patron.trait.assume', 'camille.meteo.pluie', 'camille.meteo.vent', 'camille.meteo.chaleur');
+	for (const langue of ['fr', 'en']) {
+		const dico = vm.runInContext(`TRADUCTIONS.${langue}`, c);
+		const manque = bases.flatMap((b) => [b, b + '.v1', b + '.v2']).concat('camille.meteo.reponse').filter((k) => !dico[k]);
+		verifier(!manque.length, `prompt 189 : clés manquantes (${langue}) : ${manque.join(', ')}`);
+	}
+}
+
+// Prompt 191 : le mail du soir comme scène (fait marquant tiré d'un dossier joué, phrase du patron à trois niveaux,
+// bilan compact dessous), respiration « Fin de journée. » ≤ 3 s et passable, accroche météo du matin (donnée du jour)
+{
+	const c = contexte('fr');
+	const r = vm.runInContext(
+		`(() => {
+		Jeu.chargerSemaine(Jeu.semainesProposees()[0].lundi);
+		Jeu.nouvellePartie();
+		const out = { jours: [], erreurs: [] };
+		const choix = ['renfort', 'rien', 'devier', 'retenir'];
+		for (let jour = 0; jour < 2 && !Jeu.terminee; jour++) {
+			let i = 0;
+			while (Jeu.prochainDuJour()) {
+				const d = Jeu.prochainDuJour();
+				if (Jeu.conflit && Jeu.conflit()) Jeu.choisirPriorite('a');
+				Jeu.decider(choix[i++ % choix.length], d.contradiction ? d.contradiction.bonne : undefined);
+			}
+			Jeu.finDeJourneeTactique();
+			const j = Jeu.jourCourant();
+			const duJour = Jeu.evenementsJournee.filter((e) => e.jour === j.date);
+			const m = Jeu.mailDuJour();
+			const sc = m.scene;
+			if (!sc || !sc.patron) out.erreurs.push('scène absente');
+			else {
+				if (duJour.length && (!sc.fait || !duJour.includes(sc.fait.evenement))) out.erreurs.push('fait marquant hors des dossiers joués ce jour');
+				if (sc.fait) {
+					const e = sc.fait.evenement, txt = String(sc.fait.texte);
+					if (!txt.includes(e.heure) || !txt.includes(e.externe) || (e.cleAction !== 'temps' && !txt.includes(e.action))) out.erreurs.push('fait sans heure / nature / décision : ' + txt);
+					if (e.ligne && !txt.includes(String(e.ligne))) out.erreurs.push('fait sans ligne : ' + txt);
+					if (txt.includes('{') || txt.includes('[À COMPLÉTER]')) out.erreurs.push('gabarit non rempli : ' + txt);
+					const chiffres = (txt.match(/\\d+/g) || []).filter((n) => !(e.heure + ' ' + (e.ligne || '') + ' ' + e.externe + ' ' + e.action + ' ' + e.meilleureAction + ' ' + e.retard + ' ' + e.retardEffectif).includes(n));
+					if (chiffres.length) out.erreurs.push('chiffre non issu du dossier : ' + chiffres.join(','));
+				}
+				if (String(Jeu.mailDuJour().scene.patron) !== String(sc.patron)) out.erreurs.push('tirage du patron non déterministe');
+				if (m.lignes.length < 2) out.erreurs.push('bilan chiffré absent');
+			}
+			out.jours.push({ n: duJour.length, niveau: sc && sc.niveau });
+			if (!Jeu.jours[Jeu.jourIndex + 1]) break;
+			Jeu.journeeSuivante();
+		}
+		// Niveaux : seuils sur la part de « bon choix ! »
+		const faux = (ev) => ({ cleAction: 'x', resultat: {}, heure: '09:00' });
+		const sauve = Jeu.evaluer;
+		const niv = (bons, total) => { let k = 0; Jeu.evaluer = () => (k++ < bons ? 'bon' : 'rate'); const n = Jeu.niveauPatronDuJour(Array.from({ length: total }, faux)); return n; };
+		out.niveaux = [niv(3, 3), niv(1, 2), niv(0, 3), Jeu.niveauPatronDuJour([])].join(',');
+		Jeu.evaluer = sauve;
+		out.cles = ['satisfait', 'neutre', 'inquiet'].map((n) => { Jeu.jourIndex = 0; return String(T('mailf.patron.' + n)); });
+		// Accroche météo : seulement avec la donnée du jour
+		const j0 = Jeu.jours[0];
+		const met = (Jeu.etat.semaine.meteo || []).find((x) => x.date === j0.date);
+		const acc = Jeu.accrocheMeteo(j0.date);
+		out.meteoOk = met ? !!acc && String(acc).includes(String(met.temp_max).replace('.', ',')) : acc === null;
+		out.meteoAbsente = Jeu.accrocheMeteo('1999-01-01') === null;
+		return out;
+	})()`,
+		c,
+	);
+	verifier(!r.erreurs.length, `prompt 191 : mail du soir : ${r.erreurs.join(' | ')}`);
+	verifier(r.jours.length === 2, `prompt 191 : deux journées jouées (${r.jours.length})`);
+	verifier(r.niveaux === 'satisfait,neutre,inquiet,neutre', `prompt 191 : niveaux du patron (${r.niveaux})`);
+	verifier(new Set(r.cles).size === 3 && r.cles.every((x) => x && !x.startsWith('mailf.')), 'prompt 191 : trois phrases du patron distinctes');
+	verifier(r.meteoOk && r.meteoAbsente, `prompt 191 : accroche météo du jour (présente ${r.meteoOk}, absente sans donnée ${r.meteoAbsente})`);
+	for (const langue of ['fr', 'en']) {
+		const dico = vm.runInContext(`TRADUCTIONS.${langue}`, c);
+		const cles = ['satisfait', 'neutre', 'inquiet'].flatMap((n) => ['', '.v1', '.v2'].map((v) => `mailf.patron.${n}${v}`)).concat('mailf.fait.titre', 'mailf.fait.bon', 'mailf.fait.rate', 'mailf.fait.tropTard', 'mailf.fait.aucun', 'mailf.bilan', 'soir.respiration', 'transition.meteo');
+		const manque = cles.filter((k) => !dico[k]);
+		verifier(!manque.length, `prompt 191 : clés manquantes (${langue}) : ${manque.join(', ')}`);
+	}
+	// Respiration : ≤ 3 s, passable (clic, Entrée, Espace), temps suspendu, nuit directe en animations réduites
+	const soir = readFileSync(join(pub, 'soir.js'), 'utf8');
+	const duree = Number((soir.match(/const DUREE_RESPIRATION = (\d+);/) || [])[1]);
+	verifier(duree > 0 && duree <= 3000, `prompt 191 : respiration ≤ 3 s (${duree} ms)`);
+	verifier(/action: passerRespiration/.test(soir) && /respirationSoir\(\) && [^\n]*keyCode === ENTER[^\n]*key === ' '[^\n]*passerRespiration\(\)/.test(soir), 'prompt 191 : respiration passable au clic, à Entrée et à Espace');
+	verifier(/reduireAnimations \? 1 :/.test(soir.slice(soir.indexOf('function dessinerRespirationSoir'))), 'prompt 191 : animations réduites → pas de fondu progressif');
+	verifier(/dessinerRespirationSoir\(\)/.test(readFileSync(join(pub, 'sketch.js'), 'utf8')), 'prompt 191 : respiration dessinée');
+	const cr = contexte('fr');
+	vm.runInContext(
+		`var phase = 'mail', ecran = 'jeu', vue = 'bureau', fenetre = null, enPause = false, enSieste = false, reveil = null, reduireAnimations = false, smsActif = false;
+		var MENU = { actif: false }, PC = { fenetre: null }, CAMERA = { x: 0, y: 0 }, METEO_VISU = { nuit: 1 }, PIECE = { lampe: false }, focusBureau = -1, OBJETS_BUREAU = [];
+		var L = 1920, H = 1080, __t = 0, ENTER = 13, RETURN = 13, ESCAPE = 27, keyCode = 0, key = '', __annonces = [];
+		var millis = () => __t, constrain = (v, a, b) => Math.max(a, Math.min(b, v));
+		var seLever = () => {}, annoncer = (x) => __annonces.push(String(x)), interaction = () => {};
+		var Confort = { Son: { bip: () => {}, musique: { attenuer: () => {} } } }, Sauvegarde = { auto: () => {} };`,
+		cr,
+	);
+	vm.runInContext(soir, cr, { filename: 'soir.js' });
+	const rr = vm.runInContext(
+		`(() => {
+		Jeu.chargerSemaine(Jeu.semainesProposees()[0].lundi); Jeu.nouvellePartie();
+		const o = {};
+		rangerPoste();
+		o.debut = respirationSoir() && !lampeAllumee() && __annonces.includes('Fin de journée.');
+		__t = 1500; o.lampe = lampeAllumee() && respirationSoir() && !sortieVisible();
+		__t = 3001; o.finie = !respirationSoir();
+		phase = 'mail'; __t = 5000; rangerPoste(); __t = 5200;
+		keyCode = 0; key = ' '; o.espace = toucheSoir() === true && !respirationSoir() && sortieVisible();
+		phase = 'mail'; __t = 9000; rangerPoste(); keyCode = 13; key = 'Enter'; toucheSoir(); o.entree = !respirationSoir() && !SOIR.sortie;
+		phase = 'mail'; __t = 12000; rangerPoste(); passerRespiration(); o.clic = !respirationSoir();
+		phase = 'mail'; reduireAnimations = true; __t = 15000; rangerPoste(); o.reduit = nuitSoir() === 1 && lampeAllumee() && respirationSoir();
+		return o;
+	})()`,
+		cr,
+	);
+	for (const [k, v] of Object.entries(rr)) verifier(v === true, `prompt 191 : respiration ${k} = ${v}`);
+	const imm = readFileSync(join(pub, 'immersion.js'), 'utf8');
+	verifier(/function tempsSuspendu\(\) \{\n\treturn [^\n]*phase === 'soir'[^\n]*\n\}/.test(imm), 'prompt 191 : tempsSuspendu() reste un return sur une ligne et suspend le soir');
+	verifier(/Jeu\.accrocheMeteo\(j\.date\)/.test(imm.slice(imm.indexOf('function lignesTransitionJour'))), 'prompt 191 : accroche météo sur l\'écran « Jour N »');
+}
+
+// Prompt 193 : badge lisible dans chaque palette daltonienne, bouton plein écran au menu, musique hors ligne
+{
+	const lire193 = (f) => readFileSync(join(pub, f), 'utf8');
+	// 1. Badge : texte calculé (texteSurAplat, theme.js) ≥ 4,5:1 sur chaque aplat de chaque palette de accessibilite.js
+	const c193 = { DS: { fond: '#0D0C0C' }, C: {}, MENU_C: {}, document: { documentElement: { style: { setProperty: () => {} } } }, localStorage: { getItem: () => null, setItem: () => {} }, location: { search: '' } };
+	vm.createContext(c193);
+	const acc = lire193('accessibilite.js');
+	const blocPal = acc.slice(acc.indexOf('const PALETTES = {'), acc.indexOf('const ORDRE_DALTONISME'));
+	vm.runInContext(lire193('theme.js') + ';' + blocPal + ';globalThis.T = { PALETTES, texteSurAplat, rapportContraste };', c193);
+	const { PALETTES: pals, texteSurAplat: sur, rapportContraste: rc } = c193.T;
+	const ds = lire193('ds.js');
+	const info = /info: '(#[0-9A-Fa-f]{6})'/.exec(ds)[1];
+	verifier(Object.keys(pals).length >= 4 && ['normal', 'protan', 'deutan', 'tritan'].every((k) => pals[k]), 'prompt 193 : les quatre palettes de daltonisme');
+	for (const [id, p] of Object.entries(pals)) {
+		for (const [type, fond] of [['erreur', p.critique], ['succes', p.bon], ['alerte', p.alerte], ['info', info]]) {
+			const txt = sur(fond);
+			verifier(rc(txt, fond) >= 4.5, `prompt 193 : badge ${type} en palette ${id} — ${txt} sur ${fond} = ${rc(txt, fond).toFixed(2)}:1 (< 4,5)`);
+		}
+	}
+	verifier(sur(pals.protan.critique) === '#0D0C0C' && sur(pals.normal.critique) === '#FFFFFF', 'prompt 193 : badge sombre sur l\'orange protan / deutan, blanc sur le rouge normal');
+	const badge = ds.slice(ds.indexOf('function dsBadge'), ds.indexOf('/** Interrupteur'));
+	verifier(/fill\(texteSurAplat\(aplat\)\)/.test(badge) && !/'#[0-9A-Fa-f]{6}'|daltonisme/.test(badge), 'prompt 193 : dsBadge choisit son texte par texteSurAplat, sans hexadécimal ni liste de palettes en dur');
+	verifier(/texte: texteSurAplat\(hex\)/.test(lire193('theme.js')), 'prompt 193 : accentDerive et le badge partagent texteSurAplat');
+	// 2. Plein écran : bouton de la ligne du haut, même logique que F, avant « installer » dans l'ordre clavier, masqué sans API
+	const menu = lire193('menu.js');
+	const extras = menu.slice(menu.indexOf('const EXTRAS_MENU'), menu.indexOf('/** Prompt 171 : ligne du haut'));
+	verifier(/pleinEcranPossible\(\) \? \[\{ cle: 'pleinEcran'[^\n]*basculerPleinEcran\(\)/.test(extras) && extras.indexOf("cle: 'pleinEcran'") < extras.indexOf("cle: 'installer'"), 'prompt 193 : entrée plein écran dans EXTRAS_MENU, juste avant installer, seulement si l\'API existe');
+	verifier(/boutonCarreHaut\(xLangue - LANGUES\.length \* \(84 \+ 8\) - 8 - HAUT_MENU\.h, HAUT_MENU\.y, HAUT_MENU\.h, focusExtra\(e\.length, 'pleinEcran'\), pleinEcranActif\(\) \? 'minimize' : 'maximize', libellePleinEcranMenu\(\), basculerPleinEcran\)/.test(menu), 'prompt 193 : bouton plein écran à gauche de FR / EN, icône maximize / minimize, basculerPleinEcran réutilisé');
+	verifier(/annoncer\(choisi\(\)\.libelle \? choisi\(\)\.libelle\(\) : t\('mp\.' \+ choisi\(\)\.cle\)\)/.test(menu), 'prompt 193 : l\'annonce clavier suit l\'état du plein écran');
+	verifier((lire193('sketch.js').match(/requestFullscreen\(\)/g) || []).length === 1 && !/requestFullscreen|exitFullscreen/.test(menu), 'prompt 193 : une seule logique de plein écran (sketch.js)');
+	const ic = lire193('icones-lucide.js');
+	verifier(/'maximize':/.test(ic) && /'minimize':/.test(ic), 'prompt 193 : icônes maximize / minimize disponibles');
+	for (const langue of ['fr', 'en']) {
+		const d = vm.runInContext(`TRADUCTIONS[${JSON.stringify(langue)}]`, contexte(langue));
+		verifier(/\(F\)$/.test(d['mp.pleinEcran'] || '') && /\(F\)$/.test(d['mp.pleinEcran.quitter'] || '') && d['mp.pleinEcran'] !== d['mp.pleinEcran.quitter'], `prompt 193 : libellés du bouton plein écran (${langue})`);
+	}
+	// 3. Musique hors ligne : Range servi depuis le cache (206), morceaux précachés, repli WebAudio si le fichier échoue
+	const sw = lire193('sw.js');
+	verifier(/headers\.has\('range'\)\) \{\n\t\te\.respondWith\(caches\.match\(req\.url, \{ ignoreSearch: true \}\)\.then\(\(enCache\) => \(enCache \? reponsePartielle\(req, enCache\) : fetch\(req\)\)\)\);/.test(sw), 'prompt 193 : requêtes Range servies depuis le cache');
+	for (const f of readdirSync(join(pub, 'audio')).filter((f) => /\.(ogg|mp3)$/.test(f))) verifier(sw.includes(`"./audio/${f}"`), `prompt 193 : ${f} doit être précaché`);
+	verifier(readFileSync(join(pub, '..', 'scripts', 'generer-sw.mjs'), 'utf8').includes('reponsePartielle\\(req, enCache\\)'), 'prompt 193 : le générateur refuse un sw.js sans lecture partielle depuis le cache');
+	if (typeof Response === 'function' && typeof Blob === 'function') {
+		const fn = sw.slice(sw.indexOf('function reponsePartielle'));
+		const rp = new Function('Response', fn + ';return reponsePartielle;')(Response);
+		const req = (r) => ({ headers: { get: (k) => (k === 'range' ? r : null) } });
+		const plein = () => new Response(new Blob([new Uint8Array(100).map((_, i) => i)]), { headers: { 'content-type': 'audio/ogg' } });
+		const essais = [
+			['bytes=0-', 206, 'bytes 0-99/100', 100, 0],
+			['bytes=10-19', 206, 'bytes 10-19/100', 10, 10],
+			['bytes=-5', 206, 'bytes 95-99/100', 5, 95],
+			['bytes=90-500', 206, 'bytes 90-99/100', 10, 90],
+			['bytes=200-', 416, 'bytes */100', 0, null],
+			['n\'importe quoi', 200, null, 100, 0],
+		];
+		for (const [r, statut, plage, longueur, premier] of essais) {
+			const rep = await rp(req(r), plein());
+			const octets = new Uint8Array(await rep.arrayBuffer());
+			verifier(rep.status === statut && rep.headers.get('content-range') === plage && octets.length === longueur && (premier === null || octets[0] === premier) && (statut === 416 || rep.headers.get('content-type') === 'audio/ogg'), `prompt 193 : réponse partielle « ${r} » (${rep.status}, ${rep.headers.get('content-range')}, ${octets.length} octets)`);
+		}
+	}
+	const conf = lire193('confort.js');
+	verifier(/a\.addEventListener\('error', \(\) => \{\n\t\t\t\tif \(Musique\.audio !== a\) return;\n\t\t\t\tMusique\.enPanne\.add\(p\.fichier\);[\s\S]{0,260}Musique\.demarrer\(\);/.test(conf) && /Musique\.enPanne\.has\(p\.fichier\) \? PISTES\.origine : p/.test(conf), 'prompt 193 : musique en fichier injouable → repli sur le morceau WebAudio');
 }
 
 if (erreurs.length) {

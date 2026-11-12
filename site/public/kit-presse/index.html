@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="fr">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Nantes en régulation — Kit de presse</title>
+		<meta name="description" content="Kit de presse du jeu « Nantes en régulation » : communiqué, captures d'écran, vidéo de démonstration, logo et liens." />
+		<link rel="icon" href="logo.svg" type="image/svg+xml" />
+		<link rel="canonical" href="https://workshop-design-interactions.pages.dev/kit-presse/" />
+		<meta name="theme-color" content="#0d0c0c" />
+		<link rel="stylesheet" href="../fonts.css" />
+		<!-- Prompt 188 : page autonome (aucune dépendance au jeu ni réseau externe), Pixel Design System :
+		     fond #0D0C0C, primaire #D4031C (aplats, texte blanc dessus : 5,5:1), texte blanc / blanc 80 % (≥ 11:1),
+		     liens #FF8A95 sur fond nuit (≥ 7:1), focus en contour blanc 3 px. -->
+		<style>
+			:root { color-scheme: dark; --fond: #0d0c0c; --surface: #1c1a1a; --texte: #ffffff; --doux: rgba(255, 255, 255, 0.8); --primaire: #d4031c; --lien: #ff8a95; --trait: rgba(255, 255, 255, 0.35); }
+			* { box-sizing: border-box; }
+			html { scroll-behavior: smooth; }
+			@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+			body { margin: 0; background: var(--fond); color: var(--texte); font: 1.0625rem/1.6 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace; }
+			a { color: var(--lien); text-underline-offset: 3px; }
+			a:focus-visible, video:focus-visible, button:focus-visible { outline: 3px solid var(--texte); outline-offset: 3px; }
+			.evitement { position: absolute; left: -9999px; top: 0; background: var(--texte); color: var(--fond); padding: .75rem 1rem; }
+			.evitement:focus { left: 1rem; top: 1rem; z-index: 2; }
+			header, main, footer { max-width: 64rem; margin: 0 auto; padding: 0 1rem; }
+			header { padding-top: 2.5rem; padding-bottom: 1rem; border-bottom: 4px solid var(--primaire); }
+			h1, h2 { font-family: 'Bitsy Pixels', 'JetBrains Mono', ui-monospace, monospace; line-height: 1.2; }
+			h1 { font-size: clamp(1.75rem, 5vw, 2.75rem); margin: 0 0 .5rem; }
+			h2 { font-size: 1.5rem; margin: 2.5rem 0 1rem; }
+			h3 { font-size: 1.125rem; margin: 1.5rem 0 .5rem; }
+			.sous-titre { margin: 0; color: var(--doux); overflow-wrap: anywhere; }
+			nav ul { list-style: none; padding: 0; margin: 1rem 0 0; display: flex; flex-wrap: wrap; gap: .5rem; }
+			nav a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 .75rem; border: 2px solid var(--trait); color: var(--texte); text-decoration: none; }
+			nav a:hover { border-color: var(--texte); }
+			section { border-top: 1px solid var(--trait); }
+			section:first-of-type { border-top: 0; }
+			.communique { background: var(--surface); padding: 1.25rem 1.25rem .5rem; border-left: 6px solid var(--primaire); }
+			.communique h3:first-child { margin-top: 0; font-size: 1.25rem; }
+			.bouton { display: inline-flex; align-items: center; min-height: 44px; padding: .5rem 1rem; background: var(--primaire); color: #ffffff; font-weight: 700; text-decoration: none; border: 2px solid var(--primaire); }
+			.bouton:hover { background: var(--fond); }
+			.bouton.secondaire { background: transparent; border-color: var(--texte); }
+			.bouton.secondaire:hover { background: var(--texte); color: var(--fond); }
+			.actions { display: flex; flex-wrap: wrap; gap: .75rem; margin: 1rem 0; padding: 0; list-style: none; }
+			.galerie { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 28rem), 1fr)); gap: 1.5rem; }
+			figure { margin: 0; }
+			figure img, video { display: block; width: 100%; height: auto; border: 1px solid var(--trait); background: #000000; }
+			figcaption { color: var(--doux); font-size: .9375rem; margin-top: .5rem; }
+			figcaption a { display: inline-flex; align-items: center; min-height: 44px; }
+			.logos { display: flex; flex-wrap: wrap; gap: 1rem; }
+			.logos div { width: 10rem; height: 10rem; display: flex; align-items: center; justify-content: center; border: 1px solid var(--trait); }
+			.logos .clair { background: #ffffff; }
+			.logos img { width: 6rem; height: 6rem; image-rendering: pixelated; }
+			footer { margin-top: 3rem; padding-top: 1rem; padding-bottom: 2.5rem; border-top: 1px solid var(--trait); color: var(--doux); }
+			code { font-family: inherit; }
+			li, p, figcaption, h1, h3 { overflow-wrap: anywhere; } /* longues URL : pas de défilement horizontal sur mobile */
+		</style>
+	</head>
+	<body>
+		<a class="evitement" href="#contenu">Aller au contenu</a>
+		<header>
+			<h1>Nantes en régulation — Kit de presse</h1>
+			<p class="sous-titre">Le jeu : <a href="https://workshop-design-interactions.pages.dev/">https://workshop-design-interactions.pages.dev/</a></p>
+			<nav aria-label="Sections du kit">
+				<ul>
+					<li><a href="#communique">Communiqué</a></li>
+					<li><a href="#visuels">Visuels</a></li>
+					<li><a href="#video">Vidéo</a></li>
+					<li><a href="#logo">Logo</a></li>
+					<li><a href="#liens">Liens</a></li>
+				</ul>
+			</nav>
+		</header>
+		<main id="contenu">
+			<section aria-labelledby="communique">
+				<h2 id="communique">Communiqué de presse</h2>
+				<!-- Même texte que communique-de-presse.md / .txt (à tenir identique) -->
+				<article class="communique">
+					<h3>« Nantes en régulation » : un jeu web pour rejouer une semaine réelle du réseau de transports nantais</h3>
+					<p><strong>Nantes, novembre 2026.</strong> Deux étudiants de l'ESD Nantes, Mattéo Brevet et Guillaume Renoult, publient « Nantes en régulation », un jeu gratuit qui se joue dans le navigateur. Conçu pendant l'atelier B3 Design des 9, 10 et 12 novembre 2026, il installe le joueur au poste d'un régulateur, en salle de contrôle, face aux incidents du réseau Naolib.</p>
+					<p>Le principe : choisir une semaine réelle, puis trancher, dossier après dossier, les situations qui l'ont marquée. Les dossiers viennent de données ouvertes : les perturbations datées et l'offre du réseau publiées sur le portail Open Data de Nantes Métropole, la météo de la semaine (Open-Meteo) et, en temps réel, les retards d'au moins 10 minutes. Aucun événement n'est inventé, hormis au plus un incident fictif par semaine, marqué « Fictif » à l'écran.</p>
+					<p>Chaque dossier propose quatre réponses, dont « attendre ». Chaque choix fait bouger trois jauges à préserver : la fluidité du réseau, sa réputation et le budget. La pression ne vient pas d'un chronomètre : un retard non traité s'aggrave dans la file, et les dossiers restants à la fin du service comptent comme non traités. Plusieurs fins dépendent du bilan des trois jauges.</p>
+					<p>Le jeu, écrit en p5.js, se lance en ligne ou hors ligne, s'installe comme une application et se joue au clavier, à la souris ou au toucher, en français et en anglais. Son code est publié sous licence MIT, avec l'historique complet des prompts qui l'ont construit.</p>
+					<h3>En bref</h3>
+					<ul>
+						<li>Titre : « Nantes en régulation » (édition PATRIMOINE.EXE · NTE001)</li>
+						<li>Auteurs : Mattéo Brevet et Guillaume Renoult, ESD Nantes, atelier B3 Design, novembre 2026</li>
+						<li>Sources : données ouvertes du réseau Naolib (Open Data Nantes Métropole), météo Open-Meteo</li>
+						<li>Jouer : <a href="https://workshop-design-interactions.pages.dev/">https://workshop-design-interactions.pages.dev/</a></li>
+						<li>Présentation : <a href="https://workshop-design-interactions.pages.dev/presentation/">https://workshop-design-interactions.pages.dev/presentation/</a></li>
+						<li>Code (licence MIT) : <a href="https://github.com/ArtistDev44/workshop-design-interactions">https://github.com/ArtistDev44/workshop-design-interactions</a></li>
+						<li>Exposition : [À COMPLÉTER]</li>
+					</ul>
+					<h3>Contact</h3>
+					<p>[À COMPLÉTER]</p>
+				</article>
+				<ul class="actions">
+					<li><a class="bouton" href="communique-de-presse.txt" download>Télécharger le communiqué (.txt)</a></li>
+					<li><a class="bouton secondaire" href="communique-de-presse.md" download>Version Markdown (.md)</a></li>
+				</ul>
+			</section>
+
+			<section aria-labelledby="visuels">
+				<h2 id="visuels">Visuels</h2>
+				<p>Vrai rendu du jeu, sans retouche. Conditions de réutilisation des images : [À COMPLÉTER].</p>
+				<div class="galerie">
+					<figure>
+						<img src="hero.jpg" width="1920" height="1080" loading="lazy" alt="La salle de régulation en pixel art : l'écran du poste affiche le bureau de RégulOS, la Loire et la grue en fond, l'horloge à 10 h 00 ; une consigne invite à cliquer sur l'écran pour traiter un incident en cours." />
+						<figcaption>hero.jpg — la salle de contrôle, avant de s'installer au poste (1920 × 1080). <a href="hero.jpg" download>Télécharger hero.jpg</a></figcaption>
+					</figure>
+					<figure>
+						<img src="detail-01.jpg" width="1920" height="1080" loading="lazy" alt="Le poste de régulation : en haut les jauges fluidité, réputation et budget ; au centre le dossier « Affluence signalée · Gravité moyenne », la plainte d'un usager, l'onglet Enquête avec l'info trafic consultée et quatre réponses possibles ; à droite les équipes police, ambulance, techniciens et pompiers." />
+						<figcaption>detail-01.jpg — un signalement réel, enquêté source par source avant de répondre (1920 × 1080). <a href="detail-01.jpg" download>Télécharger detail-01.jpg</a></figcaption>
+					</figure>
+					<figure>
+						<img src="process.jpg" width="1920" height="1080" loading="lazy" alt="Le rapport hebdomadaire papier de la semaine 1 (14 au 20 septembre 2026), tamponné « À surveiller » : score 185 sur 300, jauges fluidité, réputation et budget, décisions clés et courbe des jauges décision par décision." />
+						<figcaption>process.jpg — le rapport papier de fin de semaine, mode histoire (1920 × 1080). <a href="process.jpg" download>Télécharger process.jpg</a></figcaption>
+					</figure>
+					<figure>
+						<img src="thumb.jpg" width="640" height="360" loading="lazy" alt="Vignette du jeu : image réduite de la vidéo de démonstration." />
+						<figcaption>thumb.jpg — vignette (640 × 360), image d'attente de la vidéo. <a href="thumb.jpg" download>Télécharger thumb.jpg</a></figcaption>
+					</figure>
+				</div>
+			</section>
+
+			<section aria-labelledby="video">
+				<h2 id="video">Vidéo</h2>
+				<figure>
+					<!-- La vidéo n'est pas dupliquée dans le kit : elle reste dans ../captures/ (même fichier que le cartel) -->
+					<video src="../captures/demo.mp4" controls muted playsinline preload="none" poster="thumb.jpg" width="1280" height="720" aria-describedby="video-legende"></video>
+					<figcaption id="video-legende">demo.mp4 — 29 s d'une vraie partie, du menu au rapport de la semaine, sans son (enregistrement automatisé, accéléré × 1,25). <a href="../captures/demo.mp4" download="nantes-en-regulation-demo.mp4">Télécharger la vidéo (MP4)</a></figcaption>
+				</figure>
+			</section>
+
+			<section aria-labelledby="logo">
+				<h2 id="logo">Logo</h2>
+				<p>Bulle de dialogue « … » dont la pointe est un marqueur de carte, en pixel art (SVG, 16 × 16, à agrandir sans lissage).</p>
+				<div class="logos">
+					<div><img src="logo.svg" width="96" height="96" alt="Logo de Nantes en régulation sur fond sombre" /></div>
+					<div class="clair"><img src="logo.svg" width="96" height="96" alt="Logo de Nantes en régulation sur fond clair" /></div>
+				</div>
+				<ul class="actions">
+					<li><a class="bouton" href="logo.svg" download="nantes-en-regulation-logo.svg">Télécharger le logo (SVG)</a></li>
+				</ul>
+			</section>
+
+			<section aria-labelledby="liens">
+				<h2 id="liens">Liens</h2>
+				<ul class="actions">
+					<li><a class="bouton" href="https://workshop-design-interactions.pages.dev/">Jouer au jeu</a></li>
+					<li><a class="bouton secondaire" href="https://github.com/ArtistDev44/workshop-design-interactions">Dépôt du code</a></li>
+					<li><a class="bouton secondaire" href="../presentation/">Présentation du projet</a></li>
+					<li><a class="bouton secondaire" href="https://github.com/ArtistDev44/workshop-design-interactions/blob/main/LICENSE">Licence (MIT)</a></li>
+				</ul>
+				<p>Index des fichiers du kit : <a href="README.md">README.md</a>.</p>
+			</section>
+		</main>
+		<footer>
+			<p>Mattéo Brevet &amp; Guillaume Renoult — ESD Nantes, 2026 — Code sous licence MIT</p>
+		</footer>
+	</body>
+</html>

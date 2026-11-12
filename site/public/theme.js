@@ -43,6 +43,10 @@ function eclaircirJusqua(hex, fond, seuil) {
 	}
 	return ACCENT_CLAIR;
 }
+/** Texte posé sur un aplat `hex` : blanc ou fond sombre du DS, le plus contrasté des deux (prompt 176 ; badges, prompt 193) */
+function texteSurAplat(hex) {
+	return rapportContraste(ACCENT_CLAIR, hex) >= rapportContraste(ACCENT_SOMBRE, hex) ? ACCENT_CLAIR : ACCENT_SOMBRE;
+}
 /** Prompt 176 — fonction unique des usages d'un accent : { fond, texte, trait, texteSurFond }.
  * texte : blanc ou sombre, le plus contrasté sur l'aplat ; trait : accent à 3:1 au moins sur le fond sombre ;
  * texteSurFond : accent à 4,5:1 au moins sur le fond sombre (liens, libellés actifs). */
@@ -50,7 +54,7 @@ function accentDerive(hex, surface) {
 	const s = surface || ACCENT_SURFACE;
 	return {
 		fond: hex,
-		texte: rapportContraste(ACCENT_CLAIR, hex) >= rapportContraste(ACCENT_SOMBRE, hex) ? ACCENT_CLAIR : ACCENT_SOMBRE,
+		texte: texteSurAplat(hex),
 		trait: eclaircirJusqua(hex, s, 3),
 		texteSurFond: eclaircirJusqua(hex, s, 4.5),
 	};

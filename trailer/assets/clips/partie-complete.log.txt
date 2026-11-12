@@ -1,0 +1,132 @@
+   0.3 menu principal
+   4.9 clic « Nouvelle partie »
+   8.8 décoche « Prendre en main (guidé) »
+  12.0 clic « Lancer la partie »
+  15.4 autorisations : clic « Jouer »
+  15.6 carton du jour (JOUR 1/6 — SEMAINE 1)
+  19.8 téléphone : messages de Camille, cheffe de salle
+  21.1 message suivant
+  22.5 message suivant
+  23.9 message suivant
+  25.2 message suivant
+  26.6 message suivant
+  28.0 message suivant
+  31.6 tutoriel passé (Échap)
+  32.1 vue du bureau : salle de contrôle, PC, horloge, téléphone
+  41.8 clic sur l’écran du PC → appli Carte
+  48.1 clic sur le signalement (carte)
+  51.4 dossier ouvert : réponses possibles
+  51.4 dossier refermé pour envoyer une équipe
+  55.3 glisser l’équipe Police vers le signalement
+  69.7 équipe Police en route
+  74.3 rouvre le dossier
+  79.0 choix de la réponse 1 → jauges
+  84.8 clic « Dossier suivant »
+  89.4 appli Mails
+  95.1 appli Community
+ 100.8 appli Journal
+ 106.4 appli Données
+ 111.9 retour à la Carte
+ 113.6 état jeu|attente|poste|appli|false|tache|false|false||false|false|0|false|false · 10h22 · file 0
+ 115.8 fenêtre tache fermée
+ 116.5 état jeu|attente|poste|appli|false||false|false||false|false|0|false|false · 11h38 · file 0
+ 116.5 rien à traiter : sieste (Z), le temps file ×100
+ 117.4 état jeu|reveil|zoom-arriere|appli|false||false|false||false|true|0|false|false · 13h03 · file 2
+ 117.4 réveil
+ 118.2 état jeu|selection|bureau|appli|false||false|false||false|false|0|false|false · 13h09 · file 2
+ 120.0 clic sur l’écran du PC
+ 120.8 état jeu|selection|poste|appli|false||false|false||false|false|0|false|false · 13h11 · file 2
+ 120.8 prend le signalement suivant
+ 121.7 état jeu|decision|poste|appli|false||false|false||false|false|0|false|false · 13h11 · file 2
+ 125.0 réponse 1
+ 127.8 état jeu|narration|poste|appli|false||false|false||false|false|0|false|false · 13h14 · file 1
+ 129.3 dossier suivant
+ 130.1 état jeu|selection|poste|appli|false||false|false||false|false|0|false|false · 13h21 · file 1
+ 130.1 prend le signalement suivant
+ 131.0 état jeu|decision|poste|appli|false||false|false||false|false|0|false|false · 13h21 · file 1
+ 134.3 réponse 2
+ 137.1 état jeu|narration|poste|appli|false||false|false||false|false|0|false|false · 13h24 · file 0
+ 138.6 dossier suivant
+ 139.4 état jeu|attente|poste|appli|false||false|false||false|false|0|false|false · 14h43 · file 0
+ 139.4 rien à traiter : sieste (Z), le temps file ×100
+ 140.2 état jeu|reveil|zoom-arriere|appli|false||false|false||false|true|0|false|false · 16h07 · file 2
+ 140.2 réveil
+ 141.0 état jeu|selection|bureau|appli|false||false|false||false|false|0|false|false · 16h11 · file 2
+ 142.8 clic sur l’écran du PC
+ 143.7 état jeu|selection|poste|appli|false||false|false||false|false|0|false|false · 16h14 · file 2
+ 143.7 prend le signalement suivant
+ 144.5 état jeu|decision|poste|appli|false||false|false||false|false|0|false|false · 16h14 · file 2
+ 147.9 réponse 1
+ 150.7 état jeu|narration|poste|appli|false||false|false||false|false|0|false|false · 16h17 · file 1
+ 152.2 dossier suivant
+ 153.0 état jeu|selection|poste|appli|false||false|false||false|false|0|false|false · 16h25 · file 1
+ 153.0 prend le signalement suivant
+ 153.8 état jeu|decision|poste|appli|false||false|false||false|false|0|false|false · 16h25 · file 1
+ 157.2 réponse 2
+ 159.9 état jeu|narration|poste|appli|false||false|false||false|false|0|false|false · 16h28 · file 0
+ 161.4 dossier suivant
+ 162.3 état jeu|attente|poste|appli|false||false|false||false|false|0|false|false · 17h50 · file 0
+ 162.3 rien à traiter : sieste (Z), le temps file ×100
+ 163.1 état jeu|attente|zoom-arriere|appli|false||false|false||false|true|0|false|false · 19h12 · file 0
+ 163.8 état jeu|attente|bureau|appli|false||false|false||false|true|0|false|false · 20h00 · file 0
+ 163.8 fin de service : quitter la journée (Q)
+ 164.6 fin de service : quitter la journée (Q)
+ 165.4 fin de service : quitter la journée (Q)
+ 166.2 fin de service : quitter la journée (Q)
+ 167.0 fin de service : quitter la journée (Q)
+ 167.8 fin de service : quitter la journée (Q)
+ 168.6 fin de service : quitter la journée (Q)
+ 169.4 fin de service : quitter la journée (Q)
+ 170.2 fin de service : quitter la journée (Q)
+ 171.0 fin de service : quitter la journée (Q)
+ 171.7 fin de service : quitter la journée (Q)
+ 172.5 fin de service : quitter la journée (Q)
+ 173.3 fin de service : quitter la journée (Q)
+ 174.1 fin de service : quitter la journée (Q)
+ 174.9 fin de service : quitter la journée (Q)
+ 175.7 fin de service : quitter la journée (Q)
+ 176.5 fin de service : quitter la journée (Q)
+ 177.3 fin de service : quitter la journée (Q)
+ 178.1 fin de service : quitter la journée (Q)
+ 178.9 fin de service : quitter la journée (Q)
+ 179.7 fin de service : quitter la journée (Q)
+ 180.5 fin de service : quitter la journée (Q)
+ 181.3 fin de service : quitter la journée (Q)
+ 182.1 fin de service : quitter la journée (Q)
+ 182.9 fin de service : quitter la journée (Q)
+ 183.7 fin de service : quitter la journée (Q)
+ 184.4 fin de service : quitter la journée (Q)
+ 185.2 fin de service : quitter la journée (Q)
+ 186.0 fin de service : quitter la journée (Q)
+ 186.9 fin de service : quitter la journée (Q)
+ 187.7 fin de service : quitter la journée (Q)
+ 188.4 fin de service : quitter la journée (Q)
+ 189.3 fin de service : quitter la journée (Q)
+ 190.1 fin de service : quitter la journée (Q)
+ 190.9 fin de service : quitter la journée (Q)
+ 191.7 fin de service : quitter la journée (Q)
+ 192.5 fin de service : quitter la journée (Q)
+ 193.3 fin de service : quitter la journée (Q)
+ 194.1 fin de service : quitter la journée (Q)
+ 194.9 fin de service : quitter la journée (Q)
+ 195.7 fin de service : quitter la journée (Q)
+ 196.5 fin de service : quitter la journée (Q)
+ 197.3 fin de service : quitter la journée (Q)
+ 198.0 fin de service : quitter la journée (Q)
+ 198.9 fin de service : quitter la journée (Q)
+ 199.7 fin de service : quitter la journée (Q)
+ 200.4 fin de service : quitter la journée (Q)
+ 201.2 fin de service : quitter la journée (Q)
+ 202.1 fin de service : quitter la journée (Q)
+ 202.8 fin de service : quitter la journée (Q)
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+page.waitForTimeout: Target page, context or browser has been closed
+    at pause (/home/guillaume/ESD_Docs/design-interaction/wdi-187/trailer/scripts/capture.mjs:67:28)
+    at /home/guillaume/ESD_Docs/design-interaction/wdi-187/trailer/scripts/capture.mjs:259:8 {
+  log: []
+}
+
+Node.js v24.13.1

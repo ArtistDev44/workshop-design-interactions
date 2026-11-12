@@ -24,7 +24,6 @@ const SMS = [
 	{ de: 'moi', texte: T('sms.5') },
 ];
 
-const LIVRE_STRESS = [0, 1, 2, 3, 4, 5].map((n) => T('stress.' + n));
 
 let smsActif = false;
 let smsIndex = 0;
@@ -51,7 +50,7 @@ const OBJETS_BUREAU = [
 	{ nom: 'fenetre', piece: true, label: T('piece.fenetre'), infobulle: T('piece.fenetre.survol'), x: 334, y: 14, l: 64, h: 96 }, // prompt 31 : la baie s'arrête au pan de mur
 	{ nom: 'horloge', label: T('objet.horloge'), infobulle: T('objet.horloge.survol'), x: 404, y: 30, l: 28, h: 29 }, // prompt 51 : finir sa journée
 	{ nom: 'webcam', label: T('objet.webcam'), infobulle: T('objet.webcam.survol'), x: 234, y: 39, l: 13, h: 8 }, // prompt 57 : webcam posée sur l'écran
-	{ nom: 'micro', label: T('objet.micro'), infobulle: T('objet.micro.survol'), x: 150, y: 170, l: 12, h: 24, visible: () => typeof objetPresent !== 'function' || objetPresent('micro') }, // prompt 54 : micro du poste (appui maintenu) ; prompt 104
+	{ nom: 'micro', label: T('objet.micro'), infobulle: { toString: () => t(Jeu.defiChrono ? 'objet.micro.survolChrono' : 'objet.micro.survol') }, x: 150, y: 170, l: 12, h: 24, visible: () => typeof objetPresent !== 'function' || objetPresent('micro') }, // prompt 54 : micro du poste (appui maintenu) ; prompt 104 ; prompt 161 : infobulle « compteur » seulement en défi chrono
 	{ nom: 'sortie', label: T('soir.sortie'), infobulle: T('soir.infobulle'), x: 41, y: 92, l: 34, h: 56, visible: () => typeof sortieVisible === 'function' && sortieVisible() }, // prompt 69 : flèche du soir (soir.js)
 ];
 
@@ -116,7 +115,7 @@ function interagirPiece(nom) {
 		texte = j ? t('piece.tasse.jour', { heure, n: j.dossiers.length }) : t('piece.tasse.libre', { heure });
 	} else if (nom === 'dossiers') {
 		const j = ecran === 'jeu' && Jeu.jourCourant ? Jeu.jourCourant() : null;
-		texte = j ? t('piece.dossiers.jour', { n: j.dossiers.length, date: j.date.split('-').reverse().join('/') }) : t('piece.dossiers.libre');
+		texte = j ? t('piece.dossiers.jour', { n: j.dossiers.length, parts: Jeu.compositionDossiers(j.dossiers), date: j.date.split('-').reverse().join('/') }) : t('piece.dossiers.libre');
 	}
 	PIECE.message = { texte, objet: nom, jusqua: millis() + 5000 };
 	dernierRenduBureau = 0; // la pièce est redessinée tout de suite (lampe, store)
@@ -138,12 +137,13 @@ function demarrerJournee() {
 	interaction();
 	annoncerJournee(); // prompt 43 : écran noir « JOUR n — SEMAINE n »
 	demarrageDuJour(); // prompt 71 : le PC redémarre les 3 premiers jours
-	filDebutJournee(); // prompt 74 : objectif du jour et bilan de la veille, avant le premier signalement
+	filDebutJournee(); // prompt 74 : bilan de la veille, avant le premier signalement
 }
 
 // ——— Prompt 43 : transition entre journées — fond noir, « JOUR n — SEMAINE n » et la date, centrés ———
-const DUREE_TRANSITION_JOUR = 5200; // prompt 95 : 2,8 → 5,2 s pour lire l'explication de la journée (Entrée / clic passent)
-const DUREE_TRANSITION_INTRO = 1500; // prompt 112 : jour 1 de la toute première partie — titre et date seulement, le téléphone suit
+// Prompt 180 : plus de temps pour lire — le texte est pleinement lisible de 0,3 s à D − 0,5 s (hors fondus) ; clic, Entrée ou Espace passent
+const DUREE_TRANSITION_JOUR = 9000; // prompt 95 : 2,8 → 5,2 s ; prompt 180 : 5,2 → 9 s (titre, date et 4 à 5 lignes d'explication)
+const DUREE_TRANSITION_INTRO = 4300; // prompt 112 : jour 1 de la toute première partie — titre et date seulement ; prompt 180 : 1,5 → 4,3 s (≈ 3,5 s lisibles)
 const dureeTransition = () => (TRANSITION_JOUR && TRANSITION_JOUR.duree) || DUREE_TRANSITION_JOUR;
 /** Prompt 95 : « lundi 14 septembre » */
 function jourDate(iso) {
@@ -169,7 +169,9 @@ function lignesTransitionJour() {
 	const T0 = TRANSITION_JOUR;
 	const j = Jeu.jours && Jeu.jours[T0.jour - 1];
 	const l = [];
-	if (j) l.push(t('transition.prevus', { n: j.dossiers.length }));
+	const meteo = j && Jeu.accrocheMeteo ? Jeu.accrocheMeteo(j.date) : null; // prompt 191 : accroche du matin, météo réelle du jour (rien si la donnée manque)
+	if (meteo) l.push(String(meteo));
+	if (j) l.push(t('transition.prevus', { n: j.dossiers.length, parts: Jeu.compositionDossiers(j.dossiers) })); // prompt 162 : « réel » réservé aux faits de la source
 	l.push(t('transition.service', { debut: Jeu.formaterHeure(Jeu.debutJournee ? Jeu.debutJournee() : 480), fin: Jeu.formaterHeure(Jeu.finJournee()) }));
 	l.push(t('transition.rythme'));
 	l.push(t('transition.finir'));
@@ -245,8 +247,11 @@ function heureAffichee() {
 }
 
 /** Le temps de jeu est-il arrêté ? (fin, mail, soir, démarrage du PC, SMS, pause, tutoriel, transition, fenêtres) */
+// Prompt 172 : la lecture de l'aide (livre du bureau, H, menu pause) suspend le temps, comme le tutoriel
+// Prompt 179 : la toute première lecture du téléphone aussi (telephone.js) ; aux ouvertures suivantes, le temps file
+// Prompt 181 : et le guide « Prendre en main » tant qu'une étape attend le joueur (guideSuspendTemps, guide.js)
 function tempsSuspendu() {
-	return ecran !== 'jeu' || !Jeu.horloge || phase === 'fin' || phase === 'mail' || phase === 'soir' || pcDemarre() || smsActif || enPause || tutoriel || TRANSITION_JOUR || mecaniquesSuspendentTemps() || fenetre === 'poste' || lecturePanneau(); // prompt 74 : explication du poste ; prompt 87 : lecture d'un signalement
+	return ecran !== 'jeu' || !Jeu.horloge || phase === 'fin' || phase === 'mail' || phase === 'soir' || pcDemarre() || smsActif || enPause || tutoriel || TRANSITION_JOUR || mecaniquesSuspendentTemps() || fenetre === 'aide' || fenetre === 'menu' || (typeof telephonePremiereLecture === 'function' && telephonePremiereLecture()) || lecturePanneau() || (typeof guideSuspendTemps === 'function' && guideSuspendTemps()) || (typeof expoEnPause === 'function' && expoEnPause()); // prompt 160 : voile « Partie en pause » de l'exposition ; prompt 74 : explication du poste ; prompt 87 : lecture d'un signalement
 }
 function tempsCompresse() {
 	return ecran === 'jeu' && (phase === 'attente' || phase === 'reveil') && !tempsSuspendu(); // « ×100 » seulement quand le temps file vraiment
@@ -417,20 +422,8 @@ function dessinerAttente() {
 		textSize(22);
 		text(t('surv.sieste'), z.x + 32, z.y + 440);
 	}
-	// Prompt 74 : objectif du jour avec sa règle, puis le fil de la journée (objectif, bilan, liaisons, rythme)
-	const o = Jeu.objectifDuJour ? Jeu.objectifDuJour() : null;
-	if (o) {
-		fill(255, 255, 255, 13);
-		rect(z.x + 32, z.y + 484, z.l - 64, 92);
-		fill(C.accent);
-		rect(z.x + 32, z.y + 484, 4, 92);
-		textFont(POLICE_TEXTE);
-		textSize(19);
-		textLeading(26);
-		fill(C.texte);
-		text(t('fil.objectifRegle', { libelle: String(o.libelle), v: Math.round(Jeu.jauges[o.jauge]) }), z.x + 48, z.y + 494, z.l - 96, 78);
-	}
-	dessinerFil(z.x + 32, z.y + 598, z.l - 64, z.h - 618);
+	// Prompt 183 : plus de texte d'objectif dans l'appli (le bandeau le porte) ; le fil de la journée remonte
+	dessinerFil(z.x + 32, z.y + 484, z.l - 64, z.h - 504);
 }
 
 // ——— Mail de fin de journée (§ 6), affiché dans l'écran du PC ———
@@ -451,21 +444,35 @@ function dessinerMail() {
 	dsTexte(t('mailf.de', { de: m.de }), x + 32, y + 84, 20, DS.blanc50, 'left');
 	dsTexte(t('mailf.a'), x + 32, y + 114, 20, DS.blanc50, 'left');
 	dsTitre(String(m.objet).toUpperCase(), x + 32, y + 156, 28, DS.blanc, 'left');
-	let ty = y + 220;
-	m.lignes.forEach((ligne) => {
+	// Prompt 191 : d'abord la scène — le moment de la journée (un dossier réellement joué) et la phrase du patron
+	const lt = l - 64;
+	let ty = y + 206;
+	const sc = m.scene || {};
+	dsTexte(t('mailf.fait.titre'), x + 32, ty, 18, DS.blanc50, 'left');
+	ty += 30;
+	ty += dessinerTexte(sc.fait ? String(sc.fait.texte) : t('mailf.fait.aucun'), x + 32, ty, lt, { taille: 24, couleur: DS.blanc, interligne: 34, maxLignes: 3 }).h + 14;
+	if (sc.patron) ty += dessinerTexte('« ' + String(sc.patron) + ' » ' + t('mailf.signature'), x + 32, ty, lt, { taille: 22, couleur: DS.blanc, style: ITALIC, interligne: 32, maxLignes: 2 }).h + 18;
+	// Puis le bilan chiffré, plus compact (il est aussi dans le rapport papier et le Journal)
+	noStroke();
+	fill(DS.blanc50);
+	rect(x + 32, ty, lt, 1);
+	ty += 12;
+	dsTexte(t('mailf.bilan'), x + 32, ty, 16, DS.blanc50, 'left');
+	ty += 28;
+	const limite = y + h - 112;
+	for (const ligne of m.lignes) {
 		const estFait = !!ligne.fait;
 		const ok = !!ligne.ok;
+		const hl = hauteurTexte(String(ligne), lt - 18, { taille: 17, interligne: 24, maxLignes: 2 });
+		if (ty + hl > limite) break; // le reste du bilan est dans le rapport papier et le Journal
 		if (estFait) {
 			noStroke();
 			fill(ok ? DS.succes : DS.primaire);
-			rect(x + 32, ty + 4, 6, 22);
+			rect(x + 32, ty + 3, 4, 18);
 		}
-		dsTexte(ligne, x + (estFait ? 50 : 32), ty, estFait ? 19 : 21, estFait ? (ok ? DS.succesClair : DS.erreurClair) : DS.blanc, 'left', l - 100);
-		textFont(DS.policeTexte);
-		textSize(estFait ? 19 : 21);
-		ty += textWidth(ligne) > l - 110 ? 60 : 36;
-	});
-	dsTexte(t('mailf.signature'), x + 32, Math.min(ty + 10, y + h - 150), 20, DS.blanc50, 'left');
+		dessinerTexte(String(ligne), x + 50, ty, lt - 18, { taille: 17, couleur: estFait ? (ok ? DS.succesClair : DS.erreurClair) : DS.blanc, interligne: 24, maxLignes: 2 });
+		ty += hl + 6;
+	}
 	dsBouton(x + l - 420, y + h - 96, 388, 64, t('soir.ranger'), rangerPoste, 'primaire'); // prompt 69 : la sortie du bureau mène au lendemain (ou au bilan)
 }
 
@@ -694,7 +701,7 @@ function dessinerSMS() {
 	dessinerTelephoneEnMain(contenuConversation);
 }
 
-// ——— Fenêtres du bureau : menu Échap (§ 1) et livre « stress » (§ 7) ———
+// ——— Fenêtres du bureau : menu Échap (§ 1) ; les livres ouvrent l'aide (aide.js, prompt 172) ———
 // Prompt 35 : menu Échap modernisé (même style que le menu principal)
 let choixPause = 0;
 // Prompt 124 : « Quitter la journée » et « Recommencer » ne sont plus dans le bandeau — ils sont ici (souris, toucher)
@@ -709,7 +716,7 @@ const TOUTES_ENTREES_PAUSE = [
 ];
 const entreesPause = () => TOUTES_ENTREES_PAUSE.filter((e) => !e.visible || e.visible());
 function fenetreMenu() {
-	const l = 700;
+	const l = DS.fenetre.etroite; // prompt 173 (était 700)
 	const ENTREES_PAUSE = entreesPause();
 	const h = 160 + ENTREES_PAUSE.length * 112;
 	if (choixPause >= ENTREES_PAUSE.length) choixPause = 0;
@@ -721,6 +728,7 @@ function fenetreMenu() {
 	strokeWeight(2);
 	rect(x, y, l, h);
 	noStroke();
+	zoneFenetre(x, y, l, h); // prompt 173 : clic sur le fond
 	dsTitre(t('menu.titre'), x + 48, y + 40, 44, '#ffffff', 'left');
 	noStroke();
 	textAlign(LEFT, TOP);
@@ -739,43 +747,11 @@ function quitterPartie() {
 	retourAccueil();
 }
 
-function fenetreLivreStress() {
-	// Le livre « Bien gérer son stress » s'ouvre : couverture verte, deux pages
-	const livre = dessinerLivreOuvert(L / 2 - 680, 110, 1360, 720, '#3f7a43', '#2f5d3a');
-	if (livre.pret) {
-		const g = livre.gauche;
-		const d = livre.droite;
-		noStroke();
-		textAlign(LEFT, TOP);
-		fill('#2f5d3a');
-		textFont(POLICE_TEXTE);
-		textStyle(BOLD);
-		textSize(40);
-		textLeading(50);
-		text(LIVRE_STRESS[0], g.x, g.y, g.l, 120);
-		textStyle(NORMAL);
-		textSize(23);
-		textLeading(32);
-		fill('#1c2733');
-		let ty = g.y + 150;
-		LIVRE_STRESS.slice(1, 3).forEach((p) => {
-			text(p, g.x, ty, g.l, 180);
-			ty += 190;
-		});
-		ty = d.y;
-		LIVRE_STRESS.slice(3).forEach((p) => {
-			text(p, d.x, ty, d.l, 180);
-			ty += 190;
-		});
-	}
-	bouton(L / 2 + 680 - 260, 110 + 720 + 40, 260, 64, t('commun.fermer'), fermer);
-}
-
 // ——— Overlay de réveil (§ 4) ———
 function dessinerReveil() {
 	const reste = Math.max(0, reveil.limite - millis());
 	voile();
-	const l = 720;
+	const l = DS.fenetre.etroite; // prompt 173 (était 720)
 	const h = 300;
 	const x = (L - l) / 2;
 	const y = (H - h) / 2;
@@ -987,8 +963,7 @@ function ouvrirObjetBureau(nom) {
 	if (nom === 'sortie') return quitterBureau(); // prompt 69
 	if (nom === 'rapport') return ouvrirRapport(); // prompt 41
 	if (nom === 'telephone') return ouvrirTelephone(); // prompt 38 : notifications de l'Agenda Nantes Métropole
-	if (nom === 'aide') return lancerTutoriel(); // prompt 34 / 70 : le livre « Aide » ouvre le tutoriel
-	if (nom === 'stress') return (livreOuverture = millis()), ouvrir('livre-stress');
+	if (nom === 'aide' || nom === 'stress') return ouvrir('aide'); // prompt 172 : les livres ouvrent la fenêtre d'aide illustrée (le tutoriel s'y lance, touche T)
 	if (nom === 'horloge') return clicHorloge(); // prompt 51
 	if (nom === 'tasse') return boireCafe(); // prompt 52 : le café en main, puis le boost
 	if (nom === 'micro') return clicMicro(); // prompt 54 : push-to-talk
@@ -1060,7 +1035,7 @@ function infobulle(texte, x, y) {
 // =====================================================================
 // Prompt 74 — comprendre le poste, et une journée qui « vit » (rythme.js : logique pure, reproductible)
 // =====================================================================
-const FIL = { messages: [], serieDepuis: 0, rythmeFaits: {}, jourCle: '', explicationVue: false };
+const FIL = { messages: [], serieDepuis: 0, rythmeFaits: {}, jourCle: '' };
 /** Remise à zéro pour une nouvelle partie (le mélange des arrivées est fait juste après Jeu.nouvellePartie) */
 function nouvellePartieRythme() {
 	Rythme.clamperDebut(); // prompt 76 : aucun dossier avant 8 h
@@ -1074,7 +1049,6 @@ function nouvellePartieRythme() {
 	FIL.serieDepuis = 0;
 	FIL.rythmeFaits = {};
 	FIL.jourCle = '';
-	FIL.explicationVue = false;
 }
 /** Ajoute une ligne au fil de la journée (texte traduit au dessin) ; annoncée en aria-live */
 function ajouterFil(m, sorte) {
@@ -1083,11 +1057,9 @@ function ajouterFil(m, sorte) {
 	if (FIL.messages.length > 6) FIL.messages.shift();
 	annoncer(t(m.cle, m.vars));
 }
-/** Début de journée : objectif concret avec sa règle, et bilan de la veille (chiffres réels) */
+/** Début de journée : bilan de la veille (chiffres réels) */
 function filDebutJournee() {
-	const o = Jeu.objectifDuJour ? Jeu.objectifDuJour() : null;
-	if (o) ajouterFil({ cle: 'fil.objectif', vars: { libelle: String(o.libelle) } }, 'objectif');
-	ajouterFil(Rythme.bilanVeille(), 'veille');
+	ajouterFil(Rythme.bilanVeille(), 'veille'); // prompt 183 : l'objectif du jour n'est plus répété ici (bandeau)
 }
 /** Après chaque décision : texte de liaison (après la narration) */
 function filApresDecision() {
@@ -1124,7 +1096,7 @@ function verifierSerie() {
 }
 /** Fil de la journée, dans le panneau d'attente : objectif, bilan, liaisons, rythme, séries (les plus récents en bas) */
 function dessinerFil(x, y, l, h) {
-	const couleurs = { objectif: C.accent, veille: C.gris, liaison: C.texte, rythme: C.orange, bravo: C.vert, courage: C.orange, info: C.texte };
+	const couleurs = { veille: C.gris, liaison: C.texte, rythme: C.orange, bravo: C.vert, courage: C.orange, info: C.texte };
 	noStroke();
 	textAlign(LEFT, TOP);
 	textFont(POLICE_TEXTE);
@@ -1153,57 +1125,8 @@ function dessinerFil(x, y, l, h) {
 	});
 }
 
-// ——— Explication du poste : à la première ouverture de l'écran de jeu de la partie (gardée dans la sauvegarde) ———
-function majExplicationPoste() {
-	if (FIL.explicationVue || fenetre || tutoriel || smsActif || TRANSITION_JOUR || MENU.actif) return;
-	if (ecran !== 'jeu' || vue !== 'poste' || PC.etat !== 'appli' || phase === 'fin') return;
-	FIL.explicationVue = true;
-	ouvrir('poste');
-	annoncer(t('poste.titre') + '. ' + t('poste.role') + ' ' + ['devier', 'retenir', 'renfort', 'rien'].map((a) => t('action.desc.' + a)).join(' '));
-}
-function fenetrePoste() {
-	const l = 1240;
-	const h = 860;
-	const x = (L - l) / 2;
-	const y = (H - h) / 2;
-	panneau(x, y, l, h, C.accent);
-	noStroke();
-	textAlign(LEFT, TOP);
-	fill(C.texte);
-	textFont(POLICE_TEXTE);
-	textStyle(BOLD);
-	textSize(36);
-	text(t('poste.titre'), x + 56, y + 44, l - 112, 50);
-	textStyle(NORMAL);
-	textSize(22);
-	textLeading(32);
-	text(t('poste.role'), x + 56, y + 108, l - 112, 140);
-	textStyle(BOLD);
-	textSize(24);
-	text(t('poste.decisions'), x + 56, y + 262);
-	textStyle(NORMAL);
-	// Prompt 131 : les gestes réels du jeu (carte, répliques 1 à 4, équipes glissées, menu à gauche), plus l'ancienne table Q5–Q7
-	['carte', 'repondre', 'equipes', 'menu'].forEach((g, i) => {
-		const k = t('poste.geste.' + g + '.k');
-		const yy = y + 310 + i * 72;
-		textFont(POLICE_DONNEES);
-		textStyle(BOLD);
-		textSize(22);
-		fill(C.orange);
-		text(k, x + 56, yy);
-		textStyle(NORMAL);
-		textFont(POLICE_TEXTE);
-		textSize(21);
-		textLeading(27);
-		fill(C.texte);
-		text(t('poste.geste.' + g), x + 230, yy, l - 290, 66);
-	});
-	textSize(20);
-	textLeading(28);
-	fill(C.gris);
-	text(t('poste.apprendre'), x + 56, y + h - 196, l - 112, 90);
-	bouton(x + l - 56 - 360, y + h - 96, 360, 64, t('poste.compris'), fermer);
-}
+// Fenêtre « Votre poste » (prompts 74 / 131 / 161) supprimée le 12/11/2026 à la demande du groupe : le guide
+// « Prendre en main » (coché à la 1re partie) et l'aide (H) présentent les gestes.
 /** Prompt 87 : hors défi chrono, l'horloge du jeu s'arrête pendant la lecture d'un signalement ouvert (panneau de décision
  * affiché) ; elle tourne sur la liste, dans les autres applis et au bureau. */
 function lecturePanneau() {

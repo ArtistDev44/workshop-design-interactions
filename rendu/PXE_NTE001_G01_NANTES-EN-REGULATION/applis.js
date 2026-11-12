@@ -1,13 +1,12 @@
 /* Nantes en régulation — prompt 91 : applis reliées et déblocage par semaine.
  * § 2 (option du groupe, désactivée par défaut : Paramètres → Options de jeu) : semaine 1 = Signalements seule ;
  *     Community (et la Corbeille) en semaine 2, Messages en 3, Journal et Indicateurs en 4, Données en 5. Icônes
- *     verrouillées grisées avec cadenas, secousse et infobulle ; carte d'intro d'une phrase au déblocage (une fois).
+ *     verrouillées grisées avec cadenas, secousse et infobulle (prompt 183 : plus de fenêtre d'intro au déblocage).
  * § 3 : pile de navigation — chaque redirection (« Voir le dossier », « Publier sur Community », lien vers le Journal)
  *     empile l'écran d'origine ; Échap dépile et revient à l'écran précédent.
  */
 const PLANNING_APPLIS = { signalements: 1, community: 2, corbeille: 2, patron: 3, journal: 4, indicateurs: 4, donnees: 5 };
-const APPLIS = { tremble: null, introVues: null, pile: [] };
-const CLE_INTRO_APPLIS = 'pxe-nte001-applis-intro';
+const APPLIS = { tremble: null, pile: [] };
 
 /** Numéro de semaine du déblocage : chapitre du mode histoire (1 à 3) ; temps réel / hors ligne → 4, ou tout si l'option l'autorise */
 function semaineApplis() {
@@ -47,66 +46,16 @@ function dessinerBulleVerrou() {
 	if (b) infobulle(b.txt, b.x, b.y);
 }
 
-// ——— Carte d'intro au déblocage (une fois par appli, persisté) ———
-function introsApplis() {
-	if (!APPLIS.introVues) {
-		try {
-			APPLIS.introVues = JSON.parse(localStorage.getItem(CLE_INTRO_APPLIS) || '{}') || {};
-		} catch (e) {
-			APPLIS.introVues = {};
-		}
-	}
-	return APPLIS.introVues;
-}
-/** Au bureau RégulOS : une appli fraîchement débloquée (planning > 1) est présentée en une phrase */
-function verifierDeblocages() {
-	if (!Confort.Reglages.deblocageApplis || fenetre || ecran !== 'jeu' || vue !== 'poste' || PC.etat !== 'os') return;
-	const vues = introsApplis();
-	const neuve = Object.keys(PLANNING_APPLIS).find((cle) => PLANNING_APPLIS[cle] > 1 && cle !== 'corbeille' && appliDebloquee(cle) && !vues[cle]);
-	if (!neuve) return;
-	APPLIS.intro = neuve;
-	ouvrir('deblocage');
-	annoncer(t('applis.nouvelle', { appli: t('app.' + neuve) }) + ' ' + t('applis.intro.' + neuve));
-}
-function fermerIntroAppli() {
-	const vues = introsApplis();
-	vues[APPLIS.intro] = true;
-	try {
-		localStorage.setItem(CLE_INTRO_APPLIS, JSON.stringify(vues));
-	} catch (e) {}
-	fermer();
-}
-function fenetreDeblocage() {
-	const l = 1000;
-	const h = 420;
-	const x = (L - l) / 2;
-	const y = (H - h) / 2;
-	panneau(x, y, l, h, C.accent);
-	noStroke();
-	dsTitre(t('applis.nouvelle', { appli: t('app.' + APPLIS.intro) }).toUpperCase(), x + 48, y + 40, 32, C.texte, 'left');
-	textAlign(LEFT, TOP);
-	textFont(POLICE_TEXTE);
-	textSize(24);
-	textLeading(34);
-	fill(C.texte);
-	text(t('applis.intro.' + APPLIS.intro), x + 48, y + 120, l - 96, 160);
-	bouton(x + l - 48 - 300, y + h - 100, 300, 64, t('tache.continuer'), fermerIntroAppli);
-}
-function toucheDeblocage() {
-	if (fenetre !== 'deblocage') return false;
-	if (keyCode === ENTER || keyCode === RETURN || keyCode === ESCAPE) fermerIntroAppli();
-	return true;
-}
-
 // ——— § 3 : pile de navigation des redirections ———
 /** Écran courant (ce qu'on empile) */
 function ecranCourantPC() {
-	return { etat: PC.etat, fenetre: PC.fenetre, journal: typeof JOURNAL !== 'undefined' ? { jour: JOURNAL.jour, enquete: JOURNAL.enquete } : null, commu: typeof COMMU !== 'undefined' ? COMMU.onglet : null };
+	const mail = PC.fenetre === 'patron' && typeof PATRON !== 'undefined' ? { sel: (Jeu.messagesPatron || []).indexOf(PATRON.sel), filtre: PATRON.filtre, lecture: PATRON.lecture } : null; // prompt 185 : le retour rouvre le mail d'origine
+	return { etat: PC.etat, fenetre: PC.fenetre, journal: typeof JOURNAL !== 'undefined' ? { jour: JOURNAL.jour, enquete: JOURNAL.enquete } : null, commu: typeof COMMU !== 'undefined' ? COMMU.onglet : null, mail };
 }
 /** Redirection vers une appli avec contexte : l'origine est empilée ; Échap y revient */
 function redirigerVers(cle, prep) {
 	if (cle !== 'signalements' && !appliDebloquee(cle)) return refuserAppliVerrouillee(cle), false;
-	APPLIS.pile.push(ecranCourantPC());
+	APPLIS.pile.push(Object.assign(ecranCourantPC(), { cible: cle })); // prompt 185 : la cible dit quel écran ramène ici
 	if (APPLIS.pile.length > 12) APPLIS.pile.shift();
 	if (cle === 'signalements') {
 		PC.fenetre = null;
@@ -124,22 +73,32 @@ function redirigerVers(cle, prep) {
 function depilerNavigation() {
 	const o = APPLIS.pile.pop();
 	if (!o) return false;
-	PC.etat = o.etat;
+	PC.etat = o.fenetre ? 'os' : 'appli'; // prompt 183 : jamais de bureau d'icônes
 	PC.fenetre = o.fenetre;
 	if (o.journal && typeof JOURNAL !== 'undefined') Object.assign(JOURNAL, o.journal);
 	if (o.commu && typeof COMMU !== 'undefined') COMMU.onglet = o.commu;
+	if (o.mail && typeof PATRON !== 'undefined') Object.assign(PATRON, { filtre: o.mail.filtre || 'tout', sel: (Jeu.messagesPatron || [])[o.mail.sel] || null, lecture: !!o.mail.lecture, ouvert: true, voirSel: true, defilLecture: 0 });
 	Confort.Son.clic();
-	annoncer(t('applis.retour', { appli: t('app.' + (o.fenetre || (o.etat === 'appli' ? 'signalements' : 'bureau'))) }));
+	annoncer(t('applis.retour', { appli: t('app.' + (o.fenetre || 'signalements')) }));
 	return true;
 }
-/** « Voir le dossier » depuis n'importe quelle appli : Signalements, sur le dossier s'il est encore ouvert, sinon le Journal */
+/** Prompt 185 : « Retour » / Échap sur l'écran ouvert par une redirection vers `cle` → écran d'origine ; true si pris */
+function retourRedirection(cle) {
+	const o = APPLIS.pile[APPLIS.pile.length - 1];
+	return !!(o && o.cible === cle && depilerNavigation());
+}
+/** « Voir le dossier » depuis n'importe quelle appli : Signalements, sur le dossier s'il est encore ouvert, sinon sa
+ * fiche dans le Journal. Prompt 185 : la trace est retrouvée par le RANG du dossier (e.index), pas par l'identité de
+ * l'objet — après une sauvegarde rechargée, resultat.dossier est une copie et l'ancienne comparaison (===) échouait :
+ * le lien ramenait à la carte au lieu de la fiche. */
 function voirDossierDepuis(index) {
+	if (index === undefined || index === null) return;
 	const d = Jeu.paquet && Jeu.paquet[index];
-	if (!d) return;
-	const e = (Jeu.evenementsJournee || []).find((x) => x.resultat && x.resultat.dossier === d);
+	const e = (Jeu.evenementsJournee || []).find((x) => x.index === index) || (d && (Jeu.evenementsJournee || []).find((x) => x.resultat && x.resultat.dossier === d));
 	if (!e) {
-		// Pas encore décidé : on revient à la liste des signalements (le dossier y est, ou arrivera)
-		return redirigerVers('signalements');
+		if (!d) return;
+		// Pas encore décidé : Signalements, sur ce dossier s'il est dans la file (sinon la liste : il arrivera)
+		return redirigerVers('signalements', () => typeof ouvrirSignalements === 'function' && ouvrirSignalements(d));
 	}
 	redirigerVers('journal', () => {
 		const ji = (Jeu.jours || []).findIndex((j) => j.date === e.jour);

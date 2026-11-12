@@ -1,0 +1,143 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      background: var(--fond, #0d0c0c);
+      overflow: hidden;
+      font-family: 'JetBrains Mono', monospace;
+      color: #ffffff;
+    }
+    #carton-logo {
+      position: absolute;
+      left: 760px;
+      top: 150px;
+      width: 400px;
+      height: 400px;
+    }
+    #carton-logo .px {
+      position: absolute;
+      width: 25px;
+      height: 25px;
+    }
+    #carton-titre-wrap {
+      position: absolute;
+      left: 0;
+      top: 590px;
+      width: 1920px;
+      height: 120px;
+      display: flex;
+      justify-content: center;
+    }
+    #carton-titre {
+      width: 1500px;
+      height: 120px;
+      image-rendering: pixelated;
+    }
+    #carton-sous {
+      position: absolute;
+      top: 740px;
+      left: 0;
+      width: 1920px;
+      text-align: center;
+      font-size: 40px;
+      font-weight: 400;
+    }
+    #carton-url {
+      position: absolute;
+      top: 812px;
+      left: 0;
+      width: 1920px;
+      text-align: center;
+      font-size: 36px;
+      font-weight: 700;
+      color: #ffffff;
+    }
+    #carton-url span {
+      background: #d4031c;
+      padding: 6px 18px;
+    }
+    #carton-donnees {
+      position: absolute;
+      top: 900px;
+      left: 0;
+      width: 1920px;
+      text-align: center;
+      font-size: 28px;
+      color: #ffffff;
+    }
+    #carton-musique {
+      position: absolute;
+      top: 960px;
+      left: 0;
+      width: 1920px;
+      text-align: center;
+      font-size: 28px;
+      color: #c8c4c4;
+    }
+  </style>
+  <div id="root" data-composition-id="carton" data-width="1920" data-height="1080">
+    <div id="carton-logo"></div>
+    <div id="carton-titre-wrap"><canvas id="carton-titre" width="750" height="60"></canvas></div>
+    <div id="carton-sous" class="clip" data-start="0" data-duration="3.5" data-var-text="sousTitre">Rejouez une vraie semaine du réseau nantais</div>
+    <div id="carton-url" class="clip" data-start="0" data-duration="3.5"><span data-var-text="url">workshop-design-interactions.pages.dev</span></div>
+    <div id="carton-donnees" class="clip" data-start="0" data-duration="3.5" data-var-text="donnees">Données : Open Data Nantes Métropole</div>
+    <div id="carton-musique" class="clip" data-start="0" data-duration="3.5" data-var-text="creditMusique">Musique : « Heroic Age », Kevin MacLeod (incompetech.com) · CC BY 4.0</div>
+  </div>
+  <script>
+    (() => {
+      // Logo bulle-pin (site/public/favicon.svg, 16 × 16) reconstruit en carrés de 25 px pour être « joué » :
+      // les pixels montent rangée par rangée depuis la pointe du marqueur (la pointe touche la carte d'abord).
+      const R = '#d4031c';
+      const W = '#ffffff';
+      const rects = [
+        [1, 1, 14, 1, R], [0, 2, 16, 8, R], [1, 10, 14, 1, R], [4, 11, 8, 1, R], [5, 12, 6, 1, R], [6, 13, 4, 1, R], [7, 14, 2, 1, R],
+      ];
+      const blancs = [[3, 5], [4, 5], [3, 6], [4, 6], [7, 5], [8, 5], [7, 6], [8, 6], [11, 5], [12, 5], [11, 6], [12, 6]];
+      const estBlanc = (x, y) => blancs.some(([a, b]) => a === x && b === y);
+      const logo = document.getElementById('carton-logo');
+      const px = [];
+      for (const [x0, y0, w, h, c] of rects)
+        for (let y = y0; y < y0 + h; y++)
+          for (let x = x0; x < x0 + w; x++) {
+            const d = document.createElement('div');
+            d.className = 'px';
+            d.style.left = x * 25 + 'px';
+            d.style.top = y * 25 + 'px';
+            d.style.background = estBlanc(x, y) ? W : c;
+            logo.appendChild(d);
+            px.push({ d, x, y, blanc: estBlanc(x, y) });
+          }
+      const tl = gsap.timeline({ paused: true });
+      // rangées de bas (pointe, y = 14) en haut (y = 1) : 0,035 s par rangée, chaque carré tombe de 18 px
+      for (const p of px) {
+        const t = p.blanc ? 0.62 + (p.x % 4) * 0.02 : 0.05 + (14 - p.y) * 0.035;
+        tl.fromTo(p.d, { opacity: 0, y: -18 }, { opacity: 1, y: 0, duration: 0.16, ease: 'expo.out' }, t);
+      }
+      // Titre en rendu pixel (comme l'image Open Graph) : JetBrains Mono 800 rendu petit, seuillé, agrandi ×2
+      const cv = document.getElementById('carton-titre');
+      const g = cv.getContext('2d');
+      const dessiner = () => {
+        g.clearRect(0, 0, 750, 60);
+        g.fillStyle = '#ffffff';
+        g.font = '800 46px "JetBrains Mono"';
+        g.textAlign = 'center';
+        g.textBaseline = 'middle';
+        g.fillText('NANTES EN RÉGULATION', 375, 32);
+        const im = g.getImageData(0, 0, 750, 60);
+        for (let i = 3; i < im.data.length; i += 4) im.data[i] = im.data[i] > 110 ? 255 : 0;
+        g.putImageData(im, 0, 0);
+      };
+      document.fonts.load('800 46px "JetBrains Mono"').then(() => {
+        dessiner();
+        // le titre s'essuie de gauche à droite, en marches de 25 px (pixels), 0,3 s
+        tl.fromTo('#carton-titre', { clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0% 0 0)', duration: 0.3, ease: 'steps(24)' }, 0.78);
+        tl.fromTo('#carton-sous', { opacity: 0, filter: 'blur(8px)' }, { opacity: 1, filter: 'blur(0px)', duration: 0.18, ease: 'power4.out' }, 1.1);
+        tl.fromTo('#carton-url', { opacity: 0, filter: 'blur(8px)' }, { opacity: 1, filter: 'blur(0px)', duration: 0.18, ease: 'power4.out' }, 1.25);
+        tl.fromTo('#carton-donnees', { opacity: 0 }, { opacity: 1, duration: 0.2, ease: 'power2.out' }, 0.95);
+        tl.fromTo('#carton-musique', { opacity: 0 }, { opacity: 1, duration: 0.2, ease: 'power2.out' }, 1.0);
+        window.__timelines['carton'] = tl;
+      });
+    })();
+  </script>
+</template>

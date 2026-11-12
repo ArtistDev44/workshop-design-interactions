@@ -480,7 +480,7 @@ function dessinerMurDroit(g) {
 	const lampe = typeof OBJETS_BUREAU !== 'undefined' ? OBJETS_BUREAU.find((o) => o.nom === 'lampe') : null;
 	if (!lampe) return;
 	const lx = lampe.x + lampe.l / 2;
-	const allumee = typeof PIECE === 'undefined' || PIECE.lampe;
+	const allumee = typeof PIECE === 'undefined' || (typeof lampeAllumee === 'function' ? lampeAllumee() : PIECE.lampe); // prompt 191 : allumée le soir
 	if (allumee) {
 		g.fill(255, 226, 160, 46);
 		g.quad(lx - 4, lampe.y + lampe.h, lx + 4, lampe.y + lampe.h, lx + 14, BAIE_BAS, lx - 14, BAIE_BAS);
@@ -1014,7 +1014,7 @@ function composerVue() {
 			: ecran === 'jeu' && phase === 'attente' && Jeu.journeeFinie && Jeu.journeeFinie()
 				? t('bureau.finJournee') // prompt 51
 				: t(typeof MOBILE !== 'undefined' && MOBILE.actif ? 'bureau.installerMobile' : 'bureau.installer'); // prompt 60 : consigne tactile
-	if (phase === 'soir' && SOIR.sortie) return; // prompt 69 : pendant la sortie, pas de consigne
+	if (phase === 'soir' && (SOIR.sortie || respirationSoir())) return; // prompt 69 : pendant la sortie, pas de consigne ; prompt 191 : ni pendant « Fin de journée. »
 	// Prompt 124 : la consigne « Cliquez sur le PC… » n'est plus affichée en permanence (immersion) ; elle ne revient
 	// qu'après 10 s sans geste, pour qui hésite. Les messages d'état (incident, mail, soir) restent.
 	const consigne = msg === t('bureau.installer') || msg === t('bureau.installerMobile');

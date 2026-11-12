@@ -447,6 +447,7 @@ function glisserEnquete(dy) {
 	return true;
 }
 function mouseDragged() {
+	if (typeof guideBloque === 'function' && guideBloque(pmouseX, pmouseY)) return; // prompt 181 : glisser hors de la cible du guide
 	if (dansZoneSources(pmouseX, pmouseY)) glisserEnquete(mouseY - pmouseY);
 }
 /** Clavier, « En savoir plus » ouvert sur Sources : Tab parcourt les cartes, Entrée ouvre / ferme « Lire tout »

@@ -23,6 +23,9 @@ retirées le 10/11/2026 quand le jeu est passé à la racine (voir `journal.md`)
 registre machine-readable `src/content/oeuvres/*.json`, validé au build, d'où est générée la seule
 page Astro : **`/cartel/`**. Le tout rend lisible la chaîne **source → grammaire → système → œuvre**.
 
+Une partie (une semaine rejouée) dure **10 à 20 minutes** ; le mode histoire (3 semaines), 30 à 45 minutes
+(durées visées par la conception, à confirmer par les tests humains). Public : 12 ans et plus.
+
 ## Stack
 
 - [Astro](https://astro.build) 7, rendu **100 % statique** (seule dépendance : `astro`).

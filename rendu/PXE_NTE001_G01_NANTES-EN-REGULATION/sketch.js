@@ -15,7 +15,19 @@ const C = {
 	panneau: '#171616', // fond + blanc 05 %
 	texte: '#FFFFFF',
 	accent: '#FFFFFF', // titres et bordures accentuées (le rouge primaire est réservé aux fonds de boutons)
-	primaire: '#D4031C',
+	// Prompt 176 : la couleur d'accent n'a qu'une source, DS (ds.js / theme.js)
+	get primaire() {
+		return DS.primaire;
+	},
+	get surPrimaire() {
+		return DS.surPrimaire;
+	},
+	get primaireTrait() {
+		return DS.primaireTrait;
+	},
+	get primaireTexte() {
+		return DS.primaireTexte;
+	},
 	vert: '#00B74F',
 	orange: '#FFC138',
 	rouge: '#FFC5C2', // Error Light : lisible en texte sur fond sombre
@@ -58,7 +70,7 @@ function appliquerReglages() {
 }
 
 // ——— Confort (prompt 18) : fenêtres, pause, meilleur bilan ———
-let fenetre = null; // null | 'aide' | 'reset' | 'parametres'
+let fenetre = null; // null | 'aide' | 'reset' | 'parametres' (une seule fenêtre à onglets, parametres.js)
 let enPause = false;
 let debutPause = 0;
 let bilanFin = null; // { meilleur, record, ancien } calculé à la fin de partie
@@ -106,7 +118,6 @@ function optionsAccueil() {
 		titre: T('accueil.semaine', { debut: { toString: () => dateLongue(s.lundi) }, fin: { toString: () => dateLongue(s.dimanche) } }),
 		detail: Confort.Reglages.defiChrono ? T('accueil.detailChrono', { niveau: T('niveau.' + s.niveau), s: s.compteur_s }) : T('accueil.detail', { niveau: T('niveau.' + s.niveau) }), // prompt 87
 		info: T('accueil.info', { d: s.dossiers, e: s.evenements, meilleur: texteMeilleur(s.lundi) }),
-		sauvegarde: Sauvegarde.pour(s.lundi), // prompt 33
 	}));
 	opts.push({
 		type: 'direct',
@@ -114,7 +125,6 @@ function optionsAccueil() {
 		detail: T(Jeu.enLigne === false ? 'accueil.direct.indispo' : 'accueil.direct.flux'),
 		info: T('accueil.direct.info', { meilleur: texteMeilleur('direct') }),
 		desactive: Jeu.enLigne === false,
-		sauvegarde: Sauvegarde.pour('direct'),
 	});
 	return opts;
 }
@@ -183,7 +193,6 @@ function draw() {
 	verifierMecaniques(); // prompt 47 : inspection surprise (avant l'horloge, qui s'arrête alors)
 	verifierTaches(); // prompt 88 : briefing du matin, tâches courtes
 	majAmbianceTaches(); // prompt 88 : humeur musicale de la crise
-	verifierDeblocages(); // prompt 91 § 2 (option) : carte d'intro d'une appli débloquée
 	majSeuilSomnolence(); // prompt 91 § 5 (option)
 	majMultitache(); // prompts 68 / 77 : arrivées, compteurs des signalements actifs, expirations en arrière-plan
 	majNotifsTel(); // prompt 90 : notifications spontanées du téléphone (aucun appel réseau ici)
@@ -192,7 +201,6 @@ function draw() {
 	majPatron(); // prompt 86 : son, indicateur de saisie
 	if (PC.fenetre !== 'patron') PATRON.ouvert = false; // prochaine ouverture : sur le premier non lu
 	majRythme(); // prompt 74 : événements de rythme à heures fixes
-	majExplicationPoste(); // prompt 74 : explication du poste à la première ouverture de l'écran de jeu
 	majSoir(); // prompt 69 : crépuscule accéléré, sortie du bureau
 	if (typeof majProgressionBureau === 'function') majProgressionBureau(); // prompt 104 : nouvel objet sur le bureau (annonce, une fois)
 	majDemarrageJour(); // prompt 71 : démarrage du PC en début de journée (jours 1 à 3)
@@ -263,6 +271,7 @@ function draw() {
 	}
 	dessinerGuide(); // prompt 37 : flèches « Prendre en main »
 	dessinerTutoriel(); // prompt 34 : par-dessus l'écran et les fenêtres
+	if (typeof dessinerRespirationSoir === 'function') dessinerRespirationSoir(); // prompt 191 : « Fin de journée. », passable
 	dessinerNoirSoir(); // prompt 69 : fondu et écran noir de la sortie
 	dessinerTransitionJour(); // prompt 43 : écran noir entre les journées, au-dessus de tout
 	dessinerClignement(); // prompt 21 § 2 : par-dessus tout, purement visuel (n'intercepte aucune entrée)
@@ -301,14 +310,15 @@ function bandeauEtat() {
 function lancerPartie() {
 	const o = optionsAccueil()[choixAccueil];
 	if (!o || o.desactive) return;
-	// Prompt 33 : une sauvegarde existe pour cette semaine → « Reprendre » ou « Nouvelle partie » (écrasement confirmé)
-	if (o.sauvegarde) return ouvrir('reprise');
+	// Prompt 178 : chaque nouvelle partie a son emplacement — plus de fenêtre « Reprendre / Nouvelle partie ». Seule
+	// la limite d'emplacements arrête le lancement : l'écran « Reprendre une partie » propose de supprimer la plus ancienne
+	if (Sauvegarde.pleine()) return allerSauvegardes(lancerNouvellePartie);
 	lancerNouvellePartie();
 }
 function lancerNouvellePartie() {
 	const o = optionsAccueil()[choixAccueil];
 	if (!o || o.desactive) return;
-	if (o.sauvegarde) Sauvegarde.effacer(o.sauvegarde.semaine);
+	Sauvegarde.nouvelle(); // prompt 178 : nouvel emplacement, créé à la première sauvegarde automatique (les autres parties restent)
 	fenetre = null;
 	const p = o.type === 'direct' ? Jeu.chargerDirect() : Jeu.chargerSemaine(o.lundi);
 	Confort.Son.bip('choix');
@@ -365,8 +375,7 @@ function decider(action) {
 	dernierResultat.contexteNarr = Rythme.contexteNarration(dernierResultat, Jeu.index - 1); // prompt 74 : phrase de contexte réelle
 	if (action !== 'temps') tachesApresDecision(dernierResultat); // prompt 88 : rotation des tâches
 	if (typeof tracerDecision === 'function') tracerDecision(dernierResultat); // prompt 89 bis : trace dans la file
-	const dj = dernierResultat.deltas.map((v, i) => t('jaugeTitre.' + ['fluidite', 'reputation', 'budget'][i]) + ' ' + (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v)).join(', ');
-	annoncer(t('annonce.decision', { titre: dernierResultat.narration.titre, texte: dernierResultat.narration.texte }) + ' ' + dj + '.'); // prompt 53 : variations annoncées
+	annoncer(t('annonce.decision', { titre: dernierResultat.narration.titre, texte: dernierResultat.narration.texte }) + ' ' + phraseEcarts(dernierResultat.deltas)); // prompt 53 ; prompt 184 : une phrase « fluidité en hausse, budget en baisse »
 	Confort.Son.clicAction(Jeu.familleDe ? Jeu.familleDe(action) : action); // prompt 44 § 4 : un clic de console par action ; prompt 89 bis : famille de la réponse (son distinct)
 	Confort.Son.jauges(dernierResultat.deltas); // § 5 : chute brutale ou remontée nette, audibles
 	if (typeof feedback === 'function') feedback(Juice.tierDeltas(dernierResultat.deltas)); // prompts 94 / 96 : tier selon l'effet réel (small / medium / large)
@@ -375,6 +384,14 @@ function decider(action) {
 	if (dernierResultat.contexteNarr) annoncer(t(dernierResultat.contexteNarr.cle, dernierResultat.contexteNarr.vars));
 	verifierSerie(); // prompt 74 : 2 bonnes ou 2 ratées d'affilée → mot du patron (sans effet sur les jauges)
 	Sauvegarde.auto(false); // prompt 33 : après chaque décision (l'annonce de la décision n'est pas écrasée)
+}
+
+/** Prompt 184 : sens des écarts en une phrase pour le lecteur d'écran (jauges inchangées omises) */
+function phraseEcarts(deltas) {
+	const p = ['fluidite', 'reputation', 'budget'].map((k, i) => [k, deltas[i]]).filter(([, v]) => v).map(([k, v]) => t(v > 0 ? 'annonce.hausse' : 'annonce.baisse', { jauge: t('jaugeTitre.' + k).toLowerCase() }));
+	if (!p.length) return t('narr.aucunEffet');
+	const phrase = p.join(', ');
+	return phrase.charAt(0).toUpperCase() + phrase.slice(1) + '.';
 }
 
 function continuer() {
@@ -401,50 +418,53 @@ function ouvrir(nom) {
 	Confort.Son.bip('choix');
 }
 function fermer() {
+	if (fenetre === 'telephone' && typeof noterTelephoneLu === 'function') noterTelephoneLu(); // prompt 179 : première lecture du téléphone faite
 	fenetre = null;
+}
+
+// ——— Prompt 173 : clic (ou appui tactile) sur le fond = fermer la fenêtre, comme Échap ———
+// Point unique : mousePressed (le tactile y passe aussi), quand aucun bouton n'a pris le clic.
+// FENETRES_BLOQUANTES : elles exigent une réponse (décision, confirmation, bilan à lire, animation) et ne se ferment
+// JAMAIS au clic sur le fond. FERMETURE_FOND : ce que fait Échap dans chaque fenêtre qui se ferme ainsi.
+// Une fenêtre absente des deux listes est traitée comme bloquante.
+const FENETRES_BLOQUANTES = ['reset', 'demission', 'partir', 'blame', 'inspection', 'tache', 'mailFin', 'rapport', 'rapportVeille', 'cafe'];
+const FERMETURE_FOND = {
+	aide: fermer,
+	parametres: fermer,
+	partage: fermer,
+	installation: fermer,
+	palmares: fermer,
+	menu: fermer,
+	telephone: fermer,
+};
+let ZONE_FENETRE = null; // rectangle de la fenêtre dessinée à cette image (premier panneau), null hors fenêtre
+let FENETRE_EN_DESSIN = false;
+function zoneFenetre(x, y, l, h) {
+	if (FENETRE_EN_DESSIN && !ZONE_FENETRE) ZONE_FENETRE = { x, y, l, h };
+}
+/** Vrai si le clic a fermé la fenêtre (clic hors du panneau d'une fenêtre non bloquante) */
+function clicFondFenetre() {
+	const z = ZONE_FENETRE;
+	if (!fenetre || !z || tutoriel || smsActif || FENETRES_BLOQUANTES.includes(fenetre) || !FERMETURE_FOND[fenetre]) return false;
+	if (mouseX >= z.x && mouseX <= z.x + z.l && mouseY >= z.y && mouseY <= z.y + z.h) return false;
+	FERMETURE_FOND[fenetre]();
+	Confort.Son.clic();
+	return true;
 }
 
 // ——— Recommencer la semaine (R, avec confirmation, Q38) ———
 function confirmerReset() {
 	fenetre = null;
 	enPause = false;
-	Sauvegarde.effacer(Sauvegarde.semaineCourante()); // prompt 33 : le reset efface la sauvegarde de la semaine
+	Sauvegarde.effacerCourante(); // prompt 33 : le reset efface la sauvegarde de la partie en cours (prompt 178 : son emplacement, pas les autres)
 	rejouer();
 }
 
-// ——— Prompt 33 : reprendre une partie sauvegardée ———
+// ——— Prompt 33 : reprendre une partie sauvegardée (prompt 178 : le choix se fait dans l'écran « Reprendre une partie », menu.js) ———
+/** Raccourci de la webapp installée (?action=reprendre) : la partie la plus récente */
 function continuerPartie() {
 	const o = Sauvegarde.lister()[0];
 	if (o) Sauvegarde.reprendre(o);
-}
-function reprendreSemaineChoisie() {
-	const o = optionsAccueil()[choixAccueil];
-	fenetre = null;
-	if (o && o.sauvegarde) Sauvegarde.reprendre(o.sauvegarde);
-}
-function fenetreReprise() {
-	const o = optionsAccueil()[choixAccueil];
-	if (!o || !o.sauvegarde) return fermer();
-	const l = 860;
-	const h = 340;
-	const x = (L - l) / 2;
-	const y = (H - h) / 2;
-	panneau(x, y, l, h, C.accent);
-	textAlign(CENTER, TOP);
-	noStroke();
-	fill(C.texte);
-	textFont(POLICE_TEXTE);
-	textStyle(BOLD);
-	textSize(36);
-	text(t('reprise.titre'), L / 2, y + 44);
-	textStyle(NORMAL);
-	textSize(22);
-	fill(C.gris);
-	text(t('reprise.texte', { n: o.sauvegarde.etat.dossierIndex + 1, total: o.sauvegarde.etat.complet.paquet.length }), x + 48, y + 104, l - 96, 80);
-	const lb = (l - 128) / 3;
-	bouton(x + 48, y + h - 112, lb, 72, t('reprise.reprendre'), reprendreSemaineChoisie);
-	bouton(x + 64 + lb, y + h - 112, lb, 72, t('reprise.nouvelle'), lancerNouvellePartie, false, true);
-	bouton(x + 80 + 2 * lb, y + h - 112, lb, 72, t('reprise.annuler'), fermer, false, true);
 }
 
 // =====================================================================
@@ -787,27 +807,24 @@ function dessinerNarration() {
 	textSize(26);
 	text(r.narration.texte, z.x + 32, z.y + 190, z.l - 64, 260);
 
-	// Détail des effets : base + 1d6 et contexte (lisible pour la soutenance)
+	// Prompt 184 : plus de liste des écarts (« Fluidité −9 (dé : 3) », « Effets : … ») — les jauges du bandeau s'animent
+	// (segment vert / rouge, feedback.js) ; le détail chiffré reste dans l'appli Journal. Restent le contexte qui a
+	// renforcé l'effet, l'explication (pourquoi, meilleure réponse) et la phrase de contexte réelle.
 	textFont(POLICE_DONNEES);
 	textSize(18);
-	fill(C.gris);
-	const noms = [t('jaugeTitre.fluidite'), t('jaugeTitre.reputation'), t('jaugeTitre.budget')];
-	r.deltas.forEach((v, i) => {
-		const de = r.des[i] ? t('narration.de', { d: r.des[i] }) : '';
-		fill(v > 0 ? C.vert : v < 0 ? C.rouge : C.gris);
-		text(noms[i].padEnd(13, ' ') + (v > 0 ? '+' : '') + v + de, z.x + 32, z.y + 470 + i * 30);
-	});
 	const ctx = [r.contexte.meteo && t('ctx.meteo'), r.contexte.pointe && t('ctx.pointe'), r.contexte.affluence && t('ctx.affluence')].filter(Boolean);
 	fill(C.gris);
-	if (ctx.length) text(t('narration.contexte', { liste: ctx.join(', ') }), z.x + 32, z.y + 570);
+	if (ctx.length) text(t('narration.contexte', { liste: ctx.join(', ') }), z.x + 32, z.y + 470);
 	// Prompt 74 : une phrase de contexte tirée de la situation réelle (météo, heure, ligne, agenda)
 	// Prompt 87 : avant elle, l'explication — ce qui s'est passé, et pourquoi (ou quelle réponse convenait mieux)
-	const expl = explicationDecision(r).concat(r.contexteNarr ? [t(r.contexteNarr.cle, r.contexteNarr.vars)] : []);
+	const expl = explicationDecision(r, true).concat(r.contexteNarr ? [t(r.contexteNarr.cle, r.contexteNarr.vars)] : []);
+	push(); // textLeading est un état global de p5 : encadré
 	textFont(POLICE_TEXTE);
 	textSize(20);
 	textLeading(28);
 	fill(C.texte);
-	text(expl.join('\n'), z.x + 32, z.y + 612, z.l - 64, 150);
+	text(expl.join('\n'), z.x + 32, z.y + (ctx.length ? 512 : 470), z.l - 64, ctx.length ? 250 : 292);
+	pop();
 
 	// Suite automatique, ou Entrée / clic
 	// Prompt 131 : plus de suite automatique hors défi chrono — le joueur lit à son rythme (Entrée, clic ou « Suivant »)
@@ -819,9 +836,8 @@ function dessinerNarration() {
 		fill(couleurTon);
 		rect(z.x + 32, z.y + z.h - 140, (z.l - 64) * tA, 6, 3);
 	}
-	const lb = (z.l - 64 - 16) * 0.68;
-	bouton(z.x + 32, z.y + z.h - 112, lb, 72, t(Jeu.terminee ? 'narration.bilan' : 'narration.suivant'), continuer);
-	bouton(z.x + 48 + lb, z.y + z.h - 112, z.l - 64 - 16 - lb, 72, t(enPause ? 'pause.reprendre' : 'pause.pause'), basculerPause, false, true);
+	// Prompt 183 : plus de bouton « Pause » dans l'appli (la touche P et le menu du jeu restent)
+	bouton(z.x + 32, z.y + z.h - 112, z.l - 64, 72, t(Jeu.terminee ? 'narration.bilan' : 'narration.suivant'), continuer);
 	if (auto && tA >= 1 && !enPause && !fenetre) continuer();
 }
 
@@ -991,6 +1007,7 @@ function retourAccueil() {
 
 function rejouer() {
 	bilanCalcule = null;
+	Sauvegarde.nouvelle(); // prompt 178 : la partie rejouée prend un nouvel emplacement
 	const e = Jeu.etat;
 	const p = e.mode === 'semaine' ? Jeu.chargerSemaine(e.semaine.lundi) : e.mode === 'direct' ? Jeu.chargerDirect() : Jeu.chargerHorsLigne();
 	p.then(() => {
@@ -1040,6 +1057,7 @@ function panneau(x, y, l, h, bordure) {
 	rect(x + 1, y + 1, l - 2, h - 2);
 	noStroke();
 	zoneTexteDeclarer('panneau', x, y, l, h); // prompt 93
+	zoneFenetre(x, y, l, h); // prompt 173 : clic sur le fond
 }
 
 function bouton(x, y, l, h, label, action, desactive, secondaire) {
@@ -1061,14 +1079,14 @@ function bouton(x, y, l, h, label, action, desactive, secondaire) {
 	}
 	if (survol) {
 		noFill();
-		stroke(secondaire ? '#FFFFFF' : C.primaire);
+		stroke(secondaire ? '#FFFFFF' : C.primaireTrait);
 		strokeWeight(2);
 		rect(x - 5, y - 5, l + 10, h + 10);
 		stroke(C.fond);
 		rect(x - 2, y - 2, l + 4, h + 4);
 	}
 	noStroke();
-	fill(desactive ? 'rgba(255,255,255,0.5)' : '#FFFFFF');
+	fill(desactive ? 'rgba(255,255,255,0.5)' : secondaire ? '#FFFFFF' : C.surPrimaire);
 	textFont(POLICE_TEXTE);
 	textStyle(BOLD);
 	textSize(Math.min(28, h * 0.34));
@@ -1103,6 +1121,8 @@ function mousePressed() {
 	if (arreterDemo()) return; // prompt 48
 	Confort.Son.demarrer();
 	interaction();
+	if (typeof GUIDE !== 'undefined') GUIDE.clavier = false; // prompt 181 : le contour de focus clavier du guide s'efface à la souris
+	if (typeof guideBloque === 'function' && guideBloque(mouseX, mouseY)) return rappelerConsigneGuide(); // prompt 181 : guide contraignant — hors de la cible, le clic est ignoré
 	if (typeof debutJeton === 'function' && debutJeton()) return; // prompt 102 : jeton d'équipe saisi (glisser-déposer)
 	if (typeof debutGlisser === 'function' && debutGlisser()) return; // prompt 94 : une carte de réponse est saisie (clic ou glisser-déposer)
 	for (let i = boutons.length - 1; i >= 0; i--) {
@@ -1113,6 +1133,7 @@ function mousePressed() {
 			return;
 		}
 	}
+	if (clicFondFenetre()) return; // prompt 173 : clic sur le fond = fermer (fenêtres non bloquantes)
 	if (typeof debutPanCarte === 'function') debutPanCarte(); // prompt 106 : glisser la carte
 }
 
@@ -1120,25 +1141,47 @@ function basculerSon() {
 	Confort.Reglages.basculer('son');
 }
 
-/** Prompt 133 : plein écran du document (1920×1080 du brief sans barres du navigateur) */
-function basculerPleinEcran() {
-	const doc = document;
+/** Prompt 133 : plein écran du document (1920×1080 du brief sans barres du navigateur).
+ * Prompt 175 : une seule logique pour la touche F et l'interrupteur des paramètres ; l'état affiché est l'état RÉEL
+ * (document.fullscreenElement, ou plein écran du navigateur ouvert par F11), jamais un réglage mémorisé — le
+ * navigateur exige un geste. L'annonce part de l'événement « fullscreenchange » (sortie par Échap comprise). */
+const pleinEcranPossible = () => typeof document !== 'undefined' && !!(document.documentElement && document.documentElement.requestFullscreen && document.exitFullscreen) && document.fullscreenEnabled !== false;
+/** Plein écran ouvert par le navigateur (F11) : la page ne peut pas en sortir elle-même */
+function pleinEcranNavigateur() {
 	try {
-		if (doc.fullscreenElement) doc.exitFullscreen();
-		else if (doc.documentElement.requestFullscreen) doc.documentElement.requestFullscreen().catch(() => {});
-		else return;
-		annoncer(t(doc.fullscreenElement ? 'pleinEcran.sortie' : 'pleinEcran.entree'));
+		return !document.fullscreenElement && typeof matchMedia === 'function' && matchMedia('(display-mode: fullscreen)').matches;
+	} catch (e) {
+		return false;
+	}
+}
+const pleinEcranActif = () => typeof document !== 'undefined' && (!!document.fullscreenElement || pleinEcranNavigateur());
+function basculerPleinEcran() {
+	if (!pleinEcranPossible()) return;
+	try {
+		if (document.fullscreenElement) document.exitFullscreen();
+		else if (pleinEcranNavigateur()) annoncer(t('pleinEcran.f11'));
+		else document.documentElement.requestFullscreen().catch(() => {});
 	} catch (e) {}
+}
+if (typeof document !== 'undefined' && document.addEventListener) document.addEventListener('fullscreenchange', () => annoncer(t(document.fullscreenElement ? 'pleinEcran.entree' : 'pleinEcran.sortie')));
+/** Prompt 174 : true si la touche n'est pas pour le jeu — un champ de saisie HTML a le focus (le texte tapé lui
+ * appartient), ou Ctrl / Cmd / Alt est enfoncé (Ctrl+R, Ctrl+L, Ctrl+P, Alt+← restent au navigateur) */
+function saisieOuRaccourciNavigateur() {
+	const a = typeof document !== 'undefined' ? document.activeElement : null;
+	if (a && (/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) || a.isContentEditable)) return true;
+	return keyIsDown(CONTROL) || keyIsDown(ALT) || keyIsDown(91) || keyIsDown(93);
 }
 function keyPressed() {
 	// Prompt 33 : boîte d'import ouverte (champ texte, fichier) → le clavier lui appartient
 	if (Sauvegarde.dialogueOuvert) return;
+	if (saisieOuRaccourciNavigateur()) return; // prompt 174 : champ de texte au focus, ou Ctrl / Cmd / Alt (raccourcis du navigateur) → le jeu ne lit rien
 	if (arreterDemo()) return false; // prompt 48 : une touche arrête la démo automatique
 	if (CINE) return toucheCinematique(), false; // prompt 41
 	if (GAMEOVER) return toucheGameOver(), false; // prompt 84
 	if (TRANSITION_JOUR && (keyCode === ENTER || keyCode === RETURN || key === ' ' || keyCode === ESCAPE)) return passerTransitionJour(), false; // prompt 43
 	Confort.Son.demarrer(); // l'audio ne peut démarrer qu'après un geste du joueur
 	interaction();
+	if (typeof guideFiltre === 'function' && guideFiltre() && toucheGuide()) return false; // prompt 181 : guide contraignant — liste blanche de touches (guide.js)
 	// Intro SMS (§ 2) : clic / Entrée pour avancer
 	if (smsActif) {
 		if (keyCode === ENTER || keyCode === RETURN || key === ' ') avancerConversation(); // prompt 42
@@ -1166,16 +1209,16 @@ function keyPressed() {
 	// Langue (prompt 24) : L bascule partout, sans toucher à la partie
 	if (key === 'l' || key === 'L') return Langue.suivante(), false;
 	// Prompt 47 : inspection, démission, palmarès ; J = journal de bord, D = rendre son badge
-	if (toucheDeblocage() || toucheTelephone() || toucheTaches() || toucheMecaniques() || toucheAccessibilite() || toucheJournee()) return false; // prompts 47, 48 et 51
-	if (typeof toucheCarte === 'function' && toucheCarte()) return false; // prompt 102 : Échap annule un jeton d'équipe choisi
+	if (toucheParametres() || toucheTelephone() || toucheTaches() || toucheMecaniques() || toucheJournee()) return false; // prompts 47 et 51 ; prompt 175 : la fenêtre des paramètres capte le clavier (Tab, flèches, Entrée, Espace)
+	if (appliInteractive() && typeof toucheCarte === 'function' && toucheCarte()) return false; // prompt 102 : Échap annule un jeton d'équipe choisi ; prompt 182 : raccourcis de l'appli seulement au poste
 	// Fenêtres ouvertes : elles captent le clavier
 	if (fenetre) {
 		if (keyCode === ESCAPE || (fenetre === 'aide' && (key === 'h' || key === 'H' || key === '?'))) return fermer(), false;
 		if (fenetre === 'aide' && toucheAide()) return false; // prompt 123 : onglets (← → Tab, 1 à 4) et pages (↑ ↓)
 		if (fenetre === 'aide' && (key === 't' || key === 'T')) return lancerTutoriel(), false; // prompt 34
 		if (fenetre === 'telephone' && (keyCode === ENTER || keyCode === RETURN)) return fermer(), false; // prompt 38
-		if (fenetre === 'poste' && (keyCode === ENTER || keyCode === RETURN || key === ' ')) return fermer(), false; // prompt 74
 		if (fenetre === 'partage' && keyCode !== ESCAPE) return touchePartage(), false; // prompt 81
+		if (fenetre === 'installation' && (keyCode === ENTER || keyCode === RETURN || key === ' ')) return fermer(), false; // prompt 171
 		if (fenetre === 'rapport' && (keyCode === ENTER || keyCode === RETURN)) return actionRapport(), false; // prompt 41
 		if (fenetre === 'rapportVeille' && (keyCode === ENTER || keyCode === RETURN || keyCode === ESCAPE)) return fermer(), false; // prompt 89 bis
 		if (fenetre === 'menu') {
@@ -1192,27 +1235,11 @@ function keyPressed() {
 			if (keyCode === ENTER || keyCode === RETURN || key === 'o' || key === 'O') confirmerReset();
 			if (key === 'n' || key === 'N') fermer();
 		}
-		if (fenetre === 'reprise') {
-			if (keyCode === ENTER || keyCode === RETURN) reprendreSemaineChoisie();
-			if (key === 'n' || key === 'N') lancerNouvellePartie();
-		}
-		if (fenetre === 'parametres') {
-			const cles = { 1: 'son', 2: 'horsLigneForce', 3: 'reduireAnimations', 4: 'contrasteRenforce', 0: 'defiChrono' }; // prompt 87 : 0 = défi chrono
-			if (cles[key]) basculerReglage(cles[key]);
-			if (key === '8') musiqueSuivante(); // prompt 44
-			if (key === 'c' || key === 'C') Theme.suivante(keyIsDown(SHIFT) ? -1 : 1); // prompt 115 : couleur principale
-			if (key === '9') return ouvrirAccessibilite(), false; // prompt 48
-			if (key === 'g' || key === 'G') return ouvrirOptionsJeu(), false; // prompt 88
-			if (key === '5') Sauvegarde.exporter(); // prompt 33
-			if (key === '6') Sauvegarde.copier();
-			if (key === '7') return Sauvegarde.ouvrirImport(), false;
-			if (keyCode === ENTER || keyCode === RETURN) fermer();
-		}
 		return false;
 	}
 	// Prompt 35 : menu principal (écran titre / choix de la semaine)
 	if (MENU.actif) return toucheMenu(), false;
-	if (toucheSoir()) return false; // prompt 69 : Entrée / S → sortie du bureau
+	if (toucheSoir()) return false; // prompt 69 : Entrée → sortie du bureau (prompt 174 : plus de S)
 	// Au bureau (§ 1, § 7) : Échap = menu ; Tab = objets (écran, livres) ; Entrée = ouvrir / s'installer
 	if (vue !== 'poste') {
 		if (vue !== 'bureau') return false;
@@ -1230,27 +1257,29 @@ function keyPressed() {
 	}
 	// Prompt 36 : I ouvre / ferme l'app flottante « Indicateurs » (au poste)
 	if (key === 'i' || key === 'I') return basculerIndicateurs(), false;
-	// Prompt 101 (D2) : V déplie / replie les détails des Indicateurs (le Journal et le Patron gardent leur V quand ils sont ouverts)
-	if ((key === 'v' || key === 'V') && PC.flottant && PC.fenetre !== 'journal' && PC.fenetre !== 'patron') return basculerDetailsIndicateurs(), false;
-	// Prompt 91 § 1 : une fenêtre RégulOS ouverte par-dessus l'appli de jeu reçoit les touches d'abord (Échap la ferme)
-	if (PC.fenetre && PC.etat === 'appli') PC.etat = 'os';
-	// Au poste, système du PC (bureau RégulOS) : Tab = icônes, Entrée = ouvrir, Échap = fermer l'app puis se lever
+	// Prompt 101 (D2) : V déplie / replie les détails des Indicateurs (le Patron / Mails garde son V quand il est ouvert ;
+	// prompt 186 : le Journal n'a plus de pli « Détails », V y garde ce sens)
+	if ((key === 'v' || key === 'V') && PC.flottant && PC.fenetre !== 'patron') return basculerDetailsIndicateurs(), false;
+	// Prompt 183 : plus de bureau d'icônes — au poste, PC.etat vaut 'appli' (carte) ou 'os' (une autre appli en vue
+	// intégrée, PC.fenetre) ; éteint ou en démarrage, seul « Quitter le PC » répond
+	if (PC.fenetre && PC.etat === 'appli') PC.etat = 'os'; // prompt 91 § 1 : la vue ouverte reçoit les touches d'abord
+	if (PC.etat === 'os' && !PC.fenetre) versAppliPrincipale();
 	if (PC.etat !== 'appli') {
 		if (PC.etat === 'os' && typeof toucheJournal === 'function' && toucheJournal()) return false; // prompt 89 : jours, filtres, cartes, enquête (Échap revient)
-		if (keyCode === ESCAPE) return (depilerNavigation() || (PC.fenetre ? fermerFenetreApp() : seLever())), false; // prompt 91 § 3 : Échap revient d'abord à l'écran d'origine
+		if (keyCode === ESCAPE && typeof echapPatron === 'function' && echapPatron()) return false; // prompt 185 : Mails en zone étroite, la lecture revient à la liste
+		if (keyCode === ESCAPE) return (depilerNavigation() || (PC.etat === 'os' ? fermerFenetreApp() : quitterPC())), false; // prompt 91 § 3 : Échap revient d'abord à l'écran d'origine, puis à la carte (prompt 183) ; prompt 182 : sortie par quitterPC
 		if (focusQuitter && (keyCode === ENTER || keyCode === RETURN || key === ' ')) return quitterPC(), false; // prompt 26
-		if (focusDemarrer && (keyCode === ENTER || keyCode === RETURN || key === ' ')) return basculerFocusDemarrer(false), retourAccueilPC(), false; // prompt 75
 		if (PC.etat !== 'os') {
 			if (keyCode === TAB) basculerFocusQuitter(!focusQuitter);
 			return false;
 		}
-		// Prompt 28 : plainte en attente dans l'app Community — Tab parcourt les réponses, Entrée / 1-2-3 répond
 		// Prompt 103 : le menu a le focus (Tab) → Entrée ouvre l'entrée choisie avant les raccourcis de la vue
-		if (typeof MENU_FOCUS !== 'undefined' && MENU_FOCUS.actif && (keyCode === ENTER || keyCode === RETURN || key === ' ') && vueIntegree()) return (MENU_FOCUS.actif = false), ouvrirEntreeMenu(ICONES_OS[PC.selection].cle), false;
+		if (MENU_FOCUS.actif && (keyCode === ENTER || keyCode === RETURN || key === ' ')) return ouvrirEntreeMenu(ICONES_OS[PC.selection].cle), false;
 		if (ecran === 'jeu' && toucheCommunity()) return false; // prompt 85 : onglets, défilement, publication
 		if (ecran === 'jeu' && touchePatron()) return false; // prompt 86 : filtres, défilement, réponses rapides
+		// Prompt 28 : plainte en attente dans l'app Community — Tab parcourt les réponses, Entrée / 1-2-3 répond
 		const plainte = PC.fenetre === 'community' && ecran === 'jeu' ? cibleCommunity() : null;
-		if (plainte && !focusQuitter && !focusDemarrer) {
+		if (plainte && !focusQuitter) {
 			const n = plainte.def.reponses.length;
 			if (keyCode === TAB) {
 				focusReponse = (focusReponse + (keyIsDown(SHIFT) ? n - 1 : 1)) % n;
@@ -1260,51 +1289,27 @@ function keyPressed() {
 			if (keyCode === ENTER || keyCode === RETURN || key === ' ') return repondrePlainte(focusReponse), false;
 			if (Number(key) >= 1 && Number(key) <= n) return repondrePlainte(Number(key) - 1), false;
 		}
-		if (keyCode === TAB) {
-			// Prompt 26 : le cycle Tab passe par les icônes, le bouton « Quitter le PC », puis (prompt 75) le logo
-			// en bas à gauche de la barre des tâches (accueil de RégulOS)
-			const n = ecran === 'jeu' && !(typeof vueIntegree === 'function' && vueIntegree()) ? 1 : ICONES_OS.length; // prompt 103 : bureau = une icône ; dans l'appli, Tab parcourt le menu
-			const recul = keyIsDown(SHIFT);
-			if (typeof MENU_FOCUS !== 'undefined') MENU_FOCUS.actif = typeof vueIntegree === 'function' && vueIntegree(); // prompt 103
-			if (focusQuitter) {
-				basculerFocusQuitter(false);
-				if (recul) PC.selection = n - 1;
-				else basculerFocusDemarrer(true);
-			} else if (focusDemarrer) {
-				basculerFocusDemarrer(false);
-				if (recul) basculerFocusQuitter(true);
-				else PC.selection = 0;
-			} else if (!recul && PC.selection === n - 1) basculerFocusQuitter(true);
-			else if (recul && PC.selection === 0) basculerFocusDemarrer(true);
-			else PC.selection = (PC.selection + (recul ? n - 1 : 1)) % n;
-			if (typeof MENU_FOCUS !== 'undefined' && MENU_FOCUS.actif && !focusQuitter && !focusDemarrer && typeof libelleEntreeMenu === 'function') annoncer(libelleEntreeMenu(ICONES_OS[PC.selection].cle)); // prompt 111 : libellé + badge
-			return false;
-		}
-		if (keyCode === ENTER || keyCode === RETURN || (key === ' ' && !PC.fenetre)) ouvrirIconeOS(PC.selection);
-		if (phase === 'mail' && PC.fenetre === null && (keyCode === ENTER || keyCode === RETURN)) return false;
+		if (keyCode === TAB) return tabMenuApp(), false; // prompts 26 / 103 : entrées du menu, puis « Quitter le PC »
 		return false;
 	}
 	// Au poste : Échap fait se lever (sauf à l'écran de fin)
-	if (keyCode === ESCAPE && !(ecran === 'jeu' && phase === 'fin')) return (depilerNavigation() || seLever()), false; // prompt 91 § 3
+	if (keyCode === ESCAPE && !(ecran === 'jeu' && phase === 'fin')) return (depilerNavigation() || quitterPC()), false; // prompt 91 § 3 ; prompt 182 : sortie retenue si un choix attend
+	// Prompt 183 : le menu de l'appli a le focus (Tab) → Entrée / Espace ouvre l'appli choisie
+	if (MENU_FOCUS.actif && ecran === 'jeu' && (keyCode === ENTER || keyCode === RETURN || key === ' ')) return ouvrirEntreeMenu(ICONES_OS[PC.selection].cle), false;
 	// Prompt 72 : réponses d'une alerte — ↑ ↓ / Tab les parcourent, Entrée valide (le focus « Quitter le PC » d'abord s'il est pris)
-	if (!focusQuitter && !focusDemarrer && ecran === 'jeu' && toucheSourcesEnquete()) return false; // prompt 92 : Tab / Entrée / ↑ ↓ dans les sources d'« En savoir plus »
-	if (!focusQuitter && !focusDemarrer && ecran === 'jeu' && toucheMultitache()) return false; // prompt 77 : Tab passe d'un signalement actif à l'autre
-	// Prompt 26 : Tab place le focus sur « Quitter le PC », puis (prompt 75) sur le logo de la barre des tâches, puis l'en retire
-	if (keyCode === TAB) {
-		if (focusQuitter) basculerFocusQuitter(false), basculerFocusDemarrer(true);
-		else if (focusDemarrer) basculerFocusDemarrer(false);
-		else basculerFocusQuitter(true);
-		return false;
-	}
+	if (!focusQuitter && !MENU_FOCUS.actif && ecran === 'jeu' && toucheSourcesEnquete()) return false; // prompt 92 : Tab / Entrée / ↑ ↓ dans les sources d'« En savoir plus »
+	if (!focusQuitter && !MENU_FOCUS.actif && ecran === 'jeu' && toucheMultitache()) return false; // prompt 77 : Tab passe d'un signalement actif à l'autre
+	// Prompt 26 : Tab place le focus sur « Quitter le PC » ; prompt 183 : il passe d'abord par le menu de l'appli
+	// (Patron, Community, Journal, Données) — seul chemin au clavier vers les autres applis depuis la carte
+	if (keyCode === TAB) return ecran === 'jeu' && phase !== 'fin' ? tabMenuApp() : basculerFocusQuitter(!focusQuitter), false;
 	if (focusQuitter && (keyCode === ENTER || keyCode === RETURN || key === ' ')) return quitterPC(), false;
-	if (focusDemarrer && (keyCode === ENTER || keyCode === RETURN || key === ' ')) return basculerFocusDemarrer(false), retourAccueilPC(), false; // prompt 75
 	if (phase === 'mail' && (keyCode === ENTER || keyCode === RETURN)) return rangerPoste(), false; // prompt 69 : on range le poste, la nuit tombe
 	// Touches valables partout
 	if (key === 'h' || key === 'H' || key === '?') return ouvrir('aide'), false;
 	if (key === 'm' || key === 'M') return toucheMEnfoncee(), false; // prompt 54 : brève = son, maintenue = micro
 	if (ecran === 'jeu') {
-		// Prompt 55 : pendant un dossier, R = ralenti tactique ; sinon R = recommencer la semaine (Q38)
-		if (key === 'r' || key === 'R') return ['decision', 'contradiction', 'conflit'].includes(phase) ? Jeu.defiChrono && demanderRalentiUI() : ouvrir('reset'), false; // prompt 87 : ralenti seulement en défi chrono
+		// Prompt 174 : R = ralenti tactique (défi chrono) seulement ; « Recommencer la semaine », action rare et destructrice, n'a plus de touche (menu du jeu)
+		if ((key === 'r' || key === 'R') && Jeu.defiChrono && ['decision', 'contradiction', 'conflit'].includes(phase)) return demanderRalentiUI(), false;
 		if (key === 'p' || key === 'P') return basculerPause(), false;
 	}
 	if (ecran === 'accueil') {
@@ -1316,7 +1321,6 @@ function keyPressed() {
 	} else if ((phase === 'decision' || phase === 'contradiction') && toucheEnquete()) {
 		// prompt 50 : 5 à 8 consultent une source
 	} else if (phase === 'decision') {
-		if ((key === 'b' || key === 'B') && Jeu.dossierCourant() && peutPublierDossier(Jeu.dossierCourant())) return publierDepuisDossier(Jeu.dossierCourant()), false; // prompt 91 § 3
 		// Prompt 87 : 1 à 4 = cartes de réponse affichées ; 0 ou Espace = la réponse « attendre » ; E = En savoir plus
 		toucheReponses(); // prompt 117 : 1 à 3 = les répliques affichées (plus de raccourci caché « 0 = attendre »)
 	} else if (phase === 'contradiction') {
@@ -1335,8 +1339,10 @@ function keyPressed() {
 }
 
 // Prompt 26 : au poste, la molette fait quitter le PC (anti-rebond dans bureau.js) ; ailleurs, scroll normal
+// Prompt 182 : le contenu qui défile prend la molette d'abord ; la sortie n'est possible que si aucun choix n'attend
 function mouseWheel(event) {
 	interaction();
+	if (typeof guideBloque === 'function' && guideBloque(mouseX, mouseY)) return rappelerConsigneGuide(), false; // prompt 181 : molette hors de la cible du guide
 	if (typeof molletteCarte === 'function' && molletteCarte(event.delta)) return false; // prompt 106 : zoom de la carte
 	if (molletteCommunity(event.delta)) return false; // prompt 85 : défilement du fil
 	if (mollettePatron(event.delta)) return false; // prompt 86 : historique du patron
@@ -1365,14 +1371,12 @@ function touchStarted(e) {
 // Fenêtres : aide, confirmation de reset, paramètres ; voile de pause
 // =====================================================================
 function voile() {
-	noStroke();
-	fill(13, 12, 12, 190); // prompt 39 : voile = fond du DS
-	rect(0, 0, L, H);
+	dsVoile(); // prompt 173 : un seul voile (DS.voile, ds.js) derrière toutes les fenêtres
 }
 
 function dessinerPause() {
 	voile();
-	const l = 640;
+	const l = DS.fenetre.etroite;
 	const h = 240;
 	panneau((L - l) / 2, (H - h) / 2, l, h, C.accent);
 	textAlign(CENTER, CENTER);
@@ -1386,7 +1390,17 @@ function dessinerPause() {
 }
 
 function dessinerFenetre() {
-	if (fenetre === 'telephone') return fenetreTelephone(); // prompt 42 : le téléphone en main a son propre voile
+	// Prompt 173 : la zone de la fenêtre (premier panneau dessiné) sert au clic sur le fond
+	ZONE_FENETRE = null;
+	FENETRE_EN_DESSIN = true;
+	try {
+		contenuFenetre();
+	} finally {
+		FENETRE_EN_DESSIN = false;
+	}
+}
+function contenuFenetre() {
+	if (fenetre === 'telephone') return fenetreTelephone(); // prompt 42 : le téléphone en main (voile du DS, prompt 173)
 	if (fenetre === 'cafe') return fenetreCafe(); // prompt 52 : même animation, la tasse en main
 	voile();
 	if (fenetre === 'rapport') return fenetreRapport(); // prompt 41
@@ -1394,28 +1408,23 @@ function dessinerFenetre() {
 	if (fenetre === 'mailFin') return fenetreMailFin(); // prompt 56
 	if (fenetre === 'inspection') return fenetreInspection(); // prompt 47
 	if (fenetre === 'tache') return fenetreTache(); // prompt 88
-	if (fenetre === 'optionsJeu') return fenetreOptionsJeu(); // prompt 88 (lot F)
-	if (fenetre === 'deblocage') return fenetreDeblocage(); // prompt 91
 	if (fenetre === 'demission') return fenetreDemission(); // prompt 47
 	if (fenetre === 'palmares') return fenetrePalmares(); // prompt 47
-	if (fenetre === 'accessibilite') return fenetreAccessibilite(); // prompt 48
 	if (fenetre === 'partir') return fenetrePartir(); // prompt 51
 	if (fenetre === 'blame') return fenetreBlame(); // prompt 51
-	if (fenetre === 'poste') return fenetrePoste(); // prompt 74
 	if (fenetre === 'partage') return fenetrePartage(); // prompt 81
+	if (fenetre === 'installation') return fenetreInstallation(); // prompt 171
 	if (fenetre === 'aide') return fenetreAide();
 	if (fenetre === 'reset') return fenetreReset();
-	if (fenetre === 'parametres') return fenetreParametres();
-	if (fenetre === 'reprise') return fenetreReprise();
+	if (fenetre === 'parametres') return fenetreParametres(); // prompt 175 : parametres.js
 	if (fenetre === 'menu') return fenetreMenu();
-	if (fenetre === 'livre-stress') return fenetreLivreStress();
 	if (fenetre === 'telephone') return fenetreTelephone(); // prompt 38
 }
 
 // Prompt 123 : la fenêtre d'aide (onglets, cartes, pagination) est dans aide.js
 
 function fenetreReset() {
-	const l = 760;
+	const l = DS.fenetre.moyenne; // prompt 173 (était 760)
 	const h = 300;
 	const x = (L - l) / 2;
 	const y = (H - h) / 2;
@@ -1436,10 +1445,10 @@ function fenetreReset() {
 }
 
 /** Prompt 44 : morceau suivant (mémorisé), joué tout de suite si le son est actif */
-function musiqueSuivante() {
+function musiqueSuivante(sens) {
 	const liste = Confort.Son.musique.pistes();
 	const i = liste.indexOf(Confort.Reglages.musique || 'coquillage');
-	const suivante = liste[(i + 1) % liste.length];
+	const suivante = liste[(i + (sens || 1) + liste.length) % liste.length];
 	Confort.Son.demarrer();
 	Confort.Son.musique.changer(suivante);
 	annoncer(t('param.musique') + ' : ' + t('musique.' + suivante));
@@ -1457,134 +1466,13 @@ function basculerReglage(nom) {
 	}
 }
 
-function fenetreParametres() {
-	const l = 1000;
-	const h = 1052; // prompt 33 : + section « Progression » ; prompt 44 : + « Musique » ; prompt 48 : + « Accessibilité »
-	const x = (L - l) / 2;
-	const y = (H - h) / 2;
-	panneau(x, y, l, h, C.accent);
-	textAlign(LEFT, TOP);
-	noStroke();
-	fill(C.accent);
-	textFont(POLICE_TEXTE);
-	textStyle(BOLD);
-	textSize(40);
-	text(t('param.titre'), x + 48, y + 36);
-	textStyle(NORMAL);
-	const R = Confort.Reglages;
-	const lignes = [
-		['1', t('param.son'), 'son'],
-		['2', t('param.horsLigne'), 'horsLigneForce'],
-		['3', t('param.animations'), 'reduireAnimations'],
-		['4', t('param.contraste'), 'contrasteRenforce'],
-		['0', t('param.defiChrono'), 'defiChrono'], // prompt 87 : compteur, ralenti, expiration (prochaine partie)
-	];
-	lignes.forEach(([k, lib, nom], i) => {
-		const ly = y + 120 + i * 72; // prompt 115 : rangées de 72 px pour la couleur principale
-		textFont(POLICE_TEXTE);
-		ajusterTaille(lib, 490, 26);
-		fill(C.texte);
-		textAlign(LEFT, CENTER);
-		text(lib, x + 48, ly + 36);
-		textFont(POLICE_DONNEES);
-		textSize(18);
-		fill(C.gris);
-		text(t('param.touche', { k }), x + 560, ly + 36);
-		bouton(x + l - 248, ly + 6, 200, 60, t(R[nom] ? 'commun.oui' : 'commun.non'), () => basculerReglage(nom), false, !R[nom]);
-	});
-	textAlign(LEFT, TOP);
-	textFont(POLICE_DONNEES);
-	textSize(16);
-	fill(C.gris);
-	text(t('param.note'), x + 48, y + h - 104, l - 360, 60);
-	// Langue (prompt 24) : même sélecteur qu'à l'accueil, touche L
-	textFont(POLICE_TEXTE);
-	textSize(26);
-	fill(C.texte);
-	textAlign(LEFT, CENTER);
-	text(t('langue.titre'), x + 48, y + 120 + 5 * 72 + 36);
-	textFont(POLICE_DONNEES);
-	textSize(18);
-	fill(C.gris);
-	text(t('param.touche', { k: 'L' }), x + 560, y + 120 + 5 * 72 + 36);
-	textAlign(LEFT, TOP);
-	selecteurLangue(x + l - 48, y + 120 + 5 * 72 + 10);
-	// Prompt 44 : choix de la musique (morceaux originaux, chiptune), touche 8
-	const ym = y + 120 + 6 * 72;
-	textFont(POLICE_TEXTE);
-	textSize(26);
-	fill(C.texte);
-	textAlign(LEFT, CENTER);
-	text(t('param.musique'), x + 48, ym + 36);
-	textFont(POLICE_DONNEES);
-	textSize(18);
-	fill(C.gris);
-	text(t('param.touche', { k: '8' }), x + 500, ym + 36);
-	bouton(x + l - 48 - 340, ym + 8, 340, 56, // prompt 98 : 280 → 340, le titre du morceau tient sans passer sous 14 px
-		 '♪ ' + t('musique.' + (Confort.Reglages.musique || 'coquillage')), musiqueSuivante, false, true);
-	textFont(POLICE_DONNEES);
-	textSize(14);
-	fill(C.gris);
-	textAlign(LEFT, TOP);
-	text(t('param.musiqueCredits'), x + 48, ym + 70, l - 96, 24); // crédits des morceaux CC0 ; prompt 93 : largeur libre sous le bouton, libellé court
-	if (mouseX >= x + 48 && mouseX <= x + l - 48 && mouseY >= ym + 66 && mouseY <= ym + 92) infobulle(t('param.musiqueCreditsLong'), x + 48, ym + 96);
-	// Prompt 33 : Progression — exporter (fichier), copier (presse-papiers), importer (fichier ou texte collé)
-	const yp = y + 120 + 7 * 72 + 16;
-	textFont(POLICE_TEXTE);
-	textSize(26);
-	fill(C.texte);
-	textAlign(LEFT, CENTER);
-	text(t('parametres.progression'), x + 48, yp + 36);
-	const lbp = 200;
-	bouton(x + l - 48 - 3 * lbp - 32, yp + 8, lbp, 56, t('parametres.exporter'), () => Sauvegarde.exporter(), false, true);
-	bouton(x + l - 48 - 2 * lbp - 16, yp + 8, lbp, 56, t('parametres.copier'), () => Sauvegarde.copier(), false, true);
-	bouton(x + l - 48 - lbp, yp + 8, lbp, 56, t('parametres.importer'), () => Sauvegarde.ouvrirImport(), false, true);
-	// Prompt 48 : accessibilité (daltonisme, taille du texte, lecture facile) et reprise sur un autre appareil
-	const ya = yp + 72;
-	textFont(POLICE_TEXTE);
-	textSize(26);
-	fill(C.texte);
-	textAlign(LEFT, CENTER);
-	text(t('acc.titre'), x + 48, ya + 36);
-	textFont(POLICE_DONNEES);
-	textSize(18);
-	fill(C.gris);
-	text(t('param.touche', { k: '9' }), x + 560, ya + 36);
-	bouton(x + l - 48 - 280, ya + 8, 280, 56, t('acc.ouvrir'), ouvrirAccessibilite, false, true);
-	// Prompt 88 : options de jeu soumises au groupe (chaînes, déblocages, arbitrage) et remise à zéro de la progression
-	const yo = ya + 72;
-	textFont(POLICE_TEXTE);
-	textSize(26);
-	fill(C.texte);
-	textAlign(LEFT, CENTER);
-	text(t('optjeu.titre'), x + 48, yo + 36);
-	textFont(POLICE_DONNEES);
-	textSize(18);
-	fill(C.gris);
-	text(t('param.touche', { k: 'G' }), x + 560, yo + 36);
-	bouton(x + l - 48 - 280, yo + 8, 280, 56, t('optjeu.ouvrir'), ouvrirOptionsJeu, false, true);
-	// Prompt 115 : couleur principale du design system (6 palettes), touche C
-	const yc = yo + 72;
-	textFont(POLICE_TEXTE);
-	textSize(26);
-	fill(C.texte);
-	textAlign(LEFT, CENTER);
-	text(t('couleur.titre'), x + 48, yc + 36);
-	textFont(POLICE_DONNEES);
-	textSize(18);
-	fill(C.gris);
-	text(t('param.touche', { k: 'C' }), x + 440, yc + 36);
-	textAlign(LEFT, TOP);
-	selecteurCouleur(x + l - 48, yc + 10);
-	textAlign(LEFT, TOP);
-	bouton(x + l - 288, y + h - 104, 240, 64, t('param.retour'), fermer);
-}
+// Prompt 175 : la fenêtre des paramètres (quatre sections à onglets) est dans parametres.js
 
 /** Sélecteur de langue (prompt 24) : un bouton par entrée de LANGUES, aligné à droite sur xDroite ; touche L partout */
-function selecteurLangue(xDroite, y) {
+function selecteurLangue(xDroite, y, h) {
 	const lb = 84;
 	LANGUES.forEach((lg, i) => {
 		const x = xDroite - (LANGUES.length - i) * (lb + 8);
-		bouton(x, y, lb, 52, lg.code.toUpperCase(), () => Langue.changer(lg.code), false, lg.code !== Langue.actuelle);
+		bouton(x, y, lb, h || 52, lg.code.toUpperCase(), () => Langue.changer(lg.code), false, lg.code !== Langue.actuelle);
 	});
 }

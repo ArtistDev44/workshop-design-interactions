@@ -467,3 +467,47 @@ Les écrans ont été audités par le parcours `?audit=textes&parcours=1` : 59 �
 
 - Défauts A à D : 0 avant comme après.
 - Tests humains (pouce seul en mobile portrait, clavier seul de bout en bout) : [À COMPLÉTER].
+
+## Tests humains — protocole (prompt 192, rédigé le 12/11/2026, à exécuter par le groupe)
+
+L'équilibrage n'a été validé que par simulation (`site/scripts/test-jeu.mjs`). Cette section prépare les tests
+avec de vrais joueurs ; **aucun résultat n'est encore consigné** : rien ci-dessous n'est à inventer ni à
+compléter de mémoire, seulement à remplir pendant ou juste après chaque test.
+
+### 1. Test novice (3 testeurs)
+- **Testeurs** : 3 personnes hors du projet, qui n'ont jamais vu le jeu.
+- **Consigne orale, une seule phrase** : « Joue à ce jeu, dis-moi ce que tu comprends et ce qui te plaît ou te
+  gêne. » Aucune explication des règles ; on n'intervient pas pendant le test (test silencieux).
+- **Cadre** : 10 minutes de jeu libre sur la semaine 1 (facile, mode histoire), 1920 × 1080, navigateur récent,
+  guide « Prendre en main » laissé tel que le jeu le propose (coché à la 1re partie).
+- **À noter pour chaque testeur** (3 observations au minimum) :
+  1. À quelle décision a-t-il compris le but du jeu ? (n° de dossier, temps écoulé)
+  2. Sa première erreur de compréhension.
+  3. Son ressenti du game feel (secousse, arrêt sur image, jauges animées) : trop fort / imperceptible / agréable.
+  4. Ce qu'il a utilisé : clavier, souris, glisser-déposer, téléphone.
+  5. Un verbatim exact (phrase prononcée, positive ou négative), entre guillemets.
+
+### 2. Test croisé inter-groupe (30 à 60 s)
+Un autre groupe joue 60 secondes sans consigne, note 3 observations et rend le jeu. Consigner ici, puis cocher
+« Test croisé silencieux » dans `todo.md` **seulement une fois le test fait**.
+
+### 3. Tests ciblés en attente (renvoyés ici par les fiches `jeu/`)
+- Ressenti du game feel : le hit se lit-il, nausée, entrées pendant le gel (`jeu/92-game-feel-juice.md`).
+- Joueur novice : 3e décision en moins de 2 min sans aide, sait dire ce qu'il faut préserver (`jeu/93-…`).
+- Mobile portrait au pouce seul ; partie entière au clavier seul (`jeu/94-revue-ui-hud.md`).
+- Partie complète à la souris, au clavier et sur mobile (`jeu/105-109-carte-dialogue-equipes.md`).
+- Durée réelle d'une semaine (10 à 20 min visées, prompt 190) : chronométrer.
+
+### 4. Gabarit à remplir — Tests humains du [À COMPLÉTER]
+
+| Testeur | Profil (âge, habitude de jeu) | Compris à la décision n° / temps | Première erreur | Game feel | Entrées utilisées | Verbatim |
+|---|---|---|---|---|---|---|
+| T1 | [À COMPLÉTER] | [À COMPLÉTER] | [À COMPLÉTER] | [À COMPLÉTER] | [À COMPLÉTER] | « [À COMPLÉTER] » |
+| T2 | [À COMPLÉTER] | [À COMPLÉTER] | [À COMPLÉTER] | [À COMPLÉTER] | [À COMPLÉTER] | « [À COMPLÉTER] » |
+| T3 | [À COMPLÉTER] | [À COMPLÉTER] | [À COMPLÉTER] | [À COMPLÉTER] | [À COMPLÉTER] | « [À COMPLÉTER] » |
+
+**Test croisé du [À COMPLÉTER]** — groupe [À COMPLÉTER] : 1. [À COMPLÉTER] · 2. [À COMPLÉTER] · 3. [À COMPLÉTER]
+
+**Synthèse** (après les tests) : les 3 frictions les plus citées → propositions d'amélioration, chacune en prompt
+séparé (ce prompt mesure, il ne corrige pas) : [À COMPLÉTER].
+

@@ -8,6 +8,16 @@ salle de contrôle, les décisions de régulation qui préservent la fluidité d
 réseau — chaque incident réel de l'API devenant un dossier à trancher sous
 pression. »
 
+## Public cible et session (prompt 190)
+- **Public** : joueurs de 12 ans et plus, amateurs de jeux de gestion et de simulation (façon *Papers, Please*),
+  qui cherchent une session courte et intense ; jouable au clavier seul, à la souris ou sur mobile.
+- **Session visée** : 10 à 20 minutes pour une semaine rejouée ; 30 à 45 minutes pour le mode histoire
+  (3 semaines). Durées **visées par la conception**, non mesurées : à confirmer par les tests humains (prompt 192).
+- **Ressenti visé** : la tension d'un régulateur qui doit trancher vite et bien, la satisfaction d'avoir bien lu
+  la situation, la fierté d'une bonne fin de semaine.
+- **Plateformes** : PC (1920 × 1080, clavier + souris) et mobile (portrait, tactile) ; hors ligne après
+  installation de la webapp.
+
 ## Spec verrouillée (décisions prises)
 - **Thème** : transports en commun nantais (tram, bus), régulation en salle de contrôle.
 - **Rôle du joueur** : régulateur / dispatcher qui alloue les voies et réagit aux alertes.

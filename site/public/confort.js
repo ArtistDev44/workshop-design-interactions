@@ -543,7 +543,12 @@
 			onde: 'square', basse: 'square', filtre: 2200, gain: 0.26, percu: true,
 		},
 	};
-	const piste = () => PISTES[(typeof Musique !== 'undefined' && Musique.humeurActive) || Reglages.musique] || PISTES.origine; // prompt 88 : humeur temporaire (crise)
+	// Prompt 88 : humeur temporaire (crise). Prompt 193 : un morceau en fichier qui n'a pas pu se charger (hors ligne sans
+	// cache, format refusé) est remplacé, pour la session, par le morceau composé en WebAudio « origine »
+	const piste = () => {
+		const p = PISTES[(typeof Musique !== 'undefined' && Musique.humeurActive) || Reglages.musique] || PISTES.origine;
+		return p.fichier && typeof Musique !== 'undefined' && Musique.enPanne.has(p.fichier) ? PISTES.origine : p;
+	};
 	const Musique = {
 		bus: null,
 		minuterie: null,
@@ -578,8 +583,18 @@
 		},
 		/** Morceau CC0 : élément audio en boucle (OGG, ou MP3 si le navigateur ne lit pas l'OGG), fondu d'entrée 2 s */
 		audio: null,
+		enPanne: new Set(), // prompt 193 : fichiers dont le chargement a échoué pendant la session
 		demarrerFichier: function (p) {
 			const a = new Audio();
+			// Prompt 193 : erreur de chargement → repli immédiat sur la musique synthétisée (WebAudio, sans réseau)
+			a.addEventListener('error', () => {
+				if (Musique.audio !== a) return;
+				Musique.enPanne.add(p.fichier);
+				Musique.audio = null;
+				if (Musique.minuterie && Musique.minuterie !== 'fichier') clearInterval(Musique.minuterie);
+				Musique.minuterie = null;
+				Musique.demarrer();
+			});
 			const ogg = a.canPlayType('audio/ogg; codecs="vorbis"');
 			a.src = p.fichier + (ogg ? '.ogg' : '.mp3');
 			a.loop = true;

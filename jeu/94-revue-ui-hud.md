@@ -53,7 +53,7 @@ Une recherche statique dans `npm test` complète le parcours : elle trouve les t
 - **6 cibles à 42-43 px** (onglets et boutons du panneau, ✕) : à 1 ou 2 px du seuil à 1920×1080, et bien au-dessus du minimum WCAG 2.5.8 (24 px) pour la souris. En mobile, la mise en page portrait du prompt 60 a ses propres cibles de 44 px ou plus.
 - **3 objets de la pièce le soir** (37 à 42 px) : ce sont des objets du décor diégétique (flèche de sortie, objets). Ils sont aussi atteignables au clavier (Tab, Entrée, S) et par la sortie automatique (prompt 94).
 - **Limite de l'outil en mobile portrait** : il mesure en coordonnées du canevas 1920×1080. Les cibles du portrait recomposé (`portrait.js`) ne sont pas comptées par le parcours ; leurs 44 px viennent du prompt 60.
-- **Tests humains** (mobile portrait au pouce seul ; partie entière au clavier seul) : [À COMPLÉTER].
+- **Tests humains** (mobile portrait au pouce seul ; partie entière au clavier seul) : non testé, prévu en salle (protocole de `notes.md`, « Tests humains », prompt 192) — date [À COMPLÉTER].
 
 ## Vérifications
 - `npm test` passe : 442 contrôles smoke et 533 contrôles du jeu. Il vérifie en plus : aucune taille fixe sous 14 px dans `site/public/` ; `bouton()` jamais sous 14 px ; délai de l'infobulle ; zones de clic du ✕ et de la somnolence.

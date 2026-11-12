@@ -26,7 +26,7 @@ function lancerLicenciement() {
 	fenetre = null;
 	enSieste = false;
 	reveil = null;
-	Sauvegarde.effacer(Sauvegarde.semaineCourante()); // plus rien à reprendre ; pas de palmarès (allerFin n'est pas appelé)
+	Sauvegarde.effacerCourante(); // plus rien à reprendre ; pas de palmarès (allerFin n'est pas appelé)
 	try {
 		localStorage.setItem(CLE_LICENCIEMENTS, String((Number(localStorage.getItem(CLE_LICENCIEMENTS)) || 0) + 1)); // statistique locale
 	} catch (e) {}
@@ -52,7 +52,6 @@ function toucheGameOver() {
 	else if (keyCode === LEFT_ARROW) GAMEOVER.focus = (GAMEOVER.focus + n - 1) % n;
 	else if (keyCode === ENTER || keyCode === RETURN || key === ' ') return ACTIONS_GAMEOVER[GAMEOVER.focus].action();
 	else if (keyCode === ESCAPE) return quitterGameOver('changer');
-	else if (key === 'j' || key === 'J') return ACTIONS_GAMEOVER[2].action();
 	else return;
 	annoncer(t(ACTIONS_GAMEOVER[GAMEOVER.focus].cle));
 }
@@ -64,7 +63,7 @@ function dessinerGameOver() {
 	fill(0, 0, 0, 255 * a);
 	rect(0, 0, L, H);
 	if (a < 1) return;
-	dsTitre(t('gameover.titre'), 120, 70, 88, DS.primaire, 'left');
+	dsTitre(t('gameover.titre'), 120, 70, 88, DS.primaireTrait, 'left');
 	noStroke();
 	textFont(POLICE_TEXTE);
 	textAlign(LEFT, TOP);
@@ -100,11 +99,11 @@ function dessinerGameOver() {
 		rotate(-0.18);
 		scale(0.7 + 0.3 * k);
 		noFill();
-		stroke(DS.primaire);
+		stroke(DS.primaireTrait);
 		strokeWeight(6);
 		rect(-150, -46, 300, 92);
 		noStroke();
-		fill(DS.primaire);
+		fill(DS.primaireTrait);
 		textAlign(CENTER, CENTER);
 		textFont(POLICE_TEXTE);
 		textStyle(BOLD);
@@ -129,7 +128,7 @@ function dessinerGameOver() {
 		bouton(bx, y + h + 40, lb, 72, t(b.cle), b.action, false, i > 0);
 		if (G.focus === i) {
 			noFill();
-			stroke('#FFC138');
+			stroke(DS.blanc); // prompt 173 : focus clavier en double bordure blanche du DS (plus de jaune)
 			strokeWeight(4);
 			rect(bx - 8, y + h + 32, lb + 16, 88);
 			noStroke();

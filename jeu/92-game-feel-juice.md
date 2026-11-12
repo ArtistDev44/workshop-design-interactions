@@ -63,4 +63,4 @@ Code :
   - Retour au repos à chaque fois ; rien avec les animations réduites.
   - Aucune erreur de console (le tier large appelait d'abord `Son.signal` avec une clé au lieu d'un objet ; corrigé en `bip('consequence')`).
 - Audit des textes : 0 défaut A à D.
-- **Ressenti à faire par un humain** (le hit se lit-il ? nausée ? entrées pendant le gel ?) : [À COMPLÉTER].
+- **Ressenti à faire par un humain** (le hit se lit-il ? nausée ? entrées pendant le gel ?) : non testé, prévu en salle (protocole de `notes.md`, « Tests humains », prompt 192) — date [À COMPLÉTER].

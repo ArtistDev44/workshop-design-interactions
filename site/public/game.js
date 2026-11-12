@@ -1092,8 +1092,58 @@
 			objet: T(parfaite ? 'mail.objetMerci' : 'mail.objetRevoir', { date }),
 			positif: parfaite,
 			lignes,
+			scene: Jeu.sceneDuSoir(duJour), // prompt 191 : le mail raconte un moment (fait marquant + phrase du patron), le bilan passe dessous
 			dernier: Jeu.jourIndex >= (Jeu.jours || []).length - 1,
 		};
+	};
+
+	// =====================================================================
+	// Prompt 191 — le mail du soir comme scène : un fait marquant tiré d'un dossier RÉELLEMENT joué ce jour,
+	// une phrase du patron à trois niveaux (part des décisions jugées « bon choix ! » dans la journée).
+	// Couche de présentation : aucune règle ni aucun effet de jauge.
+	// =====================================================================
+	const SEUILS_MAIL_PATRON = { satisfait: 2 / 3, inquiet: 1 / 3 }; // part des bonnes décisions du jour
+	Jeu.SEUILS_MAIL_PATRON = SEUILS_MAIL_PATRON;
+	const retardDe = (e) => (e.retardEffectif !== undefined && e.retardEffectif !== null ? e.retardEffectif : e.retard !== null && e.retard !== undefined ? e.retard : null);
+	/** Dossier retenu : la pire décision du jour (plus gros retard d'abord, puis la plus tôt) ; sinon la meilleure */
+	Jeu.faitMarquantDuJour = function (duJour) {
+		const evs = (duJour || []).filter((e) => e && e.heure && e.resultat);
+		if (!evs.length) return null;
+		const tri = (a, b) => (retardDe(b) || 0) - (retardDe(a) || 0) || String(a.heure).localeCompare(String(b.heure));
+		const mauvais = evs.filter((e) => Jeu.evaluer(e) !== 'bon').sort(tri);
+		const e = mauvais[0] || evs.slice().sort(tri)[0];
+		const ev = Jeu.evaluer(e);
+		const r = retardDe(e);
+		const texte = T(ev === 'bon' ? 'mailf.fait.bon' : e.cleAction === 'temps' ? 'mailf.fait.tropTard' : 'mailf.fait.rate', {
+			heure: e.heure,
+			sujet: marquerFictif(e, e.ligne ? T('sujet.ligne', { ligne: e.ligne }) : T('sujet.reseau')),
+			externe: e.externe,
+			retard: r !== null ? T('mail.retard', { retard: r }) : '',
+			action: e.action,
+			meilleure: e.meilleureAction,
+		});
+		return { texte, evenement: e, evaluation: ev };
+	};
+	/** Niveau du patron : satisfait / neutre / inquiet selon la part de « bon choix ! » du jour (neutre sans dossier) */
+	Jeu.niveauPatronDuJour = function (duJour) {
+		const evs = duJour || [];
+		if (!evs.length) return 'neutre';
+		const part = evs.filter((e) => Jeu.evaluer(e) === 'bon').length / evs.length;
+		return part >= SEUILS_MAIL_PATRON.satisfait ? 'satisfait' : part < SEUILS_MAIL_PATRON.inquiet ? 'inquiet' : 'neutre';
+	};
+	Jeu.sceneDuSoir = function (duJour) {
+		const niveau = Jeu.niveauPatronDuJour(duJour);
+		const suffixe = ['', '.v1', '.v2'][hacher(String(Jeu.graine) + '|mailSoir|' + Jeu.jourIndex + '|' + niveau) % 3]; // tirage déterministe, sans dé
+		return { fait: Jeu.faitMarquantDuJour(duJour), niveau, patron: T('mailf.patron.' + niveau + suffixe) };
+	};
+	/** Accroche météo du matin (écran « Jour N ») : la météo réelle du jour, seulement si la donnée du jour existe */
+	Jeu.accrocheMeteo = function (date) {
+		const m = date && Jeu.meteoDuJour ? Jeu.meteoDuJour(date) : null;
+		if (!m || m.date !== date) return null; // meteoDuJour retombe sur le 1er jour de la semaine : rien sans la donnée du jour
+		const ok = (k) => typeof m[k] === 'number' && isFinite(m[k]);
+		if (!['temp_min', 'temp_max', 'pluie_mm', 'rafales_max'].every(ok)) return null;
+		const n = (v) => (typeof Langue !== 'undefined' && Langue.actuelle === 'fr' ? String(v).replace('.', ',') : String(v));
+		return T('transition.meteo', { min: n(m.temp_min), max: n(m.temp_max), pluie: n(m.pluie_mm), vent: n(Math.round(m.rafales_max)) });
 	};
 
 	// =====================================================================

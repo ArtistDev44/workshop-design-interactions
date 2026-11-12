@@ -9,7 +9,7 @@
  * Enregistré seulement en http(s), jamais en file:// (index.html).
  */
 /* précache:début (généré par scripts/generer-sw.mjs — ne pas modifier à la main) */
-const VERSION = 'nte-regulation-3ca066c62b';
+const VERSION = 'nte-regulation-6fdb0466e9';
 const ESSENTIELS = [
 	"./",
 	"./accessibilite.js",
@@ -44,6 +44,8 @@ const ESSENTIELS = [
 	"./captures/hero.jpg",
 	"./captures/process.jpg",
 	"./captures/thumb.jpg",
+	"./captures/trailer-poster.jpg",
+	"./captures/trailer.fr.vtt",
 	"./carte-alertes.js",
 	"./carte.js",
 	"./community.js",
@@ -100,6 +102,7 @@ const ESSENTIELS = [
 	"./icon-512.png",
 	"./icon-maskable-192.png",
 	"./icon-maskable-512.png",
+	"./icones-lucide.js",
 	"./immersion.js",
 	"./index.html",
 	"./installation.js",
@@ -107,7 +110,17 @@ const ESSENTIELS = [
 	"./journal.js",
 	"./journee.js",
 	"./juice.js",
+	"./kit-presse/README.md",
+	"./kit-presse/communique-de-presse.md",
+	"./kit-presse/communique-de-presse.txt",
+	"./kit-presse/detail-01.jpg",
+	"./kit-presse/hero.jpg",
+	"./kit-presse/index.html",
+	"./kit-presse/logo.svg",
+	"./kit-presse/process.jpg",
+	"./kit-presse/thumb.jpg",
 	"./lib/p5.min.js",
+	"./licences/lucide-LICENSE.txt",
 	"./manifest.json",
 	"./manifest.webmanifest",
 	"./mecaniques.js",
@@ -120,7 +133,9 @@ const ESSENTIELS = [
 	"./og-image.jpg",
 	"./os.js",
 	"./panneau.js",
+	"./parametres.js",
 	"./patron.js",
+	"./personnages.js",
 	"./portrait.js",
 	"./presentation/assets/404-B8OoIpL6.css",
 	"./presentation/assets/NoteDisplay-DCBzjb4F.css",
@@ -214,6 +229,7 @@ const ESSENTIELS = [
 	"./theme.js",
 	"./traces.js",
 	"./webcam.js",
+	"./kit-presse/",
 	"./cartel/",
 	"./making-of/",
 	"./presentation/"
@@ -242,7 +258,12 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
 	const req = e.request;
 	if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return; // API : réseau seulement
-	if (req.headers.has('range')) return; // lectures partielles (audio, vidéo) : laissées au navigateur
+	// Prompt 193 : lectures partielles (musique en fichier) — servies depuis le cache quand le fichier y est (hors ligne
+	// compris), réponse 206 découpée dans le fichier complet ; sinon laissées au navigateur (réseau)
+	if (req.headers.has('range')) {
+		e.respondWith(caches.match(req.url, { ignoreSearch: true }).then((enCache) => (enCache ? reponsePartielle(req, enCache) : fetch(req))));
+		return;
+	}
 	if (req.mode === 'navigate') {
 		// Pages : réseau d'abord (contenu à jour), repli sur le cache puis sur l'accueil du jeu
 		e.respondWith(
@@ -269,3 +290,22 @@ self.addEventListener('fetch', (e) => {
 		),
 	);
 });
+
+/** Prompt 193 : réponse 206 (Content-Range) découpée dans un fichier complet du cache, pour un en-tête
+ * « Range: bytes=début-fin », « bytes=début- » ou « bytes=-suffixe » ; en-tête illisible → fichier entier (200). */
+function reponsePartielle(req, rep) {
+	return rep.blob().then((blob) => {
+		const taille = blob.size;
+		const type = rep.headers.get('content-type') || '';
+		const m = /^bytes=(\d*)-(\d*)$/.exec((req.headers.get('range') || '').trim());
+		if (!m || (m[1] === '' && m[2] === '')) return new Response(blob, { status: 200, headers: { 'Content-Type': type, 'Content-Length': String(taille), 'Accept-Ranges': 'bytes' } });
+		const debut = m[1] === '' ? Math.max(0, taille - Number(m[2])) : Number(m[1]);
+		const fin = m[1] === '' || m[2] === '' ? taille - 1 : Math.min(Number(m[2]), taille - 1);
+		if (debut >= taille || debut > fin) return new Response(null, { status: 416, headers: { 'Content-Range': `bytes */${taille}` } });
+		return new Response(blob.slice(debut, fin + 1), {
+			status: 206,
+			statusText: 'Partial Content',
+			headers: { 'Content-Type': type, 'Content-Length': String(fin - debut + 1), 'Content-Range': `bytes ${debut}-${fin}/${taille}`, 'Accept-Ranges': 'bytes' },
+		});
+	});
+}

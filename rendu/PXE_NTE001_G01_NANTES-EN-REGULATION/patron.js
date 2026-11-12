@@ -1,11 +1,13 @@
-/* Nantes en régulation — prompt 86 : l'appli « Messages du patron » devient une messagerie moderne et lisible.
- * Design system Pixel (ds.js) ; aucune imitation d'une messagerie existante. Contenu et effets de jeu inchangés :
- * mêmes messages et mêmes déclencheurs (game.js), désormais typés avec leurs valeurs réelles au moment de l'envoi.
- * En-tête (statut en ligne / hors ligne, filtres), consigne du jour épinglée, historique complet défilable avec
- * séparateurs de journée, cartes typées (bloc enrichi selon le type), lus / non lus, accusés de lecture,
- * indicateur de saisie (affichage seul : l'heure du message ne change pas), réponses rapides SANS effet de jeu.
+/* Nantes en régulation — prompt 86 : messagerie du patron ; prompt 185 : l'appli s'appelle « Mails » (EN « Mail ») et
+ * prend la forme d'une vraie messagerie en trois zones — dossiers (= filtres par type, compteurs total / non lus
+ * toujours visibles), liste des mails (expéditeur, objet, début du texte, heure de jeu, pastille « non lu »), volet de
+ * lecture (mail entier, blocs enrichis, réponses rapides). Identifiant interne inchangé : 'patron' (sauvegardes,
+ * tests, pile de navigation). Zone étroite (< 1300 px) ou portrait : deux zones, la lecture remplace la liste
+ * (← Liste, Échap). Contenu et effets de jeu inchangés : mêmes messages et mêmes déclencheurs (game.js).
+ * Clavier : ↑ ↓ dans la zone qui a le focus, Tab entre les zones (puis menu d'applis), Entrée ouvre, ← → dossiers,
+ * 1-3 réponses rapides, V tout déplier.
  */
-const PATRON = { deplies: new Set(), toutDeplie: false, dernier: null, filtre: 'tout', defil: 0, ouvert: false, epingle: false, premierNonLu: -1, vus: 0, ecritJusqua: 0, hauteurs: new Map(), max: 0 };
+const PATRON = { deplies: new Set(), toutDeplie: false, dernier: null, filtre: 'tout', defil: 0, defilLecture: 0, maxLecture: 0, ouvert: false, vus: 0, ecritJusqua: 0, max: 0, sel: null, lecture: false, zoneFocus: null, voirSel: false, etroit: false };
 const FILTRES_PATRON = [
 	{ cle: 'tout', types: null },
 	{ cle: 'consignes', types: ['consigne'] },
@@ -17,25 +19,15 @@ const COULEURS_TYPES = { consigne: () => DS.info, alerte: () => DS.erreur, conse
 const REPONSES_RAPIDES = { consigne: ['recu', 'jemen'], alerte: ['redresse', 'compris'], conseil: ['compris'], reproche: ['corrige'], budget: ['recu'], equipes: ['recu'], info: ['recu'] };
 /** Prompt 101 : blocs enrichis repliés en une ligne (déplier : clic, ou V pour tous) ; le dernier message reste déplié */
 const BLOCS_PLIABLES = ['consigne', 'reproche', 'budget', 'equipes'];
-const aUnBloc = (m) => Object.keys(m.meta || {}).some((k) => k !== 'important');
+const aUnBloc = (m) => (typeDe(m) === 'reproche' ? (m.meta || {}).index !== undefined : Object.keys(m.meta || {}).some((k) => k !== 'important')); // prompt 185 : un reproche sans dossier (départ anticipé) n'a ni bloc ni lien
 const blocDeplie = (m) => !BLOCS_PLIABLES.includes(typeDe(m)) || !aUnBloc(m) || PATRON.toutDeplie || PATRON.deplies.has(m) || m === PATRON.dernier;
 const typeDe = (m) => (Jeu.TYPES_MESSAGES.includes(m.type) ? m.type : 'info');
 const enPanne = () => !!(Jeu.modificateurActif && Jeu.modificateurActif() === 'panne_messagerie');
 
-/** Pictogramme pixel original 16 × 16 (agrandi ×2) pour chaque type ; aucun emoji système */
-const PICTOS = {
-	consigne: ['..######..', '.#......#.', '.#.####.#.', '.#......#.', '.#.####.#.', '.#......#.', '.#.###..#.', '.########.'],
-	alerte: ['....##....', '...####...', '...#..#...', '..#.##.#..', '..#.##.#..', '.#......#.', '.#..##..#.', '##########'],
-	conseil: ['...####...', '..#....#..', '.#......#.', '.#......#.', '..#....#..', '...####...', '...####...', '....##....'],
-	budget: ['..######..', '.#......#.', '#...##...#', '#..#..#..#', '#...##...#', '#..#..#..#', '.#......#.', '..######..'],
-	reproche: ['########..', '#......#..', '#.####.#..', '#......###', '#.##.##..#', '#...#....#', '#..#.##..#', '##########'],
-	equipes: ['...####...', '..#....#..', '.########.', '#.#.##.#.#', '##########', '#........#', '##.####.##', '.##....##.'],
-	info: ['.########.', '#........#', '#.######.#', '#........#', '#.####...#', '#........#', '.###.#####', '...##.....'],
-};
+/** Prompt 170 : pictogramme Lucide 24 px pour chaque type de message (icones-lucide.js) ; aucun emoji système */
+const PICTOS = { consigne: 'clipboard-list', alerte: 'triangle-alert', conseil: 'lightbulb', budget: 'coins', reproche: 'message-square-warning', equipes: 'users', info: 'message-square' };
 function picto(type, x, y, c) {
-	noStroke();
-	fill(c);
-	(PICTOS[type] || PICTOS.info).forEach((ligne, j) => [...ligne].forEach((v, i) => v === '#' && rect(x + i * 2.6, y + j * 3, 2.6, 3)));
+	iconeLucide(PICTOS[type] || PICTOS.info, x + 1, y, 24, c);
 }
 /** Avatar original du patron : buste stylisé, cravate, sans visage réaliste */
 function avatarPatron(x, y, s) {
@@ -52,15 +44,62 @@ function avatarPatron(x, y, s) {
 	rect(x + s * 0.46, y + s * 0.56, s * 0.08, s * 0.36);
 }
 
-const messagesFiltres = () => {
-	const f = FILTRES_PATRON.find((x) => x.cle === PATRON.filtre) || FILTRES_PATRON[0];
-	return (Jeu.messagesPatron || []).filter((m) => !f.types || f.types.includes(typeDe(m)));
+const typesFiltre = (cle) => (FILTRES_PATRON.find((x) => x.cle === cle) || FILTRES_PATRON[0]).types;
+/** Messages bruts d'un dossier (filtre) — base des compteurs */
+const mailsDuFiltre = (cle) => {
+	const types = typesFiltre(cle);
+	return (Jeu.messagesPatron || []).filter((m) => !types || types.includes(typeDe(m)));
 };
+const messagesFiltres = () => mailsDuFiltre(PATRON.filtre);
+/** Compteurs d'un dossier : total et non lus (prompt 185 : toujours affichés) */
+function compteursMails(cle) {
+	const l = mailsDuFiltre(cle);
+	return { n: l.length, nl: l.filter((m) => !m.lu).length };
+}
+/** Nombre total de mails non lus (badge de l'appli dans le menu) */
+const mailsNonLus = () => (Jeu.messagesPatron || []).filter((m) => !m.lu).length;
+/** Liste affichée : la plus récente en haut ; un même message répété le même jour (même type, même texte) n'est
+ * montré qu'une fois, avec « ×N » (prompt 101 b) ; le dernier attend la fin de « Direction écrit… » */
+function listeMails() {
+	const brut = messagesFiltres();
+	const cachee = PATRON.ecritJusqua > millis() ? brut[brut.length - 1] : null;
+	const groupes = new Map();
+	brut.forEach((m) => {
+		if (m === cachee) return;
+		const k = typeDe(m) + '|' + m.jour + '|' + String(m.texte);
+		if (groupes.has(k)) groupes.get(k).push(m);
+		else groupes.set(k, [m]);
+	});
+	PATRON.repetes = new Map([...groupes.values()].map((g) => [g[0], g]));
+	PATRON.dernier = brut[brut.length - 1] || null;
+	return { liste: [...groupes.values()].map((g) => g[0]).reverse(), cachee };
+}
+const groupeDe = (m) => (PATRON.repetes && PATRON.repetes.get(m)) || [m];
+const nonLu = (m) => groupeDe(m).some((x) => !x.lu);
 function changerFiltre(cle) {
 	PATRON.filtre = cle;
 	PATRON.defil = 0;
+	PATRON.sel = null;
+	PATRON.lecture = false;
 	Confort.Son.clic();
-	annoncer(t('patron.filtre.' + cle));
+	const c = compteursMails(cle);
+	annoncer(t('patron.filtre.' + cle) + ' · ' + t('patron.compteur', { n: c.n, nl: c.nl }));
+}
+/** Ouvre un mail dans le volet de lecture (en zone étroite : la lecture remplace la liste) */
+function ouvrirMail(m, sansSon) {
+	if (!m) return;
+	PATRON.sel = m;
+	PATRON.defilLecture = 0;
+	PATRON.voirSel = true;
+	if (PATRON.etroit) PATRON.lecture = true;
+	if (!sansSon) Confort.Son.clic();
+}
+/** Lu une fois ouvert dans le volet de lecture (avec ses répétitions « ×N ») */
+function marquerLu(m) {
+	if (enPanne() || PC.fenetre !== 'patron') return;
+	groupeDe(m).forEach((x) => {
+		if (!x.lu) (x.lu = true), (x.luA = Jeu.horloge ? Jeu.formaterHeure(Jeu.horloge.minutes) : '');
+	});
 }
 /** Une fois par image : sons (alerte distincte), indicateur de saisie avant un nouveau message */
 function majPatron() {
@@ -68,231 +107,271 @@ function majPatron() {
 	if (n > PATRON.vus && PATRON.vus) {
 		const m = Jeu.messagesPatron[n - 1];
 		Confort.Son.bip(typeDe(m) === 'alerte' ? 'alerte' : 'choix');
-		if (!reduireAnimations) PATRON.ecritJusqua = millis() + 800; // « Direction écrit… » 0,8 s, puis le message glisse
+		if (!reduireAnimations) PATRON.ecritJusqua = millis() + 800; // « Direction écrit… » 0,8 s, puis le mail arrive
 	}
 	PATRON.vus = n;
 }
-
-/** Hauteur d'une carte, mise en cache (recalculée au changement de langue ou de largeur) */
-function hauteurCarte(m, l) {
-	const cle = Langue.actuelle + '|' + l + '|' + (m.reponse || '') + '|' + blocDeplie(m);
-	const c = PATRON.hauteurs.get(m);
-	if (c && c.cle === cle) return c.h;
-	textFont(DS.policeTexte);
-	textSize(20);
-	const n = Math.max(1, couperLignes(String(m.texte), l - 70, DS.policeTexte, 20).length); // prompt 101 b : vraie coupure (plus de ligne vide)
-	const bloc = typeDe(m) === 'reproche' && (m.meta || {}).index !== undefined ? 32 : blocDeplie(m) ? { consigne: 56, alerte: 44, conseil: 44, reproche: 60, budget: 44, equipes: 40, info: 0 }[typeDe(m)] || 0 : 32;
-	const h = 46 + n * 28 + (bloc ? bloc + 8 : 0) + 18 + (m.reponse ? 56 : 0);
-	PATRON.hauteurs.set(m, { cle, h });
-	return h;
+const objetMail = (m) => t('patron.type.' + typeDe(m)) + (groupeDe(m).length > 1 ? ' ×' + groupeDe(m).length : '') + (m.enRetard ? ' · ' + t('patron.retard') : '');
+/** Heure de jeu ; date courte si le mail n'est pas du jour */
+function heureMail(m) {
+	const auj = ((Jeu.jourCourant && Jeu.jourCourant()) || {}).date;
+	return (m.jour && m.jour !== auj ? m.jour.split('-').reverse().slice(0, 2).join('/') + ' · ' : '') + (m.heure || '');
+}
+/** Contour de focus clavier (zone active) */
+function contourFocus(x, y, l, h) {
+	noFill();
+	stroke(DS.primaireTrait);
+	strokeWeight(2);
+	rect(x + 1, y + 1, l - 2, h - 2);
+	noStroke();
 }
 
 function appPatron(z) {
-	const mobile = typeof PORTRAIT !== 'undefined' && PORTRAIT.actif;
-	const l = mobile ? Math.min(z.l, 860) : z.l;
 	const panne = enPanne();
-	// À l'ouverture : position sur le premier non lu, séparateur « Nouveaux messages »
+	const portrait = typeof PORTRAIT !== 'undefined' && PORTRAIT.actif;
+	const etroit = portrait || z.l < 1300; // 3 zones lisibles (texte ≥ 18 px) à partir de 1300 px
+	PATRON.etroit = etroit;
+	const { liste, cachee } = listeMails();
 	if (!PATRON.ouvert) {
+		// À l'ouverture : le plus ancien non lu du dossier (sinon le plus récent) ; en zone étroite, la liste d'abord
 		PATRON.ouvert = true;
-		PATRON.premierNonLu = (Jeu.messagesPatron || []).findIndex((m) => !m.lu);
-		PATRON.allerNonLu = PATRON.premierNonLu >= 0;
+		PATRON.zoneFocus = null;
+		PATRON.lecture = false;
+		const nl = liste.filter(nonLu);
+		PATRON.sel = nl[nl.length - 1] || liste[0] || null;
+		PATRON.voirSel = true;
+		PATRON.defilLecture = 0;
 	}
-	// En-tête de conversation (88 px) : avatar, nom, rôle, statut ; filtres à droite
-	avatarPatron(z.x, z.y, 64);
-	dsTexte(t('mail.de'), z.x + 80, z.y + 4, 20, DS.blanc, 'left');
-	// Prompt 101 b : le rôle (« Direction de la salle de régulation ») répétait le nom ; le statut remonte d'une ligne
+	if (PATRON.sel && !liste.includes(PATRON.sel)) PATRON.sel = liste.find((m) => groupeDe(m).includes(PATRON.sel)) || null;
+	if (!PATRON.sel && !etroit && liste.length) PATRON.sel = liste[0];
+	if (!PATRON.sel) PATRON.lecture = false;
+	// En-tête (56 px) : icône, nom de l'appli, statut ; compteur global à droite
+	iconeLucide('mail', z.x, z.y + 4, 32, DS.blanc);
+	dsTexte(t('app.patron'), z.x + 44, z.y + 4, 24, DS.blanc, 'left');
 	noStroke();
 	fill(panne ? DS.erreur : DS.succes);
-	rect(z.x + 80, z.y + 40, 12, 12);
-	dsTexte(t(panne ? 'patron.statut.horsLigne' : 'patron.statut.enLigne'), z.x + 100, z.y + 36, 18, panne ? DS.erreurClair : DS.blanc50, 'left');
-	let fx = z.x + l;
-	FILTRES_PATRON.slice()
-		.reverse()
-		.forEach((f) => {
-			const nb = (Jeu.messagesPatron || []).filter((m) => !f.types || f.types.includes(typeDe(m))).length;
-			const lib = t('patron.filtre.' + f.cle) + (PATRON.filtre === f.cle ? ' ' + nb : ''); // prompt 101 : compteur sur le filtre actif seulement
-			textFont(DS.policeTexte);
-			textSize(18);
-			const w = Math.max(110, textWidth(lib) + 64); // place pour le chevron de dsBouton
-			fx -= w + 8;
-			if (mobile && f.cle !== 'tout' && f.cle !== PATRON.filtre) return; // portrait : filtres réduits
-			dsBouton(fx, z.y + 14, w, 44, lib, () => changerFiltre(f.cle), PATRON.filtre === f.cle ? 'secondaire' : 'fantome'); // prompt 101 : pas de rouge pour un filtre
-		});
-	let y = z.y + 88;
-	// Bandeau de panne : on ne masque plus tout
+	rect(z.x + 160, z.y + 14, 12, 12);
+	dsTexte(t(panne ? 'patron.statut.horsLigne' : 'patron.statut.enLigne'), z.x + 180, z.y + 8, 18, panne ? DS.erreurClair : DS.blanc50, 'left');
+	const tot = compteursMails('tout');
+	dsTexte(t('patron.compteur', { n: tot.n, nl: tot.nl }), z.x + z.l, z.y + 8, 18, DS.blanc75, 'right');
+	let y = z.y + 56;
 	if (panne) {
 		noStroke();
 		fill(DS.erreur);
-		rect(z.x, y, l, 40);
+		rect(z.x, y, z.l, 40);
 		dsTexte(t('patron.reconnexion', { s: Math.ceil((Jeu.modificateur.fin - millis()) / 1000) }), z.x + 14, y + 8, 20, '#FFFFFF', 'left');
 		y += 48;
 	}
-	// Consigne du jour épinglée (une ligne, se déroule au clic ou avec Entrée)
-	const consigne = (Jeu.messagesPatron || []).filter((m) => typeDe(m) === 'consigne' && m.jour === ((Jeu.jourCourant() || {}).date || null)).pop();
-	if (consigne) {
-		noStroke();
-		fill(DS.blanc05);
-		rect(z.x, y, l, PATRON.epingle ? 96 : 44);
-		fill(DS.info);
-		rect(z.x, y, 4, PATRON.epingle ? 96 : 44);
-		picto('consigne', z.x + 14, y + 8, DS.infoClair);
-		const txt = t('patron.epingle') + ' · ' + String(consigne.texte);
-		if (PATRON.epingle) dsTexte(txt, z.x + 52, y + 10, 18, DS.blanc, 'left', l - 70);
-		else {
-			textFont(DS.policeTexte);
-			textSize(18);
-			let court = txt;
-			while (court.length > 8 && textWidth(court) > l - 90) court = court.slice(0, -2);
-			dsTexte(court === txt ? txt : court + '…', z.x + 52, y + 12, 18, DS.blanc, 'left');
-		}
-		boutons.push({ x: z.x, y, l, h: PATRON.epingle ? 96 : 44, action: () => (PATRON.epingle = !PATRON.epingle) });
-		y += (PATRON.epingle ? 96 : 44) + 8;
+	const h = z.y + z.h - y;
+	// Dossiers : colonne à gauche (rangée en haut en portrait)
+	let x = z.x;
+	if (portrait) {
+		zoneDossiers(z.x, y, z.l, 56, true);
+		y += 64;
+	} else {
+		zoneDossiers(z.x, y, 320, h, false);
+		x += 336;
 	}
-	// Fil défilable
-	const zf = { x: z.x, y, l, h: z.y + z.h - y - 64 };
-	const liste = messagesFiltres();
-	PATRON.dernier = liste[liste.length - 1] || null;
-	const cachee = PATRON.ecritJusqua > millis() ? liste[liste.length - 1] : null; // le dernier attend la fin de « écrit… »
+	const hc = z.y + z.h - y;
+	const lr = z.x + z.l - x;
+	if (etroit) {
+		if (PATRON.lecture && PATRON.sel) voletLecture(PATRON.sel, x, y, lr, hc, panne, true);
+		else zoneListe(liste, cachee, x, y, lr, hc, panne);
+	} else {
+		zoneListe(liste, cachee, x, y, 520, hc, panne);
+		voletLecture(PATRON.sel, x + 536, y, lr - 536, hc, panne, false);
+	}
+}
+/** Colonne des dossiers : un par filtre, avec le total et les non lus (pastille d'accent) */
+function zoneDossiers(x, y, l, h, rangee) {
+	const n = FILTRES_PATRON.length;
+	FILTRES_PATRON.forEach((f, k) => {
+		const r = rangee ? { x: x + (k * l) / n, y, l: l / n - 8, h } : { x, y: y + k * 64, l, h: 56 };
+		const actif = PATRON.filtre === f.cle;
+		const c = compteursMails(f.cle);
+		noStroke();
+		if (actif) {
+			fill(primaireRGBA(0.16));
+			rect(r.x, r.y, r.l, r.h);
+			fill(DS.primaire);
+			rect(r.x, r.y, 4, r.h);
+		}
+		const types = f.types;
+		if (!rangee) iconeLucide(types ? PICTOS[types[0]] : 'inbox', r.x + 14, r.y + 16, 24, actif ? DS.blanc : DS.blanc75);
+		const lx = rangee ? r.x + 10 : r.x + 50;
+		// Compteurs à droite : non lus (pastille d'accent) puis total
+		textFont(DS.policeTexte);
+		textSize(18);
+		const totTxt = String(c.n);
+		const wt = textWidth(totTxt);
+		dsTexte(totTxt, r.x + r.l - 12, r.y + 18, 18, DS.blanc75, 'right');
+		let wnl = 0;
+		if (c.nl) {
+			const txt = String(c.nl);
+			wnl = Math.max(32, textWidth(txt) + 16);
+			noStroke();
+			fill(DS.primaire);
+			rect(r.x + r.l - 24 - wt - wnl, r.y + 14, wnl, 28);
+			dsTexte(txt, r.x + r.l - 24 - wt - wnl / 2, r.y + 18, 18, DS.surPrimaire, 'center');
+		}
+		const place = r.x + r.l - 32 - wt - wnl - lx;
+		dsTexte(couperLargeurCarte(t('patron.filtre.' + f.cle), place, 20), lx, r.y + 16, 20, actif ? DS.blanc : DS.blanc75, 'left');
+		zoneTexteDeclarer('dossierMails', r.x, r.y, r.l, r.h);
+		if (actif && PATRON.zoneFocus === 'dossiers') contourFocus(r.x, r.y, r.l, r.h);
+		boutons.push({ x: r.x, y: r.y, l: r.l, h: r.h, action: () => changerFiltre(f.cle) });
+	});
+}
+/** Liste des mails : défilable et masquée hors de sa zone (déclarée à l'audit) */
+function zoneListe(liste, cachee, x, y, l, h, panne) {
+	noStroke();
+	fill(DS.blanc05);
+	rect(x, y, l, h);
+	const HM = 116;
 	drawingContext.save();
 	drawingContext.beginPath();
-	drawingContext.rect(zf.x - 4, zf.y, zf.l + 8, zf.h);
+	drawingContext.rect(x, y, l, h);
 	drawingContext.clip();
-	zoneTexteDebut('filPatron', zf.x - 4, zf.y, zf.l + 8, zf.h, { clip: true }); // prompt 93 : zone défilante (ce qui en sort est masqué exprès)
+	zoneTexteDebut('listeMails', x, y, l, h, { clip: true }); // prompt 93 : ce qui sort de la zone est masqué exprès
 	const n0 = boutons.length;
-	let yy = zf.y - PATRON.defil;
-	let jour = null;
-	let prec = null;
-	// Prompt 101 b : un même message répété le même jour (même type, même texte) n'est montré qu'une fois, avec « ×N »
-	const repetes = new Map();
-	liste.forEach((m) => {
-		const k = typeDe(m) + '|' + m.jour + '|' + String(m.texte);
-		const r = repetes.get(k);
-		if (r) r.n++, (m._doublon = r.m !== m), (m._rep = r.m);
-		else repetes.set(k, { m, n: 1 }), (m._doublon = false), (m._rep = m);
-	});
-	PATRON.repetes = new Map([...repetes.values()].map((r) => [r.m, r.n]));
-	liste.forEach((m) => {
-		if (m === cachee) return;
-		if (consigne && m === consigne) {
-			// prompt 103 : la consigne du jour est déjà épinglée en haut — pas de seconde carte identique
-			if (!m.lu && !panne) (m.lu = true), (m.luA = Jeu.horloge ? Jeu.formaterHeure(Jeu.horloge.minutes) : '');
-			return;
-		}
-		if (m._doublon) {
-			if (!m.lu && !panne) (m.lu = true), (m.luA = Jeu.horloge ? Jeu.formaterHeure(Jeu.horloge.minutes) : ''); // compté dans la carte « ×N »
-			return;
-		}
-		if (m.jour && m.jour !== jour) {
-			jour = m.jour;
-			yy += separateurJour(m.jour, zf.x, yy, l);
-		}
-		const i = Jeu.messagesPatron.indexOf(m);
-		if (i === PATRON.premierNonLu) {
-			if (PATRON.allerNonLu) {
-				PATRON.defil = Math.max(0, yy - zf.y - 8 + PATRON.defil);
-				PATRON.allerNonLu = false;
-			}
-			noStroke();
-			fill(DS.blanc50); // prompt 101 : séparateur en blanc, le rouge reste rare
-			rect(zf.x, yy + 12, l, 1);
-			dsTexte(t('patron.nouveaux'), zf.x + l / 2, yy, 18, DS.blanc75, 'center');
-			yy += 34;
-		}
-		// Regroupement : même type à moins de 30 min de jeu → une seule heure
-		const groupe = prec && typeDe(prec) === typeDe(m) && prec.jour === m.jour && Math.abs(minutesDe(m.heure) - minutesDe(prec.heure)) < 30;
-		const h = hauteurCarte(m, l) - (groupe ? 0 : 0);
-		if (yy + h >= zf.y && yy <= zf.y + zf.h) carteMessage(m, zf.x, yy, l, groupe, panne); // seulement les cartes visibles
-		yy += h + 16; // prompt 101 b : plus d'air entre les messages
-		prec = m;
-	});
+	let yy = y - PATRON.defil;
 	if (cachee) {
-		const n = 1 + (Math.floor(millis() / 250) % 3);
-		dsTexte(t('patron.ecrit') + ' ' + '•'.repeat(n), zf.x, yy + 6, 18, DS.blanc50, 'left');
-		yy += 40;
+		const k = 1 + (Math.floor(millis() / 250) % 3);
+		dsTexte(t('patron.ecrit') + ' ' + '•'.repeat(k), x + 32, yy + 12, 18, DS.blanc50, 'left');
+		yy += 48;
 	}
-	if (!liste.length) dsTexte(t('app.pasMessage'), zf.x, zf.y, 20, DS.blanc50, 'left');
-	// Accusé du dernier message : « Envoyé » à la réception, « Lu · HH:MM » une fois affiché
-	const dernier = liste[liste.length - 1];
-	if (dernier && dernier !== cachee) dsTexte(dernier.lu ? t('patron.lu', { heure: dernier.luA || dernier.heure }) : t('patron.envoye'), zf.x + l, yy - 4, 18, DS.blanc50, 'right');
+	if (!liste.length && !cachee) dsTexte(t('app.pasMessage'), x + 16, yy + 16, 20, DS.blanc50, 'left', l - 32);
+	const iSel = liste.indexOf(PATRON.sel);
+	if (PATRON.voirSel && iSel >= 0) {
+		const top = (cachee ? 48 : 0) + iSel * HM;
+		if (top < PATRON.defil) PATRON.defil = top;
+		else if (top + HM > PATRON.defil + h) PATRON.defil = top + HM - h;
+		yy = y - PATRON.defil + (cachee ? 48 : 0);
+		PATRON.voirSel = false;
+	} else if (cachee) yy = y - PATRON.defil + 48;
+	liste.forEach((m) => {
+		if (yy + HM >= y && yy <= y + h) itemMail(m, x, yy, l, HM);
+		yy += HM;
+	});
 	zoneTexteFin();
 	drawingContext.restore();
-	for (let i = boutons.length - 1; i >= n0; i--) if (boutons[i].y + boutons[i].h < zf.y || boutons[i].y > zf.y + zf.h) boutons.splice(i, 1);
+	for (let i = boutons.length - 1; i >= n0; i--) if (boutons[i].y + boutons[i].h <= y || boutons[i].y >= y + h) boutons.splice(i, 1);
 	if (panne) {
 		noStroke();
-		fill(13, 12, 12, 140); // historique lisible mais grisé
-		rect(zf.x, zf.y, zf.l, zf.h);
+		fill(13, 12, 12, 140); // liste lisible mais grisée
+		rect(x, y, l, h);
 	}
-	PATRON.max = Math.max(0, yy + PATRON.defil - zf.y - zf.h);
+	PATRON.max = Math.max(0, yy + PATRON.defil - y - h);
 	PATRON.defil = constrain(PATRON.defil, 0, PATRON.max);
-	PATRON.zone = zf;
+	PATRON.zone = { x, y, l, h };
 	if (PATRON.max > 0) {
-		const hb = Math.max(40, (zf.h * zf.h) / (zf.h + PATRON.max));
+		const hb = Math.max(40, (h * h) / (h + PATRON.max));
 		noStroke();
 		fill(DS.blanc15);
-		rect(zf.x + l + 4, zf.y, 4, zf.h);
+		rect(x + l - 4, y, 4, h);
 		fill(DS.blanc75);
-		rect(zf.x + l + 4, zf.y + ((zf.h - hb) * PATRON.defil) / PATRON.max, 4, hb);
+		rect(x + l - 4, y + ((h - hb) * PATRON.defil) / PATRON.max, 4, hb);
 	}
-	barreReponses(dernier && dernier !== cachee ? dernier._rep || dernier : null, z.x, z.y + z.h - 56, l, panne);
+}
+/** Une ligne de la liste : pastille non lu, expéditeur, heure ; objet ; début du texte */
+function itemMail(m, x, y, l, h) {
+	const sel = m === PATRON.sel;
+	const nl = nonLu(m);
+	noStroke();
+	if (sel) {
+		fill(primaireRGBA(0.16));
+		rect(x, y, l, h);
+		fill(DS.primaire);
+		rect(x, y, 4, h);
+	}
+	fill(DS.blanc15);
+	rect(x + 16, y + h - 1, l - 32, 1);
+	if (nl) {
+		fill(DS.primaire);
+		circle(x + 20, y + 26, 12); // non lu
+	}
+	dsTexte(heureMail(m), x + l - 16, y + 14, 18, nl ? DS.blanc : DS.blanc50, 'right');
+	textFont(DS.policeTexte);
+	textSize(18);
+	const wh = textWidth(heureMail(m));
+	dsTexte(couperLargeurCarte(t('mail.de'), l - 76 - wh, 20), x + 36, y + 12, 20, nl ? DS.blanc : DS.blanc75, 'left');
+	picto(typeDe(m), x + 34, y + 44, COULEURS_TYPES[typeDe(m)](m));
+	dsTexte(couperLargeurCarte(objetMail(m), l - 100, 18), x + 68, y + 46, 18, nl ? DS.blanc : DS.blanc75, 'left');
+	dsTexte(couperLargeurCarte(String(m.texte).replace(/\s+/g, ' '), l - 52, 18), x + 36, y + 78, 18, DS.blanc50, 'left');
+	zoneTexteDeclarer('itemMail', x, y, l, h);
+	if (sel && PATRON.zoneFocus === 'liste') contourFocus(x, y, l, h);
+	boutons.push({ x, y, l, h, action: () => ouvrirMail(m) });
+}
+/** Volet de lecture : mail entier, bloc enrichi, réponse envoyée ; réponses rapides en pied */
+function voletLecture(m, x, y, l, h, panne, avecRetour) {
+	if (!m) {
+		dsTexte(t('patron.aucunSel'), x + 24, y + 24, 20, DS.blanc50, 'left', l - 48);
+		return;
+	}
+	marquerLu(m);
+	let yy = y;
+	if (avecRetour) {
+		dsBouton(x, yy, 180, 44, '← ' + t('patron.retourListe'), () => ((PATRON.lecture = false), (PATRON.voirSel = true), Confort.Son.clic()), 'contour', false, true);
+		yy += 56;
+	}
+	// En-tête du mail : objet, expéditeur (avatar, nom, rôle), heure de jeu
+	picto(typeDe(m), x, yy + 2, COULEURS_TYPES[typeDe(m)](m));
+	dsTexte(couperLargeurCarte(objetMail(m), l - 40, 24), x + 36, yy, 24, DS.blanc, 'left');
+	yy += 44;
+	avatarPatron(x, yy, 48);
+	dsTexte(couperLargeurCarte(t('mail.de'), l - 260, 20), x + 64, yy, 20, DS.blanc, 'left');
+	dsTexte(couperLargeurCarte(t('patron.role'), l - 80, 18), x + 64, yy + 28, 18, DS.blanc50, 'left');
+	dsTexte(heureMail(m), x + l, yy + 2, 18, DS.blanc50, 'right');
+	yy += 64;
+	noStroke();
+	fill(m.important ? DS.primaire : DS.blanc15); // prompt 115 : mail mis en avant
+	rect(x, yy, l, m.important ? 2 : 1);
+	yy += 16;
+	// Corps défilable (masqué hors zone)
+	const rr = reponsesRapides(m);
+	const bas = y + h - (rr.length ? 64 : 0);
+	const zc = { x, y: yy, l, h: bas - yy };
+	drawingContext.save();
+	drawingContext.beginPath();
+	drawingContext.rect(zc.x - 4, zc.y, zc.l + 8, zc.h);
+	drawingContext.clip();
+	zoneTexteDebut('lectureMail', zc.x - 4, zc.y, zc.l + 8, zc.h, { clip: true });
+	const n0 = boutons.length;
+	let yc = zc.y - PATRON.defilLecture;
+	const lt = l - 24;
+	dsTexte(String(m.texte), x, yc, 20, DS.blanc, 'left', lt);
+	textFont(DS.policeTexte);
+	textSize(20);
+	yc += Math.max(1, couperLignes(String(m.texte), lt, DS.policeTexte, 20).length) * 28 + 16;
+	if (aUnBloc(m)) {
+		const hb = typeDe(m) === 'reproche' || !blocDeplie(m) ? 32 : { consigne: 56, alerte: 44, conseil: 44, reproche: 60, budget: 44, equipes: 40, info: 0 }[typeDe(m)] || 0;
+		blocEnrichi(m, x, yc, Math.min(lt, 720), panne);
+		yc += hb + 16;
+	}
+	if (m.reponse) {
+		// Réponse du joueur : bulle à droite
+		const txt = t('patron.rapide.' + m.reponse);
+		textFont(DS.policeTexte);
+		textSize(18);
+		const w = Math.min(l, textWidth(txt) + 40);
+		noStroke();
+		fill(DS.blanc15);
+		rect(x + l - w, yc, w, 40);
+		dsTexte(txt, x + l - 20, yc + 9, 18, DS.blanc, 'right');
+		yc += 56;
+	}
+	zoneTexteFin();
+	drawingContext.restore();
+	for (let i = boutons.length - 1; i >= n0; i--) if (boutons[i].y + boutons[i].h <= zc.y || boutons[i].y >= zc.y + zc.h) boutons.splice(i, 1);
+	PATRON.maxLecture = Math.max(0, yc + PATRON.defilLecture - zc.y - zc.h);
+	PATRON.defilLecture = constrain(PATRON.defilLecture, 0, PATRON.maxLecture);
+	PATRON.zoneLecture = { x, y, l, h };
+	if (PATRON.zoneFocus === 'lecture') contourFocus(x - 12, y - 8, l + 24, h + 8);
+	barreReponses(m, x, y + h - 52, l, panne);
 }
 const minutesDe = (h) => {
 	const m = String(h || '').match(/(\d+)\D(\d+)/);
 	return m ? Number(m[1]) * 60 + Number(m[2]) : 0;
 };
-function separateurJour(iso, x, y, l) {
-	const [a, mo, j] = iso.split('-').map(Number);
-	const txt = new Date(Date.UTC(a, mo - 1, j)).toLocaleDateString(localeActive(), { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
-	const lib = txt.charAt(0).toUpperCase() + txt.slice(1);
-	textFont(DS.policeTexte);
-	textSize(18);
-	const w = textWidth(lib) + 32;
-	dsTexte(lib, x + l / 2, y + 4, 18, DS.blanc50, 'center'); // prompt 101 : texte seul, sans trait
-	return 40;
-}
-/** Carte d'un message : barre de couleur du type, pictogramme, libellé, heure, texte, bloc enrichi (meta) */
-function carteMessage(m, x, y, l, groupe, panne) {
-	const type = typeDe(m);
-	const c = COULEURS_TYPES[type](m);
-	const h = hauteurCarte(m, l);
-	const arrivee = reduireAnimations || m._vu ? 0 : 8;
-	if (!m._vu) m._vu = millis();
-	const dx = reduireAnimations ? 0 : Math.max(0, arrivee - (millis() - m._vu) / 25);
-	noStroke();
-	fill(m.important ? primaireRGBA(0.16) : DS.blanc05); // prompt 115
-	rect(x + dx, y, l - (m.reponse ? 0 : 0), h - (m.reponse ? 56 : 0));
-	noStroke(); // prompt 101 b : fond seul, sans second cadre
-	zoneTexteDeclarer('carteMessage', x + dx, y, l, h); // prompt 93
-	fill(c);
-	rect(x + dx, y, 4, h - (m.reponse ? 56 : 0));
-	if (!m.lu) {
-		fill(DS.primaire);
-		circle(x + dx - 10, y + 22, 10); // non lu
-	}
-	picto(type, x + dx + 16, y + 12, DS.blanc75);
-	const nRep = (PATRON.repetes && PATRON.repetes.get(m)) || 1;
-	dsTexte(t('patron.type.' + type).toUpperCase() + (nRep > 1 ? ' ×' + nRep : '') + (m.enRetard ? ' · ' + t('patron.retard') : ''), x + dx + 52, y + 14, 18, DS.blanc50, 'left'); // prompt 101 b : le rouge reste sur la barre de type
-	if (!groupe) dsTexte(m.heure, x + dx + l - 14, y + 14, 18, DS.blanc50, 'right');
-	dsTexte(String(m.texte), x + dx + 18, y + 44, 20, m.lu ? DS.blanc75 : DS.blanc, 'left', l - 70);
-	textFont(DS.policeTexte);
-	textSize(20);
-	const yb = y + 44 + Math.max(1, couperLignes(String(m.texte), l - 70, DS.policeTexte, 20).length) * 28 + 6;
-	blocEnrichi(m, x + dx + 18, yb, l - 36, panne);
-	if (m.reponse) {
-		// Réponse du joueur : bulle à droite, accusé « Vu ✓ »
-		const txt = t('patron.rapide.' + m.reponse);
-		textFont(DS.policeTexte);
-		textSize(18);
-		const w = textWidth(txt) + 120;
-		fill(DS.blanc15);
-		rect(x + l - w, y + h - 48, w, 40);
-		dsTexte(txt + '  · ' + t('patron.vu'), x + l - 14, y + h - 40, 18, DS.blanc, 'right');
-	}
-	// Lu une fois affiché dans l'appli ouverte
-	if (!m.lu && !panne && PC.fenetre === 'patron') {
-		m.lu = true;
-		m.luA = Jeu.horloge ? Jeu.formaterHeure(Jeu.horloge.minutes) : '';
-	}
-}
 /** Bloc enrichi selon le type, construit avec les valeurs réelles gardées au moment de l'envoi (meta) */
 function blocEnrichi(m, x, y, l, panne) {
 	const me = m.meta || {};
@@ -386,21 +465,90 @@ function repondreRapide(m, cle) {
 	Confort.Son.clic();
 	annoncer(t('patron.rapide.' + cle));
 }
-/** Clavier : ← → filtres, ↑ ↓ défilement, Entrée = déroule la consigne épinglée, 1-3 = réponses rapides */
+/** Prompt 185 — Tab entre les zones (dossiers → liste → lecture), puis le menu d'applis (tabMenuApp) ; true si pris */
+const ZONES_MAILS = () => (PATRON.etroit ? (PATRON.lecture ? ['dossiers', 'lecture'] : ['dossiers', 'liste']) : ['dossiers', 'liste', 'lecture']);
+function tabPatron() {
+	if (typeof MENU_FOCUS !== 'undefined' && MENU_FOCUS.actif) return false;
+	if (typeof focusQuitter !== 'undefined' && focusQuitter) return false;
+	const zs = ZONES_MAILS();
+	const k = zs.indexOf(PATRON.zoneFocus);
+	const recul = keyIsDown(SHIFT);
+	if (k < 0 && recul) return false; // Maj + Tab sans focus : le menu, à rebours
+	const n = k + (recul ? -1 : 1);
+	if (n >= zs.length) return (PATRON.zoneFocus = null), false; // après la dernière zone : le menu d'applis
+	PATRON.zoneFocus = n < 0 ? null : zs[n];
+	if (PATRON.zoneFocus === 'dossiers') {
+		const c = compteursMails(PATRON.filtre);
+		annoncer(t('patron.zone.dossiers') + ' · ' + t('patron.filtre.' + PATRON.filtre) + ' · ' + t('patron.compteur', { n: c.n, nl: c.nl }));
+	} else if (PATRON.zoneFocus === 'liste') annoncer(t('patron.zone.liste') + ' · ' + annonceMail(PATRON.sel));
+	else if (PATRON.zoneFocus === 'lecture') annoncer(t('patron.zone.lecture') + (PATRON.sel ? ' · ' + objetMail(PATRON.sel) + ' · ' + String(PATRON.sel.texte) : ''));
+	return true;
+}
+/** « Mail 3 sur 12, non lu · Consigne · 08:49 » */
+function annonceMail(m) {
+	const { liste } = listeMails();
+	const i = liste.indexOf(m);
+	if (i < 0) return t('patron.aucunSel');
+	return t('patron.annonceMail', { i: i + 1, n: liste.length, nonlu: nonLu(m) ? t('patron.nonLu') : '', type: objetMail(m), heure: heureMail(m) });
+}
+/** Échap en zone étroite : la lecture revient à la liste ; true si pris */
+function echapPatron() {
+	if (PC.fenetre !== 'patron' || !PATRON.etroit || !PATRON.lecture) return false;
+	PATRON.lecture = false;
+	PATRON.voirSel = true;
+	if (PATRON.zoneFocus === 'lecture') PATRON.zoneFocus = 'liste';
+	Confort.Son.clic();
+	annoncer(t('patron.zone.liste'));
+	return true;
+}
+/** Clavier : Tab zones ; ↑ ↓ dossiers / mails / défilement de la lecture ; ← → dossiers ; Entrée ouvre ;
+ * 1-3 réponses rapides du mail ouvert ; V tout déplier */
 function touchePatron() {
 	if (PC.fenetre !== 'patron') return false;
+	if (keyCode === TAB) return tabPatron();
+	const zf = PATRON.zoneFocus;
 	const i = FILTRES_PATRON.findIndex((f) => f.cle === PATRON.filtre);
-	if (keyCode === RIGHT_ARROW || keyCode === LEFT_ARROW) return changerFiltre(FILTRES_PATRON[(i + (keyCode === RIGHT_ARROW ? 1 : FILTRES_PATRON.length - 1)) % FILTRES_PATRON.length].cle), true;
-	if (keyCode === UP_ARROW || keyCode === DOWN_ARROW) return (PATRON.defil = constrain(PATRON.defil + (keyCode === DOWN_ARROW ? 120 : -120), 0, PATRON.max)), true;
-	if (keyCode === ENTER || keyCode === RETURN) return (PATRON.epingle = !PATRON.epingle), true;
+	const pasFiltre = (d) => changerFiltre(FILTRES_PATRON[(i + d + FILTRES_PATRON.length) % FILTRES_PATRON.length].cle);
+	if (keyCode === RIGHT_ARROW || keyCode === LEFT_ARROW) return pasFiltre(keyCode === RIGHT_ARROW ? 1 : -1), true;
+	const haut = keyCode === UP_ARROW;
+	if (haut || keyCode === DOWN_ARROW) {
+		if (zf === 'dossiers') return pasFiltre(haut ? -1 : 1), true;
+		if (zf === 'lecture' || (PATRON.etroit && PATRON.lecture)) return (PATRON.defilLecture = constrain(PATRON.defilLecture + (haut ? -120 : 120), 0, PATRON.maxLecture)), true;
+		const { liste } = listeMails();
+		if (!liste.length) return true;
+		const k = liste.indexOf(PATRON.sel);
+		const m = liste[k < 0 ? 0 : constrain(k + (haut ? -1 : 1), 0, liste.length - 1)];
+		annoncer(annonceMail(m)); // avant l'ouverture : l'état « non lu » est encore vrai
+		if (PATRON.etroit) (PATRON.sel = m), (PATRON.voirSel = true);
+		else ouvrirMail(m, true);
+		return true;
+	}
+	if (keyCode === ENTER || keyCode === RETURN) {
+		if (zf === 'dossiers') return (PATRON.zoneFocus = 'liste'), annoncer(t('patron.zone.liste') + ' · ' + annonceMail(PATRON.sel)), true;
+		if (zf === 'lecture' || (PATRON.etroit && PATRON.lecture)) {
+			const m = PATRON.sel;
+			if (m && aUnBloc(m) && BLOCS_PLIABLES.includes(typeDe(m)) && typeDe(m) !== 'reproche') PATRON.deplies.has(m) ? PATRON.deplies.delete(m) : PATRON.deplies.add(m);
+			else if (m && typeDe(m) === 'reproche' && aUnBloc(m) && !enPanne()) voirDossier(m.meta);
+			return true;
+		}
+		if (PATRON.sel) {
+			ouvrirMail(PATRON.sel);
+			PATRON.zoneFocus = 'lecture';
+			annoncer(objetMail(PATRON.sel) + ' · ' + String(PATRON.sel.texte));
+		}
+		return true;
+	}
 	if (key === 'v' || key === 'V') return (PATRON.toutDeplie = !PATRON.toutDeplie), annoncer(t(PATRON.toutDeplie ? 'journal.details' : 'journal.detailsMasquer')), true; // prompt 101
-	const l = messagesFiltres();
-	const rr = reponsesRapides(l[l.length - 1]);
-	if (Number(key) >= 1 && Number(key) <= rr.length) return repondreRapide(l[l.length - 1], rr[Number(key) - 1]), true;
+	const rr = reponsesRapides(PATRON.sel);
+	if (Number(key) >= 1 && Number(key) <= rr.length) return repondreRapide(PATRON.sel, rr[Number(key) - 1]), true;
 	return false;
 }
 function mollettePatron(delta) {
-	if (PC.fenetre !== 'patron' || !PATRON.zone || vue !== 'poste') return false;
-	PATRON.defil = constrain(PATRON.defil + delta, 0, PATRON.max);
+	if (PC.fenetre !== 'patron' || vue !== 'poste') return false;
+	const zl = PATRON.zoneLecture;
+	const dansLecture = zl && (PATRON.etroit ? PATRON.lecture : mouseX >= zl.x - 12 && mouseX <= zl.x + zl.l + 12 && mouseY >= zl.y && mouseY <= zl.y + zl.h);
+	if (dansLecture) PATRON.defilLecture = constrain(PATRON.defilLecture + delta, 0, PATRON.maxLecture);
+	else if (PATRON.zone) PATRON.defil = constrain(PATRON.defil + delta, 0, PATRON.max);
+	else return false;
 	return true;
 }

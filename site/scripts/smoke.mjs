@@ -118,6 +118,15 @@ for (const f of sources) {
 	/const VERSION = 'nte-regulation-[0-9a-f]{10}'/.test(sw) ? ok() : echec('sw.js : VERSION non générée (lancer npm run sw ou npm run build)');
 	const liste = new Set([...sw.matchAll(/"(\.\/[^"]*)"/g)].map((x) => x[1]));
 	for (const ref of [...html.matchAll(/(?:src|href)="(\.\/[^"#?]+)"/g)].map((x) => x[1])) liste.has(ref) ? ok() : echec(`sw.js : ${ref} (index.html) absent du précache`);
+	// Prompt 188 : kit de presse — page, communiqué, logo et captures en précache (la vidéo reste ../captures/demo.mp4, non dupliquée)
+	for (const ref of ['./kit-presse/', './kit-presse/index.html', './kit-presse/communique-de-presse.txt', './kit-presse/communique-de-presse.md', './kit-presse/README.md', './kit-presse/logo.svg', './kit-presse/hero.jpg', './kit-presse/detail-01.jpg', './kit-presse/process.jpg', './kit-presse/thumb.jpg', './captures/demo.mp4']) liste.has(ref) ? ok() : echec(`sw.js : ${ref} (kit de presse) absent du précache`);
+	{
+		const kit = readFileSync(join(pub, 'kit-presse', 'index.html'), 'utf8');
+		const refs = [...kit.matchAll(/(?:src|href|poster)="([^"#:]+)"/g)].map((x) => x[1]);
+		for (const r of refs) existsSync(join(pub, 'kit-presse', r.endsWith('/') ? r + 'index.html' : r)) || r === '../presentation/' ? ok() : echec(`kit-presse/index.html : fichier référencé absent ${r}`);
+		/<html lang="fr">/.test(kit) && !/<script|https?:\/\/(?!workshop-design-interactions\.pages\.dev|github\.com\/ArtistDev44)/.test(kit) ? ok() : echec('kit-presse/index.html : lang="fr", sans script ni ressource externe');
+		readFileSync(join(pub, 'kit-presse', 'communique-de-presse.md'), 'utf8') === readFileSync(join(pub, 'kit-presse', 'communique-de-presse.txt'), 'utf8') ? ok() : echec('kit-presse : communique-de-presse.md et .txt différents');
+	}
 	// Prompt 82 : la présentation Slidev (public/presentation/) est entièrement en précache, hors ligne compris
 	const pres = join(pub, 'presentation');
 	if (!existsSync(join(pres, 'index.html'))) echec('presentation/index.html absent : lancer npm run build:slides');
@@ -138,7 +147,7 @@ for (const f of sources) {
 // 4. Build (facultatif)
 const dist = join(racine, 'dist');
 if (existsSync(dist)) {
-	for (const page of ['index.html', 'cartel/index.html', 'making-of/index.html', 'presentation/index.html', 'manifest.json', 'captures/hero.jpg', 'captures/demo.mp4']) {
+	for (const page of ['index.html', 'cartel/index.html', 'making-of/index.html', 'presentation/index.html', 'manifest.json', 'captures/hero.jpg', 'captures/demo.mp4', 'kit-presse/index.html', 'kit-presse/logo.svg']) {
 		if (existsSync(join(dist, page))) ok();
 		else echec(`dist/${page} absent : relancer npm run build`);
 	}

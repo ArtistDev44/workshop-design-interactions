@@ -1,5 +1,7 @@
 /* Nantes en régulation — prompt 48 : accessibilité (daltonisme, taille du texte, lecture facile),
- * reprise sur un autre appareil, démo automatique du menu, courbes des jauges sur le rapport papier.
+ * démo automatique du menu, courbes des jauges sur le rapport papier.
+ * Prompt 175 : la fenêtre « Accessibilité et reprise » a disparu — ces réglages sont la section « Accessibilité »
+ * de la fenêtre des paramètres (parametres.js) ; « Reprendre sur un autre appareil » (QR code) est supprimé.
  */
 
 // ——— Palettes daltonisme : jauges, seuils et alertes (bon / attention / critique) ———
@@ -66,137 +68,32 @@ function installerEchelleTexte() {
 /** Lecture facile : compte à rebours ×1,5 et pas de tic-tac */
 const facteurLecture = () => (Confort.Reglages.lectureFacile ? 1.5 : 1);
 
-function changerDaltonisme() {
+function changerDaltonisme(sens) {
+	const n = ORDRE_DALTONISME.length;
 	const i = ORDRE_DALTONISME.indexOf(Confort.Reglages.daltonisme || 'normal');
-	Confort.Reglages.choisir('daltonisme', ORDRE_DALTONISME[(i + 1) % ORDRE_DALTONISME.length]);
+	Confort.Reglages.choisir('daltonisme', ORDRE_DALTONISME[(i + (sens || 1) + n) % n]);
 	appliquerReglages();
 	annoncer(t('acc.daltonisme') + ' : ' + t('acc.dalt.' + Confort.Reglages.daltonisme));
 	Confort.Son.bip('choix');
 }
-function changerTailleTexte() {
+function changerTailleTexte(sens) {
+	const n = TAILLES_TEXTE.length;
 	const i = TAILLES_TEXTE.indexOf(Confort.Reglages.tailleTexte || 100);
-	Confort.Reglages.choisir('tailleTexte', TAILLES_TEXTE[(i + 1) % TAILLES_TEXTE.length]);
+	Confort.Reglages.choisir('tailleTexte', TAILLES_TEXTE[(i + (sens || 1) + n) % n]);
 	appliquerReglages();
 	annoncer(t('acc.taille') + ' : ' + Confort.Reglages.tailleTexte + ' %');
 	Confort.Son.bip('choix');
 }
 function basculerLectureFacile() {
 	Confort.Reglages.basculer('lectureFacile');
-	annoncer(t('acc.lecture') + ' : ' + t(Confort.Reglages.lectureFacile ? 'commun.oui' : 'commun.non'));
+	annoncer(t('acc.lecture') + ' : ' + t(Confort.Reglages.lectureFacile ? 'commun.active' : 'commun.desactive'));
 }
-
-// ——— Fenêtre « Accessibilité et reprise » (ouverte depuis les Paramètres, touche 9) ———
-let imageQR = null;
-function ouvrirAccessibilite() {
-	if (!imageQR && typeof loadImage === 'function')
-		imageQR = loadImage(
-			'./assets/qr-edition.png',
-			() => {},
-			() => (imageQR = 'echec'), // ouvert en double clic (file://) : on affiche l'adresse seule
-		);
-	fenetre = 'accessibilite';
-	annoncer(t('acc.titre'));
-}
-function fenetreAccessibilite() {
-	const l = 1240;
-	const h = 1060;
-	const x = (L - l) / 2;
-	const y = (H - h) / 2;
-	const R = Confort.Reglages;
-	panneau(x, y, l, h, C.accent);
-	noStroke();
-	textAlign(LEFT, TOP);
-	fill(C.accent);
-	textFont(POLICE_TEXTE);
-	textStyle(BOLD);
-	textSize(40);
-	text(t('acc.titre'), x + 48, y + 36);
-	textStyle(NORMAL);
-	const lignes = [
-		['1', t('acc.daltonisme'), t('acc.dalt.' + (R.daltonisme || 'normal')), changerDaltonisme, false],
-		['2', t('acc.taille'), (R.tailleTexte || 100) + ' %', changerTailleTexte, false],
-		['3', t('acc.lecture'), t(R.lectureFacile ? 'commun.oui' : 'commun.non'), basculerLectureFacile, !R.lectureFacile],
-		['4', t('micro.reglage'), t(R.micro !== false ? 'commun.oui' : 'commun.non'), basculerMicroReglage, R.micro === false], // prompt 54
-		['5', t('webcam.reglage'), t(CAM.active ? 'webcam.etat.on' : R.webcam ? 'webcam.etat.attente' : 'commun.non'), basculerWebcamReglage, !R.webcam], // prompt 57
-		['6', t('acc.intensite'), (R.intensiteFeedback === undefined ? 100 : R.intensiteFeedback) + ' %', changerIntensiteFeedback, (R.intensiteFeedback === undefined ? 100 : R.intensiteFeedback) !== 100], // prompt 96 : secousse et hit-stop 100 / 50 / 0 %
-	];
-	lignes.forEach(([k, lib, valeur, action, secondaire], i) => {
-		const ly = y + 116 + i * 70; // prompt 96 : 82 → 70 px pour une 6e ligne
-		textFont(POLICE_TEXTE);
-		ajusterTaille(lib, 520, 26);
-		fill(C.texte);
-		textAlign(LEFT, CENTER);
-		text(lib, x + 48, ly + 36);
-		textFont(POLICE_DONNEES);
-		textSize(18);
-		fill(C.gris);
-		text(t('param.touche', { k }), x + 600, ly + 36);
-		bouton(x + l - 48 - 320, ly + 6, 320, 60, valeur, action, false, secondaire);
-	});
-	// Aperçu de la palette : bon / attention / critique
-	const p = palette();
-	textFont(POLICE_DONNEES);
-	textSize(16);
-	textAlign(LEFT, CENTER);
-	[['bon', p.bon], ['alerte', p.alerte], ['critique', p.critique]].forEach(([n, c], i) => {
-		const px0 = x + 48 + i * 260;
-		fill(c);
-		rect(px0, y + 546, 120, 18);
-		fill(C.texte);
-		text(t('acc.niveau.' + n), px0 + 132, y + 555);
-	});
-	textAlign(LEFT, TOP);
-	textFont(POLICE_TEXTE);
-	textSize(18);
-	fill(C.gris);
-	textLeading(26);
-	text(t('acc.lecture.detail'), x + 48, y + 574, l - 96, 54);
-	// Reprise sur un autre appareil : QR code vers le jeu + export / import JSON
-	const yr = y + 646;
-	fill(C.bord);
-	rect(x + 48, yr - 18, l - 96, 2);
-	fill(C.texte);
-	textStyle(BOLD);
-	textSize(26);
-	text(t('acc.reprise.titre'), x + 48, yr);
-	textStyle(NORMAL);
-	textSize(19);
-	textLeading(28);
-	fill(C.texte);
-	text(t('acc.reprise.texte'), x + 48, yr + 48, l - 96 - 280, 240);
-	const q = 220;
-	if (imageQR && imageQR !== 'echec' && imageQR.width > 1) {
-		fill('#ffffff');
-		rect(x + l - 48 - q, yr, q, q);
-		image(imageQR, x + l - 48 - q + 6, yr + 6, q - 12, q - 12);
-	}
-	textFont(POLICE_DONNEES);
-	textSize(15);
-	fill(C.gris);
-	textAlign(RIGHT, TOP);
-	text(URL_JEU.replace(/^https:\/\//, '').replace(/\/$/, ''), x + l - 48, yr + q + 10); // prompt 81 : URL_JEU (menu.js), une seule définition
-	textAlign(LEFT, TOP);
-	bouton(x + 48, y + h - 104, 300, 64, t('parametres.exporter'), () => Sauvegarde.exporter(), false, true);
-	bouton(x + 364, y + h - 104, 300, 64, t('parametres.importer'), () => Sauvegarde.ouvrirImport(), false, true);
-	if (installationPossible()) bouton(x + 680, y + h - 104, 300, 64, t('pwa.installerCourt'), installerApplication); // prompt 65
-	bouton(x + l - 288, y + h - 104, 240, 64, t('param.retour'), () => (fenetre = 'parametres'));
-}
-/** Prompt 96 : intensité du feedback (secousse, hit-stop) — 100, 50 ou 0 % ; les animations réduites coupent tout */
-function changerIntensiteFeedback() {
-	const v = Confort.Reglages.intensiteFeedback === undefined ? 100 : Confort.Reglages.intensiteFeedback;
-	Confort.Reglages.choisir('intensiteFeedback', v === 100 ? 50 : v === 50 ? 0 : 100);
-	annoncer(t('acc.intensite') + ' : ' + Confort.Reglages.intensiteFeedback + ' %');
-}
-function toucheAccessibilite() {
-	if (fenetre !== 'accessibilite') return false;
-	if (key === '1') changerDaltonisme();
-	else if (key === '2') changerTailleTexte();
-	else if (key === '3') basculerLectureFacile();
-	else if (key === '4') basculerMicroReglage(); // prompt 54
-	else if (key === '5') basculerWebcamReglage(); // prompt 57
-	else if (key === '6') changerIntensiteFeedback(); // prompt 96
-	else if (keyCode === ESCAPE || keyCode === BACKSPACE) fenetre = 'parametres';
-	return true;
+/** Prompt 96 : secousse et arrêt sur image des décisions — complet (100 %), atténué (50 %) ou aucun (0 %) ;
+ * les animations réduites coupent tout. Prompt 175 : valeurs nommées (parametres.js : libelleIntensite) */
+function changerIntensiteFeedback(sens) {
+	const n = ORDRE_INTENSITE.length;
+	Confort.Reglages.choisir('intensiteFeedback', ORDRE_INTENSITE[(ORDRE_INTENSITE.indexOf(intensiteFeedback()) + (sens || 1) + n) % n]);
+	annoncer(t('acc.intensite') + ' : ' + libelleIntensite());
 }
 
 // ——— Démo automatique : 40 s sans action sur l'écran titre ———
