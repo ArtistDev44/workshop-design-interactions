@@ -20,7 +20,6 @@
 			if (typeof tutoriel !== 'undefined') tutoriel = null;
 			if (typeof PLUS !== 'undefined') PLUS.ouvert = false;
 			if (typeof TRANSITION_JOUR !== 'undefined') TRANSITION_JOUR = null;
-			if (typeof DEMARRAGE_JOUR !== 'undefined') DEMARRAGE_JOUR = null;
 		},
 		partie(c) {
 			H.raz();

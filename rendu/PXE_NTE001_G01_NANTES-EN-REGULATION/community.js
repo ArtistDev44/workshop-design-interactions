@@ -172,10 +172,6 @@ function dessinerPhoto(photo, x, y, l, h, pluie, nuit) {
 }
 const meteoDe = (date) => (Jeu.meteoDuJour && date ? Jeu.meteoDuJour(date) : null) || {};
 const nuitDe = (minute) => minute !== undefined && minute !== null && (minute < 7 * 60 || minute >= 20 * 60);
-function altPhoto(p) {
-	const m = meteoDe(p.date);
-	return t('commu.alt', { sujet: t('commu.sujet.' + p.photo.sujet), meteo: (m.pluie_mm || 0) >= 1 ? t('commu.alt.pluie') : '' });
-}
 
 // ——— Avatar du compte : feu de signalisation tram, pictogramme pixel original ———
 function avatarCompte(x, y, s) {
@@ -500,7 +496,7 @@ function blocPlainteSociale(pl, x, y, l, prive) {
 		fill(pl.bonne ? 'rgba(0,183,79,0.14)' : 'rgba(209,11,0,0.16)');
 		rect(x + 34, yy, l - 60, 46);
 		avatarCompte(x + 44, yy + 10, 24);
-		dsTexte(Jeu.texteMessage(r.texte, pl.vars), x + 78, yy + 12, 18, pl.bonne ? DS.succesClair : DS.erreurClair, 'left', l - 120);
+		dsTexte(Jeu.texteReponse(pl, r), x + 78, yy + 12, 18, pl.bonne ? DS.succesClair : DS.erreurClair, 'left', l - 120); // prompt 197 : texte du clash généré (Jeu.texteReponse)
 		yy += 56;
 		(pl.relances || []).forEach((rl) => {
 			dsTexte(pl.auteur + ' · ' + rl.heure + ' : ' + String(rl.texte), x + 34, yy, 18, DS.blanc75, 'left', l - 60);
@@ -514,9 +510,11 @@ function blocPlainteSociale(pl, x, y, l, prive) {
 		yy += 32;
 	} else {
 		const cible = cibleCommunity() === pl;
-		pl.def.reponses.forEach((r, i) => {
+		// Prompt 197 : 3 réponses dans un ordre mélangé, déterministe et indiscernable (aucun marqueur du clash)
+		Jeu.ordreReponses(pl).forEach((ri, i) => {
+			const r = pl.def.reponses[ri];
 			const actif = cible && focusReponse === i;
-			yy += boutonTexte(x + 34, yy, l - 60, i + 1 + '  ' + Jeu.texteMessage(r.texte, pl.vars), () => repondrePlainte(i, pl), actif) + 8;
+			yy += boutonTexte(x + 34, yy, l - 60, i + 1 + '  ' + Jeu.texteReponse(pl, r), () => repondrePlainte(i, pl), actif) + 8;
 		});
 		if (prive) {
 			dsBouton(x + 34, yy, 340, 44, t('commu.transmettre'), () => transmettreAuPatron(pl), 'secondaire');

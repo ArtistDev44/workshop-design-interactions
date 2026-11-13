@@ -51,7 +51,6 @@ function dormir(volontaire) {
 	if (typeof sauverActif === 'function') sauverActif(); // les signalements actifs continuent en arrière-plan
 	if (phase === 'selection' || PHASES_ACTIVES.includes(phase)) phase = 'attente'; // le temps file ×100
 	enSieste = true;
-	debutSieste = millis();
 	SOMNO.forcee = !volontaire;
 	SOMNO.alarmes = new Set();
 	SOMNO.bilan = { arrives: 0, expires: 0, minutes: Jeu.horloge.minutes, jauges: Object.assign({}, Jeu.jauges) };

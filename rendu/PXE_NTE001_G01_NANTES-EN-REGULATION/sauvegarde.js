@@ -64,14 +64,6 @@ const Sauvegarde = (function () {
 		indisponibleSignale = true;
 		toast(t('sauvegarde.indisponible'), 'erreur');
 	}
-	function lireCle(cle) {
-		try {
-			const brut = localStorage.getItem(cle);
-			return brut ? JSON.parse(brut) : null;
-		} catch (e) {
-			return null;
-		}
-	}
 	function ecrireCle(cle, objet) {
 		// Quota dépassé ou stockage bloqué : setItem lève AVANT d'écrire — l'ancienne valeur de cette clé et les autres
 		// emplacements restent intacts, la partie continue en mémoire ; message une fois, redonné après un succès
@@ -101,10 +93,6 @@ const Sauvegarde = (function () {
 
 	// ——— Modèle ———
 	const cleEmplacement = (id) => PREFIXE + id;
-	function semaineCourante() {
-		const e = Jeu.etat || {};
-		return e.mode === 'semaine' && e.semaine ? e.semaine.lundi : e.mode === 'direct' ? 'direct' : 'fallback';
-	}
 
 	/** Prompt 95 : les horodatages des équipes suivent l'horloge de jeu (TEMPS_EQUIPES), pas millis() — décalage en ms */
 	function recalerEquipes(liste, decal) {
@@ -587,12 +575,9 @@ const Sauvegarde = (function () {
 		ouvrirImport,
 		fermerImport,
 		texteIndicateur,
-		semaineCourante,
 		libelleSemaine,
 		get dialogueOuvert() {
 			return !!dialogue;
 		},
-		_encoder: encoder,
-		_decoder: decoder,
 	};
 })();

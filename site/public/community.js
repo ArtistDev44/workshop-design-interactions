@@ -172,10 +172,6 @@ function dessinerPhoto(photo, x, y, l, h, pluie, nuit) {
 }
 const meteoDe = (date) => (Jeu.meteoDuJour && date ? Jeu.meteoDuJour(date) : null) || {};
 const nuitDe = (minute) => minute !== undefined && minute !== null && (minute < 7 * 60 || minute >= 20 * 60);
-function altPhoto(p) {
-	const m = meteoDe(p.date);
-	return t('commu.alt', { sujet: t('commu.sujet.' + p.photo.sujet), meteo: (m.pluie_mm || 0) >= 1 ? t('commu.alt.pluie') : '' });
-}
 
 // ——— Avatar du compte : feu de signalisation tram, pictogramme pixel original ———
 function avatarCompte(x, y, s) {

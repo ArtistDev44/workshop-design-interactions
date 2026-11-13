@@ -32,8 +32,6 @@ function verifierTaches() {
 	if (!['attente', 'selection'].includes(phase) || vue !== 'poste' || PC.etat !== 'appli' || (typeof pcDemarre === 'function' && pcDemarre())) return false;
 	if (typeof CINE !== 'undefined' && CINE) return false;
 	if (TACHE.courante) return ouvrir('tache'), true; // tâche interrompue par une autre fenêtre : on la reprend
-	const b = Taches.briefing();
-	if (b) return ouvrirTache({ type: 'briefing', donnees: b }), true;
 	const a = Taches.arbitrage(); // option du groupe (lot F), une fois par semaine
 	if (a) return ouvrirTache(a), true;
 	const suivante = TACHE.file.shift();
@@ -42,7 +40,7 @@ function verifierTaches() {
 }
 function ouvrirTache(tache, suite) {
 	TACHE.courante = tache;
-	TACHE.choix = tache.type === 'info' ? tache.blocs.map(() => null) : [];
+	TACHE.choix = [];
 	TACHE.groupe = 0;
 	TACHE.resultat = null;
 	TACHE.suite = suite || null;
@@ -74,22 +72,7 @@ function tachesFinJournee() {
 function basculerChoix(i) {
 	const tache = TACHE.courante;
 	if (!tache) return;
-	if (tache.type === 'briefing') {
-		const o = tache.donnees.options[i];
-		if (!o) return;
-		const k = TACHE.choix.indexOf(o.id);
-		if (k >= 0) TACHE.choix.splice(k, 1);
-		else if (TACHE.choix.length < 2) TACHE.choix.push(o.id);
-		else annoncer(t('tache.briefing.max'));
-		annoncer(t('tache.prio.' + o.id, o.vars) + ' : ' + t(TACHE.choix.includes(o.id) ? 'tache.choisi' : 'tache.retire'));
-	} else if (tache.type === 'info') {
-		const b = tache.blocs[TACHE.groupe];
-		if (!b || !b.options[i]) return;
-		TACHE.choix[TACHE.groupe] = i;
-		annoncer(t('tache.info.bloc.' + b.id) + ' : ' + b.options[i]);
-		const vide = TACHE.choix.findIndex((c) => c === null);
-		if (vide >= 0) TACHE.groupe = vide; // case suivante à remplir
-	} else if (tache.type === 'evenement' || tache.type === 'arbitrage') {
+	if (tache.type === 'evenement' || tache.type === 'arbitrage') {
 		const o = tache.options[i];
 		if (!o) return;
 		TACHE.choix = [o];
@@ -108,24 +91,20 @@ function validerTache(passer) {
 	const tache = TACHE.courante;
 	if (!tache) return;
 	if (TACHE.resultat || tache.type === 'recap') return fermerTache(); // écran de résultat ou récapitulatif : Entrée / Échap pour continuer
-	if (tache.type === 'info' || tache.type === 'evenement' || tache.type === 'arbitrage') {
-		if (!passer && (tache.type === 'info' ? TACHE.choix.some((c) => c === null) : !TACHE.choix[0])) return annoncer(t('tache.' + tache.type + '.incomplet'));
-		const r = Taches.resoudre(tache, passer ? null : tache.type === 'info' ? TACHE.choix.slice() : TACHE.choix[0]);
+	if (tache.type === 'evenement' || tache.type === 'arbitrage') {
+		if (!passer && !TACHE.choix[0]) return annoncer(t('tache.' + tache.type + '.incomplet'));
+		const r = Taches.resoudre(tache, passer ? null : TACHE.choix[0]);
 		if (passer || !r || r.ok === null) {
 			annoncer(t('tache.passee'));
 			return fermerTache();
 		}
 		TACHE.resultat = r;
-		const txt = tache.type === 'info' ? t(r.ok ? 'tache.info.juste' : 'tache.info.faux', { v: Math.abs(r.effets.reputation) }) : tache.type === 'arbitrage' ? t('tache.arbitrage.ok.' + TACHE.choix[0]) : t('tache.prep.ok', { nom: tache.nom, cout: Taches.R.prep.cout });
+		const txt = tache.type === 'arbitrage' ? t('tache.arbitrage.ok.' + TACHE.choix[0]) : t('tache.prep.ok', { nom: tache.nom, cout: Taches.R.prep.cout });
 		annoncer(txt);
 		Confort.Son.bip(r.ok === false ? 'alerte' : 'choix');
 		return;
 	}
-	if (tache.type === 'briefing') {
-		if (!passer && TACHE.choix.length < 2) return annoncer(t('tache.briefing.deux'));
-		const p = Taches.choisirPriorites(passer ? [] : TACHE.choix);
-		annoncer(passer || !p.length ? t('tache.briefing.passe') : t('tache.briefing.ok', { liste: p.map((x) => t('tache.prio.' + x.id, x.vars)).join(Langue.actuelle === 'fr' ? ' ; ' : '; ') }));
-	} else if (tache.type === 'rapport') {
+	if (tache.type === 'rapport') {
 		if (!passer && (!TACHE.choix[0] || !TACHE.choix[1])) return annoncer(t('tache.rapport.incomplet'));
 		const r = Taches.validerRapport(TACHE.choix[0] || null, passer ? null : TACHE.choix[1]);
 		annoncer(t('tache.rapport.ok') + ' ' + texteDemande(r));
@@ -149,10 +128,6 @@ function toucheTaches() {
 	if (!tache) return fermer(), true;
 	if (['1', '2', '3', '4'].includes(key)) basculerChoix(Number(key) - 1);
 	else if (keyCode === TAB) {
-		if (tache.type === 'info') {
-			TACHE.groupe = (TACHE.groupe + (keyIsDown(SHIFT) ? tache.blocs.length - 1 : 1)) % tache.blocs.length;
-			annoncer(t('tache.info.bloc.' + tache.blocs[TACHE.groupe].id));
-		}
 		if (tache.type === 'rapport') {
 			TACHE.groupe = 1 - TACHE.groupe;
 			annoncer(t(TACHE.groupe ? 'tache.rapport.groupeDemande' : 'tache.rapport.groupeFait'));
@@ -193,8 +168,6 @@ function fenetreTache() {
 		yy += 130;
 	}
 	if (TACHE.resultat) yy = corpsResultat(tache, TACHE.resultat, x + 56, yy, l - 112);
-	else if (tache.type === 'briefing') yy = corpsBriefing(tache.donnees, x + 56, yy, l - 112);
-	else if (tache.type === 'info') yy = corpsInfo(tache, x + 56, yy, l - 112);
 	else if (tache.type === 'evenement') yy = corpsPreparation(tache, x + 56, yy, l - 112);
 	else if (tache.type === 'recap') yy = corpsRecap(tache.donnees, x + 56, yy, l - 112);
 	else if (tache.type === 'arbitrage') yy = corpsArbitrage(tache, x + 56, yy, l - 112);
@@ -218,21 +191,6 @@ function ligneInfo(txt, x, y, l) {
 	fill(C.texte);
 	text(txt, x, y, l, 56);
 	return y + (textWidth(txt) > l ? 56 : 30);
-}
-function corpsBriefing(b, x, y, l) {
-	const m = b.meteo;
-	y = ligneInfo(m ? t('tache.briefing.meteo', { min: nombreFr(m.temp_min), max: nombreFr(m.temp_max), pluie: nombreFr(m.pluie_mm), vent: nombreFr(m.rafales_max) }) : t('enq.meteo.inconnue'), x, y, l);
-	y = ligneInfo(b.agenda.length ? t('tache.briefing.agenda', { n: b.agenda.length, nom: b.agenda[0] }) : t('rythme.agendaVide'), x, y, l);
-	y = ligneInfo(t('tache.briefing.travaux', { n: b.travaux }), x, y, l);
-	y += 14;
-	const lb = (l - 16) / 2;
-	b.options.forEach((o, i) => {
-		const bx = x + (i % 2) * (lb + 16);
-		const by = y + Math.floor(i / 2) * (hb(76) + 16);
-		const pris = TACHE.choix.includes(o.id);
-		bouton(bx, by, lb, hb(76), i + 1 + '  ' + (pris ? '✓ ' : '') + t('tache.prio.' + o.id, o.vars), () => basculerChoix(i), false, !pris);
-	});
-	return y + 2 * (hb(76) + 16);
 }
 function corpsRapport(rp, x, y, l) {
 	const groupe = (titre, liste, g, libelle) => {
@@ -270,26 +228,6 @@ function ouvrirTacheEnFile(suite) {
 	ouvrirTache(TACHE.file.shift(), suite);
 	return true;
 }
-function corpsInfo(tache, x, y, l) {
-	y = ligneInfo(t('tache.info.contexte', { sujet: tache.sujet, action: tache.action }), x, y, l) + 8;
-	tache.blocs.forEach((b, k) => {
-		const actif = TACHE.groupe === k;
-		textAlign(LEFT, TOP);
-		textFont(POLICE_DONNEES);
-		textStyle(BOLD);
-		textSize(17);
-		fill(actif ? C.primaireTexte : C.gris);
-		text(t('tache.info.bloc.' + b.id).toUpperCase() + (actif ? '  ◀' : ''), x, y + 14);
-		textStyle(NORMAL);
-		const lb = (l - 220 - 2 * 10) / 3;
-		b.options.forEach((o, i) => {
-			const pris = TACHE.choix[k] === i;
-			bouton(x + 220 + i * (lb + 10), y, lb, hb(52), (actif ? i + 1 + '  ' : '') + (pris ? '✓ ' : '') + court(o, 30), () => ((TACHE.groupe = k), basculerChoix(i)), false, !pris);
-		});
-		y += hb(52) + 12;
-	});
-	return y;
-}
 function corpsPreparation(tache, x, y, l) {
 	y = ligneInfo(t('tache.prep.contexte', { nom: tache.nom, heure: tache.heure }), x, y, l) + 12;
 	tache.options.forEach((o, i) => {
@@ -305,24 +243,10 @@ function corpsResultat(tache, r, x, y, l) {
 	textStyle(BOLD);
 	textSize(24);
 	fill(r.ok === false ? C.rouge : C.vert);
-	const titre = tache.type === 'info' ? t(r.ok ? 'tache.info.juste' : 'tache.info.faux', { v: Math.abs(r.effets.reputation) }) : tache.type === 'arbitrage' ? t('tache.arbitrage.ok.' + TACHE.choix[0]) : t('tache.prep.ok', { nom: tache.nom, cout: Taches.R.prep.cout });
+	const titre = tache.type === 'arbitrage' ? t('tache.arbitrage.ok.' + TACHE.choix[0]) : t('tache.prep.ok', { nom: tache.nom, cout: Taches.R.prep.cout });
 	text(titre, x, y, l, 70);
 	textStyle(NORMAL);
 	y += 84;
-	if (tache.type === 'info') {
-		tache.blocs.forEach((b, k) => {
-			const ok = !r.faux[k];
-			textSize(20);
-			fill(ok ? C.texte : C.orange);
-			text((ok ? '✓ ' : '✗ ') + t('tache.info.resultat', { bloc: t('tache.info.bloc.' + b.id), choix: court(b.options[TACHE.choix[k]], 60) }) + (ok ? '' : ' → ' + court(b.options[b.bonne], 60)), x, y, l, 30);
-			y += 34;
-		});
-		if (!r.ok) {
-			fill(C.gris);
-			text(t('tache.info.plainte'), x, y + 6, l, 30);
-			y += 40;
-		}
-	}
 	return y;
 }
 
@@ -464,7 +388,7 @@ function corpsArbitrage(tache, x, y, l) {
 }
 
 // ——— Lot F : options soumises au groupe (Paramètres → section « Avancé », parametres.js), désactivées par défaut ———
-const OPTIONS_JEU = ['chaines', 'deblocages', 'arbitrage', 'traceDossier', 'pressionVisible', 'deVisible', 'eclairageJauges', 'npd', 'deblocageApplis', 'toutDebloque', 'somnolenceNecessaire']; // prompt 89 bis : 4 options (§ 6) ; prompt 90 : Ne pas déranger ; prompt 91 : § 7
+const OPTIONS_JEU = ['chaines', 'deblocages', 'arbitrage', 'deVisible', 'eclairageJauges', 'npd', 'deblocageApplis', 'toutDebloque', 'somnolenceNecessaire']; // prompt 89 bis : 4 options (§ 6) ; prompt 90 : Ne pas déranger ; prompt 91 : § 7
 let confirmerRemiseCarriere = 0;
 function basculerOptionJeu(nom) {
 	Confort.Reglages.basculer(nom);

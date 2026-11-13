@@ -20,8 +20,6 @@ const ICONES_OPTIONS_JEU = {
 	chaines: 'link',
 	deblocages: 'lock-open',
 	arbitrage: 'coins',
-	traceDossier: 'file-text',
-	pressionVisible: 'trending-up',
 	deVisible: 'dices',
 	eclairageJauges: 'lightbulb',
 	npd: 'moon',

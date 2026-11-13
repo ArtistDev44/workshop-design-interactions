@@ -30,7 +30,6 @@ let smsIndex = 0;
 let introVue = false;
 let inactifDepuis = 0; // millis() de la dernière interaction
 let enSieste = false;
-let debutSieste = 0;
 let reveil = null; // { limite } quand une alerte arrive pendant la sieste
 let focusBureau = -1; // -1 : aucun ; sinon index dans OBJETS_BUREAU
 let derniereImage = 0;

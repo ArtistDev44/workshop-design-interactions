@@ -394,7 +394,7 @@
 		// Partie : bureau, poste, applis
 		add('partie semaine 1 · bureau', () => (H.partie(0), (vue = 'bureau')), 20);
 		// Prompt 183 : plus de bureau d'icônes — les applis sont des vues de l'appli principale ; Indicateurs = panneau flottant (I)
-		['patron', 'community', 'journal', 'donnees', 'corbeille'].forEach((a) => add('appli ' + a, () => (H.poste(), (PC.etat = 'os'), (PC.fenetre = a))));
+		['patron', 'community', 'journal', 'donnees'].forEach((a) => add('appli ' + a, () => (H.poste(), (PC.etat = 'os'), (PC.fenetre = a))));
 		add('appli indicateurs', () => (H.poste(), (PC.flottant = true), (INDIC.deplie = true)));
 		add('appli indicateurs · fermée', () => ((PC.flottant = false), (INDIC.deplie = false)), 2);
 		add('Signalements · file', () => H.poste());

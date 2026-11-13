@@ -490,14 +490,12 @@ for (const [nom, ctx] of [['fr', contexte('fr')], ['en', contexte('en')]]) {
 		const ordre = [Jeu.paquet[0] === avant[2], Jeu.paquet[1] === avant[0], Jeu.paquet[2] === avant[1]];
 		const equipeSuit = Jeu.paquet[Jeu.equipes[0].index] === avant[0];
 		const arrivees = Object.keys(SELECTION.arrivees).length === 3;
-		const lignes = texteLignes({ lignes: ['1'] }, 5); // dossier à venir : ligne pas encore identifiée
-		const connu = texteLignes({ lignes: ['1'] }, -1); // dossier déjà traité : ligne connue
 		Jeu.decider('rien');
 		const snap = JSON.parse(JSON.stringify(Jeu.instantane(0)));
 		const coherent = snap.jours.every((jj) => jj.dossiers.every((i) => i >= 0)) && new Set(snap.jours.flatMap((jj) => jj.dossiers)).size === snap.paquet.length;
 		let tours = 0;
 		while (!Jeu.terminee && tours++ < 200) { if (Jeu.prochainDuJour()) Jeu.decider('renfort'); else if (Jeu.jours[Jeu.jourIndex + 1]) Jeu.journeeSuivante(); else break; }
-		return { ordre, equipeSuit, arrivees, coherent, fin: Jeu.index === Jeu.paquet.length, lignes, connu };
+		return { ordre, equipeSuit, arrivees, coherent, fin: Jeu.index === Jeu.paquet.length };
 	})()`,
 		cs,
 	);
@@ -505,7 +503,6 @@ for (const [nom, ctx] of [['fr', contexte('fr')], ['en', contexte('en')]]) {
 	verifier(r.equipeSuit, 'signalements : l\'équipe envoyée doit suivre son dossier après réordonnancement');
 	verifier(r.arrivees, 'signalements : heures d\'arrivée perdues au réordonnancement');
 	verifier(r.coherent && r.fin, `signalements : sauvegarde cohérente (${r.coherent}) et semaine jouée jusqu'au bout (${r.fin})`);
-	verifier(/François Mitterrand/.test(r.connu) && !/Mitterrand/.test(r.lignes), `signalements : ligne avec son nom réel une fois identifiée (${r.connu} / ${r.lignes})`);
 	const code = ['sketch.js', 'carte.js', 'os.js', 'portrait.js', 'mobile.js', 'guide.js'].map((f) => readFileSync(join(pub, f), 'utf8')).join('\n');
 	verifier(!/zoomerCarte|CARTE_VUE|commandesCarte|dessinerLignesEtat|dessinerReperesCarte|positionDossier|centreLigne|traceDecision|dessinerBandeauEquipes|zoomCarteMolette|iconeCarte/.test(code), 'signalements : reste du code de la carte');
 	const orphelines = vm.runInContext("['carte.zoom', 'carte.reseau', 'legende.heure', 'app.carte', 'enq.source.carte', 'guide.ouvrirCarte'].filter((k) => TRADUCTIONS.fr[k] !== undefined || TRADUCTIONS.en[k] !== undefined)", cs);
@@ -1283,13 +1280,11 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 		}
 		// Demande accordée (réputation ≥ 50) : +5 de budget le lendemain matin ; refusée sous 50
 		Jeu.chargerSemaine('2026-11-02'); Jeu.nouvellePartie(); Taches.nouvellePartie();
-		Taches.choisirPriorites([]);
 		Jeu.jauges.reputation = 60; Jeu.finDeJourneeTactique();
 		const r1 = Taches.validerRapport('x', 'budget');
 		while (Jeu.prochainDuJour()) Jeu.decider('temps');
 		Jeu.journeeSuivante(); const b0 = Jeu.jauges.budget; Taches.matin();
 		out.accord = { accordee: r1.accordee, delta: Jeu.jauges.budget - b0, message: Jeu.messagesPatron.filter((m) => m.jour === Jeu.jourCourant().date).map((m) => String(m.texte)).join(' | ') };
-		Taches.choisirPriorites([]);
 		Jeu.jauges.reputation = 30;
 		const r2 = Taches.validerRapport('x', 'equipe');
 		Jeu.journeeSuivante(); Taches.matin();
@@ -1306,7 +1301,7 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 	verifier(r.erreursOpt.length === 0, `briefing : options sans fait réel ou en nombre incorrect (${r.erreursOpt.slice(0, 4)})`);
 	verifier(r.carnet >= 6 && r.sansCarnet, `rapport du soir : un par journée, sans carnet (prompt 142) (${r.carnet})`);
 	verifier(r.nbPrio && r.nbPrio.slice(0, 4).every((n) => n === 2) && r.nbPrio.slice(4, 6).every((n) => n === 3), `priorités imposées : 2 par jour puis 3 après 4 jours joués (${r.nbPrio && r.nbPrio.slice(0, 7)})`);
-	verifier(/function briefing\(\) \{\n\t\treturn null;/.test(readFileSync(join(pub, 'taches.js'), 'utf8')), 'priorités : plus aucune fenêtre de choix (briefing() renvoie null)');
+	verifier(!/briefing\(\)|choisirPriorites/.test(readFileSync(join(pub, 'taches.js'), 'utf8') + readFileSync(join(pub, 'taches-ui.js'), 'utf8')), 'priorités : plus aucune fenêtre de choix (briefing retiré, prompt 199)');
 	verifier(r.accord.accordee && r.accord.delta === 5 && /accordée/.test(r.accord.message), `rapport : demande accordée → +5 de budget le lendemain (${JSON.stringify(r.accord)})`);
 	verifier(r.refus.accordee === false && r.refus.bonus === '{}', `rapport : réputation < 50 → demande refusée (${JSON.stringify(r.refus)})`);
 	verifier(r.sauve, 'sauvegarde : les tâches de la partie (priorités, rapport) sont restaurées');
@@ -1332,13 +1327,7 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 				const res = Jeu.decider(Jeu.actionsPossibles(d)[0]);
 				const tache = Taches.apresDecision(res, Jeu.index - 1);
 				if (!tache) continue;
-				if (tache.type === 'info') {
-					out.infos++;
-					const b = tache.blocs;
-					const ligne = d.lignes && d.lignes.length ? T('tache.info.ligne', { ligne: d.lignes[0] }) : T('tache.info.ligneInconnue');
-					if (String(b[0].options[b[0].bonne]) !== String(ligne)) out.erreursInfo.push('ligne ' + d.texte_source);
-					if (b.some((x) => x.options.length < 2 || x.bonne < 0 || new Set(x.options.map(String)).size !== x.options.length)) out.erreursInfo.push('options ' + d.texte_source);
-				}
+				if (tache.type === 'info') out.infos++;
 				if (tache.type === 'evenement') {
 					out.preps++;
 					const ev = Jeu.paquet[tache.index];
@@ -1346,23 +1335,12 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 				}
 			}
 		}
-		// Effet : info exacte +2, info fausse −2 et une plainte Community étiquetée « info_erronee »
-		Jeu.chargerSemaine('2026-11-02'); Jeu.nouvellePartie(); Taches.nouvellePartie();
-		const res = Jeu.decider(Jeu.actionsPossibles(Jeu.dossierCourant())[0]);
-		const tache = Taches.tacheInfo(res, 0);
-		const r0 = Jeu.jauges.reputation;
-		Taches.resoudre(tache, Taches.bonneReponse(tache));
-		const r1 = Jeu.jauges.reputation;
-		Taches.resoudre(tache, tache.blocs.map((b) => (b.bonne + 1) % b.options.length));
-		out.effetInfo = [r1 - r0, Jeu.jauges.reputation - r1];
-		out.plainte = Jeu.plaintes.some((p) => p.id === 'info_erronee');
 		return out;
 	})()`,
 		cc,
 	);
 	verifier(r.infos === 0, `info trafic : remplacée par la publication Community (prompt 91), ${r.infos} tâche(s) proposée(s)`);
 	verifier(r.prepSansEvenement === 0, `préparer un événement : proposé sans affluence réelle à venir (${r.prepSansEvenement}/${r.preps})`);
-	verifier(JSON.stringify(r.effetInfo) === '[2,-2]' && r.plainte, `info trafic : effets ${r.effetInfo}, plainte ${r.plainte}`);
 }
 
 // Prompt 88 lot D : thème du jour calculé sur les faits réels, au plus une cellule de crise par semaine
@@ -1458,7 +1436,7 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 // Prompt 88 lot F : options du groupe désactivées par défaut ; chaînes étiquetées et plafonnées ; déblocages ; arbitrage
 {
 	const conf = readFileSync(join(pub, 'confort.js'), 'utf8');
-	verifier(/chaines: false, deblocages: false, arbitrage: false, traceDossier: false, pressionVisible: false, deVisible: false, eclairageJauges: false/.test(conf), 'options du groupe : désactivées par défaut (Confort.Reglages)');
+	verifier(/chaines: false, deblocages: false, arbitrage: false, deVisible: false, eclairageJauges: false/.test(conf), 'options du groupe : désactivées par défaut (Confort.Reglages)');
 	const cf = contexte('fr');
 	const r = vm.runInContext(
 		`(() => {
@@ -1573,7 +1551,8 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 	verifier(!/function appJournal|function enqueteJournal/.test(readFileSync(join(pub, 'os.js'), 'utf8')), 'journal : ancien rendu retiré d’os.js');
 }
 
-// Prompt 89 bis : traces dans la file, pression lisible, Q25 expliqué, dé visible — aucune valeur d'effet modifiée
+// Prompt 89 bis : trace de la décision, Q25 expliqué, dé visible — aucune valeur d'effet modifiée (prompt 199 : la file
+// des « traités » et la pression lisible, que plus rien n'affichait, ont été retirées avec leurs tests)
 {
 	const ct = contexte('fr');
 	const r = vm.runInContext(
@@ -1590,28 +1569,22 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 				while (Jeu.prochainDuJour()) {
 					const d = Jeu.prochainDuJour();
 					Jeu.horloge.minutes = Math.max(Jeu.horloge.minutes, d.minute);
-					const p1 = Traces.pression(d);
-					Jeu.horloge.minutes += 30;
-					const p2 = Traces.pression(d);
-					if (p2.ecoule !== Math.floor(Jeu.horloge.minutes - d.minute)) out.erreurs.push('temps écoulé');
-					if (p1.retard !== null && p2.retard < p1.retard) out.erreurs.push('retard qui baisse');
 					const res = Jeu.decider(k++ % 4 === 3 ? 'temps' : Jeu.actionsPossibles(d)[k % 3]);
 					const e = Jeu.evenementsJournee[Jeu.evenementsJournee.length - 1];
 					Jeu.horloge.minutes += 60;
 					if (e.retardEffectif !== null && e.retardEffectif !== undefined && Jeu.retardEffectif(d) !== e.retardEffectif) out.erreurs.push('retard non figé');
-					const l = Traces.lignesFile(d.date)[0];
-					if (e.cleAction === 'temps') { if (l.etat !== 'nonTraite' || !l.detail) out.erreurs.push('non traité sans calcul'); }
-					else if (l.etat !== 'traite' || !l.titre.includes(String(e.action)) || !/\\d+h\\d\\d/.test(l.titre)) out.erreurs.push('trace file ' + l.titre);
+					const tr = Traces.trace(res);
+					if (!tr || !/\\d+h\\d\\d/.test(tr)) out.erreurs.push('trace ' + tr);
+					lignes.push(tr);
 					const des = Traces.texteDes(res);
 					if (des && res.des.some((v, n) => v && !des.includes('dé ' + v))) out.erreurs.push('dé affiché ≠ dé tiré');
 				}
-				lignes.push(...Traces.lignesFile(Jeu.jourCourant().date).map((x) => x.titre));
 				Jeu.finDeJourneeTactique(); Jeu.journeeSuivante();
 			}
 			return { lignes, jauges: JSON.stringify(Jeu.jauges), tirages: Jeu.tirages };
 		};
 		const sans = jouer({});
-		const avec = jouer({ traceDossier: true, pressionVisible: true, deVisible: true, eclairageJauges: true });
+		const avec = jouer({ deVisible: true, eclairageJauges: true });
 		const bis = jouer({});
 		out.memesEffets = sans.jauges === avec.jauges && sans.tirages === avec.tirages;
 		out.repro = JSON.stringify(sans.lignes) === JSON.stringify(bis.lignes);
@@ -1619,11 +1592,6 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 		// Q25 : le calcul cite les effets réellement appliqués
 		const tps = Jeu.evenementsJournee.filter((e) => e.cleAction === 'temps');
 		out.q25 = tps.every((e) => { const c = Traces.calculQ25(e); return ['fluidite', 'reputation', 'budget'].every((k) => !e.deltas[k] || c.includes(String(Math.abs(e.deltas[k])))); }) && tps.length > 0;
-		// Sauvegarde : les traces sont reconstruites à l'identique depuis le journal sauvegardé
-		const date = Jeu.jours[0].date;
-		const avant = JSON.stringify(Traces.lignesFile(date).map((x) => x.titre));
-		Jeu.restaurerInstantane(JSON.parse(JSON.stringify(Jeu.instantane(0))), 0);
-		out.sauve = JSON.stringify(Traces.lignesFile(date).map((x) => x.titre)) === avant;
 		return out;
 	})()`,
 		ct,
@@ -1632,7 +1600,6 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 	verifier(r.memesEffets, 'traces : les options d\'affichage ne changent ni les jauges ni les dés');
 	verifier(r.repro && r.nb > 5, `traces : reproductibles par la graine (${r.nb} lignes)`);
 	verifier(r.q25, 'Q25 : le calcul affiché cite les effets réellement appliqués');
-	verifier(r.sauve, 'traces : restaurées depuis la sauvegarde');
 }
 
 // Prompt 90 : notifications du téléphone — données réelles seulement, rythme, priorités, Ne pas déranger, pas de doublon
@@ -1758,8 +1725,8 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 		ca,
 	);
 	verifier(r.sansOption, 'déblocage : sans l\'option (défaut), toutes les applis sont ouvertes');
-	verifier(r.semaines[0] === 'signalements' && r.semaines[1] === 'community,corbeille,signalements' && r.semaines[2] === 'community,corbeille,patron,signalements', `déblocage par semaine : ${r.semaines.join(' | ')}`);
-	verifier(r.direct === 6 && r.directTout, `déblocage : temps réel = semaine 4 (${r.direct}) ; « tout débloqué » (${r.directTout})`);
+	verifier(r.semaines[0] === 'signalements' && r.semaines[1] === 'community,signalements' && r.semaines[2] === 'community,patron,signalements', `déblocage par semaine : ${r.semaines.join(' | ')}`);
+	verifier(r.direct === 5 && r.directTout, `déblocage : temps réel = semaine 4 (${r.direct}) ; « tout débloqué » (${r.directTout})`);
 	verifier(r.pile === 'os/community > os/journal > os/community > appli/' && r.vide, `pile de navigation : ${r.pile}`);
 	// Brouillon Community : faits réels du dossier (ligne, cause, durée), publication sans effet de jauge
 	const cb = contexte('fr');
@@ -1945,40 +1912,6 @@ for (const f of ['enquete.js', 'carte.js', 'journal.js']) verifier(!/\*\s*1\.05\
 // « Quitter la journée » (mail → soir → sortie, sans toucher aux jauges), clés FR + EN
 {
 	const cg = contexte('fr');
-	vm.runInContext(
-		`var ecran = 'jeu', phase = 'decision', vue = 'poste', fenetre = null, enPause = false, reduireAnimations = false;
-		var PC = { etat: 'appli' }, MOBILE = { actif: false }, ECRAN_POSTE = { x: 96, y: 40, l: 1728, h: 972 }, L = 1920, H = 1080;
-		var mouseX = 0, mouseY = 0, __t = 0, __decide = [], __ann = [];
-		var millis = () => __t, decider = (c) => __decide.push(c), annoncer = (x) => __ann.push(String(x)), constrain = (v, a, b) => Math.max(a, Math.min(b, v));
-		var Confort = { Son: { clic() {}, bip() {} } };
-		function ecranVers(x, y) { mouseX = ECRAN_POSTE.x + (x * ECRAN_POSTE.l) / L; mouseY = ECRAN_POSTE.y + (y * ECRAN_POSTE.h) / H; }`,
-		cg,
-	);
-	vm.runInContext(readFileSync(join(pub, 'glisser.js'), 'utf8'), cg, { filename: 'glisser.js' });
-	const g = vm.runInContext(
-		`(() => {
-		CARTES = [{ cle: 'renfort', x: 820, y: 640, l: 420, h: 140, lib: 'Renforcer', touche: '1' }, { cle: 'rien', x: 1260, y: 640, l: 420, h: 140, lib: 'Ne rien faire', touche: '4' }];
-		ZONE_DEPOT = { x: 810, y: 210, l: 900, h: 340 };
-		const r = {};
-		// glisser la carte 1 sur le dossier
-		ecranVers(900, 700); r.prise = debutGlisser(); ecranVers(1200, 380); relacherGlisser();
-		r.depot = __decide.join() === 'renfort';
-		// glisser ailleurs : aucun choix, retour en ressort, annonce
-		ecranVers(1300, 700); debutGlisser(); ecranVers(200, 900); relacherGlisser();
-		r.ailleurs = __decide.length === 1 && !!GLISSER.retour && /aucun choix/.test(__ann[__ann.length - 1]);
-		// simple clic : décide
-		ecranVers(1300, 700); debutGlisser(); ecranVers(1302, 702); relacherGlisser();
-		r.clic = __decide.join() === 'renfort,rien';
-		// hors décision ou au doigt : pas de prise
-		phase = 'narration'; ecranVers(900, 700); r.horsDecision = debutGlisser() === false; phase = 'decision';
-		MOBILE.actif = true; r.tactile = debutGlisser() === false; MOBILE.actif = false;
-		// poids : amplitude selon les deltas réels, coupée avec les animations réduites
-		// prompt 96 : la secousse passe par juice.js (testé plus bas)
-		return r;
-	})()`,
-		cg,
-	);
-	for (const [k, v] of Object.entries(g)) verifier(v === true, `glisser-déposer (prompt 94) : ${k}`);
 	// Quitter la journée : fin de service → soir (prompt 194 : sans mail plein écran) → sortie → lendemain, jauges intactes
 	const cq = contexte('fr');
 	vm.runInContext(
@@ -2020,12 +1953,12 @@ for (const f of ['enquete.js', 'carte.js', 'journal.js']) verifier(!/\*\s*1\.05\
 	for (const [k, v] of Object.entries(q)) verifier(v === true, `quitter la journée (prompt 94) : ${k}`);
 	const fr94 = contexte('fr');
 	const en94 = contexte('en');
-	for (const cle of ['quitter.bouton', 'glisser.deposer', 'glisser.annule']) {
+	for (const cle of ['quitter.bouton']) {
 		const a = vm.runInContext(`t(${JSON.stringify(cle)}, { reponse: 'X' })`, fr94);
 		const b = vm.runInContext(`t(${JSON.stringify(cle)}, { reponse: 'X' })`, en94);
 		verifier(a !== '[À COMPLÉTER]' && b !== '[À COMPLÉTER]' && a !== b, `prompt 94 : clé ${cle} absente en FR ou en EN`);
 	}
-	verifier(/debutGlisser\(\)/.test(readFileSync(join(pub, 'sketch.js'), 'utf8')) && /relacherGlisser\(\)/.test(readFileSync(join(pub, 'micro.js'), 'utf8')), 'glisser-déposer : appui et relâchement branchés');
+	verifier(!/debutGlisser|relacherGlisser|dessinerCartesReponses/.test(['sketch.js', 'micro.js', 'panneau.js', 'glisser.js'].map((f) => readFileSync(join(pub, f), 'utf8')).join('\n')), 'glisser-déposer (prompt 94) : retiré avec les cartes de réponse (prompt 199)');
 }
 
 // Prompt 95 : journées synchronisées et expliquées — une seule horloge (équipes en temps de jeu), titres de
@@ -3048,7 +2981,7 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 		verifier(!chrono.test(dico['sms.2']) && dico['sms.2'].length > 40, `prompt 179 : sms.2 ne parle plus de chrono et garde la consigne (${langue}) : « ${dico['sms.2']} »`);
 		const fautes = Object.keys(dico).filter((k) => salle.test(dico[k]));
 		verifier(!fautes.length, `prompt 179 : « réputation de la salle » subsiste (${langue}) : ${fautes.join(', ')}`);
-		verifier(['jaugeLong.reputation', 'fin.jauge.reputation', 'sms.3'].every((k) => reseau.test(dico[k])), `prompt 179 : « réputation du réseau » attendu dans jaugeLong.reputation, fin.jauge.reputation et sms.3 (${langue})`);
+		verifier(['fin.jauge.reputation', 'sms.3'].every((k) => reseau.test(dico[k])), `prompt 179 : « réputation du réseau » attendu dans fin.jauge.reputation et sms.3 (${langue})`);
 	}
 	// Temps gelé à la première lecture du téléphone, puis comportement normal ; clé purgée par le mode exposition
 	verifier(/function tempsSuspendu\(\) \{\n\treturn [^\n]*telephonePremiereLecture\(\)/.test(lire179('immersion.js')), 'prompt 179 : tempsSuspendu() doit tenir compte de la première lecture du téléphone');

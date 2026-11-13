@@ -342,8 +342,7 @@ function cartePlainte(p, x, y, l, focus) {
 	if (actionsVisiblesJournal()) dsBouton(x + l - 190, y + 10, 176, 44, t('journal.voirCommunity'), () => ouvrirAppPC('community'), 'fantome');
 }
 function ouvrirAppPC(nom) {
-	if (typeof ouvrirFenetreApp === 'function') ouvrirFenetreApp(nom);
-	else PC.fenetre = nom;
+	PC.fenetre = nom;
 }
 
 /** Pictogrammes pixel 7 × 7 par catégorie (dessinés par le code) */
