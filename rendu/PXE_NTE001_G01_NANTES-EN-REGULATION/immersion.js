@@ -251,7 +251,7 @@ function heureAffichee() {
 // Prompt 179 : la toute première lecture du téléphone aussi (telephone.js) ; aux ouvertures suivantes, le temps file
 // Prompt 181 : et le guide « Prendre en main » tant qu'une étape attend le joueur (guideSuspendTemps, guide.js)
 function tempsSuspendu() {
-	return ecran !== 'jeu' || !Jeu.horloge || phase === 'fin' || phase === 'mail' || phase === 'soir' || pcDemarre() || smsActif || enPause || tutoriel || TRANSITION_JOUR || mecaniquesSuspendentTemps() || fenetre === 'aide' || fenetre === 'menu' || (typeof telephonePremiereLecture === 'function' && telephonePremiereLecture()) || lecturePanneau() || (typeof guideSuspendTemps === 'function' && guideSuspendTemps()) || (typeof expoEnPause === 'function' && expoEnPause()); // prompt 160 : voile « Partie en pause » de l'exposition ; prompt 74 : explication du poste ; prompt 87 : lecture d'un signalement
+	return ecran !== 'jeu' || !Jeu.horloge || phase === 'fin' || phase === 'soir' || pcDemarre() || smsActif || enPause || tutoriel || TRANSITION_JOUR || mecaniquesSuspendentTemps() || fenetre === 'aide' || fenetre === 'menu' || (typeof telephonePremiereLecture === 'function' && telephonePremiereLecture()) || lecturePanneau() || (typeof guideSuspendTemps === 'function' && guideSuspendTemps()) || (typeof expoEnPause === 'function' && expoEnPause()); // prompt 160 : voile « Partie en pause » de l'exposition ; prompt 74 : explication du poste ; prompt 87 : lecture d'un signalement
 }
 function tempsCompresse() {
 	return ecran === 'jeu' && (phase === 'attente' || phase === 'reveil') && !tempsSuspendu(); // « ×100 » seulement quand le temps file vraiment
@@ -424,56 +424,6 @@ function dessinerAttente() {
 	}
 	// Prompt 183 : plus de texte d'objectif dans l'appli (le bandeau le porte) ; le fil de la journée remonte
 	dessinerFil(z.x + 32, z.y + 484, z.l - 64, z.h - 504);
-}
-
-// ——— Mail de fin de journée (§ 6), affiché dans l'écran du PC ———
-let mailCalcule = null;
-function dessinerMail() {
-	// Messagerie du PC — Pixel Design System (fond noir, angles droits, titres pixel, bouton primaire rouge)
-	if (!mailCalcule || mailCalcule.jour !== Jeu.jourIndex) mailCalcule = Object.assign(Jeu.mailDuJour(), { jour: Jeu.jourIndex });
-	const m = mailCalcule;
-	const x = 140;
-	const y = 90;
-	const l = L - 280;
-	const h = H - 180;
-	noStroke();
-	fill(13, 12, 12, 200);
-	rect(0, 0, L, H);
-	dsPanneau(x, y, l, h, t('mailf.titre'), m.positif ? 'rgba(0,251,116,0.12)' : primaireRGBA(0.25)); // prompt 115
-	dsBadge(x + l - 120, y + 30, t('mailf.nouveau'), m.positif ? 'succes' : 'erreur');
-	dsTexte(t('mailf.de', { de: m.de }), x + 32, y + 84, 20, DS.blanc50, 'left');
-	dsTexte(t('mailf.a'), x + 32, y + 114, 20, DS.blanc50, 'left');
-	dsTitre(String(m.objet).toUpperCase(), x + 32, y + 156, 28, DS.blanc, 'left');
-	// Prompt 191 : d'abord la scène — le moment de la journée (un dossier réellement joué) et la phrase du patron
-	const lt = l - 64;
-	let ty = y + 206;
-	const sc = m.scene || {};
-	dsTexte(t('mailf.fait.titre'), x + 32, ty, 18, DS.blanc50, 'left');
-	ty += 30;
-	ty += dessinerTexte(sc.fait ? String(sc.fait.texte) : t('mailf.fait.aucun'), x + 32, ty, lt, { taille: 24, couleur: DS.blanc, interligne: 34, maxLignes: 3 }).h + 14;
-	if (sc.patron) ty += dessinerTexte('« ' + String(sc.patron) + ' » ' + t('mailf.signature'), x + 32, ty, lt, { taille: 22, couleur: DS.blanc, style: ITALIC, interligne: 32, maxLignes: 2 }).h + 18;
-	// Puis le bilan chiffré, plus compact (il est aussi dans le rapport papier et le Journal)
-	noStroke();
-	fill(DS.blanc50);
-	rect(x + 32, ty, lt, 1);
-	ty += 12;
-	dsTexte(t('mailf.bilan'), x + 32, ty, 16, DS.blanc50, 'left');
-	ty += 28;
-	const limite = y + h - 112;
-	for (const ligne of m.lignes) {
-		const estFait = !!ligne.fait;
-		const ok = !!ligne.ok;
-		const hl = hauteurTexte(String(ligne), lt - 18, { taille: 17, interligne: 24, maxLignes: 2 });
-		if (ty + hl > limite) break; // le reste du bilan est dans le rapport papier et le Journal
-		if (estFait) {
-			noStroke();
-			fill(ok ? DS.succes : DS.primaire);
-			rect(x + 32, ty + 3, 4, 18);
-		}
-		dessinerTexte(String(ligne), x + 50, ty, lt - 18, { taille: 17, couleur: estFait ? (ok ? DS.succesClair : DS.erreurClair) : DS.blanc, interligne: 24, maxLignes: 2 });
-		ty += hl + 6;
-	}
-	dsBouton(x + l - 420, y + h - 96, 388, 64, t('soir.ranger'), rangerPoste, 'primaire'); // prompt 69 : la sortie du bureau mène au lendemain (ou au bilan)
 }
 
 // ——— Intro SMS (§ 2) ———

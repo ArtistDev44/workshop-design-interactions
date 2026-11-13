@@ -4,7 +4,7 @@
 
 Le principe : choisir une semaine réelle, puis trancher, dossier après dossier, les situations qui l'ont marquée. Les dossiers viennent de données ouvertes : les perturbations datées et l'offre du réseau publiées sur le portail Open Data de Nantes Métropole, la météo de la semaine (Open-Meteo) et, en temps réel, les retards d'au moins 10 minutes. Aucun événement n'est inventé, hormis au plus un incident fictif par semaine, marqué « Fictif » à l'écran.
 
-Chaque dossier propose quatre réponses, dont « attendre ». Chaque choix fait bouger trois jauges à préserver : la fluidité du réseau, sa réputation et le budget. La pression ne vient pas d'un chronomètre : un retard non traité s'aggrave dans la file, et les dossiers restants à la fin du service comptent comme non traités. Plusieurs fins dépendent du bilan des trois jauges.
+Chaque dossier propose trois répliques mélangées, dont une qui clashe l'usager, au prix de la réputation. Chaque choix fait bouger trois jauges à préserver : la fluidité du réseau, sa réputation et le budget. La pression ne vient pas d'un chronomètre : un retard non traité s'aggrave dans la file, et les dossiers restants à la fin du service comptent comme non traités. Plusieurs fins dépendent du bilan des trois jauges.
 
 Le jeu, écrit en p5.js, se lance en ligne ou hors ligne, s'installe comme une application et se joue au clavier, à la souris ou au toucher, en français et en anglais. Son code est publié sous licence MIT, avec l'historique complet des prompts qui l'ont construit.
 

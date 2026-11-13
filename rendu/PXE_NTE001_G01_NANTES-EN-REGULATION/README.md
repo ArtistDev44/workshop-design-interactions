@@ -19,7 +19,7 @@ est tenue de bout en bout : **source réelle → grammaire écrite → système 
 | Grammaire explicite, au moins une règle structurante | *Un fait daté de la source devient un dossier à trancher* ; fiche du livret remplie (7 champs), invariants, variables, espace génératif à graine fixe | `grammar.md` / `.pdf` |
 | Prototype fonctionnel lançable dans un navigateur | Double clic sur `index.html`, hors ligne compris ; en ligne sur https://workshop-design-interactions.pages.dev/ | `index.html` · rubrique « Lancer le projet » |
 | Au moins trois paramètres réellement opérants | Semaine rejouée, difficulté (signalements simultanés, aggravation, budget), mode en ligne / hors ligne, défi chrono | rubrique « Data / interaction » · tests `site/scripts/test-jeu.mjs` (3 semaines × 3 façons de jouer, test de difficulté) |
-| Itérations documentées | 151 prompts numérotés (01 à 160) exécutés un par un, revues UX et audits suivis de corrections, une ligne par push | dossier `prompts/` et `journal.md` du dépôt |
+| Itérations documentées | 181 prompts numérotés (01 à 196) exécutés un par un, revues UX et audits suivis de corrections, une ligne par push | dossier `prompts/` et `journal.md` du dépôt |
 | Test par un autre groupe | [À COMPLÉTER par le groupe : groupe testeur, 3 observations, décision prise] | — |
 | Documentation pour comprendre et relancer | README aux 12 rubriques du « README minimal » | ce fichier |
 | Une donnée ne devient intéressante qu'après un mapping | Retard ≥ 10 min, perturbation datée ou météo au-dessus du 95ᵉ centile → dossier ; réponse → effets sur 3 jauges selon le contexte | rubrique « Data / interaction » · `grammar.md` |
@@ -30,7 +30,7 @@ est tenue de bout en bout : **source réelle → grammaire écrite → système 
 | Livrable : fiche-source et grammaire | `.md` et `.pdf` | `source-sheet.pdf` · `grammar.pdf` |
 | Livrable : README | Concept, stack, lancement, mapping, fallback, contributions, IA, sources et droits | ce fichier |
 | Livrable : manifest | Métadonnées de l'édition (framework, édition, ville, dates, auteurs, source, stack, données, IA, licence) | `manifest.json` |
-| Livrable : cartel | 113 mots (80–120 demandés) + source + système + données | `cartel.md` · page https://workshop-design-interactions.pages.dev/cartel/ |
+| Livrable : cartel | 111 mots (80–120 demandés) + source + système + données | `cartel.md` · page https://workshop-design-interactions.pages.dev/cartel/ |
 | Livrable : captation | `hero.jpg`, `detail-01.jpg`, `process.jpg`, `thumb.jpg`, `demo.mp4` de 29 s (20–30 s demandées), vrai rendu du jeu | ce dossier |
 | Livrable : présentation | Diaporama de démonstration et de défense | https://workshop-design-interactions.pages.dev/presentation/ |
 | Structure de dossier recommandée | `PXE_NTE001_G01_NANTES-EN-REGULATION/` au nommage et au contenu du livret | ce dossier |
@@ -57,7 +57,7 @@ Le visiteur prend un poste dans une salle de contrôle des transports nantais et
 réseau : chaque fait daté de la source (perturbation, météo extrême, événement de l'agenda) devient un dossier à
 trancher ; en temps réel, un retard mesuré d'au moins 10 minutes aussi, et il s'aggrave tant qu'il attend. Ses
 réponses font bouger trois jauges (fluidité, réputation, budget). Hormis au plus un incident fictif par semaine,
-marqué « Fictif », aucun événement n'est inventé ; l'affluence attribuée à un événement est une hypothèse du jeu. Cartel de 113 mots : `cartel.md`.
+marqué « Fictif », aucun événement n'est inventé ; l'affluence attribuée à un événement est une hypothèse du jeu. Cartel de 111 mots : `cartel.md`.
 
 ## Grammaire / règles
 
@@ -80,7 +80,7 @@ Bitsy Pixels si installée.
   dans la boucle de rendu). Liste des API et licences : appli « Données » du jeu et `jeu/api.md` du dépôt.
 - **Mapping** : retard ≥ 10 min / perturbation datée / météo au-dessus du 95e centile de la semaine → dossier ;
   réponse du joueur → effets sur les jauges, modulés par le contexte (× 1,25) et un dé 1d6 à graine fixe.
-- **Interaction** : souris, glisser-déposer des réponses, clavier complet (1–4, Q, Échap, L pour la langue), tactile
+- **Interaction** : souris, glisser-déposer des réponses, clavier complet (1–3 pour les répliques, E pour l'enquête, Q, Échap, L pour la langue ; inventaire : `jeu/174-raccourcis.md` du dépôt), tactile
   en portrait ; options micro (souffle) et webcam (main devant la caméra → sieste), toujours doublées au
   clavier et à la souris. Les images de la webcam sont réduites à 48 × 27, jamais affichées, enregistrées ni
   envoyées (`webcam.js`).
@@ -113,7 +113,7 @@ Bitsy Pixels si installée.
 Trace observable (`git shortlog -sn --all`, 12/11/2026) : ArtistDev44 223 commits, matteobvt49-code 103,
 Vibe Nuage Agent 62 (compte d'agent IA), Skyfe 30. Comptes rattachés par le groupe (12/11/2026) :
 ArtistDev44, Vibe Nuage Agent et Skyfe → Guillaume ; matteobvt49-code → Mattéo. Prompts par auteur (création du
-fichier dans git) : Guillaume 90, Mattéo 14 — détail sur https://workshop-design-interactions.pages.dev/making-of/.
+fichier dans git, `prompts/auteurs.json`) : Guillaume 152, Mattéo 29 — détail sur https://workshop-design-interactions.pages.dev/making-of/.
 
 ## AI usage
 

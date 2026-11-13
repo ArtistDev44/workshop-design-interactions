@@ -22,7 +22,8 @@
 		{ "name": "Météo (prévision et archive ERA5)", "provider": "Open-Meteo", "url": "https://open-meteo.com/", "rights": "CC BY 4.0" },
 		{ "name": "Hauteur de la Loire à Nantes (station M800001010)", "provider": "Hub'Eau — Hydrométrie (eaufrance)", "url": "https://hubeau.eaufrance.fr/", "rights": "Licence Ouverte Etalab (CGU Hub'Eau § 5.1.3, vérifié le 2026-11-11 ; citer l'auteur : PHyC, Service Central Vigicrues)" },
 		{ "name": "Musiques (Komiku)", "provider": "Wikimedia Commons", "url": "https://commons.wikimedia.org/", "rights": "CC0 1.0" },
-		{ "name": "Musiques lo-fi (Loyalty Freak Music, album MELODIES WITH A BEAT)", "provider": "Free Music Archive via Wikimedia Commons", "url": "https://freemusicarchive.org/music/Loyalty_Freak_Music/MELODIES_WITH_A_BEAT", "rights": "CC0 1.0 (vérifié sur les pages FMA des 3 morceaux le 2026-11-11)" }
+		{ "name": "Musiques lo-fi (Loyalty Freak Music, album MELODIES WITH A BEAT)", "provider": "Free Music Archive via Wikimedia Commons", "url": "https://freemusicarchive.org/music/Loyalty_Freak_Music/MELODIES_WITH_A_BEAT", "rights": "CC0 1.0 (vérifié sur les pages FMA des 3 morceaux le 2026-11-11)" },
+		{ "name": "Musique du trailer (« Heroic Age », Kevin MacLeod)", "provider": "incompetech.com", "url": "https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100848", "rights": "CC BY 4.0 (vérifié le 2026-11-12, voir trailer/CREDITS.md)" }
 	],
 	"ai_usage": "Code, documentation et prompts réalisés avec un assistant IA (commits marqués Co-Authored-By: Claude), à partir de prompts écrits par le groupe (dossier prompts/). Relecture et part humaine : [À COMPLÉTER].",
 	"license": "MIT (code, voir LICENSE) ; données et médias sous leurs licences propres (data_sources)",

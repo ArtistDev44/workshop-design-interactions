@@ -177,7 +177,7 @@ function detecterMain(px) {
 }
 /** Main reconnue : endormi → réveil ; éveillé → sieste */
 function basculerSiesteMain() {
-	if (ecran !== 'jeu' || !Jeu.horloge || MENU.actif || fenetre || smsActif || phase === 'fin' || phase === 'mail' || phase === 'soir') return; // prompt 69 : pas de sieste le soir
+	if (ecran !== 'jeu' || !Jeu.horloge || MENU.actif || fenetre || smsActif || phase === 'fin' || phase === 'soir') return; // prompt 69 : pas de sieste le soir
 	// Prompt 78 : même sieste que la jauge de somnolence (temps ×100, bilan au réveil)
 	if (enSieste) {
 		basculerSieste();
