@@ -70,7 +70,8 @@ function installerEchelleTexte() {
 
 /** Prompt 209 : écrans dessinés en colonne étroite en portrait (le plancher de 20 px s'y applique) */
 function plancherPortrait() {
-	return typeof FENETRE_EN_DESSIN !== 'undefined' && FENETRE_EN_DESSIN && typeof fenetre !== 'undefined' && fenetre !== 'telephone' && fenetre !== 'cafe';
+	if (typeof TEL_EN_DESSIN !== 'undefined' && TEL_EN_DESSIN) return true; // écran du téléphone en main (SMS, notifications)
+	return typeof FENETRE_EN_DESSIN !== 'undefined' && FENETRE_EN_DESSIN && typeof fenetre !== 'undefined' && fenetre !== 'cafe';
 }
 
 /** Lecture facile : compte à rebours ×1,5 et pas de tic-tac */

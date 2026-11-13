@@ -224,7 +224,7 @@ function contenuCentreNotifications(e, pret) {
 		textFont(POLICE_TEXTE);
 		textStyle(NORMAL);
 		textAlign(LEFT, CENTER);
-		zoneTexteDebut('npdTel', x + 42, y0 - 24, lw - 26, 24);
+		zoneTexteDebut('npdTel', x + 42, y0 - 28, lw - 26, 30); // prompt 209 : 20 px en portrait (plancher), boîte agrandie
 		ajusterTaille(t('tel.npd'), lw - 26, 18, 14);
 		text(t('tel.npd'), x + 42, y0 - 13);
 		zoneTexteFin();

@@ -84,6 +84,7 @@ const LARGEUR_FENETRE = {}; // prompt 88 (largeurs propres), prompt 209 : toutes
 
 function scenePortrait() {
 	if (typeof CINE !== 'undefined' && CINE) return 'plein';
+	if (typeof TRANSITION_JOUR !== 'undefined' && TRANSITION_JOUR) return 'transition'; // prompt 209 : au-dessus des SMS
 	if (fenetre === 'telephone' || fenetre === 'cafe' || smsActif) return 'main';
 	if (fenetre === 'rapport') return 'rapport';
 	if (fenetre || tutoriel) return 'fenetre';
@@ -103,9 +104,17 @@ function composerPortrait() {
 	PORTRAIT.boutons = [];
 	const scene = scenePortrait();
 	if (scene === 'appli' || scene === 'vueApp') regionsPoste(scene); // prompt 205
-	else if (scene === 'main') region({ x: 880, y: 0, l: 780, h: H }, 0, 200, PL);
+	else if (scene === 'main') {
+		// Prompt 209 : le téléphone seul (560 px de large, sans la main) ; la tasse de café garde l'ancien cadrage
+		if (fenetre === 'cafe') region({ x: 880, y: 0, l: 780, h: H }, 0, 200, PL);
+		else {
+			const src = { x: xTelephoneMain() - 20, y: 16, l: TEL_MAIN.l + 40, h: 980 };
+			region(src, 0, Math.max(0, (PH - (src.h * PL) / src.l) / 2), PL);
+		}
+	}
 	else if (scene === 'rapport') regionsFenetre(); // prompt 209 : feuilles de 640 px (histoire.js, rapportPortrait)
 	else if (scene === 'fenetre') regionsFenetre();
+	else if (scene === 'transition') region({ x: L / 2 - 340, y: 0, l: 680, h: H }, 0, (PH - (H * PL) / 680) / 2, PL); // prompt 209 : colonne de 640 px
 	else if (scene === 'menu') {
 		// Prompt 199 : en haut à droite, la pile FR / EN · plein écran · télécharger ; puis la colonne du menu (titre, cartes)
 		// jusqu'à Paramètres ; puis la rangée Livrables · Kit de presse · Présentation · Dépôt · Partager et le pied de page. Pile et rangée agrandies ×2 :
