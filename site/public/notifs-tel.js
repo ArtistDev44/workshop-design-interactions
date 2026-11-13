@@ -275,7 +275,7 @@ function contenuGroupesTel(x, y0, l, h) {
 			textFont(POLICE_DONNEES);
 			textSize(15);
 			fill('#3d4b5f');
-			text(t('tel.app.' + g.app) + ' · ' + (n.heureReelle ? t('tel.releve', { heure: n.heureReelle }) : Jeu.formaterHeure(n.minute)) + (!n.lu ? ' · ●' : ''), x + 70, y + 14, l - 120, 20);
+			text(t('tel.app.' + g.app) + ' · ' + (n.heureReelle ? t('tel.releve', { heure: n.heureReelle }) : Jeu.formaterHeure(n.minute)) + (!n.lu ? ' · ●' : ''), x + 70, y + (typeof PORTRAIT !== 'undefined' && PORTRAIT.actif ? 10 : 14), l - 120, typeof PORTRAIT !== 'undefined' && PORTRAIT.actif ? 28 : 20); // prompt 209 : plancher de 20 px en portrait
 			textFont(POLICE_TEXTE);
 			textSize(17);
 			fill('#0b1b33');

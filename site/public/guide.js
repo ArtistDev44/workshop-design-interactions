@@ -346,7 +346,8 @@ function bulleGuide(texte, cx, y, auDessus, xFixe, centreV) {
 	textSize(22);
 	textLeading(30);
 	const lignes = Math.max(1, Math.ceil((textWidth(texte) * 1.1) / (l - 48)));
-	const h = 32 + lignes * 30 + (avecBoutons ? 72 : 0);
+	const hbq = typeof PORTRAIT !== 'undefined' && PORTRAIT.actif ? 64 : 48; // prompt 209 : boutons de la bulle plus hauts en portrait (libellé ≥ 12 px CSS)
+	const h = 32 + lignes * 30 + (avecBoutons ? hbq + 24 : 0);
 	const x = constrain(xFixe !== undefined ? xFixe : cx - l / 2, 24, L - l - 24);
 	const by = constrain(centreV ? y - h / 2 : auDessus ? y - h : y, 24, H - h - 24);
 	noStroke();
@@ -371,16 +372,17 @@ function bulleGuide(texte, cx, y, auDessus, xFixe, centreV) {
 		rect(x - 4, by - 4, l + 8, h + 8);
 		noStroke();
 	}
+	if (typeof loupePortrait === 'function' && vue === 'bureau') loupePortrait(x - 10, by - 10, l + 20, h + 20); // prompt 209 : bulle reprise sous la pièce
 	fill('#ffffff');
 	textAlign(LEFT, TOP);
 	text(texte, x + 28, by + 18, l - 48, lignes * 30 + 8);
 	pop();
 	if (avecBoutons) {
-		const yb = by + h - 62;
+		const yb = by + h - hbq - 14;
 		const e = ETAPES_GUIDE[GUIDE.etape];
-		const zs = { x: x + 28, y: yb, l: 260, h: 48 };
+		const zs = { x: x + 28, y: yb, l: 260, h: hbq };
 		const lq = typeof PORTRAIT !== 'undefined' && PORTRAIT.actif ? 360 : 300; // prompt 205 : en portrait, le libellé reste ≥ 12 px CSS (sans réduction)
-		const zq = { x: x + l - 28 - lq, y: yb, l: lq, h: 48 };
+		const zq = { x: x + l - 28 - lq, y: yb, l: lq, h: hbq };
 		if (forcee && e.lecture) {
 			bouton(zs.x, zs.y, zs.l, zs.h, t('guide.suivante'), etapeGuideSuivante, false, true);
 			GUIDE.zones.push(zs);

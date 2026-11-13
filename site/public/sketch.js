@@ -210,6 +210,8 @@ function draw() {
 	boutons = [];
 	// 1. Contenu de l'écran du PC, en 1920×1080 : l'appli de régulation, ou le système (démarrage, bureau)
 	ciblesGuide = {}; // prompt 37 : cibles des flèches, relevées pendant le dessin
+	const vignettePC = vue === 'bureau'; // prompt 209 : vu de la pièce, l'écran du PC n'est qu'une vignette de 336 × 189 px (décor)
+	if (vignettePC) zoneTexteDecor(true);
 	espaceDessin = 'pc';
 	sourisVersEcran();
 	background(C.fond);
@@ -246,12 +248,13 @@ function draw() {
 	dessinerIndicateurs(); // prompt 36 : app flottante, au premier plan
 	sourisRestaurer();
 	espaceDessin = 'ecran';
+	if (vignettePC) zoneTexteDecor(false);
 	// 2. La pièce et le moniteur autour (bureau, zoom, ou « au poste » avec la pièce visible)
 	const d0 = typeof Juice !== 'undefined' ? Juice.decalage(millis()) : { x: 0, y: 0 }; // prompt 96 : secousse par trauma² (temps réel)
 	const secousse = d0.x || d0.y ? d0 : null;
 	if (secousse) push(), translate(secousse.x, secousse.y);
 	composerVue();
-	if (vue === 'bureau' && !fenetre) badgeEcranBureau(); // prompt 111 : PC « fermé » : un seul badge, le total, au coin de l'écran
+	if (vue === 'bureau' && !fenetre && !(typeof PORTRAIT !== 'undefined' && PORTRAIT.actif)) badgeEcranBureau(); // prompt 209 : en portrait, dans le bouton « S'installer » // prompt 111 : PC « fermé » : un seul badge, le total, au coin de l'écran
 	if (secousse) pop();
 	dessinerBoost(); // prompt 52 : cœur, pulsation rouge, lignes de vitesse, flou
 	dessinerMicro(); // prompt 54 : oscilloscope et mesures pendant l'appui

@@ -179,7 +179,9 @@
 		if (A.enParcours && A.enregistre && !tampon && !sousCalque && !A.decor && typeof PORTRAIT !== 'undefined' && PORTRAIT.actif && PORTRAIT.canevas && PORTRAIT.regions.length) {
 			const cx = b.x + b.l / 2;
 			const cy = b.y + b.h / 2;
-			const r = [...PORTRAIT.regions].reverse().find((g) => cx >= g.src.x && cx <= g.src.x + g.src.l && cy >= g.src.y && cy <= g.src.y + g.src.h);
+			// Prompt 209 : au bureau, les loupes déjà relevées pendant cette image comptent aussi (sinon décalage d'une image)
+			const loupes = typeof scenePortrait === 'function' && scenePortrait() === 'bureau' ? (PORTRAIT.loupes || []).map((z) => ({ src: z, dst: { l: z.l * Math.min(PL / 680, (PL - 40) / z.l) } })) : [];
+			const r = [...PORTRAIT.regions, ...loupes].reverse().find((g) => cx >= g.src.x && cx <= g.src.x + g.src.l && cy >= g.src.y && cy <= g.src.y + g.src.h);
 			if (r) {
 				const css = tAff * (r.dst.l / r.src.l) * (PORTRAIT.canevas.getBoundingClientRect().width / PL);
 				const cle = 'T|' + (typeof Langue !== 'undefined' ? Langue.actuelle : '') + '|' + s.slice(0, 50);

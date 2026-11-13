@@ -103,6 +103,8 @@ function composerPortrait() {
 	if (!src) return;
 	PORTRAIT.regions = [];
 	PORTRAIT.boutons = [];
+	const loupes = PORTRAIT.loupes || []; // prompt 209 : relevées pendant le dessin de cette image
+	PORTRAIT.loupes = [];
 	const scene = scenePortrait();
 	if (scene === 'appli' || scene === 'vueApp') regionsPoste(scene); // prompt 205
 	else if (scene === 'main') {
@@ -137,7 +139,16 @@ function composerPortrait() {
 	}
 	else if (scene === 'bureau') {
 		region({ x: 0, y: 0, l: L, h: H }, 0, 150, PL);
-		boutonsBureau();
+		// Prompt 209 : textes utiles de la pièce repris à l'échelle d'une colonne de 640 px — l'heure dans la bande du haut,
+		// la consigne, « Fin de journée. » et la bulle du guide entre l'image et les boutons
+		let y = 150 + (H * PL) / L + 16;
+		loupes.forEach((z) => {
+			const s = Math.min(PL / 680, (PL - 40) / z.l);
+			const dl = z.l * s;
+			if (z.haut) region(z, (PL - dl) / 2, Math.max(4, (150 - z.h * s) / 2), dl);
+			else y += region(z, (PL - dl) / 2, y, dl) + 12;
+		});
+		boutonsBureau(y + 8);
 	} else region({ x: 0, y: 0, l: L, h: H }, 0, (PH - (H * PL) / L) / 2, PL);
 	// Dessin
 	ctx.fillStyle = '#0D0C0C';
@@ -363,15 +374,19 @@ function dessinerBarresPortrait() {
 	ctx.restore();
 }
 /** Bureau : tous les objets de la pièce en grosses cibles (2 colonnes), plus « S'installer au PC » */
-function boutonsBureau() {
-	let objets = [{ nom: 'ecran', label: t('portrait.installer'), action: sAsseoir }].concat(
+/** Prompt 209 : loupe — rectangle de l'image (texte utile dessiné dans la pièce) repris agrandi au bureau en portrait */
+function loupePortrait(x, y, l, h, haut) {
+	if (typeof PORTRAIT !== 'undefined' && PORTRAIT.actif) (PORTRAIT.loupes = PORTRAIT.loupes || []).push({ x, y, l, h, haut: !!haut });
+}
+function boutonsBureau(y0) {
+	const nb = typeof totalBadges === 'function' && ecran === 'jeu' && Jeu.paquet ? totalBadges() : 0; // prompt 209 : le badge de l'écran passe dans le bouton
+	let objets = [{ nom: 'ecran', label: t('portrait.installer') + (nb ? ' (' + texteBadge(nb) + ')' : ''), action: sAsseoir }].concat(
 		OBJETS_BUREAU.slice(1)
 			.filter((o) => !o.visible || o.visible())
 			.map((o) => ({ nom: o.nom, label: String(o.label), action: () => ouvrirObjetBureau(o.nom) })),
 	);
 	// Prompt 69 : le soir, la sortie devient la grande cible principale (← Sortie)
 	if (typeof sortieVisible === 'function' && sortieVisible()) objets = [{ nom: 'sortie', label: '← ' + t('soir.sortie'), action: quitterBureau }].concat(objets.filter((o) => o.nom !== 'sortie'));
-	const y0 = 150 + (H * PL) / L + 24;
 	const lb = (PL - 60) / 2;
 	const hp = objets[0].nom === 'sortie' ? 124 : 96; // prompt 69 : la sortie ≥ 44 px CSS sur un téléphone de 412 px
 	objets.forEach((o, i) => {
