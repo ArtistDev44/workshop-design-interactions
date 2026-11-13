@@ -1,4 +1,3 @@
-successfully downloaded text file (SHA: 948604bc0f33593f4dfbd161d25a45fb5e88aa79)
 # Prompt 197 — Jeu : réorganisation UX du menu principal (langue au-dessus, pile plein écran · télécharger, rangée d'icônes livrables · dépôt · partage)
 
 Demande d'origine (prise de notes du 13/11/2026) :
