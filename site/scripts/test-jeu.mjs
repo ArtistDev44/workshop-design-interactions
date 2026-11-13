@@ -2568,8 +2568,8 @@ for (const langue of ['fr', 'en']) {
 	verifier(/ouvrirCredits\(\)/.test(menu171.slice(menu171.indexOf('function piedCredits'), menu171.indexOf('function boutonIcone'))) && /function dessinerCredits/.test(lire('credits.js')), 'prompt 171 : les noms du pied de page ne mènent plus aux Crédits');
 	verifier(/mp\.aide/.test(lire('immersion.js')) && (lire('sketch.js').match(/ouvrir\('aide'\)/g) || []).length >= 2 && /function fenetreAide/.test(lire('aide.js')), 'prompt 171 : l\'aide doit rester atteignable en partie (H, menu pause)');
 	verifier(!/PXE-NTE001/.test(menu171) && /dessinerLogoPXE\(HAUT_MENU\.marge, HAUT_MENU\.y, HAUT_MENU\.h\)/.test(menu171) && /const JEU = 'PXE-NTE001-G01-W01'/.test(lire('sauvegarde.js')), 'prompt 171 : mention « PXE- » encore affichée au menu (ou clé de stockage renommée)');
-	verifier(/const HAUT_MENU = \{ y: 56, h: 60, marge: 80 \}/.test(menu171) && /selecteurLangue\([^;]*HAUT_MENU\.y, HAUT_MENU\.h\)/.test(menu171) && /boutonInstaller\(xi, HAUT_MENU\.y, HAUT_MENU\.h/.test(menu171), 'prompt 171 : logo, langue et installation ne partagent plus y, hauteur et marge');
-	verifier(/boutonCarreHaut\(x, y, c, focus, 'download', t\('mp\.installer'\), installerJeu\)/.test(menu171) && /iconeLucide\(icone,/.test(menu171) && /infobulle\(bulle/.test(menu171.slice(menu171.indexOf('function boutonCarreHaut'))) && /cle: 'installer', action: \(\) => installerJeu\(\)/.test(menu171), 'prompt 171 : icône « télécharger » absente, sans infobulle ou hors du parcours clavier');
+	verifier(/const HAUT_MENU = \{ y: 56, h: 60, marge: 80 \}/.test(menu171) && /selecteurLangue\([^;]*HAUT_MENU\.y, HAUT_MENU\.h\)/.test(menu171) && /boutonInstaller\(xp, yp, focusExtra/.test(menu171) && /const xp = L - HAUT_MENU\.marge - LARGEUR_PILE\(\)/.test(menu171), 'prompt 171 (199 : pile) : logo, langue et installation ne partagent plus y, hauteur et marge');
+	verifier(/boutonCarreHaut\(x, y, LARGEUR_PILE\(\), HAUT_MENU\.h, focus, 'download', t\('mp\.installer'\), installerJeu\)/.test(menu171) && /iconeLucide\(icone,/.test(menu171) && /infobulle\(bulle/.test(menu171.slice(menu171.indexOf('function boutonCarreHaut'))) && /cle: 'installer', action: \(\) => installerJeu\(\)/.test(menu171), 'prompt 171 : icône « télécharger » absente, sans infobulle ou hors du parcours clavier');
 	const inst171 = lire('installation.js');
 	verifier(/function installerJeu\(\) \{[^}]*installationPossible\(\)\) return installerApplication\(\);[^}]*ouvrirInstallation\(\);/.test(inst171) && /fenetre === 'installation'\) return fenetreInstallation\(\)/.test(lire('sketch.js')), 'prompt 171 : l\'icône doit installer le jeu (beforeinstallprompt) ou ouvrir l\'explication');
 	// Comportement : avec une invitation du navigateur, elle est jouée ; sans, la fenêtre d'explication s'ouvre
@@ -3592,20 +3592,30 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	}
 }
 
-// Prompt 188 : bouton « Kit de presse » du menu principal (modèle Livrables) — ordre clavier = ordre visuel, textes FR / EN
+// Prompt 188 → 199 : Kit de presse et Présentation retirés du menu principal (les pages restent) ; pile FR / EN · plein
+// écran · télécharger en haut à droite, rangée d'icônes Livrables · Dépôt · Partager sous Paramètres
 {
 	const menu = readFileSync(join(pub, 'menu.js'), 'utf8');
 	const extras = menu.slice(menu.indexOf('const EXTRAS_MENU'), menu.indexOf('const HAUT_MENU'));
 	const ordre = [...extras.matchAll(/cle: '(\w+)'/g)].map((x) => x[1]).join();
-	verifier(ordre === 'livrables,kitpresse,depot,partager,presentation,pleinEcran,installer', `prompt 188 : ordre des extras du menu (${ordre})`);
-	verifier(/function ouvrirKitPresse\(\) \{\s*annoncer\(t\('mp\.kitpresse\.annonce'\)\);\s*ouvrirLien\('\.\/kit-presse\/'\);/.test(menu) && /presse: 'newspaper'/.test(menu), 'prompt 188 : ouvrirKitPresse (annonce + ./kit-presse/ en nouvel onglet) et icône Lucide newspaper');
-	// De haut en bas : Livrables, Kit de presse, puis les trois boutons — même largeur, 16 px d'écart
-	verifier(/boutonIcone\(b\.x, b\.y - 2 \* \(b\.h \+ 16\), 3 \* b\.l \+ 32, b\.h, 'carnet'/.test(menu) && /boutonIcone\(b\.x, b\.y - b\.h - 16, 3 \* b\.l \+ 32, b\.h, 'presse', t\('mp\.kitpresse'\), ouvrirKitPresse, focusExtra\(n, 'kitpresse'\)\)/.test(menu), 'prompt 188 : rangées Livrables puis Kit de presse au-dessus du bloc');
-	verifier(/BLOC_PARTAGE\.y - 2 \* \(BLOC_PARTAGE\.h \+ 16\) - 12, l: 3 \* BLOC_PARTAGE\.l \+ 56, h: 3 \* BLOC_PARTAGE\.h \+ 32 \+ 24/.test(readFileSync(join(pub, 'portrait.js'), 'utf8')), 'prompt 188 : la région portrait du bloc inclut les deux rangées');
+	verifier(ordre === 'pleinEcran,installer,livrables,depot,partager', `prompt 199 : ordre clavier = ordre visuel (pile, puis rangée) (${ordre})`);
+	verifier(!/ouvrirKitPresse|ouvrirPresentation|mp\.kitpresse|mp\.presentation/.test(menu), 'prompt 199 : Kit de presse et Présentation encore au menu');
+	const dessin = menu.slice(menu.indexOf('function dessinerMenuPrincipal'), menu.indexOf('function marqueExpo'));
+	const iL = dessin.indexOf('selecteurLangue('), iP = dessin.indexOf("'pleinEcran'), pleinEcranActif()"), iI = dessin.indexOf('boutonInstaller(xp, yp');
+	verifier(iL > 0 && iL < iP && iP < iI && /yp \+= HAUT_MENU\.h \+ 16/.test(dessin) && /let yp = HAUT_MENU\.y \+ HAUT_MENU\.h \+ 16/.test(dessin), 'prompt 199 : pile de haut en bas FR / EN, plein écran, télécharger, 16 px d\'écart');
+	verifier(/const LARGEUR_PILE = \(\) => LANGUES\.length \* \(84 \+ 8\) - 8/.test(menu), 'prompt 199 : même largeur pour les trois éléments de la pile');
+	verifier(/const BLOC_PARTAGE = \{ x: 160, y: H - 74 - 16 - 68, l: 68, h: 68 \}/.test(menu) && /const basPile = EXTRAS_MENU\.length \? BLOC_PARTAGE\.y - 24/.test(menu), 'prompt 199 : rangée sous la colonne des cartes, alignée à gauche (x des cartes)');
+	const rangee = menu.slice(menu.indexOf('const RANGEE_MENU'), menu.indexOf('function blocPartage'));
+	verifier([...rangee.matchAll(/cle: '(\w+)'/g)].map((x) => x[1]).join() === 'livrables,depot,partager', 'prompt 199 : rangée Livrables, Dépôt, Partager');
+	const bi = menu.slice(menu.indexOf('function boutonIcone'), menu.indexOf('const BLOC_PARTAGE'));
+	verifier(!/text\(/.test(bi) && /iconeMenu\(icone/.test(bi), 'prompt 199 : boutons de la rangée à icône seule (pas de libellé à l\'écran)');
+	verifier(/bulle = t\('mp\.' \+ r\.cle\) \+ ' — ' \+ t\('mp\.' \+ r\.cle \+ '\.infobulle'\)/.test(menu), 'prompt 199 : le libellé passe dans l\'infobulle');
+	const portrait = readFileSync(join(pub, 'portrait.js'), 'utf8');
+	verifier(/LARGEUR_PILE\(\) \+ 24/.test(portrait) && /2 \* lp\);/.test(portrait) && /2 \* lr\) \+ 16;/.test(portrait), 'prompt 199 : régions portrait (pile et rangée agrandies ×2, cibles ≥ 44 px)');
 	const c = contexte('fr');
 	for (const langue of ['fr', 'en']) {
 		const dico = vm.runInContext(`TRADUCTIONS.${langue}`, c);
-		verifier(['mp.kitpresse', 'mp.kitpresse.infobulle', 'mp.kitpresse.annonce'].every((k) => dico[k]), `prompt 188 : clés mp.kitpresse manquantes (${langue})`);
+		verifier(['livrables', 'depot', 'partager'].every((k) => dico['mp.' + k] && dico['mp.' + k + '.infobulle']) && dico['mp.installer'] && dico['mp.pleinEcran'] && !dico['mp.kitpresse'] && !dico['mp.presentation'], `prompt 199 : libellés et infobulles du menu (${langue})`);
 	}
 	verifier(existsSync(join(pub, 'kit-presse', 'index.html')) && existsSync(join(pub, 'kit-presse', 'communique-de-presse.txt')) && existsSync(join(pub, 'kit-presse', 'logo.svg')), 'prompt 188 : fichiers du kit de presse présents');
 }
@@ -3828,7 +3838,7 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	const menu = lire193('menu.js');
 	const extras = menu.slice(menu.indexOf('const EXTRAS_MENU'), menu.indexOf('/** Prompt 171 : ligne du haut'));
 	verifier(/pleinEcranPossible\(\) \? \[\{ cle: 'pleinEcran'[^\n]*basculerPleinEcran\(\)/.test(extras) && extras.indexOf("cle: 'pleinEcran'") < extras.indexOf("cle: 'installer'"), 'prompt 193 : entrée plein écran dans EXTRAS_MENU, juste avant installer, seulement si l\'API existe');
-	verifier(/boutonCarreHaut\(xLangue - LANGUES\.length \* \(84 \+ 8\) - 8 - HAUT_MENU\.h, HAUT_MENU\.y, HAUT_MENU\.h, focusExtra\(e\.length, 'pleinEcran'\), pleinEcranActif\(\) \? 'minimize' : 'maximize', libellePleinEcranMenu\(\), basculerPleinEcran\)/.test(menu), 'prompt 193 : bouton plein écran à gauche de FR / EN, icône maximize / minimize, basculerPleinEcran réutilisé');
+	verifier(/boutonCarreHaut\(xp, yp, LARGEUR_PILE\(\), HAUT_MENU\.h, focusExtra\(e\.length, 'pleinEcran'\), pleinEcranActif\(\) \? 'minimize' : 'maximize', libellePleinEcranMenu\(\), basculerPleinEcran\)/.test(menu), 'prompt 193 (199 : sous FR / EN) : bouton plein écran, icône maximize / minimize, basculerPleinEcran réutilisé');
 	verifier(/annoncer\(choisi\(\)\.libelle \? choisi\(\)\.libelle\(\) : t\('mp\.' \+ choisi\(\)\.cle\)\)/.test(menu), 'prompt 193 : l\'annonce clavier suit l\'état du plein écran');
 	verifier((lire193('sketch.js').match(/requestFullscreen\(\)/g) || []).length === 1 && !/requestFullscreen|exitFullscreen/.test(menu), 'prompt 193 : une seule logique de plein écran (sketch.js)');
 	const ic = lire193('icones-lucide.js');
