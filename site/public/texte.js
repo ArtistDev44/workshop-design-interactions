@@ -173,7 +173,6 @@ const TexteUI = (() => {
 		segments,
 		mots,
 		mesurer,
-		viderCache: () => cache.clear(),
 		tailleCache: () => cache.size,
 		set mesureur(f) {
 			mesureur = f;

@@ -13,7 +13,6 @@ const Taches = (() => {
 		bonusPriorite: 2, // réputation par priorité du matin tenue
 		seuilAccord: 50, // réputation minimale pour que le patron accorde la demande du rapport du soir
 		demande: { budget: 5, equipe: 1, calme: 5 }, // budget du lendemain, +1 équipe (police), objectif allégé de 5
-		info: { juste: 2, faux: -2 }, // info trafic exacte et complète / avec un bloc faux (+ plainte Community)
 		prep: { cout: 3, bonus: 3, rembourse: 1 }, // préparer un événement : budget engagé tôt, réputation si utile
 		suiteMax: 3, // rotation : jamais plus de 3 fois de suite le même type de tâche
 		crise: { bonus: 3, debut: 16 * 60 + 30, fin: 17 * 60 + 45, minDossiers: 3 }, // cellule de crise : arrivées regroupées 16 h 30 – 17 h 45
@@ -286,38 +285,6 @@ const Taches = (() => {
 		const j = jour(date);
 		return (j && j.priorites) || [];
 	};
-	/** Le briefing du jour, s'il n'a pas encore été fait : { date, options } (null sinon) — prompt 91 : plus de choix */
-	function briefing() {
-		return null;
-	}
-	function briefingAncien() {
-		const jr = Jeu.jourCourant ? Jeu.jourCourant() : null;
-		if (!jr || Jeu.terminee) return null;
-		const j = jour(jr.date);
-		if (j.briefing) return null;
-		if (!j.options) j.options = optionsBriefing(jr);
-		return { date: jr.date, options: j.options, meteo: Jeu.meteoDuJour ? Jeu.meteoDuJour(jr.date) : null, agenda: agenda(jr.date).map(nomEvenement), travaux: jr.dossiers.filter((d) => d.type === 'perturbation').length };
-	}
-	/** Retient 2 priorités (ou moins si le joueur passe) ; le patron en prend acte */
-	function choisirPriorites(ids) {
-		const b = briefingAncien(); // prompt 91 : plus utilisé en jeu (priorités imposées) ; gardé pour les tests et les anciennes sauvegardes
-		if (!b) return null;
-		const j = jour(b.date);
-		j.priorites = b.options.filter((o) => (ids || []).includes(o.id)).slice(0, 2);
-		j.briefing = j.priorites.length ? 'fait' : 'passe';
-		j.repDebut = Jeu.jauges ? Jeu.jauges.reputation : null;
-		noter('briefing', b.date);
-		if (j.priorites.length) {
-			const txt = t('tache.briefing.patron', { liste: j.priorites.map((p) => t('tache.prio.' + p.id, p.vars)).join(Langue.actuelle === 'fr' ? ' ; ' : '; ') });
-			// Le patron prend acte dans la consigne du jour (le ton de ses messages suit les priorités) — pas un message de plus
-			const consigne = (Jeu.messagesPatron || []).slice().reverse().find((x) => x.type === 'consigne' && x.jour === b.date);
-			if (consigne) {
-				consigne.texte = String(consigne.texte) + ' ' + txt;
-				consigne.meta = Object.assign({}, consigne.meta, { priorites: j.priorites.map((p) => p.id) });
-			} else if (Jeu.messagePatron) Jeu.messagePatron(txt, 'consigne', { priorites: j.priorites.map((p) => p.id) });
-		}
-		return j.priorites;
-	}
 	/** Une priorité est-elle tenue ? Calcul sur le journal réel de la journée : 'tenue' | 'manquee' | 'sansObjet' */
 	function evaluerPriorite(p, date) {
 		const ev = (Jeu.evenementsJournee || []).filter((e) => e.jour === date);
@@ -442,8 +409,8 @@ const Taches = (() => {
 		return d;
 	}
 
-	// ——— Rédiger l'info trafic (§ 1) : 4 blocs, chacun 3 propositions dont 1 exacte, tirées des dossiers réels ———
-	const FAMILLES_ALT = ['devier', 'retenir', 'renfort', 'rien'];
+	// ——— Cause, ligne et durée d'un dossier en texte (publication Community, community.js) — la tâche « rédiger l'info
+	// trafic » du prompt 88 a été retirée au prompt 91, son code au prompt 200 ———
 	function causeDe(d) {
 		if (d.type === 'ligne en difficulté') return t(Jeu.retardEffectif(d) !== null && Jeu.retardEffectif(d) !== undefined ? 'tache.cause.retard' : 'tache.cause.retardSignale'); // prompt 162 : « mesuré » seulement si un retard est connu
 		if (d.type === 'événement') return t('tache.cause.affluence', { nom: nomEvenement(d) });
@@ -454,27 +421,6 @@ const Taches = (() => {
 	function dureeDe(d, r) {
 		const re = r && r.retardEffectif !== undefined ? r.retardEffectif : Jeu.retardEffectif(d);
 		return re !== null && re !== undefined ? t('tache.info.duree', { min: re }) : t('tache.info.dureeInconnue');
-	}
-	/** 3 propositions : l'exacte + 2 autres prises dans les autres dossiers réels de la semaine (ordre tiré par la graine) */
-	function bloc(id, exacte, autres, cle) {
-		const pool = [...new Set(autres.filter((x) => x && x !== exacte))];
-		const leurres = melanger(pool, cle + '|leurres').slice(0, 2);
-		const options = melanger([exacte].concat(leurres), cle);
-		return { id, options, bonne: options.indexOf(exacte) };
-	}
-	function tacheInfo(r, n) {
-		const d = r.dossier;
-		const autres = (Jeu.paquet || []).filter((x) => x !== d);
-		const fam = Jeu.familleDe ? Jeu.familleDe(r.action) : r.action;
-		const famille = FAMILLES_ALT.includes(fam) ? fam : 'rien';
-		const blocs = [
-			// Leurres : lignes des autres dossiers de la semaine, sinon lignes réelles du réseau (data/lignes.json)
-			bloc('ligne', ligneDe(d), autres.map(ligneDe).concat([t('tache.info.ligneInconnue')], ((Jeu.lignes && Jeu.lignes.lignes) || []).slice(0, 12).map((x) => t('tache.info.ligne', { ligne: x.nom }))), 'info-ligne|' + n),
-			bloc('cause', causeDe(d), autres.map(causeDe), 'info-cause|' + n),
-			bloc('duree', dureeDe(d, r), [10, 20, 30, 45].map((m) => t('tache.info.duree', { min: m })).concat([t('tache.info.dureeInconnue')]), 'info-duree|' + n),
-			bloc('alternative', t('tache.alt.' + famille), FAMILLES_ALT.map((f) => t('tache.alt.' + f)), 'info-alt|' + n),
-		];
-		return { type: 'info', index: n, date: d.date, sujet: String(marquerFictif(d, d.lignes && d.lignes.length ? t('dossier.ligne', { lignes: d.lignes.join(', ') }) : causeDe(d))), action: String(r.nomAction || ''), blocs };
 	}
 
 	// ——— Préparer un événement (§ 1) : l'agenda annonce un événement et son affluence n'est pas encore arrivée ———
@@ -518,14 +464,11 @@ const Taches = (() => {
 		const doit = suite.type === 'signalement' && suite.n >= R.suiteMax - 1; // la tâche s'intercale avant d'atteindre le plafond
 		const p = tachePreparation(date, Jeu.paquet.indexOf(r.dossier));
 		const sig = SIGNATURE[theme(date)];
-		const premiere = !j.journal.some((x) => x === 'info' || x === 'evenement');
 		if (p && (doit || sig === 'evenement' || choix('prep|' + n, 2) === 0)) {
 			j.offertes.evenement = true;
 			return p;
 		}
-		const calme = (Jeu.jours || []).some((x) => x.date === date && x.dossiers.length <= 2); // journée calme : la tâche courte est toujours proposée
 		// Prompt 91 : la tâche « rédiger l'info trafic » est remplacée par la publication Community depuis le dossier (§ 3)
-		void doit, calme, premiere;
 		return null;
 	}
 	// ——— Lot F : événements chaînés (option) — une conséquence de jeu, ÉTIQUETÉE comme telle, jamais un fait réel ———
@@ -585,7 +528,6 @@ const Taches = (() => {
 
 	/** Bonne réponse d'une tâche (simulation, tests) */
 	function bonneReponse(tache) {
-		if (tache.type === 'info') return tache.blocs.map((b) => b.bonne);
 		if (tache.type === 'evenement') return 'police';
 		return null;
 	}
@@ -593,24 +535,6 @@ const Taches = (() => {
 	function resoudre(tache, reponse) {
 		const j = jour(tache.date);
 		noter(tache.type, tache.date);
-		if (tache.type === 'info') {
-			const textes = [t('tache.info.contexte', { sujet: tache.sujet, action: tache.action })]; // phrase montrée (les blocs sont des boutons)
-			if (!reponse) return { ok: null, textes };
-			const juste = tache.blocs.every((b, i) => reponse[i] === b.bonne);
-			const e = etat();
-			e.infos = e.infos || { publiees: 0, parfaites: 0 };
-			e.infos.publiees++;
-			if (juste) {
-				e.infos.parfaites++;
-				j.infoJustes = (j.infoJustes || 0) + 1;
-				Jeu.appliquerDeltas({ reputation: R.info.juste });
-			} else {
-				Jeu.appliquerDeltas({ reputation: R.info.faux });
-				plainteInfo(tache);
-			}
-			j.info = (j.info || 0) + 1;
-			return { ok: juste, effets: { reputation: juste ? R.info.juste : R.info.faux }, textes, faux: tache.blocs.map((b, i) => reponse[i] !== b.bonne) };
-		}
 		if (tache.type === 'arbitrage') {
 			const textes = [t('tache.arbitrage.contexte', { budget: tache.budget })];
 			etat().arbitrage.choix = reponse || 'aucun';
@@ -626,16 +550,7 @@ const Taches = (() => {
 		}
 		return null;
 	}
-	/** Info trafic avec un bloc faux : un usager (pseudonyme fictif) le signale sur Community */
-	function plainteInfo(tache) {
-		const def = Jeu.MESSAGES && Jeu.MESSAGES.plaintes.find((p) => p.id === 'info_erronee');
-		if (!def || !Jeu.plaintes) return null;
-		const plainte = { id: def.id, def, vars: { sujet: tache.sujet }, index: tache.index, heure: Jeu.horloge ? Jeu.formaterHeure(Jeu.horloge.minutes) : '', auteur: def.auteur, reponse: null, jour: Jeu.jourIndex }; // prompt 198 : comptée dans les tons du jour
-		Jeu.plaintes.push(plainte);
-		if (Jeu.nonLus) Jeu.nonLus.community++;
-		return plainte;
-	}
 
-	return { R, briefingAncien, imposerPriorites, prioritesDuJour, nbPriorites, causeDe, ligneDe, dureeDe, prevision, arbitrage, creerChaine, carriere, reinitialiserCarriere, grade, gradeDe, xpJour, theme, crise, criseActive, calculerThemes, choisirJourCrise, SIGNATURE, hacher, choix, nouvellePartie, etat, jour, noter, suiteFinale, briefing, choisirPriorites, evaluerPriorite, rapport, validerRapport, matin, apresDecision, faitsDuJour, bonneReponse, resoudre, tacheInfo, tachePreparation };
+	return { R, imposerPriorites, prioritesDuJour, nbPriorites, causeDe, ligneDe, dureeDe, prevision, arbitrage, creerChaine, carriere, reinitialiserCarriere, grade, gradeDe, xpJour, theme, crise, criseActive, calculerThemes, choisirJourCrise, SIGNATURE, hacher, choix, nouvellePartie, etat, jour, noter, suiteFinale, evaluerPriorite, rapport, validerRapport, matin, apresDecision, faitsDuJour, bonneReponse, resoudre, tachePreparation };
 })();
 if (typeof window !== 'undefined') window.Taches = Taches;

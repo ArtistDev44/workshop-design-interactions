@@ -153,36 +153,6 @@ function phraseSituation(d) {
 	}
 	return t('phrase.autre', { texte: d.texte_source });
 }
-// ——— Bloc 2 : au plus 3 puces, seulement celles qui s'appliquent ———
-function pucesImportance(d) {
-	const p = [];
-	const m = Jeu.meteoDuJour(d.date) || {};
-	const sit = Jeu.situation(d);
-	if (sit.includes('pointe')) p.push(t('puce.pointe'));
-	if ((m.pluie_mm || 0) >= 5) p.push(t('puce.pluie', { pluie: nombreFr(m.pluie_mm) }));
-	else if ((m.rafales_max || 0) >= 50) p.push(t('puce.vent', { vent: nombreFr(m.rafales_max) }));
-	const re = Jeu.retardEffectif(d);
-	if (re !== null && d.retard !== null && re > d.retard) p.push(t('puce.aggrave', { reel: d.retard, effectif: re }));
-	const ev = Jeu.evenementsAffluence ? Jeu.evenementsAffluence(d.date) : [];
-	if (d.type !== 'événement' && ev.length) p.push(t('puce.agenda', { nom: String(ev[0].texte_source).split(' — ')[0] }));
-	if (d.lignes && d.lignes.length) {
-		const n = (Jeu.evenementsJournee || []).filter((e) => e.ligne && d.lignes.some((l) => String(e.ligne).split(', ').includes(l))).length;
-		if (n) p.push(t('puce.historique', { n }));
-	}
-	if (!p.length) p.push(t('puce.calme'));
-	return p.slice(0, 3);
-}
-// ——— Bloc 3 : certitudes et incertitudes dites clairement ———
-function savoirs(d) {
-	const out = [];
-	if (d.consequence) return [{ sur: true, txt: t('savoir.consequence', { heure: d.consequence.heure }) }, { sur: false, txt: t('savoir.sansDuree') }]; // prompt 88 : jamais présentée comme un fait réel
-	const src = /GTFS-RT|temps réel/i.test(String(d.source)) ? 'mesure' : /changelog/i.test(String(d.source)) ? 'changelog' : /agenda/i.test(String(d.source)) ? 'agenda' : /meteo|Open-Meteo/i.test(String(d.source)) ? 'meteo' : 'autre';
-	out.push({ sur: true, txt: t('savoir.source.' + src) });
-	if (d.contradiction) out.push({ sur: false, txt: t('savoir.contradiction') });
-	if (!(d.lignes && d.lignes.length)) out.push({ sur: false, txt: t('savoir.sansLigne') });
-	if (d.retard === null || d.retard === undefined) out.push({ sur: false, txt: t('savoir.sansDuree') });
-	return out.slice(0, 3);
-}
 
 // ——— Panneau du signalement ouvert (phase décision / contradiction) ———
 /** Prompt 107 : fenêtre flottante du plaignant — posée sur la carte, du côté opposé au marqueur ; Échap ou la
@@ -243,26 +213,22 @@ function dessinerPanneauSignalement(d, x, base) {
 		textAlign(LEFT, TOP);
 	}
 	if (phase === 'contradiction') return dessinerChoixSource(d, x + 32, yr, l);
-	CARTES = []; // prompt 107 : plus de cartes à glisser
-	ZONE_DEPOT = null;
 	dsTexte(t('dialogue.titre'), x + 32, yr, 18, DS.blanc75, 'left');
-	const bloquee = Jeu.actionBloquee ? Jeu.actionBloquee() : null;
 	// Prompt 130 : tendance des 3 jauges sous chaque réplique (symbole + couleur, jamais la couleur seule) ;
 	// option « Pression visible » : pastille « conseillé » sur la ou les réponses que l'évaluation jugerait bonnes
 	rs.forEach((r, i) => {
 		const ry = yr + 36 + i * pas;
-		const off = r.cle === bloquee;
-		const survol = !off && mouseX >= x + 32 && mouseX <= x + 32 + l && mouseY >= ry && mouseY <= ry + hL;
+		const survol = mouseX >= x + 32 && mouseX <= x + 32 + l && mouseY >= ry && mouseY <= ry + hL;
 		noStroke();
 		fill(survol ? DS.blanc15 : DS.blanc05);
 		rect(x + 32, ry, l, hL);
-		fill(off ? DS.blanc15 : DS.blanc);
+		fill(DS.blanc);
 		rect(x + 32, ry, 44, hL);
 		dsTexte(TOUCHES_REPONSES[i], x + 54, ry + (hL - 26) / 2, 20, DS.fond, 'center');
 		const rep = repliquesDuDossier(rs, d)[i];
-		dessinerTexte('« ' + rep + ' »', x + 92, ry + 6, l - 76, { taille: 20, couleur: off ? C.gris : C.texte, maxLignes: 2, interligne: 25 });
+		dessinerTexte('« ' + rep + ' »', x + 92, ry + 6, l - 76, { taille: 20, couleur: C.texte, maxLignes: 2, interligne: 25 });
 		if (!compact) dessinerTendanceReponse(r, d, x + 92, ry + 58); // sous la réplique (plus de mention « conseillé », demande du 12/11/2026)
-		if (!off) boutons.push({ x: x + 32, y: ry, l, h: hL, action: () => choisirReplique(r) });
+		boutons.push({ x: x + 32, y: ry, l, h: hL, action: () => choisirReplique(r) });
 		if (i === 0) cibleGuide('actions', x + 32, yr + 36, l, rs.length * pas);
 	});
 	// « Dites-m'en plus » : pas une décision — ouvre / referme les sources de l'enquête (comme E)
@@ -457,66 +423,6 @@ function tendance(v) {
 	if (v > 0) return '▲';
 	if (v <= -8) return '▼▼';
 	return '▼';
-}
-function dessinerCartesReponses(d, x, y, l, h) {
-	const rs = reponsesAffichees(d);
-	const lc = (l - 16) / 2;
-	const hc = (h - 16) / 2;
-	const bloquee = Jeu.actionBloquee ? Jeu.actionBloquee() : null;
-	CARTES = []; // prompt 94 : rectangles des cartes, pour le glisser-déposer (glisser.js)
-	rs.forEach((r, i) => {
-		const cx = x + (i % 2) * (lc + 16);
-		const cy = y + Math.floor(i / 2) * (hc + 16);
-		if (r.cle !== bloquee) CARTES.push({ cle: r.cle, x: cx, y: cy, l: lc, h: hc, lib: String(r.lib), touche: TOUCHES_REPONSES[i] });
-		if (carteSaisie(r.cle)) return emplacementCarte({ x: cx, y: cy, l: lc, h: hc }); // la carte flotte : son emplacement en pointillés
-		// Prompt 96 : les cartes arrivent en pop (1,15 → 1, ease-out-back, décalées de 50 ms) ; exactement 1 ensuite
-		const sp = typeof Juice !== 'undefined' ? Juice.pop(arriveeDossier + 250 + i * 50, millis()) : 1;
-		push();
-		if (sp !== 1) translate(cx + lc / 2, cy + hc / 2), scale(sp), translate(-(cx + lc / 2), -(cy + hc / 2));
-		const survol = mouseX >= cx && mouseX <= cx + lc && mouseY >= cy && mouseY <= cy + hc;
-		noStroke();
-		fill(survol ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.06)');
-		rect(cx, cy, lc, hc);
-		stroke(survol ? '#FFFFFF' : C.bord);
-		strokeWeight(2);
-		noFill();
-		rect(cx + 1, cy + 1, lc - 2, hc - 2);
-		noStroke();
-		zoneTexteDeclarer('carteReponse', cx, cy, lc, hc); // prompt 93
-		fill(C.primaire);
-		rect(cx, cy, 44, 40);
-		textAlign(CENTER, CENTER);
-		textFont(POLICE_TEXTE);
-		textStyle(BOLD);
-		textSize(20);
-		fill('#FFFFFF');
-		text(TOUCHES_REPONSES[i], cx + 22, cy + 20);
-		textAlign(LEFT, TOP);
-		ajusterTaille(String(r.lib), lc - 70, 20, 16);
-		text(String(r.lib), cx + 56, cy + 9);
-		textStyle(NORMAL);
-		textFont(POLICE_DONNEES);
-		textSize(16);
-		textLeading(21);
-		fill(C.gris);
-		textLeading(24);
-		text(String(r.expl), cx + 14, cy + 46, lc - 28, hc - 90); // l'explication entière (2 à 3 lignes)
-		// Tendance dans le contexte réel du dossier (Jeu.effetsAttendus : même calcul que l'évaluation)
-		const e = Jeu.effetsAttendus(r.cle, d);
-		const tend = ['fluidite', 'reputation', 'budget'].map((k, j) => t('jaugeCourt.' + k) + ' ' + tendance(e[j])).join('  ');
-		fill(C.texte);
-		text(tend, cx + 14, cy + hc - 32);
-		if (r.equipe && Jeu.elementDebloque('equipes')) {
-			const dispo = Jeu.equipesDisponibles(r.equipe, (typeof tempsEquipes === 'function' ? tempsEquipes() : millis()));
-			fill(dispo ? C.vert : C.orange);
-			textAlign(RIGHT, TOP);
-			text(t('rep.equipe', { nom: String(Jeu.EQUIPES[r.equipe].nom), n: dispo, maj: Jeu.TYPES_EQUIPES.indexOf(r.equipe) + 1 }), cx + lc - 14, cy + hc - 32);
-			textAlign(LEFT, TOP);
-		}
-		pop();
-		if (r.cle !== bloquee) boutons.push({ x: cx, y: cy, l: lc, h: hc, action: () => decider(r.cle) });
-	});
-	cibleGuide('actions', x, y, l, h); // prompt 37
 }
 /** Clavier : 1 à 4 = réponse de la carte (dans l'ordre affiché) ; E = « En savoir plus » ; true si la touche est prise */
 function toucheReponses() {

@@ -363,7 +363,6 @@ function nouveauDossier() {
 /* Décision du joueur (ou compteur à 0 → 'temps', Q25) */
 function decider(action) {
 	if (phase !== 'decision' && !(action === 'temps' && phase === 'contradiction')) return;
-	if (Jeu.actionBloquee && action === Jeu.actionBloquee()) return; // erreur système : action indisponible
 	// Prompt 56 : mesures de la décision (temps réel de décision, sources consultées) pour le rapport de semaine
 	const mesures = { dureeMs: Math.max(0, millis() - arriveeDossier), sources: typeof enqueteDossier === 'function' ? Object.keys(enqueteDossier().revele).length : 0 };
 	const dDecide = Jeu.dossierCourant();
@@ -489,7 +488,6 @@ function texteResteJournee() {
 }
 function indicateurSauvegarde() {
 	const r = texteResteJournee();
-	const messageFile = SELECTION.message && millis() - SELECTION.message.t < 5000; // le message de la file (bas) a la priorité
 	// Prompt 102 : « reste de la journée » dans la ligne d'état de la carte (carte-alertes.js) ; plus de doublon ici
 	const s = Sauvegarde.texteIndicateur();
 	if (!s || phase === 'narration') return; // prompt 131 : il chevauchait le titre de la narration
@@ -1125,7 +1123,6 @@ function mousePressed() {
 	if (typeof GUIDE !== 'undefined') GUIDE.clavier = false; // prompt 181 : le contour de focus clavier du guide s'efface à la souris
 	if (typeof guideBloque === 'function' && guideBloque(mouseX, mouseY)) return rappelerConsigneGuide(); // prompt 181 : guide contraignant — hors de la cible, le clic est ignoré
 	if (typeof debutJeton === 'function' && debutJeton()) return; // prompt 102 : jeton d'équipe saisi (glisser-déposer)
-	if (typeof debutGlisser === 'function' && debutGlisser()) return; // prompt 94 : une carte de réponse est saisie (clic ou glisser-déposer)
 	if (typeof PATRON !== 'undefined' && PATRON.zoneFocus === 'barre') PATRON.zoneFocus = null; // prompt 195 : un clic hors du champ quitte la recherche de Mails (le champ, cliqué, la reprend)
 	for (let i = boutons.length - 1; i >= 0; i--) {
 		const b = boutons[i];
@@ -1286,7 +1283,8 @@ function keyPressed() {
 			const n = plainte.def.reponses.length;
 			if (keyCode === TAB) {
 				focusReponse = (focusReponse + (keyIsDown(SHIFT) ? n - 1 : 1)) % n;
-				annoncer(Jeu.texteMessage(plainte.def.reponses[focusReponse].texte, plainte.vars));
+				const rTab = plainte.def.reponses[Jeu.ordreReponses(plainte)[focusReponse]]; // prompt 197 : ordre mélangé + texte du clash, lu « mot masqué »
+				annoncer(typeof lireMasques === 'function' ? lireMasques(Jeu.texteReponse(plainte, rTab)) : Jeu.texteReponse(plainte, rTab));
 				return false;
 			}
 			if (keyCode === ENTER || keyCode === RETURN || key === ' ') return repondrePlainte(focusReponse), false;

@@ -284,12 +284,13 @@ function repondrePlainte(i, cible) {
 	const r = Jeu.repondrePlainte(p, i, millis()); // prompt 79 : réponse rapide ou tardive
 	if (!r) return;
 	focusReponse = 0;
+	if (r.clash && typeof feedback === 'function') feedback('large'); // prompt 197 : le clash est récompensé à l'instant (choc « large »), conséquences inchangées (réputation −8, réponse « mauvaise »)
 	const fx = Object.keys(r.effets)
 		.map((k) => t('jauge.' + k) + ' ' + (r.effets[k] > 0 ? '+' : '') + r.effets[k])
 		.join(' · ');
-	const texte = t(r.bonne ? 'plainte.bonne' : 'plainte.mauvaise', { effets: fx || '0' }) + (r.tardive ? ' ' + t('plainte.tardive') : '');
+	const texte = t(r.bonne ? 'plainte.bonne' : 'plainte.mauvaise', { effets: fx || '0' }) + (r.tardive ? ' ' + t('plainte.tardive') : '') + (r.clash && r.reaction ? ' ' + t('commu.reactionClash', { auteur: p.auteur, reaction: r.reaction }) : ''); // prompt 197 : réaction de connard du plaignant
 	retourPlainte = { texte, bonne: r.bonne, jusqua: millis() + 5000 };
-	annoncer(texte); // aria-live
+	annoncer(typeof lireMasques === 'function' ? lireMasques(texte) : texte); // aria-live ; prompt 197 : masques hors alphabet lus « mot masqué »
 	Confort.Son.bip(r.bonne ? 'action' : 'alerte');
 }
 
@@ -303,41 +304,8 @@ function appCommunity(z) {
 const signe = (v) => (v > 0 ? '+' + v : v < 0 ? '−' + Math.abs(v) : '0');
 
 // =====================================================================
-// Prompt 36 — Corbeille (plaintes traitées) et app flottante « Indicateurs »
+// Prompt 36 — app flottante « Indicateurs » (la Corbeille, inaccessible depuis le prompt 103, a été retirée au prompt 200)
 // =====================================================================
-function appCorbeille(z) {
-	const liste = (Jeu.plaintes || []).filter((p) => p.reponse !== null && !p.masquee);
-	if (!liste.length) return dsTexte(t('app.corbeille.vide'), z.x, z.y, 20, DS.blanc50, 'left'); // prompt 101 : vue vide = une phrase
-	dsTexte(t('app.corbeille.intro', { n: liste.length }), z.x, z.y, 20, DS.blanc75, 'left', z.l - 320);
-	dsBouton(z.x + z.l - 300, z.y - 8, 300, 52, t('app.corbeille.vider'), viderCorbeille, 'contour');
-	let y = z.y + 64;
-	liste
-		.slice()
-		.reverse()
-		.slice(0, 6)
-		.forEach((p) => {
-			const r = p.def.reponses[p.reponse];
-			noStroke();
-			fill(DS.blanc05);
-			rect(z.x, y, z.l, 104);
-			fill(p.bonne ? DS.succes : DS.alerte);
-			rect(z.x, y, 4, 104);
-			dsTexte(p.auteur + ' · ' + p.heure, z.x + 18, y + 10, 16, DS.blanc50, 'left');
-			dsTexte(Jeu.textePlainte(p), z.x + 18, y + 32, 18, DS.blanc, 'left', z.l - 200);
-			dsTexte('↳ ' + Jeu.texteMessage(r.texte, p.vars), z.x + 18, y + 66, 17, DS.blanc75, 'left', z.l - 200);
-			const rep = Number((r.effets || {}).reputation) || 0;
-			dsBadge(z.x + z.l - 90, y + 40, t(p.bonne ? 'app.corbeille.bonne' : 'app.corbeille.mauvaise') + ' ' + (rep > 0 ? '+' : '') + rep, p.bonne ? 'succes' : 'alerte');
-			y += 116;
-		});
-}
-function viderCorbeille() {
-	(Jeu.plaintes || []).forEach((p) => {
-		if (p.reponse !== null) p.masquee = true; // retirées de la liste seulement : jauges et bilan inchangés
-	});
-	annoncer(t('app.corbeille.videe'));
-	Confort.Son.bip('choix');
-}
-
 // Fenêtre flottante, toujours au premier plan, déplaçable par sa barre de titre ; position mémorisée
 const CLE_INDICATEURS = 'pxe-nte001:jeu:indicateurs';
 const INDIC = (() => {

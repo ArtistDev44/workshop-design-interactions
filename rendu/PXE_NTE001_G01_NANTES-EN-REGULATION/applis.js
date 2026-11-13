@@ -1,11 +1,11 @@
 /* Nantes en régulation — prompt 91 : applis reliées et déblocage par semaine.
  * § 2 (option du groupe, désactivée par défaut : Paramètres → Options de jeu) : semaine 1 = Signalements seule ;
- *     Community (et la Corbeille) en semaine 2, Messages en 3, Journal et Indicateurs en 4, Données en 5. Icônes
+ *     Community en semaine 2, Messages en 3, Journal et Indicateurs en 4, Données en 5. Icônes
  *     verrouillées grisées avec cadenas, secousse et infobulle (prompt 183 : plus de fenêtre d'intro au déblocage).
  * § 3 : pile de navigation — chaque redirection (« Voir le dossier », « Publier sur Community », lien vers le Journal)
  *     empile l'écran d'origine ; Échap dépile et revient à l'écran précédent.
  */
-const PLANNING_APPLIS = { signalements: 1, community: 2, corbeille: 2, patron: 3, journal: 4, indicateurs: 4, donnees: 5 };
+const PLANNING_APPLIS = { signalements: 1, community: 2, patron: 3, journal: 4, indicateurs: 4, donnees: 5 };
 const APPLIS = { tremble: null, pile: [] };
 
 /** Numéro de semaine du déblocage : chapitre du mode histoire (1 à 3) ; temps réel / hors ligne → 4, ou tout si l'option l'autorise */

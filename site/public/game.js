@@ -887,7 +887,6 @@
 	// =====================================================================
 	const DEBUT_JOURNEE = 8 * 60; // 8h00 — valeur verrouillée (prompt 76 : un centre de régulation n'ouvre pas à 6 h)
 	const FIN_JOURNEE = 20 * 60; // 20h00
-	const NOMS_JAUGES_LONGS = { fluidite: T('jaugeLong.fluidite'), reputation: T('jaugeLong.reputation'), budget: T('jaugeLong.budget') };
 
 	/**
 	 * Découpe le paquet en journées (une par date réelle) et fixe l'heure d'arrivée de chaque dossier
@@ -1256,14 +1255,14 @@
 		const j = Jeu.jourCourant();
 		const o = Jeu.objectifDuJour();
 		const mo = Jeu.modificateur;
-		return { n: j ? j.dossiers.length : 0, jauge: o.jauge, seuil: o.seuil, budget: Jeu.jauges.budget, mod: mo ? mo.id : null, bloque: mo && mo.actionBloquee ? mo.actionBloquee : null };
+		return { n: j ? j.dossiers.length : 0, jauge: o.jauge, seuil: o.seuil, budget: Jeu.jauges.budget, mod: mo ? mo.id : null };
 	}
 	function consigneDuJour() {
 		const j = Jeu.jourCourant();
 		const n = j ? j.dossiers.length : 0;
 		const o = Jeu.objectifDuJour();
 		const mo = Jeu.modificateur;
-		const m = mo ? (mo.actionBloquee ? T('patron.modBloque', { libelle: mo.libelle, action: REGLAGES.effets[mo.actionBloquee].nom }) : T('patron.mod', { libelle: mo.libelle })) : '';
+		const m = mo ? T('patron.mod', { libelle: mo.libelle }) : '';
 		return T('patron.consigne', { n, parts: Jeu.compositionDossiers(j ? j.dossiers : []), date: j ? j.date.split('-').reverse().join('/') : '', objectif: o.libelle, budget: Jeu.jauges.budget, mod: m });
 	}
 	/** Prompt 162 : composition d'une liste de dossiers dite honnêtement — « réel » réservé aux faits de la source
@@ -1960,7 +1959,6 @@
 	Jeu.EQUIPES = EQUIPES;
 	Jeu.DELAI_EQUIPE_MS = 20000; // arrivée 20 s (réelles) après l'envoi
 
-	Jeu.equipePour = (index) => Jeu.equipes.find((q) => q.index === index) || null;
 
 	// Prompt 68 — équipes d'intervention LIMITÉES. Effectif par jour, cycle disponible → en route (20 s) → sur place
 	// (durée d'intervention) → retour (10 s) → disponible. Effectifs remis à zéro chaque matin. Valeurs verrouillées.
@@ -2151,7 +2149,7 @@
 	Jeu.tirerModificateur = function () {
 		if (!Jeu.elementDebloque('crise')) return void (Jeu.modificateur = null); // prompt 41 : imprévus à partir de la semaine 3
 		const m = Jeu.forcerModificateur ? MODIFICATEURS.find((x) => x.id === Jeu.forcerModificateur) : MODIFICATEURS[Math.floor(Jeu.alea() * MODIFICATEURS.length)];
-		Jeu.modificateur = Object.assign({}, m, { debut: null, fin: null, actionBloquee: null }); // plus d'« erreur système » (retirée sur demande)
+		Jeu.modificateur = Object.assign({}, m, { debut: null, fin: null });
 	};
 	Jeu.demarrerModificateur = function (maintenant) {
 		if (Jeu.modificateur && Jeu.modificateur.debut === null) {
@@ -2165,7 +2163,6 @@
 		const t = maintenant !== undefined ? maintenant : typeof millis === 'function' ? millis() : Date.now();
 		return t < m.fin ? m.id : null;
 	};
-	Jeu.actionBloquee = () => null; // les fausses erreurs système du PC ont été retirées : aucune action n'est jamais bloquée
 
 	/** § 3 — Objectifs de journée qui se resserrent */
 	const OBJECTIFS = [

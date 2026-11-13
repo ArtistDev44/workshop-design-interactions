@@ -101,20 +101,15 @@ function opaciteCritique() {
 }
 
 // ——— Urgence du compteur ———
-const URGENCE = { u: 0, t: 0 };
 /** Appelée par dessinerDossier avec le temps restant ; renvoie la couleur de la barre */
 function couleurCompteur(resteMs) {
 	if (resteMs < 10000) {
-		URGENCE.u = 1 - resteMs / 10000;
-		URGENCE.t = millis();
 		const c = color(C.rougeFonce);
 		c.setAlpha(255 * (reduireAnimations ? 1 : 0.65 + 0.35 * pulsationDouce(1.5)));
 		return c;
 	}
 	return color(C.primaire);
 }
-/** Urgence en cours (0 si aucun compteur sous 10 s à cette image) */
-const urgenceCompteur = () => (millis() - URGENCE.t < 250 ? URGENCE.u : 0);
 
 // ——— Tampon « SIGNALEMENT » à l'arrivée du dossier ———
 function dessinerTamponSignalement(x, y) {

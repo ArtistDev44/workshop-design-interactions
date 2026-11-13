@@ -338,12 +338,11 @@ function carteEquipe(q, x, y, l, focus) {
 function cartePlainte(p, x, y, l, focus) {
 	cadreCarte(x, y, l, 64, focus, p.reponse === null ? DS.alerte : p.bonne ? DS.succes : DS.erreur);
 	dsTexte('✉ ' + p.auteur + ' · ' + court(Jeu.textePlainte(p), 72), x + 20, y + 8, 15, DS.blanc, 'left'); // une ligne : pas de chevauchement
-	dsTexte(p.reponse === null ? t('journal.sansReponse') : '↳ ' + court(Jeu.texteMessage(p.def.reponses[p.reponse].texte, p.vars), 64) + ' · ' + t(p.bonne ? 'journal.bienRecue' : 'journal.malRecue'), x + 20, y + 36, 14, DS.blanc75, 'left');
+	dsTexte(p.reponse === null ? t('journal.sansReponse') : '↳ ' + court(Jeu.texteReponse(p, p.def.reponses[p.reponse]), 64) + ' · ' + t(p.bonne ? 'journal.bienRecue' : 'journal.malRecue'), x + 20, y + 36, 14, DS.blanc75, 'left'); // prompt 197 : texte du clash généré
 	if (actionsVisiblesJournal()) dsBouton(x + l - 190, y + 10, 176, 44, t('journal.voirCommunity'), () => ouvrirAppPC('community'), 'fantome');
 }
 function ouvrirAppPC(nom) {
-	if (typeof ouvrirFenetreApp === 'function') ouvrirFenetreApp(nom);
-	else PC.fenetre = nom;
+	PC.fenetre = nom;
 }
 
 /** Pictogrammes pixel 7 × 7 par catégorie (dessinés par le code) */
