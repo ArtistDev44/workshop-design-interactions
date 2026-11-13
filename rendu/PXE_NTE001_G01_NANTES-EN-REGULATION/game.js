@@ -679,6 +679,57 @@
 		return String(t(ok[h % ok.length]));
 	};
 
+	// =====================================================================
+	// Prompt 197 — Community : trio de réponses mélangé (dont un clash), réaction de connard du plaignant
+	// =====================================================================
+	/** Catégorie du dossier réel derrière la plainte (mêmes 7 catégories que le panneau, prompt 196) */
+	Jeu.categoriePlainte = function (plainte) {
+		const d = Jeu.paquet && plainte ? Jeu.paquet[plainte.index] : null;
+		return (Jeu.categorie && Jeu.categorie(d)) || 'autre';
+	};
+	/** Ordre d'affichage des 3 réponses d'une plainte : permutation déterministe (graine + plainte), 6 cas — aucun marqueur visuel du clash */
+	const PERMUTATIONS_3_JEU = [[0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0]];
+	Jeu.ordreReponses = function (plainte) {
+		const n = plainte && plainte.def && Array.isArray(plainte.def.reponses) ? plainte.def.reponses.length : 0;
+		const idx = [...Array(n).keys()];
+		if (n === 3) {
+			const h = hacher(String(Jeu.graine) + '|ordre|' + plainte.id + '|' + plainte.index);
+			return PERMUTATIONS_3_JEU[h % 6].map((k) => idx[k]);
+		}
+		return idx;
+	};
+	/** Texte du clash d'une plainte Community : variante clash.<cat>.1..3 (prompt 196, mots masqués hors alphabet)
+	 * dont toutes les variables sont connues, tirée de façon déterministe ; repli clash.autre.1 */
+	Jeu.repliqueClashPlainte = function (plainte) {
+		const cat = Jeu.categoriePlainte(plainte);
+		const vars = Object.assign({}, plainte.vars, { auteur: plainte.auteur, nom: (plainte.vars && (plainte.vars.nom || plainte.vars.nature)) || '' });
+		const ok = [];
+		for (let k = 1; k <= 3; k++) {
+			const cle = 'clash.' + cat + '.' + k;
+			if (typeof TRADUCTIONS !== 'undefined' && TRADUCTIONS.fr[cle] === undefined) continue;
+			const brut = String(t(cle));
+			if ((brut.match(/\{(\w+)\}/g) || []).every((m) => vars[m.slice(1, -1)] !== undefined && vars[m.slice(1, -1)] !== '')) ok.push(brut);
+		}
+		const brut = ok.length ? ok[hacher(String(Jeu.graine) + '|clashCommu|' + plainte.id + '|' + plainte.index) % ok.length] : String(t('clash.autre.1'));
+		return brut.replace(/\{(\w+)\}/g, (m, k) => String(vars[k]));
+	};
+	/** Texte d'une réponse à afficher dans Community (clash : généré, sinon champ texte du JSON) */
+	Jeu.texteReponse = function (plainte, r) {
+		return r && r.clash ? Jeu.repliqueClashPlainte(plainte) : Jeu.texteMessage(r && r.texte, plainte.vars);
+	};
+	/** Prompt 197 : réaction de connard du plaignant d'une plainte Community après un clash (variantes reactionClash.*, prompt 196) */
+	Jeu.reactionClashPlainte = function (plainte) {
+		const cat = Jeu.categoriePlainte(plainte);
+		const ok = [];
+		for (let k = 1; k <= 3; k++) {
+			const cle = 'reactionClash.' + cat + '.' + k;
+			if (typeof TRADUCTIONS !== 'undefined' && TRADUCTIONS.fr[cle] !== undefined) ok.push(cle);
+		}
+		if (!ok.length) ok.push('reactionClash.autre.1');
+		const h = hacher(String(Jeu.graine) + '|reactionClash|' + plainte.id + '|' + plainte.index);
+		return String(t(ok[h % ok.length]));
+	};
+
 	/* Ton adaptatif selon les jauges (Q17) : neutre / tendu / critique. */
 	Jeu.ton = function () {
 		const min = Math.min(Jeu.jauges.fluidite, Jeu.jauges.reputation, Jeu.jauges.budget);
@@ -830,7 +881,6 @@
 	// =====================================================================
 	const DEBUT_JOURNEE = 8 * 60; // 8h00 — valeur verrouillée (prompt 76 : un centre de régulation n'ouvre pas à 6 h)
 	const FIN_JOURNEE = 20 * 60; // 20h00
-	const NOMS_JAUGES_LONGS = { fluidite: T('jaugeLong.fluidite'), reputation: T('jaugeLong.reputation'), budget: T('jaugeLong.budget') };
 
 	/**
 	 * Découpe le paquet en journées (une par date réelle) et fixe l'heure d'arrivée de chaque dossier
@@ -1199,14 +1249,14 @@
 		const j = Jeu.jourCourant();
 		const o = Jeu.objectifDuJour();
 		const mo = Jeu.modificateur;
-		return { n: j ? j.dossiers.length : 0, jauge: o.jauge, seuil: o.seuil, budget: Jeu.jauges.budget, mod: mo ? mo.id : null, bloque: mo && mo.actionBloquee ? mo.actionBloquee : null };
+		return { n: j ? j.dossiers.length : 0, jauge: o.jauge, seuil: o.seuil, budget: Jeu.jauges.budget, mod: mo ? mo.id : null };
 	}
 	function consigneDuJour() {
 		const j = Jeu.jourCourant();
 		const n = j ? j.dossiers.length : 0;
 		const o = Jeu.objectifDuJour();
 		const mo = Jeu.modificateur;
-		const m = mo ? (mo.actionBloquee ? T('patron.modBloque', { libelle: mo.libelle, action: REGLAGES.effets[mo.actionBloquee].nom }) : T('patron.mod', { libelle: mo.libelle })) : '';
+		const m = mo ? T('patron.mod', { libelle: mo.libelle }) : '';
 		return T('patron.consigne', { n, parts: Jeu.compositionDossiers(j ? j.dossiers : []), date: j ? j.date.split('-').reverse().join('/') : '', objectif: o.libelle, budget: Jeu.jauges.budget, mod: m });
 	}
 	/** Prompt 162 : composition d'une liste de dossiers dite honnêtement — « réel » réservé aux faits de la source
@@ -1436,10 +1486,12 @@
 				typeof p.texte.fr === 'string' &&
 				Array.isArray(p.reponses) &&
 				p.reponses.length >= 2 &&
-				p.reponses.every((r) => r && r.texte && typeof r.texte.fr === 'string') &&
-				p.reponses.some((r) => r.bonne === true);
+				// prompt 197 : une réponse « clash » n'a pas de texte (tiré des clés clash.*) ; 3 réponses dont une bonne et une clash
+				p.reponses.every((r) => r && (r.clash === true || (r.texte && typeof r.texte.fr === 'string'))) &&
+				p.reponses.some((r) => r.bonne === true) &&
+				p.reponses.filter((r) => r.clash === true).length <= 1;
 			if (valide) ok.push(p);
-			else if (global.console) console.warn('messages.json : plainte n° ' + i + ' ignorée (id, texte.fr, 2 réponses dont une « bonne » requis)');
+			else if (global.console) console.warn('messages.json : plainte n° ' + i + ' ignorée (id, texte.fr, réponses valides dont une « bonne » et au plus une « clash » requis)');
 		});
 		// Prompt 85 : modèles d'info trafic (FR + EN, « coherent »), validés comme les plaintes
 		const modeles = ((donnees && donnees.modeles) || []).filter((m) => m && typeof m.id === 'string' && m.texte && typeof m.texte.fr === 'string' && typeof m.texte.en === 'string' && Array.isArray(m.coherent));
@@ -1463,7 +1515,7 @@
 		return v;
 	}
 	function variablesUtilisees(p) {
-		const textes = [p.texte.fr, p.texte.en || ''].concat(p.reponses.map((r) => r.texte.fr + ' ' + (r.texte.en || '')));
+		const textes = [p.texte.fr, p.texte.en || ''].concat(p.reponses.map((r) => (r.clash ? '' : r.texte.fr + ' ' + (r.texte.en || '')))); // prompt 197 : le clash n'a pas de texte propre
 		return (textes.join(' ').match(/\{(\w+)\}/g) || []).map((m) => m.slice(1, -1));
 	}
 	function plainteCorrespond(p, d, vars) {
@@ -1577,9 +1629,11 @@
 		return { temps: du.filter((p) => p.statut === 'temps').length, tard: du.filter((p) => p.statut === 'tard').length, expire: du.filter((p) => p.statut === 'expire').length };
 	};
 
-	/** Le joueur répond : effets du JSON (bornés à ±bornesEffet) appliqués aux jauges, bornées 0–100 */
+	/** Le joueur répond : effets du JSON (bornés à ±bornesEffet) appliqués aux jauges, bornées 0–100.
+	 * Prompt 197 : « i » est l'index AFFICHÉ (ordre mélangé, Jeu.ordreReponses) ; le clash renvoie clash/reaction */
 	Jeu.repondrePlainte = function (plainte, i, maintenant) {
-		const r = plainte && plainte.reponse === null && !plainte.expiree ? plainte.def.reponses[i] : null;
+		const ri = plainte && plainte.reponse === null && !plainte.expiree ? (Jeu.ordreReponses(plainte)[i] !== undefined ? Jeu.ordreReponses(plainte)[i] : i) : null;
+		const r = ri !== null ? plainte.def.reponses[ri] : null;
 		if (!r) return null;
 		const effets = {};
 		NOMS_JAUGES.forEach((k) => {
@@ -1591,17 +1645,30 @@
 		if (tardive) effets.reputation = borner((effets.reputation || 0) + DELTA_REPUTATION.mauvais);
 		plainte.statut = tardive ? 'tard' : 'temps';
 		plainte.jourStatut = Jeu.jourIndex;
-		plainte.reponse = i;
+		plainte.reponse = ri; // index réel stocké (affichage et sauvegarde inchangés)
 		plainte.bonne = r.bonne === true;
 		Jeu.appliquerDeltas(effets);
 		Jeu.commentaires.push({
 			heure: maintenantSim(),
 			auteur: T('plainte.reponseDe'),
-			texte: { toString: () => Jeu.texteMessage(r.texte, plainte.vars) },
+			texte: { toString: () => Jeu.texteReponse(plainte, r) },
 			delta: effets.reputation || 0,
 		});
+		// Prompt 197 : après un clash, le plaignant (toujours gentil d'habitude) répond par un commentaire de connard (mots masqués hors alphabet)
+		let reaction = null;
+		if (r.clash === true) {
+			reaction = Jeu.reactionClashPlainte(plainte);
+			Jeu.appliquerDeltas({ reputation: DELTA_REPUTATION.mauvais });
+			if (plainte.def && plainte.def.prive) {
+				plainte.relances = (plainte.relances || []).concat({ heure: maintenantSim(), texte: reaction, delta: DELTA_REPUTATION.mauvais });
+				Jeu.nonLus.community++;
+			} else {
+				Jeu.commentaires.push({ heure: maintenantSim(), auteur: plainte.auteur, texte: reaction, delta: DELTA_REPUTATION.mauvais, clash: true });
+				Jeu.nonLus.community++;
+			}
+		}
 		Jeu.programmerSuivis(plainte); // prompt 63 : 0 à 3 réactions, à des heures variées
-		return { effets, bonne: plainte.bonne, tardive };
+		return { effets, bonne: plainte.bonne, tardive, clash: r.clash === true, reaction };
 	};
 
 	// Prompt 63 — réactions en chaîne : tirées par hachage (graine + plainte), sans toucher aux dés de la partie
@@ -1763,7 +1830,6 @@
 	Jeu.EQUIPES = EQUIPES;
 	Jeu.DELAI_EQUIPE_MS = 20000; // arrivée 20 s (réelles) après l'envoi
 
-	Jeu.equipePour = (index) => Jeu.equipes.find((q) => q.index === index) || null;
 
 	// Prompt 68 — équipes d'intervention LIMITÉES. Effectif par jour, cycle disponible → en route (20 s) → sur place
 	// (durée d'intervention) → retour (10 s) → disponible. Effectifs remis à zéro chaque matin. Valeurs verrouillées.
@@ -1954,7 +2020,7 @@
 	Jeu.tirerModificateur = function () {
 		if (!Jeu.elementDebloque('crise')) return void (Jeu.modificateur = null); // prompt 41 : imprévus à partir de la semaine 3
 		const m = Jeu.forcerModificateur ? MODIFICATEURS.find((x) => x.id === Jeu.forcerModificateur) : MODIFICATEURS[Math.floor(Jeu.alea() * MODIFICATEURS.length)];
-		Jeu.modificateur = Object.assign({}, m, { debut: null, fin: null, actionBloquee: null }); // plus d'« erreur système » (retirée sur demande)
+		Jeu.modificateur = Object.assign({}, m, { debut: null, fin: null });
 	};
 	Jeu.demarrerModificateur = function (maintenant) {
 		if (Jeu.modificateur && Jeu.modificateur.debut === null) {
@@ -1968,7 +2034,6 @@
 		const t = maintenant !== undefined ? maintenant : typeof millis === 'function' ? millis() : Date.now();
 		return t < m.fin ? m.id : null;
 	};
-	Jeu.actionBloquee = () => null; // les fausses erreurs système du PC ont été retirées : aucune action n'est jamais bloquée
 
 	/** § 3 — Objectifs de journée qui se resserrent */
 	const OBJECTIFS = [

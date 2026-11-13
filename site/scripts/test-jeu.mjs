@@ -490,14 +490,12 @@ for (const [nom, ctx] of [['fr', contexte('fr')], ['en', contexte('en')]]) {
 		const ordre = [Jeu.paquet[0] === avant[2], Jeu.paquet[1] === avant[0], Jeu.paquet[2] === avant[1]];
 		const equipeSuit = Jeu.paquet[Jeu.equipes[0].index] === avant[0];
 		const arrivees = Object.keys(SELECTION.arrivees).length === 3;
-		const lignes = texteLignes({ lignes: ['1'] }, 5); // dossier à venir : ligne pas encore identifiée
-		const connu = texteLignes({ lignes: ['1'] }, -1); // dossier déjà traité : ligne connue
 		Jeu.decider('rien');
 		const snap = JSON.parse(JSON.stringify(Jeu.instantane(0)));
 		const coherent = snap.jours.every((jj) => jj.dossiers.every((i) => i >= 0)) && new Set(snap.jours.flatMap((jj) => jj.dossiers)).size === snap.paquet.length;
 		let tours = 0;
 		while (!Jeu.terminee && tours++ < 200) { if (Jeu.prochainDuJour()) Jeu.decider('renfort'); else if (Jeu.jours[Jeu.jourIndex + 1]) Jeu.journeeSuivante(); else break; }
-		return { ordre, equipeSuit, arrivees, coherent, fin: Jeu.index === Jeu.paquet.length, lignes, connu };
+		return { ordre, equipeSuit, arrivees, coherent, fin: Jeu.index === Jeu.paquet.length };
 	})()`,
 		cs,
 	);
@@ -505,7 +503,6 @@ for (const [nom, ctx] of [['fr', contexte('fr')], ['en', contexte('en')]]) {
 	verifier(r.equipeSuit, 'signalements : l\'équipe envoyée doit suivre son dossier après réordonnancement');
 	verifier(r.arrivees, 'signalements : heures d\'arrivée perdues au réordonnancement');
 	verifier(r.coherent && r.fin, `signalements : sauvegarde cohérente (${r.coherent}) et semaine jouée jusqu'au bout (${r.fin})`);
-	verifier(/François Mitterrand/.test(r.connu) && !/Mitterrand/.test(r.lignes), `signalements : ligne avec son nom réel une fois identifiée (${r.connu} / ${r.lignes})`);
 	const code = ['sketch.js', 'carte.js', 'os.js', 'portrait.js', 'mobile.js', 'guide.js'].map((f) => readFileSync(join(pub, f), 'utf8')).join('\n');
 	verifier(!/zoomerCarte|CARTE_VUE|commandesCarte|dessinerLignesEtat|dessinerReperesCarte|positionDossier|centreLigne|traceDecision|dessinerBandeauEquipes|zoomCarteMolette|iconeCarte/.test(code), 'signalements : reste du code de la carte');
 	const orphelines = vm.runInContext("['carte.zoom', 'carte.reseau', 'legende.heure', 'app.carte', 'enq.source.carte', 'guide.ouvrirCarte'].filter((k) => TRADUCTIONS.fr[k] !== undefined || TRADUCTIONS.en[k] !== undefined)", cs);
@@ -869,7 +866,7 @@ for (const [nom, ctx] of [['fr', contexte('fr')], ['en', contexte('en')]]) {
 // Prompt 85 : compte social (Quai) — plaintes ajoutées, posts réels, archive, info trafic, messages privés
 {
 	const brut = JSON.parse(readFileSync(join(pub, 'data', 'messages.json'), 'utf8'));
-	const CLES_COND = ['type', 'retard_min', 'ligne', 'nature_contient', 'pointe', 'meteo'];
+	const CLES_COND = ['type', 'retard_min', 'ligne', 'nature_contient', 'pointe', 'meteo', 'fil']; // prompt 198 : « fil » (relance, doublon)
 	const invalides = brut.plaintes.filter((p) => !p.texte.en || p.reponses.length !== 3 || !p.reponses.some((r) => r.bonne) || !p.reponses.some((r) => !r.bonne && !r.clash) || p.reponses.filter((r) => r.clash).length !== 1 || p.reponses.some((r) => !r.clash && !r.texte.en) || Object.keys(p.condition || {}).some((k) => !CLES_COND.includes(k))); // prompt 197 : exactement 3 réponses dont une bonne et une clash
 	verifier(invalides.length === 0 && brut.plaintes.length >= 21 && brut.plaintes.filter((p) => p.prive).length >= 3, `community : plaintes invalides ${invalides.map((p) => p.id)}`);
 	verifier((brut.modeles || []).length === 3 && brut.modeles.every((m) => m.texte.fr && m.texte.en && m.coherent.length), 'community : 3 modèles d\'info trafic FR + EN');
@@ -1099,17 +1096,17 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 	}
 }
 
-// Prompt 118 : plaintes agressives — FR et EN, aucun gros mot en clair (masqués par des symboles), conditions réelles, ≈ 1 sur 3
+// Prompt 118 (ton renommé « provoquant » au prompt 198) : plaintes agressives — FR et EN, aucun gros mot en clair (masqués par des symboles), conditions réelles, ≈ 1 sur 3
 {
 	const c118 = contexte('fr');
 	const r = vm.runInContext(`(() => {
-		const ag = Jeu.MESSAGES.plaintes.filter((p) => p.ton === 'agressif');
+		const ag = Jeu.MESSAGES.plaintes.filter((p) => p.ton === 'provoquant');
 		const textes = ag.flatMap((p) => [p.texte.fr, p.texte.en || '']);
 		const clair = /\\b(merde|putain|connard|connasse|enculé|salope|bordel|foutre|fuck|shit|bastard|bitch|asshole|crap|damn)\\b/i;
 		const out = { n: ag.length, sansEn: ag.filter((p) => !p.texte.en).map((p) => p.id), enClair: textes.filter((x) => clair.test(x)), sansSymbole: ag.filter((p) => !/[@#$%&!]{2,}/.test(p.texte.fr)).map((p) => p.id), agressifs: 0, total: 0 };
 		for (const sem of ['2026-09-14', '2026-10-12', '2026-11-02']) {
 			Jeu.chargerSemaine(sem); Jeu.nouvellePartie();
-			Jeu.paquet.forEach((d, i) => { const pl = Jeu.plaignantPour(i); if (pl) { out.total++; if (pl.ton === 'agressif') out.agressifs++; } });
+			Jeu.paquet.forEach((d, i) => { const pl = Jeu.plaignantPour(i); if (pl) { out.total++; if (pl.ton === 'provoquant') out.agressifs++; } });
 		}
 		return out;
 	})()`, c118);
@@ -1283,13 +1280,11 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 		}
 		// Demande accordée (réputation ≥ 50) : +5 de budget le lendemain matin ; refusée sous 50
 		Jeu.chargerSemaine('2026-11-02'); Jeu.nouvellePartie(); Taches.nouvellePartie();
-		Taches.choisirPriorites([]);
 		Jeu.jauges.reputation = 60; Jeu.finDeJourneeTactique();
 		const r1 = Taches.validerRapport('x', 'budget');
 		while (Jeu.prochainDuJour()) Jeu.decider('temps');
 		Jeu.journeeSuivante(); const b0 = Jeu.jauges.budget; Taches.matin();
 		out.accord = { accordee: r1.accordee, delta: Jeu.jauges.budget - b0, message: Jeu.messagesPatron.filter((m) => m.jour === Jeu.jourCourant().date).map((m) => String(m.texte)).join(' | ') };
-		Taches.choisirPriorites([]);
 		Jeu.jauges.reputation = 30;
 		const r2 = Taches.validerRapport('x', 'equipe');
 		Jeu.journeeSuivante(); Taches.matin();
@@ -1306,7 +1301,7 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 	verifier(r.erreursOpt.length === 0, `briefing : options sans fait réel ou en nombre incorrect (${r.erreursOpt.slice(0, 4)})`);
 	verifier(r.carnet >= 6 && r.sansCarnet, `rapport du soir : un par journée, sans carnet (prompt 142) (${r.carnet})`);
 	verifier(r.nbPrio && r.nbPrio.slice(0, 4).every((n) => n === 2) && r.nbPrio.slice(4, 6).every((n) => n === 3), `priorités imposées : 2 par jour puis 3 après 4 jours joués (${r.nbPrio && r.nbPrio.slice(0, 7)})`);
-	verifier(/function briefing\(\) \{\n\t\treturn null;/.test(readFileSync(join(pub, 'taches.js'), 'utf8')), 'priorités : plus aucune fenêtre de choix (briefing() renvoie null)');
+	verifier(!/briefing\(\)|choisirPriorites/.test(readFileSync(join(pub, 'taches.js'), 'utf8') + readFileSync(join(pub, 'taches-ui.js'), 'utf8')), 'priorités : plus aucune fenêtre de choix (briefing retiré, prompt 200)');
 	verifier(r.accord.accordee && r.accord.delta === 5 && /accordée/.test(r.accord.message), `rapport : demande accordée → +5 de budget le lendemain (${JSON.stringify(r.accord)})`);
 	verifier(r.refus.accordee === false && r.refus.bonus === '{}', `rapport : réputation < 50 → demande refusée (${JSON.stringify(r.refus)})`);
 	verifier(r.sauve, 'sauvegarde : les tâches de la partie (priorités, rapport) sont restaurées');
@@ -1332,13 +1327,7 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 				const res = Jeu.decider(Jeu.actionsPossibles(d)[0]);
 				const tache = Taches.apresDecision(res, Jeu.index - 1);
 				if (!tache) continue;
-				if (tache.type === 'info') {
-					out.infos++;
-					const b = tache.blocs;
-					const ligne = d.lignes && d.lignes.length ? T('tache.info.ligne', { ligne: d.lignes[0] }) : T('tache.info.ligneInconnue');
-					if (String(b[0].options[b[0].bonne]) !== String(ligne)) out.erreursInfo.push('ligne ' + d.texte_source);
-					if (b.some((x) => x.options.length < 2 || x.bonne < 0 || new Set(x.options.map(String)).size !== x.options.length)) out.erreursInfo.push('options ' + d.texte_source);
-				}
+				if (tache.type === 'info') out.infos++;
 				if (tache.type === 'evenement') {
 					out.preps++;
 					const ev = Jeu.paquet[tache.index];
@@ -1346,23 +1335,12 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 				}
 			}
 		}
-		// Effet : info exacte +2, info fausse −2 et une plainte Community étiquetée « info_erronee »
-		Jeu.chargerSemaine('2026-11-02'); Jeu.nouvellePartie(); Taches.nouvellePartie();
-		const res = Jeu.decider(Jeu.actionsPossibles(Jeu.dossierCourant())[0]);
-		const tache = Taches.tacheInfo(res, 0);
-		const r0 = Jeu.jauges.reputation;
-		Taches.resoudre(tache, Taches.bonneReponse(tache));
-		const r1 = Jeu.jauges.reputation;
-		Taches.resoudre(tache, tache.blocs.map((b) => (b.bonne + 1) % b.options.length));
-		out.effetInfo = [r1 - r0, Jeu.jauges.reputation - r1];
-		out.plainte = Jeu.plaintes.some((p) => p.id === 'info_erronee');
 		return out;
 	})()`,
 		cc,
 	);
 	verifier(r.infos === 0, `info trafic : remplacée par la publication Community (prompt 91), ${r.infos} tâche(s) proposée(s)`);
 	verifier(r.prepSansEvenement === 0, `préparer un événement : proposé sans affluence réelle à venir (${r.prepSansEvenement}/${r.preps})`);
-	verifier(JSON.stringify(r.effetInfo) === '[2,-2]' && r.plainte, `info trafic : effets ${r.effetInfo}, plainte ${r.plainte}`);
 }
 
 // Prompt 88 lot D : thème du jour calculé sur les faits réels, au plus une cellule de crise par semaine
@@ -1458,7 +1436,7 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 // Prompt 88 lot F : options du groupe désactivées par défaut ; chaînes étiquetées et plafonnées ; déblocages ; arbitrage
 {
 	const conf = readFileSync(join(pub, 'confort.js'), 'utf8');
-	verifier(/chaines: false, deblocages: false, arbitrage: false, traceDossier: false, pressionVisible: false, deVisible: false, eclairageJauges: false/.test(conf), 'options du groupe : désactivées par défaut (Confort.Reglages)');
+	verifier(/chaines: false, deblocages: false, arbitrage: false, deVisible: false, eclairageJauges: false/.test(conf), 'options du groupe : désactivées par défaut (Confort.Reglages)');
 	const cf = contexte('fr');
 	const r = vm.runInContext(
 		`(() => {
@@ -1573,7 +1551,8 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 	verifier(!/function appJournal|function enqueteJournal/.test(readFileSync(join(pub, 'os.js'), 'utf8')), 'journal : ancien rendu retiré d’os.js');
 }
 
-// Prompt 89 bis : traces dans la file, pression lisible, Q25 expliqué, dé visible — aucune valeur d'effet modifiée
+// Prompt 89 bis : trace de la décision, Q25 expliqué, dé visible — aucune valeur d'effet modifiée (prompt 200 : la file
+// des « traités » et la pression lisible, que plus rien n'affichait, ont été retirées avec leurs tests)
 {
 	const ct = contexte('fr');
 	const r = vm.runInContext(
@@ -1590,28 +1569,22 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 				while (Jeu.prochainDuJour()) {
 					const d = Jeu.prochainDuJour();
 					Jeu.horloge.minutes = Math.max(Jeu.horloge.minutes, d.minute);
-					const p1 = Traces.pression(d);
-					Jeu.horloge.minutes += 30;
-					const p2 = Traces.pression(d);
-					if (p2.ecoule !== Math.floor(Jeu.horloge.minutes - d.minute)) out.erreurs.push('temps écoulé');
-					if (p1.retard !== null && p2.retard < p1.retard) out.erreurs.push('retard qui baisse');
 					const res = Jeu.decider(k++ % 4 === 3 ? 'temps' : Jeu.actionsPossibles(d)[k % 3]);
 					const e = Jeu.evenementsJournee[Jeu.evenementsJournee.length - 1];
 					Jeu.horloge.minutes += 60;
 					if (e.retardEffectif !== null && e.retardEffectif !== undefined && Jeu.retardEffectif(d) !== e.retardEffectif) out.erreurs.push('retard non figé');
-					const l = Traces.lignesFile(d.date)[0];
-					if (e.cleAction === 'temps') { if (l.etat !== 'nonTraite' || !l.detail) out.erreurs.push('non traité sans calcul'); }
-					else if (l.etat !== 'traite' || !l.titre.includes(String(e.action)) || !/\\d+h\\d\\d/.test(l.titre)) out.erreurs.push('trace file ' + l.titre);
+					const tr = Traces.trace(res);
+					if (!tr || !/\\d+h\\d\\d/.test(tr)) out.erreurs.push('trace ' + tr);
+					lignes.push(tr);
 					const des = Traces.texteDes(res);
 					if (des && res.des.some((v, n) => v && !des.includes('dé ' + v))) out.erreurs.push('dé affiché ≠ dé tiré');
 				}
-				lignes.push(...Traces.lignesFile(Jeu.jourCourant().date).map((x) => x.titre));
 				Jeu.finDeJourneeTactique(); Jeu.journeeSuivante();
 			}
 			return { lignes, jauges: JSON.stringify(Jeu.jauges), tirages: Jeu.tirages };
 		};
 		const sans = jouer({});
-		const avec = jouer({ traceDossier: true, pressionVisible: true, deVisible: true, eclairageJauges: true });
+		const avec = jouer({ deVisible: true, eclairageJauges: true });
 		const bis = jouer({});
 		out.memesEffets = sans.jauges === avec.jauges && sans.tirages === avec.tirages;
 		out.repro = JSON.stringify(sans.lignes) === JSON.stringify(bis.lignes);
@@ -1619,11 +1592,6 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 		// Q25 : le calcul cite les effets réellement appliqués
 		const tps = Jeu.evenementsJournee.filter((e) => e.cleAction === 'temps');
 		out.q25 = tps.every((e) => { const c = Traces.calculQ25(e); return ['fluidite', 'reputation', 'budget'].every((k) => !e.deltas[k] || c.includes(String(Math.abs(e.deltas[k])))); }) && tps.length > 0;
-		// Sauvegarde : les traces sont reconstruites à l'identique depuis le journal sauvegardé
-		const date = Jeu.jours[0].date;
-		const avant = JSON.stringify(Traces.lignesFile(date).map((x) => x.titre));
-		Jeu.restaurerInstantane(JSON.parse(JSON.stringify(Jeu.instantane(0))), 0);
-		out.sauve = JSON.stringify(Traces.lignesFile(date).map((x) => x.titre)) === avant;
 		return out;
 	})()`,
 		ct,
@@ -1632,7 +1600,6 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 	verifier(r.memesEffets, 'traces : les options d\'affichage ne changent ni les jauges ni les dés');
 	verifier(r.repro && r.nb > 5, `traces : reproductibles par la graine (${r.nb} lignes)`);
 	verifier(r.q25, 'Q25 : le calcul affiché cite les effets réellement appliqués');
-	verifier(r.sauve, 'traces : restaurées depuis la sauvegarde');
 }
 
 // Prompt 90 : notifications du téléphone — données réelles seulement, rythme, priorités, Ne pas déranger, pas de doublon
@@ -1758,8 +1725,8 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 		ca,
 	);
 	verifier(r.sansOption, 'déblocage : sans l\'option (défaut), toutes les applis sont ouvertes');
-	verifier(r.semaines[0] === 'signalements' && r.semaines[1] === 'community,corbeille,signalements' && r.semaines[2] === 'community,corbeille,patron,signalements', `déblocage par semaine : ${r.semaines.join(' | ')}`);
-	verifier(r.direct === 6 && r.directTout, `déblocage : temps réel = semaine 4 (${r.direct}) ; « tout débloqué » (${r.directTout})`);
+	verifier(r.semaines[0] === 'signalements' && r.semaines[1] === 'community,signalements' && r.semaines[2] === 'community,patron,signalements', `déblocage par semaine : ${r.semaines.join(' | ')}`);
+	verifier(r.direct === 5 && r.directTout, `déblocage : temps réel = semaine 4 (${r.direct}) ; « tout débloqué » (${r.directTout})`);
 	verifier(r.pile === 'os/community > os/journal > os/community > appli/' && r.vide, `pile de navigation : ${r.pile}`);
 	// Brouillon Community : faits réels du dossier (ligne, cause, durée), publication sans effet de jauge
 	const cb = contexte('fr');
@@ -1945,40 +1912,6 @@ for (const f of ['enquete.js', 'carte.js', 'journal.js']) verifier(!/\*\s*1\.05\
 // « Quitter la journée » (mail → soir → sortie, sans toucher aux jauges), clés FR + EN
 {
 	const cg = contexte('fr');
-	vm.runInContext(
-		`var ecran = 'jeu', phase = 'decision', vue = 'poste', fenetre = null, enPause = false, reduireAnimations = false;
-		var PC = { etat: 'appli' }, MOBILE = { actif: false }, ECRAN_POSTE = { x: 96, y: 40, l: 1728, h: 972 }, L = 1920, H = 1080;
-		var mouseX = 0, mouseY = 0, __t = 0, __decide = [], __ann = [];
-		var millis = () => __t, decider = (c) => __decide.push(c), annoncer = (x) => __ann.push(String(x)), constrain = (v, a, b) => Math.max(a, Math.min(b, v));
-		var Confort = { Son: { clic() {}, bip() {} } };
-		function ecranVers(x, y) { mouseX = ECRAN_POSTE.x + (x * ECRAN_POSTE.l) / L; mouseY = ECRAN_POSTE.y + (y * ECRAN_POSTE.h) / H; }`,
-		cg,
-	);
-	vm.runInContext(readFileSync(join(pub, 'glisser.js'), 'utf8'), cg, { filename: 'glisser.js' });
-	const g = vm.runInContext(
-		`(() => {
-		CARTES = [{ cle: 'renfort', x: 820, y: 640, l: 420, h: 140, lib: 'Renforcer', touche: '1' }, { cle: 'rien', x: 1260, y: 640, l: 420, h: 140, lib: 'Ne rien faire', touche: '4' }];
-		ZONE_DEPOT = { x: 810, y: 210, l: 900, h: 340 };
-		const r = {};
-		// glisser la carte 1 sur le dossier
-		ecranVers(900, 700); r.prise = debutGlisser(); ecranVers(1200, 380); relacherGlisser();
-		r.depot = __decide.join() === 'renfort';
-		// glisser ailleurs : aucun choix, retour en ressort, annonce
-		ecranVers(1300, 700); debutGlisser(); ecranVers(200, 900); relacherGlisser();
-		r.ailleurs = __decide.length === 1 && !!GLISSER.retour && /aucun choix/.test(__ann[__ann.length - 1]);
-		// simple clic : décide
-		ecranVers(1300, 700); debutGlisser(); ecranVers(1302, 702); relacherGlisser();
-		r.clic = __decide.join() === 'renfort,rien';
-		// hors décision ou au doigt : pas de prise
-		phase = 'narration'; ecranVers(900, 700); r.horsDecision = debutGlisser() === false; phase = 'decision';
-		MOBILE.actif = true; r.tactile = debutGlisser() === false; MOBILE.actif = false;
-		// poids : amplitude selon les deltas réels, coupée avec les animations réduites
-		// prompt 96 : la secousse passe par juice.js (testé plus bas)
-		return r;
-	})()`,
-		cg,
-	);
-	for (const [k, v] of Object.entries(g)) verifier(v === true, `glisser-déposer (prompt 94) : ${k}`);
 	// Quitter la journée : fin de service → soir (prompt 194 : sans mail plein écran) → sortie → lendemain, jauges intactes
 	const cq = contexte('fr');
 	vm.runInContext(
@@ -2020,12 +1953,12 @@ for (const f of ['enquete.js', 'carte.js', 'journal.js']) verifier(!/\*\s*1\.05\
 	for (const [k, v] of Object.entries(q)) verifier(v === true, `quitter la journée (prompt 94) : ${k}`);
 	const fr94 = contexte('fr');
 	const en94 = contexte('en');
-	for (const cle of ['quitter.bouton', 'glisser.deposer', 'glisser.annule']) {
+	for (const cle of ['quitter.bouton']) {
 		const a = vm.runInContext(`t(${JSON.stringify(cle)}, { reponse: 'X' })`, fr94);
 		const b = vm.runInContext(`t(${JSON.stringify(cle)}, { reponse: 'X' })`, en94);
 		verifier(a !== '[À COMPLÉTER]' && b !== '[À COMPLÉTER]' && a !== b, `prompt 94 : clé ${cle} absente en FR ou en EN`);
 	}
-	verifier(/debutGlisser\(\)/.test(readFileSync(join(pub, 'sketch.js'), 'utf8')) && /relacherGlisser\(\)/.test(readFileSync(join(pub, 'micro.js'), 'utf8')), 'glisser-déposer : appui et relâchement branchés');
+	verifier(!/debutGlisser|relacherGlisser|dessinerCartesReponses/.test(['sketch.js', 'micro.js', 'panneau.js', 'glisser.js'].map((f) => readFileSync(join(pub, f), 'utf8')).join('\n')), 'glisser-déposer (prompt 94) : retiré avec les cartes de réponse (prompt 200)');
 }
 
 // Prompt 95 : journées synchronisées et expliquées — une seule horloge (équipes en temps de jeu), titres de
@@ -3048,7 +2981,7 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 		verifier(!chrono.test(dico['sms.2']) && dico['sms.2'].length > 40, `prompt 179 : sms.2 ne parle plus de chrono et garde la consigne (${langue}) : « ${dico['sms.2']} »`);
 		const fautes = Object.keys(dico).filter((k) => salle.test(dico[k]));
 		verifier(!fautes.length, `prompt 179 : « réputation de la salle » subsiste (${langue}) : ${fautes.join(', ')}`);
-		verifier(['jaugeLong.reputation', 'fin.jauge.reputation', 'sms.3'].every((k) => reseau.test(dico[k])), `prompt 179 : « réputation du réseau » attendu dans jaugeLong.reputation, fin.jauge.reputation et sms.3 (${langue})`);
+		verifier(['fin.jauge.reputation', 'sms.3'].every((k) => reseau.test(dico[k])), `prompt 179 : « réputation du réseau » attendu dans fin.jauge.reputation et sms.3 (${langue})`);
 	}
 	// Temps gelé à la première lecture du téléphone, puis comportement normal ; clé purgée par le mode exposition
 	verifier(/function tempsSuspendu\(\) \{\n\treturn [^\n]*telephonePremiereLecture\(\)/.test(lire179('immersion.js')), 'prompt 179 : tempsSuspendu() doit tenir compte de la première lecture du téléphone');
@@ -3598,24 +3531,24 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	const menu = readFileSync(join(pub, 'menu.js'), 'utf8');
 	const extras = menu.slice(menu.indexOf('const EXTRAS_MENU'), menu.indexOf('const HAUT_MENU'));
 	const ordre = [...extras.matchAll(/cle: '(\w+)'/g)].map((x) => x[1]).join();
-	verifier(ordre === 'pleinEcran,installer,livrables,depot,partager', `prompt 199 : ordre clavier = ordre visuel (pile, puis rangée) (${ordre})`);
-	verifier(!/ouvrirKitPresse|ouvrirPresentation|mp\.kitpresse|mp\.presentation/.test(menu), 'prompt 199 : Kit de presse et Présentation encore au menu');
+	verifier(ordre === 'pleinEcran,installer,livrables,kitpresse,presentation,depot,partager', `prompt 199 : ordre clavier = ordre visuel (pile, puis rangée) (${ordre})`);
+	verifier(/function ouvrirKitPresse\(\) \{\s*annoncer\(t\('mp\.kitpresse\.annonce'\)\);\s*ouvrirLien\('\.\/kit-presse\/'\);/.test(menu) && /function ouvrirPresentation\(\) \{\s*annoncer\(t\('mp\.presentation\.annonce'\)\);\s*ouvrirLien\('\.\/presentation\/'\);/.test(menu) && /presse: 'newspaper'/.test(menu), 'prompt 199 : Kit de presse et Présentation gardés au menu (pages ./kit-presse/ et ./presentation/)');
 	const dessin = menu.slice(menu.indexOf('function dessinerMenuPrincipal'), menu.indexOf('function marqueExpo'));
 	const iL = dessin.indexOf('selecteurLangue('), iP = dessin.indexOf("'pleinEcran'), pleinEcranActif()"), iI = dessin.indexOf('boutonInstaller(xp, yp');
 	verifier(iL > 0 && iL < iP && iP < iI && /yp \+= HAUT_MENU\.h \+ 16/.test(dessin) && /let yp = HAUT_MENU\.y \+ HAUT_MENU\.h \+ 16/.test(dessin), 'prompt 199 : pile de haut en bas FR / EN, plein écran, télécharger, 16 px d\'écart');
 	verifier(/const LARGEUR_PILE = \(\) => LANGUES\.length \* \(84 \+ 8\) - 8/.test(menu), 'prompt 199 : même largeur pour les trois éléments de la pile');
 	verifier(/const BLOC_PARTAGE = \{ x: 160, y: H - 74 - 16 - 68, l: 68, h: 68 \}/.test(menu) && /const basPile = EXTRAS_MENU\.length \? BLOC_PARTAGE\.y - 24/.test(menu), 'prompt 199 : rangée sous la colonne des cartes, alignée à gauche (x des cartes)');
 	const rangee = menu.slice(menu.indexOf('const RANGEE_MENU'), menu.indexOf('function blocPartage'));
-	verifier([...rangee.matchAll(/cle: '(\w+)'/g)].map((x) => x[1]).join() === 'livrables,depot,partager', 'prompt 199 : rangée Livrables, Dépôt, Partager');
+	verifier([...rangee.matchAll(/cle: '(\w+)'/g)].map((x) => x[1]).join() === 'livrables,kitpresse,presentation,depot,partager', 'prompt 199 : rangée Livrables, Kit de presse, Présentation, Dépôt, Partager');
 	const bi = menu.slice(menu.indexOf('function boutonIcone'), menu.indexOf('const BLOC_PARTAGE'));
 	verifier(!/text\(/.test(bi) && /iconeMenu\(icone/.test(bi), 'prompt 199 : boutons de la rangée à icône seule (pas de libellé à l\'écran)');
 	verifier(/bulle = t\('mp\.' \+ r\.cle\) \+ ' — ' \+ t\('mp\.' \+ r\.cle \+ '\.infobulle'\)/.test(menu), 'prompt 199 : le libellé passe dans l\'infobulle');
 	const portrait = readFileSync(join(pub, 'portrait.js'), 'utf8');
-	verifier(/LARGEUR_PILE\(\) \+ 24/.test(portrait) && /2 \* lp\);/.test(portrait) && /2 \* lr\) \+ 16;/.test(portrait), 'prompt 199 : régions portrait (pile et rangée agrandies ×2, cibles ≥ 44 px)');
+	verifier(/LARGEUR_PILE\(\) \+ 24/.test(portrait) && /2 \* lp\);/.test(portrait) && /Math\.min\(2 \* lr, PL - 40\)\) \+ 16;/.test(portrait), 'prompt 199 : régions portrait (pile et rangée agrandies ×2, cibles ≥ 44 px)');
 	const c = contexte('fr');
 	for (const langue of ['fr', 'en']) {
 		const dico = vm.runInContext(`TRADUCTIONS.${langue}`, c);
-		verifier(['livrables', 'depot', 'partager'].every((k) => dico['mp.' + k] && dico['mp.' + k + '.infobulle']) && dico['mp.installer'] && dico['mp.pleinEcran'] && !dico['mp.kitpresse'] && !dico['mp.presentation'], `prompt 199 : libellés et infobulles du menu (${langue})`);
+		verifier(['livrables', 'kitpresse', 'presentation', 'depot', 'partager'].every((k) => dico['mp.' + k] && dico['mp.' + k + '.infobulle']) && dico['mp.installer'] && dico['mp.pleinEcran'], `prompt 199 : libellés et infobulles du menu (${langue})`);
 	}
 	verifier(existsSync(join(pub, 'kit-presse', 'index.html')) && existsSync(join(pub, 'kit-presse', 'communique-de-presse.txt')) && existsSync(join(pub, 'kit-presse', 'logo.svg')), 'prompt 188 : fichiers du kit de presse présents');
 }
@@ -3935,6 +3868,111 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 		verifier(!ajoutees.length, `prompt 194 (${langue}) : clés manquantes : ${ajoutees.join(', ')}`);
 		verifier(/horlog|clock/i.test(dico['tuto.6.texte']) && /\bQ\b/.test(dico['tuto.6.texte']) && /Mail/.test(dico['tuto.6.texte']) && !/PC/.test(dico['horloge.fin']), `prompt 194 (${langue}) : le tutoriel explique l'horloge et Mails`);
 	}
+}
+
+// Prompt 198 : variété des interactions Community — volume × 4, au plus 1/3 de provoquantes, tirage semé sans répétition
+{
+	const brut = JSON.parse(readFileSync(join(pub, 'data', 'messages.json'), 'utf8'));
+	const TONS = ['provoquant', 'neutre', 'positif'];
+	const CATS = ['question', 'remerciement', 'suggestion', 'temoignage', 'relance', 'doublon', 'accessibilite', 'photo'];
+	const nouvelles = brut.plaintes.filter((p) => p.categorie && p.categorie !== 'plainte');
+	verifier(brut.plaintes.every((p) => TONS.includes(p.ton)) && !brut.plaintes.some((p) => p.ton === 'agressif'), '198 : chaque entrée de messages.json porte un ton (provoquant, neutre, positif)');
+	verifier(CATS.every((c) => nouvelles.filter((p) => p.categorie === c).length >= 4), `198 : au moins 4 entrées par nouvelle catégorie (${CATS.map((c) => c + ' ' + nouvelles.filter((p) => p.categorie === c).length).join(', ')})`);
+	const incompletes = nouvelles.filter((p) => !p.texte.fr || !p.texte.en || p.reponses.length !== 3 || p.reponses.filter((r) => r.bonne).length !== 1 || p.reponses.some((r) => !r.effets || (!r.clash && (!r.texte.fr || !r.texte.en))));
+	verifier(nouvelles.length >= 40 && !incompletes.length, `198 : nouvelles interactions incomplètes (FR + EN, 3 réponses, effets) : ${incompletes.map((p) => p.id)}`);
+	const clair = /\b(merde|putain|connard|connasse|enculé|salope|bordel|foutre|fuck|shit|bastard|bitch|asshole|crap|damn)\b/i;
+	verifier(!nouvelles.some((p) => clair.test(p.texte.fr + ' ' + p.texte.en)), '198 : aucun mot grossier en clair dans les nouvelles interactions');
+	verifier(nouvelles.filter((p) => p.ton === 'provoquant').every((p) => /[@#$%&!]{2,}/.test(p.texte.fr) && /[@#$%&!]{2,}/.test(p.texte.en)), '198 : provocations aux mots masqués hors alphabet');
+	const code = readFileSync(join(pub, 'game.js'), 'utf8');
+	verifier(!/Math\.random\s*\(/.test(code), '198 : aucun Math.random() dans game.js (tirage semé)');
+
+	const SIM = `(sem, enPlus) => {
+		Jeu.chargerSemaine(sem); Jeu.nouvellePartie(); Jeu.NB_INTERACTIONS_EN_PLUS = enPlus;
+		const jours = []; let tours = 0; let sauvegarde = null;
+		const repondre = () => Jeu.plaintesEnAttente().forEach((p) => Jeu.repondrePlainte(p, 0, undefined));
+		while (!Jeu.terminee && tours++ < 500) {
+			const d = Jeu.prochainDuJour();
+			const deb = Jeu.debutJournee(), fin = Jeu.finJournee();
+			if (d) {
+				const n = Jeu.jourCourant().dossiers.length, rang = Jeu.jourCourant().dossiers.indexOf(d);
+				Jeu.horloge.minutes = deb + Math.floor(((rang + 1) * (fin - deb)) / (n + 1));
+				Jeu.majInteractions(); repondre();
+				Jeu.declencherPlainte(Jeu.index); repondre();
+				if (!sauvegarde && Jeu.interactionsPrevues.length) sauvegarde = { prevues: JSON.stringify(Jeu.interactionsPrevues), instantane: JSON.stringify(Jeu.instantane(0)) };
+				if (Jeu.conflit && Jeu.conflit()) Jeu.choisirPriorite('a');
+				Jeu.decider(Jeu.actionsPossibles(d)[0], d.contradiction ? d.contradiction.bonne : undefined);
+			} else {
+				Jeu.horloge.minutes = fin;
+				for (let i = 0; i < 6; i++) { Jeu.majInteractions(); repondre(); }
+				const du = Jeu.plaintes.filter((p) => p.jour === Jeu.jourIndex);
+				const tons = du.map((p) => Jeu.tonInteraction(p));
+				jours.push({
+					total: du.length, principales: du.filter((p) => !p.extra).length, provoquant: tons.filter((x) => x === 'provoquant').length,
+					deSuite: tons.some((x, i) => i && x === 'provoquant' && tons[i - 1] === 'provoquant'),
+					depasse: tons.some((x, i) => 3 * tons.slice(0, i + 1).filter((y) => y === 'provoquant').length > i + 1),
+					categories: [...new Set(du.map((p) => Jeu.categorieInteraction(p)))],
+					textes: du.map((p) => p.id + '|' + p.auteur + '|' + p.heure + '|' + Jeu.textePlainte(p)),
+					ids: du.filter((p) => p.extra).map((p) => p.id),
+					horsFait: du.filter((p) => /\\{\\w+\\}/.test(Jeu.textePlainte(p)) || !Jeu.paquet[p.index]).map((p) => p.id),
+					doublesDuFil: du.filter((p) => du.some((q) => q !== p && q.index === p.index && (q.id === p.id || q.auteur === p.auteur))).map((p) => p.id),
+					reste: Jeu.interactionsPrevues.length,
+				});
+				Jeu.finDeJourneeTactique(); Jeu.mailDuJour();
+				if (!Jeu.jours[Jeu.jourIndex + 1]) break;
+				Jeu.journeeSuivante();
+			}
+		}
+		return { jours, sauvegarde, tirages: Jeu.tirages, historique: Jeu.derniersTextes };
+	}`;
+	const simuler = (sem, enPlus, langue = 'fr', avant = '') => vm.runInContext(`${avant}(${SIM})(${JSON.stringify(sem)}, ${enPlus})`, contexte(langue));
+	for (const sem of ['2026-09-14', '2026-10-12', '2026-11-02']) {
+		const ref = simuler(sem, 0);
+		const neuf = simuler(sem, 3);
+		// volume : 4 × la référence (une plainte au plus par dossier présenté), journée par journée
+		verifier(ref.jours.length === neuf.jours.length && ref.jours.every((j, i) => j.total > 0 && neuf.jours[i].total === 4 * j.total && neuf.jours[i].principales === j.total), `198 (${sem}) : volume ≠ 4 × la référence : ${ref.jours.map((j) => j.total)} → ${neuf.jours.map((j) => j.total)}`);
+		verifier(neuf.jours.every((j) => 3 * j.provoquant <= j.total && !j.depasse && !j.deSuite), `198 (${sem}) : provocations au-delà de 1/3 ou deux de suite : ${neuf.jours.map((j) => j.provoquant + '/' + j.total)}`);
+		verifier(neuf.jours.some((j) => j.provoquant > 0), `198 (${sem}) : aucune interaction provoquante de la semaine`);
+		verifier(neuf.jours.every((j) => j.categories.length >= 4 && !j.horsFait.length && !j.doublesDuFil.length && j.reste === 0), `198 (${sem}) : variété ou rattachement au fait réel : ${JSON.stringify(neuf.jours.map((j) => [j.categories.length, j.horsFait, j.doublesDuFil, j.reste]))}`);
+		// 20 tirages de suite (et tous les autres) : aucune variante immédiatement répétée
+		const ids = neuf.jours.flatMap((j) => j.ids);
+		verifier(ids.length >= 20 && !ids.some((x, i) => i && x === ids[i - 1]) && new Set(ids).size >= 20, `198 (${sem}) : variante répétée de suite ou trop peu de variantes (${new Set(ids).size} sur ${ids.length})`);
+		// reproductibilité : même graine → mêmes textes, auteurs et heures ; les dés de la partie ne sont pas consommés
+		const bis = simuler(sem, 3);
+		verifier(JSON.stringify(bis.jours) === JSON.stringify(neuf.jours), `198 (${sem}) : deux parties identiques ne donnent pas les mêmes interactions`);
+		verifier(neuf.tirages === ref.tirages, `198 (${sem}) : le tirage varié consomme les dés de la partie (${ref.tirages} → ${neuf.tirages})`);
+		// une autre graine ne donne pas le même habillage
+		const autre = vm.runInContext(`(() => { const init = Jeu.initialiserAlea; Jeu.initialiserAlea = (g, n) => init(g + 7919, n); return (${SIM})(${JSON.stringify(sem)}, 3); })()`, contexte('fr'));
+		verifier(JSON.stringify(autre.jours.map((j) => j.textes)) !== JSON.stringify(neuf.jours.map((j) => j.textes)), `198 (${sem}) : une autre graine donne exactement les mêmes interactions`);
+		// anglais : mêmes interactions, textes traduits, aucune variable restante
+		const en = simuler(sem, 3, 'en');
+		verifier(JSON.stringify(en.jours.map((j) => j.ids)) === JSON.stringify(neuf.jours.map((j) => j.ids)) && en.jours.every((j) => !j.horsFait.length), `198 (${sem}) : interactions différentes ou incomplètes en anglais`);
+		// sauvegarde / reprise : interactions réservées et historique des variantes restitués
+		const repris = vm.runInContext(`(() => { Jeu.chargerSemaine(${JSON.stringify(sem)}); Jeu.restaurerInstantane(JSON.parse(${JSON.stringify(neuf.sauvegarde.instantane)}), 0); return { prevues: JSON.stringify(Jeu.interactionsPrevues), historique: typeof Jeu.derniersTextes }; })()`, contexte('fr'));
+		verifier(repris.prevues === neuf.sauvegarde.prevues && repris.historique === 'object', `198 (${sem}) : interactions réservées perdues à la reprise`);
+	}
+	// Jeu.hasard : générateur semé (mêmes valeurs pour la même clé, autres valeurs pour une autre clé), dans [0, 1[
+	const h = vm.runInContext(`(() => { Jeu.chargerSemaine('2026-10-12'); Jeu.nouvellePartie(); const suite = (k) => { const r = Jeu.hasard(k); return [r(), r(), r(), r()]; }; return { a: suite('3|1|2'), b: suite('3|1|2'), c: suite('4|1|2') }; })()`, contexte('fr'));
+	verifier(JSON.stringify(h.a) === JSON.stringify(h.b) && JSON.stringify(h.a) !== JSON.stringify(h.c) && h.a.every((x) => x >= 0 && x < 1), `198 : Jeu.hasard non reproductible ou hors [0, 1[ : ${JSON.stringify(h)}`);
+	// historique circulaire : jamais plus long que le pool de la catégorie − 1, et la variante revient quand le pool est épuisé
+	const t = vm.runInContext(`(() => {
+		Jeu.chargerSemaine('2026-10-12'); Jeu.nouvellePartie();
+		const pool = Jeu.MESSAGES.plaintes.filter((p) => p.categorie === 'remerciement');
+		const rnd = Jeu.hasard('test'); const tires = [];
+		for (let i = 0; i < 3 * pool.length; i++) tires.push(Jeu.tirerVarie('remerciement', pool, rnd).id);
+		return { pool: pool.length, tires, historique: Jeu.derniersTextes.remerciement.length };
+	})()`, contexte('fr'));
+	const fenetres = t.tires.every((x, i) => !t.tires.slice(Math.max(0, i - (t.pool - 1)), i).includes(x));
+	verifier(t.historique === t.pool - 1 && fenetres && new Set(t.tires).size === t.pool, `198 : historique circulaire (pool ${t.pool}, historique ${t.historique}, tirages ${t.tires.join(' ')})`);
+	// entrée invalide (ton ou catégorie inconnus, interaction sans anglais) : ignorée
+	const inv = vm.runInContext(`(() => {
+		const base = JSON.parse(JSON.stringify(MESSAGES.plaintes.find((p) => p.id === 'merci_general')));
+		const faux = [Object.assign({}, base, { id: 'x1', ton: 'furieux' }), Object.assign({}, base, { id: 'x2', categorie: 'pub' }), Object.assign({}, base, { id: 'x3', texte: { fr: 'Seulement en français' } })];
+		const garde = console.warn; let avertis = 0; console.warn = () => avertis++;
+		const n = Jeu.chargerMessages({ plaintes: [base].concat(faux) });
+		console.warn = garde; Jeu.chargerMessages(MESSAGES);
+		return { n, avertis };
+	})()`, contexte('fr'));
+	verifier(inv.n === 1 && inv.avertis === 3, `198 : entrées invalides non ignorées (${JSON.stringify(inv)})`);
 }
 
 if (erreurs.length) {

@@ -367,7 +367,6 @@ function corpsEnquete(d, x, y0, l, h) {
 	h -= 62;
 	ENQ_UI.vu = frameCount;
 	if (SELECTION.onglet === 'historique') return (ENQ_UI.zone = null), dessinerHistoriqueLigne(d, x, y0, l, h);
-	if (SELECTION.onglet === 'equipes') return (ENQ_UI.zone = null), dessinerEquipesIncident(d, x, y0, l, h);
 	if (ENQ_UI.dossier !== d) Object.assign(ENQ_UI, { dossier: d, defil: 0, vise: 0, focus: -1 });
 	const lc = l - 20; // place de la barre de défilement
 	const items = [];

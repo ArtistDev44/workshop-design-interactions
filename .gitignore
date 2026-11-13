@@ -1,5 +1,7 @@
-# Prompt 187 — trailer HyperFrames : dépendances, rendus intermédiaires et sources brutes (musique originale incluse)
+# Prompt 187 — trailer HyperFrames : dépendances, rendus intermédiaires, caches et sources brutes (musique originale incluse)
 trailer/node_modules/
 trailer/renders/
 trailer/assets/raw/
 trailer/.hyperframes/
+trailer/.thumbnails/
+trailer/.waveform-cache/

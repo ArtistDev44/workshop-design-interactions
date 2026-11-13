@@ -36,11 +36,6 @@ function appliVersImage(r) {
 	const k = KP();
 	return { x: ECRAN_POSTE.x + (A.x + r.x * A.k) * k, y: ECRAN_POSTE.y + (A.y + r.y * A.k) * k, l: r.l * A.k * k, h: r.h * A.k * k };
 }
-/** Rectangle de l'écran du PC (coordonnées PC) → image principale */
-function pcVersImage(r) {
-	const k = KP();
-	return { x: ECRAN_POSTE.x + r.x * k, y: ECRAN_POSTE.y + r.y * k, l: r.l * k, h: r.h * k };
-}
 function region(src, dx, dy, dl, defile) {
 	const dh = (src.h * dl) / src.l;
 	PORTRAIT.regions.push({ src, dst: { x: dx, y: dy, l: dl, h: dh }, defile: !!defile });
@@ -84,15 +79,15 @@ function composerPortrait() {
 		region({ x: (L - W) / 2, y: 0, l: W, h: H }, 0, (PH - (H * PL) / W) / 2, PL);
 	} else if (scene === 'menu') {
 		// Prompt 199 : en haut à droite, la pile FR / EN · plein écran · télécharger ; puis la colonne du menu (titre, cartes)
-		// jusqu'à Paramètres ; puis la rangée Livrables · Dépôt · Partager et le pied de page. Pile et rangée agrandies ×2 :
+		// jusqu'à Paramètres ; puis la rangée Livrables · Kit de presse · Présentation · Dépôt · Partager et le pied de page. Pile et rangée agrandies ×2 :
 		// boutons de 60 et 68 px → ≥ 44 px à l'écran sur un téléphone de 412 px de large
 		const lp = LARGEUR_PILE() + 24, hp = 3 * HAUT_MENU.h + 2 * 16 + 24;
 		region({ x: L - HAUT_MENU.marge - lp + 12, y: HAUT_MENU.y - 12, l: lp, h: hp }, PL - 20 - 2 * lp, 30, 2 * lp);
 		const b = BLOC_PARTAGE, yr = b.yDessin || b.y, lc = 908;
 		let y = 30 + 2 * hp + 24;
 		y += region({ x: 110, y: 60, l: lc, h: yr - 12 - 60 }, 0, y, PL) + 8;
-		const lr = 3 * b.l + 2 * 16 + 24;
-		y += region({ x: b.x - 12, y: yr - 12, l: lr, h: b.h + 24 }, 20, y, 2 * lr) + 16;
+		const lr = RANGEE_MENU.length * b.l + (RANGEE_MENU.length - 1) * 16 + 24;
+		y += region({ x: b.x - 12, y: yr - 12, l: lr, h: b.h + 24 }, 20, y, Math.min(2 * lr, PL - 40)) + 16;
 		region({ x: 110, y: H - 80, l: lc, h: 56 }, 0, y, PL); // pied de page (nos noms → Crédits)
 	}
 	else if (scene === 'bureau') {
@@ -142,7 +137,6 @@ function regionsAppli() {
 	let y = haut;
 	// Prompt 73 : la liste des signalements en haut (hauteur selon le nombre de signalements), le dossier dessous,
 	// puis la colonne lignes / objectif / équipes
-	const nSig = Math.max(1, Math.min(typeof fileIncidents === 'function' ? fileIncidents().length : 1, 7));
 	const zcP = typeof zoneCarte === 'function' ? zoneCarte() : FILE_SIG; // prompt 102 : la carte à la place de la liste
 	y += region(appliVersImage({ x: zcP.x, y: zcP.y, l: zcP.l, h: zcP.h }), 20, y, PL - 40, true) + 16;
 	y += region(appliVersImage(MENU_BAS), 0, y, PL) + 16; // prompt 103 : menu en barre d'onglets

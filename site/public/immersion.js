@@ -30,7 +30,6 @@ let smsIndex = 0;
 let introVue = false;
 let inactifDepuis = 0; // millis() de la dernière interaction
 let enSieste = false;
-let debutSieste = 0;
 let reveil = null; // { limite } quand une alerte arrive pendant la sieste
 let focusBureau = -1; // -1 : aucun ; sinon index dans OBJETS_BUREAU
 let derniereImage = 0;
@@ -283,6 +282,7 @@ function avancerTemps() {
 	if (Jeu.etat.mode !== 'direct' && Jeu.horloge.minutes > Jeu.finJournee()) Jeu.horloge.minutes = Math.max(avant, Jeu.finJournee());
 	majSomnolence(dt, Jeu.horloge.minutes - avant); // prompt 78 : la somnolence monte avec le temps de jeu et l'inactivité
 	if (Jeu.majSuivis && Jeu.majSuivis()) Confort.Son.bip('choix'); // prompt 63 : une réaction arrive sur Community
+	if (Jeu.majInteractions && Jeu.majInteractions()) Confort.Son.bip('choix'); // prompt 198 : une interaction de plus arrive sur Community
 
 	// Prompt 87 : sans chrono, rien n'expire pendant la journée ; à l'heure de fin, ce qui reste suit la règle « non traité » (Q25)
 	if (!Jeu.defiChrono && (phase === 'attente' || phase === 'selection') && Jeu.etat.mode !== 'direct' && Jeu.horloge.minutes >= Jeu.finJournee() && Jeu.prochainDuJour()) {

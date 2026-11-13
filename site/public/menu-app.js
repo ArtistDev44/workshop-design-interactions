@@ -9,7 +9,7 @@
  *   l'entrée active ; plus aucune carte de notification à l'écran.
  * - Mobile portrait : le menu devient une barre d'onglets en bas (dessinée sous le contenu, y 1036).
  */
-const VUES_APP = ['patron', 'community', 'journal', 'donnees', 'corbeille']; // prompt 183 : la Corbeille (hors menu depuis le prompt 103) se dessine aussi en vue intégrée
+const VUES_APP = ['patron', 'community', 'journal', 'donnees'];
 const ENTREES_MENU = ['signalements', 'patron', 'community', 'journal', 'donnees'];
 const ZONE_VUE = { x: 184, y: 92, l: 1696, h: 940 }; // prompt 145
 const MENU_FOCUS = { actif: false }; // Tab dans le menu (Entrée ouvre l'entrée focalisée)
@@ -121,5 +121,4 @@ function dessinerVueApp() {
 	else if (PC.fenetre === 'community') appCommunity(z);
 	else if (PC.fenetre === 'journal') appJournal(z);
 	else if (PC.fenetre === 'donnees') dessinerAppliDonnees(z);
-	else if (PC.fenetre === 'corbeille') appCorbeille(z);
 }

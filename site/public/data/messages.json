@@ -1,5 +1,5 @@
 {
- "_lisezMoi": "Plaintes des Nantais (prompt 28). Fichier brut modifiable à la main : ajouter une plainte = ajouter une entrée dans « plaintes », sans toucher au code. Après modification, lancer « npm run messages » dans site/ pour régénérer messages.js (double clic hors ligne) ; servi par un serveur, le jeu relit directement ce JSON. condition : type (« ligne en difficulté », « perturbation », « événement », « alerte météo » ou « * »), retard_min (minutes), ligne (nom exact), nature_contient (texte), pointe (true = 7–9 h ou 17–19 h), meteo (« pluie » = au moins 1 mm ce jour-là). Variables remplies par le dossier réel joué : {ligne}, {retard}, {nature} (les dossiers d’archive et d’agenda n’ont souvent pas de ligne : préférer {nature}). Une plainte dont une variable n'existe pas pour le dossier n'est pas proposée. effets : points ajoutés aux jauges fluidite, reputation, budget (bornés à ±15, puis jauges bornées 0–100). bonne : true pour la réponse de bon sens (au moins une par plainte). Prompt 85 : « prive »: true envoie la plainte dans la messagerie privée du compte (une relance au plus) ; « modeles » = les 3 modèles d’info trafic que le joueur peut publier ({sujet}, {action}), « coherent » = actions (ou « meteo ») avec lesquelles le message est cohérent (+1 réputation, sinon −2). Prompt 189 : « registre » (etudiant, senior, touriste, travailleur, parent) = registre de langage de l’usager ; seul le vocabulaire change, les faits restent ceux du dossier réel. Prompt 197 : chaque plainte a exactement 3 réponses dont une « clash » (clash: true, sans champ texte : le texte est tiré des clés clash.<catégorie>.1..3, mots grossiers masqués hors alphabet) ; effets du clash : réputation -8, réponse toujours « mauvaise ». Ordre d’affichage mélangé de façon déterministe (aucun marqueur visuel du clash).",
+ "_lisezMoi": "Plaintes des Nantais (prompt 28). Fichier brut modifiable à la main : ajouter une plainte = ajouter une entrée dans « plaintes », sans toucher au code. Après modification, lancer « npm run messages » dans site/ pour régénérer messages.js (double clic hors ligne) ; servi par un serveur, le jeu relit directement ce JSON. condition : type (« ligne en difficulté », « perturbation », « événement », « alerte météo » ou « * »), retard_min (minutes), ligne (nom exact), nature_contient (texte), pointe (true = 7–9 h ou 17–19 h), meteo (« pluie » = au moins 1 mm ce jour-là). Variables remplies par le dossier réel joué : {ligne}, {retard}, {nature} (les dossiers d’archive et d’agenda n’ont souvent pas de ligne : préférer {nature}). Une plainte dont une variable n'existe pas pour le dossier n'est pas proposée. effets : points ajoutés aux jauges fluidite, reputation, budget (bornés à ±15, puis jauges bornées 0–100). bonne : true pour la réponse de bon sens (au moins une par plainte). Prompt 85 : « prive »: true envoie la plainte dans la messagerie privée du compte (une relance au plus) ; « modeles » = les 3 modèles d’info trafic que le joueur peut publier ({sujet}, {action}), « coherent » = actions (ou « meteo ») avec lesquelles le message est cohérent (+1 réputation, sinon −2). Prompt 189 : « registre » (etudiant, senior, touriste, travailleur, parent) = registre de langage de l’usager ; seul le vocabulaire change, les faits restent ceux du dossier réel. Prompt 197 : chaque plainte a exactement 3 réponses dont une « clash » (clash: true, sans champ texte : le texte est tiré des clés clash.<catégorie>.1..3, mots grossiers masqués hors alphabet) ; effets du clash : réputation -8, réponse toujours « mauvaise ». Ordre d’affichage mélangé de façon déterministe (aucun marqueur visuel du clash). Prompt 198 : « ton » (provoquant, neutre, positif) sur chaque entrée — au plus 1/3 d’interactions provoquantes par journée jouée, jamais deux de suite ; « categorie » (plainte par défaut, question, remerciement, suggestion, temoignage, relance, doublon, accessibilite, photo) : une plainte déclenchée amène 3 interactions de plus sur le même fait réel, tirées par Jeu.hasard (graine de la partie + dossier + jour + rang) sans répétition récente ; sans « auteur », le pseudonyme fictif est tiré aussi ; condition « fil »: true = seulement si le fait a déjà une plainte (relance, doublon).",
  "version": 1,
  "plaintes": [
   {
@@ -48,7 +48,8 @@
       "budget": 0
      }
     }
-   ]
+   ],
+   "ton": "neutre"
   },
   {
    "id": "retard_20",
@@ -96,7 +97,8 @@
       "budget": 0
      }
     }
-   ]
+   ],
+   "ton": "neutre"
   },
   {
    "id": "retard_pointe",
@@ -145,7 +147,8 @@
       "budget": 0
      }
     }
-   ]
+   ],
+   "ton": "neutre"
   },
   {
    "id": "correspondance",
@@ -193,7 +196,8 @@
       "budget": 0
      }
     }
-   ]
+   ],
+   "ton": "neutre"
   },
   {
    "id": "manifestation",
@@ -241,7 +245,8 @@
       "budget": 0
      }
     }
-   ]
+   ],
+   "ton": "neutre"
   },
   {
    "id": "mouvement_social",
@@ -289,7 +294,8 @@
       "budget": 0
      }
     }
-   ]
+   ],
+   "ton": "neutre"
   },
   {
    "id": "perturbation",
@@ -336,7 +342,8 @@
       "budget": 0
      }
     }
-   ]
+   ],
+   "ton": "neutre"
   },
   {
    "id": "affluence",
@@ -383,7 +390,8 @@
       "budget": 0
      }
     }
-   ]
+   ],
+   "ton": "neutre"
   },
   {
    "id": "affluence_proprete",
@@ -430,7 +438,8 @@
       "budget": 0
      }
     }
-   ]
+   ],
+   "ton": "neutre"
   },
   {
    "id": "affluence_pluie",
@@ -478,7 +487,8 @@
       "budget": 0
      }
     }
-   ]
+   ],
+   "ton": "neutre"
   },
   {
    "id": "affluence_pointe",
@@ -526,7 +536,8 @@
       "budget": 0
      }
     }
-   ]
+   ],
+   "ton": "neutre"
   },
   {
    "id": "vent",
@@ -574,7 +585,8 @@
       "budget": 0
      }
     }
-   ]
+   ],
+   "ton": "neutre"
   },
   {
    "id": "temperature",
@@ -622,7 +634,8 @@
       "budget": 0
      }
     }
-   ]
+   ],
+   "ton": "neutre"
   },
   {
    "id": "pluie_abri",
@@ -670,7 +683,8 @@
       "budget": 0
      }
     }
-   ]
+   ],
+   "ton": "neutre"
   },
   {
    "id": "travaux_deviation",
@@ -718,7 +732,8 @@
       "budget": 0
      }
     }
-   ]
+   ],
+   "ton": "neutre"
   },
   {
    "id": "affluence_soir",
@@ -765,7 +780,8 @@
       "budget": 0
      }
     }
-   ]
+   ],
+   "ton": "neutre"
   },
   {
    "id": "affluence_accessibilite",
@@ -811,7 +827,8 @@
       "budget": 0
      }
     }
-   ]
+   ],
+   "ton": "neutre"
   },
   {
    "id": "perturbation_horaires",
@@ -858,7 +875,8 @@
       "budget": 0
      }
     }
-   ]
+   ],
+   "ton": "neutre"
   },
   {
    "id": "prive_objet_oublie",
@@ -906,7 +924,8 @@
      }
     }
    ],
-   "prive": true
+   "prive": true,
+   "ton": "neutre"
   },
   {
    "id": "prive_accessibilite",
@@ -953,7 +972,8 @@
      }
     }
    ],
-   "prive": true
+   "prive": true,
+   "ton": "neutre"
   },
   {
    "id": "prive_deviation",
@@ -1001,7 +1021,8 @@
      }
     }
    ],
-   "prive": true
+   "prive": true,
+   "ton": "neutre"
   },
   {
    "id": "info_erronee",
@@ -1048,12 +1069,13 @@
       "budget": 0
      }
     }
-   ]
+   ],
+   "ton": "neutre"
   },
   {
    "id": "agressif_retard_10",
    "auteur": "@raleur_du_44",
-   "ton": "agressif",
+   "ton": "provoquant",
    "condition": {
     "type": "ligne en difficulté",
     "retard_min": 10
@@ -1101,7 +1123,7 @@
   {
    "id": "agressif_retard_20",
    "auteur": "@plus_jamais_le_tram",
-   "ton": "agressif",
+   "ton": "provoquant",
    "condition": {
     "type": "ligne en difficulté",
     "retard_min": 20
@@ -1149,7 +1171,7 @@
   {
    "id": "agressif_perturbation",
    "auteur": "@nantais_vener",
-   "ton": "agressif",
+   "ton": "provoquant",
    "condition": {
     "type": "perturbation"
    },
@@ -1196,7 +1218,7 @@
   {
    "id": "agressif_travaux",
    "auteur": "@chantier_ma_vie",
-   "ton": "agressif",
+   "ton": "provoquant",
    "condition": {
     "type": "perturbation",
     "nature_contient": "travaux"
@@ -1244,7 +1266,7 @@
   {
    "id": "agressif_evenement",
    "auteur": "@coincee_dans_la_foule",
-   "ton": "agressif",
+   "ton": "provoquant",
    "condition": {
     "type": "événement"
    },
@@ -1291,7 +1313,7 @@
   {
    "id": "agressif_pluie",
    "auteur": "@trempe_et_furax",
-   "ton": "agressif",
+   "ton": "provoquant",
    "condition": {
     "type": "*",
     "meteo": "pluie"
@@ -1339,7 +1361,7 @@
   {
    "id": "agressif_general",
    "auteur": "@client_mecontent",
-   "ton": "agressif",
+   "ton": "provoquant",
    "condition": {
     "type": "*"
    },
@@ -1386,7 +1408,7 @@
   {
    "id": "agressif_vent",
    "auteur": "@decoiffe_44",
-   "ton": "agressif",
+   "ton": "provoquant",
    "condition": {
     "type": "alerte météo",
     "nature_contient": "vent"
@@ -1477,7 +1499,8 @@
       "budget": 0
      }
     }
-   ]
+   ],
+   "ton": "neutre"
   },
   {
    "id": "fictif_agression_2",
@@ -1525,7 +1548,8 @@
       "budget": 0
      }
     }
-   ]
+   ],
+   "ton": "neutre"
   },
   {
    "id": "fictif_vol_1",
@@ -1573,7 +1597,8 @@
       "budget": 0
      }
     }
-   ]
+   ],
+   "ton": "neutre"
   },
   {
    "id": "fictif_vol_2",
@@ -1604,6 +1629,2515 @@
      "texte": {
       "fr": "Nous ne commentons pas ce type d'incident.",
       "en": "We don't comment on this kind of incident."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -5,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ],
+   "ton": "neutre"
+  },
+  {
+   "id": "question_ligne",
+   "categorie": "question",
+   "ton": "neutre",
+   "condition": {
+    "type": "ligne en difficulté"
+   },
+   "texte": {
+    "fr": "Bonjour, la ligne {ligne} affiche {retard} min de retard : ça vaut le coup d’attendre ou je pars à pied ?",
+    "en": "Hello, line {ligne} shows a {retard} min delay: is it worth waiting or should I walk?"
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Bonjour : le retard de {retard} min sur la ligne {ligne} est confirmé. Pour un trajet court, la marche peut être plus rapide ; nous publions la suite ici.",
+      "en": "Hello: the {retard} min delay on line {ligne} is confirmed. For a short trip, walking may be quicker; we post updates here."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 3,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Regardez l’appli.",
+      "en": "Check the app."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -3,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "question_perturbation",
+   "categorie": "question",
+   "ton": "neutre",
+   "condition": {
+    "type": "perturbation"
+   },
+   "texte": {
+    "fr": "Question : « {nature} », ça touche quelles lignes ? Je dois m’organiser pour ce soir.",
+    "en": "Question: “{nature}”, which lines does it affect? I need to plan for tonight."
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Bonjour : « {nature} » est bien signalé. Chaque mise à jour est publiée ici dès qu’elle est confirmée.",
+      "en": "Hello: “{nature}” is on record. Every update is posted here as soon as it is confirmed."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 3,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Aucune idée pour l’instant.",
+      "en": "No idea for now."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -3,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "question_evenement",
+   "categorie": "question",
+   "ton": "neutre",
+   "condition": {
+    "type": "événement"
+   },
+   "texte": {
+    "fr": "Je vais à « {nom} » : il y aura de quoi rentrer en tram après ?",
+    "en": "I’m going to “{nom}”: will there be trams to get home afterwards?"
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Bonjour : l’affluence possible pour « {nom} » est suivie par la régulation. Prévoyez un peu de marge au retour et suivez l’info trafic.",
+      "en": "Hello: possible crowds for “{nom}” are being monitored. Allow some extra time on the way back and follow the traffic updates."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 3,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Ce n’est pas notre événement.",
+      "en": "It is not our event."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -3,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "question_meteo",
+   "categorie": "question",
+   "ton": "neutre",
+   "condition": {
+    "type": "alerte météo"
+   },
+   "texte": {
+    "fr": "Avec l’alerte « {nature} », est-ce que le service change aujourd’hui ?",
+    "en": "With the “{nature}” alert, is the service changing today?"
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Bonjour : l’alerte « {nature} » est suivie. Toute adaptation du service sera annoncée ici en priorité.",
+      "en": "Hello: the “{nature}” alert is being monitored. Any change to the service will be announced here first."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 3,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Voyez la météo.",
+      "en": "Check the weather."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -3,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "question_generale",
+   "categorie": "question",
+   "ton": "neutre",
+   "condition": {
+    "type": "*"
+   },
+   "texte": {
+    "fr": "Bonjour, où trouver l’info trafic en temps réel ? Je ne m’y retrouve pas.",
+    "en": "Hello, where do I find live traffic information? I can’t find my way around."
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Bonjour : l’info trafic est publiée sur ce compte et aux arrêts. Dites-nous votre ligne, on regarde.",
+      "en": "Hello: traffic information is posted on this account and at stops. Tell us your line and we’ll look."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 2,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Cherchez un peu.",
+      "en": "Look a bit harder."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -3,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "question_pluie",
+   "categorie": "question",
+   "ton": "neutre",
+   "condition": {
+    "type": "*",
+    "meteo": "pluie"
+   },
+   "texte": {
+    "fr": "Il pleut fort : est-ce qu’il y a un abri à tous les arrêts ? Je voyage avec une poussette.",
+    "en": "It’s pouring: is there a shelter at every stop? I’m travelling with a pushchair."
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Bonjour : tous les arrêts n’ont pas d’abri. Indiquez-nous le vôtre, nous transmettons la demande.",
+      "en": "Hello: not every stop has a shelter. Tell us yours and we’ll pass the request on."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 3,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Prenez un parapluie.",
+      "en": "Take an umbrella."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -4,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "question_privee_trajet",
+   "categorie": "question",
+   "ton": "neutre",
+   "condition": {
+    "type": "perturbation"
+   },
+   "texte": {
+    "fr": "Bonjour, à cause de « {nature} » je ne sais pas comment rejoindre mon rendez-vous. Vous pouvez m’aider ?",
+    "en": "Hello, because of “{nature}” I don’t know how to get to my appointment. Can you help?"
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Bonjour : donnez-nous votre arrêt de départ et d’arrivée, nous vous indiquons le trajet conseillé.",
+      "en": "Hello: give us your departure and arrival stops and we’ll tell you the recommended route."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 2,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Débrouillez-vous avec le plan.",
+      "en": "Work it out with the map."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -3,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ],
+   "prive": true
+  },
+  {
+   "id": "merci_ligne",
+   "categorie": "remerciement",
+   "ton": "positif",
+   "condition": {
+    "type": "ligne en difficulté"
+   },
+   "texte": {
+    "fr": "Malgré les {retard} min de retard sur la ligne {ligne}, le conducteur a prévenu tout le monde au micro. Merci à lui !",
+    "en": "Despite the {retard} min delay on line {ligne}, the driver told everyone over the speaker. Thanks to him!"
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Merci pour ce message : nous le transmettons à l’équipe de la ligne {ligne}.",
+      "en": "Thank you for this message: we’re passing it on to the line {ligne} team."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 3,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Ok.",
+      "en": "Ok."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -2,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "merci_perturbation",
+   "categorie": "remerciement",
+   "ton": "positif",
+   "condition": {
+    "type": "perturbation"
+   },
+   "texte": {
+    "fr": "Merci pour l’info sur « {nature} » : pour une fois, j’ai pu m’organiser avant de partir.",
+    "en": "Thanks for the info on “{nature}”: for once I could plan before leaving."
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Merci à vous : c’est pour cela que nous publions l’info dès qu’elle est confirmée.",
+      "en": "Thank you: that’s why we post information as soon as it is confirmed."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 3,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Pour une fois ? Nous informons toujours.",
+      "en": "For once? We always inform."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -3,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "merci_evenement",
+   "categorie": "remerciement",
+   "ton": "positif",
+   "condition": {
+    "type": "événement"
+   },
+   "texte": {
+    "fr": "Merci d’avance aux équipes pour « {nom} » : si les rames sont pleines, un mot d’info à l’arrêt change tout.",
+    "en": "Thanks in advance to the teams for “{nom}”: if the trams are full, a word of information at the stop makes all the difference."
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Merci ! Nous faisons suivre aux équipes mobilisées pour « {nom} ».",
+      "en": "Thank you! We’re passing it on to the teams working on “{nom}”."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 3,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "C’est notre travail.",
+      "en": "It’s our job."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -2,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "merci_meteo",
+   "categorie": "remerciement",
+   "ton": "positif",
+   "condition": {
+    "type": "alerte météo"
+   },
+   "texte": {
+    "fr": "Merci d’avoir relayé l’alerte « {nature} », j’ai pris mes précautions.",
+    "en": "Thanks for sharing the “{nature}” alert, I took precautions."
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Avec plaisir : prenez soin de vous, nous relayons chaque évolution de l’alerte.",
+      "en": "You’re welcome: take care, we share every change to the alert."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 3,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "L’alerte ne vient pas de nous.",
+      "en": "The alert doesn’t come from us."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -2,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "merci_general",
+   "categorie": "remerciement",
+   "ton": "positif",
+   "condition": {
+    "type": "*"
+   },
+   "texte": {
+    "fr": "Petit mot pour dire merci aux agents du réseau : pas simple tous les jours, et vous répondez quand même.",
+    "en": "A quick word to thank the network staff: it’s not easy every day, and you still reply."
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Merci beaucoup, le message est transmis aux équipes.",
+      "en": "Thank you very much, the message has been passed on to the teams."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 2,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Message noté, dossier clos.",
+      "en": "Message noted, case closed."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -2,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "merci_prive",
+   "categorie": "remerciement",
+   "ton": "positif",
+   "condition": {
+    "type": "*"
+   },
+   "texte": {
+    "fr": "Bonjour, juste un merci en privé : vos infos m’ont évité une galère aujourd’hui.",
+    "en": "Hello, just a private thank-you: your updates saved me some trouble today."
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Merci pour ce retour, bonne fin de journée sur le réseau !",
+      "en": "Thanks for the feedback, enjoy the rest of your day on the network!"
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 2,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Ce canal est réservé aux réclamations.",
+      "en": "This channel is for complaints only."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -2,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ],
+   "prive": true
+  },
+  {
+   "id": "suggestion_ligne",
+   "categorie": "suggestion",
+   "ton": "neutre",
+   "condition": {
+    "type": "ligne en difficulté"
+   },
+   "texte": {
+    "fr": "Idée : quand la ligne {ligne} a {retard} min de retard, proposez un itinéraire de rechange dans vos messages.",
+    "en": "Idea: when line {ligne} is {retard} min late, suggest an alternative route in your posts."
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Bonne idée : nous la remontons, et nous ajoutons un itinéraire conseillé quand il en existe un pour la ligne {ligne}.",
+      "en": "Good idea: we’re passing it up, and we add a recommended route when one exists for line {ligne}."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 3,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Ce n’est pas prévu.",
+      "en": "That’s not planned."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -3,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "suggestion_perturbation",
+   "categorie": "suggestion",
+   "ton": "neutre",
+   "condition": {
+    "type": "perturbation"
+   },
+   "texte": {
+    "fr": "Suggestion pour « {nature} » : affichez l’info à l’arrêt, pas seulement en ligne. Tout le monde n’a pas de téléphone.",
+    "en": "Suggestion for “{nature}”: post the information at the stop, not only online. Not everyone has a phone."
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Merci : c’est noté et transmis à l’équipe terrain pour l’affichage aux arrêts.",
+      "en": "Thank you: noted and passed on to the field team for display at stops."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 3,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Tout est déjà en ligne.",
+      "en": "Everything is already online."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -3,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "suggestion_evenement",
+   "categorie": "suggestion",
+   "ton": "neutre",
+   "condition": {
+    "type": "événement"
+   },
+   "texte": {
+    "fr": "Pour « {nom} », un message la veille aiderait à choisir son heure de départ. Vous y pensez ?",
+    "en": "For “{nom}”, a post the day before would help people choose when to leave. Any plans?"
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Merci pour la suggestion : nous la transmettons pour les prochains événements.",
+      "en": "Thanks for the suggestion: we’re passing it on for future events."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 3,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "On ne peut pas tout annoncer.",
+      "en": "We can’t announce everything."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -3,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "suggestion_meteo",
+   "categorie": "suggestion",
+   "ton": "neutre",
+   "condition": {
+    "type": "alerte météo"
+   },
+   "texte": {
+    "fr": "Avec « {nature} », un rappel des consignes à l’arrêt serait utile, non ?",
+    "en": "With “{nature}”, a reminder of the safety advice at the stop would help, wouldn’t it?"
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Bonne remarque : nous la transmettons, et nous relayons ici les consignes de l’alerte.",
+      "en": "Good point: we’re passing it on, and we share the alert’s advice here."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 3,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Les consignes sont connues.",
+      "en": "The advice is well known."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -3,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "suggestion_generale",
+   "categorie": "suggestion",
+   "ton": "neutre",
+   "condition": {
+    "type": "*"
+   },
+   "texte": {
+    "fr": "Une idée en passant : un récapitulatif du trafic chaque matin sur ce compte, ce serait pratique.",
+    "en": "A passing idea: a traffic summary every morning on this account would be handy."
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Merci, l’idée est transmise à l’équipe qui anime ce compte.",
+      "en": "Thank you, the idea has been passed on to the team running this account."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 2,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Nous publions déjà assez.",
+      "en": "We already post enough."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -3,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "suggestion_pointe",
+   "categorie": "suggestion",
+   "ton": "neutre",
+   "condition": {
+    "type": "ligne en difficulté",
+    "pointe": true
+   },
+   "texte": {
+    "fr": "Aux heures de pointe, la ligne {ligne} sature. Vous pourriez prévenir avant qu’on soit tous sur le quai ?",
+    "en": "At rush hour, line {ligne} is packed. Could you warn us before we’re all on the platform?"
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Vous avez raison : nous prévenons dès que le retard sur la ligne {ligne} est confirmé.",
+      "en": "You’re right: we warn as soon as the delay on line {ligne} is confirmed."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 3,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Aux heures de pointe, c’est chargé partout.",
+      "en": "At rush hour, it’s busy everywhere."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -3,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "temoignage_ligne",
+   "categorie": "temoignage",
+   "ton": "neutre",
+   "condition": {
+    "type": "ligne en difficulté"
+   },
+   "texte": {
+    "fr": "{retard} min d’attente sur la ligne {ligne} : tout le quai s’est mis à discuter, on se serait cru au marché.",
+    "en": "{retard} min waiting on line {ligne}: the whole platform started chatting, it felt like market day."
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Merci pour ce moment de quai ! Le retard est connu, la régulation est en cours.",
+      "en": "Thanks for sharing that platform moment! The delay is known and being handled."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 2,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Merci de ne pas encombrer ce fil.",
+      "en": "Please don’t clutter this feed."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -3,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "temoignage_evenement",
+   "categorie": "temoignage",
+   "ton": "positif",
+   "condition": {
+    "type": "événement"
+   },
+   "texte": {
+    "fr": "En route pour « {nom} » : si tout le tram se met à chanter, ça promet !",
+    "en": "On my way to “{nom}”: if the whole tram starts singing, it should be fun!"
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Ça fait plaisir à lire ! Bon événement, et pensez à l’info trafic pour le retour.",
+      "en": "Lovely to read! Enjoy the event, and check the traffic updates for the way back."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 2,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Merci de respecter la tranquillité des voyageurs.",
+      "en": "Please respect other passengers’ peace."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -3,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "temoignage_pluie",
+   "categorie": "temoignage",
+   "ton": "positif",
+   "condition": {
+    "type": "*",
+    "meteo": "pluie"
+   },
+   "texte": {
+    "fr": "Sous la pluie, une voyageuse a partagé son parapluie à l’arrêt. Nantes, quoi.",
+    "en": "In the rain, a passenger shared her umbrella at the stop. That’s Nantes for you."
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Merci pour ce beau moment : c’est aussi ça, le réseau.",
+      "en": "Thanks for this lovely moment: that’s the network too."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 2,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Ce n’est pas le sujet de ce compte.",
+      "en": "That’s not what this account is for."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -2,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "temoignage_perturbation",
+   "categorie": "temoignage",
+   "ton": "neutre",
+   "condition": {
+    "type": "perturbation"
+   },
+   "texte": {
+    "fr": "Avec « {nature} », j’ai fini à pied : finalement, j’ai redécouvert mon quartier.",
+    "en": "With “{nature}”, I ended up walking: in the end I rediscovered my neighbourhood."
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Merci pour ce partage ! Nous suivons « {nature} » et publions la suite ici.",
+      "en": "Thanks for sharing! We’re monitoring “{nature}” and posting updates here."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 2,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Tant mieux pour vous.",
+      "en": "Good for you."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -2,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "temoignage_meteo",
+   "categorie": "temoignage",
+   "ton": "neutre",
+   "condition": {
+    "type": "alerte météo"
+   },
+   "texte": {
+    "fr": "Alerte « {nature} » : à l’arrêt, tout le monde s’est serré sous l’abri. Solidaires malgré nous.",
+    "en": "“{nature}” alert: at the stop everyone huddled under the shelter. Solidarity by necessity."
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Merci du témoignage : restez prudents, nous relayons l’alerte.",
+      "en": "Thanks for the account: stay safe, we’re sharing the alert."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 2,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Rien à signaler de notre côté.",
+      "en": "Nothing to report on our side."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -2,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "temoignage_general",
+   "categorie": "temoignage",
+   "ton": "positif",
+   "condition": {
+    "type": "*"
+   },
+   "texte": {
+    "fr": "Des années que je prends les transports à Nantes : il y a des jours sans, mais je ne changerais pas.",
+    "en": "I’ve used public transport in Nantes for years: some days are rough, but I wouldn’t change."
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Merci pour votre fidélité, ça compte pour les équipes.",
+      "en": "Thank you for your loyalty, it means a lot to the teams."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 2,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "C’est noté.",
+      "en": "Noted."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -2,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "relance_ligne",
+   "categorie": "relance",
+   "ton": "neutre",
+   "condition": {
+    "type": "ligne en difficulté",
+    "fil": true
+   },
+   "texte": {
+    "fr": "Je reviens aux nouvelles pour la ligne {ligne} : du mieux depuis tout à l’heure ?",
+    "en": "Checking back on line {ligne}: any better since earlier?"
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Nous suivons toujours la ligne {ligne} : dès que la situation change, nous le publions ici.",
+      "en": "We’re still monitoring line {ligne}: as soon as things change, we post it here."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 3,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Nous avons déjà répondu.",
+      "en": "We have already replied."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -3,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "relance_ligne_vive",
+   "categorie": "relance",
+   "ton": "provoquant",
+   "condition": {
+    "type": "ligne en difficulté",
+    "fil": true
+   },
+   "texte": {
+    "fr": "Toujours rien sur la ligne {ligne} ?! Vous répondez aux autres et pas à moi, c’est quoi ce #@&! de service ?",
+    "en": "Still nothing on line {ligne}?! You reply to others and not to me, what kind of #@&! service is this?"
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Désolés pour l’attente : la ligne {ligne} est suivie, et nous vous répondons ici dès qu’il y a du nouveau.",
+      "en": "Sorry for the wait: line {ligne} is being monitored, and we’ll reply here as soon as there is news."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 4,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Merci de rester poli.",
+      "en": "Please stay polite."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -5,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "relance_perturbation",
+   "categorie": "relance",
+   "ton": "neutre",
+   "condition": {
+    "type": "perturbation",
+    "fil": true
+   },
+   "texte": {
+    "fr": "Des nouvelles pour « {nature} » ? Je repasse dans une heure.",
+    "en": "Any news on “{nature}”? I’ll check back in an hour."
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Nous suivons « {nature} » : la prochaine mise à jour sera publiée ici dès qu’elle est confirmée.",
+      "en": "We’re monitoring “{nature}”: the next update will be posted here as soon as it is confirmed."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 3,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Rien de neuf, inutile de relancer.",
+      "en": "Nothing new, no need to ask again."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -3,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "relance_perturbation_vive",
+   "categorie": "relance",
+   "ton": "provoquant",
+   "condition": {
+    "type": "perturbation",
+    "fil": true
+   },
+   "texte": {
+    "fr": "Deuxième message sur « {nature} » et toujours le même #@&! de silence. Il faut faire quoi pour avoir une réponse ?",
+    "en": "Second message about “{nature}” and still the same #@&! silence. What does it take to get an answer?"
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Vous avez raison d’insister, désolés pour l’attente : « {nature} » est suivi et nous vous répondons ici.",
+      "en": "You’re right to insist, sorry for the wait: “{nature}” is being monitored and we’re replying here."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 4,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Merci de rester poli.",
+      "en": "Please stay polite."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -5,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "relance_evenement",
+   "categorie": "relance",
+   "ton": "neutre",
+   "condition": {
+    "type": "événement",
+    "fil": true
+   },
+   "texte": {
+    "fr": "Je relance pour « {nom} » : des renforts sont prévus ou pas ?",
+    "en": "Following up on “{nom}”: is extra service planned or not?"
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Nous suivons l’affluence possible pour « {nom} » ; toute adaptation sera annoncée ici.",
+      "en": "We’re monitoring possible crowds for “{nom}”; any change will be announced here."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 3,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Voir notre réponse précédente.",
+      "en": "See our previous reply."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -3,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "relance_generale_vive",
+   "categorie": "relance",
+   "ton": "provoquant",
+   "condition": {
+    "type": "*",
+    "fil": true
+   },
+   "texte": {
+    "fr": "Je relance. Encore. Vous lisez vos messages ou c’est un &!#@ de robot qui tient ce compte ?",
+    "en": "Following up. Again. Do you read your messages or is a &!#@ robot running this account?"
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Nous lisons tout, et désolés pour le délai : dites-nous votre ligne, on regarde tout de suite.",
+      "en": "We read everything, and sorry for the delay: tell us your line and we’ll look right away."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 4,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Un peu de patience.",
+      "en": "A little patience."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -5,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "doublon_ligne",
+   "categorie": "doublon",
+   "ton": "neutre",
+   "condition": {
+    "type": "ligne en difficulté",
+    "fil": true
+   },
+   "texte": {
+    "fr": "Je confirme : même chose de mon côté sur la ligne {ligne}, {retard} min affichées.",
+    "en": "Confirming: same on my side on line {ligne}, {retard} min displayed."
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Merci pour la confirmation : le retard sur la ligne {ligne} est bien pris en compte.",
+      "en": "Thanks for confirming: the delay on line {ligne} is being dealt with."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 2,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Déjà signalé, inutile de répéter.",
+      "en": "Already reported, no need to repeat."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -3,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "doublon_perturbation",
+   "categorie": "doublon",
+   "ton": "neutre",
+   "condition": {
+    "type": "perturbation",
+    "fil": true
+   },
+   "texte": {
+    "fr": "Pareil ici pour « {nature} », je le signale au cas où.",
+    "en": "Same here for “{nature}”, reporting it just in case."
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Merci, c’est bien noté : « {nature} » est déjà suivi par la régulation.",
+      "en": "Thank you, noted: “{nature}” is already being monitored by the control room."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 2,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "On sait.",
+      "en": "We know."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -3,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "doublon_evenement",
+   "categorie": "doublon",
+   "ton": "neutre",
+   "condition": {
+    "type": "événement",
+    "fil": true
+   },
+   "texte": {
+    "fr": "Idem pour « {nom} » : il risque d’y avoir du monde sur les quais, je préfère le dire.",
+    "en": "Same for “{nom}”: the platforms might get crowded, I’d rather say so."
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Merci du signalement : l’affluence possible pour « {nom} » est suivie.",
+      "en": "Thanks for reporting: possible crowds for “{nom}” are being monitored."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 2,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Nous sommes au courant.",
+      "en": "We are aware."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -2,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "doublon_meteo",
+   "categorie": "doublon",
+   "ton": "neutre",
+   "condition": {
+    "type": "alerte météo",
+    "fil": true
+   },
+   "texte": {
+    "fr": "Je signale aussi « {nature} » : ça se sent bien à l’arrêt.",
+    "en": "I’m also reporting “{nature}”: you can really feel it at the stop."
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Merci, l’alerte « {nature} » est bien relayée : soyez prudent.",
+      "en": "Thank you, the “{nature}” alert has been shared: stay safe."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 2,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "L’alerte est déjà publiée.",
+      "en": "The alert is already posted."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -2,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "doublon_vif",
+   "categorie": "doublon",
+   "ton": "provoquant",
+   "condition": {
+    "type": "*",
+    "fil": true
+   },
+   "texte": {
+    "fr": "D’autres vous l’ont déjà dit et rien ne bouge. Il vous faut combien de signalements, #@&! ?",
+    "en": "Others have already told you and nothing changes. How many reports do you need, #@&!?"
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Chaque signalement compte et celui-ci est pris en charge : merci, et désolés pour l’attente.",
+      "en": "Every report counts and this one is being handled: thank you, and sorry for the wait."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 4,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Un seul signalement suffit.",
+      "en": "One report is enough."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -5,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "accessibilite_ligne",
+   "categorie": "accessibilite",
+   "ton": "neutre",
+   "condition": {
+    "type": "ligne en difficulté"
+   },
+   "texte": {
+    "fr": "Je suis en fauteuil : avec {retard} min de retard sur la ligne {ligne}, le prochain véhicule sera-t-il accessible ?",
+    "en": "I use a wheelchair: with a {retard} min delay on line {ligne}, will the next vehicle be accessible?"
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Bonjour : nous posons la question à la régulation de la ligne {ligne} et vous répondons ici.",
+      "en": "Hello: we’re asking the line {ligne} control room and will reply here."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 3,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Tous nos véhicules sont en service.",
+      "en": "All our vehicles are in service."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -4,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "accessibilite_perturbation",
+   "categorie": "accessibilite",
+   "ton": "neutre",
+   "condition": {
+    "type": "perturbation"
+   },
+   "texte": {
+    "fr": "Malvoyante, je ne peux pas lire les affiches sur « {nature} ». Une annonce sonore est prévue ?",
+    "en": "I’m visually impaired and can’t read the posters about “{nature}”. Is an audio announcement planned?"
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Merci de le signaler : nous demandons une annonce sonore et vous donnons l’information ici par écrit.",
+      "en": "Thanks for telling us: we’re requesting an audio announcement and giving you the information here in writing."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 3,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Les affiches sont aux arrêts.",
+      "en": "The posters are at the stops."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -4,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "accessibilite_evenement",
+   "categorie": "accessibilite",
+   "ton": "neutre",
+   "condition": {
+    "type": "événement"
+   },
+   "texte": {
+    "fr": "Si les rames sont pleines pour « {nom} », comment monter avec une poussette ? Un conseil ?",
+    "en": "If the trams are full for “{nom}”, how do I get on with a pushchair? Any advice?"
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Bonjour : laissez passer la plus forte affluence si vous le pouvez, et dites-nous votre arrêt pour vous orienter.",
+      "en": "Hello: let the biggest crowd pass if you can, and tell us your stop so we can guide you."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 3,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Pliez la poussette.",
+      "en": "Fold the pushchair."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -4,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "accessibilite_meteo",
+   "categorie": "accessibilite",
+   "ton": "neutre",
+   "condition": {
+    "type": "alerte météo"
+   },
+   "texte": {
+    "fr": "Mon père marche avec une canne : avec « {nature} », attendre debout est compliqué. Où s’asseoir ?",
+    "en": "My father walks with a stick: with “{nature}”, waiting standing up is hard. Where can he sit?"
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Merci de nous le dire : indiquez-nous l’arrêt, nous cherchons la solution la plus proche.",
+      "en": "Thanks for telling us: let us know the stop and we’ll look for the nearest solution."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 3,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Nous ne gérons pas le mobilier.",
+      "en": "We don’t manage street furniture."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -4,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "accessibilite_privee",
+   "categorie": "accessibilite",
+   "ton": "neutre",
+   "condition": {
+    "type": "*"
+   },
+   "texte": {
+    "fr": "Bonjour, je suis sourd et je ne peux pas téléphoner. Est-ce que je peux vous écrire ici pour mes trajets ?",
+    "en": "Hello, I’m deaf and can’t make phone calls. Can I write to you here about my trips?"
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Bonjour : oui, écrivez-nous ici, nous vous répondons par écrit.",
+      "en": "Hello: yes, write to us here and we’ll reply in writing."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 2,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Merci d’appeler le service client.",
+      "en": "Please call customer service."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -4,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ],
+   "prive": true
+  },
+  {
+   "id": "photo_ligne",
+   "categorie": "photo",
+   "ton": "neutre",
+   "condition": {
+    "type": "ligne en difficulté"
+   },
+   "texte": {
+    "fr": "La photo de votre message sur la ligne {ligne}, elle date d’aujourd’hui ?",
+    "en": "The photo in your post about line {ligne}, is it from today?"
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "L’image illustre le message ; le retard de {retard} min sur la ligne {ligne}, lui, est bien réel et suivi.",
+      "en": "The picture illustrates the post; the {retard} min delay on line {ligne} is real and being monitored."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 2,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Ce n’est qu’une photo.",
+      "en": "It’s only a photo."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -2,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "photo_perturbation",
+   "categorie": "photo",
+   "ton": "neutre",
+   "condition": {
+    "type": "perturbation"
+   },
+   "texte": {
+    "fr": "La photo de votre message sur « {nature} » : c’est pris où ? Je ne reconnais pas l’endroit.",
+    "en": "The photo in your post about “{nature}”: where was it taken? I don’t recognise the place."
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Bonjour : l’image illustre le message, elle n’indique pas un lieu précis. Pour votre trajet, fiez-vous au texte.",
+      "en": "Hello: the picture illustrates the post, it doesn’t show a precise place. For your trip, rely on the text."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 2,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Peu importe la photo.",
+      "en": "The photo doesn’t matter."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -2,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "photo_evenement",
+   "categorie": "photo",
+   "ton": "positif",
+   "condition": {
+    "type": "événement"
+   },
+   "texte": {
+    "fr": "Jolie image pour « {nom} » ! Ça pourrait donner envie d’y aller en tram.",
+    "en": "Nice picture for “{nom}”! It could make people want to go by tram."
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Merci ! Bon événement, et pensez à l’info trafic pour le retour.",
+      "en": "Thank you! Enjoy the event, and check the traffic updates for the way back."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 2,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Merci de rester sur le sujet du trafic.",
+      "en": "Please stick to traffic matters."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -2,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "photo_meteo",
+   "categorie": "photo",
+   "ton": "neutre",
+   "condition": {
+    "type": "alerte météo"
+   },
+   "texte": {
+    "fr": "Votre image pour l’alerte « {nature} » fait un peu peur, non ? C’est si grave ?",
+    "en": "Your picture for the “{nature}” alert is a bit scary, isn’t it? Is it that serious?"
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "L’image attire l’attention, mais c’est le texte de l’alerte qui fait foi : nous relayons chaque évolution.",
+      "en": "The picture catches the eye, but the text of the alert is what counts: we share every change."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 2,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Nous ne commentons pas les images.",
+      "en": "We don’t comment on pictures."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -2,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "photo_vive",
+   "categorie": "photo",
+   "ton": "provoquant",
+   "condition": {
+    "type": "*"
+   },
+   "texte": {
+    "fr": "Encore une belle photo pendant qu’on galère. Vous avez un #@&! de photographe mais pas de réponse ?",
+    "en": "Another pretty photo while we struggle. You’ve got a #@&! photographer but no answer?"
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "On comprend l’agacement : l’image accompagne l’info, et nous répondons à votre situation ici.",
+      "en": "We understand the frustration: the picture goes with the info, and we’re answering your situation here."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 4,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "La photo ne vous plaît pas ?",
+      "en": "Don’t you like the photo?"
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -5,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "question_vive",
+   "categorie": "question",
+   "ton": "provoquant",
+   "condition": {
+    "type": "*"
+   },
+   "texte": {
+    "fr": "Quelqu’un peut me dire où trouver une info fiable, ou c’est trop demander à ce #@&! de réseau ?",
+    "en": "Can someone tell me where to find reliable information, or is that too much to ask of this #@&! network?"
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "On comprend l’agacement : l’info trafic est publiée ici et aux arrêts. Dites-nous votre ligne, on regarde.",
+      "en": "We understand the frustration: traffic information is posted here and at stops. Tell us your line and we’ll look."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 4,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "L’info est disponible, il suffit de chercher.",
+      "en": "The information is available, you just have to look."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -5,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "question_vive_meteo",
+   "categorie": "question",
+   "ton": "provoquant",
+   "condition": {
+    "type": "alerte météo"
+   },
+   "texte": {
+    "fr": "Alerte « {nature} » et personne pour dire si le service change. Il faut deviner, #@&! ?",
+    "en": "“{nature}” alert and nobody to say whether the service is changing. Are we supposed to guess, #@&!?"
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Désolés pour le flou : l’alerte « {nature} » est suivie, toute adaptation du service est annoncée ici.",
+      "en": "Sorry for the confusion: the “{nature}” alert is being monitored, any change to the service is announced here."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 4,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Regardez dehors.",
+      "en": "Look outside."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -5,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "question_vive_evenement",
+   "categorie": "question",
+   "ton": "provoquant",
+   "condition": {
+    "type": "événement"
+   },
+   "texte": {
+    "fr": "« {nom} » : vous comptez prévenir quelqu’un si ça déborde, ou on se débrouille, #@&! ?",
+    "en": "“{nom}”: do you plan to warn anyone if it overflows, or are we on our own, #@&!?"
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Nous suivons l’affluence possible pour « {nom} » et nous prévenons ici dès qu’une adaptation est décidée.",
+      "en": "We’re monitoring possible crowds for “{nom}” and will post here as soon as a change is decided."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 4,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Nous verrons bien.",
+      "en": "We’ll see."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -5,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "suggestion_vive",
+   "categorie": "suggestion",
+   "ton": "provoquant",
+   "condition": {
+    "type": "*"
+   },
+   "texte": {
+    "fr": "Une suggestion : répondez aux gens au lieu de poster des messages tout faits, #@&! Ça changerait.",
+    "en": "A suggestion: answer people instead of posting canned messages, #@&! That would make a change."
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Message reçu : nous répondons à chacun ici, et votre remarque est transmise à l’équipe.",
+      "en": "Message received: we reply to everyone here, and your remark has been passed on to the team."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 4,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Nos messages sont très bien.",
+      "en": "Our posts are just fine."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -5,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "temoignage_vif_ligne",
+   "categorie": "temoignage",
+   "ton": "provoquant",
+   "condition": {
+    "type": "ligne en difficulté"
+   },
+   "texte": {
+    "fr": "{retard} min sur le quai de la ligne {ligne}, à compter les trams qui ne passent pas. Quelle #@&! de journée.",
+    "en": "{retard} min on the line {ligne} platform, counting the trams that don’t come. What a #@&! day."
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Désolés pour cette attente : le retard de {retard} min sur la ligne {ligne} est connu et la régulation est en cours.",
+      "en": "Sorry for the wait: the {retard} min delay on line {ligne} is known and being handled."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 4,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Les retards, ça arrive.",
+      "en": "Delays happen."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -5,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "temoignage_vif_perturbation",
+   "categorie": "temoignage",
+   "ton": "provoquant",
+   "condition": {
+    "type": "perturbation"
+   },
+   "texte": {
+    "fr": "« {nature} » : j’ai tout fait à pied. Merci le réseau, vraiment, #@&!",
+    "en": "“{nature}”: I walked the whole way. Thanks a lot, network, really, #@&!"
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Désolés pour ce trajet à pied : « {nature} » est suivi et nous publions la suite ici.",
+      "en": "Sorry you had to walk: “{nature}” is being monitored and we post updates here."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 4,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "La marche, c’est bon pour la santé.",
+      "en": "Walking is good for you."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": -5,
+      "budget": 0
+     },
+     "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "accessibilite_vive",
+   "categorie": "accessibilite",
+   "ton": "provoquant",
+   "condition": {
+    "type": "*"
+   },
+   "texte": {
+    "fr": "En fauteuil, je dois toujours tout demander deux fois. C’est pour quand, un #@&! de réseau pensé pour tout le monde ?",
+    "en": "In a wheelchair, I always have to ask for everything twice. When do we get a #@&! network designed for everyone?"
+   },
+   "reponses": [
+    {
+     "texte": {
+      "fr": "Vous avez raison de le dire : indiquez-nous votre trajet, nous cherchons la solution avec vous dès maintenant.",
+      "en": "You’re right to say so: tell us your trip and we’ll look for a solution with you right now."
+     },
+     "effets": {
+      "fluidite": 0,
+      "reputation": 4,
+      "budget": 0
+     },
+     "bonne": true
+    },
+    {
+     "texte": {
+      "fr": "Le réseau respecte les normes.",
+      "en": "The network meets the standards."
      },
      "effets": {
       "fluidite": 0,

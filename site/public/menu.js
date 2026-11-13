@@ -16,10 +16,20 @@ function ouvrirLien(url) {
 	if (typeof EXPO !== 'undefined' && EXPO.actif) return; // prompt 160 : aucune sortie du jeu sur le kiosque
 	window.open(url, '_blank', 'noopener');
 }
+/** Page de présentation du projet (diaporama Slidev, prompt 82), servie à côté du jeu */
+function ouvrirPresentation() {
+	annoncer(t('mp.presentation.annonce'));
+	ouvrirLien('./presentation/');
+}
 /** Prompt 136 : diapositive « Les livrables » du diaporama (routeAlias livrables), même page /presentation/ ; prompt 138 : ?clicks=5 ouvre la diapositive avec ses 5 apparitions déjà jouées */
 function ouvrirLivrables() {
 	annoncer(t('mp.livrables.annonce'));
 	ouvrirLien('./presentation/#/livrables?clicks=5');
+}
+/** Prompt 188 : kit de presse (page statique kit-presse/index.html : communiqué, captures, vidéo, logo, liens), nouvel onglet */
+function ouvrirKitPresse() {
+	annoncer(t('mp.kitpresse.annonce'));
+	ouvrirLien('./kit-presse/');
 }
 const MENU_C = {
 	nuit: '#0D0C0C', // Background du Pixel DS (prompt 39)
@@ -108,7 +118,7 @@ function fondMenu() {
 
 /** Prompt 170 : icônes d'interface Lucide (icones-lucide.js), 48 px centrées dans le carré 56 × 56 ; les logos de
  * marque, absents de Lucide, restent en pixel art (iconeReseau) */
-const ICONES_MENU = { plus: 'plus', lecture: 'play', reglages: 'settings', aide: 'circle-question-mark', livre: 'book-open', retour: 'arrow-left', trophee: 'trophy', carnet: 'notebook-text', menu: 'menu', partage: 'share-2', lien: 'link' };
+const ICONES_MENU = { plus: 'plus', lecture: 'play', reglages: 'settings', aide: 'circle-question-mark', livre: 'book-open', retour: 'arrow-left', trophee: 'trophy', presentation: 'presentation', presse: 'newspaper', carnet: 'notebook-text', menu: 'menu', partage: 'share-2', lien: 'link' };
 function iconeMenu(type, x, y, c) {
 	push();
 	translate(x, y);
@@ -290,11 +300,12 @@ function marqueExpo() {
 // Prompt 160 : en exposition, ni plein écran, ni installation, ni Livrables, ni Dépôt, ni Partager (le visiteur suivant doit trouver le jeu)
 const EXTRAS_MENU = typeof EXPO !== 'undefined' && EXPO.actif ? [] : [
 	// Prompt 199 : ordre clavier ↑ ↓ / Tab = ordre visuel — la pile en haut à droite (plein écran, télécharger), puis la
-	// rangée d'icônes sous Paramètres (Livrables, Dépôt, Partager) ; Kit de presse et Présentation ne sont plus au menu
-	// (les pages kit-presse/ et presentation/ restent en ligne). Plein écran seulement si l'API Fullscreen existe.
+	// rangée d'icônes sous Paramètres (Livrables, Kit de presse, Présentation, Dépôt, Partager). Plein écran seulement si l'API Fullscreen existe.
 	...(pleinEcranPossible() ? [{ cle: 'pleinEcran', libelle: () => libellePleinEcranMenu(), action: () => basculerPleinEcran() }] : []),
 	{ cle: 'installer', action: () => installerJeu() },
 	{ cle: 'livrables', action: () => ouvrirLivrables() }, // prompt 136
+	{ cle: 'kitpresse', action: () => ouvrirKitPresse() }, // prompt 188
+	{ cle: 'presentation', action: () => ouvrirPresentation() }, // prompt 82
 	{ cle: 'depot', action: () => ouvrirLien(DEPOT_URL) },
 	{ cle: 'partager', action: () => ouvrirPartage() }, // dernière avant de reboucler sur « Nouvelle partie »
 ];
@@ -352,7 +363,7 @@ function piedCredits(x, y, n) {
 	boutons.push({ x: x - 8, y: y - 34, l: cw + 16, h: 46, action: () => ouvrirCredits() });
 	if (survolC) infobulle(t('mp.credits.infobulle'), x, y - 76);
 }
-/** Prompt 199 : bouton à icône seule de la rangée Livrables · Dépôt · Partager (style des cartes du menu, focus en
+/** Prompt 199 : bouton à icône seule de la rangée Livrables · Kit de presse · Présentation · Dépôt · Partager (style des cartes du menu, focus en
  * double bordure) ; le libellé est dans l'infobulle (blocPartage) — renvoie le survol */
 function boutonIcone(x, y, l, h, icone, action, focus) {
 	const survol = mouseX >= x && mouseX <= x + l && mouseY >= y && mouseY <= y + h;
@@ -382,11 +393,13 @@ function boutonIcone(x, y, l, h, icone, action, focus) {
 	boutons.push({ x, y, l, h, action });
 	return survol;
 }
-/** Prompt 199 : rangée de 3 boutons à icône seule sous la colonne des cartes, alignée à gauche sous Paramètres ;
+/** Prompt 199 : rangée de 5 boutons à icône seule sous la colonne des cartes, alignée à gauche sous Paramètres ;
  * 68 px de côté : ≥ 44 px à l'écran en portrait mobile ; bas de la rangée à 16 px au-dessus du pied de page */
 const BLOC_PARTAGE = { x: 160, y: H - 74 - 16 - 68, l: 68, h: 68 };
 const RANGEE_MENU = [
 	{ cle: 'livrables', icone: 'carnet', action: () => ouvrirLivrables() },
+	{ cle: 'kitpresse', icone: 'presse', action: () => ouvrirKitPresse() },
+	{ cle: 'presentation', icone: 'presentation', action: () => ouvrirPresentation() },
 	{ cle: 'depot', icone: 'github', action: () => ouvrirLien(DEPOT_URL) },
 	{ cle: 'partager', icone: 'partage', action: () => ouvrirPartage() },
 ];

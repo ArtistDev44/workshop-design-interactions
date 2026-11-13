@@ -27,7 +27,7 @@
 		const f = PC.fenetre;
 		if (f === 'community') return 'Community · ' + COMMU.onglet;
 		if (f === 'journal') return JOURNAL.enquete !== null && JOURNAL.enquete !== undefined ? 'Journal · fiche enquête' : 'Journal · jour';
-		return { patron: 'Patron', corbeille: 'Corbeille' }[f] || 'appli ' + f;
+		return { patron: 'Patron' }[f] || 'appli ' + f;
 	};
 	function zone(nomFn, nom, aire) {
 		const orig = window[nomFn];
@@ -233,7 +233,6 @@
 				const e = j && (Jeu.evenementsJournee || []).find((x) => x.jour === j.date && x.resultat && x.resultat.dossier);
 				if (e) ouvrirEnqueteJournal(e);
 			});
-			add('Corbeille', () => os('corbeille'));
 			add('Indicateurs', () => (P.raz(), P.poste(), (PC.flottant = true)));
 			add('Signalements', () => ((PC.flottant = false), P.raz(), P.poste()));
 		});

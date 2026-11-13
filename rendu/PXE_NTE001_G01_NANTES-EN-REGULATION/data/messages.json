@@ -1,5 +1,5 @@
 {
- "_lisezMoi": "Plaintes des Nantais (prompt 28). Fichier brut modifiable à la main : ajouter une plainte = ajouter une entrée dans « plaintes », sans toucher au code. Après modification, lancer « npm run messages » dans site/ pour régénérer messages.js (double clic hors ligne) ; servi par un serveur, le jeu relit directement ce JSON. condition : type (« ligne en difficulté », « perturbation », « événement », « alerte météo » ou « * »), retard_min (minutes), ligne (nom exact), nature_contient (texte), pointe (true = 7–9 h ou 17–19 h), meteo (« pluie » = au moins 1 mm ce jour-là). Variables remplies par le dossier réel joué : {ligne}, {retard}, {nature} (les dossiers d’archive et d’agenda n’ont souvent pas de ligne : préférer {nature}). Une plainte dont une variable n'existe pas pour le dossier n'est pas proposée. effets : points ajoutés aux jauges fluidite, reputation, budget (bornés à ±15, puis jauges bornées 0–100). bonne : true pour la réponse de bon sens (au moins une par plainte). Prompt 85 : « prive »: true envoie la plainte dans la messagerie privée du compte (une relance au plus) ; « modeles » = les 3 modèles d’info trafic que le joueur peut publier ({sujet}, {action}), « coherent » = actions (ou « meteo ») avec lesquelles le message est cohérent (+1 réputation, sinon −2). Prompt 189 : « registre » (etudiant, senior, touriste, travailleur, parent) = registre de langage de l’usager ; seul le vocabulaire change, les faits restent ceux du dossier réel.",
+ "_lisezMoi": "Plaintes des Nantais (prompt 28). Fichier brut modifiable à la main : ajouter une plainte = ajouter une entrée dans « plaintes », sans toucher au code. Après modification, lancer « npm run messages » dans site/ pour régénérer messages.js (double clic hors ligne) ; servi par un serveur, le jeu relit directement ce JSON. condition : type (« ligne en difficulté », « perturbation », « événement », « alerte météo » ou « * »), retard_min (minutes), ligne (nom exact), nature_contient (texte), pointe (true = 7–9 h ou 17–19 h), meteo (« pluie » = au moins 1 mm ce jour-là). Variables remplies par le dossier réel joué : {ligne}, {retard}, {nature} (les dossiers d’archive et d’agenda n’ont souvent pas de ligne : préférer {nature}). Une plainte dont une variable n'existe pas pour le dossier n'est pas proposée. effets : points ajoutés aux jauges fluidite, reputation, budget (bornés à ±15, puis jauges bornées 0–100). bonne : true pour la réponse de bon sens (au moins une par plainte). Prompt 85 : « prive »: true envoie la plainte dans la messagerie privée du compte (une relance au plus) ; « modeles » = les 3 modèles d’info trafic que le joueur peut publier ({sujet}, {action}), « coherent » = actions (ou « meteo ») avec lesquelles le message est cohérent (+1 réputation, sinon −2). Prompt 189 : « registre » (etudiant, senior, touriste, travailleur, parent) = registre de langage de l’usager ; seul le vocabulaire change, les faits restent ceux du dossier réel. Prompt 197 : chaque plainte a exactement 3 réponses dont une « clash » (clash: true, sans champ texte : le texte est tiré des clés clash.<catégorie>.1..3, mots grossiers masqués hors alphabet) ; effets du clash : réputation -8, réponse toujours « mauvaise ». Ordre d’affichage mélangé de façon déterministe (aucun marqueur visuel du clash).",
  "version": 1,
  "plaintes": [
   {
@@ -38,6 +38,15 @@
       "budget": 0
      },
      "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
     }
    ]
   },
@@ -79,16 +88,13 @@
      "bonne": false
     },
     {
-     "texte": {
-      "fr": "Nous transmettons au service concerné.",
-      "en": "We have passed this on to the relevant team."
-     },
+     "clash": true,
+     "bonne": false,
      "effets": {
       "fluidite": 0,
-      "reputation": 1,
+      "reputation": -8,
       "budget": 0
-     },
-     "bonne": false
+     }
     }
    ]
   },
@@ -129,6 +135,15 @@
       "budget": 0
      },
      "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
     }
    ]
   },
@@ -168,6 +183,15 @@
       "budget": 0
      },
      "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
     }
    ]
   },
@@ -207,6 +231,15 @@
       "budget": 0
      },
      "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
     }
    ]
   },
@@ -246,6 +279,15 @@
       "budget": 0
      },
      "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
     }
    ]
   },
@@ -284,6 +326,15 @@
       "budget": 0
      },
      "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
     }
    ]
   },
@@ -322,6 +373,15 @@
       "budget": 0
      },
      "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
     }
    ]
   },
@@ -360,6 +420,15 @@
       "budget": 0
      },
      "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
     }
    ]
   },
@@ -399,6 +468,15 @@
       "budget": 0
      },
      "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
     }
    ]
   },
@@ -438,6 +516,15 @@
       "budget": 0
      },
      "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
     }
    ]
   },
@@ -477,6 +564,15 @@
       "budget": 0
      },
      "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
     }
    ]
   },
@@ -516,6 +612,15 @@
       "budget": 0
      },
      "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
     }
    ]
   },
@@ -555,6 +660,15 @@
       "budget": 0
      },
      "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
     }
    ]
   },
@@ -594,6 +708,15 @@
       "budget": 0
      },
      "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
     }
    ]
   },
@@ -632,6 +755,15 @@
       "budget": 0
      },
      "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
     }
    ]
   },
@@ -669,6 +801,15 @@
       "budget": 0
      },
      "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
     }
    ]
   },
@@ -707,6 +848,15 @@
       "budget": 0
      },
      "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
     }
    ]
   },
@@ -745,6 +895,15 @@
       "budget": 0
      },
      "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
     }
    ],
    "prive": true
@@ -783,6 +942,15 @@
       "budget": 0
      },
      "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
     }
    ],
    "prive": true
@@ -822,6 +990,15 @@
       "budget": 0
      },
      "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
     }
    ],
    "prive": true
@@ -861,6 +1038,15 @@
       "budget": 0
      },
      "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
     }
    ]
   },
@@ -900,6 +1086,15 @@
       "budget": 0
      },
      "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
     }
    ]
   },
@@ -939,6 +1134,15 @@
       "budget": 0
      },
      "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
     }
    ]
   },
@@ -977,6 +1181,15 @@
       "budget": 0
      },
      "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
     }
    ]
   },
@@ -1016,6 +1229,15 @@
       "budget": 0
      },
      "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
     }
    ]
   },
@@ -1054,6 +1276,15 @@
       "budget": 0
      },
      "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
     }
    ]
   },
@@ -1093,6 +1324,15 @@
       "budget": 0
      },
      "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
     }
    ]
   },
@@ -1131,6 +1371,15 @@
       "budget": 0
      },
      "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
     }
    ]
   },
@@ -1170,6 +1419,15 @@
       "budget": 0
      },
      "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
     }
    ]
   },
@@ -1209,6 +1467,15 @@
       "budget": 0
      },
      "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
     }
    ]
   },
@@ -1248,6 +1515,15 @@
       "budget": 0
      },
      "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
     }
    ]
   },
@@ -1287,6 +1563,15 @@
       "budget": 0
      },
      "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
     }
    ]
   },
@@ -1326,6 +1611,15 @@
       "budget": 0
      },
      "bonne": false
+    },
+    {
+     "clash": true,
+     "bonne": false,
+     "effets": {
+      "fluidite": 0,
+      "reputation": -8,
+      "budget": 0
+     }
     }
    ]
   }

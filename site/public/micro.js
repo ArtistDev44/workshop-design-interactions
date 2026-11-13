@@ -14,16 +14,11 @@ const MICRO = {
 	flux: null,
 	source: null,
 	analyseur: null,
-	bus: null,
-	anneau: null, // Float32Array : 2 s de signal (micro ou repli synthétique)
-	ecriture: 0,
 	interne: false, // repli : pas de micro
 	refus: false,
-	mesures: { amp: 0, hauteur: 0, souffle: 0, frag: 0, densite: 0 },
+	mesures: { amp: 0, hauteur: 0, souffle: 0 },
 	forme: new Float32Array(128),
 	minuterieAnalyse: null,
-	minuterieGrains: null,
-	prochainGrain: 0,
 };
 const MICRO_APPUI_MS = 250;
 const microActive = () => Confort.Reglages.micro !== false && (typeof objetPresent !== 'function' || objetPresent('micro')); // prompt 104 : pas de micro avant qu'il soit posé
@@ -52,7 +47,6 @@ function keyReleased() {
 }
 function mouseReleased() {
 	if (typeof relacherJeton === 'function' && relacherJeton()) return; // prompt 102 : dépôt d'un jeton d'équipe
-	if (typeof relacherGlisser === 'function') relacherGlisser(); // prompt 94 : dépôt d'une carte (ou clic)
 	if (MICRO.ouvert && MICRO.par === 'clic') arreterMicro();
 }
 function touchEnded(e) {
@@ -79,7 +73,6 @@ async function demarrerMicro(par) {
 	MICRO.ouvert = true;
 	MICRO.par = par;
 	const c = S.ctx;
-	if (!MICRO.anneau) MICRO.anneau = new Float32Array(Math.round(c.sampleRate * 2));
 	if (!MICRO.flux && !MICRO.refus) {
 		try {
 			if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('getUserMedia absent');
@@ -99,14 +92,13 @@ async function demarrerMicro(par) {
 		annoncer(t('micro.indisponible'));
 	} else annoncer(t('micro.on'));
 	MICRO.minuterieAnalyse = setInterval(analyserMicro, 50);
-	MICRO.prochainGrain = c.currentTime + 0.05;
 }
 function arreterMicro() {
 	const etait = MICRO.ouvert;
 	MICRO.ouvert = false;
 	clearInterval(MICRO.minuterieAnalyse);
 	MICRO.minuterieAnalyse = null;
-	MICRO.mesures = { amp: 0, hauteur: 0, souffle: 0, frag: 0, densite: 0 };
+	MICRO.mesures = { amp: 0, hauteur: 0, souffle: 0 };
 	if (MICRO.flux) {
 		MICRO.flux.getTracks().forEach((p) => p.stop()); // le voyant micro du navigateur s'éteint
 		MICRO.flux = null;
@@ -128,20 +120,9 @@ function analyserMicro() {
 		const souffle = 0.5 + 0.5 * Math.sin(tps * 0.37);
 		for (let i = 0; i < n; i++) bufTemps[i] = (Math.sin((2 * Math.PI * f0 * (i + tps * c.sampleRate)) / c.sampleRate) * (1 - souffle) + (Math.random() * 2 - 1) * souffle) * 0.25;
 	} else MICRO.analyseur.getFloatTimeDomainData(bufTemps);
-	// Anneau : on y copie les derniers échantillons (les grains y puisent)
-	const A = MICRO.anneau;
-	const nouv = Math.min(n, Math.round(c.sampleRate * 0.05));
-	for (let i = 0; i < nouv; i++) {
-		A[MICRO.ecriture] = bufTemps[n - nouv + i];
-		MICRO.ecriture = (MICRO.ecriture + 1) % A.length;
-	}
-	// Amplitude (RMS) et pic
+	// Amplitude (RMS)
 	let s = 0;
-	let pic = 0;
-	for (let i = 0; i < n; i++) {
-		s += bufTemps[i] * bufTemps[i];
-		pic = Math.max(pic, Math.abs(bufTemps[i]));
-	}
+	for (let i = 0; i < n; i++) s += bufTemps[i] * bufTemps[i];
 	const rms = Math.sqrt(s / n);
 	const hauteur = rms > 0.01 ? hauteurAutocorrelation(bufTemps, c.sampleRate) : 0;
 	const m = MICRO.mesures;
@@ -149,7 +130,6 @@ function analyserMicro() {
 	m.amp = lisse(m.amp, Math.min(1, rms * 6), 0.5);
 	m.hauteur = hauteur ? lisse(m.hauteur || hauteur, hauteur, 0.5) : lisse(m.hauteur, 0, 0.2);
 	m.souffle = lisse(m.souffle, rms > 0.02 && !hauteur ? Math.min(1, rms * 8) : 0, 0.3); // RMS continu sans hauteur
-	m.frag = lisse(m.frag, Math.min(1, Math.max(0, pic / Math.max(rms, 1e-4) - 3) / 5), 0.4); // pics (bruit, chocs)
 	usagesMicro(50); // prompt 63/64 : souffle anti-stress
 	for (let i = 0; i < MICRO.forme.length; i++) MICRO.forme[i] = bufTemps[i * 16];
 }
@@ -234,7 +214,7 @@ function dessinerMicroPoste(g) {
 }
 
 // ——— Prompt 63/64 : souffler pendant le boost du café (bonus facultatif) ———
-const RADIO = { souffleMs: 0, annonceSouffle: 0 }; // prompt 64 : la radio des chauffeurs a été retirée, reste le souffle
+const RADIO = { annonceSouffle: 0 }; // prompt 64 : la radio des chauffeurs a été retirée, reste le souffle
 /** Appelée à chaque analyse (toutes les 50 ms) pendant l'appui */
 function usagesMicro(dt) {
 	const m = MICRO.mesures;
@@ -244,12 +224,11 @@ function usagesMicro(dt) {
 	//    le compteur ralentit de moitié
 	const souffle = m.souffle > 0.35 && !m.hauteur;
 	if (souffle && typeof boostActif === 'function' && boostActif()) {
-		RADIO.souffleMs += dt;
 		CAFE.boost -= dt; // le boost s'épuise deux fois plus vite
 		if (enDossier && Jeu.defiChrono) debutCompteur += dt / 2; // compteur à mi-vitesse
 		if (millis() - RADIO.annonceSouffle > 6000) {
 			RADIO.annonceSouffle = millis();
 			annoncer(t('micro.souffle'));
 		}
-	} else RADIO.souffleMs = 0;
+	}
 }

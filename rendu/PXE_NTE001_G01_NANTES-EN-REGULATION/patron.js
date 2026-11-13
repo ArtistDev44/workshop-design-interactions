@@ -66,7 +66,6 @@ function texteGras(txt, x, y, taille, couleur, align) {
 }
 
 const filtreDe = (cle) => FILTRES_PATRON.find((x) => x.cle === cle) || FILTRES_PATRON[0];
-const typesFiltre = (cle) => filtreDe(cle).types;
 /** Messages bruts d'un dossier (filtre) — base des compteurs ; les archivés ne sont que dans « Archives » */
 const mailsDuFiltre = (cle) => {
 	const f = filtreDe(cle);
@@ -690,7 +689,7 @@ function blocEnrichi(m, x, y, l, panne) {
 	if (type === 'consigne' && me.jauge) {
 		const obj = me.jauge === 'budget' ? t('obj.budget', { seuil: me.seuil }) : t('obj.garder', { jauge: t('jauge.' + me.jauge), seuil: me.seuil });
 		const puces = [t('patron.puce.objectif', { o: obj }), t('patron.puce.budget', { b: me.budget }), t('patron.puce.dossiers', { n: me.n })];
-		if (me.mod) puces.push(t('patron.puce.mod', { m: t('mod.' + me.mod) }) + (me.bloque ? ' · ' + t('patron.puce.bloque', { a: t('action.' + { devier: 'devier', retenir: 'retenir', renfort: 'renfort' }[me.bloque]) }) : ''));
+		if (me.mod) puces.push(t('patron.puce.mod', { m: t('mod.' + me.mod) }));
 		let px = x;
 		puces.forEach((p) => {
 			textFont(DS.policeTexte);

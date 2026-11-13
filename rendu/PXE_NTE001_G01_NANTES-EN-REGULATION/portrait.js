@@ -36,11 +36,6 @@ function appliVersImage(r) {
 	const k = KP();
 	return { x: ECRAN_POSTE.x + (A.x + r.x * A.k) * k, y: ECRAN_POSTE.y + (A.y + r.y * A.k) * k, l: r.l * A.k * k, h: r.h * A.k * k };
 }
-/** Rectangle de l'écran du PC (coordonnées PC) → image principale */
-function pcVersImage(r) {
-	const k = KP();
-	return { x: ECRAN_POSTE.x + r.x * k, y: ECRAN_POSTE.y + r.y * k, l: r.l * k, h: r.h * k };
-}
 function region(src, dx, dy, dl, defile) {
 	const dh = (src.h * dl) / src.l;
 	PORTRAIT.regions.push({ src, dst: { x: dx, y: dy, l: dl, h: dh }, defile: !!defile });
@@ -133,7 +128,6 @@ function regionsAppli() {
 	let y = haut;
 	// Prompt 73 : la liste des signalements en haut (hauteur selon le nombre de signalements), le dossier dessous,
 	// puis la colonne lignes / objectif / équipes
-	const nSig = Math.max(1, Math.min(typeof fileIncidents === 'function' ? fileIncidents().length : 1, 7));
 	const zcP = typeof zoneCarte === 'function' ? zoneCarte() : FILE_SIG; // prompt 102 : la carte à la place de la liste
 	y += region(appliVersImage({ x: zcP.x, y: zcP.y, l: zcP.l, h: zcP.h }), 20, y, PL - 40, true) + 16;
 	y += region(appliVersImage(MENU_BAS), 0, y, PL) + 16; // prompt 103 : menu en barre d'onglets
