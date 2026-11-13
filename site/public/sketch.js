@@ -440,6 +440,12 @@ const FERMETURE_FOND = {
 };
 let ZONE_FENETRE = null; // rectangle de la fenêtre dessinée à cette image (premier panneau), null hors fenêtre
 let FENETRE_EN_DESSIN = false;
+// Prompt 209 : mobile portrait — seconde colonne d'une fenêtre trop haute pour 640 × 1080 (dessinée à côté dans l'image,
+// empilée dessous et défilable sur le canevas portrait) ; null sinon. Posée par la fenêtre à chaque image.
+let FENETRE_SUITE = null;
+function suiteFenetre(x, y, l, h) {
+	if (FENETRE_EN_DESSIN) FENETRE_SUITE = { x, y, l, h };
+}
 function zoneFenetre(x, y, l, h) {
 	if (FENETRE_EN_DESSIN && !ZONE_FENETRE) ZONE_FENETRE = { x, y, l, h };
 }
@@ -448,6 +454,8 @@ function clicFondFenetre() {
 	const z = ZONE_FENETRE;
 	if (!fenetre || !z || tutoriel || smsActif || FENETRES_BLOQUANTES.includes(fenetre) || !FERMETURE_FOND[fenetre]) return false;
 	if (mouseX >= z.x && mouseX <= z.x + z.l && mouseY >= z.y && mouseY <= z.y + z.h) return false;
+	const sf = FENETRE_SUITE; // prompt 209 : la suite de la fenêtre (portrait) n'est pas le fond
+	if (sf && mouseX >= sf.x && mouseX <= sf.x + sf.l && mouseY >= sf.y && mouseY <= sf.y + sf.h) return false;
 	FERMETURE_FOND[fenetre]();
 	Confort.Son.clic();
 	return true;
@@ -1402,6 +1410,7 @@ function dessinerPause() {
 function dessinerFenetre() {
 	// Prompt 173 : la zone de la fenêtre (premier panneau dessiné) sert au clic sur le fond
 	ZONE_FENETRE = null;
+	FENETRE_SUITE = null; // prompt 209
 	FENETRE_EN_DESSIN = true;
 	zoneTexteCalque(); // prompt 209
 	try {
@@ -1437,7 +1446,8 @@ function contenuFenetre() {
 
 function fenetreReset() {
 	const l = DS.fenetre.moyenne; // prompt 173 (était 760)
-	const h = 300;
+	const portrait = typeof PORTRAIT !== 'undefined' && PORTRAIT.actif; // prompt 209 : 640 px, texte en boîte, boutons empilés
+	const h = portrait ? 480 : 300;
 	const x = (L - l) / 2;
 	const y = (H - h) / 2;
 	panneau(x, y, l, h, C.orange);
@@ -1449,8 +1459,15 @@ function fenetreReset() {
 	textSize(40);
 	text(t('reset.titre'), L / 2, y + 48);
 	textStyle(NORMAL);
-	ajusterTaille(t('reset.texte'), l - 80, 22);
 	fill(C.gris);
+	if (portrait) {
+		textSize(22);
+		text(t('reset.texte'), x + 48, y + 110, l - 96, 120);
+		bouton(x + 48, y + h - 200, l - 96, 72, t('reset.oui'), confirmerReset);
+		bouton(x + 48, y + h - 112, l - 96, 72, t('reset.non'), fermer, false, true);
+		return;
+	}
+	ajusterTaille(t('reset.texte'), l - 80, 22);
 	text(t('reset.texte'), L / 2, y + 110);
 	bouton(x + 48, y + h - 112, (l - 112) / 2, 72, t('reset.oui'), confirmerReset);
 	bouton(x + 64 + (l - 112) / 2, y + h - 112, (l - 112) / 2, 72, t('reset.non'), fermer, false, true);

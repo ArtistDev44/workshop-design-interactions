@@ -39,6 +39,7 @@ function activerPortrait(oui) {
 	PORTRAIT.actif = oui;
 	document.body.classList.toggle('portrait', oui);
 	appliquerGeometriePortrait(oui);
+	appliquerFenetresPortrait(oui); // prompt 209
 	if (oui && !PORTRAIT.canevas) {
 		const c = document.createElement('canvas');
 		c.id = 'portrait';
@@ -65,8 +66,21 @@ function region(src, dx, dy, dl, defile) {
 	return dh;
 }
 // Prompt 173 : les fenêtres n'ont plus que trois largeurs (DS.fenetre) ; le cadrage portrait = largeur + 40 px
-const CADRE_FENETRE = { etroite: DS.fenetre.etroite + 40, moyenne: DS.fenetre.moyenne + 40, large: DS.fenetre.large + 40 };
-const LARGEUR_FENETRE = { menu: CADRE_FENETRE.etroite, partage: CADRE_FENETRE.moyenne, installation: CADRE_FENETRE.moyenne, demission: CADRE_FENETRE.moyenne, partir: CADRE_FENETRE.moyenne, reset: CADRE_FENETRE.moyenne }; // prompt 88 ; les autres : large
+// Prompt 209 : en portrait, les trois largeurs valent 640 (colonne étroite de l'image, recomposée pleine largeur : le texte
+// de 20 px y fait ≈ 12 px CSS sur un écran de 412 px) ; elles reprennent leurs valeurs en sortant du portrait
+const FENETRE_ORDINATEUR = Object.assign({}, DS.fenetre);
+const FENETRE_PORTRAIT = 640;
+function appliquerFenetresPortrait(oui) {
+	['etroite', 'moyenne', 'large'].forEach((k) => (DS.fenetre[k] = oui ? FENETRE_PORTRAIT : FENETRE_ORDINATEUR[k]));
+}
+const CADRE_FENETRE = {
+	get etroite() { return DS.fenetre.etroite + 40; },
+	get moyenne() { return DS.fenetre.moyenne + 40; },
+	get large() { return DS.fenetre.large + 40; },
+};
+const LARGEUR_FENETRE = {}; // prompt 88 (largeurs propres), prompt 209 : toutes à CADRE_FENETRE en portrait
+['menu'].forEach((f) => Object.defineProperty(LARGEUR_FENETRE, f, { get: () => CADRE_FENETRE.etroite }));
+['partage', 'installation', 'demission', 'partir', 'reset'].forEach((f) => Object.defineProperty(LARGEUR_FENETRE, f, { get: () => CADRE_FENETRE.moyenne }));
 
 function scenePortrait() {
 	if (typeof CINE !== 'undefined' && CINE) return 'plein';
@@ -91,10 +105,8 @@ function composerPortrait() {
 	if (scene === 'appli' || scene === 'vueApp') regionsPoste(scene); // prompt 205
 	else if (scene === 'main') region({ x: 880, y: 0, l: 780, h: H }, 0, 200, PL);
 	else if (scene === 'rapport') region({ x: 420, y: 0, l: 1420, h: H }, 0, (PH - (H * PL) / 1420) / 2, PL);
-	else if (scene === 'fenetre') {
-		const W = tutoriel ? 1400 : LARGEUR_FENETRE[fenetre] || CADRE_FENETRE.large;
-		region({ x: (L - W) / 2, y: 0, l: W, h: H }, 0, (PH - (H * PL) / W) / 2, PL);
-	} else if (scene === 'menu') {
+	else if (scene === 'fenetre') regionsFenetre();
+	else if (scene === 'menu') {
 		// Prompt 199 : en haut à droite, la pile FR / EN · plein écran · télécharger ; puis la colonne du menu (titre, cartes)
 		// jusqu'à Paramètres ; puis la rangée Livrables · Kit de presse · Présentation · Dépôt · Partager et le pied de page. Pile et rangée agrandies ×2 :
 		// boutons de 60 et 68 px → ≥ 44 px à l'écran sur un téléphone de 412 px de large
@@ -116,7 +128,8 @@ function composerPortrait() {
 	ctx.fillRect(0, 0, PL, PH);
 	ctx.imageSmoothingEnabled = true;
 	const poste = scene === 'appli' || scene === 'vueApp';
-	const zone = poste ? { haut: PORTRAIT.hautDefil, bas: PORTRAIT.basDefil } : null;
+	const defilant = poste || (scene === 'fenetre' && PORTRAIT.defilMax > 0); // prompt 209 : fenêtre avec une suite
+	const zone = defilant ? { haut: PORTRAIT.hautDefil, bas: PORTRAIT.basDefil } : null;
 	// Prompt 205 : la fiche du dossier monte du bas à son arrivée (0,3 s ; immédiate si les animations sont réduites)
 	const kF = reduireAnimations ? 1 : Math.min(1, (millis() - PORTRAIT.feuille) / 300);
 	const montee = poste && kF < 1 ? (1 - (1 - Math.pow(1 - kF, 3))) * (PH - (zone ? zone.haut : 0)) : 0;
@@ -139,13 +152,41 @@ function composerPortrait() {
 		if (SOMMEIL.k > 0.5) PORTRAIT.boutons = [];
 		return;
 	}
-	if (poste && PORTRAIT.defilMax > 0) {
+	if (defilant && PORTRAIT.defilMax > 0) {
 		// Ascenseur discret : où l'on est dans la colonne
 		const h = ((zone.bas - zone.haut) * (zone.bas - zone.haut)) / (zone.bas - zone.haut + PORTRAIT.defilMax);
 		const y = zone.haut + ((zone.bas - zone.haut - h) * PORTRAIT.defil) / PORTRAIT.defilMax;
 		ctx.fillStyle = 'rgba(255,255,255,0.35)';
 		ctx.fillRect(PL - 10, y, 6, h);
 	}
+}
+
+/** Prompt 209 : fenêtre — sa colonne (640 px + marges, centrée sur le panneau dessiné), et sa suite éventuelle
+ * (FENETRE_SUITE, seconde colonne de l'image) empilée dessous ; l'ensemble défile au doigt s'il dépasse l'écran */
+function regionsFenetre() {
+	const W = tutoriel ? 1400 : LARGEUR_FENETRE[fenetre] || CADRE_FENETRE.large;
+	const Z = typeof ZONE_FENETRE !== 'undefined' ? ZONE_FENETRE : null;
+	const cx = !tutoriel && Z && Z.l <= W ? Z.x + Z.l / 2 : L / 2;
+	const S = !tutoriel && typeof FENETRE_SUITE !== 'undefined' ? FENETRE_SUITE : null;
+	const cle = 'fenetre:' + fenetre;
+	if (cle !== PORTRAIT.cleContenu) {
+		PORTRAIT.cleContenu = cle;
+		PORTRAIT.defil = 0;
+	}
+	PORTRAIT.hautDefil = 0;
+	PORTRAIT.basDefil = PH;
+	if (!S) {
+		PORTRAIT.defilMax = 0;
+		region({ x: cx - W / 2, y: 0, l: W, h: H }, 0, (PH - (H * PL) / W) / 2, PL);
+		return;
+	}
+	const y0 = Z ? Math.max(0, Z.y - 20) : 0;
+	const y1 = Z ? Math.min(H, Z.y + Z.h + 20) : H;
+	const dh = region({ x: cx - W / 2, y: y0, l: W, h: y1 - y0 }, 0, 0, PL, true);
+	const s0 = Math.max(0, S.y - 20);
+	const total = dh + region({ x: S.x + S.l / 2 - W / 2, y: s0, l: W, h: Math.min(H, S.y + S.h + 20) - s0 }, 0, dh, PL, true);
+	PORTRAIT.defilMax = Math.max(0, total - PH);
+	PORTRAIT.defil = constrain(PORTRAIT.defil, 0, PORTRAIT.defilMax);
 }
 
 // ——— Prompt 205 : poste en portrait — barre des jauges (haut), un seul contenu plein écran (défilant), équipes
@@ -371,7 +412,7 @@ function portraitDeplacement(e) {
 	if (!d) return;
 	const p = pointPortrait(e);
 	const sc = scenePortrait();
-	if ((sc === 'appli' || sc === 'vueApp') && Math.abs(p.y - d.y) > 12) {
+	if ((sc === 'appli' || sc === 'vueApp' || (sc === 'fenetre' && PORTRAIT.defilMax > 0)) && Math.abs(p.y - d.y) > 12) {
 		PORTRAIT.cible = null;
 		PORTRAIT.defil = constrain(d.defil - (p.y - d.y), 0, PORTRAIT.defilMax); // le doigt fait défiler la colonne
 	}

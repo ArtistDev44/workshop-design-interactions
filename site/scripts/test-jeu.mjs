@@ -4152,6 +4152,23 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	verifier(/smsPostureCamille\(meteo\)/.test(readFileSync(join(pub, 'soir.js'), 'utf8')) && /noterPosture\('cafes'\)/.test(readFileSync(join(pub, 'cafe.js'), 'utf8')) && /volontaire && Jeu\.noterPosture\) Jeu\.noterPosture\('siestes'\)/.test(readFileSync(join(pub, 'sieste.js'), 'utf8')), '207 : SMS de posture le soir, café et sieste volontaire comptés');
 }
 
+// ——— Prompt 209 : mobile portrait hors du poste — DS.fenetre vaut 640 en portrait, reprend ses valeurs en sortant ———
+{
+	const c = vm.createContext({ console, Math, Object, String, Number, Array, JSON, window: {} });
+	const fen = /fenetre: (\{[^}]*\})/.exec(readFileSync(join(pub, 'ds.js'), 'utf8'))[1]; // DS.fenetre tel que ds.js le déclare
+	vm.runInContext(`var DS = { fenetre: ${fen} };`, c);
+	vm.runInContext(readFileSync(join(pub, 'portrait.js'), 'utf8'), c, { filename: 'portrait.js' });
+	const lire = () => JSON.parse(vm.runInContext('JSON.stringify({ e: DS.fenetre.etroite, m: DS.fenetre.moyenne, l: DS.fenetre.large, c: [CADRE_FENETRE.etroite, CADRE_FENETRE.moyenne, CADRE_FENETRE.large, LARGEUR_FENETRE.menu, LARGEUR_FENETRE.partage] })', c));
+	const avant = lire();
+	vm.runInContext('appliquerFenetresPortrait(true)', c);
+	const pendant = lire();
+	vm.runInContext('appliquerFenetresPortrait(false)', c);
+	const apres = lire();
+	verifier(pendant.e === 640 && pendant.m === 640 && pendant.l === 640 && pendant.c.every((v) => v === 680), `prompt 209 : en portrait, DS.fenetre doit valoir 640 (cadre 680) : ${JSON.stringify(pendant)}`);
+	verifier(JSON.stringify(apres) === JSON.stringify(avant) && avant.l > 640, `prompt 209 : en sortant du portrait, DS.fenetre doit reprendre ses valeurs : ${JSON.stringify(avant)} → ${JSON.stringify(apres)}`);
+	verifier(/appliquerFenetresPortrait\(oui\)/.test(readFileSync(join(pub, 'portrait.js'), 'utf8')), 'prompt 209 : activerPortrait doit appliquer les largeurs de fenêtre');
+}
+
 if (erreurs.length) {
 	console.error(`Test du jeu : ${erreurs.length} erreur(s) sur ${controles + erreurs.length} contrôles`);
 	for (const e of erreurs) console.error(`  ✗ ${e}`);

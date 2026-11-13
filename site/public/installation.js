@@ -45,7 +45,11 @@ const ETAPES_INSTALLATION = ['ordinateur', 'android', 'ios'];
 function fenetreInstallation() {
 	const l = DS.fenetre.moyenne; // prompt 173 (était 1000)
 	const installe = estInstallee();
-	const h = installe ? 330 : 620;
+	const portrait = typeof PORTRAIT !== 'undefined' && PORTRAIT.actif; // prompt 209 : 640 px, plateformes au-dessus de leur texte
+	const oi = { taille: 22, interligne: 32 };
+	const oe = { taille: 20, interligne: 30 };
+	const hp = portrait && !installe ? 104 + hauteurTexte(t('pwa.aide.intro'), l - 96, oi) + 20 + ETAPES_INSTALLATION.reduce((a, k) => a + 36 + hauteurTexte(t('pwa.aide.' + k), l - 96, oe) + 16, 0) + 8 + hauteurTexte(t('pwa.aide.horsLigne'), l - 96, oe) + 24 + 120 : 0;
+	const h = hp ? Math.min(H - 16, hp) : installe ? 330 : 620;
 	const x = (L - l) / 2;
 	const y = (H - h) / 2;
 	panneau(x, y, l, h, C.accent);
@@ -61,12 +65,18 @@ function fenetreInstallation() {
 	yy += dessinerTexte(t(installe ? 'pwa.aide.dejaInstalle' : 'pwa.aide.intro'), x + 48, yy, l - 96, { taille: 22, interligne: 32 }).h + 20;
 	if (!installe) {
 		ETAPES_INSTALLATION.forEach((k) => {
+			if (portrait) {
+				dessinerTexte(t('pwa.aide.' + k + '.k'), x + 48, yy, l - 96, { taille: 20, interligne: 30, police: POLICE_DONNEES, style: BOLD, couleur: C.orange });
+				yy += 36 + dessinerTexte(t('pwa.aide.' + k), x + 48, yy + 36, l - 96, oe).h + 16;
+				return;
+			}
 			dessinerTexte(t('pwa.aide.' + k + '.k'), x + 48, yy, 250, { taille: 20, interligne: 30, police: POLICE_DONNEES, style: BOLD, couleur: C.orange });
 			yy += dessinerTexte(t('pwa.aide.' + k), x + 310, yy, l - 310 - 48, { taille: 20, interligne: 30 }).h + 16;
 		});
 		dessinerTexte(t('pwa.aide.horsLigne'), x + 48, yy + 8, l - 96, { taille: 20, interligne: 30, couleur: C.gris });
 	}
-	bouton(x + l - 48 - 260, y + h - 96, 260, 60, t('commun.fermer'), fermer);
+	if (portrait) bouton(x + 48, y + h - 104, l - 96, 72, t('commun.fermer'), fermer);
+	else bouton(x + l - 48 - 260, y + h - 96, 260, 60, t('commun.fermer'), fermer);
 }
 
 window.addEventListener('beforeinstallprompt', (e) => {

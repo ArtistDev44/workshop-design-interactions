@@ -57,12 +57,20 @@ function installerEchelleTexte() {
 		let v = s < 24 ? Math.min(s * ECHELLE_TEXTE, 24) : s;
 		// Prompt 49 : sur l'écran du PC (affiché à 90 %), aucun texte sous 18 px (≈ 16 px à l'écran)
 		if (typeof espaceDessin !== 'undefined' && espaceDessin === 'pc') v = Math.max(v, typeof transformAppli !== 'undefined' && transformAppli ? 20 : TAILLE_MIN_PC); // prompt 50 : 20 px dans l'appli, réduite à 91 % en fenêtre
+		// Prompt 209 : mobile portrait — dans les écrans recomposés en colonne de 640 px (fenêtres…), aucun texte sous 20 px
+		// (≈ 12 px CSS sur un écran de 412 px de large)
+		if (typeof PORTRAIT !== 'undefined' && PORTRAIT.actif && plancherPortrait()) v = Math.max(v, 20);
 		return tailleOrigine(v);
 	};
 	window.textLeading = function (s) {
 		if (s === undefined) return interligneOrigine();
 		return interligneOrigine(Math.max(s, tailleOrigine() * 1.25)); // l'interligne suit le texte agrandi
 	};
+}
+
+/** Prompt 209 : écrans dessinés en colonne étroite en portrait (le plancher de 20 px s'y applique) */
+function plancherPortrait() {
+	return typeof FENETRE_EN_DESSIN !== 'undefined' && FENETRE_EN_DESSIN && typeof fenetre !== 'undefined' && fenetre !== 'telephone' && fenetre !== 'cafe' && fenetre !== 'rapport';
 }
 
 /** Lecture facile : compte à rebours ×1,5 et pas de tic-tac */

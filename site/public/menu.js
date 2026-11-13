@@ -502,6 +502,11 @@ function fenetrePartage() {
 		const lib = o.copie && PARTAGE.copie && millis() - PARTAGE.copie < 3000 ? t('mp.partager.copie') : libellePartage(o);
 		boutonIcone(x + 48, by, l - 96, ho, o.cle, lib, () => activerPartage(i), PARTAGE.focus === i);
 	});
+	if (portrait) {
+		// Prompt 209 : fenêtre de 640 px — « Fermer » pleine largeur, sans le rappel du clavier (au doigt)
+		bouton(x + 48, y + h - 112, l - 96, 80, t('mp.partager.fermer'), fermer, false, PARTAGE.focus !== OPTIONS_PARTAGE.length);
+		return textAlign(LEFT, TOP);
+	}
 	bouton(x + l - 48 - 260, y + h - 96, 260, 60, t('mp.partager.fermer'), fermer, false, PARTAGE.focus !== OPTIONS_PARTAGE.length);
 	if (PARTAGE.focus === OPTIONS_PARTAGE.length) {
 		noFill();

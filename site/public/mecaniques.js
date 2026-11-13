@@ -102,7 +102,8 @@ function dessinerOffreDemission() {
 }
 function fenetreDemission() {
 	const l = DS.fenetre.moyenne; // prompt 173 (était 900)
-	const h = 420;
+	const portrait = typeof PORTRAIT !== 'undefined' && PORTRAIT.actif;
+	const h = portrait ? 640 : 420; // prompt 209 : texte plus long sur 640 px, boutons empilés
 	const x = (L - l) / 2;
 	const y = (H - h) / 2;
 	panneau(x, y, l, h, C.accent);
@@ -113,7 +114,13 @@ function fenetreDemission() {
 	textSize(24);
 	textLeading(34);
 	fill(C.texte);
-	text(t('demission.texte', { f: Jeu.jauges.fluidite, r: Jeu.jauges.reputation, b: Jeu.jauges.budget }), x + 56, y + 130, l - 112, 140);
+	text(t('demission.texte', { f: Jeu.jauges.fluidite, r: Jeu.jauges.reputation, b: Jeu.jauges.budget }), x + 56, y + 130, l - 112, portrait ? 300 : 140);
+	if (portrait) {
+		// Prompt 209 : fenêtre de 640 px — les deux boutons empilés, pleine largeur
+		bouton(x + 56, y + h - 116 - 88, l - 112, 72, t('demission.confirmer'), demissionner);
+		bouton(x + 56, y + h - 116, l - 112, 72, t('demission.continuer'), fermer, false, true);
+		return;
+	}
 	bouton(x + 56, y + h - 116, 380, 72, t('demission.confirmer'), demissionner);
 	bouton(x + l - 56 - 340, y + h - 116, 340, 72, t('demission.continuer'), fermer, false, true);
 }
@@ -133,6 +140,7 @@ function lignesPalmares() {
 	return semaines.map((s) => Object.assign(s, { m: Confort.Bilans.meilleur(s.cle) }));
 }
 function fenetrePalmares() {
+	if (typeof PORTRAIT !== 'undefined' && PORTRAIT.actif) return palmaresPortrait(); // prompt 209
 	const l = DS.fenetre.large; // prompt 173 (était 1400)
 	const lignes = lignesPalmares();
 	const h = 300 + lignes.length * 96 + 90; // prompt 207 : l'aide passe au-dessus des boutons (bouton « Fins découvertes »)
@@ -184,6 +192,65 @@ function fenetrePalmares() {
 	bouton(x + l - 56 - 300, y + h - 108, 300, 68, t('commun.fermer'), fermer);
 }
 
+/** Prompt 209 : mobile portrait — le tableau devient une liste de cartes (une par semaine) dans la colonne de 640 px ;
+ * l'explication et les boutons passent dans la suite de la fenêtre (empilée dessous, défilable) */
+function palmaresPortrait() {
+	const l = DS.fenetre.large;
+	const lignes = lignesPalmares();
+	const cl = l - 64;
+	const hCarte = (s) => (s.m ? 196 : 104);
+	const x = 20;
+	const h = 136 + lignes.reduce((a, s) => a + hCarte(s) + 12, 0) + 20;
+	const y = Math.max(8, (H - h) / 2);
+	panneau(x, y, l, h, C.accent);
+	dsTitre(t('palmares.titre'), x + 32, y + 32, 48, C.texte, 'left');
+	let yy = y + 120;
+	lignes.forEach((s) => {
+		const hc = hCarte(s);
+		noStroke();
+		fill(255, 255, 255, 13);
+		rect(x + 32, yy, cl, hc);
+		textAlign(LEFT, TOP);
+		textFont(POLICE_TEXTE);
+		textStyle(BOLD);
+		textSize(22);
+		fill(C.texte);
+		text(s.libelle, x + 48, yy + 14, cl - 32, 32);
+		textStyle(NORMAL);
+		textSize(20);
+		if (!s.m) {
+			fill(C.gris);
+			text(t('palmares.col.score') + ' : ' + t('palmares.vide'), x + 48, yy + 56, cl - 32, 32);
+		} else {
+			textStyle(BOLD);
+			textSize(30);
+			fill(C.texte);
+			text(s.m.score + ' / 300', x + 48, yy + 52);
+			textStyle(NORMAL);
+			textSize(20);
+			fill(C.gris);
+			text(t('palmares.le', { date: s.m.le.split('-').reverse().join('/') }), x + 48 + 200, yy + 60);
+			const j = s.m.jauges || {};
+			fill(C.texte);
+			text(t('palmares.jauges', { f: j.fluidite, r: j.reputation, b: j.budget }), x + 48, yy + 100, cl - 32, 30);
+			text(t('palmares.col.profil') + ' : ' + (s.m.profil ? t('profil.' + s.m.profil) : '—') + (s.m.defis ? ' · ' + t('palmares.defis', { n: s.m.defis }) : ''), x + 48, yy + 134, cl - 32, 56);
+		}
+		yy += hc + 12;
+	});
+	// Suite : explication, puis « Fins découvertes » et « Fermer » en boutons pleine largeur
+	const x2 = 720;
+	const o = { taille: 20, couleur: C.gris, police: POLICE_DONNEES, interligne: 26 };
+	const ht = hauteurTexte(t('palmares.aide'), cl, o);
+	const h2 = 32 + ht + 32 + (Jeu.Galerie ? 88 : 0) + 104;
+	const y2 = Math.max(8, (H - h2) / 2);
+	panneau(x2, y2, l, h2, C.accent);
+	suiteFenetre(x2, y2, l, h2);
+	dessinerTexte(t('palmares.aide'), x2 + 32, y2 + 32, cl, o);
+	let yb = y2 + 32 + ht + 32;
+	if (Jeu.Galerie) bouton(x2 + 32, yb, cl, 72, t('fins.bouton', { d: Jeu.Galerie.decouvertes(), n: Jeu.FINS_SEMAINE.length }), ouvrirFins, false, true), (yb += 88);
+	bouton(x2 + 32, yb, cl, 72, t('commun.fermer'), fermer);
+}
+
 // ——— Prompt 207 : galerie des dix fins de semaine (découvertes / à découvrir), depuis le palmarès ———
 function ouvrirFins() {
 	if (!Jeu.Galerie) return;
@@ -195,6 +262,7 @@ function ouvrirFins() {
 	);
 }
 function fenetreFins() {
+	if (typeof PORTRAIT !== 'undefined' && PORTRAIT.actif) return finsPortrait(); // prompt 209
 	const l = DS.fenetre.large;
 	const g = Jeu.Galerie ? Jeu.Galerie.lire() : {};
 	const fins = Jeu.FINS_SEMAINE || [];
@@ -229,6 +297,52 @@ function fenetreFins() {
 		dessinerTexte(ligne, cx + 56, cy + 46, cl - 72, { taille: 17, couleur: C.gris, maxLignes: 2, interligne: 23 });
 	});
 	bouton(x + l - 56 - 300, y + h - 92, 300, 64, t('fins.retour'), fermerFins);
+}
+/** Prompt 209 : mobile portrait — galerie en une colonne de 640 px : fins 1 à 5 dans la fenêtre, 6 à 10 et « Retour »
+ * dans sa suite (seconde colonne de l'image, empilée dessous et défilable) */
+function finsPortrait() {
+	const l = DS.fenetre.large;
+	const g = Jeu.Galerie ? Jeu.Galerie.lire() : {};
+	const fins = Jeu.FINS_SEMAINE || [];
+	const moitie = Math.ceil(fins.length / 2);
+	const hc = 136;
+	const cl = l - 64;
+	const carte = (f, i, cx, cy) => {
+		const vu = g[f.cle];
+		noStroke();
+		fill(255, 255, 255, vu ? 22 : 9);
+		rect(cx, cy, cl, hc);
+		textAlign(LEFT, TOP);
+		textFont(POLICE_DONNEES);
+		textSize(20);
+		fill(C.gris);
+		text(String(i + 1).padStart(2, '0'), cx + 16, cy + 14);
+		textFont(POLICE_TEXTE);
+		textStyle(BOLD);
+		textSize(24);
+		fill(vu ? C.texte : C.gris);
+		text(vu ? t('fin.' + f.cle + '.nom') : t('fins.cachee'), cx + 60, cy + 10, cl - 76, 32);
+		textStyle(NORMAL);
+		const ligne = vu ? t('fins.obtenue', { le: vu.le.split('-').reverse().join('/'), s: vu.score, n: vu.n || 1 }) + ' — ' + t('fin.' + f.cle + '.indice') : t('fin.' + f.cle + '.indice');
+		dessinerTexte(ligne, cx + 60, cy + 48, cl - 76, { taille: 20, couleur: C.gris, maxLignes: 3, interligne: 26 });
+	};
+	const x = 20;
+	const h = 196 + moitie * (hc + 12);
+	const y = Math.max(8, (H - h) / 2);
+	panneau(x, y, l, h, C.accent);
+	dsTitre(t('fins.titre'), x + 32, y + 32, 44, C.texte, 'left');
+	noStroke();
+	textAlign(LEFT, TOP);
+	dessinerTexte(t('fins.compte', { d: Jeu.Galerie ? Jeu.Galerie.decouvertes() : 0, n: fins.length }), x + 32, y + 96, l - 64, { taille: 20, couleur: C.gris, police: POLICE_DONNEES, maxLignes: 3, interligne: 26 });
+	fins.slice(0, moitie).forEach((f, i) => carte(f, i, x + 32, y + 184 + i * (hc + 12)));
+	// Suite : à droite dans l'image, empilée sous la fenêtre en portrait
+	const x2 = 720;
+	const h2 = 24 + (fins.length - moitie) * (hc + 12) + 112;
+	const y2 = Math.max(8, (H - h2) / 2);
+	panneau(x2, y2, l, h2, C.accent);
+	suiteFenetre(x2, y2, l, h2);
+	fins.slice(moitie).forEach((f, i) => carte(f, moitie + i, x2 + 32, y2 + 24 + i * (hc + 12)));
+	bouton(x2 + 32, y2 + h2 - 96, cl, 72, t('fins.retour'), fermerFins);
 }
 function fermerFins() {
 	ouvrir('palmares');
