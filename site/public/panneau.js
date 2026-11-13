@@ -347,8 +347,8 @@ function bulleDuPlaignant(d, x, y, l) {
 	}
 	fill(DS.blanc05);
 	rect(x + 76, y, lt + 8, hb);
-	if (pl && pl.ton === 'agressif') {
-		fill(DS.alerte); // prompt 118 : ton agressif voulu — liseré d'alerte
+	if (pl && pl.ton === 'provoquant') {
+		fill(DS.alerte); // prompt 118 : ton provoquant voulu (prompt 198 : « agressif » → « provoquant ») — liseré d'alerte
 		rect(x + 76, y, 4, hb);
 	}
 	triangle(x + 76, y + 22, x + 66, y + 30, x + 76, y + 38); // pointe de la bulle vers l'avatar

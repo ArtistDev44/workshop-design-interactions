@@ -869,7 +869,7 @@ for (const [nom, ctx] of [['fr', contexte('fr')], ['en', contexte('en')]]) {
 // Prompt 85 : compte social (Quai) — plaintes ajoutées, posts réels, archive, info trafic, messages privés
 {
 	const brut = JSON.parse(readFileSync(join(pub, 'data', 'messages.json'), 'utf8'));
-	const CLES_COND = ['type', 'retard_min', 'ligne', 'nature_contient', 'pointe', 'meteo'];
+	const CLES_COND = ['type', 'retard_min', 'ligne', 'nature_contient', 'pointe', 'meteo', 'fil']; // prompt 198 : « fil » (relance, doublon)
 	const invalides = brut.plaintes.filter((p) => !p.texte.en || p.reponses.length !== 3 || !p.reponses.some((r) => r.bonne) || !p.reponses.some((r) => !r.bonne && !r.clash) || p.reponses.filter((r) => r.clash).length !== 1 || p.reponses.some((r) => !r.clash && !r.texte.en) || Object.keys(p.condition || {}).some((k) => !CLES_COND.includes(k))); // prompt 197 : exactement 3 réponses dont une bonne et une clash
 	verifier(invalides.length === 0 && brut.plaintes.length >= 21 && brut.plaintes.filter((p) => p.prive).length >= 3, `community : plaintes invalides ${invalides.map((p) => p.id)}`);
 	verifier((brut.modeles || []).length === 3 && brut.modeles.every((m) => m.texte.fr && m.texte.en && m.coherent.length), 'community : 3 modèles d\'info trafic FR + EN');
@@ -1099,17 +1099,17 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 	}
 }
 
-// Prompt 118 : plaintes agressives — FR et EN, aucun gros mot en clair (masqués par des symboles), conditions réelles, ≈ 1 sur 3
+// Prompt 118 (ton renommé « provoquant » au prompt 198) : plaintes agressives — FR et EN, aucun gros mot en clair (masqués par des symboles), conditions réelles, ≈ 1 sur 3
 {
 	const c118 = contexte('fr');
 	const r = vm.runInContext(`(() => {
-		const ag = Jeu.MESSAGES.plaintes.filter((p) => p.ton === 'agressif');
+		const ag = Jeu.MESSAGES.plaintes.filter((p) => p.ton === 'provoquant');
 		const textes = ag.flatMap((p) => [p.texte.fr, p.texte.en || '']);
 		const clair = /\\b(merde|putain|connard|connasse|enculé|salope|bordel|foutre|fuck|shit|bastard|bitch|asshole|crap|damn)\\b/i;
 		const out = { n: ag.length, sansEn: ag.filter((p) => !p.texte.en).map((p) => p.id), enClair: textes.filter((x) => clair.test(x)), sansSymbole: ag.filter((p) => !/[@#$%&!]{2,}/.test(p.texte.fr)).map((p) => p.id), agressifs: 0, total: 0 };
 		for (const sem of ['2026-09-14', '2026-10-12', '2026-11-02']) {
 			Jeu.chargerSemaine(sem); Jeu.nouvellePartie();
-			Jeu.paquet.forEach((d, i) => { const pl = Jeu.plaignantPour(i); if (pl) { out.total++; if (pl.ton === 'agressif') out.agressifs++; } });
+			Jeu.paquet.forEach((d, i) => { const pl = Jeu.plaignantPour(i); if (pl) { out.total++; if (pl.ton === 'provoquant') out.agressifs++; } });
 		}
 		return out;
 	})()`, c118);
@@ -3925,6 +3925,111 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 		verifier(!ajoutees.length, `prompt 194 (${langue}) : clés manquantes : ${ajoutees.join(', ')}`);
 		verifier(/horlog|clock/i.test(dico['tuto.6.texte']) && /\bQ\b/.test(dico['tuto.6.texte']) && /Mail/.test(dico['tuto.6.texte']) && !/PC/.test(dico['horloge.fin']), `prompt 194 (${langue}) : le tutoriel explique l'horloge et Mails`);
 	}
+}
+
+// Prompt 198 : variété des interactions Community — volume × 4, au plus 1/3 de provoquantes, tirage semé sans répétition
+{
+	const brut = JSON.parse(readFileSync(join(pub, 'data', 'messages.json'), 'utf8'));
+	const TONS = ['provoquant', 'neutre', 'positif'];
+	const CATS = ['question', 'remerciement', 'suggestion', 'temoignage', 'relance', 'doublon', 'accessibilite', 'photo'];
+	const nouvelles = brut.plaintes.filter((p) => p.categorie && p.categorie !== 'plainte');
+	verifier(brut.plaintes.every((p) => TONS.includes(p.ton)) && !brut.plaintes.some((p) => p.ton === 'agressif'), '198 : chaque entrée de messages.json porte un ton (provoquant, neutre, positif)');
+	verifier(CATS.every((c) => nouvelles.filter((p) => p.categorie === c).length >= 4), `198 : au moins 4 entrées par nouvelle catégorie (${CATS.map((c) => c + ' ' + nouvelles.filter((p) => p.categorie === c).length).join(', ')})`);
+	const incompletes = nouvelles.filter((p) => !p.texte.fr || !p.texte.en || p.reponses.length !== 3 || p.reponses.filter((r) => r.bonne).length !== 1 || p.reponses.some((r) => !r.effets || (!r.clash && (!r.texte.fr || !r.texte.en))));
+	verifier(nouvelles.length >= 40 && !incompletes.length, `198 : nouvelles interactions incomplètes (FR + EN, 3 réponses, effets) : ${incompletes.map((p) => p.id)}`);
+	const clair = /\b(merde|putain|connard|connasse|enculé|salope|bordel|foutre|fuck|shit|bastard|bitch|asshole|crap|damn)\b/i;
+	verifier(!nouvelles.some((p) => clair.test(p.texte.fr + ' ' + p.texte.en)), '198 : aucun mot grossier en clair dans les nouvelles interactions');
+	verifier(nouvelles.filter((p) => p.ton === 'provoquant').every((p) => /[@#$%&!]{2,}/.test(p.texte.fr) && /[@#$%&!]{2,}/.test(p.texte.en)), '198 : provocations aux mots masqués hors alphabet');
+	const code = readFileSync(join(pub, 'game.js'), 'utf8');
+	verifier(!/Math\.random\s*\(/.test(code), '198 : aucun Math.random() dans game.js (tirage semé)');
+
+	const SIM = `(sem, enPlus) => {
+		Jeu.chargerSemaine(sem); Jeu.nouvellePartie(); Jeu.NB_INTERACTIONS_EN_PLUS = enPlus;
+		const jours = []; let tours = 0; let sauvegarde = null;
+		const repondre = () => Jeu.plaintesEnAttente().forEach((p) => Jeu.repondrePlainte(p, 0, undefined));
+		while (!Jeu.terminee && tours++ < 500) {
+			const d = Jeu.prochainDuJour();
+			const deb = Jeu.debutJournee(), fin = Jeu.finJournee();
+			if (d) {
+				const n = Jeu.jourCourant().dossiers.length, rang = Jeu.jourCourant().dossiers.indexOf(d);
+				Jeu.horloge.minutes = deb + Math.floor(((rang + 1) * (fin - deb)) / (n + 1));
+				Jeu.majInteractions(); repondre();
+				Jeu.declencherPlainte(Jeu.index); repondre();
+				if (!sauvegarde && Jeu.interactionsPrevues.length) sauvegarde = { prevues: JSON.stringify(Jeu.interactionsPrevues), instantane: JSON.stringify(Jeu.instantane(0)) };
+				if (Jeu.conflit && Jeu.conflit()) Jeu.choisirPriorite('a');
+				Jeu.decider(Jeu.actionsPossibles(d)[0], d.contradiction ? d.contradiction.bonne : undefined);
+			} else {
+				Jeu.horloge.minutes = fin;
+				for (let i = 0; i < 6; i++) { Jeu.majInteractions(); repondre(); }
+				const du = Jeu.plaintes.filter((p) => p.jour === Jeu.jourIndex);
+				const tons = du.map((p) => Jeu.tonInteraction(p));
+				jours.push({
+					total: du.length, principales: du.filter((p) => !p.extra).length, provoquant: tons.filter((x) => x === 'provoquant').length,
+					deSuite: tons.some((x, i) => i && x === 'provoquant' && tons[i - 1] === 'provoquant'),
+					depasse: tons.some((x, i) => 3 * tons.slice(0, i + 1).filter((y) => y === 'provoquant').length > i + 1),
+					categories: [...new Set(du.map((p) => Jeu.categorieInteraction(p)))],
+					textes: du.map((p) => p.id + '|' + p.auteur + '|' + p.heure + '|' + Jeu.textePlainte(p)),
+					ids: du.filter((p) => p.extra).map((p) => p.id),
+					horsFait: du.filter((p) => /\\{\\w+\\}/.test(Jeu.textePlainte(p)) || !Jeu.paquet[p.index]).map((p) => p.id),
+					doublesDuFil: du.filter((p) => du.some((q) => q !== p && q.index === p.index && (q.id === p.id || q.auteur === p.auteur))).map((p) => p.id),
+					reste: Jeu.interactionsPrevues.length,
+				});
+				Jeu.finDeJourneeTactique(); Jeu.mailDuJour();
+				if (!Jeu.jours[Jeu.jourIndex + 1]) break;
+				Jeu.journeeSuivante();
+			}
+		}
+		return { jours, sauvegarde, tirages: Jeu.tirages, historique: Jeu.derniersTextes };
+	}`;
+	const simuler = (sem, enPlus, langue = 'fr', avant = '') => vm.runInContext(`${avant}(${SIM})(${JSON.stringify(sem)}, ${enPlus})`, contexte(langue));
+	for (const sem of ['2026-09-14', '2026-10-12', '2026-11-02']) {
+		const ref = simuler(sem, 0);
+		const neuf = simuler(sem, 3);
+		// volume : 4 × la référence (une plainte au plus par dossier présenté), journée par journée
+		verifier(ref.jours.length === neuf.jours.length && ref.jours.every((j, i) => j.total > 0 && neuf.jours[i].total === 4 * j.total && neuf.jours[i].principales === j.total), `198 (${sem}) : volume ≠ 4 × la référence : ${ref.jours.map((j) => j.total)} → ${neuf.jours.map((j) => j.total)}`);
+		verifier(neuf.jours.every((j) => 3 * j.provoquant <= j.total && !j.depasse && !j.deSuite), `198 (${sem}) : provocations au-delà de 1/3 ou deux de suite : ${neuf.jours.map((j) => j.provoquant + '/' + j.total)}`);
+		verifier(neuf.jours.some((j) => j.provoquant > 0), `198 (${sem}) : aucune interaction provoquante de la semaine`);
+		verifier(neuf.jours.every((j) => j.categories.length >= 4 && !j.horsFait.length && !j.doublesDuFil.length && j.reste === 0), `198 (${sem}) : variété ou rattachement au fait réel : ${JSON.stringify(neuf.jours.map((j) => [j.categories.length, j.horsFait, j.doublesDuFil, j.reste]))}`);
+		// 20 tirages de suite (et tous les autres) : aucune variante immédiatement répétée
+		const ids = neuf.jours.flatMap((j) => j.ids);
+		verifier(ids.length >= 20 && !ids.some((x, i) => i && x === ids[i - 1]) && new Set(ids).size >= 20, `198 (${sem}) : variante répétée de suite ou trop peu de variantes (${new Set(ids).size} sur ${ids.length})`);
+		// reproductibilité : même graine → mêmes textes, auteurs et heures ; les dés de la partie ne sont pas consommés
+		const bis = simuler(sem, 3);
+		verifier(JSON.stringify(bis.jours) === JSON.stringify(neuf.jours), `198 (${sem}) : deux parties identiques ne donnent pas les mêmes interactions`);
+		verifier(neuf.tirages === ref.tirages, `198 (${sem}) : le tirage varié consomme les dés de la partie (${ref.tirages} → ${neuf.tirages})`);
+		// une autre graine ne donne pas le même habillage
+		const autre = vm.runInContext(`(() => { const init = Jeu.initialiserAlea; Jeu.initialiserAlea = (g, n) => init(g + 7919, n); return (${SIM})(${JSON.stringify(sem)}, 3); })()`, contexte('fr'));
+		verifier(JSON.stringify(autre.jours.map((j) => j.textes)) !== JSON.stringify(neuf.jours.map((j) => j.textes)), `198 (${sem}) : une autre graine donne exactement les mêmes interactions`);
+		// anglais : mêmes interactions, textes traduits, aucune variable restante
+		const en = simuler(sem, 3, 'en');
+		verifier(JSON.stringify(en.jours.map((j) => j.ids)) === JSON.stringify(neuf.jours.map((j) => j.ids)) && en.jours.every((j) => !j.horsFait.length), `198 (${sem}) : interactions différentes ou incomplètes en anglais`);
+		// sauvegarde / reprise : interactions réservées et historique des variantes restitués
+		const repris = vm.runInContext(`(() => { Jeu.chargerSemaine(${JSON.stringify(sem)}); Jeu.restaurerInstantane(JSON.parse(${JSON.stringify(neuf.sauvegarde.instantane)}), 0); return { prevues: JSON.stringify(Jeu.interactionsPrevues), historique: typeof Jeu.derniersTextes }; })()`, contexte('fr'));
+		verifier(repris.prevues === neuf.sauvegarde.prevues && repris.historique === 'object', `198 (${sem}) : interactions réservées perdues à la reprise`);
+	}
+	// Jeu.hasard : générateur semé (mêmes valeurs pour la même clé, autres valeurs pour une autre clé), dans [0, 1[
+	const h = vm.runInContext(`(() => { Jeu.chargerSemaine('2026-10-12'); Jeu.nouvellePartie(); const suite = (k) => { const r = Jeu.hasard(k); return [r(), r(), r(), r()]; }; return { a: suite('3|1|2'), b: suite('3|1|2'), c: suite('4|1|2') }; })()`, contexte('fr'));
+	verifier(JSON.stringify(h.a) === JSON.stringify(h.b) && JSON.stringify(h.a) !== JSON.stringify(h.c) && h.a.every((x) => x >= 0 && x < 1), `198 : Jeu.hasard non reproductible ou hors [0, 1[ : ${JSON.stringify(h)}`);
+	// historique circulaire : jamais plus long que le pool de la catégorie − 1, et la variante revient quand le pool est épuisé
+	const t = vm.runInContext(`(() => {
+		Jeu.chargerSemaine('2026-10-12'); Jeu.nouvellePartie();
+		const pool = Jeu.MESSAGES.plaintes.filter((p) => p.categorie === 'remerciement');
+		const rnd = Jeu.hasard('test'); const tires = [];
+		for (let i = 0; i < 3 * pool.length; i++) tires.push(Jeu.tirerVarie('remerciement', pool, rnd).id);
+		return { pool: pool.length, tires, historique: Jeu.derniersTextes.remerciement.length };
+	})()`, contexte('fr'));
+	const fenetres = t.tires.every((x, i) => !t.tires.slice(Math.max(0, i - (t.pool - 1)), i).includes(x));
+	verifier(t.historique === t.pool - 1 && fenetres && new Set(t.tires).size === t.pool, `198 : historique circulaire (pool ${t.pool}, historique ${t.historique}, tirages ${t.tires.join(' ')})`);
+	// entrée invalide (ton ou catégorie inconnus, interaction sans anglais) : ignorée
+	const inv = vm.runInContext(`(() => {
+		const base = JSON.parse(JSON.stringify(MESSAGES.plaintes.find((p) => p.id === 'merci_general')));
+		const faux = [Object.assign({}, base, { id: 'x1', ton: 'furieux' }), Object.assign({}, base, { id: 'x2', categorie: 'pub' }), Object.assign({}, base, { id: 'x3', texte: { fr: 'Seulement en français' } })];
+		const garde = console.warn; let avertis = 0; console.warn = () => avertis++;
+		const n = Jeu.chargerMessages({ plaintes: [base].concat(faux) });
+		console.warn = garde; Jeu.chargerMessages(MESSAGES);
+		return { n, avertis };
+	})()`, contexte('fr'));
+	verifier(inv.n === 1 && inv.avertis === 3, `198 : entrées invalides non ignorées (${JSON.stringify(inv)})`);
 }
 
 if (erreurs.length) {
