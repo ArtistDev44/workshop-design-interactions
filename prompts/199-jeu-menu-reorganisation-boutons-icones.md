@@ -1,4 +1,5 @@
 
+
 # Prompt 199 — Jeu : réorganisation UX du menu principal (langue au-dessus, pile plein écran · télécharger, rangée d'icônes livrables · dépôt · partage)
 
 Demande d'origine (prise de notes du 13/11/2026) :
@@ -67,7 +68,7 @@ aussi leurs entrées `EXTRAS_MENU`, leurs dessins et leurs régions, sans suppri
 - Portrait mobile : pile et rangée utilisables au toucher.
 - Navigation clavier complète, ordre visuel = ordre de tabulation ; F bascule toujours le plein écran.
 - `npm run build` puis `npm test` verts ; audit des textes (`?audit=textes`) à 0 défaut A–D (3 tailles, FR/EN).
-- `prompts/README.md` (ligne 197) et `journal.md` mis à jour au push.
+- `prompts/README.md` (ligne 199) et `journal.md` mis à jour au push.
 
 ## Hors périmètre (ne pas faire)
 
