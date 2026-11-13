@@ -331,3 +331,4 @@ repassé en ◻. Écarts connus, voulus ou hors de portée de l'assistant :
 
 
 
+| 203 | `203-jeu-audit-ux.md` | Jeu : **audit UX complet** — démarrage à froid au clavier et écrans clés capturés en 1366 × 768 et 412 × 915 ; mobile portrait illisible en partie (texte 5–8 px, chevauchements, audit des textes aveugle à l'échelle du canevas), réponse Community focalisée par défaut pouvant être le clash, tutoriel 8 étapes surchargé sans mise en lumière, abréviations (Flu., F/R/B, coût des équipes), fiche dossier qui cache la carte, chevauchements en 1366, 133 chaînes « (s) » ; feuille de route en 9 actions ; aucun écran modifié | ✅ fusionné dans main (rapport `jeu/203-audit-ux.md`, tests humains [À COMPLÉTER]) |
