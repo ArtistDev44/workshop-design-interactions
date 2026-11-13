@@ -88,9 +88,21 @@ function finDeSemaine() {
 		// prompt 47 : une démission ne valide pas le chapitre
 		const p = progressionHistoire();
 		p.scores[ch] = b.score;
-		if (ch === 3) p.termine = true;
+		// Prompt 207 : signaux de posture gardés par semaine ; la fin de l'histoire lit leur cumul (semaines 1 à 3)
+		if (b.signaux) p.signaux = Object.assign({}, p.signaux || {}, { [ch]: b.signaux });
+		if (ch === 3) {
+			p.termine = true;
+			const cumul = Jeu.cumulerSignaux ? Jeu.cumulerSignaux([1, 2, 3].map((k) => (p.signaux || {})[k])) : null;
+			if (cumul) {
+				b.finFinale = Jeu.finDeSemaine(cumul);
+				b.tonFinal = (Jeu.FINS_SEMAINE.find((f) => f.cle === b.finFinale) || {}).ton;
+				if (Jeu.Galerie) Jeu.Galerie.noter(b.finFinale, cumul.score);
+			}
+		}
 		enregistrerProgression(p);
 	}
+	// Prompt 207 : la fin obtenue entre dans la galerie (pas une démission)
+	if (!b.demission && b.fin && Jeu.Galerie) b.finNouvelle = Jeu.Galerie.noter(b.fin, b.score);
 	// Prompt 56 : le rapport (deux pages) vient avant la cinématique de la semaine 3 ; le mail du patron est mis en avant
 	RAPPORT = { debut: millis(), bilan: b, chapitre: ch, mode: Jeu.etat.mode, page: 0, stats: Jeu.statsSemaine(), cine: ch === 3 && !b.demission, mail: b.demission ? null : Jeu.mailFinSemaine() };
 	annoncer(t('rapport.imprime'));
@@ -137,7 +149,9 @@ function ouvrirRapport() {
 	if (!RAPPORT) return rapportVeille() ? (ouvrir('rapportVeille'), annoncer(texteRapportVeille())) : undefined;
 	livreOuverture = millis();
 	ouvrir('rapport');
-	annoncer(t('rapport.titre', { n: RAPPORT.chapitre || '' }) + ' — ' + t('rapport.score', { s: RAPPORT.bilan.score }));
+	const b = RAPPORT.bilan;
+	const pese = !b.demission && b.pese && b.pese.length ? ' ' + t('rapport.pese', { liste: b.pese.map(String).join(' · ') }) : ''; // prompt 207
+	annoncer(t('rapport.titre', { n: RAPPORT.chapitre || '' }) + ' — ' + t('rapport.score', { s: b.score }) + ' — ' + String(b.demission ? t('demission.rapportTitre') : b.titre) + '.' + pese);
 }
 function actionRapport() {
 	if (!RAPPORT) return;
@@ -233,7 +247,7 @@ function fenetreRapport() {
 	text(t('rapport.periode', { p: b.faits.periodeTexte || b.faits.periode }), x + 56, y + 130); // prompt 163 : jj/mm et jours joués
 	// Tampon de la fin (incliné)
 	const couleurs = { bonne: '#1e7a3c', moyenne: '#a15c07', mauvaise: '#b3261e', demission: '#b3261e' };
-	const tampon = b.demission ? 'demission' : b.type; // prompt 47
+	const tampon = b.demission ? 'demission' : b.ton || b.type; // prompt 47 ; prompt 207 : couleur de la fin obtenue
 	push();
 	translate(x + l - 210, y + 120);
 	rotate(-0.12);
@@ -256,8 +270,10 @@ function fenetreRapport() {
 		textAlign(CENTER, TOP);
 		textFont(POLICE_DONNEES);
 		textSize(16);
-		fill(couleurs[b.type]);
-		text(t('rapport.typeFin.' + b.type, { s: Jeu.SEUILS_FIN[b.type === 'mauvaise' ? 'moyenne' : b.type] }), x + l - 380, y + 186, 340, 24);
+		fill(couleurs[b.ton || b.type]);
+		// Prompt 207 : numéro de la fin dans la table et galerie (« Fin 4 sur 10 · 3 découvertes · nouvelle ! »)
+		const ligneFin = b.fin && Jeu.Galerie ? t(b.finNouvelle ? 'rapport.finNouvelle' : 'rapport.finNumero', { i: b.numeroFin, n: Jeu.FINS_SEMAINE.length, d: Jeu.Galerie.decouvertes() }) : t('rapport.typeFin.' + b.type, { s: Jeu.SEUILS_FIN[b.type === 'mauvaise' ? 'moyenne' : b.type] });
+		text(ligneFin, x + l - 400, y + 186, 380, 24);
 		textAlign(LEFT, TOP);
 		textFont(POLICE_TEXTE);
 	}
@@ -277,6 +293,10 @@ function fenetreRapport() {
 	fill(encre);
 	text(b.demission ? t('demission.rapportTexte') : b.texte, x + 56, ly, l - 112, 84);
 	ly += 92;
+	// Prompt 207 : « Ce qui a pesé » — 2 ou 3 faits réels de la partie qui ont décidé de la fin
+	if (!b.demission && b.pese && b.pese.length) {
+		ly += dessinerTexte(t('rapport.pese', { liste: b.pese.map(String).join(' · ') }), x + 56, ly - 4, l - 112, { taille: 16, couleur: gris, police: POLICE_DONNEES, maxLignes: 2, interligne: 21 }).h + 8;
+	}
 	// Jauges
 	[['fluidite', b.jauges.fluidite], ['reputation', b.jauges.reputation], ['budget', b.jauges.budget]].forEach(([cle, v], i) => {
 		const jx = x + 56 + i * ((l - 112) / 3);
@@ -401,7 +421,7 @@ function dessinerCinematique() {
 	textFont(POLICE_DONNEES);
 	textSize(18);
 	fill('rgba(255,255,255,0.6)');
-	text(t('cine.titre.' + c.type), 60, 55);
+	text(c.bilan && c.bilan.finFinale ? t('cine.titreFin', { nom: t('fin.' + c.bilan.finFinale + '.nom') }) : t('cine.titre.' + c.type), 60, 55); // prompt 207 : la fin de l'histoire nommée
 	bouton(L - 360, 30, 300, 56, t('cine.passer'), finCinematique, false, true);
 	boutons.push({ x: 0, y: 110, l: L, h: H - 260, action: planSuivant });
 }
@@ -470,7 +490,9 @@ function planLettre(type, u) {
 	textSize(24);
 	textLeading(36);
 	fill('#1d1a16');
-	text(t('cine.lettre.' + type), x + 60, y + 120, l - 120, h - 260);
+	const finale = CINE && CINE.bilan && CINE.bilan.finFinale; // prompt 207 : la lettre suit la fin (posture cumulée), le ciel suit le score
+	text(t(finale ? 'cine.lettre.fin.' + finale : 'cine.lettre.' + type), x + 60, y + 120, l - 120, h - 260);
+	if (finale && CINE.bilan.tonFinal) type = CINE.bilan.tonFinal; // tampon de la lettre : couleur de la fin
 	const couleurs = { bonne: '#1e7a3c', moyenne: '#a15c07', mauvaise: '#b3261e' };
 	push();
 	translate(x + l - 190, y + h - 110);

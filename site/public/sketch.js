@@ -433,6 +433,7 @@ const FERMETURE_FOND = {
 	partage: fermer,
 	installation: fermer,
 	palmares: fermer,
+	fins: () => fermerFins(), // prompt 207
 	menu: fermer,
 	telephone: fermer,
 };
@@ -1416,6 +1417,7 @@ function contenuFenetre() {
 	if (fenetre === 'tache') return fenetreTache(); // prompt 88
 	if (fenetre === 'demission') return fenetreDemission(); // prompt 47
 	if (fenetre === 'palmares') return fenetrePalmares(); // prompt 47
+	if (fenetre === 'fins') return fenetreFins(); // prompt 207
 	if (fenetre === 'partir') return fenetrePartir(); // prompt 51
 	if (fenetre === 'blame') return fenetreBlame(); // prompt 51
 	if (fenetre === 'partage') return fenetrePartage(); // prompt 81

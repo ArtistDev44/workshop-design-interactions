@@ -43,3 +43,10 @@ la fin (Q53) + boutons Rejouer / changer de semaine.
 > dernier avertissement ; toujours sous 90 le soir suivant, ou rechute en danger, → licenciement ; effondrement
 > (score < 45 ou une jauge à 0) → licenciement immédiat. Hystérésis : sortie de vigilance à 140, du danger à 110.
 > Pas de palmarès, sauvegarde effacée. Voir `jeu/77-rappel-licenciement-game-over.md`.
+
+> **Prompt 207 — exception à Q47–Q55 : dix fins de semaine selon la posture.** La fin ne dépend plus du seul
+> score : une table de dix fins, évaluée dans l'ordre (capture virale, burn-out, imposteur, fauteuil du patron = bonne
+> fin, diplomate de Quai, insoumis, usagers d'abord, bouc émissaire, semaine correcte, réprimande), lit les gestes du
+> joueur (clashs, réponses Quai, cafés, siestes, objectifs du jour, qualité des décisions). Le palier de score (Q48 :
+> 240 / 150) garde le décor et le son (Q53) et sert de seuil au fauteuil et à la semaine correcte. Démission et
+> licenciement inchangés. Table et seuils finaux : `jeu/207-dix-fins-posture.md`.
