@@ -1,3 +1,4 @@
+
 # prompts/ — Créer le site Astro.js de l'édition PATRIMOINE.EXE / NTE001
 
 Ce dossier contient des **prompts numérotés**, à exécuter **dans l'ordre** avec un assistant
@@ -271,6 +272,7 @@ Preuves dans le code (grep ; 14–34 relevées au prompt 33, revérifiées et co
 | 194 | `194-jeu-fin-de-journee-horloge-suffit.md` | Jeu : **finir la journée = cliquer sur l'horloge**, sans détour par le mail du PC (le mail du soir arrive dans Mails) ; le tutoriel explique le rôle de l'horloge | ✅ fusionné dans main (non vérifié en headless : rendu du mail du soir dans Mails) |
 | 195 | `195-jeu-mails-vraie-messagerie.md` | Jeu : l'appli **Mails ressemble davantage à une messagerie** (barre d'outils et recherche, boîte de réception, rangées à initiales et aperçu, groupes par jour, volet de lecture avec en-tête et zone Répondre, archives) | ✅ fusionné dans main (vue étroite / portrait non revue en capture) |
 | 196 | `196-jeu-clash-violent-tentant-reaction-masquee.md` | Jeu : **clash violent et tentant** — les 3 répliques restent mélangées et indiscernables (117) ; les variantes `clash.*` sont réécrites plus cinglantes (mots masqués hors alphabet : `&#(`, `§¤`) et choisir le clash déclenche `feedback('large')` pour inciter à le choisir indépendamment des conséquences (réputation −8, « raté » : inchangés) ; **réaction de connard du plaignant** après un clash (`reactionClash.*` FR/EN dans la narration, lue « mot masqué ») ; `lireMasques` couvre les caractères hors alphabet | ✅ fusionné dans main (ressenti en partie [À COMPLÉTER]) |
+| 197 | `197-jeu-menu-reorganisation-boutons-icones.md` | Jeu : réorganisation UX du menu principal — pile à droite FR / EN en haut, puis plein écran (icône) et télécharger ; rangée d'icônes seules livrables · dépôt · partage placée sous le bouton Paramètres (Kit de presse et Présentation retirés du menu : à trancher avant exécution) | ◻ prévu |
 | 197 | `197-jeu-community-clash-violent-tentant-reaction-masquee.md` | Jeu Community : **3 réponses par plainte, mélangées et indiscernables** (permutation déterministe, aucun marqueur du clash) ; la réponse **clash** (texte tiré des `clash.*` du prompt 196, mots masqués hors alphabet) déclenche `feedback('large')` au choix pour inciter à la choisir indépendamment des conséquences (réputation −8 + commentaire de connard −3, réponse toujours « mauvaise » : inchangés) ; **réaction de connard du plaignant** après un clash (commentaire public `reactionClash.*`, ou relance privée, lue « mot masquée » via `lireMasques`) | ✅ fusionné dans main (ressenti en partie [À COMPLÉTER]) |
 | 198 | `198-jeu-community-variete-interactions-proportion-provoquante.md` | Jeu : **variété d'interactions Community** — volume d'interactions usagers ×4 (questions, remerciements, suggestions, témoignages, relances, doublons, accessibilité…) ; champ `ton` avec **au plus 1/3 d'interactions provoquantes** ; tirage varié `Jeu.hasard()` (PRNG déterministe semé par dossier/jour/index, anti-répétition du pool) pour ne pas toujours voir les mêmes textes ; mêmes choix de réponse (117), délais (79) et effets | ◻ prévu |
 
@@ -321,4 +323,5 @@ repassé en ◻. Écarts connus, voulus ou hors de portée de l'assistant :
   micro et une vraie webcam, et réglage des seuils, à faire en salle.
 - `scripts/test-difficulte.mjs` dépend d'un `base.mjs` hors dépôt (Playwright) : remplacé dans
   `npm test` par `scripts/test-jeu.mjs`.
+
 
