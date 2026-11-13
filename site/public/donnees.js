@@ -150,12 +150,17 @@ function dessinerBlocsDonnees(z) {
 		rect(x, y, bl, bh);
 		dsTexte(String(b.titre), x + 20, y + 16, 20, DS.blanc, 'left');
 		dsTexte(b.statut, x + 20, y + 48, 16, b.statut === t('donnees.repli') ? DS.alerte : DS.succesClair, 'left');
+		// Prompt 204 : la source (licence comprise) prend la hauteur de ses lignes réelles, juste au-dessus du bouton —
+		// à 3 lignes (Hub'Eau), elle débordait sur « Ouvrir l'API »
+		const src = t('donnees.source', { source: b.source, licence: b.licence });
+		const nSrc = couperLignes(src, bl - 40, DS.policeTexte, 16).length;
+		const ySrc = y + bh - 62 - nSrc * 26; // 26 px : interligne du texte rendu à 20 px
 		// prompt 103 : autant de lignes que la place le permet (texte rendu à 20 px dans l'appli), « … » sinon
-		const maxL = Math.max(1, Math.floor((bh - 200) / 26));
+		const maxL = Math.max(1, Math.floor((ySrc - 12 - (y + 80)) / 26));
 		const ls = [];
 		b.lignes.forEach((ln) => ls.push(...couperLignes(String(ln), bl - 40, DS.policeTexte, 20)));
 		dsTexte(ls.length > maxL ? ls.slice(0, maxL - 1).concat('…').join('\n') : ls.join('\n'), x + 20, y + 80, 18, DS.blanc75, 'left');
-		dsTexte(t('donnees.source', { source: b.source, licence: b.licence }), x + 20, y + bh - 112, 16, DS.blanc50, 'left', bl - 40); // 2 lignes au plus (20 px rendus)
+		dsTexte(src, x + 20, ySrc, 16, DS.blanc50, 'left', bl - 40);
 		dsBouton(x + 20, y + bh - 50, 300, 40, t('donnees.ouvrir'), () => ouvrirLienApi(b.url), 'fantome');
 	});
 }

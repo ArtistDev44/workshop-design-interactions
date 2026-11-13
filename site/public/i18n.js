@@ -79,7 +79,7 @@ const TRADUCTIONS = {
 		"mail.de": "Direction de la régulation",
 		"mail.objetMerci": "Merci pour cette journée — {date}",
 		"mail.objetRevoir": "Points à revoir — {date}",
-		"patron.consigne": "Bonjour. {n} dossier(s) attendus aujourd’hui ({date}) : {parts}. Objectif : {objectif}. Budget : {budget}.{mod}",
+		"patron.consigne": "Bonjour. {n} dossier(s) attendu(s) aujourd’hui ({date}) : {parts}. Objectif : {objectif}. Budget : {budget}.{mod}",
 		"patron.mod": " Attention : {libelle}.",
 		"patron.alerte": "Alerte : {jauge} à {v}/100. Redresse ça tout de suite.",
 		"patron.rate": "{sujet} : « {action} », vraiment ? Il fallait « {meilleure} ».",
@@ -371,7 +371,7 @@ const TRADUCTIONS = {
 		"piece.plante.sec": "Un peu d’eau pour la plante. Il est {heure}.",
 		"piece.tasse": "Tasse de café",
 		"piece.tasse.survol": "Café — Entrée : le boire (un par journée)",
-		"piece.tasse.jour": "Une gorgée de café. {heure} : {n} dossier(s) prévus aujourd’hui.",
+		"piece.tasse.jour": "Une gorgée de café. {heure} : {n} dossier(s) prévu(s) aujourd’hui.",
 		"piece.tasse.libre": "Une gorgée de café. Il est {heure}.",
 		"piece.dossiers": "Pile de dossiers",
 		"piece.dossiers.survol": "Dossiers — Entrée : feuilleter",
@@ -595,11 +595,11 @@ const TRADUCTIONS = {
 		"guide.option.non": "Guide « Prendre en main » désactivé.",
 		"guide.etape": "Prise en main {n}/{total}",
 		"guide.installer": "Cliquez sur l’écran du PC pour vous installer au poste (ou Entrée, ou molette vers le haut).",
-		"guide.jauges": "Voici vos trois jauges : gardez-les au vert. En attendant un incident, le temps accélère (×{x}). Sous 120 de score, le patron vous rappelle à l’ordre ; sous 90, dernier avertissement, puis licenciement.",
-		"guide.actions": "L’horloge est en pause : lisez le plaignant, puis répondez-lui (clic ou touche 1 à 3). Les équipes se glissent depuis la droite sur la carte.",
+		"guide.jauges": "Voici vos trois jauges : fluidité, réputation, budget. Gardez-les au vert — orange sous 40, rouge sous 20.",
+		"guide.actions": "L’horloge est en pause : lisez le plaignant, puis répondez-lui (clic ou touche 1 à 3).",
 		"guide.apps.ouvrir": "Ouvrez une appli du menu à gauche (clic ou Entrée) : Mails, Community, Journal ou Données.",
 		"guide.quitter": "Levez-vous pour voir la pièce : bouton « Quitter le PC » (clic ou Entrée).",
-		"guide.livre": "Ouvrez le livre « Aide » (clic, Entrée ou H) : il rappelle les règles. Après le guide, tout est cliquable dans la pièce : lampe, fenêtre, tasse.",
+		"guide.livre": "Ouvrez le livre « Aide » (clic, Entrée ou H) : il rappelle toutes les règles.",
 		"guide.retourPC": "Revenez au poste : cliquez sur l’écran du PC.",
 		"guide.suivante": "Étape suivante",
 		"guide.arreter": "Quitter le guide (Échap)",
@@ -888,7 +888,8 @@ const TRADUCTIONS = {
 		"carte.volOiseau": "Trajets des équipes : à vol d'oiseau",
 		"equipes.titre": "Équipes",
 		"equipes.dispo": "disponible",
-		"equipes.glisser": "Glissez une équipe sur un signalement de la carte.",
+		"equipes.etat": "{dispo}/{eff} libres · coût {cout}",
+		"equipes.glisser": "Glissez une équipe sur un signalement de la carte (ou Maj + 1 à 4). Chaque envoi coûte du budget.",
 		"bureau.nouveau": "Nouveau sur votre bureau : {objets}.",
 		"bureau.objet.tasse": "la tasse de café",
 		"bureau.objet.aide": "le livre d'aide",
@@ -923,7 +924,7 @@ const TRADUCTIONS = {
 		"carte.expire": "Signalement resté trop longtemps en file : réglé sans vous (conséquences naturelles).",
 		"carte.signalement": "Signalement : {quoi} (gravité {gravite}). Entrée pour le prendre.",
 		"etat.selection": "SIGNALEMENT · ouvrez-le sur la carte (clic sur le marqueur, ou ↑ ↓ et Entrée).",
-		"guide.prendre": "Un signalement est arrivé sur la carte (marqueur à son lieu). Ouvrez-le : clic, ou ↑ ↓ puis Entrée. L’horloge du jeu se met en pause pendant la lecture.",
+		"guide.prendre": "Un signalement est arrivé : son marqueur est sur la carte. Ouvrez-le : clic, ou ↑ ↓ puis Entrée.",
 		"webcam.main.reveil": "Main vue par la webcam : vous vous réveillez.",
 		"webcam.main.sieste": "Main vue par la webcam : vous faites une sieste. Montrez de nouveau la main pour vous réveiller.",
 		"mp.installer": "Installer le jeu",
@@ -990,7 +991,7 @@ const TRADUCTIONS = {
 		"donnees.meteo.jour": "{date} : {min} à {max} °C, pluie {pluie} mm, rafales {vent} km/h",
 		"donnees.agenda": "Agenda du jour",
 		"donnees.incidents": "Incidents rejoués de la semaine",
-		"donnees.incidents.n": "{n} dossier(s) issus des archives :",
+		"donnees.incidents.n": "{n} dossier(s) issu(s) des archives :",
 		"donnees.meteoSemaine": "Météo de la semaine",
 		"donnees.agendaSemaine": "Agenda de la semaine",
 		"donnees.agenda.n": "{n} événement(s) à l'agenda, dont :",
@@ -1295,7 +1296,7 @@ const TRADUCTIONS = {
 		"notif.plainte": "Community : un usager se plaint",
 		"notif.equipe": "{nom} : intervention terminée",
 		"notif.expire": "Signalement réglé sans vous",
-		"sieste.jauge": "Somnolence {v} · Z",
+		"sieste.jauge": "Somnolence {v} % · Z : repos",
 		"sieste.aide": "Clic ou Z : se reposer. La somnolence monte avec la journée ; à 100, vous vous endormez. Se reposer fait filer le temps ×100 : les signalements s’accumulent et attendent jusqu’à l’heure de fin. Une alerte grave vous réveille : sans réaction en 3 s, elle reste non traitée.",
 		"sieste.aideChrono": "Clic ou Z : se reposer. La somnolence monte avec la journée ; à 100, vous vous endormez. Se reposer fait filer le temps ×100, mais en défi chrono les compteurs tournent : un signalement à 0 est réglé sans vous. Une alerte grave vous réveille.",
 		"sieste.volontaire": "Vous fermez les yeux : le temps file ×100. Les signalements s’accumulent jusqu’à l’heure de fin ; une alerte grave vous réveillera.",
@@ -1309,8 +1310,8 @@ const TRADUCTIONS = {
 		"tuto.6.titre": "La fin de journée",
 		"tuto.6.texte": "À l’heure de fin, l’horloge murale s’arrête : un clic dessus (ou Q) termine la journée. Avant l’heure, elle propose de partir plus tôt — dossiers restants « non traités », réputation en baisse. Le mail du soir arrive dans Mails. Sortez par la flèche « Sortie » : retour le lendemain à 8 h. En fin de semaine, le score (0 à 300) mène à l’une des trois fins.",
 		"tuto.6.touches": "Clic sur l’horloge ou Q : finir la journée · Entrée : sortie",
-		"guide.somnolence": "Voici la somnolence : elle monte avec la journée. Se reposer (clic ou Z) fait filer le temps ×100 : les signalements s’accumulent jusqu’à l’heure de fin, et une alerte grave vous réveille (3 s pour réagir).",
-		"guide.somnolenceChrono": "Voici la somnolence : elle monte avec la journée. Se reposer (clic ou Z) fait filer le temps ×100, mais en défi chrono les compteurs tournent : un signalement à 0 est réglé sans vous.",
+		"guide.somnolence": "Voici la somnolence : elle monte au fil de la journée. Se reposer (clic ou Z) fait filer le temps, mais les signalements s’accumulent.",
+		"guide.somnolenceChrono": "Voici la somnolence : elle monte au fil de la journée. Se reposer (clic ou Z) fait filer le temps, mais en défi chrono un signalement à 0 est réglé sans vous.",
 		"dossier.retardEffectif": "Retard : +{reel} min (réel) → +{effectif} min actuellement",
 		"narr.retardAggrave": " (+{reel} min réels, +{effectif} min au moment de décider)",
 		"retard.aggrave": "Le retard s’aggrave : +{reel} min au départ, +{effectif} min maintenant.",
@@ -1320,6 +1321,7 @@ const TRADUCTIONS = {
 		"community.envenime": "{auteur} n’a pas eu de réponse : le ton monte et le message circule.",
 		"community.envenimeAnnonce": "Community : la plainte de {auteur} est restée sans réponse et s’envenime (réputation −3).",
 		"plainte.delai": "répondre dans {s} s",
+		"commu.choisir": "Choisissez d'abord une réponse : Tab pour les parcourir, ou 1, 2, 3.",
 		"plainte.tardive": "Réponse tardive : réputation −3.",
 		"badge.libelle": "{appli}, nouveautés : {n}",
 		"aide.k.sieste": "Se reposer (sieste, temps ×100) · se réveiller",
@@ -1386,7 +1388,7 @@ const TRADUCTIONS = {
 		"mail.dernier": "DERNIER AVERTISSEMENT — score {score} / 300. Si demain soir la salle est toujours sous {seuil}, vous êtes remercié.",
 		"mail.avertissementEnCours": "Un dernier avertissement est en cours : la semaine se termine, mais la direction s’en souviendra.",
 		"gameover.titre": "LICENCIÉ",
-		"gameover.sous": "Game over",
+		"gameover.sous": "Fin de mission",
 		"gameover.tampon": "RÉSILIÉ",
 		"gameover.annonce": "Vous êtes licencié. Score {score} sur 300. Entrée : rejouer la semaine ; Échap : changer de semaine.",
 		"gameover.objet": "Direction de la régulation — fin de votre mission",
@@ -1540,9 +1542,9 @@ const TRADUCTIONS = {
 		"phrase.meteoForte": "Météo du jour : {pluie} mm de pluie, rafales à {vent} km/h. {texte}",
 		"phrase.autre": "{texte}",
 		"savoir.contradiction": "Deux sources se contredisent : à vérifier.",
-		"jaugeCourt.fluidite": "Flu.",
-		"jaugeCourt.reputation": "Rép.",
-		"jaugeCourt.budget": "Bud.",
+		"jaugeCourt.fluidite": "Fluidité",
+		"jaugeCourt.reputation": "Réputation",
+		"jaugeCourt.budget": "Budget",
 		"rep.equipe": "{nom} : {n} dispo",
 		"retour.passe": "Vous avez choisi : {action}. Effets : {effets}.",
 		"retour.bon": "Bon choix, parce que : {pourquoi}.",
@@ -1784,7 +1786,7 @@ const TRADUCTIONS = {
 		"journal.tuile.bonnes": "Bons choix",
 		"journal.tuile.objectif": "Objectif du jour",
 		"journal.tuile.nonTraites": "dont {n} non traité(s)",
-		"journal.tuile.avertissements": "avertissement(s) du patron",
+		"journal.tuile.avertissements": "{n} avertissement(s) du patron",
 		"journal.details": "Détails",
 		"journal.detailsMasquer": "Masquer les détails",
 		"journal.filtres": "Filtre",
@@ -1900,7 +1902,7 @@ const TRADUCTIONS = {
 		"tel.n.badge": "Badge obtenu : {badge}.",
 		"tel.n.parking": "Parking {nom} : {n} places libres.",
 		"tel.n.velos": "Station {nom} : {n} vélo(s) disponible(s).",
-		"tel.n.trafic": "Trafic : {n} tronçon(s) denses ou bloqués sur {total}.",
+		"tel.n.trafic": "Trafic : {n} tronçon(s) dense(s) ou bloqué(s) sur {total}.",
 		"tel.n.pollens": "Pollens de {nom} : {etat}.",
 		"optjeu.npd": "Ne pas déranger (téléphone)",
 		"optjeu.npd.detail": "Le téléphone ne vibre plus et ne sonne plus ; seules les alertes passent. Les notifications restent dans le centre.",
@@ -1935,7 +1937,7 @@ const TRADUCTIONS = {
 		"bandeau.priorites": "Priorités : {liste}",
 		"bandeau.dateJour": "{date}",
 		"sieste.prevision": "Pendant votre sieste, les équipes en route sont arrivées. Prochain signalement attendu : {type} vers {heure}.",
-		"sieste.jaugeSeuil": "Somnolence {v} / seuil 70 · Z",
+		"sieste.jaugeSeuil": "Somnolence {v} % / seuil 70 · Z",
 		"optjeu.deblocageApplis": "Applis débloquées par semaine",
 		"optjeu.deblocageApplis.detail": "Semaine 1 : Signalements seule ; Community en 2, Messages en 3, Journal et Indicateurs en 4, Données en 5.",
 		"optjeu.toutDebloque": "Tout débloqué (défi, temps réel)",
@@ -2531,11 +2533,11 @@ const TRADUCTIONS = {
 		"guide.option.non": "“Getting started” guide off.",
 		"guide.etape": "Getting started {n}/{total}",
 		"guide.installer": "Click the PC screen to sit down at your desk (or Enter, or scroll up).",
-		"guide.jauges": "These are your three gauges: keep them green. While you wait for an incident, time speeds up (×{x}). Below a score of 120 the boss warns you; below 90, a final warning, then you are fired.",
-		"guide.actions": "The clock is paused: read the caller, then reply (click or key 1 to 3). Teams are dragged from the right onto the map.",
+		"guide.jauges": "These are your three gauges: flow, reputation, budget. Keep them green — orange below 40, red below 20.",
+		"guide.actions": "The clock is paused: read the caller, then reply (click or key 1 to 3).",
 		"guide.apps.ouvrir": "Open an app from the left menu (click or Enter): Mail, Community, Logbook or Data.",
 		"guide.quitter": "Stand up to see the room: “Leave the PC” button (click or Enter).",
-		"guide.livre": "Open the “Help” book (click, Enter or H): it recaps the rules. After the guide, everything in the room is clickable: lamp, window, mug.",
+		"guide.livre": "Open the “Help” book (click, Enter or H): it recaps every rule.",
 		"guide.retourPC": "Go back to your desk: click the PC screen.",
 		"guide.suivante": "Next step",
 		"guide.arreter": "Leave the guide (Esc)",
@@ -2824,7 +2826,8 @@ const TRADUCTIONS = {
 		"carte.volOiseau": "Team routes: as the crow flies",
 		"equipes.titre": "Teams",
 		"equipes.dispo": "available",
-		"equipes.glisser": "Drag a team onto a report on the map.",
+		"equipes.etat": "{dispo}/{eff} free · cost {cout}",
+		"equipes.glisser": "Drag a team onto a report on the map (or Shift + 1 to 4). Each dispatch costs budget.",
 		"bureau.nouveau": "New on your desk: {objets}.",
 		"bureau.objet.tasse": "the coffee mug",
 		"bureau.objet.aide": "the help book",
@@ -2859,7 +2862,7 @@ const TRADUCTIONS = {
 		"carte.expire": "Report left too long in the queue: settled without you (natural consequences).",
 		"carte.signalement": "Report: {quoi} (severity {gravite}). Enter to take it.",
 		"etat.selection": "REPORT · open it on the map (click the marker, or ↑ ↓ and Enter).",
-		"guide.prendre": "A report has appeared on the map (a marker at its place). Open it: click, or ↑ ↓ then Enter. The game clock pauses while you read.",
+		"guide.prendre": "A report has arrived: its marker is on the map. Open it: click, or ↑ ↓ then Enter.",
 		"webcam.main.reveil": "Hand seen by the webcam: you wake up.",
 		"webcam.main.sieste": "Hand seen by the webcam: you take a nap. Show your hand again to wake up.",
 		"mp.installer": "Install the game",
@@ -3231,7 +3234,7 @@ const TRADUCTIONS = {
 		"notif.plainte": "Community: a passenger complains",
 		"notif.equipe": "{nom}: intervention over",
 		"notif.expire": "Report settled without you",
-		"sieste.jauge": "Drowsiness {v} · Z",
+		"sieste.jauge": "Drowsiness {v}% · Z: rest",
 		"sieste.aide": "Click or Z: rest. Drowsiness rises through the day; at 100, you fall asleep. Resting makes time run ×100: reports pile up and wait until closing time. A serious alert wakes you: no reaction within 3 s and it stays unhandled.",
 		"sieste.aideChrono": "Click or Z: rest. Drowsiness rises through the day; at 100, you fall asleep. Resting makes time run ×100, but in time challenge the timers keep running: a report at 0 is settled without you. A serious alert wakes you.",
 		"sieste.volontaire": "You close your eyes: time runs ×100. Reports pile up until closing time; a serious alert will wake you.",
@@ -3245,8 +3248,8 @@ const TRADUCTIONS = {
 		"tuto.6.titre": "End of the day",
 		"tuto.6.texte": "At closing time, the wall clock stops: click it (or press Q) to end the day. Before that, it offers to leave early — remaining cases “not handled”, reputation down. The evening email lands in Mail. Leave by the “Exit” arrow: back the next morning at 8 a.m. At the end of the week, the score (0 to 300) leads to one of three endings.",
 		"tuto.6.touches": "Click the clock or Q: end the day · Enter: exit",
-		"guide.somnolence": "This is drowsiness: it rises through the day. Resting (click or Z) makes time run ×100: reports pile up until closing time, and a serious alert wakes you (3 s to react).",
-		"guide.somnolenceChrono": "This is drowsiness: it rises through the day. Resting (click or Z) makes time run ×100, but in time challenge the timers keep running: a report at 0 is settled without you.",
+		"guide.somnolence": "This is drowsiness: it rises through the day. Resting (click or Z) makes time fly, but reports pile up.",
+		"guide.somnolenceChrono": "This is drowsiness: it rises through the day. Resting (click or Z) makes time fly, but in time challenge a report at 0 is settled without you.",
 		"dossier.retardEffectif": "Delay: +{reel} min (real) → +{effectif} min now",
 		"narr.retardAggrave": " (+{reel} min real, +{effectif} min when you decided)",
 		"retard.aggrave": "The delay is getting worse: +{reel} min at first, +{effectif} min now.",
@@ -3256,6 +3259,7 @@ const TRADUCTIONS = {
 		"community.envenime": "{auteur} got no reply: tempers rise and the message spreads.",
 		"community.envenimeAnnonce": "Community: {auteur}’s complaint went unanswered and is turning sour (reputation −3).",
 		"plainte.delai": "reply within {s} s",
+		"commu.choisir": "Pick a reply first: Tab to browse them, or 1, 2, 3.",
 		"plainte.tardive": "Late reply: reputation −3.",
 		"badge.libelle": "{appli}, {n} new",
 		"aide.k.sieste": "Rest (nap, time ×100) · wake up",
@@ -3477,8 +3481,8 @@ const TRADUCTIONS = {
 		"phrase.autre": "{texte}",
 		"savoir.contradiction": "Two sources disagree: check them.",
 		"jaugeCourt.fluidite": "Flow",
-		"jaugeCourt.reputation": "Rep.",
-		"jaugeCourt.budget": "Bud.",
+		"jaugeCourt.reputation": "Reputation",
+		"jaugeCourt.budget": "Budget",
 		"rep.equipe": "{nom}: {n} free",
 		"retour.passe": "You chose: {action}. Effects: {effets}.",
 		"retour.bon": "Good choice, because {pourquoi}.",
@@ -3720,7 +3724,7 @@ const TRADUCTIONS = {
 		"journal.tuile.bonnes": "Good calls",
 		"journal.tuile.objectif": "Daily objective",
 		"journal.tuile.nonTraites": "{n} not handled",
-		"journal.tuile.avertissements": "warning(s) from the boss",
+		"journal.tuile.avertissements": "{n} warning(s) from the boss",
 		"journal.details": "Details",
 		"journal.detailsMasquer": "Hide details",
 		"journal.filtres": "Filter",
@@ -3871,7 +3875,7 @@ const TRADUCTIONS = {
 		"bandeau.priorites": "Priorities: {liste}",
 		"bandeau.dateJour": "{date}",
 		"sieste.prevision": "During your nap, the teams en route arrived. Next report expected: {type} around {heure}.",
-		"sieste.jaugeSeuil": "Drowsiness {v} / threshold 70 · Z",
+		"sieste.jaugeSeuil": "Drowsiness {v}% / threshold 70 · Z",
 		"optjeu.deblocageApplis": "Apps unlocked week by week",
 		"optjeu.deblocageApplis.detail": "Week 1: Reports only; Community in 2, Messages in 3, Logbook and Indicators in 4, Data in 5.",
 		"optjeu.toutDebloque": "All unlocked (challenge, live)",
@@ -3891,7 +3895,36 @@ function t(cle, v) {
 	let s = (TRADUCTIONS[Langue.actuelle] || {})[cle];
 	if (s === undefined) s = TRADUCTIONS.fr[cle];
 	if (s === undefined) return '[À COMPLÉTER]';
+	if (v && s.includes('(s)')) s = accorderPluriels(s, v);
 	if (v) s = s.replace(/\{(\w+)\}/g, (m, k) => (v[k] === undefined || v[k] === null ? '' : String(v[k])));
+	return s;
+}
+/** Prompt 204 : accorde les « mot(s) » d'un modèle au nombre qui les gouverne — la variable {x} la plus proche AVANT
+ * (« {n} dossier(s) traité(s) »), sinon la première APRÈS (« Ligne(s) {lignes} »). Nombre : pluriel à partir de 2 en
+ * français, sauf 1 en anglais ; liste en texte (virgule, « / », « et », « and ») : pluriel ; indéterminé : « (s) » gardé. */
+function accorderPluriels(s, v) {
+	const jetons = [];
+	s.replace(/\{(\w+)\}|\(s\)/g, (m, k, i) => jetons.push({ i, k: k || null }));
+	const fr = Langue.actuelle !== 'en';
+	const pluriel = (val) => {
+		if (val === undefined || val === null) return null;
+		const txt = String(val).trim();
+		const num = typeof val === 'number' ? val : /^[−-]?\d+(?:[.,]\d+)?$/.test(txt) ? parseFloat(txt.replace('−', '-').replace(',', '.')) : null;
+		if (num !== null && Number.isFinite(num)) return fr ? Math.abs(num) >= 2 : Math.abs(num) !== 1;
+		return /[,/]|\s(?:et|and)\s/.test(txt);
+	};
+	let decalage = 0;
+	jetons.forEach((j, n) => {
+		if (j.k) return;
+		let gouv = null;
+		for (let p = n - 1; p >= 0 && !gouv; p--) if (jetons[p].k) gouv = jetons[p].k;
+		for (let p = n + 1; p < jetons.length && !gouv; p++) if (jetons[p].k) gouv = jetons[p].k;
+		const pl = gouv ? pluriel(v[gouv]) : null;
+		if (pl === null) return;
+		const rempl = pl ? 's' : '';
+		s = s.slice(0, j.i + decalage) + rempl + s.slice(j.i + decalage + 3);
+		decalage += rempl.length - 3;
+	});
 	return s;
 }
 /** t() si la clé existe, sinon la valeur brute (ex. type d'incident venu des données) */

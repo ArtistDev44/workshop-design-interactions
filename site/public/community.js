@@ -462,14 +462,14 @@ function boutonTexte(x, y, l, label, action, actif) {
 	const h = 20 + n * 26;
 	const survol = mouseX >= x && mouseX <= x + l && mouseY >= y && mouseY <= y + h;
 	noStroke();
-	fill(actif ? DS.primaire : survol ? DS.blanc15 : DS.blanc05);
+	fill(actif || survol ? DS.blanc15 : DS.blanc05); // prompt 204 : le focus est un contour épais, plus un remplissage rouge qui faisait passer la réponse focalisée (parfois le clash) pour l'action recommandée
 	rect(x, y, l, h);
-	stroke(actif ? DS.primaireTrait : DS.blanc);
-	strokeWeight(2);
+	stroke(DS.blanc);
+	strokeWeight(actif ? 4 : 2);
 	noFill();
-	rect(x + 1, y + 1, l - 2, h - 2);
+	rect(x + (actif ? 2 : 1), y + (actif ? 2 : 1), l - (actif ? 4 : 2), h - (actif ? 4 : 2));
 	noStroke();
-	fill(actif ? DS.surPrimaire : DS.blanc);
+	fill(DS.blanc);
 	textAlign(LEFT, TOP);
 	textLeading(26);
 	text(label, x + 16, y + 10, l - 32, h);
@@ -576,7 +576,7 @@ function ongletMessagerie(z) {
 		dsTexte(p.heure, z.x + lg - 10, y + 8, 18, DS.blanc50, 'right');
 		dsTexte(Jeu.textePlainte(p).slice(0, 22) + '…', z.x + 56, y + 36, 18, DS.blanc50, 'left');
 		if (nonLu) dsBadge(z.x + lg - 30, y + 40, '!', 'info');
-		boutons.push({ x: z.x, y, l: lg, h: 68, action: () => ((COMMU.conv = i), (focusReponse = 0)) });
+		boutons.push({ x: z.x, y, l: lg, h: 68, action: () => ((COMMU.conv = i), (focusReponse = -1)) });
 	});
 	const p = conv[COMMU.conv];
 	const xc = z.x + lg + 16;
@@ -642,7 +642,7 @@ function toucheCommunity() {
 		if (COMMU.onglet === 'messagerie') {
 			const n = plaintesPrivees().length;
 			if (n) COMMU.conv = (COMMU.conv + (keyCode === DOWN_ARROW ? 1 : n - 1)) % n;
-			focusReponse = 0;
+			focusReponse = -1;
 		} else COMMU.defil = constrain(COMMU.defil + (keyCode === DOWN_ARROW ? 120 : -120), 0, COMMU.max || 0);
 		return true;
 	}

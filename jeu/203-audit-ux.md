@@ -25,7 +25,7 @@ indicateurs, 06–07 mobile).
 |---|---|---|---|
 | 1 | **Mobile portrait inutilisable** : texte de 5 à 8 px, HUD illisible, chevauchements, Community rendue en vignette | Bloquant (sur téléphone) | Gros |
 | 2 | **Community : Entrée envoie la réponse en tête, qui peut être le clash**, surlignée en rouge comme un bouton principal | Majeur | Petit |
-| 3 | **Prise en main surchargée** : 8 étapes, seuils de score (120, 90) et vitesse ×100 expliqués avant le premier dossier ; l'élément montré n'est pas mis en lumière | Majeur | Moyen |
+| 3 | **Prise en main surchargée** : 8 étapes, seuils de score (120, 90) et vitesse ×100 expliqués avant le premier dossier ; à l'étape des jauges, tout le bandeau est éclairé et la flèche vise « Priorités » | Majeur | Moyen |
 | 4 | **Jargon et abréviations** : `Flu. ≈`, `F +11 R 0 B -4`, `3/3 disponible · -10`, `Somnolence 9 · Z`, « Priorités : budget ≥ 40 · zéro non traité · Objectif… » | Majeur | Petit |
 | 5 | **La fiche dossier cache la carte** : le lieu de l'incident et les équipes à glisser sont hors de vue pendant la décision | Majeur | Moyen |
 | 6 | **Chevauchements visibles en 1366** : tampon « SIGNALEMENT » sur le titre et la croix ; pied de carte Données ; panneau Indicateurs par-dessus la conclusion | Moyen | Petit |
@@ -56,8 +56,9 @@ focus clavier très visible (cadre rouge épais) ; intro par SMS de Camille, cou
   (120 rappel, 90 dernier avertissement) que le joueur n'a jamais vus. L'étape 3/8 explique la somnolence, la sieste,
   le ×100, l'accumulation et une alerte « 3 s pour réagir ». → Une idée par étape ; les seuils du patron viennent au
   premier rappel à l'ordre, pas avant.
-- **Pas de mise en lumière** : tout l'écran est assombri, y compris l'élément désigné (les jauges, la somnolence) ;
-  seule une flèche rouge pointe. → Découpe claire (spotlight) autour de la cible.
+- **Mise en lumière trop large** *(corrigé le 13/11, prompt 204 : la première version de cet audit disait « pas de
+  mise en lumière », c'était faux — le voile percé existe)* : à l'étape des jauges, la zone éclairée est tout le
+  bandeau, et la flèche pointe sur « Priorités », pas sur les jauges. → Éclairer les trois jauges seules.
 - **Le temps mort du début** : à 8 h, « 5 à traiter · prochain vers 10h00 » sur une carte vide. Le tutoriel occupe
   ce temps, mais en partie sans guide le joueur ne sait pas s'il doit attendre ou agir. → Message d'attente explicite
   (« Rien à traiter pour l'instant — le temps accélère ») ou premier dossier tôt le premier jour.
@@ -176,7 +177,7 @@ portrait pour le poste (une appli plein écran à la fois, HUD réduit à 3 past
 | 2 | Accords « (s) » et « 0/0 » ; « Game over » traduit | 7, § 6 | 2 h |
 | 3 | Libellés en clair : coût des équipes, Flu./Rép./Bud., F/R/B du journal, Somnolence | 4 | 2 h |
 | 4 | Corriger les 3 chevauchements (tampon, Données, Journal) ; Indicateurs fermé pendant un dossier | 6 | 2 h |
-| 5 | Tutoriel : une idée par étape, spotlight, seuils du patron reportés | 3 | ½ j |
+| 5 | Tutoriel : une idée par étape, mise en lumière sur les seules jauges, seuils du patron reportés | 3 | ½ j |
 | 6 | Fiche dossier ancrée à droite, marqueur visible | 5 | ½ j |
 | 7 | Mobile portrait : décider (avis « jouez sur ordinateur » ou vraie mise en page) ; audit de taille rendue | 1 | 1 h ou plusieurs jours |
 | 8 | Autorisations micro / caméra au moment de la mécanique | § 1 | ½ j |
@@ -187,3 +188,8 @@ portrait pour le poste (une appli plein écran à la fois, HUD réduit à 3 past
 - Rien sur l'équilibrage ni la tension : voir `jeu/201-audit-gameplay.md`.
 - Pas de mesure de contraste au pixel : les « probablement sous 4,5:1 » sont à vérifier.
 - Le paysage mobile (canevas 16:9 plein écran) n'a pas été capturé.
+
+## Suites
+
+- Constats 2 à 7 corrigés au prompt 204 (`jeu/204-corrections-audit-ux.md`).
+- Constat 1 (mobile portrait) : prompt 205 rédigé, à exécuter (`prompts/205-jeu-mobile-portrait-jouable.md`).

@@ -1282,12 +1282,12 @@ function keyPressed() {
 		if (plainte && !focusQuitter) {
 			const n = plainte.def.reponses.length;
 			if (keyCode === TAB) {
-				focusReponse = (focusReponse + (keyIsDown(SHIFT) ? n - 1 : 1)) % n;
+				focusReponse = focusReponse < 0 ? (keyIsDown(SHIFT) ? n - 1 : 0) : (focusReponse + (keyIsDown(SHIFT) ? n - 1 : 1)) % n; // prompt 204 : premier Tab = première réponse
 				const rTab = plainte.def.reponses[Jeu.ordreReponses(plainte)[focusReponse]]; // prompt 197 : ordre mélangé + texte du clash, lu « mot masqué »
 				annoncer(typeof lireMasques === 'function' ? lireMasques(Jeu.texteReponse(plainte, rTab)) : Jeu.texteReponse(plainte, rTab));
 				return false;
 			}
-			if (keyCode === ENTER || keyCode === RETURN || key === ' ') return repondrePlainte(focusReponse), false;
+			if (keyCode === ENTER || keyCode === RETURN || key === ' ') return (focusReponse < 0 ? annoncer(t('commu.choisir')) : repondrePlainte(focusReponse)), false; // prompt 204 : aucune réponse choisie → rien n'est envoyé
 			if (Number(key) >= 1 && Number(key) <= n) return repondrePlainte(Number(key) - 1), false;
 		}
 		if (keyCode === TAB) return tabMenuApp(), false; // prompts 26 / 103 : entrées du menu, puis « Quitter le PC »

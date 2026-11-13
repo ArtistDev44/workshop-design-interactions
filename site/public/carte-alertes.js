@@ -99,8 +99,21 @@ function borner() {
 	const c = CARTE.cible;
 	c.ech = constrain(c.ech, CARTE.ech0, CARTE.ech0 * 8);
 	const e = Jeu.lignes.emprise;
-	c.lon = constrain(c.lon, e.ouest, e.est);
+	// Prompt 204 : marge d'une demi-largeur de carte, pour qu'un marqueur au bord de l'emprise puisse venir dans la
+	// partie libre (à droite de la fiche) au lieu de rester sous elle
+	const mx = CARTE.zone && CARTE.kx ? CARTE.zone.l / 2 / (CARTE.kx * c.ech) : 0;
+	c.lon = constrain(c.lon, e.ouest - mx, e.est + mx);
 	c.lat = constrain(c.lat, e.sud, e.nord);
+}
+/** Prompt 204 : cadre la carte sur un point, zoomé, au centre de la partie libre à droite de la fiche du dossier
+ * (fiche ouverte) ou au centre de la carte (sinon) — le marqueur n'est plus jamais sous la fiche */
+const ZOOM_DOSSIER = 4;
+function cadrerSur(pt, fiche) {
+	const z = CARTE.zone || ZONE_CARTE;
+	const ech = Math.max(CARTE.cible.ech, CARTE.ech0 * ZOOM_DOSSIER);
+	const libre = fiche ? z.x + 16 + FENETRE_DIALOGUE.l + 16 + (z.l - FENETRE_DIALOGUE.l - 32) / 2 : z.x + z.l / 2;
+	Object.assign(CARTE.cible, { lon: pt[0] - (libre - z.x - z.l / 2) / (CARTE.kx * ech), lat: pt[1], ech });
+	borner();
 }
 function majVue(z) {
 	initVue(z);
@@ -142,7 +155,8 @@ function recentrer() {
 	if (!CARTE.zone || !Jeu.lignes) return;
 	const m = CARTE.marqueurs.find((k) => k.courant && k.lieu.pt);
 	const c = m ? m.lieu.pt : centreEmprise();
-	CARTE.cible = { lon: c[0], lat: c[1], ech: m ? CARTE.ech0 * 2.5 : CARTE.ech0 };
+	CARTE.cible = { lon: c[0], lat: c[1], ech: CARTE.ech0 };
+	if (m) cadrerSur(c, dossierOuvert() && !(typeof DIALOGUE !== 'undefined' && DIALOGUE.reduit)); // prompt 204
 	annoncer(t('carte.recentrer'));
 }
 
@@ -168,11 +182,11 @@ function dessinerCarteAlertes() {
 	if (!Jeu.lignes) return dessinerPanneauEquipes();
 	const pr = majVue(z);
 	CARTE.pr = pr;
-	// Signalement ouvert : la carte glisse une fois vers lui
+	// Signalement ouvert : la carte zoome une fois sur lui (prompt 204 : ×4, dans la partie libre à droite de la fiche)
 	if (dossierOuvert() && CARTE.centreSur !== Jeu.index) {
 		CARTE.centreSur = Jeu.index;
 		const m = CARTE.marqueurs.find((k) => k.courant && k.lieu.pt);
-		if (m) Object.assign(CARTE.cible, { lon: m.lieu.pt[0], lat: m.lieu.pt[1], ech: Math.max(CARTE.cible.ech, CARTE.ech0 * 2.5) });
+		if (m) cadrerSur(m.lieu.pt, true);
 	}
 	// Glisser la carte
 	if (CARTE.pan) {
@@ -595,7 +609,7 @@ function dessinerPanneauEquipes() {
 			}
 		});
 		const lignesP = Math.max(1, Math.ceil(ps.length / 4));
-		const etat = verrou ? t('histoire.verrou.equipes') : dispo + '/' + eff + ' ' + t('equipes.dispo') + ' · −' + q.cout;
+		const etat = verrou ? t('histoire.verrou.equipes') : t('equipes.etat', { dispo, eff, cout: q.cout }) // prompt 204 : « libres · coût », plus « disponible · −10 »;
 		dsTexte(couperLargeurCarte(etat, P.l - 32, 20), P.x + 16, y + 60 + lignesP * 52, 14, dispo ? DS.blanc75 : DS.alerteClair, 'left');
 		y += 60 + lignesP * 52 + 40;
 	});
