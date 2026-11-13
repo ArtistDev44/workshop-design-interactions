@@ -104,7 +104,7 @@ function composerPortrait() {
 	const scene = scenePortrait();
 	if (scene === 'appli' || scene === 'vueApp') regionsPoste(scene); // prompt 205
 	else if (scene === 'main') region({ x: 880, y: 0, l: 780, h: H }, 0, 200, PL);
-	else if (scene === 'rapport') region({ x: 420, y: 0, l: 1420, h: H }, 0, (PH - (H * PL) / 1420) / 2, PL);
+	else if (scene === 'rapport') regionsFenetre(); // prompt 209 : feuilles de 640 px (histoire.js, rapportPortrait)
 	else if (scene === 'fenetre') regionsFenetre();
 	else if (scene === 'menu') {
 		// Prompt 199 : en haut à droite, la pile FR / EN · plein écran · télécharger ; puis la colonne du menu (titre, cartes)

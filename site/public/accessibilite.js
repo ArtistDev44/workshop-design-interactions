@@ -70,7 +70,7 @@ function installerEchelleTexte() {
 
 /** Prompt 209 : écrans dessinés en colonne étroite en portrait (le plancher de 20 px s'y applique) */
 function plancherPortrait() {
-	return typeof FENETRE_EN_DESSIN !== 'undefined' && FENETRE_EN_DESSIN && typeof fenetre !== 'undefined' && fenetre !== 'telephone' && fenetre !== 'cafe' && fenetre !== 'rapport';
+	return typeof FENETRE_EN_DESSIN !== 'undefined' && FENETRE_EN_DESSIN && typeof fenetre !== 'undefined' && fenetre !== 'telephone' && fenetre !== 'cafe';
 }
 
 /** Lecture facile : compte à rebours ×1,5 et pas de tic-tac */

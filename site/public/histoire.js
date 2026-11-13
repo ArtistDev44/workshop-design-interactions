@@ -177,7 +177,8 @@ function fenetreMailFin() {
 	if (!RAPPORT || !RAPPORT.mail) return fermer();
 	const m = RAPPORT.mail;
 	const l = DS.fenetre.large; // prompt 173 (était 1100)
-	const h = 640;
+	const portrait = typeof PORTRAIT !== 'undefined' && PORTRAIT.actif; // prompt 209 : 640 px — titre réduit, texte plus haut, bouton pleine largeur
+	const h = portrait ? 1000 : 640;
 	const x = (L - l) / 2;
 	const y = (H - h) / 2;
 	panneau(x, y, l, h, C.accent);
@@ -189,7 +190,9 @@ function fenetreMailFin() {
 	textSize(20);
 	fill('#ffffff');
 	text(t('finSemaine.bandeau'), x + 32, y + 28);
-	dsTitre(String(m.objet), x + 40, y + 84, 40, C.texte, 'left');
+	let tt = 40;
+	if (portrait) while (tt > 24 && largeurTitreDS(String(m.objet), tt) > l - 80) tt -= 2;
+	dsTitre(String(m.objet), x + 40, y + 84 + (40 - tt) / 2, tt, C.texte, 'left');
 	noStroke();
 	textAlign(LEFT, TOP);
 	textFont(POLICE_TEXTE);
@@ -197,7 +200,8 @@ function fenetreMailFin() {
 	textLeading(31);
 	fill(C.texte);
 	text(m.lignes.map(String).join('\n\n'), x + 40, y + 150, l - 80, h - 260);
-	bouton(x + l - 40 - 420, y + h - 96, 420, 64, t('finSemaine.lire'), fermerMailFin);
+	if (portrait) bouton(x + 40, y + h - 104, l - 80, 72, t('finSemaine.lire'), fermerMailFin);
+	else bouton(x + l - 40 - 420, y + h - 96, 420, 64, t('finSemaine.lire'), fermerMailFin);
 }
 function fermerMailFin() {
 	fenetre = null;
@@ -213,6 +217,7 @@ function changerPageRapport(sens) {
 
 function fenetreRapport() {
 	if (!RAPPORT) return fermer();
+	if (typeof PORTRAIT !== 'undefined' && PORTRAIT.actif) return rapportPortrait(); // prompt 209
 	if (RAPPORT.page === 1) return fenetreRapportChiffres();
 	if (RAPPORT.page === 2) return fenetreRapportSources();
 	const b = RAPPORT.bilan;
@@ -686,6 +691,184 @@ function fenetreRapportSources() {
 	boutonPageRapport(x + l, y);
 	const by = y + h + 20;
 	bouton(L / 2 - 220, by + 10, 440, 64, t(RAPPORT.cine ? 'finSemaine.cine' : RAPPORT.chapitre && !b.demission ? 'rapport.suivante' : 'fin.rejouer'), actionRapport);
+}
+
+// ——— Prompt 209 : mobile portrait — les trois pages du rapport recomposées en blocs, dans deux feuilles de 640 px
+// (la seconde dessinée à droite dans l'image, empilée sous la première et défilable sur le canevas portrait).
+// Mêmes textes et mêmes chiffres que sur ordinateur ; texte à 20 px au moins (≈ 12 px CSS sur un écran de 412 px).
+const ENCRE_RAPPORT = '#1d1a16';
+const GRIS_RAPPORT = '#5a5348';
+/** Bloc de texte : { h(l), dessin(x, y, l) } */
+function blocTexteRapport(txt, o) {
+	const opts = Object.assign({ taille: 20, interligne: 28, couleur: ENCRE_RAPPORT }, o || {});
+	const marge = opts.apres === undefined ? 12 : opts.apres;
+	return { h: (l) => hauteurTexte(String(txt), l, opts) + marge, dessin: (x, y, l) => dessinerTexte(String(txt), x, y, l, opts) };
+}
+function blocsRapportPortrait() {
+	const b = RAPPORT.bilan;
+	const B = [];
+	const gris = { couleur: GRIS_RAPPORT, police: POLICE_DONNEES };
+	const page = RAPPORT.page || 0;
+	const entete = t('rapport.entete') + (page === 1 ? ' · ' + t('rapport.page2court') : page === 2 ? ' · ' + t('rapport.page3court') : '');
+	B.push(blocTexteRapport(entete, gris));
+	if (page === 0) {
+		B.push(blocTexteRapport(RAPPORT.chapitre ? t('rapport.titre', { n: RAPPORT.chapitre }) : t('rapport.titreDirect'), { taille: 34, interligne: 42, style: BOLD }));
+		B.push(blocTexteRapport(t('rapport.periode', { p: b.faits.periodeTexte || b.faits.periode }), { couleur: GRIS_RAPPORT, apres: 16 }));
+		// Tampon de la fin (incliné) et, à côté, le numéro de la fin
+		const couleurs = { bonne: '#1e7a3c', moyenne: '#a15c07', mauvaise: '#b3261e', demission: '#b3261e' };
+		const tampon = b.demission ? 'demission' : b.ton || b.type;
+		const ligneFin = b.demission ? '' : b.fin && Jeu.Galerie ? t(b.finNouvelle ? 'rapport.finNouvelle' : 'rapport.finNumero', { i: b.numeroFin, n: Jeu.FINS_SEMAINE.length, d: Jeu.Galerie.decouvertes() }) : t('rapport.typeFin.' + b.type, { s: Jeu.SEUILS_FIN[b.type === 'mauvaise' ? 'moyenne' : b.type] });
+		B.push({
+			h: () => 120,
+			dessin(x, y, l) {
+				push();
+				translate(x + 140, y + 54);
+				rotate(-0.12);
+				noFill();
+				stroke(couleurs[tampon]);
+				strokeWeight(5);
+				rect(-130, -42, 260, 84);
+				noStroke();
+				fill(couleurs[tampon]);
+				textAlign(CENTER, CENTER);
+				textFont(POLICE_TEXTE);
+				textStyle(BOLD);
+				textSize(28);
+				zoneTexteDebut('tampon', -130, -42, 260, 84);
+				text(t('rapport.tampon.' + tampon), 0, 0);
+				zoneTexteFin();
+				textStyle(NORMAL);
+				pop();
+				if (ligneFin) dessinerTexte(String(ligneFin), x + 300, y + 10, l - 300, { taille: 20, interligne: 26, couleur: couleurs[b.ton || b.type], police: POLICE_DONNEES, maxLignes: 4 });
+			},
+		});
+		B.push(blocTexteRapport(t('rapport.score', { s: b.score }) + ' — ' + (b.demission ? t('demission.rapportTitre') : b.titre), { taille: 26, interligne: 34, style: BOLD }));
+		B.push(blocTexteRapport(b.demission ? t('demission.rapportTexte') : b.texte, { apres: 16 }));
+		if (!b.demission && b.pese && b.pese.length) B.push(blocTexteRapport(t('rapport.pese', { liste: b.pese.map(String).join(' · ') }), Object.assign({ interligne: 26, apres: 16 }, gris)));
+		// Jauges : une par ligne
+		B.push({
+			h: () => 3 * 58 + 8,
+			dessin(x, y, l) {
+				[['fluidite', b.jauges.fluidite], ['reputation', b.jauges.reputation], ['budget', b.jauges.budget]].forEach(([cle, v], i) => {
+					const jy = y + i * 58;
+					textFont(POLICE_TEXTE);
+					textAlign(LEFT, TOP);
+					textSize(20);
+					fill(ENCRE_RAPPORT);
+					text(t('jaugeTitre.' + cle) + ' ' + v + '/100', x, jy);
+					noStroke();
+					fill('#ddd5c2');
+					rect(x, jy + 32, l, 12);
+					fill(couleurPapier(v));
+					rect(x, jy + 32, (l * v) / 100, 12);
+				});
+			},
+		});
+		const bp = Jeu.bilanPlaintes ? Jeu.bilanPlaintes() : { traitees: 0, total: 0, bonnes: 0 };
+		B.push(blocTexteRapport(t(bp.total ? 'rapport.faits' : 'rapport.faitsSansPlaintes', { n: b.traites, total: b.total, sans: b.sansDecision, pt: bp.traitees, pT: bp.total, pb: bp.bonnes }), { apres: 16 }));
+		if (b.decisionsCles.length) B.push(blocTexteRapport(t('fin.decisions'), { style: BOLD, apres: 8 }));
+		b.decisionsCles.slice(0, 3).forEach((d) => {
+			B.push(blocTexteRapport(String(t('qualite.' + d.qualite)).toUpperCase(), Object.assign({ apres: 2 }, gris)));
+			B.push(blocTexteRapport(texteDecisionCle(d), { apres: 2 }));
+			B.push(blocTexteRapport(ecartsDecisionCle(d), Object.assign({ apres: 16 }, gris)));
+		});
+		const pr = texteProfilRapport();
+		if (pr) B.push(blocTexteRapport(pr, { couleur: GRIS_RAPPORT, apres: 16 }));
+		if (RAPPORT.chapitre && !b.demission && !RAPPORT.cine) {
+			const n = RAPPORT.chapitre + 1;
+			const nouveau = elementNouveauChapitre(n);
+			B.push(blocTexteRapport(nouveau ? t('histoire.prochain', { n, element: t('histoire.element.' + nouveau) }) : t('histoire.prochainSans', { n, niveau: t('niveau.' + niveauChapitre(n)) }), { style: BOLD, apres: 16 }));
+		}
+	} else if (page === 1) {
+		const st = RAPPORT.stats;
+		B.push(blocTexteRapport(t('rapport.chiffresTitre'), { taille: 34, interligne: 42, style: BOLD, apres: 16 }));
+		const pf = st.parFamille || {};
+		const lignes = [
+			[t('stats.recus'), st.recus],
+			[t('stats.traites'), st.traites],
+			...Jeu.FAMILLES.map((f) => [t('famille.' + f), pf[f] || 0, true]),
+			[t('stats.expires'), st.expires],
+			[t('stats.tempsMoyen'), st.tempsMoyen === null ? '—' : String(st.tempsMoyen).replace('.', Langue.actuelle === 'fr' ? ',' : '.') + ' s'],
+			[t('stats.sources'), st.sources],
+			[t('stats.ralentis'), st.ralentis],
+			[t('stats.objectifs'), st.objectifs],
+			[t('stats.equipes'), st.equipes ? st.equipes.total : '—'],
+			...(st.equipes ? [[t('stats.equipesPert'), st.equipes.pertinentes, true], [t('stats.equipesRefus'), st.equipes.refus, true]] : []),
+		];
+		lignes.forEach(([lib, v, retrait], i) => {
+			const lt = (l) => l - 24 - 110 - (retrait ? 24 : 0);
+			const o = { taille: 20, interligne: 26, couleur: retrait ? GRIS_RAPPORT : ENCRE_RAPPORT, police: POLICE_DONNEES };
+			B.push({
+				h: (l) => hauteurTexte(String(lib), lt(l), o) + 12,
+				dessin(x, y, l) {
+					const hl = hauteurTexte(String(lib), lt(l), o) + 12;
+					noStroke();
+					fill(i % 2 ? '#efe8d6' : '#f6f1e3');
+					rect(x - 8, y - 4, l + 16, hl);
+					dessinerTexte(String(lib), x + (retrait ? 24 : 0), y + 2, lt(l), o);
+					textFont(POLICE_DONNEES);
+					textSize(20);
+					textAlign(RIGHT, TOP);
+					fill(ENCRE_RAPPORT);
+					text(String(v), x + l - 8, y + 2);
+					textAlign(LEFT, TOP);
+				},
+			});
+		});
+		B.push({ h: () => 300, dessin: (x, y, l) => dessinerCourbesJauges(x + 48, y + 30, l - 60, 200, ENCRE_RAPPORT, GRIS_RAPPORT) });
+		B.push(blocTexteRapport(t('stats.defis'), { style: BOLD, apres: 8 }));
+		(b.defis || []).forEach((r) => {
+			const coul = r.sansObjet ? GRIS_RAPPORT : r.tenu ? '#1e5f30' : '#8a1f18';
+			const suite = r.sansObjet ? t('stats.sansObjet') : r.tenu ? t('stats.bonus', { jauge: t('jaugeTitre.' + r.jauge), v: r.bonus }) : '';
+			B.push(blocTexteRapport((r.sansObjet ? '– ' : r.tenu ? '✓ ' : '✗ ') + t('defi.' + r.id) + ' — ' + t('stats.valeur', { v: r.valeur }) + (suite ? ' · ' + suite : ''), { couleur: coul, police: POLICE_DONNEES, interligne: 26, apres: 8 }));
+		});
+	} else {
+		B.push(blocTexteRapport(t('rapport.sourcesTitre'), { taille: 34, interligne: 42, style: BOLD, apres: 16 }));
+		lignesSourcesRapport().forEach((li) => {
+			if (li.section) return B.push(blocTexteRapport(String(li.texte), { taille: 22, interligne: 30, style: BOLD, apres: 8 }));
+			B.push(blocTexteRapport(String(li.texte), { couleur: li.discret ? GRIS_RAPPORT : li.vert ? '#1e5f30' : ENCRE_RAPPORT }));
+		});
+	}
+	// Boutons : page suivante, puis la suite de la semaine (pleine largeur, 72 px)
+	const actions = [{ lib: t(['rapport.versPage2', 'rapport.versPage3', 'rapport.versPage1'][page]), f: changerPageRapport, sec: true }];
+	if (page === 0 && RAPPORT.chapitre && b.demission) actions.push({ lib: t('demission.reprendre'), f: actionRapport }, { lib: t('menu.menuPrincipal'), f: quitterRapport, sec: true });
+	else if (page === 0 && !RAPPORT.cine && !RAPPORT.chapitre) actions.push({ lib: t('fin.rejouer'), f: actionRapport }, { lib: t('finSemaine.autre'), f: autreSemaine, sec: true }, { lib: t('menu.menuPrincipal'), f: quitterRapport, sec: true });
+	else actions.push({ lib: t(RAPPORT.cine ? 'finSemaine.cine' : RAPPORT.chapitre && !b.demission ? 'rapport.suivante' : 'fin.rejouer'), f: actionRapport });
+	// Bouton secondaire (contour blanc) posé sur une bande d'encre : lisible sur le papier
+	actions.forEach((a, i) => B.push({ h: () => 88, dessin: (x, y, l) => (a.sec && (noStroke(), fill(ENCRE_RAPPORT), rect(x, y + (i ? 0 : 8), l, 72)), bouton(x, y + (i ? 0 : 8), l, 72, a.lib, a.f, false, !!a.sec)) }));
+	return B;
+}
+function rapportPortrait() {
+	const l = DS.fenetre.large; // 640 en portrait
+	const m = 32; // marge intérieure de la feuille
+	const lc = l - 2 * m;
+	const hMax = H - 40;
+	const blocs = blocsRapportPortrait();
+	// Mise en place : la première feuille se remplit, la suite passe sur la seconde (un bloc n'est jamais coupé)
+	const feuilles = [{ x: 20, blocs: [], h: 2 * m }, { x: 720, blocs: [], h: 2 * m }];
+	let f = 0;
+	blocs.forEach((bl) => {
+		const hb = bl.h(lc);
+		if (f === 0 && feuilles[0].h + hb > hMax && feuilles[0].blocs.length) f = 1;
+		feuilles[f].blocs.push({ bl, y: feuilles[f].h - m });
+		feuilles[f].h += hb;
+	});
+	const k = reduireAnimations ? 1 : easeOut(constrain((millis() - livreOuverture) / 400, 0, 1));
+	feuilles.forEach((fe, i) => {
+		if (!fe.blocs.length) return;
+		const y = 20 + (1 - k) * 60;
+		noStroke();
+		fill('#f6f1e3');
+		rect(fe.x, y, l, fe.h);
+		zoneTexteDeclarer('panneau', fe.x, y, l, fe.h);
+		if (i === 0) zoneFenetre(fe.x, 20, l, fe.h);
+		else suiteFenetre(fe.x, 20, l, fe.h);
+		fe.blocs.forEach((p) => {
+			textAlign(LEFT, TOP);
+			textStyle(NORMAL);
+			p.bl.dessin(fe.x + m, y + m + p.y, lc);
+		});
+	});
 }
 
 // ——— Prompt 89 bis : le rapport du soir de la veille (prompt 88) reste posé sur le bureau jusqu'à la fin de la semaine ———
