@@ -521,7 +521,8 @@ function dessinerJeuAttente() {
 	dessinerBandeau();
 	dessinerCarteAlertes(); // prompt 102 : carte pleine largeur entre deux signalements
 	if (enSieste) {
-		Object.assign(PANNEAU, { x: ZONE_CARTE.x + (ZONE_CARTE.l - FENETRE_DIALOGUE.l) / 2, y: ZONE_CARTE.y + 16, l: FENETRE_DIALOGUE.l, h: FENETRE_DIALOGUE.h }); // prompt 107
+		if (typeof PORTRAIT !== 'undefined' && PORTRAIT.actif) Object.assign(PANNEAU, GEO_PORTRAIT.panneau); // prompt 205
+		else Object.assign(PANNEAU, { x: ZONE_CARTE.x + (ZONE_CARTE.l - FENETRE_DIALOGUE.l) / 2, y: ZONE_CARTE.y + 16, l: FENETRE_DIALOGUE.l, h: FENETRE_DIALOGUE.h }); // prompt 107
 		dessinerAttente(); // sieste : le panneau d'attente dit qu'on dort (prompt 194 : plus de mail plein écran le soir)
 	}
 }
@@ -780,31 +781,36 @@ function dessinerNarration() {
 	// Prompt 121 : statut du signalement — clos (aucune équipe) ou en attente du retour du plaignant (équipe envoyée)
 	const iSig = Jeu.paquet.indexOf(r.dossier);
 	const stSig = iSig >= 0 && Jeu.statutSignalement ? Jeu.statutSignalement(iSig) : null;
+	const etroitN = z.l < 800; // prompt 205 : fiche étroite (mobile portrait) — statut sous l'en-tête, le reste descend
+	let dyN = 0;
 	if (stSig && stSig !== 'ouvert') {
 		const eqSig = (Jeu.equipes || []).filter((q) => q.index === iSig && !q.inutile).map((q) => String(q.nom)).join(', ');
 		const libSig = t('sig.statut.' + stSig, { equipe: eqSig });
 		textSize(18);
-		const lSig = Math.min(z.l - 420, textWidth(libSig) + 28);
+		const lSig = etroitN ? Math.min(z.l - 64, textWidth(libSig) + 28) : Math.min(z.l - 420, textWidth(libSig) + 28);
+		const xSig = etroitN ? z.x + 32 : z.x + z.l - 32 - lSig;
+		const ySig = etroitN ? z.y + 62 : z.y + 24;
+		if (etroitN) dyN = 44;
 		noFill();
 		stroke(stSig === 'attente' ? C.orange : C.gris);
 		strokeWeight(2);
-		rect(z.x + z.l - 32 - lSig, z.y + 24, lSig, 34);
+		rect(xSig, ySig, lSig, 34);
 		noStroke();
 		fill(stSig === 'attente' ? C.orange : C.gris);
 		textAlign(CENTER, CENTER);
 		ajusterTaille(libSig, lSig - 20, 18, 14);
-		zoneTexteDeclarer('statutSignalement', z.x + z.l - 32 - lSig + 10, z.y + 28, lSig - 20, 26);
-		text(libSig, z.x + z.l - 32 - lSig / 2, z.y + 41);
+		zoneTexteDeclarer('statutSignalement', xSig + 10, ySig + 4, lSig - 20, 26);
+		text(libSig, xSig + lSig / 2, ySig + 17);
 		textAlign(LEFT, TOP);
 	}
 	fill(C.texte);
 	textFont(POLICE_TEXTE);
 	textStyle(BOLD);
 	textSize(34);
-	text(r.narration.titre, z.x + 32, z.y + 70, z.l - 64, 100);
+	text(r.narration.titre, z.x + 32, z.y + 70 + dyN, z.l - 64, 100);
 	textStyle(NORMAL);
 	textSize(26);
-	text(r.narration.texte, z.x + 32, z.y + 190, z.l - 64, 260);
+	text(r.narration.texte, z.x + 32, z.y + 190 + dyN, z.l - 64, 260 - dyN);
 
 	// Prompt 184 : plus de liste des écarts (« Fluidité −9 (dé : 3) », « Effets : … ») — les jauges du bandeau s'animent
 	// (segment vert / rouge, feedback.js) ; le détail chiffré reste dans l'appli Journal. Restent le contexte qui a

@@ -217,7 +217,7 @@ function dessinerCompteSocial(z) {
 	textFont(DS.policeTexte);
 	textSize(20);
 	const wn = textWidth(t('commu.nom'));
-	dsTexte('· ' + t('commu.service'), z.x + 96 + wn + 12, z.y + 78, 18, DS.infoClair, 'left'); // prompt 101 : statut en texte (un badge est réservé à ce qui demande une action)
+	if (!mobile || 96 + wn + 12 + textWidth('· ' + t('commu.service')) * 0.9 < lp - 60) dsTexte('· ' + t('commu.service'), z.x + 96 + wn + 12, z.y + 78, 18, DS.infoClair, 'left'); // prompt 205 : omis s'il ne tient pas à côté du nom // prompt 101 : statut en texte (un badge est réservé à ce qui demande une action)
 	const bp = Jeu.bilanPlaintes();
 	const abonnes = Math.round((1200 * Jeu.jauges.reputation) / 50);
 	const tendance = (Jeu.commentaires || []).filter((c) => c.jour === Jeu.jourIndex).reduce((a, c) => a + (c.delta || 0), 0);
@@ -228,11 +228,13 @@ function dessinerCompteSocial(z) {
 	if (enStats) dsTexte(t('commu.bio'), z.x + 96, z.y + 128, 18, DS.blanc50, 'left', lp - 110);
 	const boutonVue = COMMU.onglet === 'fil'; // prompt 186 : bascule cartes / liste, à droite de l'en-tête (dessinée en dernier : infobulle au-dessus)
 	// Onglets (indicateur rouge sous l'onglet actif) — en bas en portrait
-	const yo = mobile ? z.y + z.h - 52 : z.y + 158;
+	// Prompt 205 : en portrait, onglets sur deux rangées de deux (les quatre libellés ne tiennent pas sur 620 px)
+	const yo0 = mobile ? z.y + z.h - 104 : z.y + 158;
 	const nb = { mentions: enAttenteDe(plaintesPubliques()).length, messagerie: enAttenteDe(plaintesPrivees()).length };
-	const lo = (lp - (mobile ? 0 : 0)) / 4;
+	const lo = mobile ? lp / 2 : lp / 4;
 	ONGLETS_COMMU.forEach((o, i) => {
-		const ox = z.x + i * lo;
+		const ox = z.x + (mobile ? i % 2 : i) * lo;
+		const yo = yo0 + (mobile ? Math.floor(i / 2) * 52 : 0);
 		const actif = COMMU.onglet === o;
 		noStroke();
 		if (actif) {
@@ -246,7 +248,7 @@ function dessinerCompteSocial(z) {
 		boutons.push({ x: ox, y: yo, l: lo - 8, h: 48, action: () => changerOnglet(o) });
 	});
 	// Contenu (zone défilable) + colonne latérale
-	const zc = { x: z.x, y: mobile ? z.y + 158 : z.y + 216, l: mobile ? lp : lp - 320, h: mobile ? z.h - 158 - 60 : z.h - 216 };
+	const zc = { x: z.x, y: mobile ? z.y + 158 : z.y + 216, l: mobile ? lp : lp - 320, h: mobile ? z.h - 158 - 112 : z.h - 216 };
 	if (!mobile) colonneNantes(z.x + lp - 300, zc.y, 300, zc.h);
 	drawingContext.save();
 	drawingContext.beginPath();
@@ -374,37 +376,41 @@ function publierInfoTrafic(id) {
 /** Carte d'un post : en-tête, texte, photo, « j'aime », commentaires (plaintes, commentaires, réactions), Répondre */
 function carteDePost(p, x, y, l, rang) {
 	const m = meteoDe(p.date);
-	const lt = l - 300;
+	// Prompt 205 : colonne étroite (mobile portrait) — photo réduite, « Voir le dossier » sur sa propre ligne
+	const et = l < 700;
+	const lph = et ? 150 : 260;
+	const xt = x + lph + 28;
+	const lt = l - lph - 40;
 	textFont(DS.policeTexte);
 	textSize(20);
 	const nl = Math.max(1, couperLignes(String(p.texte), lt, DS.policeTexte, 20).length); // prompt 93 : vraie coupure (plus d'estimation × 1,05)
 	const comms = p.index !== undefined && p.sorte !== 'archive' ? commentairesDuPost(p.index) : [];
-	const hTexte = 46 + nl * 28 + 40;
-	const hc = Math.max(176, hTexte);
+	const hTexte = 46 + nl * 28 + 40 + (et ? 34 : 0);
+	const hc = Math.max(et ? 150 : 176, hTexte);
 	const arrivee = reduireAnimations ? 0 : Math.max(0, 8 - (millis() - (p._vu || (p._vu = millis()))) / 25);
 	noStroke();
 	fill(DS.blanc05); // prompt 101 b : fond seul, sans cadre
 	rect(x, y + arrivee, l, hc);
 	noStroke();
 	zoneTexteDeclarer('post', x, y + arrivee, l, hc); // prompt 93
-	dessinerPhoto(p.photo, x + 12, y + 12 + arrivee, 260, 152, (m.pluie_mm || 0) >= 1 || p.photo.pluie, nuitDe(p.minute));
+	dessinerPhoto(p.photo, x + 12, y + 12 + arrivee, lph, et ? 88 : 152, (m.pluie_mm || 0) >= 1 || p.photo.pluie, nuitDe(p.minute));
 	// Prompt 101 b : chaque post est publié par le compte lui-même — l'avatar et le nom répétés partent, l'heure reste
-	dsTexte(p.sorte === 'archive' ? t('commu.archive', { date: p.date.split('-').reverse().join('/') }) : p.heure + (p.sorte === 'joueur' ? ' · ' + t('commu.votrePost') : ''), x + 288, y + 16, 18, DS.blanc50, 'left', lt);
-	dsTexte(String(p.texte), x + 288, y + 48, 20, DS.blanc, 'left', lt);
-	dsTexte('♥ ' + p.likes + '   ' + (comms.length ? t('commu.nbComm', { n: comms.length }) : ''), x + 288, y + hc - 34, 18, DS.blanc75, 'left');
+	dsTexte(p.sorte === 'archive' ? t('commu.archive', { date: p.date.split('-').reverse().join('/') }) : p.heure + (p.sorte === 'joueur' ? ' · ' + t('commu.votrePost') : ''), xt, y + 16, 18, DS.blanc50, 'left', lt);
+	dsTexte(String(p.texte), xt, y + 48, 20, DS.blanc, 'left', lt);
+	dsTexte('♥ ' + p.likes + '   ' + (comms.length ? t('commu.nbComm', { n: comms.length }) : ''), xt, y + hc - (et ? 68 : 34), 18, DS.blanc75, 'left');
 	if (p.index !== undefined && p.sorte !== 'archive' && typeof voirDossierDepuis === 'function') {
 		// Prompt 91 § 3 : retour croisé vers le dossier (Échap revient ici)
 		textFont(DS.policeTexte);
 		textSize(18);
 		const lien = '→ ' + t('applis.voirDossier');
-		dsTexte(lien, x + l - 16, y + hc - 34, 18, DS.infoClair, 'right');
-		boutons.push({ x: x + l - 16 - textWidth(lien), y: y + hc - 40, l: textWidth(lien), h: 32, action: () => voirDossierDepuis(p.index) });
+		dsTexte(lien, et ? xt : x + l - 16, y + hc - 34, 18, DS.infoClair, et ? 'left' : 'right');
+		boutons.push({ x: et ? xt : x + l - 16 - textWidth(lien), y: y + hc - 40, l: textWidth(lien), h: 32, action: () => voirDossierDepuis(p.index) });
 	} else if (p.index !== undefined && p.sorte === 'partie') {
 		textFont(DS.policeTexte);
 		textSize(18);
 		const lien = t('commu.voirListe');
-		dsTexte(lien, x + l - 16, y + hc - 34, 18, DS.infoClair, 'right');
-		boutons.push({ x: x + l - 16 - textWidth(lien), y: y + hc - 40, l: textWidth(lien), h: 32, action: () => (PC.fenetre = null, (PC.etat = 'appli')) });
+		dsTexte(lien, et ? xt : x + l - 16, y + hc - 34, 18, DS.infoClair, et ? 'left' : 'right');
+		boutons.push({ x: et ? xt : x + l - 16 - textWidth(lien), y: y + hc - 40, l: textWidth(lien), h: 32, action: () => (PC.fenetre = null, (PC.etat = 'appli')) });
 	}
 	// Prompt 101 : le premier commentaire seulement (et toute plainte qui attend une réponse), puis « Voir les N autres »
 	let yy = y + hc + 8;
@@ -484,7 +490,12 @@ function blocPlainteSociale(pl, x, y, l, prive) {
 	const attente = pl.reponse === null && !pl.expiree && !pl.transmise;
 	if (attente) {
 		const reste = Jeu.resteReponse(pl, typeof tempsPlaintes === 'function' ? tempsPlaintes() : millis());
-		dsTexte(t('plainte.delai', { s: Math.ceil(reste / 1000) }), x + l - 8, yy + 4, 18, reste < 30000 ? DS.alerte : DS.blanc75, 'right');
+		const delai = t('plainte.delai', { s: Math.ceil(reste / 1000) });
+		textFont(DS.policeTexte);
+		textSize(18);
+		const tient = 34 + textWidth(pl.auteur + ' · ' + pl.heure) + 24 + textWidth(delai) <= l - 8; // prompt 205 : sinon, sur sa propre ligne
+		if (!tient) yy += 26;
+		dsTexte(delai, tient ? x + l - 8 : x + 34, yy + 4, 18, reste < 30000 ? DS.alerte : DS.blanc75, tient ? 'right' : 'left');
 	}
 	dsTexte(Jeu.textePlainte(pl), x + 34, yy + 30, 20, DS.blanc, 'left', l - 60); // prompt 162 : « Fictif · » si la plainte porte sur le dossier fictif
 	textFont(DS.policeTexte);
