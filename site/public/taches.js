@@ -630,7 +630,7 @@ const Taches = (() => {
 	function plainteInfo(tache) {
 		const def = Jeu.MESSAGES && Jeu.MESSAGES.plaintes.find((p) => p.id === 'info_erronee');
 		if (!def || !Jeu.plaintes) return null;
-		const plainte = { id: def.id, def, vars: { sujet: tache.sujet }, index: tache.index, heure: Jeu.horloge ? Jeu.formaterHeure(Jeu.horloge.minutes) : '', auteur: def.auteur, reponse: null };
+		const plainte = { id: def.id, def, vars: { sujet: tache.sujet }, index: tache.index, heure: Jeu.horloge ? Jeu.formaterHeure(Jeu.horloge.minutes) : '', auteur: def.auteur, reponse: null, jour: Jeu.jourIndex }; // prompt 198 : comptée dans les tons du jour
 		Jeu.plaintes.push(plainte);
 		if (Jeu.nonLus) Jeu.nonLus.community++;
 		return plainte;

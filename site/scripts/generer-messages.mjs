@@ -11,6 +11,15 @@ if (!Array.isArray(donnees.plaintes)) throw new Error('messages.json : « plaint
 const REGISTRES = ['etudiant', 'senior', 'touriste', 'travailleur', 'parent'];
 for (const p of donnees.plaintes) if (p.registre !== undefined && !REGISTRES.includes(p.registre)) throw new Error('messages.json : registre inconnu « ' + p.registre + ' » (' + p.id + ')');
 if (new Set(donnees.plaintes.map((p) => p.registre).filter(Boolean)).size < 4) throw new Error('messages.json : au moins 4 registres différents attendus (prompt 189)');
+// Prompt 198 : ton et catégorie connus ; une interaction hors « plainte » est bilingue ; assez de variantes sans variable pour ne jamais se répéter
+const TONS = ['provoquant', 'neutre', 'positif'];
+const CATEGORIES = ['plainte', 'question', 'remerciement', 'suggestion', 'temoignage', 'relance', 'doublon', 'accessibilite', 'photo'];
+for (const p of donnees.plaintes) {
+	if (!TONS.includes(p.ton)) throw new Error('messages.json : ton attendu (provoquant, neutre, positif) pour « ' + p.id + ' »');
+	if (p.categorie !== undefined && !CATEGORIES.includes(p.categorie)) throw new Error('messages.json : catégorie inconnue « ' + p.categorie + ' » (' + p.id + ')');
+	if (p.categorie && p.categorie !== 'plainte' && (!p.texte.en || p.reponses.some((r) => !r.clash && !r.texte.en))) throw new Error('messages.json : interaction « ' + p.id + ' » sans anglais');
+}
+for (const c of CATEGORIES.slice(1)) if (!donnees.plaintes.some((p) => p.categorie === c)) throw new Error('messages.json : aucune interaction de catégorie « ' + c + ' » (prompt 198)');
 // Prompt 90 : modèles du téléphone — FR + EN obligatoires, 3 variantes au moins par fait (Camille) ou par type (chauffeurs)
 if (donnees.telephone) {
 	const tel = donnees.telephone;
