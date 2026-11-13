@@ -9,7 +9,7 @@
 const JOURNAL = { jour: null, enquete: null, volet: 0, filtre: 'tout', survol: -1, defil: 0, defilMax: 0, focus: 0, zone: 0, ouvertA: 0, voletA: 0, dernierAnnonce: '' };
 const VOLETS_ENQUETE = ['passe', 'contexte', 'decision', 'suites'];
 const ZONES_JOURNAL = ['jours', 'filtres', 'frise'];
-const HAUTEURS_CARTES = { signalement: 104, equipe: 52, plainte: 64, patron: 52, crise: 52 };
+const HAUTEURS_CARTES = { signalement: 116, equipe: 52, plainte: 64, patron: 52, crise: 52 };
 
 const animJ = (debut, duree, retard) => (reduireAnimations ? 1 : constrain((millis() - debut - (retard || 0)) / duree, 0, 1));
 const nomJour = (i) => t('journal.pastille', { n: i + 1 });
@@ -132,10 +132,10 @@ function vueJour(z) {
 	const yr = z.y + 84; // prompt 101 b : 24 px d'air sous la barre des jours
 	// Prompt 101 b : seulement l'écart du jour — les valeurs des jauges sont déjà dans la barre des tâches.
 	// Prompt 186 : à droite des filtres, seulement ce que les tuiles ne disent pas (écarts des jauges, avertissements)
-	const jg = DS_JAUGES.filter(([cle]) => tu.jauges.ecart[cle] !== undefined).map(([cle, court]) => court + ' ' + sgn(tu.jauges.ecart[cle])).join('  ');
+	const jg = DS_JAUGES.filter(([cle]) => tu.jauges.ecart[cle] !== undefined).map(([cle]) => t('jaugeCourt.' + cle) + ' ' + sgn(tu.jauges.ecart[cle])).join(' · '); // prompt 204 : noms en clair
 	const morceaux = [];
 	if (jg) morceaux.push(jg);
-	if (tu.avertissements) morceaux.push(tu.avertissements + ' ' + t('journal.tuile.avertissements'));
+	if (tu.avertissements) morceaux.push(t('journal.tuile.avertissements', { n: tu.avertissements })); // prompt 204 : nombre dans la phrase, pour l'accord
 	const lf = filtreJournal(z, yr - 12);
 	const xr = z.x + lf + 24;
 	if (morceaux.length) dsTexte(couperLargeur(morceaux.join(' · '), z.l - lf - 24, 16), xr, yr, 16, DS.blanc75, 'left');
@@ -303,7 +303,7 @@ function dessinerCarteJournal(c, x, y, l, focus, y0, hz) {
 function carteSignalement(c, x, y, l, focus) {
 	const e = c.e;
 	const d = e.resultat.dossier;
-	cadreCarte(x, y, l, 104, focus, COULEUR_EVAL[c.eval]);
+	cadreCarte(x, y, l, HAUTEURS_CARTES.signalement, focus, COULEUR_EVAL[c.eval]); // prompt 204 : 116 px, la ligne des effets ne déborde plus sur la carte suivante
 	dessinerPictoJournal(e.categorie || Jeu.categorie(d) || 'autre', x + 16, y + 12, 28);
 	let bx = x + 56;
 	if (e.ligne) bx += badgeLigne(e.ligne, bx, y + 14) + 10;
@@ -315,16 +315,16 @@ function carteSignalement(c, x, y, l, focus) {
 	textSize(15);
 	const lr = Math.min(textWidth(rep) + 20, l - 520);
 	fill(DS.blanc15);
-	rect(x + 56, y + 50, lr, 26);
-	dsTexte(court(rep, 48), x + 66, y + 54, 15, DS.blanc, 'left');
+	rect(x + 56, y + 48, lr, 32); // prompt 204 : 32 px, le texte relevé à 20 px tient dans la puce
+	dsTexte(court(rep, 48), x + 66, y + 52, 15, DS.blanc, 'left');
 	// Prompt 101 : évaluation en texte (symbole + mot, couleur claire) ; le liseré de la carte garde la couleur pleine
-	dsTexte(SYMBOLE_EVAL[c.eval] + ' ' + t('eval.' + c.eval), x + 56 + lr + 16, y + 54, 15, TEXTE_EVAL[c.eval], 'left');
-	// Effets réels : F +4 · R −2 · B −8 (signe + lettre, la couleur n'est qu'un renfort)
+	dsTexte(SYMBOLE_EVAL[c.eval] + ' ' + t('eval.' + c.eval), x + 56 + lr + 16, y + 52, 15, TEXTE_EVAL[c.eval], 'left');
+	// Effets réels : Fluidité +4 · Réputation −2 · Budget −8 (prompt 204 : noms en clair, plus F / R / B ; la couleur n'est qu'un renfort)
 	let ex = x + 56;
-	DS_JAUGES.forEach(([k, lettre]) => {
+	DS_JAUGES.forEach(([k]) => {
 		const v = e.deltas[k] || 0;
-		const txt = lettre + ' ' + sgn(v);
-		dsTexte(txt, ex, y + 82, 14, v > 0 ? DS.succesClair : v < 0 ? DS.erreurClair : DS.blanc75, 'left');
+		const txt = t('jaugeCourt.' + k) + ' ' + sgn(v);
+		dsTexte(txt, ex, y + 88, 14, v > 0 ? DS.succesClair : v < 0 ? DS.erreurClair : DS.blanc75, 'left');
 		textSize(14);
 		ex += textWidth(txt) + 18;
 	});

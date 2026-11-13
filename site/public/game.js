@@ -2532,7 +2532,7 @@
 		const basse = NOMS_JAUGES.slice().sort((a, b) => s.jauges[a] - s.jauges[b])[0];
 		const lignes = [T('finSemaine.intro', { score: s.score, traites: s.traites, recus: s.recus })];
 		if (total && ok === total) lignes.push(T('finSemaine.bravo', { objectifs: s.objectifs }));
-		else lignes.push(T('finSemaine.objectifs', { objectifs: s.objectifs }));
+		else if (total) lignes.push(T('finSemaine.objectifs', { objectifs: s.objectifs })); // prompt 204 : rien à reprocher quand aucun objectif n'a été fixé (« 0/0 »)
 		if (s.jauges[basse] < 40) lignes.push(T('finSemaine.alerte', { jauge: LIBELLES_JAUGES[basse], v: s.jauges[basse] }));
 		if (rates.length) lignes.push(T('finSemaine.defisRates', { liste: rates.map((r) => T('defi.' + r.id)).join(', ') }));
 		else if (res.length) lignes.push(T('finSemaine.defisTenus'));

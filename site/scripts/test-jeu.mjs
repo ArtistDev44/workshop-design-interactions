@@ -1977,7 +1977,7 @@ for (const f of ['enquete.js', 'carte.js', 'journal.js']) verifier(!/\*\s*1\.05\
 		const mode = Jeu.etat.mode; Jeu.etat.mode = 'direct'; r.direct = /TEMPS RÉEL/.test(texteTransitionJour()); Jeu.etat.mode = mode;
 		TRANSITION_JOUR.semaine = 0;
 		const l = lignesTransitionJour().join(' | ');
-		r.prevus = l.includes(Jeu.jours[0].dossiers.length + ' dossier(s) prévu(s)') && !/réel\(s\) prévu/.test(l); // prompt 162 : composition, plus de « réels »
+		r.prevus = new RegExp(Jeu.jours[0].dossiers.length + ' dossiers? prévus? ').test(l) && !/réel(\(s\)|s)? prévu/.test(l); // prompt 204 : pluriels accordés // prompt 162 : composition, plus de « réels »
 		r.service = l.includes('8h00') && l.includes('20h00') && /touche Q/.test(l);
 		r.courte = Jeu.jours.length < 7 ? /aucun événement réel le dimanche 20 septembre/.test(l) : true;
 		TRANSITION_JOUR.jour = 2; r.courteUneFois = !/aucun événement réel/.test(lignesTransitionJour().join(' '));
@@ -2305,7 +2305,7 @@ for (const [langue, pre] of [['fr', 'Fictif · '], ['en', 'Fictional · ']]) {
 	verifier(faitsDossier.length > 0 && faitsDossier.every((f) => f.includes(pre)), `prompt 162 : fait marquant du dossier fictif sans « ${pre}» (${JSON.stringify(r.faits)})`);
 	verifier(r.clesF.every((k) => k.startsWith(pre)), `prompt 162 : décision clé du dossier fictif sans « ${pre}» (${JSON.stringify(r.clesF)})`);
 	verifier((langue === 'fr' ? /1 incident fictif/ : /1 fictional incident/).test(r.compo) && !/réel\(s\) prévu|real report/.test(r.compo), `prompt 162 : composition du jour fictif (${r.compo})`);
-	verifier(langue === 'fr' ? /dossier\(s\) attendus aujourd’hui \([^)]*\) : \d+ /.test(r.consigne) : /case\(s\) expected today \([^)]*\): \d+ /.test(r.consigne), `prompt 162 : la consigne du patron dit la composition (${r.consigne})`);
+	verifier(langue === 'fr' ? /dossiers? attendus? aujourd’hui \([^)]*\) : \d+ /.test(r.consigne) : /cases? expected today \([^)]*\): \d+ /.test(r.consigne), `prompt 162 : la consigne du patron dit la composition (${r.consigne})`);
 	verifier(r.causeEv.includes(langue === 'fr' ? 'Affluence supposée' : 'Assumed crowds') && r.causeRetard === r.dico['tache.cause.retardSignale'], `prompt 162 : causes d'info trafic (${r.causeEv} / ${r.causeRetard})`);
 	verifier(r.vars.nom === r.nomEv && r.nomEv.length > 0, `prompt 162 : variable {nom} = nom de l'événement (${JSON.stringify(r.vars)})`);
 	// Dictionnaire : « réel » réservé à la source ; affluence dite comme une hypothèse ; fictif dans les crédits et la fin
@@ -2369,7 +2369,7 @@ for (const langue of ['fr', 'en']) {
 		verifier(best && worst && best.r <= worst.r && Math.min(...r.evals.map((e) => ({ bon: 0, aucun_detour: 1, rate: 2 })[e])) === best.r, `${nom} : décisions clés mal classées ${JSON.stringify(r.cles)}`);
 		verifier(!worst || (worst.q === 'pire') === (worst.r > 0), `${nom} : « pire » donné à un bon choix ${JSON.stringify(worst)}`);
 		verifier(r.cles.every((k) => !/—\s*$/.test(k.txt) && /\(.+\)$/.test(k.txt) && k.ec.split(' · ').length === 3), `${nom} : décision clé incomplète ${JSON.stringify(r.cles.map((k) => k.txt + ' | ' + k.ec))}`);
-		verifier(langue === 'fr' ? /^du \d\d\/\d\d au \d\d\/\d\d\/\d{4} · \d jour\(s\) joué\(s\)$/.test(r.periode) : /^\d\d\/\d\d to \d\d\/\d\d\/\d{4} · \d day/.test(r.periode), `${nom} : période ${r.periode}`);
+		verifier(langue === 'fr' ? /^du \d\d\/\d\d au \d\d\/\d\d\/\d{4} · \d jours? joués?$/.test(r.periode) : /^\d\d\/\d\d to \d\d\/\d\d\/\d{4} · \d day/.test(r.periode), `${nom} : période ${r.periode}`);
 		verifier(r.l3.length >= 7 && r.l3.some((x) => x === r.compo || x.includes(r.compo)) && r.l3.some((x) => /Open-Meteo/.test(x)) && r.l3.some((x) => /archives/.test(x)) && r.l3.filter((x) => /Période|Period/.test(x)).every((x) => (x.match(/Période|Period/g) || []).length === 1), `${nom} : page des sources incomplète ${JSON.stringify(r.l3)}`);
 		if (r.fictifs) verifier(/fictif|fictional/i.test(r.compo), `${nom} : composition sans l'incident fictif (${r.compo})`);
 		verifier(!r.l3.join(' ').includes('[À COMPLÉTER]') && !r.l3.join(' ').includes('undefined'), `${nom} : texte manquant page 3`);
