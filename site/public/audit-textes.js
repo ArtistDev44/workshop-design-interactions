@@ -375,7 +375,7 @@
 		add('menu autorisations · tout autorisé', () => (AUTOR.etat = { son: 'autorise', micro: 'autorise', camera: 'autorise' }));
 		[0, 1, 2].forEach((c) => add('menu semaines ' + c, () => (H.raz(), (MENU.actif = true), (MENU.ecran = 'semaines'), (MENU.choixSemaine = c))));
 		// Prompt 171 : l'aide ne s'ouvre plus depuis le menu titre (elle est auditée en partie, plus bas) ; + explication d'installation
-		['parametres', 'palmares', 'partage', 'installation'].forEach((f) => add('menu fenêtre ' + f, () => (H.raz(), (MENU.actif = true), (MENU.ecran = 'titre'), ouvrir(f))));
+		['parametres', 'palmares', 'fins', 'partage', 'installation'].forEach((f) => add('menu fenêtre ' + f, () => (H.raz(), (MENU.actif = true), (MENU.ecran = 'titre'), ouvrir(f))));
 		add('menu titre · focus installer', () => (H.raz(), (MENU.actif = true), (MENU.ecran = 'titre'), (MENU.choix = entreesMenu().length + EXTRAS_MENU.length - 1)));
 		add('menu titre · retour au premier choix', () => (MENU.choix = 0), 2);
 		// Prompt 123 : les onglets de l'aide (la fenêtre s'ouvre sur le premier), page 2 des règles comprise ; prompt 171 : ouverte en partie, au poste

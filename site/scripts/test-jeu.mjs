@@ -4049,6 +4049,109 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	verifier(/if \(r\.signaler\) iconeLucide\('flag'/.test(commu) && /bascule\('masquerViolence', 'eye-off'/.test(param) && /masquerViolence: false/.test(readFileSync(join(pub, 'confort.js'), 'utf8')), '202 : drapeau du bouton Signaler, réglage de confort (désactivé par défaut)');
 }
 
+// Prompt 207 : dix fins de semaine selon la posture — table de priorité, profils de joueurs scriptés sur les semaines
+// archivées (chaque fin atteinte, aucune n'avale le joueur neutre), annonces une seule fois, sauvegarde, cumul, galerie,
+// textes FR / EN, chargement et cache hors ligne
+{
+	const c = contexte('fr');
+	vm.runInContext(readFileSync(join(pub, 'posture.js'), 'utf8'), c, { filename: 'posture.js' });
+	vm.runInContext(readFileSync(join(pub, 'panneau.js'), 'utf8').replace(/^const (BANDEAU|PANNEAU|PLUS|TOUCHES_REPONSES|RAISONS)\b/gm, 'var $1'), c, { filename: 'panneau.js' });
+	vm.runInContext(readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'profils-posture.js'), 'utf8'), c, { filename: 'profils-posture.js' });
+	// 1. Table : chaque ligne et l'ordre de priorité, sur des signaux construits
+	const table = vm.runInContext(`(() => {
+		const base = { decisions: 15, bons: 9, partBons: 0.6, partBonsDecides: 0.6, nonTraites: 0, renforts: 3, partRenforts: 0.2, clashs: 0, clashsDecisions: 0, clashsQuai: 0, quai: { reponses: 2, bonnes: 1, signalees: 0 }, partBonnesQuai: 0.5, objectifs: 5, objectifsRates: 0, joursJoues: 5, cafes: 0, joursCafe: 0, siestes: 1, departs: 0, score: 200, jauges: { fluidite: 70, reputation: 70, budget: 60 } };
+		const f = (o) => Jeu.finDeSemaine(Object.assign({}, base, o));
+		const quaiBon = { quai: { reponses: 8, bonnes: 7, signalees: 1 }, partBonnesQuai: 0.875 };
+		return {
+			virale: f({ clashs: 4, score: 290 }),
+			burnout: f({ joursCafe: 5, siestes: 0, partRenforts: 0.5, score: 290 }),
+			burnoutSieste: f({ joursCafe: 5, siestes: 1, partRenforts: 0.5, score: 290 }),
+			imposteur: f({ partBons: 0.3, score: 260 }),
+			fauteuil: f(Object.assign({ score: 245 }, quaiBon)),
+			diplomate: f(Object.assign({ score: 200 }, quaiBon)),
+			diplomateClash: f(Object.assign({ score: 200, clashs: 1 }, quaiBon)),
+			insoumis: f({ objectifsRates: 2, score: 190 }),
+			usagers: f({ score: 150, jauges: { fluidite: 75, reputation: 60, budget: 15 } }),
+			bouc: f({ score: 140, partBonsDecides: 0.8, jauges: { fluidite: 50, reputation: 50, budget: 40 } }),
+			correcte: f({ score: 190 }),
+			reprimande: f({ score: 120, partBonsDecides: 0.3, jauges: { fluidite: 40, reputation: 40, budget: 40 } }),
+			ordre: Jeu.FINS_SEMAINE.map((x) => x.cle).join(','),
+			seuils: Jeu.SEUILS_POSTURE.fauteuil.score === Jeu.SEUILS_FIN.bonne && Jeu.SEUILS_POSTURE.correcte.score === Jeu.SEUILS_FIN.moyenne,
+		};
+	})()`, c);
+	const attendu = { virale: 'virale', burnout: 'burnout', burnoutSieste: 'fauteuil', imposteur: 'imposteur', fauteuil: 'fauteuil', diplomate: 'diplomate', diplomateClash: 'correcte', insoumis: 'insoumis', usagers: 'usagers', bouc: 'boucEmissaire', correcte: 'correcte', reprimande: 'reprimande' };
+	Object.entries(attendu).forEach(([k, v]) => verifier(table[k] === v, `207 : ligne « ${k} » de la table → ${table[k]} (attendu ${v})`));
+	verifier(table.ordre === 'virale,burnout,imposteur,fauteuil,diplomate,insoumis,usagers,boucEmissaire,correcte,reprimande', `207 : ordre des dix fins : ${table.ordre}`);
+	verifier(table.seuils, '207 : le fauteuil du patron reprend le seuil de la bonne fin (240), la semaine correcte celui de la moyenne (150)');
+	// 2. Profils scriptés sur les vraies semaines : chaque fin atteinte ; le joueur neutre n'est pas avalé par une seule fin
+	const sem = vm.runInContext('Jeu.semainesProposees().map((x) => x.lundi)', c);
+	const atteintes = {};
+	const neutre = {};
+	let nNeutre = 0;
+	const repartition = {}; // POSTURE_DETAIL=1 npm test : répartition des fins par profil (rapport jeu/207)
+	for (const p of ['applique', 'autre', 'clasheur', 'cafe', 'renforts', 'communicant', 'desobeissant', 'deborde', 'neutre']) {
+		for (const s of sem) {
+			for (let g = 1; g <= (p === 'neutre' ? 30 : 1); g++) {
+				const r = vm.runInContext(`jouerProfil(${JSON.stringify(s)}, ${JSON.stringify(p)}, ${g * 7919})`, c);
+				(atteintes[r.fin] = atteintes[r.fin] || new Set()).add(p);
+				if (process.env.POSTURE_DETAIL) ((repartition[p] = repartition[p] || {})[r.fin] = (repartition[p][r.fin] || 0) + 1);
+				if (p === 'neutre') (neutre[r.fin] = (neutre[r.fin] || 0) + 1), nNeutre++;
+			}
+		}
+	}
+	const cles = vm.runInContext('Jeu.FINS_SEMAINE.map((x) => x.cle)', c);
+	if (process.env.POSTURE_DETAIL) console.log('207 répartition', JSON.stringify(repartition));
+	cles.forEach((k) => verifier(atteintes[k], `207 : la fin « ${k} » n'est atteinte par aucun profil (${Object.keys(atteintes).join(', ')})`));
+	verifier(Math.max(...Object.values(neutre)) / nNeutre <= 0.45, `207 : une fin avale le joueur neutre : ${JSON.stringify(neutre)}`);
+	// 3. Bilan, annonces (une fois), sauvegarde, cumul, galerie
+	const r = vm.runInContext(`(() => {
+		const out = {};
+		Jeu.chargerSemaine(${JSON.stringify(sem[0])});
+		Jeu.nouvellePartie();
+		const n0 = Jeu.messagesPatron.length;
+		const virales = () => Jeu.messagesPatron.slice(n0).filter((m) => m.meta && m.meta.posture === 'virale').length;
+		Jeu.clashSuivant = true; Jeu.decider(Jeu.meilleureReponse(Jeu.dossierCourant()));
+		out.avant = virales();
+		Jeu.clashSuivant = true; Jeu.decider(Jeu.meilleureReponse(Jeu.dossierCourant()));
+		out.annonce = virales();
+		Jeu.annoncesPatronPosture();
+		out.uneFois = virales();
+		Jeu.noterPosture('cafes'); Jeu.noterPosture('cafes'); Jeu.noterPosture('siestes');
+		const inst = JSON.parse(JSON.stringify(Jeu.instantane(0)));
+		out.inst = !!inst.posture && inst.posture.cafes === 2 && inst.posture.joursCafe.length === 1 && inst.posture.siestes === 1 && inst.posture.annonces.virale !== undefined;
+		Jeu.restaurerInstantane(inst, 0);
+		out.reprise = Jeu.posture.cafes === 2 && Jeu.signauxPosture().clashs === 2;
+		delete inst.posture;
+		Jeu.restaurerInstantane(inst, 0);
+		out.ancienne = Jeu.posture.cafes === 0 && Jeu.posture.siestes === 0 && Array.isArray(Jeu.posture.joursCafe);
+		const b = Jeu.bilan();
+		out.bilan = !!b.fin && Jeu.FINS_SEMAINE.some((f) => f.cle === b.fin) && String(b.titre) === String(T('fin.' + b.fin + '.titre')) && b.pese.length >= 1 && b.pese.length <= 3 && b.pese.every((x) => String(x) && !/[{}]/.test(String(x))) && ['bonne', 'moyenne', 'mauvaise'].includes(b.type) && b.numeroFin >= 1;
+		const s1 = Jeu.signauxPosture();
+		const cu = Jeu.cumulerSignaux([s1, Object.assign({}, s1, { score: s1.score + 30 }), null]);
+		out.cumul = cu.semaines === 2 && cu.decisions === 2 * s1.decisions && cu.score === s1.score + 15 && Math.abs(cu.partBons - s1.partBons) < 1e-9;
+		out.galerie = [Jeu.Galerie.noter('fauteuil', 250), Jeu.Galerie.noter('fauteuil', 260), Jeu.Galerie.noter('inconnue', 1), Jeu.Galerie.decouvertes(), Jeu.Galerie.lire().fauteuil.score, Jeu.Galerie.lire().fauteuil.n];
+		return out;
+	})()`, c);
+	verifier(r.avant === 0 && r.annonce === 1 && r.uneFois === 1, `207 : mail du patron au 2e clash, une seule fois : ${JSON.stringify(r)}`);
+	verifier(r.inst && r.reprise && r.ancienne, `207 : compteurs de posture sauvegardés, repris, à zéro pour une ancienne sauvegarde : ${JSON.stringify(r)}`);
+	verifier(r.bilan, '207 : le bilan porte la fin, son titre et « ce qui a pesé » (1 à 3 faits, sans variable non remplie)');
+	verifier(r.cumul, '207 : cumul des signaux sur plusieurs semaines (mode histoire)');
+	verifier(JSON.stringify(r.galerie) === JSON.stringify([true, false, false, 1, 260, 2]), `207 : galerie des fins : ${JSON.stringify(r.galerie)}`);
+	// 4. Textes FR / EN, chargement, hors ligne
+	const tr = vm.runInContext('TRADUCTIONS', c);
+	const textes = [];
+	cles.forEach((k) => textes.push('fin.' + k + '.nom', 'fin.' + k + '.titre', 'fin.' + k + '.texte', 'fin.' + k + '.indice', 'cine.lettre.fin.' + k));
+	['clashs', 'clashsDetail', 'score', 'cafes', 'renforts', 'sansRepos', 'bons', 'budget', 'quai', 'zeroClash', 'objectifs', 'fluiditeReputation', 'meteo'].forEach((k) => textes.push('pese.' + k));
+	textes.push('rapport.pese', 'rapport.finNumero', 'rapport.finNouvelle', 'fins.titre', 'fins.compte', 'fins.cachee', 'fins.obtenue', 'fins.bouton', 'fins.retour', 'cine.titreFin', 'posture.patron.virale', 'posture.patron.insoumis');
+	['burnout', 'usagers', 'boucEmissaire'].forEach((k) => textes.push('posture.camille.' + k, 'posture.camille.' + k + '.reponse'));
+	const manquants = textes.filter((k) => !tr.fr[k] || !tr.en[k]);
+	verifier(!manquants.length, `207 : textes FR / EN manquants : ${manquants.join(', ')}`);
+	const html = readFileSync(join(pub, 'index.html'), 'utf8');
+	verifier(html.indexOf('./posture.js') > html.indexOf('./personnages.js') && html.indexOf('./posture.js') < html.indexOf('./soir.js'), '207 : posture.js chargé après personnages.js et avant soir.js');
+	verifier(readFileSync(join(pub, 'sw.js'), 'utf8').includes('./posture.js'), '207 : posture.js dans le cache hors ligne (sw.js)');
+	verifier(/smsPostureCamille\(meteo\)/.test(readFileSync(join(pub, 'soir.js'), 'utf8')) && /noterPosture\('cafes'\)/.test(readFileSync(join(pub, 'cafe.js'), 'utf8')) && /volontaire && Jeu\.noterPosture\) Jeu\.noterPosture\('siestes'\)/.test(readFileSync(join(pub, 'sieste.js'), 'utf8')), '207 : SMS de posture le soir, café et sieste volontaire comptés');
+}
+
 if (erreurs.length) {
 	console.error(`Test du jeu : ${erreurs.length} erreur(s) sur ${controles + erreurs.length} contrôles`);
 	for (const e of erreurs) console.error(`  ✗ ${e}`);
