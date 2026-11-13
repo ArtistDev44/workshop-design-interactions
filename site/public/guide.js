@@ -392,9 +392,9 @@ function bulleGuide(texte, cx, y, auDessus, xFixe, centreV) {
 }
 
 // ——— Case à cocher dans « Nouvelle partie » (appelée par menu.js) ———
-function dessinerOptionsNouvellePartie(x, y) {
+function dessinerOptionsNouvellePartie(x, y, largeur) {
 	const on = optionGuide();
-	const l = 720;
+	const l = largeur || 720; // prompt 209 : 620 px dans la colonne portrait du choix du mode
 	const h = 64;
 	const survol = mouseX >= x && mouseX <= x + l && mouseY >= y && mouseY <= y + h;
 	noStroke();

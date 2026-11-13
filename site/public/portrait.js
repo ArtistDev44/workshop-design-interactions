@@ -115,18 +115,21 @@ function composerPortrait() {
 	else if (scene === 'rapport') regionsFenetre(); // prompt 209 : feuilles de 640 px (histoire.js, rapportPortrait)
 	else if (scene === 'fenetre') regionsFenetre();
 	else if (scene === 'transition') region({ x: L / 2 - 340, y: 0, l: 680, h: H }, 0, (PH - (H * PL) / 680) / 2, PL); // prompt 209 : colonne de 640 px
+	else if (scene === 'menu' && MENU.ecran === 'semaines') regionsChoixSemaine(); // prompt 209
 	else if (scene === 'menu') {
 		// Prompt 199 : en haut à droite, la pile FR / EN · plein écran · télécharger ; puis la colonne du menu (titre, cartes)
 		// jusqu'à Paramètres ; puis la rangée Livrables · Kit de presse · Présentation · Dépôt · Partager et le pied de page. Pile et rangée agrandies ×2 :
 		// boutons de 60 et 68 px → ≥ 44 px à l'écran sur un téléphone de 412 px de large
 		const lp = LARGEUR_PILE() + 24, hp = 3 * HAUT_MENU.h + 2 * 16 + 24;
 		region({ x: L - HAUT_MENU.marge - lp + 12, y: HAUT_MENU.y - 12, l: lp, h: hp }, PL - 20 - 2 * lp, 30, 2 * lp);
-		const b = BLOC_PARTAGE, yr = b.yDessin || b.y, lc = 908;
+		// Prompt 209 : écran titre en colonne de 640 px (x 130 → 810) ; les autres écrans du menu gardent 908 px (x 110 → 1018)
+		const titre = MENU.ecran === 'titre';
+		const b = BLOC_PARTAGE, yr = b.yDessin || b.y, lc = titre ? COLONNE_MENU_PORTRAIT.l : 908, xc = titre ? COLONNE_MENU_PORTRAIT.x : 110;
 		let y = 30 + 2 * hp + 24;
-		y += region({ x: 110, y: 60, l: lc, h: yr - 12 - 60 }, 0, y, PL) + 8;
+		y += region({ x: xc, y: 60, l: lc, h: yr - 12 - 60 }, 0, y, PL) + 8;
 		const lr = RANGEE_MENU.length * b.l + (RANGEE_MENU.length - 1) * 16 + 24;
 		y += region({ x: b.x - 12, y: yr - 12, l: lr, h: b.h + 24 }, 20, y, Math.min(2 * lr, PL - 40)) + 16;
-		region({ x: 110, y: H - 80, l: lc, h: 56 }, 0, y, PL); // pied de page (nos noms → Crédits)
+		region({ x: xc, y: H - 80, l: lc, h: 56 }, 0, y, PL); // pied de page (nos noms → Crédits)
 	}
 	else if (scene === 'bureau') {
 		region({ x: 0, y: 0, l: L, h: H }, 0, 150, PL);
@@ -137,7 +140,7 @@ function composerPortrait() {
 	ctx.fillRect(0, 0, PL, PH);
 	ctx.imageSmoothingEnabled = true;
 	const poste = scene === 'appli' || scene === 'vueApp';
-	const defilant = poste || (scene === 'fenetre' && PORTRAIT.defilMax > 0); // prompt 209 : fenêtre avec une suite
+	const defilant = poste || ((scene === 'fenetre' || scene === 'rapport' || scene === 'menu') && PORTRAIT.defilMax > 0); // prompt 209 : fenêtre avec une suite, choix du mode
 	const zone = defilant ? { haut: PORTRAIT.hautDefil, bas: PORTRAIT.basDefil } : null;
 	// Prompt 205 : la fiche du dossier monte du bas à son arrivée (0,3 s ; immédiate si les animations sont réduites)
 	const kF = reduireAnimations ? 1 : Math.min(1, (millis() - PORTRAIT.feuille) / 300);
@@ -194,6 +197,19 @@ function regionsFenetre() {
 	const dh = region({ x: cx - W / 2, y: y0, l: W, h: y1 - y0 }, 0, 0, PL, true);
 	const s0 = Math.max(0, S.y - 20);
 	const total = dh + region({ x: S.x + S.l / 2 - W / 2, y: s0, l: W, h: Math.min(H, S.y + S.h + 20) - s0 }, 0, dh, PL, true);
+	PORTRAIT.defilMax = Math.max(0, total - PH);
+	PORTRAIT.defil = constrain(PORTRAIT.defil, 0, PORTRAIT.defilMax);
+}
+
+/** Prompt 209 : choix du mode — colonne A (titre, deux cartes) puis colonne B (option du guide, Lancer, Retour),
+ * empilées et défilables (menu.js, choixSemainePortrait) */
+function regionsChoixSemaine() {
+	const A = GEO_CHOIX_SEMAINE.a, B = GEO_CHOIX_SEMAINE.b;
+	if (PORTRAIT.cleContenu !== 'semaines') (PORTRAIT.cleContenu = 'semaines'), (PORTRAIT.defil = 0);
+	PORTRAIT.hautDefil = 0;
+	PORTRAIT.basDefil = PH;
+	const dh = region({ x: A.x - 30, y: A.y, l: 680, h: A.h }, 0, 40, PL, true);
+	const total = 40 + dh + region({ x: B.x - 30, y: B.y, l: 680, h: B.h }, 0, 40 + dh, PL, true) + 40;
 	PORTRAIT.defilMax = Math.max(0, total - PH);
 	PORTRAIT.defil = constrain(PORTRAIT.defil, 0, PORTRAIT.defilMax);
 }
@@ -421,7 +437,7 @@ function portraitDeplacement(e) {
 	if (!d) return;
 	const p = pointPortrait(e);
 	const sc = scenePortrait();
-	if ((sc === 'appli' || sc === 'vueApp' || (sc === 'fenetre' && PORTRAIT.defilMax > 0)) && Math.abs(p.y - d.y) > 12) {
+	if ((sc === 'appli' || sc === 'vueApp' || ((sc === 'fenetre' || sc === 'rapport' || sc === 'menu') && PORTRAIT.defilMax > 0)) && Math.abs(p.y - d.y) > 12) {
 		PORTRAIT.cible = null;
 		PORTRAIT.defil = constrain(d.defil - (p.y - d.y), 0, PORTRAIT.defilMax); // le doigt fait défiler la colonne
 	}
