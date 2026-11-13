@@ -58,7 +58,7 @@ function fenetreCredits(x, y, l, h, titre) {
 	noStroke();
 	textFont(DS.policeTexte);
 	textStyle(BOLD);
-	textSize(16);
+	textSize(creditsEnPortrait() ? 20 : 16); // prompt 209
 	textAlign(LEFT, CENTER);
 	fill(DS.blanc);
 	text(String(titre).toUpperCase().split('').join(String.fromCharCode(8202)), x + 16, y + BARRE_FEN / 2); // espacement des capitales
@@ -104,7 +104,7 @@ function blocLignesCredits(x, y, l, titre, prefixe, cles, taille, dessine) {
 		}
 		textFont(DS.policeTexte);
 		textStyle(BOLD);
-		textSize(Math.max(14, taille - 4));
+		textSize(creditsEnPortrait() ? taille : Math.max(14, taille - 4)); // prompt 209 : libellés à 20 px en portrait
 		textAlign(LEFT, TOP);
 		fill(DS.alerte);
 		text(t(prefixe + k).toUpperCase(), x + 24, yr + 10);
@@ -141,7 +141,48 @@ function portraitCredits(p, x, y, c) {
 	text(p.nom, x + c / 2, yi + c + hNom / 2);
 	textStyle(NORMAL);
 }
+const creditsEnPortrait = () => typeof PORTRAIT !== 'undefined' && PORTRAIT.actif;
+/** Prompt 209 : mobile portrait — mêmes blocs en flux dans deux colonnes de 640 px (portrait.js, fluxPortrait),
+ * texte à 20 px au moins, liens en boutons pleine largeur */
+function creditsPortrait() {
+	const F = fluxPortrait();
+	const l = F.l;
+	noStroke();
+	fill('rgba(13,12,12,0.72)');
+	rect(0, 0, L, H);
+	let tt = 72;
+	while (tt > 40 && largeurTitreDS(t('credits.titre'), tt) > l) tt -= 4;
+	let p = F.place(tt + 16);
+	dsTitre(t('credits.titre'), p.x, p.y, tt, DS.blanc, 'left');
+	const o = { taille: 22, interligne: 30, couleur: DS.blanc75, police: POLICE_DONNEES };
+	p = F.place(hauteurTexte(t('credits.atelier'), l, o) + 24);
+	dessinerTexte(t('credits.atelier'), p.x, p.y, l, o);
+	const c = (l - 32) / 2;
+	p = F.place(BARRE_FEN + c + 56 + 24);
+	EQUIPE.forEach((q, i) => portraitCredits(q, p.x + i * (c + 32), p.y, c));
+	// Liens juste après l'équipe (colonne 1), puis licence et IA (colonnes 2 et 3)
+	LIENS_CREDITS.forEach((b, i) => {
+		const retour = b.cle === 'retour';
+		p = F.place(92);
+		dsBouton(p.x, p.y + 8, l, 76, t('credits.' + b.cle), b.action, retour ? 'secondaire' : 'contour', false, retour);
+		if (CREDITS.choix === i) {
+			noFill();
+			stroke(DS.blanc);
+			strokeWeight(3);
+			rect(p.x - 6, p.y + 2, l + 12, 88);
+			noStroke();
+		}
+	});
+	const oc = { taille: 20, interligne: 28, couleur: DS.blanc75, police: POLICE_DONNEES };
+	p = F.place(hauteurTexte(t('credits.clavier'), l, oc) + 16);
+	dessinerTexte(t('credits.clavier'), p.x, p.y + 16, l, oc);
+	[['credits.licence.titre', 'credits.lic.', LIGNES_LICENCE], ['credits.ia.titre', 'credits.ia.', LIGNES_IA]].forEach(([ti, pr, cles]) => {
+		p = F.place(blocLignesCredits(0, 0, l, '', pr, cles, 20, false) + 24);
+		blocLignesCredits(p.x, p.y, l, t(ti), pr, cles, 20, true);
+	});
+}
 function dessinerCredits() {
+	if (creditsEnPortrait()) return creditsPortrait();
 	const k = reduireAnimations ? 1 : easeOut(constrain((millis() - MENU.debut) / 400, 0, 1));
 	const dy = (1 - k) * 24;
 	const x0 = 160;

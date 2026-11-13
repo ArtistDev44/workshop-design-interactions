@@ -847,11 +847,12 @@ function dessinerSauvegardes() {
 	noStroke();
 	textAlign(LEFT, TOP);
 	textFont(POLICE_TEXTE);
-	textSize(24);
+	const sp = typeof PORTRAIT !== 'undefined' && PORTRAIT.actif; // prompt 209 : colonne de 908 px en portrait → 28 px
+	textSize(sp ? 27 : 24);
 	push(); // interligne : état global de p5, rendu tel quel par pop()
 	textLeading(34);
 	fill(MENU_C.doux);
-	text(MENU.apresSuppr ? t('sauv.limite', { max: Sauvegarde.MAX }) : liste.length ? t('sauv.sous', { n: liste.length, max: Sauvegarde.MAX }) : t('sauv.vide'), Z.x, 186, Z.l, 72);
+	text(MENU.apresSuppr ? t('sauv.limite', { max: Sauvegarde.MAX }) : liste.length ? t('sauv.sous', { n: liste.length, max: Sauvegarde.MAX }) : t('sauv.vide'), Z.x, sp ? 168 : 186, Z.l, sp ? 104 : 72); // prompt 209 : trois lignes en portrait
 	pop();
 	// MAX lignes tiennent à l'écran ; au-delà (emplacements en trop, jamais créés par le menu), la liste suit la sélection
 	const debut = Math.max(0, Math.min(MENU.choixSauv - 2, liste.length - Sauvegarde.MAX));

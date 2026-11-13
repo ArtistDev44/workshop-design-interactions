@@ -119,6 +119,7 @@ function composerPortrait() {
 	else if (scene === 'gameover') regionsDeuxColonnes('gameover', GEO_GAMEOVER.a, GEO_GAMEOVER.b);
 	else if (scene === 'transition') region({ x: L / 2 - 340, y: 0, l: 680, h: H }, 0, (PH - (H * PL) / 680) / 2, PL); // prompt 209 : colonne de 640 px
 	else if (scene === 'menu' && MENU.ecran === 'semaines') regionsChoixSemaine(); // prompt 209
+	else if (scene === 'menu' && (MENU.ecran === 'credits' || MENU.ecran === 'autorisations')) regionsFlux(MENU.ecran); // prompt 209
 	else if (scene === 'menu') {
 		// Prompt 199 : en haut à droite, la pile FR / EN · plein écran · télécharger ; puis la colonne du menu (titre, cartes)
 		// jusqu'à Paramètres ; puis la rangée Livrables · Kit de presse · Présentation · Dépôt · Partager et le pied de page. Pile et rangée agrandies ×2 :
@@ -215,8 +216,40 @@ function regionsDeuxColonnes(cle, A, B) {
 	PORTRAIT.hautDefil = 0;
 	PORTRAIT.basDefil = PH;
 	const dh = region({ x: A.x - 30, y: A.y, l: 680, h: A.h }, 0, 40, PL, true);
-	const total = 40 + dh + region({ x: B.x - 30, y: B.y, l: 680, h: B.h }, 0, 40 + dh, PL, true) + 40;
+	const total = 40 + dh + (B.h > 0 ? region({ x: B.x - 30, y: B.y, l: 680, h: B.h }, 0, 40 + dh, PL, true) : 0) + 40;
 	PORTRAIT.defilMax = Math.max(0, total - PH);
+	PORTRAIT.defil = constrain(PORTRAIT.defil, 0, PORTRAIT.defilMax);
+}
+
+/** Prompt 209 : flux de blocs dans trois colonnes de 640 px de l'image (texte sur 600 px, marges de 20) — un bloc qui
+ * ne tient plus dans une colonne passe en haut de la suivante ; GEO_FLUX garde la hauteur occupée de chaque colonne, et
+ * regionsFlux les empile pleine largeur (20 px de l'image ≈ 12,9 px CSS sur un écran de 412 px) */
+const GEO_FLUX = [0, 1, 2].map((i) => ({ x: 20 + i * 640, y: 20, l: 600, h: 0 }));
+function fluxPortrait() {
+	GEO_FLUX.forEach((C) => (C.h = 0));
+	let i = 0;
+	let y = GEO_FLUX[0].y;
+	return {
+		l: GEO_FLUX[0].l,
+		place(h) {
+			if (i < GEO_FLUX.length - 1 && y > GEO_FLUX[i].y && y + h > H - 20) (i += 1), (y = GEO_FLUX[i].y);
+			const C = GEO_FLUX[i];
+			const p = { x: C.x, y };
+			y += h;
+			C.h = y - C.y;
+			return p;
+		},
+	};
+}
+function regionsFlux(cle) {
+	if (PORTRAIT.cleContenu !== cle) (PORTRAIT.cleContenu = cle), (PORTRAIT.defil = 0);
+	PORTRAIT.hautDefil = 0;
+	PORTRAIT.basDefil = PH;
+	let y = 30;
+	GEO_FLUX.forEach((C) => {
+		if (C.h > 0) y += region({ x: C.x - 20, y: C.y - 10, l: 640, h: C.h + 20 }, 0, y, PL, true);
+	});
+	PORTRAIT.defilMax = Math.max(0, y + 30 - PH);
 	PORTRAIT.defil = constrain(PORTRAIT.defil, 0, PORTRAIT.defilMax);
 }
 
