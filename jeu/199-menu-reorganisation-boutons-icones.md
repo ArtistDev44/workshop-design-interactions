@@ -34,4 +34,4 @@ notamment le bouton Paramètres. »
   régions portrait, clés FR / EN).
 - Captures 1920×1080 (FR, focus Livrables), 1920×1080 (EN, focus plein écran), 1366×768 et portrait 412 px
   vérifiées.
-- `npm run build` puis `npm test` verts ; audit des textes : voir `journal.md`.
+- `npm run build` puis `npm test` verts ; audit des textes `?audit=textes&parcours=1` à **0 défaut** à 1920×1080, 1366×768 et 412×915 (FR + EN), aucune erreur de page.
