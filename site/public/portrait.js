@@ -78,8 +78,17 @@ function composerPortrait() {
 		const W = tutoriel ? 1400 : LARGEUR_FENETRE[fenetre] || CADRE_FENETRE.large;
 		region({ x: (L - W) / 2, y: 0, l: W, h: H }, 0, (PH - (H * PL) / W) / 2, PL);
 	} else if (scene === 'menu') {
-		const hm = region({ x: 110, y: 60, l: BLOC_PARTAGE.x - 120, h: 1000 }, 0, 440, PL); // colonne du menu, titre entier (s'arrête avant le bloc de partage)
-		region({ x: BLOC_PARTAGE.x - 12, y: BLOC_PARTAGE.y - 2 * (BLOC_PARTAGE.h + 16) - 12, l: 3 * BLOC_PARTAGE.l + 56, h: 3 * BLOC_PARTAGE.h + 32 + 24 }, 20, 440 + hm + 24, PL - 40); // prompt 81 : dépôt et partage sous le menu (≥ 44 px) ; prompt 136 : + rangée Livrables ; prompt 188 : + rangée Kit de presse
+		// Prompt 199 : en haut à droite, la pile FR / EN · plein écran · télécharger ; puis la colonne du menu (titre, cartes)
+		// jusqu'à Paramètres ; puis la rangée Livrables · Kit de presse · Présentation · Dépôt · Partager et le pied de page. Pile et rangée agrandies ×2 :
+		// boutons de 60 et 68 px → ≥ 44 px à l'écran sur un téléphone de 412 px de large
+		const lp = LARGEUR_PILE() + 24, hp = 3 * HAUT_MENU.h + 2 * 16 + 24;
+		region({ x: L - HAUT_MENU.marge - lp + 12, y: HAUT_MENU.y - 12, l: lp, h: hp }, PL - 20 - 2 * lp, 30, 2 * lp);
+		const b = BLOC_PARTAGE, yr = b.yDessin || b.y, lc = 908;
+		let y = 30 + 2 * hp + 24;
+		y += region({ x: 110, y: 60, l: lc, h: yr - 12 - 60 }, 0, y, PL) + 8;
+		const lr = RANGEE_MENU.length * b.l + (RANGEE_MENU.length - 1) * 16 + 24;
+		y += region({ x: b.x - 12, y: yr - 12, l: lr, h: b.h + 24 }, 20, y, Math.min(2 * lr, PL - 40)) + 16;
+		region({ x: 110, y: H - 80, l: lc, h: 56 }, 0, y, PL); // pied de page (nos noms → Crédits)
 	}
 	else if (scene === 'bureau') {
 		region({ x: 0, y: 0, l: L, h: H }, 0, 150, PL);
