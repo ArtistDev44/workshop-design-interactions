@@ -1,3 +1,4 @@
+successfully downloaded text file (SHA: 948604bc0f33593f4dfbd161d25a45fb5e88aa79)
 # Prompt 197 — Jeu : réorganisation UX du menu principal (langue au-dessus, pile plein écran · télécharger, rangée d'icônes livrables · dépôt · partage)
 
 Demande d'origine (prise de notes du 13/11/2026) :
@@ -34,7 +35,7 @@ pleine largeur) :
 3. **Partager** (prompt 81, panneau de partage)
 
 Même style de bouton à icône que la pile, même taille, écart horizontal régulier. Les infobulles et
-annonnes aria-live existantes (`mp.*.infobulle`, `mp.*.annonce`) sont conservées : le libellé passe de
+annonces aria-live existantes (`mp.*.infobulle`, `mp.*.annonce`) sont conservées : le libellé passe de
 l'écran à l'infobulle. Les actions derrière les boutons ne changent pas.
 
 ### 3. Position de la rangée : sous les boutons de gauche
