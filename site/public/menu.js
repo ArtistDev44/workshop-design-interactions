@@ -230,7 +230,9 @@ function dessinerMenuPrincipal() {
 	// même marge au bord (HAUT_MENU) ; plus de mention de code projet « PXE-… ». En portrait mobile, la colonne recadrée
 	// commence après le logo (portrait.js) : il n'y est pas dessiné, pour ne pas apparaître coupé.
 	if (!(typeof PORTRAIT !== 'undefined' && PORTRAIT.actif)) dessinerLogoPXE(HAUT_MENU.marge, HAUT_MENU.y, HAUT_MENU.h);
-	dsTitre(t('accueil.titre'), x0, 160, 88, MENU_C.blanc, 'left'); // titre au style pixel (Bitsy Pixels)
+	// Prompt 205 : en portrait, la colonne recadrée fait 908 px (x 110 → 1018) ; à 88 px le titre en sortait
+	// (« Nantes en régulat… ») — 64 px y tiennent (≈ 28 px CSS sur un écran de 412 px)
+	dsTitre(t('accueil.titre'), x0, typeof PORTRAIT !== 'undefined' && PORTRAIT.actif ? 172 : 160, typeof PORTRAIT !== 'undefined' && PORTRAIT.actif ? 64 : 88, MENU_C.blanc, 'left'); // titre au style pixel (Bitsy Pixels)
 	noStroke();
 	textAlign(LEFT, TOP);
 	textFont(POLICE_DONNEES);

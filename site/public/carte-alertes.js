@@ -111,6 +111,7 @@ const ZOOM_DOSSIER = 4;
 function cadrerSur(pt, fiche) {
 	const z = CARTE.zone || ZONE_CARTE;
 	const ech = Math.max(CARTE.cible.ech, CARTE.ech0 * ZOOM_DOSSIER);
+	if (typeof PORTRAIT !== 'undefined' && PORTRAIT.actif) fiche = false; // prompt 205 : en portrait, la fiche a sa propre colonne
 	const libre = fiche ? z.x + 16 + FENETRE_DIALOGUE.l + 16 + (z.l - FENETRE_DIALOGUE.l - 32) / 2 : z.x + z.l / 2;
 	Object.assign(CARTE.cible, { lon: pt[0] - (libre - z.x - z.l / 2) / (CARTE.kx * ech), lat: pt[1], ech });
 	borner();

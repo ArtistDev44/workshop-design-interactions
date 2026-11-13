@@ -136,32 +136,40 @@ function dessinerAppliDonnees(z) {
 }
 /** Prompt 103 : les mêmes blocs dans une zone (une ligne d'intro, mode en texte secondaire, 2 × 2 blocs) */
 function dessinerBlocsDonnees(z) {
-	dsTexte(t('donnees.intro') + ' · ' + (modeDonnees() === 'direct' ? t('donnees.mode.direct') : t('donnees.mode.archive')), z.x, z.y, 18, DS.blanc75, 'left', z.l);
+	const intro = t('donnees.intro') + ' · ' + (modeDonnees() === 'direct' ? t('donnees.mode.direct') : t('donnees.mode.archive'));
+	dsTexte(intro, z.x, z.y, 18, DS.blanc75, 'left', z.l);
 	const blocs = blocsDonnees();
 	const e = 24;
-	const y0 = z.y + 76;
-	const bl = (z.l - e) / 2;
-	const bh = (z.h - 76 - e) / 2;
+	// Prompt 205 : en portrait, deux colonnes de 620 px dessinées côte à côte (la vue et sa suite, GEO_PORTRAIT.suite),
+	// que le canevas portrait empile : deux blocs par colonne, pleine largeur
+	const portrait = typeof PORTRAIT !== 'undefined' && PORTRAIT.actif && typeof GEO_PORTRAIT !== 'undefined';
+	const hIntro = portrait ? couperLignes(intro, z.l, DS.policeTexte, 18).length * 26 + 20 : 76;
+	const y0 = z.y + hIntro;
+	const bl = portrait ? z.l : (z.l - e) / 2;
+	const bh = portrait ? (z.h - hIntro - e) / 2 : (z.h - 76 - e) / 2;
+	const S = portrait ? GEO_PORTRAIT.suite : null;
+	const bhS = portrait ? (S.h - e) / 2 : bh;
 	blocs.forEach((b, i) => {
-		const x = z.x + (i % 2) * (bl + e);
-		const y = y0 + Math.floor(i / 2) * (bh + e);
+		const x = portrait ? (i < 2 ? z.x : S.x) : z.x + (i % 2) * (bl + e);
+		const y = portrait ? (i < 2 ? y0 + i * (bh + e) : S.y + (i - 2) * (bhS + e)) : y0 + Math.floor(i / 2) * (bh + e);
+		const hb = portrait && i >= 2 ? bhS : bh; // hauteur du bloc (la suite a sa propre hauteur)
 		noStroke();
 		fill(DS.blanc05);
-		rect(x, y, bl, bh);
+		rect(x, y, bl, hb);
 		dsTexte(String(b.titre), x + 20, y + 16, 20, DS.blanc, 'left');
-		dsTexte(b.statut, x + 20, y + 48, 16, b.statut === t('donnees.repli') ? DS.alerte : DS.succesClair, 'left');
+		dsTexte(portrait ? couperLargeurCarte(b.statut, bl - 40, 20) : b.statut, x + 20, y + 48, 16, b.statut === t('donnees.repli') ? DS.alerte : DS.succesClair, 'left');
 		// Prompt 204 : la source (licence comprise) prend la hauteur de ses lignes réelles, juste au-dessus du bouton —
 		// à 3 lignes (Hub'Eau), elle débordait sur « Ouvrir l'API »
 		const src = t('donnees.source', { source: b.source, licence: b.licence });
 		const nSrc = couperLignes(src, bl - 40, DS.policeTexte, 16).length;
-		const ySrc = y + bh - 62 - nSrc * 26; // 26 px : interligne du texte rendu à 20 px
+		const ySrc = y + hb - 62 - nSrc * 26; // 26 px : interligne du texte rendu à 20 px
 		// prompt 103 : autant de lignes que la place le permet (texte rendu à 20 px dans l'appli), « … » sinon
 		const maxL = Math.max(1, Math.floor((ySrc - 12 - (y + 80)) / 26));
 		const ls = [];
 		b.lignes.forEach((ln) => ls.push(...couperLignes(String(ln), bl - 40, DS.policeTexte, 20)));
 		dsTexte(ls.length > maxL ? ls.slice(0, maxL - 1).concat('…').join('\n') : ls.join('\n'), x + 20, y + 80, 18, DS.blanc75, 'left');
 		dsTexte(src, x + 20, ySrc, 16, DS.blanc50, 'left', bl - 40);
-		dsBouton(x + 20, y + bh - 50, 300, 40, t('donnees.ouvrir'), () => ouvrirLienApi(b.url), 'fantome');
+		dsBouton(x + 20, y + hb - 50, 300, 40, t('donnees.ouvrir'), () => ouvrirLienApi(b.url), 'fantome');
 	});
 }
 function ouvrirLienApi(url) {

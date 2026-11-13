@@ -164,6 +164,7 @@ function positionnerDialogue() {
 	if (DIALOGUE.index !== Jeu.index) (DIALOGUE.index = Jeu.index), (DIALOGUE.reduit = false);
 	// Prompt 204 : fiche toujours à gauche ; la carte cadre le marqueur dans la partie libre à droite (cadrerSur), à
 	// côté du panneau des équipes — plus de fiche posée sur le marqueur ni de glisser à travers la fiche
+	if (typeof PORTRAIT !== 'undefined' && PORTRAIT.actif) return Object.assign(PANNEAU, GEO_PORTRAIT.panneau); // prompt 205 : colonne de la fiche en portrait
 	Object.assign(PANNEAU, { x: z.x + 16, y: z.y + 16, l: F.l, h: F.h });
 }
 function reduireDialogue() {

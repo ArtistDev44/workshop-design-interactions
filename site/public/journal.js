@@ -10,6 +10,9 @@ const JOURNAL = { jour: null, enquete: null, volet: 0, filtre: 'tout', survol: -
 const VOLETS_ENQUETE = ['passe', 'contexte', 'decision', 'suites'];
 const ZONES_JOURNAL = ['jours', 'filtres', 'frise'];
 const HAUTEURS_CARTES = { signalement: 116, equipe: 52, plainte: 64, patron: 52, crise: 52 };
+// Prompt 205 : colonne étroite (mobile portrait, 620 px) — l'action de la carte passe sur une ligne à elle, sous le texte
+const HAUTEURS_ETROITES = { signalement: 176, equipe: 100, plainte: 120, patron: 100, crise: 52 };
+const hCarte = (sorte) => (JOURNAL.etroit ? HAUTEURS_ETROITES : HAUTEURS_CARTES)[sorte];
 
 const animJ = (debut, duree, retard) => (reduireAnimations ? 1 : constrain((millis() - debut - (retard || 0)) / duree, 0, 1));
 const nomJour = (i) => t('journal.pastille', { n: i + 1 });
@@ -76,6 +79,7 @@ function appJournal(z) {
 	const e = enqueteCourante();
 	if (e) return ficheEnquete(z, e);
 	JOURNAL.enquete = null;
+	JOURNAL.etroit = z.l < 800; // prompt 205
 	barreJours(z);
 	vueJour(z); // prompt 140 : la vue Jour est la seule vue
 }
@@ -137,14 +141,16 @@ function vueJour(z) {
 	if (jg) morceaux.push(jg);
 	if (tu.avertissements) morceaux.push(t('journal.tuile.avertissements', { n: tu.avertissements })); // prompt 204 : nombre dans la phrase, pour l'accord
 	const lf = filtreJournal(z, yr - 12);
-	const xr = z.x + lf + 24;
-	if (morceaux.length) dsTexte(couperLargeur(morceaux.join(' · '), z.l - lf - 24, 16), xr, yr, 16, DS.blanc75, 'left');
-	const y0 = yr + 56;
+	const et = JOURNAL.etroit; // prompt 205 : en colonne étroite, les écarts passent sous les filtres
+	const xr = et ? z.x : z.x + lf + 24;
+	const yE = et ? yr + 96 : yr;
+	if (morceaux.length) dsTexte(couperLargeur(morceaux.join(' · '), et ? z.l : z.l - lf - 24, 16), xr, yE, 16, DS.blanc75, 'left');
+	const y0 = yr + (et ? 144 : 56);
 	const liste = ['signalements', 'bonnes', 'objectif'];
-	const largeurs = liste.map((k) => (k === 'objectif' ? 1.6 : 1));
+	const largeurs = liste.map((k) => (k === 'objectif' ? (et ? 1.2 : 1.6) : 1)); // prompt 205 : « SIGNALEMENTS » tient en colonne étroite
 	const unite = (z.l - (liste.length - 1) * 12) / largeurs.reduce((a, b) => a + b, 0);
 	let x = z.x;
-	const h = 140;
+	const h = et ? 176 : 140; // prompt 205 : « dont n non traités » sur 2 à 3 lignes en colonne étroite
 	liste.forEach((k, i) => {
 		const l = unite * largeurs[i];
 		tuileFond(x, y0, l, h, t('journal.tuile.' + k));
@@ -183,6 +189,12 @@ function couperLargeur(txt, l, taille) {
 // avec son compteur, le filtre actif à la couleur d'accent ; ← → en zone filtres. Renvoie sa largeur
 function filtreJournal(z, yf) {
 	const F = JournalDonnees.FILTRES;
+	if (JOURNAL.etroit) {
+		// Prompt 205 : colonne étroite — deux rangées de deux segments, pleine largeur (« Plaintes (0) » ne tenait pas)
+		const sel = F.indexOf(JOURNAL.filtre);
+		[0, 2].forEach((d, r) => dsSegments(z.x, yf + r * 52, z.l, F.slice(d, d + 2).map(libelleFiltreJournal), sel >= d && sel < d + 2 ? sel - d : -1, (i) => choisirFiltreJournal(F[d + i]), JOURNAL.zone === 1));
+		return z.l;
+	}
 	const lf = Math.min(Math.round(z.l * 0.62), 180 * F.length);
 	dsSegments(z.x, yf, lf, F.map(libelleFiltreJournal), F.indexOf(JOURNAL.filtre), (i) => choisirFiltreJournal(F[i]), JOURNAL.zone === 1);
 	return lf;
@@ -195,7 +207,7 @@ const DS_JAUGES = [
 
 // ——— 3. Frise (cartes ancrées à leur heure, regroupées par dossier) ———
 function hauteurCarteJournal(c) {
-	return HAUTEURS_CARTES[c.sorte] + c.groupe.reduce((a, g) => a + HAUTEURS_CARTES[g.sorte] + 8, 0);
+	return hCarte(c.sorte) + c.groupe.reduce((a, g) => a + hCarte(g.sorte) + 8, 0);
 }
 function frise(z, y0) {
 	const toutes = JournalDonnees.cartes(JOURNAL.jour);
@@ -281,7 +293,7 @@ function badgeLigne(ligne, x, y) {
 	return l;
 }
 function dessinerCarteJournal(c, x, y, l, focus, y0, hz) {
-	const h = HAUTEURS_CARTES[c.sorte];
+	const h = hCarte(c.sorte);
 	if (c.sorte === 'signalement') carteSignalement(c, x, y, l, focus);
 	else if (c.sorte === 'equipe') carteEquipe(c.q, x, y, l, focus);
 	else if (c.sorte === 'plainte') cartePlainte(c.p, x, y, l, focus);
@@ -297,49 +309,52 @@ function dessinerCarteJournal(c, x, y, l, focus, y0, hz) {
 		noStroke();
 		if (g.sorte === 'equipe') carteEquipe(g.q, x + 40, yy, l - 40, false);
 		else cartePlainte(g.p, x + 40, yy, l - 40, false);
-		yy += HAUTEURS_CARTES[g.sorte] + 8;
+		yy += hCarte(g.sorte) + 8;
 	});
 }
 function carteSignalement(c, x, y, l, focus) {
 	const e = c.e;
 	const d = e.resultat.dossier;
-	cadreCarte(x, y, l, HAUTEURS_CARTES.signalement, focus, COULEUR_EVAL[c.eval]); // prompt 204 : 116 px, la ligne des effets ne déborde plus sur la carte suivante
+	cadreCarte(x, y, l, hCarte('signalement'), focus, COULEUR_EVAL[c.eval]); // prompt 204 : 116 px, la ligne des effets ne déborde plus sur la carte suivante
 	dessinerPictoJournal(e.categorie || Jeu.categorie(d) || 'autre', x + 16, y + 12, 28);
 	let bx = x + 56;
 	if (e.ligne) bx += badgeLigne(e.ligne, bx, y + 14) + 10;
 	const titre = d.consequence ? t('chaine.nature') : e.retardEffectif !== null && e.retardEffectif !== undefined && e.ligne ? t('journal.titreRetard', { retard: e.retardEffectif, ligne: e.ligne }) : d.type === 'événement' && d.texte_source ? t('tache.cause.affluence', { nom: String(d.texte_source).split(' — ')[0] }) : String(e.externeCourt || tSi('type.' + d.type, d.type));
-	dsTexte(court(String(marquerFictif(e, titre)), 64), bx, y + 14, 18, DS.blanc, 'left'); // prompt 162
+	dsTexte(JOURNAL.etroit ? couperLargeur(String(marquerFictif(e, titre)), x + l - 16 - bx, 18) : court(String(marquerFictif(e, titre)), 64), bx, y + 14, 18, DS.blanc, 'left'); // prompt 162 ; prompt 205 : coupé à la largeur
 	// Réponse choisie (puce) et évaluation (couleur + symbole + mot)
 	const rep = e.action ? String(e.action) : t('journal.aucuneAction');
 	textFont(DS.policeTexte);
 	textSize(15);
-	const lr = Math.min(textWidth(rep) + 20, l - 520);
+	const lr = Math.min(textWidth(rep) + 20, JOURNAL.etroit ? l - 56 - 200 : l - 520);
 	fill(DS.blanc15);
 	rect(x + 56, y + 48, lr, 32); // prompt 204 : 32 px, le texte relevé à 20 px tient dans la puce
-	dsTexte(court(rep, 48), x + 66, y + 52, 15, DS.blanc, 'left');
+	dsTexte(JOURNAL.etroit ? couperLargeur(rep, lr - 20, 15) : court(rep, 48), x + 66, y + 52, 15, DS.blanc, 'left');
 	// Prompt 101 : évaluation en texte (symbole + mot, couleur claire) ; le liseré de la carte garde la couleur pleine
 	dsTexte(SYMBOLE_EVAL[c.eval] + ' ' + t('eval.' + c.eval), x + 56 + lr + 16, y + 52, 15, TEXTE_EVAL[c.eval], 'left');
 	// Effets réels : Fluidité +4 · Réputation −2 · Budget −8 (prompt 204 : noms en clair, plus F / R / B ; la couleur n'est qu'un renfort)
-	let ex = x + 56;
+	let ex = x + (JOURNAL.etroit ? 20 : 56); // prompt 205 : toute la largeur de la carte en colonne étroite
 	DS_JAUGES.forEach(([k]) => {
 		const v = e.deltas[k] || 0;
 		const txt = t('jaugeCourt.' + k) + ' ' + sgn(v);
 		dsTexte(txt, ex, y + 88, 14, v > 0 ? DS.succesClair : v < 0 ? DS.erreurClair : DS.blanc75, 'left');
 		textSize(14);
-		ex += textWidth(txt) + 18;
+		ex += textWidth(txt) + (JOURNAL.etroit ? 10 : 18); // prompt 205
 	});
-	if (actionsVisiblesJournal()) dsBouton(x + l - 190, y + 30, 176, 44, t('journal.enqueter'), () => ouvrirEnqueteJournal(e), focus ? 'primaire' : 'contour');
+	if (actionsVisiblesJournal()) dsBouton(JOURNAL.etroit ? x + 56 : x + l - 190, JOURNAL.etroit ? y + 120 : y + 30, 176, 44, t('journal.enqueter'), () => ouvrirEnqueteJournal(e), focus ? 'primaire' : 'contour'); // prompt 205 : sous les effets en colonne étroite
 }
 function carteEquipe(q, x, y, l, focus) {
-	cadreCarte(x, y, l, 52, focus, DS.info);
+	cadreCarte(x, y, l, hCarte('equipe'), focus, DS.info);
 	const etat = q.inutile ? t('journal.inutile') : q.pertinente === false ? t('journal.horsSujet') : q.arrivee_sim ? t('app.arrivee', { h: q.arrivee_sim }) : t('app.enRoute');
 	dsTexte('▣ ' + t('journal.carteEquipe', { nom: q.nom, sujet: q.sujet || nonRenseigne(), cout: q.cout, etat }), x + 20, y + 14, 16, DS.blanc, 'left', l - 40);
 }
 function cartePlainte(p, x, y, l, focus) {
-	cadreCarte(x, y, l, 64, focus, p.reponse === null ? DS.alerte : p.bonne ? DS.succes : DS.erreur);
-	dsTexte('✉ ' + p.auteur + ' · ' + court(Jeu.textePlainte(p), 72), x + 20, y + 8, 15, DS.blanc, 'left'); // une ligne : pas de chevauchement
-	dsTexte(p.reponse === null ? t('journal.sansReponse') : '↳ ' + court(Jeu.texteReponse(p, p.def.reponses[p.reponse]), 64) + ' · ' + t(p.bonne ? 'journal.bienRecue' : 'journal.malRecue'), x + 20, y + 36, 14, DS.blanc75, 'left'); // prompt 197 : texte du clash généré
-	if (actionsVisiblesJournal()) dsBouton(x + l - 190, y + 10, 176, 44, t('journal.voirCommunity'), () => ouvrirAppPC('community'), 'fantome');
+	cadreCarte(x, y, l, hCarte('plainte'), focus, p.reponse === null ? DS.alerte : p.bonne ? DS.succes : DS.erreur);
+	const et = JOURNAL.etroit; // prompt 205 : lignes coupées à la largeur, bouton sous le texte
+	const l1 = '✉ ' + p.auteur + ' · ' + Jeu.textePlainte(p);
+	const l2 = p.reponse === null ? t('journal.sansReponse') : '↳ ' + Jeu.texteReponse(p, p.def.reponses[p.reponse]) + ' · ' + t(p.bonne ? 'journal.bienRecue' : 'journal.malRecue');
+	dsTexte(et ? couperLargeur(l1, l - 36, 15) : '✉ ' + p.auteur + ' · ' + court(Jeu.textePlainte(p), 72), x + 20, y + 8, 15, DS.blanc, 'left'); // une ligne : pas de chevauchement
+	dsTexte(et ? couperLargeur(l2, l - 36, 14) : p.reponse === null ? t('journal.sansReponse') : '↳ ' + court(Jeu.texteReponse(p, p.def.reponses[p.reponse]), 64) + ' · ' + t(p.bonne ? 'journal.bienRecue' : 'journal.malRecue'), x + 20, y + 36, 14, DS.blanc75, 'left'); // prompt 197 : texte du clash généré
+	if (actionsVisiblesJournal()) dsBouton(et ? x + 20 : x + l - 190, et ? y + 66 : y + 10, 176, 44, t('journal.voirCommunity'), () => ouvrirAppPC('community'), 'fantome');
 }
 function ouvrirAppPC(nom) {
 	PC.fenetre = nom;
