@@ -410,7 +410,7 @@ const Taches = (() => {
 	}
 
 	// ——— Cause, ligne et durée d'un dossier en texte (publication Community, community.js) — la tâche « rédiger l'info
-	// trafic » du prompt 88 a été retirée au prompt 91, son code au prompt 199 ———
+	// trafic » du prompt 88 a été retirée au prompt 91, son code au prompt 200 ———
 	function causeDe(d) {
 		if (d.type === 'ligne en difficulté') return t(Jeu.retardEffectif(d) !== null && Jeu.retardEffectif(d) !== undefined ? 'tache.cause.retard' : 'tache.cause.retardSignale'); // prompt 162 : « mesuré » seulement si un retard est connu
 		if (d.type === 'événement') return t('tache.cause.affluence', { nom: nomEvenement(d) });

@@ -1301,7 +1301,7 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 	verifier(r.erreursOpt.length === 0, `briefing : options sans fait réel ou en nombre incorrect (${r.erreursOpt.slice(0, 4)})`);
 	verifier(r.carnet >= 6 && r.sansCarnet, `rapport du soir : un par journée, sans carnet (prompt 142) (${r.carnet})`);
 	verifier(r.nbPrio && r.nbPrio.slice(0, 4).every((n) => n === 2) && r.nbPrio.slice(4, 6).every((n) => n === 3), `priorités imposées : 2 par jour puis 3 après 4 jours joués (${r.nbPrio && r.nbPrio.slice(0, 7)})`);
-	verifier(!/briefing\(\)|choisirPriorites/.test(readFileSync(join(pub, 'taches.js'), 'utf8') + readFileSync(join(pub, 'taches-ui.js'), 'utf8')), 'priorités : plus aucune fenêtre de choix (briefing retiré, prompt 199)');
+	verifier(!/briefing\(\)|choisirPriorites/.test(readFileSync(join(pub, 'taches.js'), 'utf8') + readFileSync(join(pub, 'taches-ui.js'), 'utf8')), 'priorités : plus aucune fenêtre de choix (briefing retiré, prompt 200)');
 	verifier(r.accord.accordee && r.accord.delta === 5 && /accordée/.test(r.accord.message), `rapport : demande accordée → +5 de budget le lendemain (${JSON.stringify(r.accord)})`);
 	verifier(r.refus.accordee === false && r.refus.bonus === '{}', `rapport : réputation < 50 → demande refusée (${JSON.stringify(r.refus)})`);
 	verifier(r.sauve, 'sauvegarde : les tâches de la partie (priorités, rapport) sont restaurées');
@@ -1551,7 +1551,7 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 	verifier(!/function appJournal|function enqueteJournal/.test(readFileSync(join(pub, 'os.js'), 'utf8')), 'journal : ancien rendu retiré d’os.js');
 }
 
-// Prompt 89 bis : trace de la décision, Q25 expliqué, dé visible — aucune valeur d'effet modifiée (prompt 199 : la file
+// Prompt 89 bis : trace de la décision, Q25 expliqué, dé visible — aucune valeur d'effet modifiée (prompt 200 : la file
 // des « traités » et la pression lisible, que plus rien n'affichait, ont été retirées avec leurs tests)
 {
 	const ct = contexte('fr');
@@ -1958,7 +1958,7 @@ for (const f of ['enquete.js', 'carte.js', 'journal.js']) verifier(!/\*\s*1\.05\
 		const b = vm.runInContext(`t(${JSON.stringify(cle)}, { reponse: 'X' })`, en94);
 		verifier(a !== '[À COMPLÉTER]' && b !== '[À COMPLÉTER]' && a !== b, `prompt 94 : clé ${cle} absente en FR ou en EN`);
 	}
-	verifier(!/debutGlisser|relacherGlisser|dessinerCartesReponses/.test(['sketch.js', 'micro.js', 'panneau.js', 'glisser.js'].map((f) => readFileSync(join(pub, f), 'utf8')).join('\n')), 'glisser-déposer (prompt 94) : retiré avec les cartes de réponse (prompt 199)');
+	verifier(!/debutGlisser|relacherGlisser|dessinerCartesReponses/.test(['sketch.js', 'micro.js', 'panneau.js', 'glisser.js'].map((f) => readFileSync(join(pub, f), 'utf8')).join('\n')), 'glisser-déposer (prompt 94) : retiré avec les cartes de réponse (prompt 200)');
 }
 
 // Prompt 95 : journées synchronisées et expliquées — une seule horloge (équipes en temps de jeu), titres de

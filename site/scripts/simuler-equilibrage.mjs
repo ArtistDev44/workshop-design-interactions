@@ -1,4 +1,4 @@
-// Nantes en régulation — simulation d'équilibrage (prompt 200), outil manuel hors `npm test`.
+// Nantes en régulation — simulation d'équilibrage (prompt 201), outil manuel hors `npm test`.
 // Charge les VRAIS fichiers du jeu (comme test-jeu.mjs) et joue chaque semaine archivée selon quatre stratégies :
 // toujours la meilleure réplique du trio, toujours l'autre, toujours le clash, au hasard (300 parties semées).
 // Ne compte ni les réponses Community, ni les équipes, ni la sieste, ni l'incident fictif.

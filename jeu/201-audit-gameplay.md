@@ -1,10 +1,10 @@
-# Prompt 200 — Audit général du gameplay : ce qui est à améliorer
+# Prompt 201 — Audit général du gameplay : ce qui est à améliorer
 
-Date : 13/11/2026. Branche `200-jeu-audit-gameplay` (empilée sur le prompt 199).
+Date : 13/11/2026. Branche `201-jeu-audit-gameplay` (empilée sur le prompt 200).
 Demande d'origine : « fais un audit général du gameplay avec ce qui est à améliorer ».
 
 Ce document ne modifie aucune règle du jeu. Il décrit l'état réel du code au 13/11/2026, après le
-nettoyage du prompt 199, et propose une feuille de route. Les numéros de ligne renvoient à
+nettoyage du prompt 200, et propose une feuille de route. Les numéros de ligne renvoient à
 `site/public/` sur cette branche.
 
 ## En bref
@@ -183,7 +183,7 @@ Score sur 300 ; fin bonne à partir de 240, moyenne à partir de 150 (`game.js:8
   étroite avant le licenciement.
 - **Inspection et modificateurs** : n'apparaissent qu'au jour 3 et en semaine 3.
 
-## Constats issus du nettoyage (prompt 199)
+## Constats issus du nettoyage (prompt 200)
 
 - Le badge « info parfaite » ne peut plus être obtenu, mais reste affiché, grisé, dans le profil.
 - L'infobulle d'une appli verrouillée ne s'affiche jamais (`dessinerBulleVerrou` n'est pas appelée).

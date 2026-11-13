@@ -1,11 +1,11 @@
 /* Nantes en régulation — prompt 89 bis : le geste, la pression et l'interface comme narration.
- * Logique pure (Traces, chargée par les tests) ; le rendu de la file « traités » a été retiré avec la file (prompt 199).
+ * Logique pure (Traces, chargée par les tests) ; le rendu de la file « traités » a été retiré avec la file (prompt 200).
  * Tout vient du journal réel de la partie (Jeu.evenementsJournee) et des dossiers réels ; aucune valeur d'effet
  * n'est modifiée : on MONTRE l'état du monde (traces, retard qui grimpe, temps écoulé, calcul Q25, dé), jamais
  * l'effet prévu d'une réponse.
  * Options du groupe (§ 6, non cochées → désactivées par défaut, Paramètres → Options de jeu) :
  *   deVisible (dé dans le retour), eclairageJauges (lumière de la pièce liée aux jauges). Les options traceDossier et
- *   pressionVisible, que plus aucun code ne lisait, ont été retirées au prompt 199.
+ *   pressionVisible, que plus aucun code ne lisait, ont été retirées au prompt 200.
  */
 const Traces = (() => {
 	const NOMS = ['fluidite', 'reputation', 'budget'];

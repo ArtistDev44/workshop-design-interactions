@@ -304,7 +304,7 @@ function appCommunity(z) {
 const signe = (v) => (v > 0 ? '+' + v : v < 0 ? '−' + Math.abs(v) : '0');
 
 // =====================================================================
-// Prompt 36 — app flottante « Indicateurs » (la Corbeille, inaccessible depuis le prompt 103, a été retirée au prompt 199)
+// Prompt 36 — app flottante « Indicateurs » (la Corbeille, inaccessible depuis le prompt 103, a été retirée au prompt 200)
 // =====================================================================
 // Fenêtre flottante, toujours au premier plan, déplaçable par sa barre de titre ; position mémorisée
 const CLE_INDICATEURS = 'pxe-nte001:jeu:indicateurs';

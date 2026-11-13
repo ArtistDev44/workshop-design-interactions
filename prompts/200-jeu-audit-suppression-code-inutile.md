@@ -1,11 +1,11 @@
-# Prompt 199 — Jeu : audit et suppression du code désormais inutile
+# Prompt 200 — Jeu : audit et suppression du code désormais inutile
 
 Demande d'origine (13/11/2026) :
 
 > Fais moi un audit qui vise à supprimer le code désormais inutile. Aussi, après cela, fais un audit
 > général du gameplay avec ce qui est à améliorer.
 
-Ce prompt couvre la première moitié de la demande ; l'audit du gameplay est le prompt 200.
+Ce prompt couvre la première moitié de la demande ; l'audit du gameplay est le prompt 201.
 
 ## À faire
 
@@ -21,7 +21,7 @@ Ce prompt couvre la première moitié de la demande ; l'audit du gameplay est le
 4. **Hors du jeu** : scripts cassés ou sans usage, doublons binaires, caches suivis par git.
 5. **Adapter les tests** (`site/scripts/test-jeu.mjs`) : retirer les vérifications du code supprimé,
    les remplacer par un garde-fou d'absence quand c'est utile.
-6. **Consigner** dans `jeu/199-audit-suppression-code-inutile.md` : ce qui a été retiré, ce qui a été
+6. **Consigner** dans `jeu/200-audit-suppression-code-inutile.md` : ce qui a été retiré, ce qui a été
    gardé et pourquoi, ce qui reste à trancher par le groupe.
 
 ## Vérification

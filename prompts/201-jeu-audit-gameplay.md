@@ -1,11 +1,11 @@
-# Prompt 200 — Jeu : audit général du gameplay, ce qui est à améliorer
+# Prompt 201 — Jeu : audit général du gameplay, ce qui est à améliorer
 
 Demande d'origine (13/11/2026) :
 
 > Fais moi un audit qui vise à supprimer le code désormais inutile. Aussi, après cela, fais un audit
 > général du gameplay avec ce qui est à améliorer.
 
-Ce prompt couvre la seconde moitié de la demande, après le nettoyage du prompt 199.
+Ce prompt couvre la seconde moitié de la demande, après le nettoyage du prompt 200.
 
 ## À faire
 
@@ -19,9 +19,9 @@ Ce prompt couvre la seconde moitié de la demande, après le nettoyage du prompt
    Distinguer ce qui est mesuré, lu dans le code, ou seulement relevé sans vérification.
 5. **Ne modifier aucune règle du jeu** : les corrections feront l'objet de prompts suivants, à choisir
    par le groupe. Aucune valeur d'équilibrage inventée : les pistes sont des hypothèses à tester.
-6. **Livrer** `jeu/200-audit-gameplay.md`, avec une feuille de route ordonnée.
+6. **Livrer** `jeu/201-audit-gameplay.md`, avec une feuille de route ordonnée.
 
 ## Vérification
 
 - `cd site && node scripts/simuler-equilibrage.mjs` redonne les tableaux du document.
-- `npm run build` puis `npm test` : inchangés par rapport au prompt 199.
+- `npm run build` puis `npm test` : inchangés par rapport au prompt 200.
