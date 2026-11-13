@@ -120,6 +120,7 @@ function reglagesParam(cle) {
 		return [
 			bascule('reduireAnimations', 'pause', t('param.animations'), t('param.animations.detail')),
 			bascule('contrasteRenforce', 'contrast', t('param.contraste')),
+			bascule('masquerViolence', 'eye-off', t('param.violence'), t('param.violence.detail')), // prompt 202
 			Object.assign(choix('daltonisme', 'eye', t('acc.daltonisme'), '', () => t('acc.dalt.' + (R.daltonisme || 'normal')), changerDaltonisme), { extra: { h: 30, dessin: apercuPaletteParam } }),
 			choix('tailleTexte', 'a-large-small', t('acc.taille'), '', () => (R.tailleTexte || 100) + ' %', changerTailleTexte),
 			{ id: 'lectureFacile', type: 'inter', icone: 'book-open', titre: t('acc.lecture'), detail: t('acc.lecture.detail'), etat: () => !!R.lectureFacile, activer: basculerLectureFacile },

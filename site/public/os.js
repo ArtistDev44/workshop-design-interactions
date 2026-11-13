@@ -284,13 +284,15 @@ function repondrePlainte(i, cible) {
 	const r = Jeu.repondrePlainte(p, i, millis()); // prompt 79 : réponse rapide ou tardive
 	if (!r) return;
 	focusReponse = 0;
-	if (r.clash && typeof feedback === 'function') feedback('large'); // prompt 197 : le clash est récompensé à l'instant (choc « large »), conséquences inchangées (réputation −8, réponse « mauvaise »)
+	if (r.clash && !r.froid && typeof feedback === 'function') feedback('large'); // prompt 202 : pas de secousse pour un clash froid // prompt 197 : le clash est récompensé à l'instant (choc « large »), conséquences inchangées (réputation −8, réponse « mauvaise »)
 	const fx = Object.keys(r.effets)
 		.map((k) => t('jauge.' + k) + ' ' + (r.effets[k] > 0 ? '+' : '') + r.effets[k])
 		.join(' · ');
 	const texte = t(r.bonne ? 'plainte.bonne' : 'plainte.mauvaise', { effets: fx || '0' }) + (r.tardive ? ' ' + t('plainte.tardive') : '') + (r.clash && r.reaction ? ' ' + t('commu.reactionClash', { auteur: p.auteur, reaction: r.reaction }) : ''); // prompt 197 : réaction de connard du plaignant
-	retourPlainte = { texte, bonne: r.bonne, jusqua: millis() + 5000 };
-	annoncer(typeof lireMasques === 'function' ? lireMasques(texte) : texte); // aria-live ; prompt 197 : masques hors alphabet lus « mot masqué »
+	if (r.signale) retourPlainte = { texte: r.notice, bonne: true, jusqua: millis() + 7000 }; // prompt 202 : notice de modération
+	else retourPlainte = { texte, bonne: r.bonne, jusqua: millis() + 5000 };
+	const lu = retourPlainte.texte;
+	annoncer(typeof lireMasques === 'function' ? lireMasques(lu) : lu); // aria-live ; prompt 197 : masques hors alphabet lus « mot masqué »
 	Confort.Son.bip(r.bonne ? 'action' : 'alerte');
 }
 

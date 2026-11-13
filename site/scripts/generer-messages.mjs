@@ -17,8 +17,17 @@ const CATEGORIES = ['plainte', 'question', 'remerciement', 'suggestion', 'temoig
 for (const p of donnees.plaintes) {
 	if (!TONS.includes(p.ton)) throw new Error('messages.json : ton attendu (provoquant, neutre, positif) pour « ' + p.id + ' »');
 	if (p.categorie !== undefined && !CATEGORIES.includes(p.categorie)) throw new Error('messages.json : catégorie inconnue « ' + p.categorie + ' » (' + p.id + ')');
-	if (p.categorie && p.categorie !== 'plainte' && (!p.texte.en || p.reponses.some((r) => !r.clash && !r.texte.en))) throw new Error('messages.json : interaction « ' + p.id + ' » sans anglais');
+	if (p.categorie && p.categorie !== 'plainte' && (!p.texte.en || p.reponses.some((r) => !r.clash && !r.signaler && !r.texte.en))) throw new Error('messages.json : interaction « ' + p.id + ' » sans anglais');
+	// Prompt 202 : chaque réponse jouable a une suite FR + EN ; provocant → un « signaler » (la bonne réponse) ; positif → clash froid avec texte
+	for (const r of p.reponses) {
+		if (r.signaler) { if (r.bonne !== true || p.ton !== 'provoquant') throw new Error('messages.json : « signaler » réservé à la bonne réponse d’un message provoquant (' + p.id + ')'); continue; }
+		if (!r.suite || !r.suite.fr || !r.suite.en) throw new Error('messages.json : réponse sans suite FR + EN (' + p.id + ')');
+	}
+	if (p.ton === 'provoquant' && p.reponses.filter((r) => r.signaler).length !== 1) throw new Error('messages.json : message provoquant sans bouton « Signaler » (' + p.id + ')');
+	if (p.ton === 'positif' && !p.reponses.some((r) => r.clash && r.froid && r.texte && r.texte.fr && r.texte.en)) throw new Error('messages.json : message positif sans clash froid (' + p.id + ')');
 }
+if (donnees.plaintes.length < 300) throw new Error('messages.json : 300 messages de base attendus (prompt 202), ' + donnees.plaintes.length + ' trouvés');
+if (new Set(donnees.plaintes.map((p) => p.id)).size !== donnees.plaintes.length) throw new Error('messages.json : identifiants en double');
 for (const c of CATEGORIES.slice(1)) if (!donnees.plaintes.some((p) => p.categorie === c)) throw new Error('messages.json : aucune interaction de catégorie « ' + c + ' » (prompt 198)');
 // Prompt 90 : modèles du téléphone — FR + EN obligatoires, 3 variantes au moins par fait (Camille) ou par type (chauffeurs)
 if (donnees.telephone) {
