@@ -721,7 +721,8 @@
 	};
 	/** Texte d'une réponse à afficher dans Community (clash : généré, sinon champ texte du JSON) */
 	Jeu.texteReponse = function (plainte, r) {
-		return r && r.clash ? Jeu.repliqueClashPlainte(plainte) : Jeu.texteMessage(r && r.texte, plainte.vars);
+		if (r && r.signaler) return String(T('commu.signaler')); // prompt 202 : bouton « Signaler » à la place de la réponse bienveillante
+		return r && r.clash && !r.texte ? Jeu.repliqueClashPlainte(plainte) : Jeu.texteMessage(r && r.texte, plainte.vars); // prompt 202 : clash froid = texte propre
 	};
 	/** Prompt 197 : réaction de connard du plaignant d'une plainte Community après un clash (variantes reactionClash.*, prompt 196) */
 	Jeu.reactionClashPlainte = function (plainte) {
@@ -1502,13 +1503,15 @@
 				Array.isArray(p.reponses) &&
 				p.reponses.length >= 2 &&
 				// prompt 197 : une réponse « clash » n'a pas de texte (tiré des clés clash.*) ; 3 réponses dont une bonne et une clash
-				p.reponses.every((r) => r && (r.clash === true || (r.texte && typeof r.texte.fr === 'string'))) &&
+				p.reponses.every((r) => r && (r.clash === true || r.signaler === true || (r.texte && typeof r.texte.fr === 'string'))) && // prompt 202 : « signaler » sans texte
+				p.reponses.filter((r) => r.signaler === true).length <= 1 &&
+				p.reponses.every((r) => !r.suite || (typeof r.suite.fr === 'string' && typeof r.suite.en === 'string')) && // prompt 202 : suite bilingue
 				p.reponses.some((r) => r.bonne === true) &&
 				p.reponses.filter((r) => r.clash === true).length <= 1 &&
 				// prompt 198 : ton et catégorie connus ; une interaction hors « plainte » est bilingue
 				(p.ton === undefined || TONS_INTERACTION.includes(p.ton)) &&
 				(p.categorie === undefined || CATEGORIES_INTERACTION.includes(p.categorie)) &&
-				(estPrincipale(p) || (typeof p.texte.en === 'string' && p.reponses.every((r) => r.clash === true || typeof r.texte.en === 'string')));
+				(estPrincipale(p) || (typeof p.texte.en === 'string' && p.reponses.every((r) => (r.clash === true && !r.texte) || r.signaler === true || typeof r.texte.en === 'string')));
 			if (valide) ok.push(p);
 			else if (global.console) console.warn('messages.json : plainte n° ' + i + ' ignorée (id, texte.fr, réponses valides dont une « bonne » et au plus une « clash », ton et catégorie connus requis)');
 		});
@@ -1534,7 +1537,8 @@
 		return v;
 	}
 	function variablesUtilisees(p) {
-		const textes = [p.texte.fr, p.texte.en || ''].concat(p.reponses.map((r) => (r.clash ? '' : r.texte.fr + ' ' + (r.texte.en || '')))); // prompt 197 : le clash n'a pas de texte propre
+		const bi = (o) => (o ? o.fr + ' ' + (o.en || '') : '');
+		const textes = [p.texte.fr, p.texte.en || ''].concat(p.reponses.map((r) => bi(r.texte) + ' ' + bi(r.suite))); // prompt 197 : le clash n'a pas de texte propre ; prompt 202 : clash froid, signaler et suites
 		return (textes.join(' ').match(/\{(\w+)\}/g) || []).map((m) => m.slice(1, -1));
 	}
 	function plainteCorrespond(p, d, vars, index) {
@@ -1567,7 +1571,12 @@
 	};
 
 	/** Prompt 162 : texte d'une plainte reçue, marqué « Fictif · » si elle porte sur le dossier fictif */
-	Jeu.textePlainte = (p) => String(marquerFictif(p && Jeu.paquet ? Jeu.paquet[p.index] : null, Jeu.texteMessage(p.def.texte, p.vars)));
+	/** Prompt 202 : réglage de confort « masquer les commentaires violents » (Confort.Reglages.masquerViolence) */
+	Jeu.violenceMasquee = () => !!(global.Confort && global.Confort.Reglages && global.Confort.Reglages.masquerViolence);
+	Jeu.textePlainte = function (p) {
+		if (p && p.def && p.def.ton === 'provoquant' && (p.signalee || Jeu.violenceMasquee())) return String(T(p.signalee ? 'commu.masqueSignale' : 'commu.masqueViolent')); // prompt 202
+		return String(marquerFictif(p && Jeu.paquet ? Jeu.paquet[p.index] : null, Jeu.texteMessage(p.def.texte, p.vars)));
+	};
 	/** Prompt 117 : meilleure réponse attendue pour ce dossier (même calcul que le Journal), lecture seule */
 	Jeu.meilleureReponse = function (d) {
 		// Prompt 130 : la meilleure réponse au sens de l'évaluation — effets pondérés par le besoin des jauges actuelles
@@ -1777,6 +1786,15 @@
 		plainte.reponse = ri; // index réel stocké (affichage et sauvegarde inchangés)
 		plainte.bonne = r.bonne === true;
 		Jeu.appliquerDeltas(effets);
+		// Prompt 202 : « Signaler » — le commentaire est masqué, une notice de modération le dit (3114 pour une incitation au suicide),
+		// pas de réponse publique ni de réaction en chaîne
+		if (r.signaler === true) {
+			plainte.signalee = true;
+			plainte.suivis = [];
+			const notice = T(plainte.def.incitation ? 'commu.signale.incitation' : 'commu.signale', { auteur: plainte.auteur });
+			Jeu.commentaires.push({ heure: maintenantSim(), auteur: T('commu.moderation'), texte: notice, delta: effets.reputation || 0, moderation: true });
+			return { effets, bonne: plainte.bonne, tardive, clash: false, signale: true, notice, reaction: null };
+		}
 		Jeu.commentaires.push({
 			heure: maintenantSim(),
 			auteur: T('plainte.reponseDe'),
@@ -1786,7 +1804,7 @@
 		// Prompt 197 : après un clash, le plaignant (toujours gentil d'habitude) répond par un commentaire de connard (mots masqués hors alphabet)
 		let reaction = null;
 		if (r.clash === true) {
-			reaction = Jeu.reactionClashPlainte(plainte);
+			reaction = r.suite ? Jeu.texteMessage(r.suite, plainte.vars) : Jeu.reactionClashPlainte(plainte); // prompt 202 : la suite propre au clash remplace la réaction générique
 			Jeu.appliquerDeltas({ reputation: DELTA_REPUTATION.mauvais });
 			if (plainte.def && plainte.def.prive) {
 				plainte.relances = (plainte.relances || []).concat({ heure: maintenantSim(), texte: reaction, delta: DELTA_REPUTATION.mauvais });
@@ -1797,14 +1815,17 @@
 			}
 		}
 		Jeu.programmerSuivis(plainte); // prompt 63 : 0 à 3 réactions, à des heures variées
-		return { effets, bonne: plainte.bonne, tardive, clash: r.clash === true, reaction };
+		return { effets, bonne: plainte.bonne, tardive, clash: r.clash === true, froid: r.froid === true, reaction };
 	};
 
 	// Prompt 63 — réactions en chaîne : tirées par hachage (graine + plainte), sans toucher aux dés de la partie
 	Jeu.NB_MODELES_SUIVI = 4; // textes : i18n.js, suivi.<bonne|mauvaise>.<n>
 	Jeu.programmerSuivis = function (plainte) {
 		const h = (k) => hacher(String(Jeu.graine) + '|suivi|' + plainte.id + '|' + plainte.index + '|' + k);
-		const n = plainte.def && plainte.def.prive ? h('n') % 2 : h('n') % 4; // 0 à 3 réactions ; message privé (prompt 85) : au plus 1 relance
+		const rep = plainte.def && plainte.reponse !== null && plainte.reponse !== undefined ? plainte.def.reponses[plainte.reponse] : null;
+		const avecSuite = !!(rep && rep.suite && !rep.clash); // prompt 202 : la suite propre à la réponse arrive en première réaction (le clash l'a déjà en réaction immédiate)
+		let n = plainte.def && plainte.def.prive ? h('n') % 2 : h('n') % 4; // 0 à 3 réactions ; message privé (prompt 85) : au plus 1 relance
+		if (avecSuite) n = Math.max(1, n);
 		const base = Jeu.horloge ? Math.floor(Jeu.horloge.minutes) : 0;
 		plainte.suivis = [];
 		for (let i = 0; i < n; i++) {
@@ -1813,6 +1834,7 @@
 				jour: Jeu.jourIndex,
 				minute: base + delai + i * 7,
 				modele: h('m' + i) % Jeu.NB_MODELES_SUIVI,
+				suite: avecSuite && i === 0, // prompt 202
 				auteur: i === 0 ? plainte.auteur : PSEUDOS[h('a' + i) % PSEUDOS.length],
 				delta: plainte.bonne ? 1 : -1,
 				livre: false,
@@ -1832,9 +1854,10 @@
 				if (!echu) return;
 				sv.livre = true; // le modèle 0 cite la nature du dossier : il n'est pris que si elle existe
 				n++;
+				const suite = sv.suite && p.def.reponses[p.reponse] && p.def.reponses[p.reponse].suite ? Jeu.texteMessage(p.def.reponses[p.reponse].suite, p.vars) : null; // prompt 202
 				if (p.def && p.def.prive) {
 					// Prompt 85 : relance privée, dans la conversation (pas de réaction publique en chaîne)
-					p.relances = (p.relances || []).concat({ heure: maintenantSim(), texte: T('suivi.prive.' + (p.bonne ? 'bonne' : 'mauvaise')), delta: sv.delta });
+					p.relances = (p.relances || []).concat({ heure: maintenantSim(), texte: suite || T('suivi.prive.' + (p.bonne ? 'bonne' : 'mauvaise')), delta: sv.delta });
 					Jeu.nonLus.community++;
 					Jeu.appliquerDeltas({ reputation: sv.delta });
 					return;
@@ -1842,7 +1865,7 @@
 				Jeu.commentaires.push({
 					heure: maintenantSim(),
 					auteur: sv.auteur,
-					texte: T('suivi.' + (p.bonne ? 'bonne' : 'mauvaise') + '.' + (!p.vars.nature && sv.modele === 0 ? 1 : sv.modele), { ligne: p.vars.ligne || '', nature: p.vars.nature || '', auteur: p.auteur }),
+					texte: suite || T('suivi.' + (p.bonne ? 'bonne' : 'mauvaise') + '.' + (!p.vars.nature && sv.modele === 0 ? 1 : sv.modele), { ligne: p.vars.ligne || '', nature: p.vars.nature || '', auteur: p.auteur }),
 					delta: sv.delta,
 					suivi: true,
 				});

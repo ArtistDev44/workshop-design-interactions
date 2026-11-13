@@ -867,7 +867,7 @@ for (const [nom, ctx] of [['fr', contexte('fr')], ['en', contexte('en')]]) {
 {
 	const brut = JSON.parse(readFileSync(join(pub, 'data', 'messages.json'), 'utf8'));
 	const CLES_COND = ['type', 'retard_min', 'ligne', 'nature_contient', 'pointe', 'meteo', 'fil']; // prompt 198 : « fil » (relance, doublon)
-	const invalides = brut.plaintes.filter((p) => !p.texte.en || p.reponses.length !== 3 || !p.reponses.some((r) => r.bonne) || !p.reponses.some((r) => !r.bonne && !r.clash) || p.reponses.filter((r) => r.clash).length !== 1 || p.reponses.some((r) => !r.clash && !r.texte.en) || Object.keys(p.condition || {}).some((k) => !CLES_COND.includes(k))); // prompt 197 : exactement 3 réponses dont une bonne et une clash
+	const invalides = brut.plaintes.filter((p) => !p.texte.en || p.reponses.length !== 3 || !p.reponses.some((r) => r.bonne) || !p.reponses.some((r) => !r.bonne && !r.clash) || p.reponses.filter((r) => r.clash).length !== 1 || p.reponses.some((r) => !r.clash && !r.signaler && !r.texte.en) || Object.keys(p.condition || {}).some((k) => !CLES_COND.includes(k))); // prompt 197 : exactement 3 réponses dont une bonne et une clash
 	verifier(invalides.length === 0 && brut.plaintes.length >= 21 && brut.plaintes.filter((p) => p.prive).length >= 3, `community : plaintes invalides ${invalides.map((p) => p.id)}`);
 	verifier((brut.modeles || []).length === 3 && brut.modeles.every((m) => m.texte.fr && m.texte.en && m.coherent.length), 'community : 3 modèles d\'info trafic FR + EN');
 	const cs = vm.runInContext(
@@ -1190,14 +1190,14 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 		const dernier = Jeu.commentaires[Jeu.commentaires.length - 1];
 		out.dernierAuteur = dernier && dernier.auteur; out.dernierDelta = dernier && dernier.delta;
 		if (dernier && clair.test(String(dernier.texte))) out.enClair.push('reaction');
-		if (dernier && !hors.test(String(dernier.texte))) out.enClair.push('reaction:sansMasque');
+		if (dernier && String(dernier.texte) !== Jeu.texteMessage(rClash.suite, pl0.vars)) out.enClair.push('reaction:pasLaSuite'); // prompt 202 : la suite propre au clash remplace la réaction générique
 		out.nonLus = Jeu.nonLus.community - nonLusAvant;
 		// plainte privée : la réaction de connard part en relance privée
 		const defPrive = Jeu.MESSAGES.plaintes.find((x) => x.prive);
 		const plP = { id: defPrive.id, def: defPrive, vars: { nature: 'incident' }, index: 2, heure: '8 h 05', auteur: '@usager_9', reponse: null };
 		const rC2 = plP.def.reponses.find((r) => r.clash);
 		const resP = Jeu.repondrePlainte(plP, Jeu.ordreReponses(plP).indexOf(plP.def.reponses.indexOf(rC2)), undefined);
-		out.relancePrivee = resP && resP.clash && (plP.relances || []).length === 1 && hors.test(String(plP.relances[0].texte));
+		out.relancePrivee = resP && resP.clash && (plP.relances || []).length === 1 && String(plP.relances[0].texte) === Jeu.texteMessage(rC2.suite, plP.vars); // prompt 202 : suite du clash
 		// lecture : masques hors alphabet lus « mot masqué »
 		out.masques = typeof lireMasques === 'function' ? lireMasques(out.texteClash + ' §¤') : null;
 		// clés i18n : commu.reactionClash FR + EN
@@ -3878,7 +3878,7 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	const nouvelles = brut.plaintes.filter((p) => p.categorie && p.categorie !== 'plainte');
 	verifier(brut.plaintes.every((p) => TONS.includes(p.ton)) && !brut.plaintes.some((p) => p.ton === 'agressif'), '198 : chaque entrée de messages.json porte un ton (provoquant, neutre, positif)');
 	verifier(CATS.every((c) => nouvelles.filter((p) => p.categorie === c).length >= 4), `198 : au moins 4 entrées par nouvelle catégorie (${CATS.map((c) => c + ' ' + nouvelles.filter((p) => p.categorie === c).length).join(', ')})`);
-	const incompletes = nouvelles.filter((p) => !p.texte.fr || !p.texte.en || p.reponses.length !== 3 || p.reponses.filter((r) => r.bonne).length !== 1 || p.reponses.some((r) => !r.effets || (!r.clash && (!r.texte.fr || !r.texte.en))));
+	const incompletes = nouvelles.filter((p) => !p.texte.fr || !p.texte.en || p.reponses.length !== 3 || p.reponses.filter((r) => r.bonne).length !== 1 || p.reponses.some((r) => !r.effets || (!r.clash && !r.signaler && (!r.texte.fr || !r.texte.en))));
 	verifier(nouvelles.length >= 40 && !incompletes.length, `198 : nouvelles interactions incomplètes (FR + EN, 3 réponses, effets) : ${incompletes.map((p) => p.id)}`);
 	const clair = /\b(merde|putain|connard|connasse|enculé|salope|bordel|foutre|fuck|shit|bastard|bitch|asshole|crap|damn)\b/i;
 	verifier(!nouvelles.some((p) => clair.test(p.texte.fr + ' ' + p.texte.en)), '198 : aucun mot grossier en clair dans les nouvelles interactions');
@@ -3973,6 +3973,80 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 		return { n, avertis };
 	})()`, contexte('fr'));
 	verifier(inv.n === 1 && inv.avertis === 3, `198 : entrées invalides non ignorées (${JSON.stringify(inv)})`);
+}
+
+// Prompt 202 : 300 messages de base, une suite par réponse, clash froid (positif), provocants vulgaires + « Signaler »
+{
+	const brut = JSON.parse(readFileSync(join(pub, 'data', 'messages.json'), 'utf8'));
+	const P = brut.plaintes;
+	const masque = (x) => /[@#$%&!]{2,}/.test(x);
+	const clair = /\b(merde|putain|connard|connasse|enculé|salope|bordel|foutre|fuck|shit|bastard|bitch|asshole)\b/i;
+	const prov = P.filter((p) => p.ton === 'provoquant'), pos = P.filter((p) => p.ton === 'positif');
+	verifier(P.length === 300 && new Set(P.map((p) => p.id)).size === 300, `202 : 300 messages de base aux ids uniques (${P.length})`);
+	verifier(prov.length >= 90 && prov.length <= 105, `202 : environ 1/3 de provocants (${prov.length})`);
+	const sansSuite = P.filter((p) => p.reponses.some((r) => !r.signaler && !(r.suite && r.suite.fr && r.suite.en)));
+	verifier(!sansSuite.length, `202 : réponses sans suite FR + EN : ${sansSuite.map((p) => p.id).slice(0, 8)}`);
+	const suites = P.flatMap((p) => p.reponses.filter((r) => r.suite).map((r) => r.suite.fr));
+	verifier(new Set(suites).size === suites.length, `202 : suites en double (${suites.length - new Set(suites).size})`);
+	const provKo = prov.filter((p) => p.reponses.filter((r) => r.signaler).length !== 1 || !p.reponses.find((r) => r.signaler).bonne || p.reponses.find((r) => r.signaler).texte || !masque(p.texte.fr) || !masque(p.texte.en) || clair.test(p.texte.fr + ' ' + p.texte.en));
+	verifier(!provKo.length, `202 : provocants sans « Signaler » (bonne), sans masque ou en clair : ${provKo.map((p) => p.id).slice(0, 8)}`);
+	verifier(!P.some((p) => p.ton !== 'provoquant' && p.reponses.some((r) => r.signaler)), '202 : « Signaler » réservé aux provocants');
+	const posKo = pos.filter((p) => { const c = p.reponses.find((r) => r.clash); return !c || !c.froid || !c.texte || /[#@&§¤%$]/.test(c.texte.fr + c.texte.en) || clair.test(c.texte.fr + ' ' + c.texte.en) || c.bonne || (c.effets || {}).reputation > -8; });
+	verifier(!posKo.length, `202 : messages positifs sans clash froid non vulgaire (−8) : ${posKo.map((p) => p.id).slice(0, 8)}`);
+	const inc = P.filter((p) => p.incitation);
+	verifier(inc.length >= 1 && inc.every((p) => p.ton === 'provoquant' && masque(p.texte.fr)), `202 : incitations (${inc.length}) provocantes et masquées`);
+	for (const lg of ['fr', 'en']) {
+		const c = contexte(lg);
+		const T = vm.runInContext('TRADUCTIONS', c)[lg];
+		verifier(['commu.signaler', 'commu.moderation', 'commu.signale', 'commu.signale.incitation', 'commu.masqueSignale', 'commu.masqueViolent', 'param.violence', 'param.violence.detail'].every((k) => T[k]) && /3114/.test(T['commu.signale.incitation']), `202 : textes de modération (${lg}) incomplets ou sans le 3114`);
+	}
+	const r = vm.runInContext(`(() => {
+		Jeu.chargerSemaine('2026-10-12'); Jeu.nouvellePartie();
+		const out = {};
+		const mk = (def, index) => ({ id: def.id, def, vars: { ligne: 'C1', retard: 12, nature: 'travaux', nom: 'Concert', sujet: 'tram' }, index, heure: '8 h 00', auteur: '@test_' + index, reponse: null, jour: Jeu.jourIndex });
+		const aff = (pl, r) => Jeu.ordreReponses(pl).indexOf(pl.def.reponses.indexOf(r));
+		// Signaler (incitation) : masqué, notice avec 3114, pas de réaction en chaîne, bonne réponse
+		const dInc = Jeu.MESSAGES.plaintes.find((p) => p.incitation && !p.prive);
+		const pI = mk(dInc, 0); Jeu.plaintes.push(pI);
+		const rS = pI.def.reponses.find((x) => x.signaler);
+		out.libelle = String(Jeu.texteReponse(pI, rS));
+		const resS = Jeu.repondrePlainte(pI, aff(pI, rS), undefined);
+		out.signale = !!(resS && resS.signale && resS.bonne && pI.signalee && /3114/.test(resS.notice));
+		out.masque = String(Jeu.textePlainte(pI));
+		out.suivis = (pI.suivis || []).length;
+		out.moderation = !!Jeu.commentaires.find((c) => c.moderation && /3114/.test(String(c.texte)));
+		// Réponse neutre : la suite propre à la réponse arrive en première réaction, à la place du texte générique
+		const dN = Jeu.MESSAGES.plaintes.find((p) => p.ton === 'neutre' && !p.prive && p.condition.type === 'ligne en difficulté' && !p.condition.fil);
+		const pN = mk(dN, 1); Jeu.plaintes.push(pN);
+		const rB = pN.def.reponses.find((x) => x.bonne);
+		Jeu.repondrePlainte(pN, aff(pN, rB), undefined);
+		out.premiereSuite = pN.suivis.length >= 1 && pN.suivis[0].suite === true;
+		Jeu.horloge.minutes += 2000; Jeu.majSuivis();
+		const attendu = Jeu.texteMessage(rB.suite, pN.vars);
+		out.suiteLivree = Jeu.commentaires.some((c) => String(c.texte) === attendu && c.auteur === pN.auteur);
+		// Message positif : clash froid (texte propre, pas de secousse), réaction = sa suite
+		const dP = Jeu.MESSAGES.plaintes.find((p) => p.ton === 'positif' && !p.prive);
+		const pP = mk(dP, 2); Jeu.plaintes.push(pP);
+		const rC = pP.def.reponses.find((x) => x.clash);
+		out.texteFroid = Jeu.texteReponse(pP, rC) === Jeu.texteMessage(rC.texte, pP.vars);
+		const resC = Jeu.repondrePlainte(pP, aff(pP, rC), undefined);
+		out.froid = !!(resC && resC.clash && resC.froid && !resC.bonne && resC.reaction === Jeu.texteMessage(rC.suite, pP.vars));
+		// Réglage de confort : provocant masqué tant qu'il n'est pas signalé
+		const dV = Jeu.MESSAGES.plaintes.find((p) => p.ton === 'provoquant' && !p.incitation);
+		const pV = mk(dV, 3);
+		const avant = Jeu.textePlainte(pV);
+		window.Confort = { Reglages: { masquerViolence: true } };
+		out.masqueViolent = String(Jeu.textePlainte(pV)); out.avant = String(avant);
+		window.Confort = undefined;
+		return out;
+	})()`, contexte('fr'));
+	verifier(r.libelle === 'Signaler ce commentaire' && r.signale && r.masque === '[Commentaire signalé et masqué]' && r.suivis === 0 && r.moderation, `202 : « Signaler » (masquage, notice 3114, pas de réaction) : ${JSON.stringify(r)}`);
+	verifier(r.premiereSuite && r.suiteLivree, `202 : la suite propre à la réponse n'arrive pas en première réaction : ${JSON.stringify({ a: r.premiereSuite, b: r.suiteLivree })}`);
+	verifier(r.texteFroid && r.froid, `202 : clash froid d'un message positif : ${JSON.stringify({ a: r.texteFroid, b: r.froid })}`);
+	verifier(r.masqueViolent === '[Commentaire masqué : contenu violent]' && /[@#$%&!]{2,}/.test(r.avant), `202 : réglage « Masquer les commentaires violents » : ${r.masqueViolent}`);
+	const os = readFileSync(join(pub, 'os.js'), 'utf8'), commu = readFileSync(join(pub, 'community.js'), 'utf8'), param = readFileSync(join(pub, 'parametres.js'), 'utf8');
+	verifier(/r\.clash && !r\.froid && typeof feedback/.test(os) && /r\.signale\) retourPlainte = \{ texte: r\.notice/.test(os), '202 : os.js — pas de secousse pour un clash froid, notice de modération');
+	verifier(/if \(r\.signaler\) iconeLucide\('flag'/.test(commu) && /bascule\('masquerViolence', 'eye-off'/.test(param) && /masquerViolence: false/.test(readFileSync(join(pub, 'confort.js'), 'utf8')), '202 : drapeau du bouton Signaler, réglage de confort (désactivé par défaut)');
 }
 
 if (erreurs.length) {

@@ -492,6 +492,15 @@ function blocPlainteSociale(pl, x, y, l, prive) {
 	yy += 40 + couperLignes(Jeu.textePlainte(pl), l - 60, DS.policeTexte, 20).length * 28; // prompt 93
 	if (pl.reponse !== null) {
 		const r = pl.def.reponses[pl.reponse];
+		if (r && r.signaler) {
+			// Prompt 202 : commentaire signalé — notice de modération à la place d'une réponse publique
+			const notice = t(pl.def.incitation ? 'commu.signale.incitation' : 'commu.signale', { auteur: pl.auteur });
+			iconeLucide('flag', x + 34, yy + 2, 22, DS.infoClair);
+			dsTexte(notice, x + 66, yy, 18, DS.infoClair, 'left', l - 92);
+			textFont(DS.policeTexte);
+			textSize(18);
+			return yy - y + 16 + couperLignes(notice, l - 92, DS.policeTexte, 18).length * 26;
+		}
 		noStroke();
 		fill(pl.bonne ? 'rgba(0,183,79,0.14)' : 'rgba(209,11,0,0.16)');
 		rect(x + 34, yy, l - 60, 46);
@@ -514,7 +523,9 @@ function blocPlainteSociale(pl, x, y, l, prive) {
 		Jeu.ordreReponses(pl).forEach((ri, i) => {
 			const r = pl.def.reponses[ri];
 			const actif = cible && focusReponse === i;
-			yy += boutonTexte(x + 34, yy, l - 60, i + 1 + '  ' + Jeu.texteReponse(pl, r), () => repondrePlainte(i, pl), actif) + 8;
+			const hb = boutonTexte(x + 34, yy, l - 60, i + 1 + '  ' + Jeu.texteReponse(pl, r), () => repondrePlainte(i, pl), actif);
+			if (r.signaler) iconeLucide('flag', x + l - 26 - 30, yy + 12, 22, actif ? DS.surPrimaire : DS.blanc); // prompt 202 : bouton « Signaler » repérable (drapeau)
+			yy += hb + 8;
 		});
 		if (prive) {
 			dsBouton(x + 34, yy, 340, 44, t('commu.transmettre'), () => transmettreAuPatron(pl), 'secondaire');
@@ -535,7 +546,7 @@ function ongletMentions(z) {
 	y += 40;
 	if (typeof retourPlainte !== 'undefined' && retourPlainte && millis() < retourPlainte.jusqua) {
 		dsTexte(retourPlainte.texte, z.x, y, 18, retourPlainte.bonne ? DS.succesClair : DS.alerte, 'left', z.l);
-		y += 40;
+		y += 16 + couperLignes(String(retourPlainte.texte), z.l, DS.policeTexte, 18).length * 26; // prompt 202 : notice ou suite longues sur plusieurs lignes
 	}
 	att.forEach((pl) => (y += blocPlainteSociale(pl, z.x, y, z.l) + 12));
 	// Mentions récentes (commentaires et réactions)
