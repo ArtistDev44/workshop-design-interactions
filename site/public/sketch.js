@@ -267,6 +267,7 @@ function draw() {
 	}
 	if (smsActif) {
 		boutons = [];
+		zoneTexteCalque(); // prompt 209
 		dessinerSMS();
 	}
 	dessinerGuide(); // prompt 37 : flèches « Prendre en main »
@@ -1049,6 +1050,8 @@ function tracer(t) {
 function zoneTexteDebut() {}
 function zoneTexteFin() {}
 function zoneTexteDeclarer() {}
+function zoneTexteCalque() {} // prompt 209 : début d'un calque au premier plan (fenêtre, SMS) — audit des textes seulement
+function zoneTexteDecor() {} // prompt 209 : textes purement décoratifs (audit, défaut T exclu) — appel encadrant : zoneTexteDecor(true) … zoneTexteDecor(false)
 function ajusterTaille(txt, largeur, tailleMax, tailleMin) {
 	textSize(tailleMax);
 	while (textSize() > (tailleMin || 12) && textWidth(String(txt)) > largeur) textSize(textSize() - 1);
@@ -1400,6 +1403,7 @@ function dessinerFenetre() {
 	// Prompt 173 : la zone de la fenêtre (premier panneau dessiné) sert au clic sur le fond
 	ZONE_FENETRE = null;
 	FENETRE_EN_DESSIN = true;
+	zoneTexteCalque(); // prompt 209
 	try {
 		contenuFenetre();
 	} finally {

@@ -67,6 +67,10 @@
 	const zone = (nom, x, y, l, h, opts) => Object.assign({ nom, espace: espace(), m: matrice(), local: { x, y, l, h } }, versEcran(x, y, l, h), opts || {});
 	window.zoneTexteDebut = (nom, x, y, l, h, opts) => A.pile.push(zone(nom, x, y, l, h, opts));
 	window.zoneTexteFin = () => A.pile.pop();
+	// Prompt 209 : calque au premier plan (fenêtre, SMS) — en portrait, seuls ses textes comptent pour le défaut T ;
+	// décor : textes purement décoratifs de la pièce, exclus du défaut T (liste dans jeu/209-mobile-portrait-hors-poste.md)
+	window.zoneTexteCalque = () => (A.calque = true);
+	window.zoneTexteDecor = (oui) => (A.decor = oui ? (A.decor || 0) + 1 : Math.max(0, (A.decor || 0) - 1));
 	window.zoneTexteDeclarer = (nom, x, y, l, h, opts) => A.zonesImage.push(Object.assign(zone(nom, x, y, l, h, opts), { ordre: A.boites.length })); // prompt 114 : ordre de dessin (catégorie F)
 
 	function nomEcran() {
@@ -171,7 +175,8 @@
 		// Prompt 205 : mobile portrait — taille RENDUE à l'écran après recomposition (région de l'image principale
 		// agrandie ou réduite sur le canevas portrait, lui-même mis à la largeur du téléphone) : défaut « T » sous 12 px CSS,
 		// compté une fois par texte et par langue (le premier écran où il apparaît)
-		if (A.enParcours && A.enregistre && !tampon && typeof PORTRAIT !== 'undefined' && PORTRAIT.actif && PORTRAIT.canevas && PORTRAIT.regions.length) {
+		const sousCalque = ((typeof fenetre !== 'undefined' && fenetre) || (typeof smsActif !== 'undefined' && smsActif)) && !A.calque; // prompt 209 : appli restée dessous
+		if (A.enParcours && A.enregistre && !tampon && !sousCalque && !A.decor && typeof PORTRAIT !== 'undefined' && PORTRAIT.actif && PORTRAIT.canevas && PORTRAIT.regions.length) {
 			const cx = b.x + b.l / 2;
 			const cy = b.y + b.h / 2;
 			const r = [...PORTRAIT.regions].reverse().find((g) => cx >= g.src.x && cx <= g.src.x + g.src.l && cy >= g.src.y && cy <= g.src.y + g.src.h);
@@ -280,6 +285,8 @@
 		A.boites = [];
 		A.zonesImage = [];
 		A.pile = [];
+		A.calque = false; // prompt 209
+		A.decor = 0;
 		A.ecran = nomEcran();
 	});
 	p5.prototype.registerMethod('post', function () {
