@@ -83,7 +83,8 @@ const LARGEUR_FENETRE = {}; // prompt 88 (largeurs propres), prompt 209 : toutes
 ['partage', 'installation', 'demission', 'partir', 'reset'].forEach((f) => Object.defineProperty(LARGEUR_FENETRE, f, { get: () => CADRE_FENETRE.moyenne }));
 
 function scenePortrait() {
-	if (typeof CINE !== 'undefined' && CINE) return 'plein';
+	if (typeof CINE !== 'undefined' && CINE) return 'cine'; // prompt 209 : colonne centrale de 640 px
+	if (typeof GAMEOVER !== 'undefined' && GAMEOVER) return 'gameover'; // prompt 209 : lettre puis boutons, empilés
 	if (typeof TRANSITION_JOUR !== 'undefined' && TRANSITION_JOUR) return 'transition'; // prompt 209 : au-dessus des SMS
 	if (fenetre === 'telephone' || fenetre === 'cafe' || smsActif) return 'main';
 	if (fenetre === 'rapport') return 'rapport';
@@ -114,6 +115,8 @@ function composerPortrait() {
 	}
 	else if (scene === 'rapport') regionsFenetre(); // prompt 209 : feuilles de 640 px (histoire.js, rapportPortrait)
 	else if (scene === 'fenetre') regionsFenetre();
+	else if (scene === 'cine') region({ x: COLONNE_CINE.x - 20, y: 0, l: 680, h: H }, 0, (PH - (H * PL) / 680) / 2, PL);
+	else if (scene === 'gameover') regionsDeuxColonnes('gameover', GEO_GAMEOVER.a, GEO_GAMEOVER.b);
 	else if (scene === 'transition') region({ x: L / 2 - 340, y: 0, l: 680, h: H }, 0, (PH - (H * PL) / 680) / 2, PL); // prompt 209 : colonne de 640 px
 	else if (scene === 'menu' && MENU.ecran === 'semaines') regionsChoixSemaine(); // prompt 209
 	else if (scene === 'menu') {
@@ -140,7 +143,7 @@ function composerPortrait() {
 	ctx.fillRect(0, 0, PL, PH);
 	ctx.imageSmoothingEnabled = true;
 	const poste = scene === 'appli' || scene === 'vueApp';
-	const defilant = poste || ((scene === 'fenetre' || scene === 'rapport' || scene === 'menu') && PORTRAIT.defilMax > 0); // prompt 209 : fenêtre avec une suite, choix du mode
+	const defilant = poste || ((scene === 'fenetre' || scene === 'rapport' || scene === 'menu' || scene === 'gameover') && PORTRAIT.defilMax > 0); // prompt 209 : fenêtre avec une suite, choix du mode
 	const zone = defilant ? { haut: PORTRAIT.hautDefil, bas: PORTRAIT.basDefil } : null;
 	// Prompt 205 : la fiche du dossier monte du bas à son arrivée (0,3 s ; immédiate si les animations sont réduites)
 	const kF = reduireAnimations ? 1 : Math.min(1, (millis() - PORTRAIT.feuille) / 300);
@@ -204,8 +207,11 @@ function regionsFenetre() {
 /** Prompt 209 : choix du mode — colonne A (titre, deux cartes) puis colonne B (option du guide, Lancer, Retour),
  * empilées et défilables (menu.js, choixSemainePortrait) */
 function regionsChoixSemaine() {
-	const A = GEO_CHOIX_SEMAINE.a, B = GEO_CHOIX_SEMAINE.b;
-	if (PORTRAIT.cleContenu !== 'semaines') (PORTRAIT.cleContenu = 'semaines'), (PORTRAIT.defil = 0);
+	regionsDeuxColonnes('semaines', GEO_CHOIX_SEMAINE.a, GEO_CHOIX_SEMAINE.b);
+}
+/** Prompt 209 : deux colonnes de l'image (640 px + marges de 20) empilées et défilables ; cle : retour en haut au changement */
+function regionsDeuxColonnes(cle, A, B) {
+	if (PORTRAIT.cleContenu !== cle) (PORTRAIT.cleContenu = cle), (PORTRAIT.defil = 0);
 	PORTRAIT.hautDefil = 0;
 	PORTRAIT.basDefil = PH;
 	const dh = region({ x: A.x - 30, y: A.y, l: 680, h: A.h }, 0, 40, PL, true);
@@ -437,7 +443,7 @@ function portraitDeplacement(e) {
 	if (!d) return;
 	const p = pointPortrait(e);
 	const sc = scenePortrait();
-	if ((sc === 'appli' || sc === 'vueApp' || ((sc === 'fenetre' || sc === 'rapport' || sc === 'menu') && PORTRAIT.defilMax > 0)) && Math.abs(p.y - d.y) > 12) {
+	if ((sc === 'appli' || sc === 'vueApp' || ((sc === 'fenetre' || sc === 'rapport' || sc === 'menu' || sc === 'gameover') && PORTRAIT.defilMax > 0)) && Math.abs(p.y - d.y) > 12) {
 		PORTRAIT.cible = null;
 		PORTRAIT.defil = constrain(d.defil - (p.y - d.y), 0, PORTRAIT.defilMax); // le doigt fait défiler la colonne
 	}

@@ -415,11 +415,12 @@ function dessinerCinematique() {
 	fill(0);
 	rect(0, 0, L, 110);
 	rect(0, H - 150, L, 150);
+	const p = progressionHistoire().scores;
+	if (typeof PORTRAIT !== 'undefined' && PORTRAIT.actif) return piedCinematiquePortrait(c, p); // prompt 209
 	textAlign(CENTER, CENTER);
 	textFont(POLICE_TEXTE);
 	textSize(30);
 	fill('#ffffff');
-	const p = progressionHistoire().scores;
 	const sous = c.plan === 2 ? t('cine.bilan', { s1: p[1] === undefined ? '—' : p[1], s2: p[2] === undefined ? '—' : p[2], s3: c.bilan.score }) : t('cine.' + c.type + '.' + c.plan);
 	text(sous, 160, H - 150, L - 320, 150);
 	textAlign(LEFT, CENTER);
@@ -429,6 +430,26 @@ function dessinerCinematique() {
 	text(c.bilan && c.bilan.finFinale ? t('cine.titreFin', { nom: t('fin.' + c.bilan.finFinale + '.nom') }) : t('cine.titre.' + c.type), 60, 55); // prompt 207 : la fin de l'histoire nommée
 	bouton(L - 360, 30, 300, 56, t('cine.passer'), finCinematique, false, true);
 	boutons.push({ x: 0, y: 110, l: L, h: H - 260, action: planSuivant });
+}
+
+/** Prompt 209 : mobile portrait — bandes, titre, « Passer » et sous-titre dans la colonne centrale de 640 px
+ * (recomposée pleine largeur) : titre et bouton pleine largeur en haut, sous-titre à 28 px en bas */
+const COLONNE_CINE = { x: L / 2 - 320, l: 640, haut: 180, bas: 280 };
+function piedCinematiquePortrait(c, p) {
+	const C0 = COLONNE_CINE;
+	noStroke();
+	fill(0);
+	rect(0, 0, L, C0.haut);
+	rect(0, H - C0.bas, L, C0.bas);
+	const titre = c.bilan && c.bilan.finFinale ? t('cine.titreFin', { nom: t('fin.' + c.bilan.finFinale + '.nom') }) : t('cine.titre.' + c.type);
+	dessinerTexte(String(titre), C0.x, 20, C0.l, { taille: 20, interligne: 26, couleur: 'rgba(255,255,255,0.75)', police: POLICE_DONNEES, maxLignes: 2 });
+	bouton(C0.x, 80, C0.l, 80, t('cine.passer'), finCinematique, false, true);
+	const sous = c.plan === 2 ? t('cine.bilan', { s1: p[1] === undefined ? '—' : p[1], s2: p[2] === undefined ? '—' : p[2], s3: c.bilan.score }) : t('cine.' + c.type + '.' + c.plan);
+	const o = { taille: 28, interligne: 36, couleur: '#ffffff', align: 'center', maxLignes: 6 };
+	const hs = hauteurTexte(String(sous), C0.l, o);
+	zoneTexteDeclarer('sousTitreCine', C0.x, H - C0.bas, C0.l, C0.bas);
+	dessinerTexte(String(sous), C0.x, H - C0.bas + Math.max(12, (C0.bas - hs) / 2), C0.l, o);
+	boutons.push({ x: 0, y: C0.haut, l: L, h: H - C0.haut - C0.bas, action: planSuivant });
 }
 
 /** Plan 1 : la ville et ses trams sur le pont (vitesse et couleurs selon la fin) */
@@ -478,25 +499,27 @@ function planLettre(type, u) {
 	fill('#b49f80');
 	for (let y = 0; y < H; y += 46) rect(0, y, L, 2); // veinage du plateau
 	const k = reduireAnimations ? 1 : easeOut(constrain(u / 0.25, 0, 1));
-	const l = 820;
-	const h = 740;
+	const portrait = typeof PORTRAIT !== 'undefined' && PORTRAIT.actif; // prompt 209 : lettre de 600 px dans la colonne centrale
+	const l = portrait ? 600 : 820;
+	const h = portrait ? H - COLONNE_CINE.haut - COLONNE_CINE.bas - 24 : 740;
 	const x = (L - l) / 2;
-	const y = 160 + (1 - k) * 80;
+	const y = (portrait ? COLONNE_CINE.haut + 12 : 160) + (1 - k) * 80;
 	fill(0, 0, 0, 70);
 	rect(x + 16, y + 20, l, h);
 	fill('#fbf8f0');
 	rect(x, y, l, h);
 	textAlign(LEFT, TOP);
 	textFont(POLICE_DONNEES);
-	textSize(18);
+	textSize(portrait ? 20 : 18);
 	fill('#5a5348');
-	text(t('cine.lettre.entete'), x + 60, y + 50);
+	const mx = portrait ? 32 : 60;
+	text(t('cine.lettre.entete'), x + mx, y + (portrait ? 28 : 50));
 	textFont(POLICE_TEXTE);
-	textSize(24);
-	textLeading(36);
+	textSize(portrait ? 22 : 24);
+	textLeading(portrait ? 30 : 36);
 	fill('#1d1a16');
 	const finale = CINE && CINE.bilan && CINE.bilan.finFinale; // prompt 207 : la lettre suit la fin (posture cumulée), le ciel suit le score
-	text(t(finale ? 'cine.lettre.fin.' + finale : 'cine.lettre.' + type), x + 60, y + 120, l - 120, h - 260);
+	text(t(finale ? 'cine.lettre.fin.' + finale : 'cine.lettre.' + type), x + mx, y + (portrait ? 70 : 120), l - 2 * mx, portrait ? h - 190 : h - 260);
 	if (finale && CINE.bilan.tonFinal) type = CINE.bilan.tonFinal; // tampon de la lettre : couleur de la fin
 	const couleurs = { bonne: '#1e7a3c', moyenne: '#a15c07', mauvaise: '#b3261e' };
 	push();
