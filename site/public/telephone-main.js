@@ -195,7 +195,8 @@ function contenuConversation(e, pret) {
 	fill('rgba(255,255,255,0.6)');
 	text(c.sous || '', e.x + e.l / 2, e.y + 80);
 	// Bulles (les plus récentes en bas ; « … » pendant que l'autre écrit)
-	const ecrit = !reduireAnimations && c.messages[smsIndex].de !== 'moi' && millis() - convDepuis < 650 && smsIndex > 0;
+	const kR = typeof facteurRythmeTexte === 'function' ? facteurRythmeTexte() : reduireAnimations ? 0 : 1; // prompt 208 : rythme du texte (0 = instantané)
+	const ecrit = kR > 0 && c.messages[smsIndex].de !== 'moi' && millis() - convDepuis < 650 * kR && smsIndex > 0;
 	const visibles = c.messages.slice(0, smsIndex + (ecrit ? 0 : 1));
 	if (!c.heures) c.heures = [];
 	const lmax = e.l - G.bord - 72; // la bulle laisse 72 px libres du côté opposé
