@@ -31,6 +31,9 @@
 	// ——— Réglages (écran Paramètres, 11-direction-artistique) ———
 	const DEFAUTS = { intensiteFeedback: 100, son: true, volume: 100, horsLigneForce: false, reduireAnimations: false, contrasteRenforce: false, masquerViolence: false, musique: 'coquillage', daltonisme: 'normal', tailleTexte: 100, lectureFacile: false, defiChrono: false, chaines: false, deblocages: false, arbitrage: false, deVisible: false, eclairageJauges: false, npd: false, deblocageApplis: false, toutDebloque: false, somnolenceNecessaire: false, micro: true, webcam: false }; // prompt 57 : webcam désactivée par défaut (opt-in) // prompt 48 : accessibilité ; prompt 54 : micro (push-to-talk) // prompt 44 : choix de la musique ; prompt 62 : Chillin' Poupi par défaut
 	const Reglages = Object.assign({}, DEFAUTS, lire(CLE_REGLAGES, {}));
+	// Prompt 210 : en exposition, chaque visiteur repart sans caméra ni micro hérités du précédent (consentement),
+	// et les commentaires violents sont masqués d'office (aussi forcé dans Jeu.violenceMasquee)
+	if (typeof EXPO !== 'undefined' && EXPO.actif) Object.assign(Reglages, { webcam: DEFAUTS.webcam, micro: DEFAUTS.micro, masquerViolence: true });
 	// Prompt 175 : volume maître 0–100 (pas de 10). Les réglages déjà stockés n'ont que « son: true / false » : ils
 	// gardent leur état (son coupé = muet) et prennent le volume par défaut, 100 %. Un volume stocké à 0 = son coupé.
 	const borneVolume = (v) => (Number.isFinite(Number(v)) ? Math.max(0, Math.min(100, Math.round(Number(v) / 10) * 10)) : DEFAUTS.volume);

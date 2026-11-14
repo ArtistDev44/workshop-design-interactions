@@ -1543,6 +1543,7 @@
 	}
 	function plainteCorrespond(p, d, vars, index) {
 		const c = p.condition || {};
+		if (p.incitation && Jeu.violenceMasquee()) return false; // prompt 210 : masquage actif (et toujours en exposition) → aucune incitation tirée
 		if (c.fil && !(Jeu.plaintes || []).some((x) => x.index === index && !x.extra)) return false; // prompt 198 : relance / doublon d'un fil qui existe
 		if (c.type && c.type !== '*' && c.type !== d.type) return false;
 		if (c.retard_min !== undefined && !(typeof d.retard === 'number' && d.retard >= c.retard_min)) return false;
@@ -1572,7 +1573,8 @@
 
 	/** Prompt 162 : texte d'une plainte reçue, marqué « Fictif · » si elle porte sur le dossier fictif */
 	/** Prompt 202 : réglage de confort « masquer les commentaires violents » (Confort.Reglages.masquerViolence) */
-	Jeu.violenceMasquee = () => !!(global.Confort && global.Confort.Reglages && global.Confort.Reglages.masquerViolence);
+	// Prompt 210 : toujours masqués en mode exposition (?expo=1), quel que soit le réglage du visiteur précédent
+	Jeu.violenceMasquee = () => !!((typeof EXPO !== 'undefined' && EXPO.actif) || (global.Confort && global.Confort.Reglages && global.Confort.Reglages.masquerViolence));
 	Jeu.textePlainte = function (p) {
 		if (p && p.def && p.def.ton === 'provoquant' && (p.signalee || Jeu.violenceMasquee())) return String(T(p.signalee ? 'commu.masqueSignale' : 'commu.masqueViolent')); // prompt 202
 		return String(marquerFictif(p && Jeu.paquet ? Jeu.paquet[p.index] : null, Jeu.texteMessage(p.def.texte, p.vars)));

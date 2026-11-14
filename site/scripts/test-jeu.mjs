@@ -4152,6 +4152,52 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	verifier(/smsPostureCamille\(meteo\)/.test(readFileSync(join(pub, 'soir.js'), 'utf8')) && /noterPosture\('cafes'\)/.test(readFileSync(join(pub, 'cafe.js'), 'utf8')) && /volontaire && Jeu\.noterPosture\) Jeu\.noterPosture\('siestes'\)/.test(readFileSync(join(pub, 'sieste.js'), 'utf8')), '207 : SMS de posture le soir, café et sieste volontaire comptés');
 }
 
+// Prompt 210 (audit 206, constat 4) : délai des plaintes Community sur UNE horloge (tempsPlaintes, temps de jeu actif).
+// Sauvegarde à millis() = 60 s / tempsPlaintes = 12 s, reprise après 50 s d'écran titre (millis() = 50,5 s,
+// tempsPlaintes = 0) : la plainte doit garder le même temps restant, et ne pas expirer à la reprise.
+{
+	const c = contexte('fr');
+	vm.runInContext('window.addEventListener = () => {}; document.addEventListener = () => {};', c);
+	vm.runInContext(readFileSync(join(pub, 'sauvegarde.js'), 'utf8'), c, { filename: 'sauvegarde.js' });
+	const r = vm.runInContext(`(() => {
+		Jeu.chargerSemaine('2026-10-12'); Jeu.nouvellePartie();
+		let p = null;
+		for (let i = 0; i < Jeu.paquet.length && !p; i++) p = Jeu.declencherPlainte(i);
+		if (!p) return { aucune: true };
+		p.depuis = 10000;
+		const avant = Jeu.resteReponse(p, 12000);
+		const snap = JSON.parse(JSON.stringify(Jeu.instantane(60000)));
+		Sauvegarde.recalerPlaintes(snap.plaintes, 60000 - 12000);
+		Jeu.restaurerInstantane(snap, 50500);
+		Sauvegarde.recalerPlaintes(Jeu.plaintes, 0 - 50500);
+		const q = Jeu.plaintes.find((x) => x.id === p.id && x.index === p.index);
+		const apres = Jeu.resteReponse(q, 0);
+		const expirees = (Jeu.majPlaintes(0) || []).filter((x) => x.id === p.id).length;
+		return { avant, apres, expirees };
+	})()`, c);
+	verifier(!r.aucune && r.avant > 0 && r.avant === r.apres && r.expirees === 0, `210 : plainte Community reprise avec le même délai (une seule horloge) : ${JSON.stringify(r)}`);
+	const os = readFileSync(join(pub, 'os.js'), 'utf8');
+	verifier(/Jeu\.repondrePlainte\(p, i, typeof tempsPlaintes === 'function' \? tempsPlaintes\(\)/.test(os), '210 : la réponse Community doit être datée sur tempsPlaintes(), pas millis()');
+	// Exposition : violence masquée d'office, aucune incitation tirée quand le masquage est actif
+	const m = vm.runInContext(`(() => {
+		globalThis.EXPO = { actif: true };
+		const masque = Jeu.violenceMasquee();
+		Jeu.chargerSemaine('2026-10-12'); Jeu.nouvellePartie();
+		const tirees = [];
+		for (let i = 0; i < Jeu.paquet.length; i++) { const p = Jeu.declencherPlainte(i); if (p) tirees.push(p.def.incitation ? 1 : 0); }
+		const prevues = (Jeu.interactionsPrevues || []).length;
+		delete globalThis.EXPO;
+		return { masque, incitations: tirees.reduce((a, b) => a + b, 0), plaintes: tirees.length, prevues };
+	})()`, c);
+	verifier(m.masque && m.incitations === 0 && m.plaintes > 0, `210 : en exposition, violence masquée et aucune incitation tirée : ${JSON.stringify(m)}`);
+	const conf = readFileSync(join(pub, 'confort.js'), 'utf8');
+	verifier(/EXPO\.actif\) Object\.assign\(Reglages, \{ webcam: DEFAUTS\.webcam, micro: DEFAUTS\.micro, masquerViolence: true \}\)/.test(conf), '210 : en exposition, webcam et micro remis à leur défaut à chaque visiteur');
+	const cam = readFileSync(join(pub, 'webcam.js'), 'utf8');
+	const mic = readFileSync(join(pub, 'micro.js'), 'utf8');
+	verifier(/if \(CAM\.enCours\) return false;/.test(cam) && /CAM\.jeton\+\+/.test(cam) && /visibilitychange/.test(cam), '210 : webcam — garde contre la double demande, coupure à l\'onglet masqué');
+	verifier(/MICRO\.demande = \(async/.test(mic) && /MICRO\.jeton\+\+/.test(mic) && /clearInterval\(MICRO\.minuterieAnalyse\);\n\tMICRO\.minuterieAnalyse = setInterval/.test(mic), '210 : micro — une seule demande d\'autorisation, jeton invalidé au relâchement');
+}
+
 if (erreurs.length) {
 	console.error(`Test du jeu : ${erreurs.length} erreur(s) sur ${controles + erreurs.length} contrôles`);
 	for (const e of erreurs) console.error(`  ✗ ${e}`);
