@@ -2638,7 +2638,7 @@ for (const langue of ['fr', 'en']) {
 	for (const m of pa.matchAll(/icone: '([a-z0-9-]+)'|, '([a-z0-9-]+)', t\('/g)) verifier(lucide.includes(`'${m[1] || m[2]}': [`) || lucide.includes(`\t${m[1] || m[2]}: [`), `prompt 175 : icône « ${m[1] || m[2]} » absente de icones-lucide.js`);
 	// Composants du DS : interrupteur (état lisible sans la couleur) et curseur ; documentés
 	const ds175 = lire175('ds.js');
-	verifier(/function dsInterrupteur\(xDroite, y, actif, action, libelle, focus\)/.test(ds175) && /commun\.active' : 'commun\.desactive'/.test(ds175) && /function dsCurseur\(x, y, l, valeur, regler, noms\)/.test(ds175), 'prompt 175 : ds.js doit fournir dsInterrupteur (libellé Activé / Désactivé) et dsCurseur');
+	verifier(/function dsInterrupteur\(xDroite, y, actif, action, libelle, focus(, hauteur)?\)/.test(ds175) && /commun\.active' : 'commun\.desactive'/.test(ds175) && /function dsCurseur\(x, y, l, valeur, regler, noms(, hauteur)?\)/.test(ds175), 'prompt 175 : ds.js doit fournir dsInterrupteur (libellé Activé / Désactivé) et dsCurseur');
 	verifier(!/#[0-9a-fA-F]{6}/.test(ds175.match(/function dsInterrupteur[\s\S]*?\n\}/)[0] + ds175.match(/function dsCurseur[\s\S]*?\n\}/)[0]), 'prompt 175 : l\'interrupteur et le curseur lisent la palette (DS.primaire), aucune couleur en dur');
 	verifier(/dsInterrupteur\(/.test(lire175('notifs-tel.js').match(/function contenuCentreNotifications[\s\S]*?\n\}/)[0]), 'prompt 175 : « Ne pas déranger » du téléphone doit être un interrupteur du DS');
 	verifier(/### Interrupteur et curseur/.test(readFileSync(join(pub, '..', '..', 'design-system', 'DESIGN.md'), 'utf8')), 'prompt 175 : DESIGN.md doit documenter l\'interrupteur et le curseur');
@@ -3537,11 +3537,11 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	const menu = readFileSync(join(pub, 'menu.js'), 'utf8');
 	const extras = menu.slice(menu.indexOf('const EXTRAS_MENU'), menu.indexOf('const HAUT_MENU'));
 	const ordre = [...extras.matchAll(/cle: '(\w+)'/g)].map((x) => x[1]).join();
-	verifier(ordre === 'pleinEcran,installer,livrables,kitpresse,presentation,depot,partager', `prompt 199 : ordre clavier = ordre visuel (pile, puis rangée) (${ordre})`);
+	verifier(ordre === 'installer,livrables,kitpresse,presentation,depot,partager', `prompt 199 (214 : sans plein écran) : ordre clavier = ordre visuel (pile, puis rangée) (${ordre})`);
 	verifier(/function ouvrirKitPresse\(\) \{\s*annoncer\(t\('mp\.kitpresse\.annonce'\)\);\s*ouvrirLien\('\.\/kit-presse\/'\);/.test(menu) && /function ouvrirPresentation\(\) \{\s*annoncer\(t\('mp\.presentation\.annonce'\)\);\s*ouvrirLien\('\.\/presentation\/'\);/.test(menu) && /presse: 'newspaper'/.test(menu), 'prompt 199 : Kit de presse et Présentation gardés au menu (pages ./kit-presse/ et ./presentation/)');
 	const dessin = menu.slice(menu.indexOf('function dessinerMenuPrincipal'), menu.indexOf('function marqueExpo'));
-	const iL = dessin.indexOf('selecteurLangue('), iP = dessin.indexOf("'pleinEcran'), pleinEcranActif()"), iI = dessin.indexOf('boutonInstaller(xp, yp');
-	verifier(iL > 0 && iL < iP && iP < iI && /yp \+= HAUT_MENU\.h \+ 16/.test(dessin) && /let yp = HAUT_MENU\.y \+ HAUT_MENU\.h \+ 16/.test(dessin), 'prompt 199 : pile de haut en bas FR / EN, plein écran, télécharger, 16 px d\'écart');
+	const iL = dessin.indexOf('selecteurLangue('), iI = dessin.indexOf('boutonInstaller(xp, yp');
+	verifier(iL > 0 && iL < iI && !/pleinEcran/.test(dessin) && /let yp = HAUT_MENU\.y \+ HAUT_MENU\.h \+ 16/.test(dessin), 'prompt 199 (214) : pile de haut en bas FR / EN, télécharger, 16 px d\'écart ; plus de bouton plein écran');
 	verifier(/const LARGEUR_PILE = \(\) => LANGUES\.length \* \(84 \+ 8\) - 8/.test(menu), 'prompt 199 : même largeur pour les trois éléments de la pile');
 	verifier(/const BLOC_PARTAGE = \{ x: 160, y: H - 74 - 16 - 68, l: 68, h: 68 \}/.test(menu) && /const basPile = EXTRAS_MENU\.length \? BLOC_PARTAGE\.y - 24/.test(menu), 'prompt 199 : rangée sous la colonne des cartes, alignée à gauche (x des cartes)');
 	const rangee = menu.slice(menu.indexOf('const RANGEE_MENU'), menu.indexOf('function blocPartage'));
@@ -3554,7 +3554,7 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	const c = contexte('fr');
 	for (const langue of ['fr', 'en']) {
 		const dico = vm.runInContext(`TRADUCTIONS.${langue}`, c);
-		verifier(['livrables', 'kitpresse', 'presentation', 'depot', 'partager'].every((k) => dico['mp.' + k] && dico['mp.' + k + '.infobulle']) && dico['mp.installer'] && dico['mp.pleinEcran'], `prompt 199 : libellés et infobulles du menu (${langue})`);
+		verifier(['livrables', 'kitpresse', 'presentation', 'depot', 'partager'].every((k) => dico['mp.' + k] && dico['mp.' + k + '.infobulle']) && dico['mp.installer'] && !dico['mp.pleinEcran'], `prompt 199 : libellés et infobulles du menu (${langue})`);
 	}
 	verifier(existsSync(join(pub, 'kit-presse', 'index.html')) && existsSync(join(pub, 'kit-presse', 'communique-de-presse.txt')) && existsSync(join(pub, 'kit-presse', 'logo.svg')), 'prompt 188 : fichiers du kit de presse présents');
 }
@@ -3773,19 +3773,12 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	const badge = ds.slice(ds.indexOf('function dsBadge'), ds.indexOf('/** Interrupteur'));
 	verifier(/fill\(texteSurAplat\(aplat\)\)/.test(badge) && !/'#[0-9A-Fa-f]{6}'|daltonisme/.test(badge), 'prompt 193 : dsBadge choisit son texte par texteSurAplat, sans hexadécimal ni liste de palettes en dur');
 	verifier(/texte: texteSurAplat\(hex\)/.test(lire193('theme.js')), 'prompt 193 : accentDerive et le badge partagent texteSurAplat');
-	// 2. Plein écran : bouton de la ligne du haut, même logique que F, avant « installer » dans l'ordre clavier, masqué sans API
+	// 2. Plein écran (prompt 214) : plus de bouton au menu ; une seule logique (sketch.js), touche F et Paramètres
 	const menu = lire193('menu.js');
-	const extras = menu.slice(menu.indexOf('const EXTRAS_MENU'), menu.indexOf('/** Prompt 171 : ligne du haut'));
-	verifier(/pleinEcranPossible\(\) \? \[\{ cle: 'pleinEcran'[^\n]*basculerPleinEcran\(\)/.test(extras) && extras.indexOf("cle: 'pleinEcran'") < extras.indexOf("cle: 'installer'"), 'prompt 193 : entrée plein écran dans EXTRAS_MENU, juste avant installer, seulement si l\'API existe');
-	verifier(/boutonCarreHaut\(xp, yp, LARGEUR_PILE\(\), HAUT_MENU\.h, focusExtra\(e\.length, 'pleinEcran'\), pleinEcranActif\(\) \? 'minimize' : 'maximize', libellePleinEcranMenu\(\), basculerPleinEcran\)/.test(menu), 'prompt 193 (199 : sous FR / EN) : bouton plein écran, icône maximize / minimize, basculerPleinEcran réutilisé');
-	verifier(/annoncer\(choisi\(\)\.libelle \? choisi\(\)\.libelle\(\) : t\('mp\.' \+ choisi\(\)\.cle\)\)/.test(menu), 'prompt 193 : l\'annonce clavier suit l\'état du plein écran');
-	verifier((lire193('sketch.js').match(/requestFullscreen\(\)/g) || []).length === 1 && !/requestFullscreen|exitFullscreen/.test(menu), 'prompt 193 : une seule logique de plein écran (sketch.js)');
+	verifier(!/pleinEcran|PleinEcran/.test(menu), 'prompt 214 : plus de bouton plein écran dans le menu principal');
+	verifier((lire193('sketch.js').match(/requestFullscreen\(\)/g) || []).length === 1 && !/requestFullscreen|exitFullscreen/.test(menu + lire193('mobile.js')), 'prompt 193 : une seule logique de plein écran (sketch.js)');
 	const ic = lire193('icones-lucide.js');
-	verifier(/'maximize':/.test(ic) && /'minimize':/.test(ic), 'prompt 193 : icônes maximize / minimize disponibles');
-	for (const langue of ['fr', 'en']) {
-		const d = vm.runInContext(`TRADUCTIONS[${JSON.stringify(langue)}]`, contexte(langue));
-		verifier(/\(F\)$/.test(d['mp.pleinEcran'] || '') && /\(F\)$/.test(d['mp.pleinEcran.quitter'] || '') && d['mp.pleinEcran'] !== d['mp.pleinEcran.quitter'], `prompt 193 : libellés du bouton plein écran (${langue})`);
-	}
+	verifier(/'maximize':/.test(ic) && /'minimize':/.test(ic), 'prompt 193 : icônes maximize / minimize disponibles (interrupteur des Paramètres)');
 	// 3. Musique hors ligne : Range servi depuis le cache (206), morceaux précachés, repli WebAudio si le fichier échoue
 	const sw = lire193('sw.js');
 	verifier(/headers\.has\('range'\)\) \{\n\t\te\.respondWith\(caches\.match\(req\.url, \{ ignoreSearch: true \}\)\.then\(\(enCache\) => \(enCache \? reponsePartielle\(req, enCache\) : fetch\(req\)\)\)\);/.test(sw), 'prompt 193 : requêtes Range servies depuis le cache');
@@ -4369,6 +4362,41 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	verifier(/800 \* k/.test(readFileSync(join(pub, 'patron.js'), 'utf8')) && /650 \* kR/.test(readFileSync(join(pub, 'telephone-main.js'), 'utf8')), '208 : « Direction écrit… » et « … » des SMS suivent le rythme du texte');
 	const sk = readFileSync(join(pub, 'sketch.js'), 'utf8');
 	verifier(/function pauseAutomatique\(\)[\s\S]{0,200}Confort\.Reglages\.pauseAuto[\s\S]{0,200}MENU\.actif/.test(sk) && /visibilitychange', \(\) => document\.hidden && pauseAutomatique\(\)/.test(sk), '208 : pause auto liée à visibilitychange, désactivable, jamais au menu principal (démo d\'exposition)');
+}
+
+// ——— Prompt 214 : mobile — plein écran automatique au premier toucher, cibles ≥ 44 px CSS en portrait ———
+{
+	const mob = readFileSync(join(pub, 'mobile.js'), 'utf8');
+	const bloc = mob.slice(mob.indexOf('const PLEIN_ECRAN_AUTO'), mob.indexOf('function windowResized'));
+	const essai = (mobile, possible, actif, refus) => {
+		const c = vm.createContext({ MOBILE: { actif: mobile }, demandes: 0, document: { addEventListener() {} } });
+		vm.runInContext(`function pleinEcranPossible() { return ${possible}; } function pleinEcranActif() { return ${actif}; }
+			function entrerPleinEcran() { demandes++; return ${refus} ? Promise.reject(new Error('refus')) : Promise.resolve(); }` + bloc, c);
+		vm.runInContext('pleinEcranMobileAuto(); pleinEcranMobileAuto();', c);
+		return c;
+	};
+	verifier(essai(true, true, false, false).demandes === 1, '214 : sur mobile, une seule demande de plein écran (au premier toucher), pas à chaque toucher');
+	verifier(essai(false, true, false, false).demandes === 0, '214 : jamais de plein écran automatique sur ordinateur');
+	verifier(essai(true, false, false, false).demandes === 0 && essai(true, true, true, false).demandes === 0, '214 : rien sans API Fullscreen (iPhone) ni si le plein écran est déjà actif');
+	const r = essai(true, true, false, true);
+	await new Promise((ok) => setTimeout(ok, 0));
+	verifier(vm.runInContext('PLEIN_ECRAN_AUTO.fait', r) === false, '214 : demande refusée → nouvel essai au toucher suivant');
+	// Prompt 214 : chaque script du jeu se compile (une erreur de syntaxe dans un fichier que ce test n'exécute pas, comme
+	// parametres.js, passait inaperçue)
+	for (const f of readdirSync(pub).filter((x) => x.endsWith('.js'))) {
+		try {
+			new vm.Script(readFileSync(join(pub, f), 'utf8'), { filename: f });
+			verifier(true, '');
+		} catch (e) {
+			verifier(false, `214 : ${f} ne se compile pas : ${e.message}`);
+		}
+	}
+	verifier(/addEventListener\('touchend', pleinEcranMobileAuto/.test(mob), '214 : la demande part de touchend (geste qui autorise le plein écran ; touchstart ne compte pas)');
+	const pa = readFileSync(join(pub, 'parametres.js'), 'utf8');
+	verifier(/const hauteurCommandeParam = \(\) => \(portraitParam\(\) \? 74 : 44\)/.test(pa) && /dsInterrupteur\([^\n]*, hc\)/.test(pa) && /dsCurseur\([^\n]*, hc\)/.test(pa) && /selecteurLangue\(xd, cy, hc\)/.test(pa), '214 : commandes des Paramètres à 74 px en portrait (≥ 44 px CSS)');
+	verifier(/const hb = portrait \? 74 : 60/.test(pa), '214 : pied des Paramètres à 74 px en portrait');
+	verifier(/h: 124, texte: o\.label/.test(readFileSync(join(pub, 'portrait.js'), 'utf8')), '214 : boutons du bureau en portrait à 124 px (≥ 44 px CSS)');
+	verifier(/const suite = portrait && yy \+ 64 \+ th > y \+ h;[\s\S]{0,200}suiteFenetre\(/.test(readFileSync(join(pub, 'aide.js'), 'utf8')), '214 : aide en portrait — la liste du tutoriel passe dans la suite de la fenêtre si elle déborde');
 }
 
 if (erreurs.length) {

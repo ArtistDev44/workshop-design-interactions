@@ -37,6 +37,7 @@
 		nonMesParAppelant: {},
 		petits: new Map(), // prompt 98 : textes < 14 px à l'écran (validations.md « small-font-size »)
 		cibles: new Map(), // prompt 98 : cibles cliquables < 44 px (« small-touch-target »)
+		ciblesCSS: new Map(), // prompt 214 : cibles < 44 px CSS À L'ÉCRAN (échelle du canevas, régions du portrait comprises)
 		boutonsParEcran: {}, // prompt 98 : nombre de boutons cliquables par écran (« moins de boutons »)
 	};
 	const TOL = 1;
@@ -309,6 +310,39 @@
 				}
 			});
 		}
+		// Prompt 214 : taille RÉELLE des cibles à l'écran, en px CSS — ce que touche le doigt. Paysage / ordinateur : échelle du
+		// canevas 1920 × 1080 ; portrait : échelle de la région recomposée qui montre le bouton (invisible = non compté), et
+		// boutons propres au portrait (PORTRAIT.boutons) à l'échelle du canevas portrait
+		if (A.enParcours && A.enregistre && typeof boutons !== 'undefined') {
+			const noter = (nom, l, h, mn) => {
+				if (mn >= 44) return;
+				const k = A.ecran + '|' + nom;
+				const avant = A.ciblesCSS.get(k);
+				if (!avant || mn < avant.minCSS) A.ciblesCSS.set(k, { ecran: A.ecran, cible: nom, l: Math.round(l), h: Math.round(h), minCSS: Math.round(mn * 10) / 10 });
+			};
+			const portrait = typeof PORTRAIT !== 'undefined' && PORTRAIT.actif && PORTRAIT.canevas;
+			const nomB = (b) => String(b.titre || b.nom || (b.x | 0) + ',' + (b.y | 0));
+			if (portrait) {
+				const kP = PORTRAIT.canevas.getBoundingClientRect().width / PL;
+				boutons.forEach((b) => {
+					if (b.l >= L - 1 && b.h >= H - 1) return;
+					const cx = b.x + b.l / 2, cy = b.y + b.h / 2;
+					// Le bouton peut paraître dans plusieurs régions (image du bureau, puis loupe en dessous) : la plus grande compte
+					const rs = PORTRAIT.regions.filter((g) => cx >= g.src.x && cx <= g.src.x + g.src.l && cy >= g.src.y && cy <= g.src.y + g.src.h);
+					if (!rs.length) return; // hors des régions recomposées : pas à l'écran
+					const e = Math.max(...rs.map((g) => g.dst.l / g.src.l)) * kP;
+					noter('image:' + nomB(b), b.l * e, b.h * e, Math.min(b.l, b.h) * e);
+				});
+				(PORTRAIT.boutons || []).forEach((b) => noter('portrait:' + String(b.libelle || b.texte || b.titre || (b.x | 0) + ',' + (b.y | 0)), b.l * kP, b.h * kP, Math.min(b.l, b.h) * kP));
+			} else {
+				const cv = document.querySelector('#scene canvas.p5Canvas');
+				const k = cv ? cv.getBoundingClientRect().width / L : 1;
+				boutons.forEach((b) => {
+					if (b.l >= L - 1 && b.h >= H - 1) return;
+					noter(nomB(b), b.l * k, b.h * k, Math.min(b.l, b.h) * k);
+				});
+			}
+		}
 		// Contours fixes (aucun clignotement) : rouge = texte fautif, orange = sa zone
 		const ctx = drawingContext;
 		ctx.save();
@@ -347,6 +381,7 @@
 			defauts: liste,
 			petitsTextes: [...A.petits.values()],
 			petitesCibles: [...A.cibles.values()],
+			petitesCiblesCSS: [...A.ciblesCSS.values()], // prompt 214
 			boutonsParEcran: A.boutonsParEcran,
 		};
 	}
@@ -411,7 +446,7 @@
 		add('paramètres · son', () => (ouvrirParametres(1), (PARAM.focus = 1)), 12);
 		add('paramètres · son 2', () => pageParam(1), 12); // prompt 208 : volumes par canal (2 pages en portrait)
 		add('paramètres · accessibilité', () => (ouvrirParametres(2), (PARAM.focus = 5)), 12);
-		[2, 3].forEach((n) => add('paramètres · accessibilité ' + n, () => pageParam(1), 12)); // prompt 208 : sous-titres, rythme du texte
+		[2, 3, 4].forEach((n) => add('paramètres · accessibilité ' + n, () => pageParam(1), 12)); // prompt 208 : sous-titres, rythme du texte ; prompt 214 : 4 pages en portrait
 		add('paramètres · avancé', () => ouvrirParametres(3), 12);
 		[2, 3, 4, 5, 6].forEach((n) => add('paramètres · avancé ' + n, () => pageParam(1), 12)); // prompt 208 : pause auto, réinitialiser (6 pages en portrait)
 		add('paramètres · fermés', () => fermer(), 2);

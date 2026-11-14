@@ -228,8 +228,8 @@ function dsLargeurInterrupteur(actif, libelle) {
 	textSize(20);
 	return Math.ceil(textWidth(libelle || t(actif ? 'commun.active' : 'commun.desactive'))) + DS_INTERRUPTEUR.ecart + DS_INTERRUPTEUR.piste;
 }
-function dsInterrupteur(xDroite, y, actif, action, libelle, focus) {
-	const I = DS_INTERRUPTEUR;
+function dsInterrupteur(xDroite, y, actif, action, libelle, focus, hauteur) {
+	const I = Object.assign({}, DS_INTERRUPTEUR, hauteur ? { h: hauteur } : {}); // prompt 214 : plus haut en portrait (cible ≥ 44 px CSS)
 	const lib = libelle || t(actif ? 'commun.active' : 'commun.desactive');
 	noStroke();
 	const l = dsLargeurInterrupteur(actif, libelle);
@@ -329,9 +329,9 @@ const dsAnnonceSegment = (prefixe, i, n, lib) => t('ds.segment.annonce', { group
 /** Curseur à crans (prompt 175) : dix segments de 10 %, boutons − et +, valeur écrite à droite (« 70 % »).
  * regler(v) reçoit la nouvelle valeur (0 à 100, pas de 10) ; noms : [nom du bouton −, nom du bouton +] (infobulles).
  * Les segments pleins prennent la couleur principale ; les vides ne sont que bordés. Haut de 44 px. */
-function dsCurseur(x, y, l, valeur, regler, noms) {
-	const h = 44;
-	const lb = 44;
+function dsCurseur(x, y, l, valeur, regler, noms, hauteur) {
+	const h = hauteur || 44; // prompt 214 : 72 en portrait (cibles ≥ 44 px CSS)
+	const lb = h;
 	const lv = 84;
 	const px = x + lb + 12;
 	const lp = l - 2 * lb - 24 - lv;

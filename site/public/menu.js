@@ -273,15 +273,12 @@ function dessinerMenuPrincipal() {
 		carteMenu(x0, yc, 620, hs[i], t('mp.' + it.cle), it.sous, it.action, i === MENU.choix, it.icone, it.desactive);
 		yc += hs[i] + ecart;
 	});
-	// Prompt 199 : pile en haut à droite, de haut en bas — FR / EN, plein écran (prompt 193), télécharger (prompt 171) :
-	// même largeur et même hauteur, bord droit à la marge, 16 px d'écart ; en exposition (prompt 160), FR / EN seul
+	// Prompt 199 : pile en haut à droite, de haut en bas — FR / EN, télécharger (prompt 171) : même largeur et même hauteur,
+	// bord droit à la marge, 16 px d'écart ; en exposition (prompt 160), FR / EN seul. Prompt 214 : plus de bouton plein
+	// écran ici (touche F, Paramètres → Écran ; sur mobile, plein écran automatique au premier toucher, mobile.js)
 	selecteurLangue(L - HAUT_MENU.marge + 8, HAUT_MENU.y, HAUT_MENU.h); // selecteurLangue laisse 8 px à droite du dernier bouton
 	const xp = L - HAUT_MENU.marge - LARGEUR_PILE();
 	let yp = HAUT_MENU.y + HAUT_MENU.h + 16;
-	if (EXTRAS_MENU.some((x) => x.cle === 'pleinEcran')) {
-		boutonCarreHaut(xp, yp, LARGEUR_PILE(), HAUT_MENU.h, focusExtra(e.length, 'pleinEcran'), pleinEcranActif() ? 'minimize' : 'maximize', libellePleinEcranMenu(), basculerPleinEcran);
-		yp += HAUT_MENU.h + 16;
-	}
 	if (EXTRAS_MENU.some((x) => x.cle === 'installer')) boutonInstaller(xp, yp, focusExtra(e.length, 'installer'));
 	textAlign(LEFT, BOTTOM);
 	textFont(POLICE_DONNEES);
@@ -336,9 +333,8 @@ function marqueExpo() {
 /** Éléments focalisables après les cartes du menu (↑ ↓ / Tab) : pile du haut, puis rangée d'icônes (prompt 199) */
 // Prompt 160 : en exposition, ni plein écran, ni installation, ni Livrables, ni Dépôt, ni Partager (le visiteur suivant doit trouver le jeu)
 const EXTRAS_MENU = typeof EXPO !== 'undefined' && EXPO.actif ? [] : [
-	// Prompt 199 : ordre clavier ↑ ↓ / Tab = ordre visuel — la pile en haut à droite (plein écran, télécharger), puis la
-	// rangée d'icônes sous Paramètres (Livrables, Kit de presse, Présentation, Dépôt, Partager). Plein écran seulement si l'API Fullscreen existe.
-	...(pleinEcranPossible() ? [{ cle: 'pleinEcran', libelle: () => libellePleinEcranMenu(), action: () => basculerPleinEcran() }] : []),
+	// Prompt 199 : ordre clavier ↑ ↓ / Tab = ordre visuel — la pile en haut à droite (télécharger), puis la rangée
+	// d'icônes sous Paramètres (Livrables, Kit de presse, Présentation, Dépôt, Partager). Prompt 214 : bouton plein écran retiré.
 	{ cle: 'installer', action: () => installerJeu() },
 	{ cle: 'livrables', action: () => ouvrirLivrables() }, // prompt 136
 	{ cle: 'kitpresse', action: () => ouvrirKitPresse() }, // prompt 188
@@ -350,8 +346,6 @@ const EXTRAS_MENU = typeof EXPO !== 'undefined' && EXPO.actif ? [] : [
 const HAUT_MENU = { y: 56, h: 60, marge: 80 };
 /** Prompt 199 : largeur commune de la pile du haut = largeur du sélecteur FR / EN (boutons de 84 px, 8 px d'écart) */
 const LARGEUR_PILE = () => LANGUES.length * (84 + 8) - 8;
-/** Prompt 193 : libellé du bouton plein écran, selon l'état RÉEL (pleinEcranActif, sketch.js) */
-const libellePleinEcranMenu = () => t(pleinEcranActif() ? 'mp.pleinEcran.quitter' : 'mp.pleinEcran');
 /** Prompt 171 : bouton carré à icône « télécharger » (style contour des boutons de langue) — installe le jeu ;
  * l'icône n'est jamais seule : infobulle au survol et au focus, annonce « Installer le jeu » au clavier */
 function boutonInstaller(x, y, focus) {

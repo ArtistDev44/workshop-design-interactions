@@ -34,12 +34,16 @@ const volumeRegle = () => Math.round(Confort.Son.niveau() * 100);
 // 18 / 28 : à « Taille du texte 130 % » le texte monte à 23,4 px et tient encore dans son interligne
 const optionsDetailParam = (couleur) => ({ police: POLICE_TEXTE, taille: 18, interligne: 28, couleur: couleur || DS.blanc75 });
 const optionsTitreParam = () => ({ police: POLICE_TEXTE, taille: 20, interligne: 28, couleur: DS.blanc, style: BOLD });
+/** Prompt 214 : en portrait, la fenêtre (640 px) est recomposée ×0,6 environ sur un écran de 412 px : une commande de
+ * 44 px y ferait 27 px CSS. Les commandes passent à 72 px (≥ 44 px CSS), le pied de la fenêtre aussi. */
+const portraitParam = () => typeof PORTRAIT !== 'undefined' && PORTRAIT.actif;
+const hauteurCommandeParam = () => (portraitParam() ? 74 : 44); // 74 × 0,606 ≈ 44,8 px CSS (72 n'en donnait que 43,6)
 /** Largeur de la commande d'une carte (elle fixe la place laissée au nom du réglage, qui passe à la ligne au besoin) */
 function largeurCommandeParam(it, l) {
 	if (it.type === 'inter') return dsLargeurInterrupteur(it.etat(), it.libelle && it.libelle());
 	if (it.type === 'curseur') return Math.min(it.largeur || 430, l - 190); // prompt 208 : curseurs des canaux à 320 px, le nom tient à côté
 	if (it.type === 'langue') return LANGUES.length * 92;
-	if (it.type === 'couleur') return PALETTES_COULEUR.length * 50;
+	if (it.type === 'couleur') return portraitParam() ? 0 : PALETTES_COULEUR.length * 50; // prompt 214 : sous le nom en portrait
 	// Bouton à la largeur de son libellé (même police que bouton() : 15 px gras), borné à 150–340 px
 	textFont(POLICE_TEXTE);
 	textStyle(BOLD);
@@ -149,7 +153,7 @@ function reglagesParam(cle) {
 			bascule('son', R.son ? 'volume-2' : 'volume-x', t('param.son'), t('param.son.detail')),
 			{ id: 'volume', type: 'curseur', icone: 'sliders-horizontal', titre: t('param.volume'), detail: t('param.volume.detail'), valeur: volumeRegle, fixer: reglerVolumeParam, regler: (s) => reglerVolumeParam(volumeRegle() + 10 * s) },
 			// Prompt 208 : un volume par canal, multiplié par le volume maître
-			...Object.keys(CANAUX_PARAM).map((c) => ({ id: 'volume-' + c, type: 'curseur', icone: { musique: 'music', effets: 'bell', ambiance: 'cloud-rain' }[c], titre: t('param.volume.' + c), detail: t('param.volume.' + c + '.detail'), largeur: 320, valeur: () => volumeCanal(c), fixer: (v) => reglerCanalParam(c, v), regler: (s) => reglerCanalParam(c, volumeCanal(c) + 10 * s) })),
+			...Object.keys(CANAUX_PARAM).map((c) => ({ id: 'volume-' + c, type: 'curseur', icone: { musique: 'music', effets: 'bell', ambiance: 'cloud-rain' }[c], titre: t('param.volume.' + c), detail: t('param.volume.' + c + '.detail'), largeur: portraitParam() ? 400 : 320 /* prompt 214 : en portrait, barre ≥ 44 px CSS */, valeur: () => volumeCanal(c), fixer: (v) => reglerCanalParam(c, v), regler: (s) => reglerCanalParam(c, volumeCanal(c) + 10 * s) })),
 			choix('musique', 'music', t('param.musique'), t('param.musiqueCredits'), () => t('musique.' + (R.musique || 'coquillage')), musiqueSuivante),
 		];
 	if (cle === 'accessibilite')
@@ -223,11 +227,13 @@ function carteParam(it, i) {
 	const od = optionsDetailParam();
 	const ot = optionsTitreParam();
 	// Prompt 209 : en portrait, un bouton dont le libellé est long (morceau de musique) passe sous la carte, pleine largeur
-	const dessous = (l) => typeof PORTRAIT !== 'undefined' && PORTRAIT.actif && !['inter', 'curseur', 'langue', 'couleur', 'info'].includes(it.type) && largeurCommandeParam(it, l) >= 300;
+	const hc = hauteurCommandeParam(); // prompt 214
+	const nuancier = portraitParam() && it.type === 'couleur'; // prompt 214 : pastilles de 72 px sous le nom
+	const dessous = (l) => nuancier || (portraitParam() && !['inter', 'curseur', 'langue', 'couleur', 'info'].includes(it.type) && largeurCommandeParam(it, l) >= 300);
 	const lt = (l) => l - 54 - 16 - (dessous(l) ? 0 : largeurCommandeParam(it, l) + 16);
-	const he = (l) => Math.max(58, 16 + hauteurTexte(it.titre, lt(l), ot) + 12); // en-tête : nom (1 ou 2 lignes) et commande
+	const he = (l) => Math.max(hc + 14, 16 + hauteurTexte(it.titre, lt(l), ot) + 12); // en-tête : nom (1 ou 2 lignes) et commande
 	const hd = (l) => (it.detail ? hauteurTexte(it.detail, l - 32, od) + 6 : 0);
-	const hauteur = (l) => he(l) + hd(l) + (it.extra ? it.extra.h + 6 : 0) + 8 + (dessous(l) ? 84 : 0);
+	const hauteur = (l) => he(l) + hd(l) + (it.extra ? it.extra.h + 6 : 0) + 8 + (dessous(l) ? 86 : 0);
 	return {
 		i,
 		h: hauteur,
@@ -251,13 +257,14 @@ function carteParam(it, i) {
 			const xd = x + l - 16;
 			const cy = y + 7;
 			const lc = largeurCommandeParam(it, l);
-			if (it.type === 'inter') dsInterrupteur(xd, cy, it.etat(), () => activerParam(i), it.libelle && it.libelle(), false);
-			else if (it.type === 'curseur') dsCurseur(xd - lc, cy, lc, it.valeur(), (v) => ((PARAM.focus = i), it.fixer(v)), [t('param.volume.moins'), t('param.volume.plus')]);
-			else if (it.type === 'langue') selecteurLangue(xd, cy, 44);
+			if (it.type === 'inter') dsInterrupteur(xd, cy, it.etat(), () => activerParam(i), it.libelle && it.libelle(), false, hc);
+			else if (it.type === 'curseur') dsCurseur(xd - lc, cy, lc, it.valeur(), (v) => ((PARAM.focus = i), it.fixer(v)), [t('param.volume.moins'), t('param.volume.plus')], hc);
+			else if (it.type === 'langue') selecteurLangue(xd, cy, hc);
+			else if (nuancier) selecteurCouleur(xd, y + h - 86, 74);
 			else if (it.type === 'couleur') selecteurCouleur(xd, cy + 2, 40);
 			else if (it.type === 'info') dsTexte(etatParam(it), xd, cy + 12, 18, DS.blanc75, 'right');
-			else if (dessous(l)) bouton(x + 16, y + h - 84, l - 32, 72, etatParam(it), () => activerParam(i), false, true);
-			else bouton(xd - lc, cy, lc, 44, etatParam(it), () => activerParam(i), false, true);
+			else if (dessous(l)) bouton(x + 16, y + h - 86, l - 32, 74, etatParam(it), () => activerParam(i), false, true);
+			else bouton(xd - lc, cy, lc, hc, etatParam(it), () => activerParam(i), false, true);
 			dessinerTexte(it.titre, x + 54, y + 16, lt(l), ot);
 			textStyle(NORMAL);
 			if (it.detail) dessinerTexte(it.detail, x + 16, y + he(l), l - 32, od);
@@ -324,7 +331,8 @@ function fenetreParametres() {
 	const cx = x + 48;
 	const cy = y + 80 + rangees * ho + (rangees - 1) * 16 + 36;
 	const cl = l - 96;
-	const ch = y + h - 116 - cy;
+	const hb = portrait ? 74 : 60; // prompt 214 : pied à 74 px en portrait (≥ 44 px CSS)
+	const ch = y + h - 56 - hb - cy;
 	const items = reglagesParam(ONGLETS_PARAM[PARAM.onglet].cle);
 	PARAM.focus = constrain(PARAM.focus, -1, items.length - 1);
 	const pages = mettreEnPagesAide(items.map(carteParam), cx, cy, cl, ch, portrait ? 1 : 2, 10);
@@ -344,14 +352,16 @@ function fenetreParametres() {
 	pop();
 	textAlign(LEFT, TOP);
 	// ——— Pied : pages à gauche, rappel du clavier (ou note de la section « Avancé »), fermeture à droite ———
-	const by = y + h - 92;
+	const by = y + h - 32 - hb;
+	const lp = portrait ? 74 : 64;
 	let fx = cx;
 	if (PARAM.pages > 1) {
-		bouton(cx, by, 64, 60, '', () => pageParam(-1), PARAM.page === 0, true);
-		iconeLucide('arrow-left', cx + 20, by + 18, 24, PARAM.page === 0 ? 'rgba(255,255,255,0.5)' : '#FFFFFF');
-		dsTexte(t('aide.page', { n: PARAM.page + 1, total: PARAM.pages }), cx + 84, by + 18, 20, DS.blanc75, 'left');
-		bouton(cx + 240, by, 64, 60, '', () => pageParam(1), PARAM.page >= PARAM.pages - 1, true);
-		iconeLucide('arrow-right', cx + 260, by + 18, 24, PARAM.page >= PARAM.pages - 1 ? 'rgba(255,255,255,0.5)' : '#FFFFFF');
+		bouton(cx, by, lp, hb, '', () => pageParam(-1), PARAM.page === 0, true);
+		iconeLucide('arrow-left', cx + (lp - 24) / 2, by + (hb - 24) / 2, 24, PARAM.page === 0 ? 'rgba(255,255,255,0.5)' : '#FFFFFF');
+		dsTexte(t('aide.page', { n: PARAM.page + 1, total: PARAM.pages }), cx + lp + 20, by + (hb - 24) / 2, 20, DS.blanc75, 'left');
+		const x2 = cx + (portrait ? 224 : 240); // prompt 214 : 8 px avant « Fermer » en portrait
+		bouton(x2, by, lp, hb, '', () => pageParam(1), PARAM.page >= PARAM.pages - 1, true);
+		iconeLucide('arrow-right', x2 + (lp - 24) / 2, by + (hb - 24) / 2, 24, PARAM.page >= PARAM.pages - 1 ? 'rgba(255,255,255,0.5)' : '#FFFFFF');
 		fx = cx + 336;
 	}
 	if (!portrait) {
@@ -360,7 +370,7 @@ function fenetreParametres() {
 		const on = optionsDetailParam(DS.blanc50);
 		dessinerTexte(note, fx, by + 30 - hauteurTexte(note, fl, on) / 2, fl, on);
 	}
-	bouton(x + l - 48 - 240, by, 240, 60, t('commun.fermer'), fermer, false, true);
+	bouton(x + l - 48 - 240, by, 240, hb, t('commun.fermer'), fermer, false, true);
 	textAlign(LEFT, TOP);
 }
 

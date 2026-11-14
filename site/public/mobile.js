@@ -26,6 +26,24 @@ function majModeMobile() {
 	document.body.classList.toggle('mobile', MOBILE.actif);
 	activerPortrait(MOBILE.portrait); // prompt 60b : mise en page portrait dédiée (portrait.js)
 }
+// ——— Prompt 214 : sur mobile, le jeu se met en plein écran par défaut ———
+// Le navigateur n'accepte la demande que pendant un geste qui « active » la page : elle part donc du premier toucher
+// (touchend ; touchstart ne compte pas). Une seule réussite par chargement : si le joueur sort du plein écran (geste
+// retour, Paramètres → Écran), on ne l'y remet pas de force. Sans l'API (Safari sur iPhone, qui ne la donne qu'aux
+// vidéos), rien ne se passe : le jeu installé sur l'écran d'accueil s'ouvre déjà sans barres (manifest « fullscreen »).
+const PLEIN_ECRAN_AUTO = { fait: false };
+function pleinEcranMobileAuto() {
+	if (PLEIN_ECRAN_AUTO.fait || !MOBILE.actif) return;
+	if (typeof pleinEcranPossible !== 'function' || !pleinEcranPossible() || pleinEcranActif()) return void (PLEIN_ECRAN_AUTO.fait = true);
+	PLEIN_ECRAN_AUTO.fait = true;
+	try {
+		entrerPleinEcran().catch(() => (PLEIN_ECRAN_AUTO.fait = false)); // refusé : on retentera au toucher suivant
+	} catch (e) {
+		PLEIN_ECRAN_AUTO.fait = false;
+	}
+}
+if (typeof document !== 'undefined' && document.addEventListener) document.addEventListener('touchend', pleinEcranMobileAuto, { capture: true, passive: true });
+
 function windowResized() {
 	majModeMobile();
 }
