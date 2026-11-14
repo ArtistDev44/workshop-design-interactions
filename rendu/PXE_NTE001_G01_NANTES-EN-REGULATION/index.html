@@ -2,7 +2,7 @@
 <html lang="fr">
 	<head>
 		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" /><!-- prompt 210 : zoom par pincement autorisé (WCAG 1.4.4) -->
 		<meta name="apple-mobile-web-app-capable" content="yes" />
 		<meta name="mobile-web-app-capable" content="yes" />
 		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -126,7 +126,9 @@
 		</div>
 		<main id="scene" aria-label="Nantes en régulation — salle de contrôle des transports nantais">
 			<noscript>Ce jeu nécessite JavaScript. · This game requires JavaScript.</noscript>
-			<p id="annonces" class="sr-only" aria-live="polite"></p>
+			<div id="annonces" class="sr-only" role="log" aria-live="polite"></div><!-- prompt 210 : file d'annonces (lecteur-ecran.js) -->
+			<nav id="commandes-jeu" class="commandes-jeu" aria-label="Commandes de l’écran"></nav><!-- prompt 210 : boutons HTML miroirs des zones cliquables -->
+			<section id="texte-ecran" class="sr-only" aria-label="Texte de l’écran"></section>
 		</main>
 
 		<!-- Tout est local et relatif : le jeu fonctionne sans réseau et ouvert par double clic. -->
@@ -142,6 +144,7 @@
 		<script src="./data/loire.js"></script>
 		<script src="./gtfsrt.js"></script>
 		<script src="./i18n.js"></script>
+		<script src="./lecteur-ecran.js"></script><!-- prompt 210 : lecteurs d'écran (après i18n.js, avant l'initialisation de p5) -->
 		<script src="./sauvegarde.js"></script>
 		<script src="./game.js"></script>
 		<script src="./confort.js"></script>
@@ -164,6 +167,7 @@
 		<script src="./telephone-main.js"></script>
 		<script src="./histoire.js"></script>
 		<script src="./personnages.js"></script><!-- prompt 189 : ton du patron, trait, SMS météo de Camille -->
+		<script src="./posture.js"></script><!-- prompt 207 : posture du joueur, dix fins, galerie -->
 		<script src="./immersion.js"></script>
 		<script src="./mecaniques.js"></script>
 		<script src="./accessibilite.js"></script>

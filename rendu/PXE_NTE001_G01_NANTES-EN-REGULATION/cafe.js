@@ -22,6 +22,7 @@ function boireCafe() {
 	CAFE.boit = true;
 	CAFE.debutBu = millis();
 	CAFE.jour = cleJourCafe();
+	if (Jeu.noterPosture) Jeu.noterPosture('cafes'); // prompt 207 : vers la fin « burn-out »
 	ouvrir('cafe');
 	Confort.Son.clic();
 	annoncer(t('cafe.boire'));

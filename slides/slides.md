@@ -215,7 +215,7 @@ class: diapo-sources
 <table class="table-ds">
   <thead><tr><th scope="col">Source</th><th scope="col">Ce qu'elle donne au jeu</th><th scope="col">Licence</th></tr></thead>
   <tbody>
-    <tr v-click><td><a href="https://data.nantesmetropole.fr/explore/dataset/244400404_transports_commun_naolib_nantes_metropole_gtfs/">Naolib, offre et perturbations</a></td><td>GTFS + changelog daté</td><td>Licence Ouverte</td></tr>
+    <tr v-click><td><a href="https://data.nantesmetropole.fr/explore/dataset/244400404_transports_commun_naolib_nantes_metropole_gtfs/">Naolib, offre et perturbations</a></td><td>GTFS + changelog daté</td><td>ODbL (Semitan)</td></tr>
     <tr v-click><td>Naolib, temps réel</td><td>GTFS-RT, retards par ligne</td><td>Licence Ouverte</td></tr>
     <tr v-click><td><a href="https://data.nantesmetropole.fr/explore/dataset/244400404_agenda-evenements-nantes-metropole_v2/">Agenda de Nantes Métropole</a></td><td>événements de la semaine</td><td>Licence Ouverte</td></tr>
     <tr v-click><td><a href="https://open-meteo.com/">Météo Open-Meteo</a></td><td>archive ERA5, pluie à la fenêtre</td><td>CC BY 4.0</td></tr>

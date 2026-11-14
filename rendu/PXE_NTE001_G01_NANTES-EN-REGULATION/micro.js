@@ -19,6 +19,8 @@ const MICRO = {
 	mesures: { amp: 0, hauteur: 0, souffle: 0 },
 	forme: new Float32Array(128),
 	minuterieAnalyse: null,
+	jeton: 0, // prompt 210 : appui en cours (un relâchement l'incrémente)
+	demande: null, // prompt 210 : promesse getUserMedia en cours, partagée
 };
 const MICRO_APPUI_MS = 250;
 const microActive = () => Confort.Reglages.micro !== false && (typeof objetPresent !== 'function' || objetPresent('micro')); // prompt 104 : pas de micro avant qu'il soit posé
@@ -43,7 +45,7 @@ function toucheMRelachee() {
 }
 function keyReleased() {
 	if (Sauvegarde.dialogueOuvert || saisieOuRaccourciNavigateur() || (typeof rechercheMailsActive === 'function' && rechercheMailsActive())) return; // on tape dans une boîte de texte (prompt 174 : ou un champ HTML ; prompt 195 : ou la recherche de Mails)
-	if (key === 'm' || key === 'M') toucheMRelachee();
+	if ((key === 'm' || key === 'M') && !raccourciLettreBloque()) toucheMRelachee(); // prompt 210
 }
 function mouseReleased() {
 	if (typeof relacherJeton === 'function' && relacherJeton()) return; // prompt 102 : dépôt d'un jeton d'équipe
@@ -72,26 +74,49 @@ async function demarrerMicro(par) {
 	if (!S.ctx) return;
 	MICRO.ouvert = true;
 	MICRO.par = par;
+	const jeton = ++MICRO.jeton; // prompt 210 : chaque appui a son jeton ; un relâchement l'invalide
 	const c = S.ctx;
 	if (!MICRO.flux && !MICRO.refus) {
-		try {
-			if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('getUserMedia absent');
-			MICRO.flux = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
-			MICRO.source = c.createMediaStreamSource(MICRO.flux);
+		// Prompt 210 : une seule demande d'autorisation à la fois — un nouvel appui pendant la demande attend la même
+		// promesse au lieu d'ouvrir un second flux (l'ancien n'était jamais arrêté)
+		if (!MICRO.demande)
+			MICRO.demande = (async () => {
+				try {
+					if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('getUserMedia absent');
+					return await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+				} catch (e) {
+					MICRO.refus = true; // repli silencieux : source interne
+					return null;
+				}
+			})();
+		const flux = await MICRO.demande;
+		MICRO.demande = null;
+		if (flux && !MICRO.flux) {
+			MICRO.flux = flux;
+			MICRO.source = c.createMediaStreamSource(flux);
 			MICRO.analyseur = c.createAnalyser();
 			MICRO.analyseur.fftSize = 2048;
 			MICRO.source.connect(MICRO.analyseur); // jamais vers les haut-parleurs : pas de larsen
-		} catch (e) {
-			MICRO.refus = true; // repli silencieux : source interne
 		}
 	}
-	if (!MICRO.ouvert) return arreterMicro(); // relâché pendant la demande d'autorisation
+	if (jeton !== MICRO.jeton) {
+		if (!MICRO.ouvert) couperFluxMicro(); // relâché pendant la demande, sans nouvel appui : on ferme le flux arrivé
+		return; // sinon un appui plus récent s'en charge
+	}
+	if (!MICRO.ouvert) return arreterMicro();
 	MICRO.interne = !MICRO.analyseur;
 	if (MICRO.interne) {
 		PIECE.message = { texte: t('micro.indisponible'), objet: 'micro', jusqua: millis() + 4000 };
 		annoncer(t('micro.indisponible'));
 	} else annoncer(t('micro.on'));
+	clearInterval(MICRO.minuterieAnalyse);
 	MICRO.minuterieAnalyse = setInterval(analyserMicro, 50);
+}
+function couperFluxMicro() {
+	if (MICRO.flux) MICRO.flux.getTracks().forEach((p) => p.stop()); // le voyant micro du navigateur s'éteint
+	MICRO.flux = null;
+	MICRO.source = null;
+	MICRO.analyseur = null;
 }
 function arreterMicro() {
 	const etait = MICRO.ouvert;
@@ -99,12 +124,8 @@ function arreterMicro() {
 	clearInterval(MICRO.minuterieAnalyse);
 	MICRO.minuterieAnalyse = null;
 	MICRO.mesures = { amp: 0, hauteur: 0, souffle: 0 };
-	if (MICRO.flux) {
-		MICRO.flux.getTracks().forEach((p) => p.stop()); // le voyant micro du navigateur s'éteint
-		MICRO.flux = null;
-		MICRO.source = null;
-		MICRO.analyseur = null;
-	}
+	MICRO.jeton++; // prompt 210 : une demande encore en cours ne rouvrira pas le micro
+	couperFluxMicro();
 	if (etait) annoncer(t('micro.off'));
 }
 

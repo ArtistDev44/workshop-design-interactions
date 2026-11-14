@@ -118,7 +118,7 @@ function fondMenu() {
 
 /** Prompt 170 : icônes d'interface Lucide (icones-lucide.js), 48 px centrées dans le carré 56 × 56 ; les logos de
  * marque, absents de Lucide, restent en pixel art (iconeReseau) */
-const ICONES_MENU = { plus: 'plus', lecture: 'play', reglages: 'settings', aide: 'circle-question-mark', livre: 'book-open', presentation: 'presentation', retour: 'arrow-left', trophee: 'trophy', carnet: 'notebook-text', presse: 'newspaper', menu: 'menu', partage: 'share-2', lien: 'link' };
+const ICONES_MENU = { plus: 'plus', lecture: 'play', reglages: 'settings', aide: 'circle-question-mark', livre: 'book-open', retour: 'arrow-left', trophee: 'trophy', presentation: 'presentation', presse: 'newspaper', carnet: 'notebook-text', menu: 'menu', partage: 'share-2', lien: 'link' };
 function iconeMenu(type, x, y, c) {
 	push();
 	translate(x, y);
@@ -230,7 +230,9 @@ function dessinerMenuPrincipal() {
 	// même marge au bord (HAUT_MENU) ; plus de mention de code projet « PXE-… ». En portrait mobile, la colonne recadrée
 	// commence après le logo (portrait.js) : il n'y est pas dessiné, pour ne pas apparaître coupé.
 	if (!(typeof PORTRAIT !== 'undefined' && PORTRAIT.actif)) dessinerLogoPXE(HAUT_MENU.marge, HAUT_MENU.y, HAUT_MENU.h);
-	dsTitre(t('accueil.titre'), x0, 160, 88, MENU_C.blanc, 'left'); // titre au style pixel (Bitsy Pixels)
+	// Prompt 205 : en portrait, la colonne recadrée fait 908 px (x 110 → 1018) ; à 88 px le titre en sortait
+	// (« Nantes en régulat… ») — 64 px y tiennent (≈ 28 px CSS sur un écran de 412 px)
+	dsTitre(t('accueil.titre'), x0, typeof PORTRAIT !== 'undefined' && PORTRAIT.actif ? 172 : 160, typeof PORTRAIT !== 'undefined' && PORTRAIT.actif ? 64 : 88, MENU_C.blanc, 'left'); // titre au style pixel (Bitsy Pixels)
 	noStroke();
 	textAlign(LEFT, TOP);
 	textFont(POLICE_DONNEES);
@@ -245,7 +247,9 @@ function dessinerMenuPrincipal() {
 	// Prompt 120 : pile calculée dans l'espace disponible (sous-titre du jeu → pied de page, 16 px de marge) :
 	// cartes normales si elles tiennent, sinon compactes ; l'écart se répartit (6 px au moins, 30 au plus)
 	let yc = 370;
-	const basPile = H - 74 - 16; // prompt 125 : le pied de page n'a plus qu'une ligne (nos noms, à H − 40) ; 16 px de marge
+	// prompt 125 : le pied de page n'a plus qu'une ligne (nos noms, à H − 40) ; 16 px de marge ; prompt 199 : la rangée
+	// Livrables · Dépôt · Partager se place sous les cartes (24 px d'écart), sauf en exposition où elle n'existe pas
+	const basPile = EXTRAS_MENU.length ? BLOC_PARTAGE.y - 24 : H - 74 - 16;
 	const hauteurs = (c) => e.map((it) => (it.sous ? (c ? 92 : 104) : c ? 72 : 84));
 	const somme = (hs) => hs.reduce((a, b) => a + b, 0);
 	let hs = hauteurs(false);
@@ -255,14 +259,16 @@ function dessinerMenuPrincipal() {
 		carteMenu(x0, yc, 620, hs[i], t('mp.' + it.cle), it.sous, it.action, i === MENU.choix, it.icone, it.desactive);
 		yc += hs[i] + ecart;
 	});
-	// Prompt 171 : FR / EN puis l'icône « télécharger » (installer le jeu, prompt 65), bord droit à la marge
-	const avecInstaller = EXTRAS_MENU.some((x) => x.cle === 'installer'); // pas en exposition (prompt 160)
-	const xi = L - HAUT_MENU.marge - HAUT_MENU.h;
-	const xLangue = avecInstaller ? xi : L - HAUT_MENU.marge + 8;
-	selecteurLangue(xLangue, HAUT_MENU.y, HAUT_MENU.h); // selecteurLangue laisse 8 px à droite du dernier bouton
-	if (avecInstaller) boutonInstaller(xi, HAUT_MENU.y, HAUT_MENU.h, focusExtra(e.length, 'installer'));
-	// Prompt 193 : plein écran (même logique que la touche F et l'interrupteur des paramètres) à gauche de FR / EN
-	if (EXTRAS_MENU.some((x) => x.cle === 'pleinEcran')) boutonCarreHaut(xLangue - LANGUES.length * (84 + 8) - 8 - HAUT_MENU.h, HAUT_MENU.y, HAUT_MENU.h, focusExtra(e.length, 'pleinEcran'), pleinEcranActif() ? 'minimize' : 'maximize', libellePleinEcranMenu(), basculerPleinEcran);
+	// Prompt 199 : pile en haut à droite, de haut en bas — FR / EN, plein écran (prompt 193), télécharger (prompt 171) :
+	// même largeur et même hauteur, bord droit à la marge, 16 px d'écart ; en exposition (prompt 160), FR / EN seul
+	selecteurLangue(L - HAUT_MENU.marge + 8, HAUT_MENU.y, HAUT_MENU.h); // selecteurLangue laisse 8 px à droite du dernier bouton
+	const xp = L - HAUT_MENU.marge - LARGEUR_PILE();
+	let yp = HAUT_MENU.y + HAUT_MENU.h + 16;
+	if (EXTRAS_MENU.some((x) => x.cle === 'pleinEcran')) {
+		boutonCarreHaut(xp, yp, LARGEUR_PILE(), HAUT_MENU.h, focusExtra(e.length, 'pleinEcran'), pleinEcranActif() ? 'minimize' : 'maximize', libellePleinEcranMenu(), basculerPleinEcran);
+		yp += HAUT_MENU.h + 16;
+	}
+	if (EXTRAS_MENU.some((x) => x.cle === 'installer')) boutonInstaller(xp, yp, focusExtra(e.length, 'installer'));
 	textAlign(LEFT, BOTTOM);
 	textFont(POLICE_DONNEES);
 	textSize(18);
@@ -270,8 +276,29 @@ function dessinerMenuPrincipal() {
 	// Prompt 124 : plus de ligne d'aide clavier sous les cartes (elle nuisait à l'immersion)
 	// Prompt 125 : plus de ligne « Données réelles… » ni de lien de licence ici — tout est dans l'écran Crédits
 	piedCredits(x0, H - 40, e.length);
-	blocPartage(e.length);
+	avertissementContenu(x0);
+	blocPartage(e.length, Math.min(BLOC_PARTAGE.y, yc - ecart + 24)); // prompt 199 : 24 px sous Paramètres, jamais sur le pied de page
 	if (typeof EXPO !== 'undefined' && EXPO.actif) marqueExpo();
+}
+/** Prompt 210 : avertissement de contenu et âge conseillé, toujours visibles sur l'écran titre (audit 206, constat 1).
+ * Paysage : à droite du pied de page (à gauche de la marque EXPO) ; portrait : au-dessus des noms, dans la colonne recadrée. */
+function avertissementContenu(x0) {
+	const expo = typeof EXPO !== 'undefined' && EXPO.actif;
+	const portrait = typeof PORTRAIT !== 'undefined' && PORTRAIT.actif;
+	textFont(POLICE_DONNEES);
+	textStyle(NORMAL);
+	textSize(18);
+	noStroke();
+	fill(MENU_C.doux);
+	const txt = t(expo ? 'mp.avertissement.expo' : 'mp.avertissement');
+	if (portrait) {
+		textAlign(LEFT, BOTTOM);
+		text(txt, x0, H - 74);
+	} else {
+		textAlign(RIGHT, BOTTOM);
+		text(txt, expo ? L - 80 - textWidth('EXPO') - 24 - 24 : L - 80, H - 40);
+	}
+	textAlign(LEFT, TOP);
 }
 /** Prompt 160 : marque discrète « EXPO » en bas à droite de l'écran titre (blanc sur pastille nuit opaque : ≈ 19:1, quel que soit le fond flouté) */
 function marqueExpo() {
@@ -292,49 +319,52 @@ function marqueExpo() {
 }
 
 // ——— Prompt 81 : crédits, dépôt et partage (écran titre uniquement) ; prompt 125 : la licence est dans les Crédits ———
-/** Éléments focalisables après les cartes du menu (↑ ↓ / Tab) : dépôt, partager, présentation (prompt 125 : plus de licence) */
-// Prompt 160 : en exposition, ni Livrables, ni Dépôt, ni Partager, ni Présentation (le visiteur suivant doit trouver le jeu)
+/** Éléments focalisables après les cartes du menu (↑ ↓ / Tab) : pile du haut, puis rangée d'icônes (prompt 199) */
+// Prompt 160 : en exposition, ni plein écran, ni installation, ni Livrables, ni Dépôt, ni Partager (le visiteur suivant doit trouver le jeu)
 const EXTRAS_MENU = typeof EXPO !== 'undefined' && EXPO.actif ? [] : [
-	{ cle: 'livrables', action: () => ouvrirLivrables() }, // prompt 136 : au-dessus des trois boutons, donc en premier
-	{ cle: 'kitpresse', action: () => ouvrirKitPresse() }, // prompt 188 : rangée entre Livrables et les trois boutons
-	{ cle: 'depot', action: () => ouvrirLien(DEPOT_URL) },
-	{ cle: 'partager', action: () => ouvrirPartage() },
-	{ cle: 'presentation', action: () => ouvrirPresentation() }, // page /presentation/ (diaporama Slidev, prompt 82)
-	// Prompt 193 : bouton plein écran de la ligne du haut (à gauche de FR / EN), seulement si l'API Fullscreen existe
+	// Prompt 199 : ordre clavier ↑ ↓ / Tab = ordre visuel — la pile en haut à droite (plein écran, télécharger), puis la
+	// rangée d'icônes sous Paramètres (Livrables, Kit de presse, Présentation, Dépôt, Partager). Plein écran seulement si l'API Fullscreen existe.
 	...(pleinEcranPossible() ? [{ cle: 'pleinEcran', libelle: () => libellePleinEcranMenu(), action: () => basculerPleinEcran() }] : []),
-	{ cle: 'installer', action: () => installerJeu() }, // prompt 171 : icône « télécharger » en haut à droite, dernière avant de reboucler sur « Nouvelle partie »
+	{ cle: 'installer', action: () => installerJeu() },
+	{ cle: 'livrables', action: () => ouvrirLivrables() }, // prompt 136
+	{ cle: 'kitpresse', action: () => ouvrirKitPresse() }, // prompt 188
+	{ cle: 'presentation', action: () => ouvrirPresentation() }, // prompt 82
+	{ cle: 'depot', action: () => ouvrirLien(DEPOT_URL) },
+	{ cle: 'partager', action: () => ouvrirPartage() }, // dernière avant de reboucler sur « Nouvelle partie »
 ];
 /** Prompt 171 : ligne du haut de l'écran titre (logo à gauche, langue + installation à droite) */
 const HAUT_MENU = { y: 56, h: 60, marge: 80 };
+/** Prompt 199 : largeur commune de la pile du haut = largeur du sélecteur FR / EN (boutons de 84 px, 8 px d'écart) */
+const LARGEUR_PILE = () => LANGUES.length * (84 + 8) - 8;
 /** Prompt 193 : libellé du bouton plein écran, selon l'état RÉEL (pleinEcranActif, sketch.js) */
 const libellePleinEcranMenu = () => t(pleinEcranActif() ? 'mp.pleinEcran.quitter' : 'mp.pleinEcran');
 /** Prompt 171 : bouton carré à icône « télécharger » (style contour des boutons de langue) — installe le jeu ;
  * l'icône n'est jamais seule : infobulle au survol et au focus, annonce « Installer le jeu » au clavier */
-function boutonInstaller(x, y, c, focus) {
-	boutonCarreHaut(x, y, c, focus, 'download', t('mp.installer'), installerJeu);
+function boutonInstaller(x, y, focus) {
+	boutonCarreHaut(x, y, LARGEUR_PILE(), HAUT_MENU.h, focus, 'download', t('mp.installer'), installerJeu);
 }
-/** Prompts 171 / 193 : bouton carré à icône de la ligne du haut (installer, plein écran) — infobulle au survol et au
- * focus, sous le bouton et alignée sur son bord droit */
-function boutonCarreHaut(x, y, c, focus, icone, bulle, action) {
-	const survol = mouseX >= x && mouseX <= x + c && mouseY >= y && mouseY <= y + c;
+/** Prompts 171 / 193 / 199 : bouton à icône seule de la pile du haut (plein écran, installer) — l × h, l'icône jamais
+ * seule : infobulle au survol et au focus, à gauche du bouton (sous lui, elle couvrirait le bouton suivant de la pile) */
+function boutonCarreHaut(x, y, l, h, focus, icone, bulle, action) {
+	const survol = mouseX >= x && mouseX <= x + l && mouseY >= y && mouseY <= y + h;
 	fill(survol || focus ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.05)');
 	stroke('#FFFFFF');
 	strokeWeight(2);
-	rect(x + 1, y + 1, c - 2, c - 2);
+	rect(x + 1, y + 1, l - 2, h - 2);
 	if (survol || focus) {
 		// même double bordure que bouton() au survol ; rouge au focus clavier, comme les autres éléments du menu
 		noFill();
 		stroke(focus ? DS.primaireTrait : '#FFFFFF');
 		strokeWeight(focus ? 4 : 2);
-		rect(x - 6, y - 6, c + 12, c + 12);
+		rect(x - 6, y - 6, l + 12, h + 12);
 	}
 	noStroke();
-	iconeLucide(icone, x + (c - 32) / 2, y + (c - 32) / 2, 32, '#FFFFFF');
-	boutons.push({ x, y, l: c, h: c, action });
+	iconeLucide(icone, x + (l - 32) / 2, y + (h - 32) / 2, 32, '#FFFFFF');
+	boutons.push({ x, y, l, h, action, titre: bulle }); // prompt 210 : libellé pour les lecteurs d'écran (lecteur-ecran.js)
 	if (survol || focus) {
 		textFont(POLICE_DONNEES);
 		textSize(18);
-		infobulle(bulle, x + c - (textWidth(bulle) + 28), y + c + 14); // sous le bouton, alignée sur le bord droit
+		infobulle(bulle, x - (textWidth(bulle) + 28) - 16, y + (h - 40) / 2); // à gauche du bouton, centrée sur lui
 		textAlign(LEFT, TOP);
 	}
 }
@@ -356,8 +386,9 @@ function piedCredits(x, y, n) {
 	boutons.push({ x: x - 8, y: y - 34, l: cw + 16, h: 46, action: () => ouvrirCredits() });
 	if (survolC) infobulle(t('mp.credits.infobulle'), x, y - 76);
 }
-/** Bouton à icône du bloc bas droite (style des cartes du menu, focus en double bordure) */
-function boutonIcone(x, y, l, h, icone, libelle, action, focus) {
+/** Prompt 199 : bouton à icône seule de la rangée Livrables · Kit de presse · Présentation · Dépôt · Partager (style des cartes du menu, focus en
+ * double bordure) ; le libellé est dans l'infobulle (blocPartage) — renvoie le survol */
+function boutonIcone(x, y, l, h, icone, action, focus) {
 	const survol = mouseX >= x && mouseX <= x + l && mouseY >= y && mouseY <= y + h;
 	const actif = survol || focus;
 	noStroke();
@@ -371,17 +402,10 @@ function boutonIcone(x, y, l, h, icone, libelle, action, focus) {
 		noStroke();
 	}
 	push();
-	translate(x + 10, y + (h - 56 * 0.8) / 2);
+	translate(x + (l - 56 * 0.8) / 2, y + (h - 56 * 0.8) / 2);
 	scale(0.8);
 	iconeMenu(icone, 0, 0, actif ? MENU_C.bleu : MENU_C.blanc);
 	pop();
-	textFont(POLICE_TEXTE);
-	textStyle(BOLD);
-	textAlign(LEFT, CENTER);
-	ajusterTaille(libelle, l - 74, 24, 14);
-	fill(actif ? MENU_C.encre : MENU_C.blanc);
-	text(libelle, x + 64, y + h / 2);
-	textStyle(NORMAL);
 	if (focus) {
 		noFill();
 		stroke(DS.primaireTrait);
@@ -392,23 +416,28 @@ function boutonIcone(x, y, l, h, icone, libelle, action, focus) {
 	boutons.push({ x, y, l, h, action });
 	return survol;
 }
-const BLOC_PARTAGE = { x: L - 80 - 3 * 260 - 2 * 16, y: H - 40 - 68, l: 260, h: 68 }; // demande du 11/11 : + bouton Présentation // 68 px : ≥ 44 px à l'écran en portrait mobile
-function blocPartage(n) {
+/** Prompt 199 : rangée de 5 boutons à icône seule sous la colonne des cartes, alignée à gauche sous Paramètres ;
+ * 68 px de côté : ≥ 44 px à l'écran en portrait mobile ; bas de la rangée à 16 px au-dessus du pied de page */
+const BLOC_PARTAGE = { x: 160, y: H - 74 - 16 - 68, l: 68, h: 68 };
+const RANGEE_MENU = [
+	{ cle: 'livrables', icone: 'carnet', action: () => ouvrirLivrables() },
+	{ cle: 'kitpresse', icone: 'presse', action: () => ouvrirKitPresse() },
+	{ cle: 'presentation', icone: 'presentation', action: () => ouvrirPresentation() },
+	{ cle: 'depot', icone: 'github', action: () => ouvrirLien(DEPOT_URL) },
+	{ cle: 'partager', icone: 'partage', action: () => ouvrirPartage() },
+];
+function blocPartage(n, y) {
 	if (!EXTRAS_MENU.length) return; // prompt 160 : mode exposition
-	const b = BLOC_PARTAGE;
-	const s1 = boutonIcone(b.x, b.y, b.l, b.h, 'github', t('mp.depot'), () => ouvrirLien(DEPOT_URL), focusExtra(n, 'depot'));
-	const s2 = boutonIcone(b.x + b.l + 16, b.y, b.l, b.h, 'partage', t('mp.partager'), ouvrirPartage, focusExtra(n, 'partager'));
-	const s3 = boutonIcone(b.x + 2 * (b.l + 16), b.y, b.l, b.h, 'presentation', t('mp.presentation'), ouvrirPresentation, focusExtra(n, 'presentation'));
-	// Prompt 136 : « Livrables » sur toute la largeur des trois boutons ; prompt 188 : « Kit de presse » juste au-dessus des
-	// trois boutons, Livrables une rangée plus haut (ordre visuel de haut en bas = ordre clavier ↑ ↓ / Tab)
-	const s0 = boutonIcone(b.x, b.y - 2 * (b.h + 16), 3 * b.l + 32, b.h, 'carnet', t('mp.livrables'), ouvrirLivrables, focusExtra(n, 'livrables'));
-	const sk = boutonIcone(b.x, b.y - b.h - 16, 3 * b.l + 32, b.h, 'presse', t('mp.kitpresse'), ouvrirKitPresse, focusExtra(n, 'kitpresse'));
-	const bulle = s0 || focusExtra(n, 'livrables') ? t('mp.livrables.infobulle') : sk || focusExtra(n, 'kitpresse') ? t('mp.kitpresse.infobulle') : s1 || focusExtra(n, 'depot') ? t('mp.depot.infobulle') : s2 || focusExtra(n, 'partager') ? t('mp.partager.infobulle') : s3 || focusExtra(n, 'presentation') ? t('mp.presentation.infobulle') : null;
-	if (bulle) {
-		textFont(POLICE_DONNEES);
-		textSize(18);
-		infobulle(bulle, Math.min(b.x, L - 24 - (textWidth(bulle) + 28)), b.y - 2 * (b.h + 16) - 52); // reste dans l'écran, au-dessus des deux rangées
-	}
+	const b = Object.assign({}, BLOC_PARTAGE, { y: y === undefined ? BLOC_PARTAGE.y : y });
+	BLOC_PARTAGE.yDessin = b.y; // pour les régions du portrait mobile (portrait.js)
+	let bulle = null;
+	RANGEE_MENU.forEach((r, i) => {
+		const focus = focusExtra(n, r.cle);
+		const survol = boutonIcone(b.x + i * (b.l + 16), b.y, b.l, b.h, r.icone, r.action, focus);
+		if (boutons.length) boutons[boutons.length - 1].titre = t('mp.' + r.cle); // prompt 210 : icône seule → libellé pour les lecteurs d'écran
+		if (focus || (survol && !bulle)) bulle = t('mp.' + r.cle) + ' — ' + t('mp.' + r.cle + '.infobulle'); // le libellé passe de l'écran à l'infobulle
+	});
+	if (bulle) infobulle(bulle, b.x + RANGEE_MENU.length * (b.l + 16) + 8, b.y + (b.h - 40) / 2); // à droite de la rangée, sur sa ligne
 	textAlign(LEFT, TOP);
 }
 

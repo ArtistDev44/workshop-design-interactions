@@ -179,7 +179,7 @@ function dsBouton(x, y, l, h, label, action, variante, desactive, sansChevron) {
 	zoneTexteDebut('bouton', x, y, l, h); // prompt 93
 	text(libelle, x + l / 2, y + h / 2);
 	zoneTexteFin();
-	if (!desactive) boutons.push({ x, y, l, h, action });
+	if (!desactive) boutons.push({ x, y, l, h, action, titre: label ? String(label) : undefined }); // prompt 210 : libellé (lecteur-ecran.js)
 }
 
 /** Badge (compteur / statut) : type 'erreur' | 'succes' | 'alerte' | 'info' */
