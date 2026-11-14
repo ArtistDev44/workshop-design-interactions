@@ -764,6 +764,23 @@ function bandeBords(c, e) {
 		ctx.fillRect(rx, ry, rl, rh);
 	});
 }
+let cPiecePoste = null;
+const CACHE_POSTE = { cle: '', t: -1e9 };
+function pieceFloueAuPoste(ox, oy, echelle) {
+	if (!cPiecePoste) cPiecePoste = canevas(L, H);
+	const cle = Math.round(ox) + ',' + Math.round(oy) + ',' + echelle.toFixed(3);
+	if (cle !== CACHE_POSTE.cle || millis() - CACHE_POSTE.t > 500) {
+		const c = cPiecePoste.getContext('2d');
+		c.clearRect(0, 0, L, H);
+		c.imageSmoothingEnabled = false;
+		c.filter = 'blur(2px) brightness(0.85)';
+		c.drawImage(gBureau.elt, ox, oy, L * echelle, H * echelle);
+		c.filter = 'none';
+		CACHE_POSTE.cle = cle;
+		CACHE_POSTE.t = millis();
+	}
+	drawingContext.drawImage(cPiecePoste, 0, 0, L, H);
+}
 function masqueFlouEtVignette(ox, oy, echelle) {
 	if (!cMasqueFlou) {
 		cPieceFloue = canevas(BW, BH);
@@ -874,8 +891,12 @@ function composerVue() {
 	const ox = r.x - e.x * echelle;
 	const oy = r.y - e.y * echelle;
 	const flou = auPoste; // la pièce n'est floutée qu'au poste (derrière le moniteur) ; plus de flou au bureau en temps accéléré
-	if (flou && !reduireAnimations) drawingContext.filter = auPoste ? 'blur(2px) brightness(0.85)' : 'blur(1.5px)';
-	if (auPoste || !COUCHES_PIECE[0].g) {
+	if (flou && !reduireAnimations) {
+		// Prompt 210 (audit 206, constat 8) : le flou plein écran recalculé à chaque image plafonnait le poste à ≈ 15 FPS.
+		// La pièce floutée est mise en cache et n'est refaite que si le cadrage change (zoom, caméra) ou toutes les
+		// 500 ms (horloge, pluie, lampe derrière le moniteur : invisibles à cette cadence sous le flou).
+		pieceFloueAuPoste(ox, oy, echelle);
+	} else if (auPoste || !COUCHES_PIECE[0].g) {
 		push();
 		translate(ox, oy);
 		scale(echelle);

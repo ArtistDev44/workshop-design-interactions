@@ -1175,6 +1175,7 @@ if (typeof document !== 'undefined' && document.addEventListener) document.addEv
 function saisieOuRaccourciNavigateur() {
 	const a = typeof document !== 'undefined' ? document.activeElement : null;
 	if (a && (/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) || a.isContentEditable)) return true;
+	if (a && a.closest && a.closest('#nouvelle-version, #commandes-jeu')) return true; // prompt 210
 	return keyIsDown(CONTROL) || keyIsDown(ALT) || keyIsDown(91) || keyIsDown(93);
 }
 function keyPressed() {

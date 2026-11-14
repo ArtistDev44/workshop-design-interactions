@@ -1522,7 +1522,9 @@
 	};
 	Jeu.chargerMessages(global.MESSAGES); // data/messages.js (double clic, hors ligne)
 	// Servi par un serveur : on relit le JSON brut, pour qu'une modification à la main soit prise sans rien régénérer
-	if (typeof fetch === 'function' && global.location && global.location.protocol !== 'file:')
+	// Prompt 210 : en développement local seulement — en ligne, messages.js (généré au build depuis ce JSON) suffit, le
+	// second chargement (499 Ko, sans cache) pesait ≈ 30 % de la première visite
+	if (typeof fetch === 'function' && global.location && global.location.protocol !== 'file:' && /^(localhost|127\.0\.0\.1|\[::1\])$/.test(global.location.hostname || ''))
 		fetch('./data/messages.json', { cache: 'no-store' })
 			.then((r) => (r.ok ? r.json() : null))
 			.then((d) => d && Jeu.chargerMessages(d))

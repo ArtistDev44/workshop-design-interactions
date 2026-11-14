@@ -3783,7 +3783,7 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	// 3. Musique hors ligne : Range servi depuis le cache (206), morceaux précachés, repli WebAudio si le fichier échoue
 	const sw = lire193('sw.js');
 	verifier(/headers\.has\('range'\)\) \{\n\t\te\.respondWith\(caches\.match\(req\.url, \{ ignoreSearch: true \}\)\.then\(\(enCache\) => \(enCache \? reponsePartielle\(req, enCache\) : fetch\(req\)\)\)\);/.test(sw), 'prompt 193 : requêtes Range servies depuis le cache');
-	for (const f of readdirSync(join(pub, 'audio')).filter((f) => /\.(ogg|mp3)$/.test(f))) verifier(sw.includes(`"./audio/${f}"`), `prompt 193 : ${f} doit être précaché`);
+	for (const f of readdirSync(join(pub, 'audio')).filter((f) => /\.mp3$/.test(f))) verifier(sw.includes(`"./audio/${f}"`), `prompt 193 : ${f} doit être précaché (prompt 210 : MP3 seul, lu partout)`);
 	verifier(readFileSync(join(pub, '..', 'scripts', 'generer-sw.mjs'), 'utf8').includes('reponsePartielle\\(req, enCache\\)'), 'prompt 193 : le générateur refuse un sw.js sans lecture partielle depuis le cache');
 	if (typeof Response === 'function' && typeof Blob === 'function') {
 		const fn = sw.slice(sw.indexOf('function reponsePartielle'));

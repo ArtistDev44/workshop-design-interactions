@@ -143,7 +143,7 @@ Les décisions de jeu (Q1–Q61, `jeu/`) et les prompts ont été rédigés en a
 
 ## Sources / droits
 
-- Données : Open Data Nantes Métropole (Naolib GTFS / GTFS-RT, agenda) — Licence Ouverte ; Open-Meteo — CC BY 4.0 (vérifié le 10/11/2026, attribution requise) ; jeux du prompt 11 (dont Air Pays de la Loire) — Licence Ouverte ou ODbL selon le jeu (champ `licence` de `src/lib/datasets.js`).
+- Données : Open Data Nantes Métropole : GTFS Naolib — ODbL, éditeur Semitan ; GTFS-RT et agenda — Licence Ouverte (vérifié le 14/11/2026) ; OpenStreetMap (`data/lieux.json`) — ODbL ; Open-Meteo — CC BY 4.0 (vérifié le 10/11/2026, attribution requise) ; jeux du prompt 11 (dont Air Pays de la Loire) — Licence Ouverte ou ODbL selon le jeu (champ `licence` de `src/lib/datasets.js`).
 - Code : licence MIT (Mattéo Brevet & Guillaume Renoult), voir `LICENSE` à la racine.
 - Textes : framework PATRIMOINE.EXE et livret étudiant Nantes 001 (ESD Nantes, 2026).
 - Design : couleurs et échelle inspirées des tokens extraits de metropole.nantes.fr ; ce site n'est pas un site officiel de Nantes Métropole.

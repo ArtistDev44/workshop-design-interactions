@@ -598,8 +598,8 @@
 				Musique.minuterie = null;
 				Musique.demarrer();
 			});
-			const ogg = a.canPlayType('audio/ogg; codecs="vorbis"');
-			a.src = p.fichier + (ogg ? '.ogg' : '.mp3');
+			// Prompt 210 : MP3 partout (lu par tous les navigateurs) — un seul format précaché, l'OGG reste dans le dépôt
+			a.src = p.fichier + '.mp3';
 			a.loop = true;
 			a.volume = 0;
 			a.play().catch(() => {}); // lecture refusée (autoplay) : le prochain geste relancera Son.demarrer
@@ -713,5 +713,21 @@
 	};
 	Son.musique = Musique;
 
+	// Prompt 210 (audit 206, performance) : onglet masqué → contexte audio suspendu et musique en pause, repris au retour
+	if (global.document && global.document.addEventListener)
+		global.document.addEventListener('visibilitychange', () => {
+			const cache = global.document.hidden;
+			const a = Musique.audio;
+			if (cache) {
+				Son.suspenduMasque = !!(Son.ctx && Son.ctx.state === 'running');
+				if (Son.suspenduMasque) Son.ctx.suspend().catch(() => {});
+				Musique.pauseMasque = !!(a && !a.paused);
+				if (Musique.pauseMasque) a.pause();
+			} else {
+				if (Son.suspenduMasque && Son.ctx) Son.ctx.resume().catch(() => {});
+				if (Musique.pauseMasque && a && Musique.audio === a) a.play().catch(() => {});
+				Son.suspenduMasque = Musique.pauseMasque = false;
+			}
+		});
 	global.Confort = { Reglages: Reglages, Bilans: Bilans, Son: Son };
 })(typeof window !== 'undefined' ? window : globalThis);
