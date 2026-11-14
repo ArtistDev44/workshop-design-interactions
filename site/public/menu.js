@@ -360,7 +360,7 @@ function boutonCarreHaut(x, y, l, h, focus, icone, bulle, action) {
 	}
 	noStroke();
 	iconeLucide(icone, x + (l - 32) / 2, y + (h - 32) / 2, 32, '#FFFFFF');
-	boutons.push({ x, y, l, h, action });
+	boutons.push({ x, y, l, h, action, titre: bulle }); // prompt 210 : libellé pour les lecteurs d'écran (lecteur-ecran.js)
 	if (survol || focus) {
 		textFont(POLICE_DONNEES);
 		textSize(18);
@@ -434,6 +434,7 @@ function blocPartage(n, y) {
 	RANGEE_MENU.forEach((r, i) => {
 		const focus = focusExtra(n, r.cle);
 		const survol = boutonIcone(b.x + i * (b.l + 16), b.y, b.l, b.h, r.icone, r.action, focus);
+		if (boutons.length) boutons[boutons.length - 1].titre = t('mp.' + r.cle); // prompt 210 : icône seule → libellé pour les lecteurs d'écran
 		if (focus || (survol && !bulle)) bulle = t('mp.' + r.cle) + ' — ' + t('mp.' + r.cle + '.infobulle'); // le libellé passe de l'écran à l'infobulle
 	});
 	if (bulle) infobulle(bulle, b.x + RANGEE_MENU.length * (b.l + 16) + 8, b.y + (b.h - 40) / 2); // à droite de la rangée, sur sa ligne

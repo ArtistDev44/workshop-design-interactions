@@ -872,6 +872,7 @@ function composerVue() {
 	const src = drawingContext.canvas;
 	if (vue === 'bureau') copieBasse.getContext('2d').drawImage(src, 0, 0, copieBasse.width, copieBasse.height);
 	else copieHaute.getContext('2d').drawImage(src, 0, 0);
+	if (typeof lecteurAvantComposition === 'function') lecteurAvantComposition(); // prompt 210 : libellés relevés dans le repère du contenu
 	// Boutons du contenu : cliquables seulement au poste, ramenés en coordonnées réelles
 	if (auPoste) {
 		const k = r.l / L;

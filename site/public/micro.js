@@ -45,7 +45,7 @@ function toucheMRelachee() {
 }
 function keyReleased() {
 	if (Sauvegarde.dialogueOuvert || saisieOuRaccourciNavigateur() || (typeof rechercheMailsActive === 'function' && rechercheMailsActive())) return; // on tape dans une boîte de texte (prompt 174 : ou un champ HTML ; prompt 195 : ou la recherche de Mails)
-	if (key === 'm' || key === 'M') toucheMRelachee();
+	if ((key === 'm' || key === 'M') && !raccourciLettreBloque()) toucheMRelachee(); // prompt 210
 }
 function mouseReleased() {
 	if (typeof relacherJeton === 'function' && relacherJeton()) return; // prompt 102 : dépôt d'un jeton d'équipe

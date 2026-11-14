@@ -242,6 +242,10 @@ const TRADUCTIONS = {
 		"profil.aucun": "aucun",
 		"page.titre": "Nantes en régulation — PXE-NTE001-G01-W01",
 		"page.aria": "Nantes en régulation — salle de contrôle des transports nantais",
+		"lecteur.commandes": "Commandes de l’écran",
+		"lecteur.texte": "Texte de l’écran",
+		"lecteur.sansNom": "Commande {n} (sans libellé)",
+		"lecteur.langue": "Langue : français",
 		"locale": "fr-FR",
 		"langue.titre": "Langue",
 		"accueil.semaine": "Semaine du {debut} au {fin}",
@@ -488,6 +492,8 @@ const TRADUCTIONS = {
 		"param.contraste": "Contraste renforcé",
 		"param.violence": "Masquer les commentaires violents",
 		"param.violence.detail": "Community : les commentaires injurieux s’affichent masqués, toujours signalables",
+		"param.raccourcis": "Raccourcis d’une lettre",
+		"param.raccourcis.detail": "Désactivés : Maj + la lettre garde le raccourci (Maj + Z pour la sieste…)",
 		"commu.signaler": "Signaler ce commentaire",
 		"commu.moderation": "Modération",
 		"commu.signale": "Commentaire de {auteur} signalé et masqué. Le compte est suspendu le temps de l’examen.",
@@ -2280,6 +2286,10 @@ const TRADUCTIONS = {
 		"profil.aucun": "none",
 		"page.titre": "Nantes in Control — PXE-NTE001-G01-W01",
 		"page.aria": "Nantes in Control — Nantes public transport control room",
+		"lecteur.commandes": "Screen controls",
+		"lecteur.texte": "Screen text",
+		"lecteur.sansNom": "Control {n} (unlabelled)",
+		"lecteur.langue": "Language: English",
 		"locale": "en-GB",
 		"langue.titre": "Language",
 		"accueil.semaine": "Week of {debut} to {fin}",
@@ -2526,6 +2536,8 @@ const TRADUCTIONS = {
 		"param.contraste": "High contrast",
 		"param.violence": "Hide abusive comments",
 		"param.violence.detail": "Community: abusive comments are shown hidden, and can still be reported",
+		"param.raccourcis": "Single-key shortcuts",
+		"param.raccourcis.detail": "Off: Shift + the key keeps the shortcut (Shift + Z to nap…)",
 		"commu.signaler": "Report this comment",
 		"commu.moderation": "Moderation",
 		"commu.signale": "Comment by {auteur} reported and hidden. The account is suspended pending review.",
@@ -4220,6 +4232,7 @@ const Langue = {
 			localStorage.setItem(CLE_LANGUE, code);
 		} catch (e) {}
 		if (!initial) this.ecouteurs.forEach((f) => f(code));
+		if (!initial) annoncer(t('lecteur.langue')); // prompt 210 : changement de langue annoncé
 	},
 	suivante() {
 		const i = LANGUES.findIndex((l) => l.code === this.actuelle);
@@ -4229,6 +4242,7 @@ const Langue = {
 
 /** Annonce pour les lecteurs d'écran (région aria-live de index.html), toujours dans la langue active */
 function annoncer(texte) {
+	if (typeof annoncerDansFile === 'function' && annoncerDansFile(texte)) return; // prompt 210 : file (role="log"), plus d'écrasement
 	const el = typeof document !== 'undefined' && document.getElementById('annonces');
 	if (el) el.textContent = String(texte);
 }

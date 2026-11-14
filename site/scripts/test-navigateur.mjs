@@ -147,6 +147,30 @@ try {
 		verifier(!fautes.length, `${nom} : ${fautes.length} erreur(s) de page — ${fautes.slice(0, 3).join(' | ')}`);
 		await ctx.close();
 	}
+	// Lecteurs d'écran (lecteur-ecran.js) : commandes HTML libellées sur l'écran titre, activables ; file d'annonces
+	{
+		const { ctx, page, fautes } = await ouvrir('index.html', { viewport: { width: 1366, height: 768 } });
+		await page.waitForFunction(() => document.querySelectorAll('#commandes-jeu button').length > 3, null, { timeout: 20000 }).catch(() => {});
+		const r = await page.evaluate(() => {
+			const bs = [...document.querySelectorAll('#commandes-jeu button')].map((b) => b.textContent);
+			annoncer('un');
+			annoncer('deux');
+			return { bs, annonces: document.querySelectorAll('#annonces p').length, texte: document.querySelectorAll('#texte-ecran li').length, canevas: document.querySelector('canvas').getAttribute('aria-hidden') };
+		});
+		const libelles = r.bs.filter((x) => !/sans libellé/.test(x));
+		verifier(r.bs.length > 3 && libelles.length >= r.bs.length / 2, `lecteur d'écran : commandes de l'écran titre libellées — ${JSON.stringify(r.bs)}`);
+		verifier(r.annonces >= 2 && r.texte > 3 && r.canevas === 'true', `lecteur d'écran : file d'annonces, texte de l'écran, canevas masqué — ${JSON.stringify(r)}`);
+		const para = r.bs.findIndex((x) => /Paramètres/.test(x));
+		if (para >= 0) {
+			await page.locator('#commandes-jeu button').nth(para).focus();
+			await page.keyboard.press('Enter');
+			await pause(800);
+			const ouvert = await page.evaluate(() => typeof fenetre !== 'undefined' && !!fenetre);
+			verifier(ouvert, 'lecteur d\'écran : « Paramètres » activé au clavier depuis la liste HTML ouvre la fenêtre');
+		} else verifier(false, `lecteur d'écran : pas de commande « Paramètres » — ${JSON.stringify(r.bs)}`);
+		verifier(!fautes.length, `lecteur d'écran : erreur(s) de page — ${fautes.slice(0, 3).join(' | ')}`);
+		await ctx.close();
+	}
 	// Mode exposition : réglages d'un « visiteur précédent » (webcam allumée, violence affichée) → remis à zéro
 	{
 		const ctx = await navigateur.newContext({ viewport: { width: 1366, height: 768 }, serviceWorkers: 'block' });
