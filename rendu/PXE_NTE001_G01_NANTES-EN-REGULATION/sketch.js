@@ -97,6 +97,7 @@ function setup() {
 	if (msgChargement) msgChargement.textContent = t('chargement.message'); // prompt 27 : dans la langue active
 	const c = createCanvas(L, H);
 	c.parent('scene');
+	c.elt.setAttribute('aria-hidden', 'true'); // prompt 210 : le contenu du canevas est repris en DOM (lecteur-ecran.js)
 	c.elt.addEventListener('mouseleave', () => (sourisDansCanevas = false)); // prompt 25 : la caméra se recentre
 	pixelDensity(1);
 	randomSeed(Jeu.fallback ? Jeu.fallback.seed : 1001);
@@ -433,6 +434,7 @@ const FERMETURE_FOND = {
 	partage: fermer,
 	installation: fermer,
 	palmares: fermer,
+	fins: () => fermerFins(), // prompt 207
 	menu: fermer,
 	telephone: fermer,
 };
@@ -521,7 +523,8 @@ function dessinerJeuAttente() {
 	dessinerBandeau();
 	dessinerCarteAlertes(); // prompt 102 : carte pleine largeur entre deux signalements
 	if (enSieste) {
-		Object.assign(PANNEAU, { x: ZONE_CARTE.x + (ZONE_CARTE.l - FENETRE_DIALOGUE.l) / 2, y: ZONE_CARTE.y + 16, l: FENETRE_DIALOGUE.l, h: FENETRE_DIALOGUE.h }); // prompt 107
+		if (typeof PORTRAIT !== 'undefined' && PORTRAIT.actif) Object.assign(PANNEAU, GEO_PORTRAIT.panneau); // prompt 205
+		else Object.assign(PANNEAU, { x: ZONE_CARTE.x + (ZONE_CARTE.l - FENETRE_DIALOGUE.l) / 2, y: ZONE_CARTE.y + 16, l: FENETRE_DIALOGUE.l, h: FENETRE_DIALOGUE.h }); // prompt 107
 		dessinerAttente(); // sieste : le panneau d'attente dit qu'on dort (prompt 194 : plus de mail plein écran le soir)
 	}
 }
@@ -780,31 +783,36 @@ function dessinerNarration() {
 	// Prompt 121 : statut du signalement — clos (aucune équipe) ou en attente du retour du plaignant (équipe envoyée)
 	const iSig = Jeu.paquet.indexOf(r.dossier);
 	const stSig = iSig >= 0 && Jeu.statutSignalement ? Jeu.statutSignalement(iSig) : null;
+	const etroitN = z.l < 800; // prompt 205 : fiche étroite (mobile portrait) — statut sous l'en-tête, le reste descend
+	let dyN = 0;
 	if (stSig && stSig !== 'ouvert') {
 		const eqSig = (Jeu.equipes || []).filter((q) => q.index === iSig && !q.inutile).map((q) => String(q.nom)).join(', ');
 		const libSig = t('sig.statut.' + stSig, { equipe: eqSig });
 		textSize(18);
-		const lSig = Math.min(z.l - 420, textWidth(libSig) + 28);
+		const lSig = etroitN ? Math.min(z.l - 64, textWidth(libSig) + 28) : Math.min(z.l - 420, textWidth(libSig) + 28);
+		const xSig = etroitN ? z.x + 32 : z.x + z.l - 32 - lSig;
+		const ySig = etroitN ? z.y + 62 : z.y + 24;
+		if (etroitN) dyN = 44;
 		noFill();
 		stroke(stSig === 'attente' ? C.orange : C.gris);
 		strokeWeight(2);
-		rect(z.x + z.l - 32 - lSig, z.y + 24, lSig, 34);
+		rect(xSig, ySig, lSig, 34);
 		noStroke();
 		fill(stSig === 'attente' ? C.orange : C.gris);
 		textAlign(CENTER, CENTER);
 		ajusterTaille(libSig, lSig - 20, 18, 14);
-		zoneTexteDeclarer('statutSignalement', z.x + z.l - 32 - lSig + 10, z.y + 28, lSig - 20, 26);
-		text(libSig, z.x + z.l - 32 - lSig / 2, z.y + 41);
+		zoneTexteDeclarer('statutSignalement', xSig + 10, ySig + 4, lSig - 20, 26);
+		text(libSig, xSig + lSig / 2, ySig + 17);
 		textAlign(LEFT, TOP);
 	}
 	fill(C.texte);
 	textFont(POLICE_TEXTE);
 	textStyle(BOLD);
 	textSize(34);
-	text(r.narration.titre, z.x + 32, z.y + 70, z.l - 64, 100);
+	text(r.narration.titre, z.x + 32, z.y + 70 + dyN, z.l - 64, 100);
 	textStyle(NORMAL);
 	textSize(26);
-	text(r.narration.texte, z.x + 32, z.y + 190, z.l - 64, 260);
+	text(r.narration.texte, z.x + 32, z.y + 190 + dyN, z.l - 64, 260 - dyN);
 
 	// Prompt 184 : plus de liste des écarts (« Fluidité −9 (dé : 3) », « Effets : … ») — les jauges du bandeau s'animent
 	// (segment vert / rouge, feedback.js) ; le détail chiffré reste dans l'appli Journal. Restent le contexte qui a
@@ -1095,7 +1103,7 @@ function bouton(x, y, l, h, label, action, desactive, secondaire) {
 	text(label, x + l / 2, y + h / 2);
 	zoneTexteFin();
 	textStyle(NORMAL);
-	if (!desactive) boutons.push({ x, y, l, h, action });
+	if (!desactive) boutons.push({ x, y, l, h, action, titre: label ? String(label) : undefined }); // prompt 210 : libellé (lecteur-ecran.js)
 }
 
 function easeOut(t) {
@@ -1168,7 +1176,13 @@ if (typeof document !== 'undefined' && document.addEventListener) document.addEv
 function saisieOuRaccourciNavigateur() {
 	const a = typeof document !== 'undefined' ? document.activeElement : null;
 	if (a && (/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) || a.isContentEditable)) return true;
+	if (a && a.closest && a.closest('#nouvelle-version, #commandes-jeu')) return true; // prompt 210
 	return keyIsDown(CONTROL) || keyIsDown(ALT) || keyIsDown(91) || keyIsDown(93);
+}
+/** Prompt 210 (audit 206, WCAG 2.1.4) : réglage « Raccourcis d'une lettre » désactivé → une lettre seule ne fait plus
+ * rien (une frappe accidentelle ou une commande vocale ne déclenche plus d'action) ; Maj + la lettre garde le raccourci */
+function raccourciLettreBloque() {
+	return Confort.Reglages.raccourcisLettres === false && typeof key === 'string' && /^[a-z]$/i.test(key) && !keyIsDown(SHIFT);
 }
 function keyPressed() {
 	// Prompt 33 : boîte d'import ouverte (champ texte, fichier) → le clavier lui appartient
@@ -1182,6 +1196,7 @@ function keyPressed() {
 	interaction();
 	if (typeof guideFiltre === 'function' && guideFiltre() && toucheGuide()) return false; // prompt 181 : guide contraignant — liste blanche de touches (guide.js)
 	if (!smsActif && !tutoriel && typeof saisieRechercheMails === 'function' && saisieRechercheMails()) return false; // prompt 195 : le champ de recherche de Mails a le focus — la frappe lui appartient (aucune lettre n'atteint les raccourcis)
+	if (raccourciLettreBloque()) return false; // prompt 210 : raccourcis d'une lettre coupés (Paramètres → Accessibilité) — Maj + lettre reste possible
 	// Intro SMS (§ 2) : clic / Entrée pour avancer
 	if (smsActif) {
 		if (keyCode === ENTER || keyCode === RETURN || key === ' ') avancerConversation(); // prompt 42
@@ -1282,12 +1297,12 @@ function keyPressed() {
 		if (plainte && !focusQuitter) {
 			const n = plainte.def.reponses.length;
 			if (keyCode === TAB) {
-				focusReponse = (focusReponse + (keyIsDown(SHIFT) ? n - 1 : 1)) % n;
+				focusReponse = focusReponse < 0 ? (keyIsDown(SHIFT) ? n - 1 : 0) : (focusReponse + (keyIsDown(SHIFT) ? n - 1 : 1)) % n; // prompt 204 : premier Tab = première réponse
 				const rTab = plainte.def.reponses[Jeu.ordreReponses(plainte)[focusReponse]]; // prompt 197 : ordre mélangé + texte du clash, lu « mot masqué »
 				annoncer(typeof lireMasques === 'function' ? lireMasques(Jeu.texteReponse(plainte, rTab)) : Jeu.texteReponse(plainte, rTab));
 				return false;
 			}
-			if (keyCode === ENTER || keyCode === RETURN || key === ' ') return repondrePlainte(focusReponse), false;
+			if (keyCode === ENTER || keyCode === RETURN || key === ' ') return (focusReponse < 0 ? annoncer(t('commu.choisir')) : repondrePlainte(focusReponse)), false; // prompt 204 : aucune réponse choisie → rien n'est envoyé
 			if (Number(key) >= 1 && Number(key) <= n) return repondrePlainte(Number(key) - 1), false;
 		}
 		if (keyCode === TAB) return tabMenuApp(), false; // prompts 26 / 103 : entrées du menu, puis « Quitter le PC »
@@ -1410,6 +1425,7 @@ function contenuFenetre() {
 	if (fenetre === 'tache') return fenetreTache(); // prompt 88
 	if (fenetre === 'demission') return fenetreDemission(); // prompt 47
 	if (fenetre === 'palmares') return fenetrePalmares(); // prompt 47
+	if (fenetre === 'fins') return fenetreFins(); // prompt 207
 	if (fenetre === 'partir') return fenetrePartir(); // prompt 51
 	if (fenetre === 'blame') return fenetreBlame(); // prompt 51
 	if (fenetre === 'partage') return fenetrePartage(); // prompt 81

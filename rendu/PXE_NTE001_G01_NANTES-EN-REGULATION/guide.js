@@ -379,7 +379,8 @@ function bulleGuide(texte, cx, y, auDessus, xFixe, centreV) {
 		const yb = by + h - 62;
 		const e = ETAPES_GUIDE[GUIDE.etape];
 		const zs = { x: x + 28, y: yb, l: 260, h: 48 };
-		const zq = { x: x + l - 28 - 300, y: yb, l: 300, h: 48 };
+		const lq = typeof PORTRAIT !== 'undefined' && PORTRAIT.actif ? 360 : 300; // prompt 205 : en portrait, le libellé reste ≥ 12 px CSS (sans réduction)
+		const zq = { x: x + l - 28 - lq, y: yb, l: lq, h: 48 };
 		if (forcee && e.lecture) {
 			bouton(zs.x, zs.y, zs.l, zs.h, t('guide.suivante'), etapeGuideSuivante, false, true);
 			GUIDE.zones.push(zs);

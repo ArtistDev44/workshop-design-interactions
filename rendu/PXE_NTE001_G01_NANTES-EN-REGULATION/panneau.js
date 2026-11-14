@@ -39,7 +39,6 @@ function dessinerBandeau() {
 	// du bandeau, dans le coin supérieur droit de l'écran (dessinerDateCoin)
 	const z = BANDEAU;
 	panneau(z.x, z.y, z.l, z.h);
-	cibleGuide('jauges', z.x, z.y, z.l, z.h);
 	const aff = jaugesAffichees();
 	const mobileMenu = typeof MOBILE !== 'undefined' && MOBILE.actif; // prompt 124 : bouton ≡ (menu) au toucher seulement
 	const cy = z.y + z.h / 2;
@@ -69,6 +68,7 @@ function dessinerBandeau() {
 		dessinerDeltasJauge(cle, bx, by, lbar, hb);
 		x = bx + lbar + 18;
 	});
+	cibleGuide('jauges', z.x, z.y, x - z.x, z.h); // prompt 204 : le voile percé éclaire les trois jauges seules, pas « Priorités »
 	// Priorités et objectif du jour fusionnés (prompt 144) ; thème du jour et « hors ligne » à la suite
 	const o = Jeu.objectifDuJour ? Jeu.objectifDuJour() : null;
 	const jc = Jeu.jourCourant ? Jeu.jourCourant() : null;
@@ -162,9 +162,10 @@ function positionnerDialogue() {
 	const z = typeof ZONE_CARTE !== 'undefined' ? ZONE_CARTE : { x: 184, y: 92, l: 1376, h: 940 };
 	const F = typeof FENETRE_DIALOGUE !== 'undefined' ? FENETRE_DIALOGUE : { l: 820, h: 868 };
 	if (DIALOGUE.index !== Jeu.index) (DIALOGUE.index = Jeu.index), (DIALOGUE.reduit = false);
-	const m = typeof CARTE !== 'undefined' ? CARTE.marqueurs.find((k) => k.courant && k.x !== undefined) : null;
-	const aGauche = m ? m.x > z.x + z.l / 2 : false; // marqueur à droite → fenêtre à gauche
-	Object.assign(PANNEAU, { x: aGauche ? z.x + 16 : z.x + z.l - F.l - 16, y: z.y + 16, l: F.l, h: F.h });
+	// Prompt 204 : fiche toujours à gauche ; la carte cadre le marqueur dans la partie libre à droite (cadrerSur), à
+	// côté du panneau des équipes — plus de fiche posée sur le marqueur ni de glisser à travers la fiche
+	if (typeof PORTRAIT !== 'undefined' && PORTRAIT.actif) return Object.assign(PANNEAU, GEO_PORTRAIT.panneau); // prompt 205 : colonne de la fiche en portrait
+	Object.assign(PANNEAU, { x: z.x + 16, y: z.y + 16, l: F.l, h: F.h });
 }
 function reduireDialogue() {
 	DIALOGUE.reduit = true;
@@ -313,8 +314,8 @@ function bulleDuPlaignant(d, x, y, l) {
 	}
 	fill(DS.blanc05);
 	rect(x + 76, y, lt + 8, hb);
-	if (pl && pl.ton === 'agressif') {
-		fill(DS.alerte); // prompt 118 : ton agressif voulu — liseré d'alerte
+	if (pl && pl.ton === 'provoquant') {
+		fill(DS.alerte); // prompt 118 : ton provoquant voulu (prompt 198 : « agressif » → « provoquant ») — liseré d'alerte
 		rect(x + 76, y, 4, hb);
 	}
 	triangle(x + 76, y + 22, x + 66, y + 30, x + 76, y + 38); // pointe de la bulle vers l'avatar

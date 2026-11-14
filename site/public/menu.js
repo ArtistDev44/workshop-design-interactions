@@ -276,8 +276,29 @@ function dessinerMenuPrincipal() {
 	// Prompt 124 : plus de ligne d'aide clavier sous les cartes (elle nuisait à l'immersion)
 	// Prompt 125 : plus de ligne « Données réelles… » ni de lien de licence ici — tout est dans l'écran Crédits
 	piedCredits(x0, H - 40, e.length);
+	avertissementContenu(x0);
 	blocPartage(e.length, Math.min(BLOC_PARTAGE.y, yc - ecart + 24)); // prompt 199 : 24 px sous Paramètres, jamais sur le pied de page
 	if (typeof EXPO !== 'undefined' && EXPO.actif) marqueExpo();
+}
+/** Prompt 210 : avertissement de contenu et âge conseillé, toujours visibles sur l'écran titre (audit 206, constat 1).
+ * Paysage : à droite du pied de page (à gauche de la marque EXPO) ; portrait : au-dessus des noms, dans la colonne recadrée. */
+function avertissementContenu(x0) {
+	const expo = typeof EXPO !== 'undefined' && EXPO.actif;
+	const portrait = typeof PORTRAIT !== 'undefined' && PORTRAIT.actif;
+	textFont(POLICE_DONNEES);
+	textStyle(NORMAL);
+	textSize(18);
+	noStroke();
+	fill(MENU_C.doux);
+	const txt = t(expo ? 'mp.avertissement.expo' : 'mp.avertissement');
+	if (portrait) {
+		textAlign(LEFT, BOTTOM);
+		text(txt, x0, H - 74);
+	} else {
+		textAlign(RIGHT, BOTTOM);
+		text(txt, expo ? L - 80 - textWidth('EXPO') - 24 - 24 : L - 80, H - 40);
+	}
+	textAlign(LEFT, TOP);
 }
 /** Prompt 160 : marque discrète « EXPO » en bas à droite de l'écran titre (blanc sur pastille nuit opaque : ≈ 19:1, quel que soit le fond flouté) */
 function marqueExpo() {
@@ -339,7 +360,7 @@ function boutonCarreHaut(x, y, l, h, focus, icone, bulle, action) {
 	}
 	noStroke();
 	iconeLucide(icone, x + (l - 32) / 2, y + (h - 32) / 2, 32, '#FFFFFF');
-	boutons.push({ x, y, l, h, action });
+	boutons.push({ x, y, l, h, action, titre: bulle }); // prompt 210 : libellé pour les lecteurs d'écran (lecteur-ecran.js)
 	if (survol || focus) {
 		textFont(POLICE_DONNEES);
 		textSize(18);
@@ -413,6 +434,7 @@ function blocPartage(n, y) {
 	RANGEE_MENU.forEach((r, i) => {
 		const focus = focusExtra(n, r.cle);
 		const survol = boutonIcone(b.x + i * (b.l + 16), b.y, b.l, b.h, r.icone, r.action, focus);
+		if (boutons.length) boutons[boutons.length - 1].titre = t('mp.' + r.cle); // prompt 210 : icône seule → libellé pour les lecteurs d'écran
 		if (focus || (survol && !bulle)) bulle = t('mp.' + r.cle) + ' — ' + t('mp.' + r.cle + '.infobulle'); // le libellé passe de l'écran à l'infobulle
 	});
 	if (bulle) infobulle(bulle, b.x + RANGEE_MENU.length * (b.l + 16) + 8, b.y + (b.h - 40) / 2); // à droite de la rangée, sur sa ligne

@@ -3783,7 +3783,7 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	// 3. Musique hors ligne : Range servi depuis le cache (206), morceaux précachés, repli WebAudio si le fichier échoue
 	const sw = lire193('sw.js');
 	verifier(/headers\.has\('range'\)\) \{\n\t\te\.respondWith\(caches\.match\(req\.url, \{ ignoreSearch: true \}\)\.then\(\(enCache\) => \(enCache \? reponsePartielle\(req, enCache\) : fetch\(req\)\)\)\);/.test(sw), 'prompt 193 : requêtes Range servies depuis le cache');
-	for (const f of readdirSync(join(pub, 'audio')).filter((f) => /\.(ogg|mp3)$/.test(f))) verifier(sw.includes(`"./audio/${f}"`), `prompt 193 : ${f} doit être précaché`);
+	for (const f of readdirSync(join(pub, 'audio')).filter((f) => /\.mp3$/.test(f))) verifier(sw.includes(`"./audio/${f}"`), `prompt 193 : ${f} doit être précaché (prompt 210 : MP3 seul, lu partout)`);
 	verifier(readFileSync(join(pub, '..', 'scripts', 'generer-sw.mjs'), 'utf8').includes('reponsePartielle\\(req, enCache\\)'), 'prompt 193 : le générateur refuse un sw.js sans lecture partielle depuis le cache');
 	if (typeof Response === 'function' && typeof Blob === 'function') {
 		const fn = sw.slice(sw.indexOf('function reponsePartielle'));
@@ -4150,6 +4150,62 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	verifier(html.indexOf('./posture.js') > html.indexOf('./personnages.js') && html.indexOf('./posture.js') < html.indexOf('./soir.js'), '207 : posture.js chargé après personnages.js et avant soir.js');
 	verifier(readFileSync(join(pub, 'sw.js'), 'utf8').includes('./posture.js'), '207 : posture.js dans le cache hors ligne (sw.js)');
 	verifier(/smsPostureCamille\(meteo\)/.test(readFileSync(join(pub, 'soir.js'), 'utf8')) && /noterPosture\('cafes'\)/.test(readFileSync(join(pub, 'cafe.js'), 'utf8')) && /volontaire && Jeu\.noterPosture\) Jeu\.noterPosture\('siestes'\)/.test(readFileSync(join(pub, 'sieste.js'), 'utf8')), '207 : SMS de posture le soir, café et sieste volontaire comptés');
+}
+
+// Prompt 210 (audit 206, constat 4) : délai des plaintes Community sur UNE horloge (tempsPlaintes, temps de jeu actif).
+// Sauvegarde à millis() = 60 s / tempsPlaintes = 12 s, reprise après 50 s d'écran titre (millis() = 50,5 s,
+// tempsPlaintes = 0) : la plainte doit garder le même temps restant, et ne pas expirer à la reprise.
+{
+	const c = contexte('fr');
+	vm.runInContext('window.addEventListener = () => {}; document.addEventListener = () => {};', c);
+	vm.runInContext(readFileSync(join(pub, 'sauvegarde.js'), 'utf8'), c, { filename: 'sauvegarde.js' });
+	const r = vm.runInContext(`(() => {
+		Jeu.chargerSemaine('2026-10-12'); Jeu.nouvellePartie();
+		let p = null;
+		for (let i = 0; i < Jeu.paquet.length && !p; i++) p = Jeu.declencherPlainte(i);
+		if (!p) return { aucune: true };
+		p.depuis = 10000;
+		const avant = Jeu.resteReponse(p, 12000);
+		const snap = JSON.parse(JSON.stringify(Jeu.instantane(60000)));
+		Sauvegarde.recalerPlaintes(snap.plaintes, 60000 - 12000);
+		Jeu.restaurerInstantane(snap, 50500);
+		Sauvegarde.recalerPlaintes(Jeu.plaintes, 0 - 50500);
+		const q = Jeu.plaintes.find((x) => x.id === p.id && x.index === p.index);
+		const apres = Jeu.resteReponse(q, 0);
+		const expirees = (Jeu.majPlaintes(0) || []).filter((x) => x.id === p.id).length;
+		return { avant, apres, expirees };
+	})()`, c);
+	verifier(!r.aucune && r.avant > 0 && r.avant === r.apres && r.expirees === 0, `210 : plainte Community reprise avec le même délai (une seule horloge) : ${JSON.stringify(r)}`);
+	const os = readFileSync(join(pub, 'os.js'), 'utf8');
+	verifier(/Jeu\.repondrePlainte\(p, i, typeof tempsPlaintes === 'function' \? tempsPlaintes\(\)/.test(os), '210 : la réponse Community doit être datée sur tempsPlaintes(), pas millis()');
+	// Exposition : violence masquée d'office, aucune incitation tirée quand le masquage est actif
+	const m = vm.runInContext(`(() => {
+		globalThis.EXPO = { actif: true };
+		const masque = Jeu.violenceMasquee();
+		Jeu.chargerSemaine('2026-10-12'); Jeu.nouvellePartie();
+		const tirees = [];
+		for (let i = 0; i < Jeu.paquet.length; i++) { const p = Jeu.declencherPlainte(i); if (p) tirees.push(p.def.incitation ? 1 : 0); }
+		const prevues = (Jeu.interactionsPrevues || []).length;
+		delete globalThis.EXPO;
+		return { masque, incitations: tirees.reduce((a, b) => a + b, 0), plaintes: tirees.length, prevues };
+	})()`, c);
+	verifier(m.masque && m.incitations === 0 && m.plaintes > 0, `210 : en exposition, violence masquée et aucune incitation tirée : ${JSON.stringify(m)}`);
+	const conf = readFileSync(join(pub, 'confort.js'), 'utf8');
+	verifier(/EXPO\.actif\) Object\.assign\(Reglages, \{ webcam: DEFAUTS\.webcam, micro: DEFAUTS\.micro, masquerViolence: true \}\)/.test(conf), '210 : en exposition, webcam et micro remis à leur défaut à chaque visiteur');
+	const cam = readFileSync(join(pub, 'webcam.js'), 'utf8');
+	const mic = readFileSync(join(pub, 'micro.js'), 'utf8');
+	verifier(/if \(CAM\.enCours\) return false;/.test(cam) && /CAM\.jeton\+\+/.test(cam) && /visibilitychange/.test(cam), '210 : webcam — garde contre la double demande, coupure à l\'onglet masqué');
+	verifier(/MICRO\.demande = \(async/.test(mic) && /MICRO\.jeton\+\+/.test(mic) && /clearInterval\(MICRO\.minuterieAnalyse\);\n\tMICRO\.minuterieAnalyse = setInterval/.test(mic), '210 : micro — une seule demande d\'autorisation, jeton invalidé au relâchement');
+}
+
+// Prompt 210 (audit 206, constat 10) : appli « Données » hors ligne alimentée par la semaine de référence
+{
+	const c = contexte('fr');
+	vm.runInContext('var ICONES_OS = []; var nombreFr = (v) => String(v); var TEL = { url: "" }; var tSi = (k, r) => r; var LOIRE = { hauteur: 1, source: "repli", date: null };', c);
+	vm.runInContext(readFileSync(join(pub, 'donnees.js'), 'utf8'), c, { filename: 'donnees.js' });
+	const r = vm.runInContext(`(() => { Jeu.chargerHorsLigne(); const b = blocsDonnees(); return { n: Jeu.fallback.dossiers.length, texte: JSON.stringify(b) }; })()`, c);
+	verifier(r.n > 0 && !/« ?0 dossier|\b0 dossier/.test(r.texte) && r.texte.includes(String(r.n)), `210 : appli Données hors ligne — ${r.n} dossiers attendus : ${r.texte.slice(0, 300)}`);
+	verifier(r.texte.includes('ODbL'), '210 : appli Données — le changelog GTFS est sous ODbL (Semitan)');
 }
 
 if (erreurs.length) {

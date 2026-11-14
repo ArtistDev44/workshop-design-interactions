@@ -606,7 +606,7 @@ function dessinerPanneauEquipes() {
 				dsTexte(Math.max(0, Math.ceil((fin - tm) / 1000)) + 's', px + lp - 4, py + 22, 14, DS.blanc75, 'right');
 			} else {
 				CARTE.jetons.push({ x: px, y: py, l: lp, h: 46, cle, actif: true });
-				boutons.push({ x: px, y: py, l: lp, h: 46, action: () => (typeof MOBILE !== 'undefined' && MOBILE.actif && dossierOuvert() ? deposerJeton(cle, Jeu.index) : choisirJeton(cle)) });
+				boutons.push({ x: px, y: py, l: lp, h: 46, action: () => (typeof MOBILE !== 'undefined' && MOBILE.actif && dossierOuvert() ? deposerJeton(cle, Jeu.index) : choisirJeton(cle)), titre: t('equipe.' + cle) }); // prompt 210 : libellé (lecteur-ecran.js)
 			}
 		});
 		const lignesP = Math.max(1, Math.ceil(ps.length / 4));

@@ -114,8 +114,12 @@ function couleurCompteur(resteMs) {
 // ——— Tampon « SIGNALEMENT » à l'arrivée du dossier ———
 function dessinerTamponSignalement(x, y) {
 	const u = reduireAnimations ? 1 : constrain((millis() - arriveeDossier - 300) / 350, 0, 1);
-	if (u <= 0) return;
-	const e = easeOut(u);
+	// Prompt 204 : le tampon marque l'arrivée puis s'efface (1,8 s, fondu 0,3 s) — resté à l'écran, il couvrait le titre
+	// et la croix de la fiche ; animations réduites : affiché puis retiré, sans fondu
+	const vie = millis() - arriveeDossier - 300 - 1800;
+	const sortie = vie <= 0 ? 1 : reduireAnimations ? 0 : 1 - constrain(vie / 300, 0, 1);
+	if (u <= 0 || sortie <= 0) return;
+	const e = easeOut(u) * sortie;
 	push();
 	translate(x, y);
 	rotate(-0.14);
