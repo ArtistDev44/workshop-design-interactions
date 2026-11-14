@@ -48,7 +48,7 @@ l'étape 7.
 L'étape 1 a surtout corrigé les SMS (60 → 27) et les Paramètres (143 → 128) : les textes de l'appli **masqués**
 par la fenêtre ou les SMS ne sont plus comptés.
 
-### Non-régression (après fusion de `main`, prompts 210 à 212 compris)
+### Non-régression (après fusion de `main`, prompts 210 à 212 compris — audit relancé après la fusion de 212)
 
 | Taille | Défauts A–E | Défauts T | Écrans parcourus | Étapes en erreur |
 |---|---|---|---|---|
@@ -88,7 +88,9 @@ hors audit). En portrait, il encadre **un seul** élément :
 
 Les textes **utiles** qu'elle portait ont été repris en clair sous l'image, à la taille portrait :
 
-- l'heure, la consigne et « Fin de journée. » ;
+- la consigne et « Fin de journée. » ; l'heure numérique sous l'horloge murale, reprise à l'étape 7, a ensuite été
+  retirée sur toutes les tailles par le prompt 212 (fusionné après) : l'heure se lit aux aiguilles, au poste et sur
+  le téléphone ;
 - la bulle du guide (dont « Quitter le guide (Échap) ») ;
 - le compteur de badges, dans le bouton « S'installer au PC (n) ».
 

@@ -951,7 +951,7 @@ function composerVue() {
 		dessinerBoutonQuitterPC();
 		return;
 	}
-	// Au bureau : survol de l'écran, objets, horloge numérique, invitation
+	// Au bureau : survol de l'écran, objets, invitation
 	survolEcran = mouseX >= r.x && mouseX <= r.x + r.l && mouseY >= r.y && mouseY <= r.y + r.h;
 	if (survolEcran || focusBureau === 0) {
 		contourSurvol(r.x - 7 * PIX, r.y - 7 * PIX, r.l + 14 * PIX, r.h + 15 * PIX);
@@ -969,20 +969,8 @@ function composerVue() {
 	}
 	if (typeof dessinerFlecheSortie === 'function') dessinerFlecheSortie(); // prompt 69
 	zonesObjetsBureau();
-	if (ecran === 'jeu' && phase !== 'fin') {
-		const hA = heureAffichee();
-		textFont(POLICE_DONNEES);
-		textSize(22);
-		const lib = String(hA.h).padStart(2, '0') + ':' + String(hA.m).padStart(2, '0') + (tempsCompresse() ? '  ▶▶ ×' + IMMERSION.compression : '');
-		const lh = textWidth(lib) + 24;
-		const ph = versEcranBureau(HORLOGE_MURALE.x, HORLOGE_MURALE.y + HORLOGE_MURALE.r + 6, 0, 0, 0.7); // sous l'horloge murale, plan « baie » (prompt 40)
-		fill(13, 12, 12, 225);
-		rect(ph.x - lh / 2, ph.y, lh, 34);
-		loupePortrait(ph.x - lh / 2 - 6, ph.y - 4, lh + 12, 42, true); // prompt 209 (avant le texte : l'audit la voit)
-		fill('#FFFFFF');
-		textAlign(CENTER, CENTER);
-		text(lib, ph.x, ph.y + 17);
-	}
+	// Prompt 212 : plus d'heure numérique sous l'horloge murale — l'horloge à aiguilles la dit au bureau, le coin du poste
+	// au PC (3e affichage de l'heure, revue ux-informations-2026-11-14 § 3)
 	const msg = incidentActif()
 		? t('bureau.incident')
 		: phase === 'soir'
