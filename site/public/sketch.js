@@ -1546,8 +1546,8 @@ function fenetreReset() {
 	if (portrait) {
 		textSize(22);
 		text(t('reset.texte'), x + 48, y + 110, l - 96, 120);
-		bouton(x + 48, y + h - 200, l - 96, 72, t('reset.oui'), confirmerReset);
-		bouton(x + 48, y + h - 112, l - 96, 72, t('reset.non'), fermer, false, true);
+		bouton(x + 48, y + h - 200, l - 96, 74, t('reset.oui'), confirmerReset); // prompt 216 : 74 px (≥ 44 px CSS)
+		bouton(x + 48, y + h - 112, l - 96, 74, t('reset.non'), fermer, false, true);
 		return;
 	}
 	ajusterTaille(t('reset.texte'), l - 80, 22);

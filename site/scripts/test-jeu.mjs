@@ -4441,6 +4441,20 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	verifier(/body\.paysage #scene canvas#portrait \{\s*width: 100vw !important;/.test(readFileSync(join(pub, 'style.css'), 'utf8')), '215 : le canevas recomposé remplit l\'écran en paysage');
 }
 
+// ——— Prompt 216 : boutons des fenêtres en portrait à 74 px (72 × 0,606 = 43,6 px CSS, sous la cible de 44) ———
+{
+	const lire = (f) => readFileSync(join(pub, f), 'utf8');
+	const attendus = [
+		['aide.js', /bouton\(x \+ l - 48 - lf, yb, lf, 74, t\('commun\.fermer'\)/], ['aide.js', /bouton\(x \+ 48, yb, l - 96 - lf - 16, 74, t\('tuto\.relancer'\)/],
+		['histoire.js', /if \(portrait\) bouton\(x \+ 40, y \+ h - 104, l - 80, 74, t\('finSemaine\.lire'\)/], ['histoire.js', /h: \(\) => 90, dessin: [^\n]*rect\(x, y \+ \(i \? 0 : 8\), l, 74\)\), bouton\(x, y \+ \(i \? 0 : 8\), l, 74,/],
+		['installation.js', /if \(portrait\) bouton\(x \+ 48, y \+ h - 104, l - 96, 74,/],
+		['journee.js', /l - 112, 74, t\('partir\.rester'\)/], ['journee.js', /l - 112, 74, t\('partir\.partir'\)/], ['journee.js', /if \(portrait\) bouton\(x \+ 40, y \+ h - 104, l - 80, 74, t\('blame\.lu'\)/],
+		['mecaniques.js', /l - 112, 74, t\('demission\.confirmer'\)/], ['mecaniques.js', /l - 112, 74, t\('demission\.continuer'\)/], ['mecaniques.js', /cl, 74, t\('fins\.bouton'/], ['mecaniques.js', /cl, 74, t\('commun\.fermer'\)/], ['mecaniques.js', /cl, 74, t\('fins\.retour'\)/],
+		['sketch.js', /l - 96, 74, t\('reset\.oui'\)/], ['sketch.js', /l - 96, 74, t\('reset\.non'\)/],
+	];
+	for (const [f, re] of attendus) verifier(re.test(lire(f)), `216 : ${f} — bouton de fenêtre en portrait à 74 px (${re.source.slice(0, 50)}…)`);
+}
+
 if (erreurs.length) {
 	console.error(`Test du jeu : ${erreurs.length} erreur(s) sur ${controles + erreurs.length} contrôles`);
 	for (const e of erreurs) console.error(`  ✗ ${e}`);

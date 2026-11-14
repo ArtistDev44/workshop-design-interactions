@@ -378,11 +378,11 @@ function fenetreAide() {
 		iconeLucide('arrow-right', cx + 260, by + 18, 24, AIDE.page >= AIDE.pages - 1 ? 'rgba(255,255,255,0.5)' : '#FFFFFF');
 	} else if (!portrait) dsTexte(t('aide.clavier'), cx, by + 20, 18, DS.blanc50, 'left');
 	if (portrait) {
-		// Prompt 209 : rangée du bas, boutons de 72 px (≥ 44 px CSS), « Relancer le tutoriel » à gauche de « Fermer »
+		// Prompt 209 : rangée du bas, boutons de 72 px (prompt 216 : 74, soit ≥ 44 px CSS ; 72 n'en faisait que 43,6), « Relancer le tutoriel » à gauche de « Fermer »
 		const yb = y + h - 92;
 		const lf = 200;
-		bouton(x + l - 48 - lf, yb, lf, 72, t('commun.fermer'), fermer, false, true);
-		bouton(x + 48, yb, l - 96 - lf - 16, 72, t('tuto.relancer'), lancerTutoriel, false, onglet !== 'demarrer'); // « Bien démarrer » : bouton primaire (il quitte le cadre du tutoriel)
+		bouton(x + l - 48 - lf, yb, lf, 74, t('commun.fermer'), fermer, false, true);
+		bouton(x + 48, yb, l - 96 - lf - 16, 74, t('tuto.relancer'), lancerTutoriel, false, onglet !== 'demarrer'); // « Bien démarrer » : bouton primaire (il quitte le cadre du tutoriel)
 		textAlign(LEFT, TOP);
 		return;
 	}

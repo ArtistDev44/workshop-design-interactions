@@ -75,7 +75,7 @@ function fenetreInstallation() {
 		});
 		dessinerTexte(t('pwa.aide.horsLigne'), x + 48, yy + 8, l - 96, { taille: 20, interligne: 30, couleur: C.gris });
 	}
-	if (portrait) bouton(x + 48, y + h - 104, l - 96, 72, t('commun.fermer'), fermer);
+	if (portrait) bouton(x + 48, y + h - 104, l - 96, 74, t('commun.fermer'), fermer); // prompt 216 : 74 px (≥ 44 px CSS)
 	else bouton(x + l - 48 - 260, y + h - 96, 260, 60, t('commun.fermer'), fermer);
 }
 

@@ -117,8 +117,8 @@ function fenetreDemission() {
 	text(t('demission.texte', { f: Jeu.jauges.fluidite, r: Jeu.jauges.reputation, b: Jeu.jauges.budget }), x + 56, y + 130, l - 112, portrait ? 300 : 140);
 	if (portrait) {
 		// Prompt 209 : fenêtre de 640 px — les deux boutons empilés, pleine largeur
-		bouton(x + 56, y + h - 116 - 88, l - 112, 72, t('demission.confirmer'), demissionner);
-		bouton(x + 56, y + h - 116, l - 112, 72, t('demission.continuer'), fermer, false, true);
+		bouton(x + 56, y + h - 116 - 88, l - 112, 74, t('demission.confirmer'), demissionner); // prompt 216 : 74 px (≥ 44 px CSS)
+		bouton(x + 56, y + h - 116, l - 112, 74, t('demission.continuer'), fermer, false, true);
 		return;
 	}
 	bouton(x + 56, y + h - 116, 380, 72, t('demission.confirmer'), demissionner);
@@ -247,8 +247,8 @@ function palmaresPortrait() {
 	suiteFenetre(x2, y2, l, h2);
 	dessinerTexte(t('palmares.aide'), x2 + 32, y2 + 32, cl, o);
 	let yb = y2 + 32 + ht + 32;
-	if (Jeu.Galerie) bouton(x2 + 32, yb, cl, 72, t('fins.bouton', { d: Jeu.Galerie.decouvertes(), n: Jeu.FINS_SEMAINE.length }), ouvrirFins, false, true), (yb += 88);
-	bouton(x2 + 32, yb, cl, 72, t('commun.fermer'), fermer);
+	if (Jeu.Galerie) bouton(x2 + 32, yb, cl, 74, t('fins.bouton', { d: Jeu.Galerie.decouvertes(), n: Jeu.FINS_SEMAINE.length }), ouvrirFins, false, true), (yb += 88);
+	bouton(x2 + 32, yb, cl, 74, t('commun.fermer'), fermer); // prompt 216 : 74 px (≥ 44 px CSS)
 }
 
 // ——— Prompt 207 : galerie des dix fins de semaine (découvertes / à découvrir), depuis le palmarès ———
@@ -342,7 +342,7 @@ function finsPortrait() {
 	panneau(x2, y2, l, h2, C.accent);
 	suiteFenetre(x2, y2, l, h2);
 	fins.slice(moitie).forEach((f, i) => carte(f, moitie + i, x2 + 32, y2 + 24 + i * (hc + 12)));
-	bouton(x2 + 32, y2 + h2 - 96, cl, 72, t('fins.retour'), fermerFins);
+	bouton(x2 + 32, y2 + h2 - 96, cl, 74, t('fins.retour'), fermerFins); // prompt 216 : 74 px
 }
 function fermerFins() {
 	ouvrir('palmares');

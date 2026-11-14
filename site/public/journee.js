@@ -70,8 +70,8 @@ function fenetrePartir() {
 	fill(C.texte);
 	text(textePartir(), x + 56, y + 124, l - 112, portrait ? 360 : 160);
 	if (portrait) {
-		bouton(x + 56, y + h - 112 - 88, l - 112, 72, t('partir.rester'), fermer);
-		bouton(x + 56, y + h - 112, l - 112, 72, t('partir.partir'), partirQuandMeme, false, true);
+		bouton(x + 56, y + h - 112 - 88, l - 112, 74, t('partir.rester'), fermer); // prompt 216 : 74 px (≥ 44 px CSS)
+		bouton(x + 56, y + h - 112, l - 112, 74, t('partir.partir'), partirQuandMeme, false, true);
 		return;
 	}
 	bouton(x + 56, y + h - 112, 400, 72, t('partir.rester'), fermer);
@@ -140,7 +140,7 @@ function fenetreBlame() {
 	fill(C.texte);
 	textAlign(LEFT, TOP);
 	text(String(b.texte), x + 40, y + 190, l - 80, portrait ? 560 : 220);
-	if (portrait) bouton(x + 40, y + h - 104, l - 80, 72, t('blame.lu'), lireBlame);
+	if (portrait) bouton(x + 40, y + h - 104, l - 80, 74, t('blame.lu'), lireBlame); // prompt 216 : 74 px
 	else bouton(x + l - 40 - 360, y + h - 104, 360, 68, t('blame.lu'), lireBlame);
 }
 function lireBlame() {
