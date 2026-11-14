@@ -89,6 +89,7 @@ function dessinerRespirationSoir() {
 	textFont(POLICE_TEXTE);
 	textSize(26);
 	textAlign(CENTER, CENTER);
+	if (typeof loupePortrait === 'function') loupePortrait(L / 2 - 320, H - 120, 640, 120); // prompt 209
 	text(t('soir.respiration'), L / 2, H - 60);
 	pop();
 }

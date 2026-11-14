@@ -2388,7 +2388,13 @@ for (const langue of ['fr', 'en']) {
 	const h163 = readFileSync(join(pub, 'histoire.js'), 'utf8');
 	verifier(!/parAction|action\.devier|stats\.final|rapport\.defis/.test(h163), 'prompt 163 : le rapport utilise encore les anciennes clés (parAction, action.devier, jauges finales, défis en page 1)');
 	verifier(/fenetreRapportSources/.test(h163) && /PAGES_RAPPORT = 3/.test(h163), 'prompt 163 : page « Sources et faits de la semaine » absente');
-	verifier((h163.match(/dessinerCourbesJauges\(/g) || []).length === 1 && (h163.match(/stats\.defis/g) || []).length === 1, 'prompt 163 : courbes ou défis en double dans le rapport');
+	{
+		// prompt 209 : la colonne portrait (blocsRapportPortrait) recompose les mêmes pages ; une seule occurrence de chaque côté
+		const iP = h163.indexOf('function blocsRapportPortrait(');
+		const paysage = iP > 0 ? h163.slice(0, iP) : h163, portrait = iP > 0 ? h163.slice(iP) : '';
+		const n = (s, re) => (s.match(re) || []).length;
+		verifier(n(paysage, /dessinerCourbesJauges\(/g) === 1 && n(paysage, /stats\.defis/g) === 1 && n(portrait, /dessinerCourbesJauges\(/g) <= 1 && n(portrait, /stats\.defis/g) <= 1, 'prompt 163 : courbes ou défis en double dans le rapport');
+	}
 	verifier(/changerPageRapport\(keyIsDown\(SHIFT\) \? -1 : 1\)/.test(readFileSync(join(pub, 'journee.js'), 'utf8')), 'prompt 163 : Maj + Tab ne recule pas dans le rapport');
 	verifier(/rapport page 3/.test(readFileSync(join(pub, 'audit-textes.js'), 'utf8')), 'prompt 163 : audit des textes sans la page 3 du rapport');
 }
@@ -2512,7 +2518,7 @@ for (const langue of ['fr', 'en']) {
 		vm.runInContext("installerJeu(); var sans = ouvertes.join(); var joue = 0; PWA.invite = { prompt() { joue++; }, userChoice: Promise.resolve({ outcome: 'accepted' }) }; installerJeu();", c);
 		verifier(vm.runInContext("sans === 'installation' && joue === 1 && ouvertes.length === 1 && /pwa\\.aide\\.titre/.test(annonces[0])", c), 'prompt 171 : installerJeu ne joue pas l\'invitation ou n\'ouvre pas l\'explication');
 	}
-	verifier(/push\(\);[^\n]*\n\ttextLeading\(40\)/.test(menu171) && !/textLeading\(interligneAvant\)/.test(menu171), 'prompt 171 : interlignage du sous-titre du menu (≈ 1,4 × 28 px) non fixé ou non rendu');
+	verifier(/push\(\);[^\n]*\n\ttextLeading\((?:menuPortrait\(\) \? 32 : )?40\)/.test(menu171) && !/textLeading\(interligneAvant\)/.test(menu171), 'prompt 171 : interlignage du sous-titre du menu (≈ 1,4 × 28 px) non fixé ou non rendu');
 	verifier(/sansChevron \? label : label \+ '  ›'/.test(lire('ds.js')) && /'contour', false, retour\)/.test(lire('credits.js')) && !/[←‹]/.test(menu171.slice(menu171.indexOf('function dessinerChoixSemaine'), menu171.indexOf('function toucheMenu'))), 'prompt 171 : flèche encore présente sur un bouton « Retour » du menu');
 	for (const langue of ['fr', 'en']) {
 		const dico = vm.runInContext(`TRADUCTIONS[${JSON.stringify(langue)}]`, contexte(langue));
@@ -4150,6 +4156,23 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	verifier(html.indexOf('./posture.js') > html.indexOf('./personnages.js') && html.indexOf('./posture.js') < html.indexOf('./soir.js'), '207 : posture.js chargé après personnages.js et avant soir.js');
 	verifier(readFileSync(join(pub, 'sw.js'), 'utf8').includes('./posture.js'), '207 : posture.js dans le cache hors ligne (sw.js)');
 	verifier(/smsPostureCamille\(meteo\)/.test(readFileSync(join(pub, 'soir.js'), 'utf8')) && /noterPosture\('cafes'\)/.test(readFileSync(join(pub, 'cafe.js'), 'utf8')) && /volontaire && Jeu\.noterPosture\) Jeu\.noterPosture\('siestes'\)/.test(readFileSync(join(pub, 'sieste.js'), 'utf8')), '207 : SMS de posture le soir, café et sieste volontaire comptés');
+}
+
+// ——— Prompt 209 : mobile portrait hors du poste — DS.fenetre vaut 640 en portrait, reprend ses valeurs en sortant ———
+{
+	const c = vm.createContext({ console, Math, Object, String, Number, Array, JSON, window: {} });
+	const fen = /fenetre: (\{[^}]*\})/.exec(readFileSync(join(pub, 'ds.js'), 'utf8'))[1]; // DS.fenetre tel que ds.js le déclare
+	vm.runInContext(`var DS = { fenetre: ${fen} };`, c);
+	vm.runInContext(readFileSync(join(pub, 'portrait.js'), 'utf8'), c, { filename: 'portrait.js' });
+	const lire = () => JSON.parse(vm.runInContext('JSON.stringify({ e: DS.fenetre.etroite, m: DS.fenetre.moyenne, l: DS.fenetre.large, c: [CADRE_FENETRE.etroite, CADRE_FENETRE.moyenne, CADRE_FENETRE.large, LARGEUR_FENETRE.menu, LARGEUR_FENETRE.partage] })', c));
+	const avant = lire();
+	vm.runInContext('appliquerFenetresPortrait(true)', c);
+	const pendant = lire();
+	vm.runInContext('appliquerFenetresPortrait(false)', c);
+	const apres = lire();
+	verifier(pendant.e === 640 && pendant.m === 640 && pendant.l === 640 && pendant.c.every((v) => v === 680), `prompt 209 : en portrait, DS.fenetre doit valoir 640 (cadre 680) : ${JSON.stringify(pendant)}`);
+	verifier(JSON.stringify(apres) === JSON.stringify(avant) && avant.l > 640, `prompt 209 : en sortant du portrait, DS.fenetre doit reprendre ses valeurs : ${JSON.stringify(avant)} → ${JSON.stringify(apres)}`);
+	verifier(/appliquerFenetresPortrait\(oui\)/.test(readFileSync(join(pub, 'portrait.js'), 'utf8')), 'prompt 209 : activerPortrait doit appliquer les largeurs de fenêtre');
 }
 
 // Prompt 210 (audit 206, constat 4) : délai des plaintes Community sur UNE horloge (tempsPlaintes, temps de jeu actif).

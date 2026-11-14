@@ -960,7 +960,8 @@ function composerVue() {
 	cibleGuide('ecranPC', r.x, r.y, r.l, r.h); // prompt 37
 	// Prompt 182 : l'invite « S'installer au PC » au survol / focus de l'écran (toujours au doigt : pas de survol)
 	const tactile = typeof MOBILE !== 'undefined' && MOBILE.actif;
-	if ((survolEcran || focusBureau === 0 || tactile) && !(phase === 'soir' && SOIR.sortie) && !fenetre && !smsActif) {
+	const enPortraitB = typeof PORTRAIT !== 'undefined' && PORTRAIT.actif; // prompt 209 : le bouton portrait « S'installer » porte l'invite
+	if ((survolEcran || focusBureau === 0 || tactile) && !enPortraitB && !(phase === 'soir' && SOIR.sortie) && !fenetre && !smsActif) {
 		const invite = t('bureau.inviteInstaller');
 		textFont(POLICE_DONNEES);
 		textSize(18);
@@ -983,6 +984,16 @@ function composerVue() {
 	// Prompt 211 : « Incident en cours » suit la même règle — la pastille sur l'écran du PC l'annonce déjà
 	const consigne = msg === t('bureau.installer') || msg === t('bureau.installerMobile') || msg === t('bureau.incident');
 	if (consigne && typeof inactifDepuis !== 'undefined' && millis() - inactifDepuis < 10000) return;
+	if (enPortraitB) {
+		// Prompt 209 : la consigne passe à la ligne dans 640 px (reprise à la loupe sous l'image)
+		const o = { taille: 22, interligne: 30, couleur: '#FFFFFF', police: POLICE_DONNEES, align: 'center' };
+		const hm = hauteurTexte(String(msg), 600, o) + 20;
+		fill(13, 12, 12, 225);
+		rect(L / 2 - 320, H - 28 - hm, 640, hm);
+		loupePortrait(L / 2 - 320, H - 28 - hm, 640, hm);
+		dessinerTexte(String(msg), L / 2 - 300, H - 28 - hm + 10, 600, o);
+		return;
+	}
 	textFont(POLICE_DONNEES);
 	textSize(22);
 	const lm = textWidth(msg) + 40;

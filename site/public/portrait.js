@@ -39,6 +39,7 @@ function activerPortrait(oui) {
 	PORTRAIT.actif = oui;
 	document.body.classList.toggle('portrait', oui);
 	appliquerGeometriePortrait(oui);
+	appliquerFenetresPortrait(oui); // prompt 209
 	if (oui && !PORTRAIT.canevas) {
 		const c = document.createElement('canvas');
 		c.id = 'portrait';
@@ -65,11 +66,26 @@ function region(src, dx, dy, dl, defile) {
 	return dh;
 }
 // Prompt 173 : les fenêtres n'ont plus que trois largeurs (DS.fenetre) ; le cadrage portrait = largeur + 40 px
-const CADRE_FENETRE = { etroite: DS.fenetre.etroite + 40, moyenne: DS.fenetre.moyenne + 40, large: DS.fenetre.large + 40 };
-const LARGEUR_FENETRE = { menu: CADRE_FENETRE.etroite, partage: CADRE_FENETRE.moyenne, installation: CADRE_FENETRE.moyenne, demission: CADRE_FENETRE.moyenne, partir: CADRE_FENETRE.moyenne, reset: CADRE_FENETRE.moyenne }; // prompt 88 ; les autres : large
+// Prompt 209 : en portrait, les trois largeurs valent 640 (colonne étroite de l'image, recomposée pleine largeur : le texte
+// de 20 px y fait ≈ 12 px CSS sur un écran de 412 px) ; elles reprennent leurs valeurs en sortant du portrait
+const FENETRE_ORDINATEUR = Object.assign({}, DS.fenetre);
+const FENETRE_PORTRAIT = 640;
+function appliquerFenetresPortrait(oui) {
+	['etroite', 'moyenne', 'large'].forEach((k) => (DS.fenetre[k] = oui ? FENETRE_PORTRAIT : FENETRE_ORDINATEUR[k]));
+}
+const CADRE_FENETRE = {
+	get etroite() { return DS.fenetre.etroite + 40; },
+	get moyenne() { return DS.fenetre.moyenne + 40; },
+	get large() { return DS.fenetre.large + 40; },
+};
+const LARGEUR_FENETRE = {}; // prompt 88 (largeurs propres), prompt 209 : toutes à CADRE_FENETRE en portrait
+['menu'].forEach((f) => Object.defineProperty(LARGEUR_FENETRE, f, { get: () => CADRE_FENETRE.etroite }));
+['partage', 'installation', 'demission', 'partir', 'reset'].forEach((f) => Object.defineProperty(LARGEUR_FENETRE, f, { get: () => CADRE_FENETRE.moyenne }));
 
 function scenePortrait() {
-	if (typeof CINE !== 'undefined' && CINE) return 'plein';
+	if (typeof CINE !== 'undefined' && CINE) return 'cine'; // prompt 209 : colonne centrale de 640 px
+	if (typeof GAMEOVER !== 'undefined' && GAMEOVER) return 'gameover'; // prompt 209 : lettre puis boutons, empilés
+	if (typeof TRANSITION_JOUR !== 'undefined' && TRANSITION_JOUR) return 'transition'; // prompt 209 : au-dessus des SMS
 	if (fenetre === 'telephone' || fenetre === 'cafe' || smsActif) return 'main';
 	if (fenetre === 'rapport') return 'rapport';
 	if (fenetre || tutoriel) return 'fenetre';
@@ -87,36 +103,60 @@ function composerPortrait() {
 	if (!src) return;
 	PORTRAIT.regions = [];
 	PORTRAIT.boutons = [];
+	const loupes = PORTRAIT.loupes || []; // prompt 209 : relevées pendant le dessin de cette image
+	PORTRAIT.loupes = [];
 	const scene = scenePortrait();
 	if (scene === 'appli' || scene === 'vueApp') regionsPoste(scene); // prompt 205
-	else if (scene === 'main') region({ x: 880, y: 0, l: 780, h: H }, 0, 200, PL);
-	else if (scene === 'rapport') region({ x: 420, y: 0, l: 1420, h: H }, 0, (PH - (H * PL) / 1420) / 2, PL);
-	else if (scene === 'fenetre') {
-		const W = tutoriel ? 1400 : LARGEUR_FENETRE[fenetre] || CADRE_FENETRE.large;
-		region({ x: (L - W) / 2, y: 0, l: W, h: H }, 0, (PH - (H * PL) / W) / 2, PL);
-	} else if (scene === 'menu') {
+	else if (scene === 'main') {
+		// Prompt 209 : le téléphone seul (560 px de large, sans la main) ; la tasse de café garde l'ancien cadrage
+		if (fenetre === 'cafe') region({ x: 880, y: 0, l: 780, h: H }, 0, 200, PL);
+		else {
+			const src = { x: xTelephoneMain() - 20, y: 16, l: TEL_MAIN.l + 40, h: 980 };
+			region(src, 0, Math.max(0, (PH - (src.h * PL) / src.l) / 2), PL);
+		}
+	}
+	else if (scene === 'rapport') regionsFenetre(); // prompt 209 : feuilles de 640 px (histoire.js, rapportPortrait)
+	else if (scene === 'fenetre') regionsFenetre();
+	else if (scene === 'cine') region({ x: COLONNE_CINE.x - 20, y: 0, l: 680, h: H }, 0, (PH - (H * PL) / 680) / 2, PL);
+	else if (scene === 'gameover') regionsDeuxColonnes('gameover', GEO_GAMEOVER.a, GEO_GAMEOVER.b);
+	else if (scene === 'transition') region({ x: L / 2 - 340, y: 0, l: 680, h: H }, 0, (PH - (H * PL) / 680) / 2, PL); // prompt 209 : colonne de 640 px
+	else if (scene === 'menu' && MENU.ecran === 'semaines') regionsChoixSemaine(); // prompt 209
+	else if (scene === 'menu' && (MENU.ecran === 'credits' || MENU.ecran === 'autorisations')) regionsFlux(MENU.ecran); // prompt 209
+	else if (scene === 'menu') {
 		// Prompt 199 : en haut à droite, la pile FR / EN · plein écran · télécharger ; puis la colonne du menu (titre, cartes)
 		// jusqu'à Paramètres ; puis la rangée Livrables · Kit de presse · Présentation · Dépôt · Partager et le pied de page. Pile et rangée agrandies ×2 :
 		// boutons de 60 et 68 px → ≥ 44 px à l'écran sur un téléphone de 412 px de large
 		const lp = LARGEUR_PILE() + 24, hp = 3 * HAUT_MENU.h + 2 * 16 + 24;
 		region({ x: L - HAUT_MENU.marge - lp + 12, y: HAUT_MENU.y - 12, l: lp, h: hp }, PL - 20 - 2 * lp, 30, 2 * lp);
-		const b = BLOC_PARTAGE, yr = b.yDessin || b.y, lc = 908;
+		// Prompt 209 : écran titre en colonne de 640 px (x 130 → 810) ; les autres écrans du menu gardent 908 px (x 110 → 1018)
+		const titre = MENU.ecran === 'titre';
+		const b = BLOC_PARTAGE, yr = b.yDessin || b.y, lc = titre ? COLONNE_MENU_PORTRAIT.l : 908, xc = titre ? COLONNE_MENU_PORTRAIT.x : 110;
 		let y = 30 + 2 * hp + 24;
-		y += region({ x: 110, y: 60, l: lc, h: yr - 12 - 60 }, 0, y, PL) + 8;
+		y += region({ x: xc, y: 60, l: lc, h: yr - 12 - 60 }, 0, y, PL) + 8;
 		const lr = RANGEE_MENU.length * b.l + (RANGEE_MENU.length - 1) * 16 + 24;
 		y += region({ x: b.x - 12, y: yr - 12, l: lr, h: b.h + 24 }, 20, y, Math.min(2 * lr, PL - 40)) + 16;
-		region({ x: 110, y: H - 80, l: lc, h: 56 }, 0, y, PL); // pied de page (nos noms → Crédits)
+		region({ x: xc, y: H - 80, l: lc, h: 56 }, 0, y, PL); // pied de page (nos noms → Crédits)
 	}
 	else if (scene === 'bureau') {
 		region({ x: 0, y: 0, l: L, h: H }, 0, 150, PL);
-		boutonsBureau();
+		// Prompt 209 : textes utiles de la pièce repris à l'échelle d'une colonne de 640 px — l'heure dans la bande du haut,
+		// la consigne, « Fin de journée. » et la bulle du guide entre l'image et les boutons
+		let y = 150 + (H * PL) / L + 16;
+		loupes.forEach((z) => {
+			const s = Math.min(PL / 680, (PL - 40) / z.l);
+			const dl = z.l * s;
+			if (z.haut) region(z, (PL - dl) / 2, Math.max(4, (150 - z.h * s) / 2), dl);
+			else y += region(z, (PL - dl) / 2, y, dl) + 12;
+		});
+		boutonsBureau(y + 8);
 	} else region({ x: 0, y: 0, l: L, h: H }, 0, (PH - (H * PL) / L) / 2, PL);
 	// Dessin
 	ctx.fillStyle = '#0D0C0C';
 	ctx.fillRect(0, 0, PL, PH);
 	ctx.imageSmoothingEnabled = true;
 	const poste = scene === 'appli' || scene === 'vueApp';
-	const zone = poste ? { haut: PORTRAIT.hautDefil, bas: PORTRAIT.basDefil } : null;
+	const defilant = poste || ((scene === 'fenetre' || scene === 'rapport' || scene === 'menu' || scene === 'gameover') && PORTRAIT.defilMax > 0); // prompt 209 : fenêtre avec une suite, choix du mode
+	const zone = defilant ? { haut: PORTRAIT.hautDefil, bas: PORTRAIT.basDefil } : null;
 	// Prompt 205 : la fiche du dossier monte du bas à son arrivée (0,3 s ; immédiate si les animations sont réduites)
 	const kF = reduireAnimations ? 1 : Math.min(1, (millis() - PORTRAIT.feuille) / 300);
 	const montee = poste && kF < 1 ? (1 - (1 - Math.pow(1 - kF, 3))) * (PH - (zone ? zone.haut : 0)) : 0;
@@ -139,13 +179,89 @@ function composerPortrait() {
 		if (SOMMEIL.k > 0.5) PORTRAIT.boutons = [];
 		return;
 	}
-	if (poste && PORTRAIT.defilMax > 0) {
+	if (defilant && PORTRAIT.defilMax > 0) {
 		// Ascenseur discret : où l'on est dans la colonne
 		const h = ((zone.bas - zone.haut) * (zone.bas - zone.haut)) / (zone.bas - zone.haut + PORTRAIT.defilMax);
 		const y = zone.haut + ((zone.bas - zone.haut - h) * PORTRAIT.defil) / PORTRAIT.defilMax;
 		ctx.fillStyle = 'rgba(255,255,255,0.35)';
 		ctx.fillRect(PL - 10, y, 6, h);
 	}
+}
+
+/** Prompt 209 : fenêtre — sa colonne (640 px + marges, centrée sur le panneau dessiné), et sa suite éventuelle
+ * (FENETRE_SUITE, seconde colonne de l'image) empilée dessous ; l'ensemble défile au doigt s'il dépasse l'écran */
+function regionsFenetre() {
+	const W = tutoriel ? 1400 : LARGEUR_FENETRE[fenetre] || CADRE_FENETRE.large;
+	const Z = typeof ZONE_FENETRE !== 'undefined' ? ZONE_FENETRE : null;
+	const cx = !tutoriel && Z && Z.l <= W ? Z.x + Z.l / 2 : L / 2;
+	const S = !tutoriel && typeof FENETRE_SUITE !== 'undefined' ? FENETRE_SUITE : null;
+	const cle = 'fenetre:' + fenetre;
+	if (cle !== PORTRAIT.cleContenu) {
+		PORTRAIT.cleContenu = cle;
+		PORTRAIT.defil = 0;
+	}
+	PORTRAIT.hautDefil = 0;
+	PORTRAIT.basDefil = PH;
+	if (!S) {
+		PORTRAIT.defilMax = 0;
+		region({ x: cx - W / 2, y: 0, l: W, h: H }, 0, (PH - (H * PL) / W) / 2, PL);
+		return;
+	}
+	const y0 = Z ? Math.max(0, Z.y - 20) : 0;
+	const y1 = Z ? Math.min(H, Z.y + Z.h + 20) : H;
+	const dh = region({ x: cx - W / 2, y: y0, l: W, h: y1 - y0 }, 0, 0, PL, true);
+	const s0 = Math.max(0, S.y - 20);
+	const total = dh + region({ x: S.x + S.l / 2 - W / 2, y: s0, l: W, h: Math.min(H, S.y + S.h + 20) - s0 }, 0, dh, PL, true);
+	PORTRAIT.defilMax = Math.max(0, total - PH);
+	PORTRAIT.defil = constrain(PORTRAIT.defil, 0, PORTRAIT.defilMax);
+}
+
+/** Prompt 209 : choix du mode — colonne A (titre, deux cartes) puis colonne B (option du guide, Lancer, Retour),
+ * empilées et défilables (menu.js, choixSemainePortrait) */
+function regionsChoixSemaine() {
+	regionsDeuxColonnes('semaines', GEO_CHOIX_SEMAINE.a, GEO_CHOIX_SEMAINE.b);
+}
+/** Prompt 209 : deux colonnes de l'image (640 px + marges de 20) empilées et défilables ; cle : retour en haut au changement */
+function regionsDeuxColonnes(cle, A, B) {
+	if (PORTRAIT.cleContenu !== cle) (PORTRAIT.cleContenu = cle), (PORTRAIT.defil = 0);
+	PORTRAIT.hautDefil = 0;
+	PORTRAIT.basDefil = PH;
+	const dh = region({ x: A.x - 30, y: A.y, l: 680, h: A.h }, 0, 40, PL, true);
+	const total = 40 + dh + (B.h > 0 ? region({ x: B.x - 30, y: B.y, l: 680, h: B.h }, 0, 40 + dh, PL, true) : 0) + 40;
+	PORTRAIT.defilMax = Math.max(0, total - PH);
+	PORTRAIT.defil = constrain(PORTRAIT.defil, 0, PORTRAIT.defilMax);
+}
+
+/** Prompt 209 : flux de blocs dans trois colonnes de 640 px de l'image (texte sur 600 px, marges de 20) — un bloc qui
+ * ne tient plus dans une colonne passe en haut de la suivante ; GEO_FLUX garde la hauteur occupée de chaque colonne, et
+ * regionsFlux les empile pleine largeur (20 px de l'image ≈ 12,9 px CSS sur un écran de 412 px) */
+const GEO_FLUX = [0, 1, 2].map((i) => ({ x: 20 + i * 640, y: 20, l: 600, h: 0 }));
+function fluxPortrait() {
+	GEO_FLUX.forEach((C) => (C.h = 0));
+	let i = 0;
+	let y = GEO_FLUX[0].y;
+	return {
+		l: GEO_FLUX[0].l,
+		place(h) {
+			if (i < GEO_FLUX.length - 1 && y > GEO_FLUX[i].y && y + h > H - 20) (i += 1), (y = GEO_FLUX[i].y);
+			const C = GEO_FLUX[i];
+			const p = { x: C.x, y };
+			y += h;
+			C.h = y - C.y;
+			return p;
+		},
+	};
+}
+function regionsFlux(cle) {
+	if (PORTRAIT.cleContenu !== cle) (PORTRAIT.cleContenu = cle), (PORTRAIT.defil = 0);
+	PORTRAIT.hautDefil = 0;
+	PORTRAIT.basDefil = PH;
+	let y = 30;
+	GEO_FLUX.forEach((C) => {
+		if (C.h > 0) y += region({ x: C.x - 20, y: C.y - 10, l: 640, h: C.h + 20 }, 0, y, PL, true);
+	});
+	PORTRAIT.defilMax = Math.max(0, y + 30 - PH);
+	PORTRAIT.defil = constrain(PORTRAIT.defil, 0, PORTRAIT.defilMax);
 }
 
 // ——— Prompt 205 : poste en portrait — barre des jauges (haut), un seul contenu plein écran (défilant), équipes
@@ -258,15 +374,19 @@ function dessinerBarresPortrait() {
 	ctx.restore();
 }
 /** Bureau : tous les objets de la pièce en grosses cibles (2 colonnes), plus « S'installer au PC » */
-function boutonsBureau() {
-	let objets = [{ nom: 'ecran', label: t('portrait.installer'), action: sAsseoir }].concat(
+/** Prompt 209 : loupe — rectangle de l'image (texte utile dessiné dans la pièce) repris agrandi au bureau en portrait */
+function loupePortrait(x, y, l, h, haut) {
+	if (typeof PORTRAIT !== 'undefined' && PORTRAIT.actif) (PORTRAIT.loupes = PORTRAIT.loupes || []).push({ x, y, l, h, haut: !!haut });
+}
+function boutonsBureau(y0) {
+	const nb = typeof totalBadges === 'function' && ecran === 'jeu' && Jeu.paquet ? totalBadges() : 0; // prompt 209 : le badge de l'écran passe dans le bouton
+	let objets = [{ nom: 'ecran', label: t('portrait.installer') + (nb ? ' (' + texteBadge(nb) + ')' : ''), action: sAsseoir }].concat(
 		OBJETS_BUREAU.slice(1)
 			.filter((o) => !o.visible || o.visible())
 			.map((o) => ({ nom: o.nom, label: String(o.label), action: () => ouvrirObjetBureau(o.nom) })),
 	);
 	// Prompt 69 : le soir, la sortie devient la grande cible principale (← Sortie)
 	if (typeof sortieVisible === 'function' && sortieVisible()) objets = [{ nom: 'sortie', label: '← ' + t('soir.sortie'), action: quitterBureau }].concat(objets.filter((o) => o.nom !== 'sortie'));
-	const y0 = 150 + (H * PL) / L + 24;
 	const lb = (PL - 60) / 2;
 	const hp = objets[0].nom === 'sortie' ? 124 : 96; // prompt 69 : la sortie ≥ 44 px CSS sur un téléphone de 412 px
 	objets.forEach((o, i) => {
@@ -371,7 +491,7 @@ function portraitDeplacement(e) {
 	if (!d) return;
 	const p = pointPortrait(e);
 	const sc = scenePortrait();
-	if ((sc === 'appli' || sc === 'vueApp') && Math.abs(p.y - d.y) > 12) {
+	if ((sc === 'appli' || sc === 'vueApp' || ((sc === 'fenetre' || sc === 'rapport' || sc === 'menu' || sc === 'gameover') && PORTRAIT.defilMax > 0)) && Math.abs(p.y - d.y) > 12) {
 		PORTRAIT.cible = null;
 		PORTRAIT.defil = constrain(d.defil - (p.y - d.y), 0, PORTRAIT.defilMax); // le doigt fait défiler la colonne
 	}

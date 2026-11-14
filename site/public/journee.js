@@ -53,7 +53,8 @@ function partirQuandMeme() {
 }
 function fenetrePartir() {
 	const l = DS.fenetre.moyenne; // prompt 173 (était 1000)
-	const h = 440;
+	const portrait = typeof PORTRAIT !== 'undefined' && PORTRAIT.actif; // prompt 209 : 640 px, boutons empilés
+	const h = portrait ? 700 : 440;
 	const x = (L - l) / 2;
 	const y = (H - h) / 2;
 	panneau(x, y, l, h, C.orange);
@@ -67,7 +68,12 @@ function fenetrePartir() {
 	textSize(24);
 	textLeading(34);
 	fill(C.texte);
-	text(textePartir(), x + 56, y + 124, l - 112, 160);
+	text(textePartir(), x + 56, y + 124, l - 112, portrait ? 360 : 160);
+	if (portrait) {
+		bouton(x + 56, y + h - 112 - 88, l - 112, 72, t('partir.rester'), fermer);
+		bouton(x + 56, y + h - 112, l - 112, 72, t('partir.partir'), partirQuandMeme, false, true);
+		return;
+	}
 	bouton(x + 56, y + h - 112, 400, 72, t('partir.rester'), fermer);
 	bouton(x + l - 56 - 420, y + h - 112, 420, 72, t('partir.partir'), partirQuandMeme, false, true);
 }
@@ -108,7 +114,8 @@ function fenetreBlame() {
 	const b = Jeu.blame;
 	if (!b) return fermer();
 	const l = DS.fenetre.large; // prompt 173 (était 1100)
-	const h = 560;
+	const portrait = typeof PORTRAIT !== 'undefined' && PORTRAIT.actif; // prompt 209 : 640 px, texte plus haut
+	const h = portrait ? 900 : 560;
 	const x = (L - l) / 2;
 	const y = (H - h) / 2;
 	panneau(x, y, l, h, C.accent);
@@ -132,8 +139,9 @@ function fenetreBlame() {
 	textLeading(34);
 	fill(C.texte);
 	textAlign(LEFT, TOP);
-	text(String(b.texte), x + 40, y + 190, l - 80, 220);
-	bouton(x + l - 40 - 360, y + h - 104, 360, 68, t('blame.lu'), lireBlame);
+	text(String(b.texte), x + 40, y + 190, l - 80, portrait ? 560 : 220);
+	if (portrait) bouton(x + 40, y + h - 104, l - 80, 72, t('blame.lu'), lireBlame);
+	else bouton(x + l - 40 - 360, y + h - 104, 360, 68, t('blame.lu'), lireBlame);
 }
 function lireBlame() {
 	if (Jeu.blame) Jeu.blame.lu = true;

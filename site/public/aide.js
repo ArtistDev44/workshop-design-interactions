@@ -292,7 +292,7 @@ function mettreEnPagesAide(cartes, x, y, l, h, colonnes, ecart) {
 function fenetreAide() {
 	const portrait = typeof PORTRAIT !== 'undefined' && PORTRAIT.actif;
 	const l = DS.fenetre.large; // prompt 173 (était 1720)
-	const h = 1040;
+	const h = portrait ? 1072 : 1040; // prompt 209 : toute la hauteur de l'image en portrait
 	const x = (L - l) / 2;
 	const y = (H - h) / 2;
 	// Ouverture : retour au premier onglet (la fenêtre n'était pas dessinée à l'image précédente)
@@ -306,11 +306,13 @@ function fenetreAide() {
 	dsPanneau(x, y, l, h, t('aide.titre'));
 	// ——— Onglets ———
 	const n = ONGLETS_AIDE.length;
-	const lo = (l - 96 - (n - 1) * 12) / n;
-	const ho = portrait ? 96 : 60; // ≥ 44 px à l'écran en portrait
+	const parRangee = portrait ? 2 : n; // prompt 209 : fenêtre de 640 px en portrait → onglets sur deux rangées
+	const lo = (l - 96 - (parRangee - 1) * 12) / parRangee;
+	const ho = portrait ? 80 : 60; // ≥ 44 px à l'écran en portrait
+	const rangees = Math.ceil(n / parRangee);
 	ONGLETS_AIDE.forEach((cle, i) => {
-		const ox = x + 48 + i * (lo + 12);
-		const oy = y + 80;
+		const ox = x + 48 + (i % parRangee) * (lo + 12);
+		const oy = y + 80 + Math.floor(i / parRangee) * (ho + 16);
 		const actif = i === AIDE.onglet;
 		const survol = mouseX >= ox && mouseX <= ox + lo && mouseY >= oy && mouseY <= oy + ho;
 		noStroke();
@@ -345,9 +347,9 @@ function fenetreAide() {
 	});
 	// ——— Contenu (entrée douce, sauf animations réduites) ———
 	const cx = x + 48;
-	const cy = y + 80 + ho + 36;
+	const cy = y + 80 + rangees * ho + (rangees - 1) * 16 + 36;
 	const cl = l - 96;
-	const ch = y + h - 116 - cy;
+	const ch = y + h - 116 - (portrait ? 84 : 0) - cy; // prompt 209 : en portrait, le pied tient sur deux rangées
 	const k = reduireAnimations ? 1 : easeOut(constrain((millis() - AIDE.debut) / 220, 0, 1));
 	const onglet = ONGLETS_AIDE[AIDE.onglet];
 	push();
@@ -366,7 +368,7 @@ function fenetreAide() {
 	pop();
 	textAlign(LEFT, TOP);
 	// ——— Pied : pages à gauche, tutoriel et fermeture à droite ———
-	const by = y + h - 92;
+	const by = y + h - 92 - (portrait && AIDE.pages > 1 && onglet !== 'demarrer' ? 84 : 0); // prompt 209 : pages au-dessus des boutons en portrait
 	if (AIDE.pages > 1) {
 		// Prompt 170 : flèches Lucide (page précédente / suivante), nommées par « Page n / total » juste à côté
 		bouton(cx, by, 64, 60, '', () => pageAide(-1), AIDE.page === 0, true);
@@ -375,6 +377,15 @@ function fenetreAide() {
 		bouton(cx + 240, by, 64, 60, '', () => pageAide(1), AIDE.page >= AIDE.pages - 1, true);
 		iconeLucide('arrow-right', cx + 260, by + 18, 24, AIDE.page >= AIDE.pages - 1 ? 'rgba(255,255,255,0.5)' : '#FFFFFF');
 	} else if (!portrait) dsTexte(t('aide.clavier'), cx, by + 20, 18, DS.blanc50, 'left');
+	if (portrait) {
+		// Prompt 209 : rangée du bas, boutons de 72 px (≥ 44 px CSS), « Relancer le tutoriel » à gauche de « Fermer »
+		const yb = y + h - 92;
+		const lf = 200;
+		bouton(x + l - 48 - lf, yb, lf, 72, t('commun.fermer'), fermer, false, true);
+		bouton(x + 48, yb, l - 96 - lf - 16, 72, t('tuto.relancer'), lancerTutoriel, false, onglet !== 'demarrer'); // « Bien démarrer » : bouton primaire (il quitte le cadre du tutoriel)
+		textAlign(LEFT, TOP);
+		return;
+	}
 	bouton(x + l - 48 - 240, by, 240, 60, t('commun.fermer'), fermer, false, true);
 	if (onglet !== 'demarrer') bouton(x + l - 48 - 240 - 20 - 380, by, 380, 60, t('tuto.relancer'), lancerTutoriel, false, true);
 	textAlign(LEFT, TOP);
@@ -385,7 +396,7 @@ function dessinerDemarrerAide(x, y, l, h, portrait) {
 	const p = paragraphesAide();
 	const lg = portrait ? l : Math.round(l * 0.56);
 	let yy = y + titreCarteAide(t('aide.carte.0'), x, y, lg);
-	yy += dessinerTexte(p[0] || '', x, yy + 6, lg, { police: POLICE_TEXTE, taille: 26, interligne: 38, couleur: DS.blanc }).h + 40;
+	yy += dessinerTexte(p[0] || '', x, yy + 6, lg, { police: POLICE_TEXTE, taille: portrait ? 22 : 26, interligne: portrait ? 30 : 38, couleur: DS.blanc }).h + (portrait ? 20 : 40);
 	// Légende des seuils (ceux de l'objectif : orange sous 40, rouge sous 20)
 	const lb = Math.min(lg, 760);
 	[
@@ -398,7 +409,7 @@ function dessinerDemarrerAide(x, y, l, h, portrait) {
 		rect(x + (lb * a) / 100, yy, (lb * (b - a)) / 100 - 4, 24);
 	});
 	[0, 20, 40, 100].forEach((v) => dsTexte(String(v), x + (lb * v) / 100 - (v === 100 ? 0 : 0), yy + 34, 20, DS.blanc75, v === 100 ? 'right' : 'left'));
-	yy += 84;
+	yy += portrait ? 70 : 84;
 	// Prompt 172 : les trois jauges du bandeau en réduction, une dans chaque état (vert, orange, rouge)
 	const pas = Math.min(260, lb / 3);
 	['fluidite', 'reputation', 'budget'].forEach((cle, i) => {
@@ -407,11 +418,13 @@ function dessinerDemarrerAide(x, y, l, h, portrait) {
 	});
 	// Le tutoriel
 	const tx = portrait ? x : x + lg + 64;
-	const ty = portrait ? yy + 70 : y;
+	const ty = portrait ? yy + 64 : y;
 	const tl = portrait ? l : l - lg - 64;
 	const total = typeof ETAPES_TUTORIEL !== 'undefined' ? ETAPES_TUTORIEL : 0;
-	const deuxLignes = !portrait; // prompt 173 : fenêtre large (1280) → l'accroche du tutoriel passe sur deux lignes
-	const th = 42 + 44 + (deuxLignes ? 28 : 0) + total * 34 + 28 + (portrait ? 110 : 76) + 32;
+	const deuxLignes = true; // prompt 173 : fenêtre large (1280) → l'accroche du tutoriel passe sur deux lignes ; prompt 209 : en portrait aussi (640 px)
+	// Prompt 209 : en portrait, les étapes sur deux colonnes et le bouton du tutoriel dans le pied de la fenêtre
+	const parCol = total; // prompt 209 : une seule colonne (« Le menu et la somnolence » ne tient pas sur une demi-largeur)
+	const th = 42 + 44 + (deuxLignes ? 28 : 0) + parCol * 34 + 28 + (portrait ? 0 : 76 + 32);
 	noStroke();
 	fill(DS.blanc05);
 	rect(tx, ty, tl, th);
@@ -426,13 +439,16 @@ function dessinerDemarrerAide(x, y, l, h, portrait) {
 	dsTexte(t('aide.tuto.texte', { n: total }), tx + 32, y2, 20, DS.blanc75, 'left', deuxLignes ? tl - 64 : undefined);
 	pop();
 	y2 += 44 + (deuxLignes ? 28 : 0);
+	const lcol = tl - 64;
 	for (let i = 1; i <= total; i++) {
-		dsTexte(String(i), tx + 32, y2, 20, DS.alerte, 'left');
+		const xc = tx + 32 + (portrait && i > parCol ? lcol : 0);
+		const yc = y2 + ((i - 1) % parCol) * 34;
+		dsTexte(String(i), xc, yc, 20, DS.alerte, 'left');
 		textFont(POLICE_TEXTE);
-		ajusterTaille(t('tuto.' + i + '.titre'), tl - 64 - 40, 20, 16);
+		ajusterTaille(t('tuto.' + i + '.titre'), lcol - 48, 20, 16);
 		fill(DS.blanc);
-		text(t('tuto.' + i + '.titre'), tx + 72, y2);
-		y2 += 34;
+		text(t('tuto.' + i + '.titre'), xc + 40, yc);
 	}
-	bouton(tx + 32, y2 + 20, tl - 64, portrait ? 110 : 76, t('tuto.relancer'), lancerTutoriel);
+	y2 += parCol * 34;
+	if (!portrait) bouton(tx + 32, y2 + 20, tl - 64, 76, t('tuto.relancer'), lancerTutoriel);
 }
