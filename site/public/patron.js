@@ -259,10 +259,10 @@ function appPatron(z) {
 	if (etroit) {
 		y += 56;
 		barreOutils(z.x, y, z.l, 0);
-		y += hCible(44, 70) + 16; // prompt 217 : 60 sur ordinateur
+		y += hCible(50, 70) + 16; // prompt 217 / 218
 	} else {
 		barreOutils(z.x + 368, y, z.l - 368, 536);
-		y += hCible(44, 70) + 20; // prompt 217 : 64 sur ordinateur
+		y += hCible(50, 70) + 20; // prompt 217 / 218
 	}
 	if (panne) {
 		noStroke();
@@ -310,7 +310,7 @@ function appPatron(z) {
 function barreOutils(x, y, l, rech) {
 	const m = PATRON.sel;
 	const actions = actionsMails(m);
-	const hB = hCible(44, 70); // prompt 217 : cibles de la barre ≥ 44 px CSS en mobile
+	const hB = hCible(50, 70); // prompt 218 : 50 sur ordinateur (45 px à l'écran) // prompt 217 : cibles de la barre ≥ 44 px CSS en mobile
 	const yI = y + 4 + (hB - 24) / 2; // icônes centrées dans la cible
 	const pas = hB + 8;
 	const la = actions.length * pas;

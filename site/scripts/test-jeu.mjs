@@ -4469,17 +4469,28 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	}
 	const lire = (x) => readFileSync(join(pub, x), 'utf8');
 	const sites = [
-		['panneau.js', /hCible\(44, 70\)[\s\S]{0,300}reduireDialogue/, '« × » de la fiche'], ['panneau.js', /hCible\(62, 70\)/, 'répliques et « Dites-m\'en plus »'], ['panneau.js', /hCible\(52, 70\), '→ ' \+ t\('applis\.publier'\)/, '« Publier sur Community »'],
+		['panneau.js', /hCible\(50, 70\)[\s\S]{0,300}reduireDialogue/, '« × » de la fiche'], ['panneau.js', /hCible\(62, 70\)/, 'répliques et « Dites-m\'en plus »'], ['panneau.js', /hCible\(52, 70\), '→ ' \+ t\('applis\.publier'\)/, '« Publier sur Community »'],
 		['carte.js', /lb, hCible\(52, 70\), t\('carte\.onglet\.'/, 'onglets Enquête / Historique'], ['enquete.js', /const ho = hCible\(52, 70\) \+ 10/, 'contenu sous les onglets'],
-		['patron.js', /const hB = hCible\(44, 70\)/, 'barre de Mails'], ['patron.js', /const hd = hCible\(56, 70\)/, 'dossiers de Mails'],
+		['patron.js', /const hB = hCible\(50, 70\)/, 'barre de Mails'], ['patron.js', /const hd = hCible\(56, 70\)/, 'dossiers de Mails'],
 		['notifs-tel.js', /const hT = hCible\(48, 60\)/, 'onglets du téléphone'], ['notifs-tel.js', /const hX = hCible\(56, 60\)/, '« × » des notifications'], ['notifs-tel.js', /const hA = hCible\(46, 60\)/, '« +n autres » / « Tout effacer »'], ['notifs-tel.js', /basculerNpd, undefined, false, hCible\(44, 60\)/, 'Ne pas déranger'],
 		['aide.js', /const la = hCible\(64, 74\), ha = hCible\(60, 74\)/, 'flèches de pages de l\'aide'], ['histoire.js', /300, hCible\(64, 74\), t\('commun\.fermer'\)/, '« Fermer » du rapport de la veille'],
 		['menu.js', /const hc = hCible\(46, 74\)/, 'lien des crédits'], ['guide.js', /const h = hCible\(64, 74\)/, 'option du guide'], ['guide.js', /const hbq = hCible\(48, 74\)/, 'boutons de la bulle du guide'],
-		['autorisations.js', /dsBouton\(x \+ 32, yb, l - 64, 74, e\.libelle/, '« Autoriser »'], ['carte-alertes.js', /const c = hCible\(48, 84\)/, '+ / − / Recentrer'], ['carte-alertes.js', /const zm = hCible\(40, 70\)/, 'marqueurs de la carte'],
+		['autorisations.js', /dsBouton\(x \+ 32, yb, l - 64, 74, e\.libelle/, '« Autoriser »'], ['carte-alertes.js', /const c = hCible\(50, 84\)/, '+ / − / Recentrer'], ['carte-alertes.js', /const zm = hCible\(50, 70\)/, 'marqueurs de la carte'],
 	];
 	for (const [fi, re, nom] of sites) verifier(re.test(lire(fi)), `217 : ${nom} (${fi}) ≥ 44 px CSS en mobile`);
 	const po = lire('portrait.js');
 	verifier(/\.inerte = true;/.test(po) && /if \(r\.inerte\) continue;/.test(po), '217 : la pièce du bureau est un décor en mobile (objets touchés par les grands boutons)');
+}
+
+// ——— Prompt 218 : cibles de l'ordinateur ≥ 44 px dans l'image 1920 × 1080 (l'appli y est réduite à 0,9 : 50 px) ———
+{
+	const lire = (x) => readFileSync(join(pub, x), 'utf8');
+	const ca = lire('carte-alertes.js');
+	verifier(/const hj = 50;/.test(ca) && /h: hj, action: \(\) => \(typeof MOBILE/.test(ca) && /lignesP \* 56/.test(ca), '218 : jetons des équipes à 50 px (rangées de 56)');
+	verifier(/const c = hCible\(50, 84\)/.test(ca) && /const zm = hCible\(50, 70\)/.test(ca), '218 : + / − / Recentrer et marqueurs de la carte à 50 px sur ordinateur');
+	verifier(/const hB = hCible\(50, 70\)/.test(lire('patron.js')) && /const tx = hCible\(50, 70\)/.test(lire('panneau.js')), '218 : barre de Mails et « × » de la fiche à 50 px');
+	verifier(/selecteurCouleur\(xd, cy, 44\)/.test(lire('parametres.js')), '218 : pastilles de couleur des Paramètres à 44 px');
+	verifier(/const lz = Math\.max\(44, r0\.l\), hz = Math\.max\(44, r0\.h\);/.test(lire('immersion.js')), '218 : objets de la pièce cliquables sur 44 px au moins');
 }
 
 if (erreurs.length) {

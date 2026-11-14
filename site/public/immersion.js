@@ -927,14 +927,17 @@ function zonesObjetsBureau() {
 	objetSurvol = null;
 	OBJETS_BUREAU.slice(1).forEach((o, i) => {
 		if (o.visible && !o.visible()) return; // prompt 41 : le rapport n'existe qu'en fin de semaine
-		const r = versEcranBureau(o.x, o.y, o.l, o.h, COEF_OBJETS[o.nom]); // prompt 25/40 : suit la caméra et le plan de l'objet
+		const r0 = versEcranBureau(o.x, o.y, o.l, o.h, COEF_OBJETS[o.nom]); // prompt 25/40 : suit la caméra et le plan de l'objet
+		// Prompt 218 : zone cliquable de 44 px au moins dans chaque sens, centrée sur l'objet (webcam, clavier… plus petits)
+		const lz = Math.max(44, r0.l), hz = Math.max(44, r0.h);
+		const r = { x: r0.x + (r0.l - lz) / 2, y: r0.y + (r0.h - hz) / 2, l: lz, h: hz };
 		if (o.nom === 'aide') cibleGuide('livreAide', r.x, r.y, r.l, r.h); // prompt 37
 		boutons.push({ x: r.x, y: r.y, l: r.l, h: r.h, action: () => ouvrirObjetBureau(o.nom) });
 		const survol = mouseX >= r.x && mouseX <= r.x + r.l && mouseY >= r.y && mouseY <= r.y + r.h;
 		if (survol || focusBureau === i + 1) objetSurvol = o.nom; // les livres se soulèvent (dessinerLivres)
 		const enReaction = PIECE.message && PIECE.message.objet === o.nom && millis() < PIECE.message.jusqua; // prompt 29
 		if (survol || focusBureau === i + 1) {
-			contourSurvol(r.x - 2 * PIX, r.y - 2 * PIX, r.l + 4 * PIX, r.h + 4 * PIX);
+			contourSurvol(r0.x - 2 * PIX, r0.y - 2 * PIX, r0.l + 4 * PIX, r0.h + 4 * PIX); // prompt 218 : autour de l'objet, pas de sa zone agrandie
 			const ib = o.infobulle ? String(o.infobulle) : t('objet.ouvrir', { label: o.label });
 			if (!enReaction) infobulle(ib, Math.max(16, Math.min(r.x, L - textWidth(ib) - 60)), r.y < 120 ? r.y + r.h + 24 : r.y - 70);
 		}

@@ -223,8 +223,8 @@ function dessinerPanneauSignalement(d, x, base) {
 	fill(C.texte);
 	text(titre, x + 32, y);
 	textStyle(NORMAL);
-	const tx = hCible(44, 70); // prompt 217 : « × » ≥ 44 px CSS en mobile
-	bouton(x + base.l - 28 - Math.max(48, tx), base.y + 56, Math.max(48, tx), tx, '×', reduireDialogue, false, true);
+	const tx = hCible(50, 70); // prompt 217 : « × » ≥ 44 px CSS en mobile ; prompt 218 : 50 sur ordinateur
+	bouton(x + base.l - 28 - tx, base.y + 56, tx, tx, '×', reduireDialogue, false, true);
 	textAlign(LEFT, TOP);
 	y += Math.max(48, tx - 8);
 	y = bulleDuPlaignant(d, x + 32, y, l);
