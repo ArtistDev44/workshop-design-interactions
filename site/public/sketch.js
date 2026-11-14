@@ -75,6 +75,10 @@ let enPause = false;
 let debutPause = 0;
 let bilanFin = null; // { meilleur, record, ancien } calculé à la fin de partie
 let alerteTempsJouee = false;
+// ——— Plein écran par défaut ———
+// Prompt 214 : plein écran automatique au premier clic/touche (desktop et mobile)
+// Le navigateur n'accepte la demande que pendant un geste qui « active » la page
+const PLEIN_ECRAN_DEFAUT = { fait: false };
 
 // ——— État d'affichage ———
 let ecran = 'accueil'; // 'accueil' | 'jeu'
@@ -1227,7 +1231,32 @@ function basculerPleinEcran() {
 function entrerPleinEcran() {
 	return document.documentElement.requestFullscreen();
 }
-if (typeof document !== 'undefined' && document.addEventListener) document.addEventListener('fullscreenchange', () => annoncer(t(document.fullscreenElement ? 'pleinEcran.entree' : 'pleinEcran.sortie')));
+/** Plein écran par défaut au premier clic/touche — desktop uniquement
+ * Note: Sur mobile, mobile.js gère déjà le plein écran automatique avec son propre écouteur touchend,
+ * donc on ignore ici si estMobile() est vrai ou si mobile.js a déjà géré l'événement */
+function pleinEcranParDefault() {
+	// Ne pas interférer avec le mécanisme mobile existant
+	// mobile.js peut ne pas être chargé encore, donc on vérifie en plusieurs étapes
+	if (typeof MOBILE !== 'undefined' && MOBILE.actif) return; // mobile.js a défini MOBILE.actif
+	if (typeof estMobile === 'function' && estMobile()) return; // mobile.js a défini estMobile
+	// Si mobile.js a déjà tenté le plein écran (via PLEIN_ECRAN_AUTO), on ne tente pas
+	if (typeof PLEIN_ECRAN_AUTO !== 'undefined' && PLEIN_ECRAN_AUTO.fait) return;
+	
+	if (PLEIN_ECRAN_DEFAUT.fait || !pleinEcranPossible()) return;
+	if (pleinEcranActif()) return (PLEIN_ECRAN_DEFAUT.fait = true);
+	PLEIN_ECRAN_DEFAUT.fait = true;
+	try {
+		entrerPleinEcran().catch(() => (PLEIN_ECRAN_DEFAUT.fait = false));
+	} catch (e) {
+		PLEIN_ECRAN_DEFAUT.fait = false;
+	}
+}
+if (typeof document !== 'undefined' && document.addEventListener) {
+	document.addEventListener('fullscreenchange', () => annoncer(t(document.fullscreenElement ? 'pleinEcran.entree' : 'pleinEcran.sortie')));
+	// Écouteurs pour le plein écran automatique au premier clic/touche
+	// On ajoute les deux (click et touchend) mais la fonction filtrera si on est sur mobile
+	document.addEventListener('click', pleinEcranParDefault, { once: true, capture: true, passive: true });
+}
 /** Prompt 174 : true si la touche n'est pas pour le jeu — un champ de saisie HTML a le focus (le texte tapé lui
  * appartient), ou Ctrl / Cmd / Alt est enfoncé (Ctrl+R, Ctrl+L, Ctrl+P, Alt+← restent au navigateur) */
 function saisieOuRaccourciNavigateur() {
