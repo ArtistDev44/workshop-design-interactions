@@ -200,7 +200,7 @@ function fenetreMailFin() {
 	textLeading(31);
 	fill(C.texte);
 	text(m.lignes.map(String).join('\n\n'), x + 40, y + 150, l - 80, h - 260);
-	if (portrait) bouton(x + 40, y + h - 104, l - 80, 72, t('finSemaine.lire'), fermerMailFin);
+	if (portrait) bouton(x + 40, y + h - 104, l - 80, 74, t('finSemaine.lire'), fermerMailFin); // prompt 216 : 74 px (≥ 44 px CSS)
 	else bouton(x + l - 40 - 420, y + h - 96, 420, 64, t('finSemaine.lire'), fermerMailFin);
 }
 function fermerMailFin() {
@@ -858,7 +858,7 @@ function blocsRapportPortrait() {
 	else if (page === 0 && !RAPPORT.cine && !RAPPORT.chapitre) actions.push({ lib: t('fin.rejouer'), f: actionRapport }, { lib: t('finSemaine.autre'), f: autreSemaine, sec: true }, { lib: t('menu.menuPrincipal'), f: quitterRapport, sec: true });
 	else actions.push({ lib: t(RAPPORT.cine ? 'finSemaine.cine' : RAPPORT.chapitre && !b.demission ? 'rapport.suivante' : 'fin.rejouer'), f: actionRapport });
 	// Bouton secondaire (contour blanc) posé sur une bande d'encre : lisible sur le papier
-	actions.forEach((a, i) => B.push({ h: () => 88, dessin: (x, y, l) => (a.sec && (noStroke(), fill(ENCRE_RAPPORT), rect(x, y + (i ? 0 : 8), l, 72)), bouton(x, y + (i ? 0 : 8), l, 72, a.lib, a.f, false, !!a.sec)) }));
+	actions.forEach((a, i) => B.push({ h: () => 90, dessin: (x, y, l) => (a.sec && (noStroke(), fill(ENCRE_RAPPORT), rect(x, y + (i ? 0 : 8), l, 74)), bouton(x, y + (i ? 0 : 8), l, 74, a.lib, a.f, false, !!a.sec)) }));
 	return B;
 }
 function rapportPortrait() {
