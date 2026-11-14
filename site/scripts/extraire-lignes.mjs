@@ -141,7 +141,7 @@ for (const f of geo.features) {
 const liste = [...lignes.values()].filter((l) => l.traces?.length).sort((a, b) => a.ordre - b.ordre);
 const tous = liste.flatMap((l) => l.traces.flat());
 const sortie = {
-	source: `Open Data Nantes Métropole — ${DATASET} (Licence Ouverte), GTFS valide du ${enreg.debut_de_validite} au ${enreg.fin_de_validite}`,
+	source: `Open Data Nantes Métropole — ${DATASET} (ODbL, éditeur Semitan), GTFS valide du ${enreg.debut_de_validite} au ${enreg.fin_de_validite}`,
 	extraitLe: new Date().toISOString(),
 	emprise: {
 		ouest: Math.min(...tous.map((p) => p[0])),

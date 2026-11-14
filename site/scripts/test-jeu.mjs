@@ -4198,6 +4198,16 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	verifier(/MICRO\.demande = \(async/.test(mic) && /MICRO\.jeton\+\+/.test(mic) && /clearInterval\(MICRO\.minuterieAnalyse\);\n\tMICRO\.minuterieAnalyse = setInterval/.test(mic), '210 : micro — une seule demande d\'autorisation, jeton invalidé au relâchement');
 }
 
+// Prompt 210 (audit 206, constat 10) : appli « Données » hors ligne alimentée par la semaine de référence
+{
+	const c = contexte('fr');
+	vm.runInContext('var ICONES_OS = []; var nombreFr = (v) => String(v); var TEL = { url: "" }; var tSi = (k, r) => r; var LOIRE = { hauteur: 1, source: "repli", date: null };', c);
+	vm.runInContext(readFileSync(join(pub, 'donnees.js'), 'utf8'), c, { filename: 'donnees.js' });
+	const r = vm.runInContext(`(() => { Jeu.chargerHorsLigne(); const b = blocsDonnees(); return { n: Jeu.fallback.dossiers.length, texte: JSON.stringify(b) }; })()`, c);
+	verifier(r.n > 0 && !/« ?0 dossier|\b0 dossier/.test(r.texte) && r.texte.includes(String(r.n)), `210 : appli Données hors ligne — ${r.n} dossiers attendus : ${r.texte.slice(0, 300)}`);
+	verifier(r.texte.includes('ODbL'), '210 : appli Données — le changelog GTFS est sous ODbL (Semitan)');
+}
+
 if (erreurs.length) {
 	console.error(`Test du jeu : ${erreurs.length} erreur(s) sur ${controles + erreurs.length} contrôles`);
 	for (const e of erreurs) console.error(`  ✗ ${e}`);
