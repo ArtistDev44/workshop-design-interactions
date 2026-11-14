@@ -365,6 +365,24 @@ function texteP(ctx, s, x, y, taille, couleur, align, gras) {
 	ctx.textBaseline = 'top';
 	ctx.fillText(s, x, y);
 }
+/** Prompt 213 : hachures de la zone d'excès sur une barre du portrait (motif, pas seulement une couleur), et trait de début */
+function hachuresPortrait(ctx, x0, x1, y, h) {
+	ctx.save();
+	ctx.beginPath();
+	ctx.rect(x0, y, x1 - x0, h);
+	ctx.clip();
+	ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+	ctx.lineWidth = 2;
+	ctx.beginPath();
+	for (let xx = x0 - h; xx < x1; xx += 7) {
+		ctx.moveTo(xx, y + h);
+		ctx.lineTo(xx + h, y);
+	}
+	ctx.stroke();
+	ctx.restore();
+	ctx.fillStyle = 'rgba(255,255,255,0.75)';
+	ctx.fillRect(x0 - 1, y - 4, 3, h + 8);
+}
 /** Barre du haut (jauges chiffrées, heure) et titre de la bande des équipes */
 function dessinerBarresPortrait() {
 	const ctx = PORTRAIT.ctx;
@@ -377,12 +395,20 @@ function dessinerBarresPortrait() {
 	['fluidite', 'reputation', 'budget'].forEach((k, i) => {
 		const x = 20 + i * (lh + 16);
 		const va = Math.round(aff[k] || 0);
+		// Prompt 213 : zone d'excès (Budget, Réputation) — valeur et barre à la couleur d'alerte, « ⚠ » après la valeur, hachures
+		const seuil = Jeu.seuilExces ? Jeu.seuilExces(k) : null;
+		const enEx = seuil !== null && va >= seuil;
 		texteP(ctx, t('jaugeTitre.' + k), x, 18, 32, '#FFFFFF');
-		texteP(ctx, String(va), x, 58, 48, couleurJaugePortrait(va), 'left', true);
+		texteP(ctx, String(va), x, 58, 48, enEx ? DS.alerteClair : couleurJaugePortrait(va), 'left', true);
+		if (enEx) {
+			const lv = ctx.measureText(String(va)).width;
+			texteP(ctx, '⚠', x + lv + 12, 64, 40, DS.alerte, 'left', true);
+		}
 		ctx.fillStyle = 'rgba(255,255,255,0.15)';
 		ctx.fillRect(x, 120, lh, 12);
-		ctx.fillStyle = couleurBarrePortrait(va);
+		ctx.fillStyle = enEx ? DS.alerte : couleurBarrePortrait(va);
 		ctx.fillRect(x, 120, (lh * Math.max(0, Math.min(100, va))) / 100, 12);
+		if (seuil !== null) hachuresPortrait(ctx, x + (lh * seuil) / 100, x + lh, 120, 12);
 	});
 	const h = heureAffichee();
 	const xr = PL - 20;

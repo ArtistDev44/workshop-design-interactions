@@ -101,8 +101,8 @@ tests 163 et 207 sont mis à jour.
 
 ## Limites
 
-- La barre des jauges du **mode portrait** (`portrait.js`) n'affiche pas encore les hachures ni le « ⚠ ».
-  L'infobulle, les messages et les flèches de répliques s'appliquent partout.
+- **Mode portrait** (`portrait.js`) : hachures, « ⚠ » après la valeur et couleur d'alerte ajoutés le 14/11 (suite du
+  prompt), vérifiés en 412 × 915.
 - La perte de patience est **comptée à la décision**. Pendant l'attente, elle se voit sur la barre de la carte et
   dans l'infobulle, mais la jauge ne bouge pas avant la réponse.
 - Le contrecoup du café n'est pas sauvegardé : après une reprise de partie, il ne tombe pas.
