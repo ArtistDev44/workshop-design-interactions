@@ -23,8 +23,8 @@ Jeu.incidentsFictifs = (() => {
 Jeu.plateauEquipesVisible = true; // prompt 103 : le panneau des équipes dit les effectifs (pas de doublon chez le patron)
 const CARTE = { zone: null, vue: null, cible: null, marqueurs: [], arrivees: {}, jeton: null, jetonChoisi: null, retour: null, jetons: [], depots: [], suivis: [], pan: null, centreSur: null, ligneSurvol: null, survolFrame: 0, controles: [] };
 const MENU_APP = { x: 40, y: 92, l: 128, h: 940 }; // prompt 103 : colonne du menu
-const ZONE_CARTE = { x: 184, y: 92, l: 1376, h: 940 }; // prompt 108 : la carte laisse la droite aux équipes
-const PANNEAU_EQUIPES = { x: 1576, y: 92, l: 304, h: 940 };
+const ZONE_CARTE = { x: 184, y: 92, l: 1424, h: 940 }; // prompt 108 : la carte laisse la droite aux équipes (élargie quand le panneau s'est affiné)
+const PANNEAU_EQUIPES = { x: 1624, y: 92, l: 256, h: 940 }; // panneau affiné : 3 cases par rangée
 const FENETRE_DIALOGUE = { l: 820, h: 868 }; // prompt 107 : fenêtre flottante du plaignant
 const PHASES_DOSSIER_CARTE = ['decision', 'contradiction', 'conflit', 'narration'];
 const LIEUX = (typeof window !== 'undefined' && window.LIEUX_DONNEES) || { centres: {}, lieux: {} };
@@ -582,8 +582,12 @@ function dessinerPanneauEquipes() {
 		const eff = Jeu.effectifJour ? Jeu.effectifJour(cle) : 1;
 		// Prompt 211 : plus de pictogramme avant le nom (les cases le portent), plus de base (épingle de la carte, au survol) ;
 		// le coût passe sur la ligne du nom
-		dsTexte(couperLargeurCarte(String(q.nom), P.l - 120, 20), P.x + 16, y, 18, DS.blanc, 'left');
-		if (!verrou) dsTexte(t('equipes.cout', { cout: q.cout }), P.x + P.l - 16, y + 3, 14, DS.blanc75, 'right');
+		const cout = verrou ? '' : t('equipes.cout', { cout: q.cout });
+		textFont(DS.policeTexte);
+		textSize(14);
+		const lc = cout ? textWidth(cout) + 8 : 0;
+		dsTexte(couperLargeurCarte(String(q.nom), P.l - 32 - lc, 20), P.x + 16, y, 18, DS.blanc, 'left');
+		if (cout) dsTexte(cout, P.x + P.l - 16, y + 3, 14, DS.blanc75, 'right');
 		// pastilles : équipes engagées (état, secondes restantes), puis disponibles
 		const eng = (Jeu.equipes || []).filter((x) => x.cle === cle && !x.inutile && x.jourIndex === Jeu.jourIndex && Jeu.phaseEquipe(x, tm) !== 'libre');
 		const dispo = verrou ? 0 : Math.max(0, eff - eng.length);
@@ -591,8 +595,8 @@ function dessinerPanneauEquipes() {
 		const lp = 64;
 		const premierDispo = ps.findIndex((p) => p.ph === 'dispo');
 		ps.forEach((p, i) => {
-			const px = P.x + 16 + (i % 4) * (lp + 4);
-			const py = y + 32 + Math.floor(i / 4) * 52;
+			const px = P.x + 16 + (i % 3) * (lp + 4);
+			const py = y + 32 + Math.floor(i / 3) * 52;
 			const saisi = i === premierDispo && ((CARTE.jeton && CARTE.jeton.cle === cle) || CARTE.jetonChoisi === cle);
 			noStroke();
 			fill(p.ph === 'dispo' ? (saisi ? DS.blanc15 : DS.fond) : p.ph === 'retour' ? DS.blanc05 : DS.blanc15);
@@ -613,13 +617,13 @@ function dessinerPanneauEquipes() {
 				boutons.push({ x: px, y: py, l: lp, h: 46, action: () => (typeof MOBILE !== 'undefined' && MOBILE.actif && dossierOuvert() ? deposerJeton(cle, Jeu.index) : choisirJeton(cle)), titre: t('equipe.' + cle) }); // prompt 210 : libellé (lecteur-ecran.js)
 			}
 		});
-		const lignesP = Math.max(1, Math.ceil(ps.length / 4));
+		const lignesP = Math.max(1, Math.ceil(ps.length / 3));
 		// Prompt 211 : « n/N libres » retiré, les cases pleines ou vides le disent déjà ; seul le verrou reste écrit
 		if (verrou) dsTexte(couperLargeurCarte(t('histoire.verrou.equipes'), P.l - 32, 20), P.x + 16, y + 30, 14, DS.alerteClair, 'left');
 		y += 32 + (ps.length ? lignesP * 52 : 30) + 22;
 	});
 	// Boutons de navigation de la carte, sous les cases des équipes
-	if (CARTE.pr) y = dessinerNavigationCarte(P.x + 16, y) + 24;
+	if (CARTE.pr) y = dessinerNavigationCarte(P.x + 16, y + 40) + 24; // bien séparés des équipes
 	// Message (envoi, refus, équipe choisie) sous les boutons ; la consigne « Glissez une équipe… » est retirée
 	const msg = SELECTION.message && millis() - SELECTION.message.t < 5000;
 	const txt = msg ? String(SELECTION.message.texte) : CARTE.jetonChoisi ? t('carte.jetonChoisi', { nom: Jeu.EQUIPES[CARTE.jetonChoisi].nom }) : '';
