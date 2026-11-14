@@ -391,7 +391,8 @@ function piedCredits(x, y, n) {
 	strokeWeight(survolC ? 3 : 1);
 	line(x, y + 2, x + cw, y + 2);
 	noStroke();
-	boutons.push({ x: x - 8, y: y - 34, l: cw + 16, h: 46, action: () => ouvrirCredits() });
+	const hc = hCible(46, 74); // prompt 217 : lien des crédits ≥ 44 px CSS en mobile (zone de toucher autour du texte)
+	boutons.push({ x: x - 8, y: y - 34 - (hc - 46) / 2, l: cw + 16, h: hc, action: () => ouvrirCredits() });
 	if (survolC) infobulle(t('mp.credits.infobulle'), x, y - 76);
 }
 /** Prompt 199 : bouton à icône seule de la rangée Livrables · Kit de presse · Présentation · Dépôt · Partager (style des cartes du menu, focus en

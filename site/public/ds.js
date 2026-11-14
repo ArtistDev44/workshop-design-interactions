@@ -329,6 +329,12 @@ const dsAnnonceSegment = (prefixe, i, n, lib) => t('ds.segment.annonce', { group
 /** Curseur à crans (prompt 175) : dix segments de 10 %, boutons − et +, valeur écrite à droite (« 70 % »).
  * regler(v) reçoit la nouvelle valeur (0 à 100, pas de 10) ; noms : [nom du bouton −, nom du bouton +] (infobulles).
  * Les segments pleins prennent la couleur principale ; les vides ne sont que bordés. Haut de 44 px. */
+/** Prompt 217 : taille d'une cible tactile — en mobile (portrait ou paysage, tous deux recomposés), au moins `min` px de
+ * l'espace où elle est dessinée (la recomposition la réduit : ≈ 0,60 px CSS par px dans une fenêtre, ≈ 0,64 dans l'appli,
+ * ≈ 0,73 dans le téléphone) ; sur ordinateur, la taille d'origine. Le minimum donne ≥ 44 px CSS à l'écran. */
+function hCible(h, min) {
+	return typeof PORTRAIT !== 'undefined' && PORTRAIT.actif ? Math.max(h, min || 74) : h;
+}
 function dsCurseur(x, y, l, valeur, regler, noms, hauteur) {
 	const h = hauteur || 44; // prompt 214 : 72 en portrait (cibles ≥ 44 px CSS)
 	const lb = h;

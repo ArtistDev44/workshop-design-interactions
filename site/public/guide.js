@@ -346,7 +346,7 @@ function bulleGuide(texte, cx, y, auDessus, xFixe, centreV) {
 	textSize(22);
 	textLeading(30);
 	const lignes = Math.max(1, Math.ceil((textWidth(texte) * 1.1) / (l - 48)));
-	const hbq = typeof PORTRAIT !== 'undefined' && PORTRAIT.actif ? 64 : 48; // prompt 209 : boutons de la bulle plus hauts en portrait (libellé ≥ 12 px CSS)
+	const hbq = hCible(48, 74); // prompt 209 : boutons de la bulle plus hauts en portrait (libellé ≥ 12 px CSS) ; prompt 217 : 74 (≥ 44 px CSS)
 	const h = 32 + lignes * 30 + (avecBoutons ? hbq + 24 : 0);
 	const x = constrain(xFixe !== undefined ? xFixe : cx - l / 2, 24, L - l - 24);
 	const by = constrain(centreV ? y - h / 2 : auDessus ? y - h : y, 24, H - h - 24);
@@ -397,7 +397,8 @@ function bulleGuide(texte, cx, y, auDessus, xFixe, centreV) {
 function dessinerOptionsNouvellePartie(x, y, largeur) {
 	const on = optionGuide();
 	const l = largeur || 720; // prompt 209 : 620 px dans la colonne portrait du choix du mode
-	const h = 64;
+	const h = hCible(64, 74); // prompt 217 : ≥ 44 px CSS en mobile
+	const dy = (h - 64) / 2; // case et coche centrées
 	const survol = mouseX >= x && mouseX <= x + l && mouseY >= y && mouseY <= y + h;
 	noStroke();
 	fill(255, 255, 255, survol ? 38 : 13);
@@ -405,12 +406,12 @@ function dessinerOptionsNouvellePartie(x, y, largeur) {
 	stroke('#ffffff');
 	strokeWeight(3);
 	fill(on ? DS.primaire : 'rgba(0,0,0,0)'); // prompt 115
-	rect(x + 20, y + 16, 32, 32);
+	rect(x + 20, y + 16 + dy, 32, 32);
 	if (on) {
 		stroke('#ffffff');
 		strokeWeight(5);
-		line(x + 27, y + 32, x + 34, y + 40);
-		line(x + 34, y + 40, x + 46, y + 23);
+		line(x + 27, y + 32 + dy, x + 34, y + 40 + dy);
+		line(x + 34, y + 40 + dy, x + 46, y + 23 + dy);
 	}
 	noStroke();
 	textAlign(LEFT, CENTER);
