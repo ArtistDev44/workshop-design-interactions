@@ -223,22 +223,24 @@ function dessinerPanneauSignalement(d, x, base) {
 	fill(C.texte);
 	text(titre, x + 32, y);
 	textStyle(NORMAL);
-	bouton(x + base.l - 76, base.y + 56, 48, 44, '×', reduireDialogue, false, true);
+	const tx = hCible(44, 70); // prompt 217 : « × » ≥ 44 px CSS en mobile
+	bouton(x + base.l - 28 - Math.max(48, tx), base.y + 56, Math.max(48, tx), tx, '×', reduireDialogue, false, true);
 	textAlign(LEFT, TOP);
-	y += 48;
+	y += Math.max(48, tx - 8);
 	y = bulleDuPlaignant(d, x + 32, y, l);
 	// Répliques : en bas de la fenêtre (prompt 116 : + « Dites-m'en plus » ; prompt 117 : 3 répliques mélangées dont un clash)
 	const rs = reponsesDialogue(d);
 	// Prompt 130 : une ligne de plus par réplique (tendance des jauges) — sauf sources ouvertes : lignes compactes
 	const compact = PLUS.ouvert;
-	const hL = compact ? 62 : H_REPONSE;
-	const pas = compact ? 70 : PAS_REPONSE;
-	const hRep = 44 + rs.length * pas + 70;
+	const hL = compact ? hCible(62, 70) : H_REPONSE; // prompt 217 : 70 en mobile (≈ 45 px CSS)
+	const pas = compact ? hL + 8 : PAS_REPONSE;
+	const hP = hCible(62, 70); // « Dites-m'en plus »
+	const hRep = 44 + rs.length * pas + hP + 8;
 	const yr = base.y + base.h - 24 - hRep;
 	// Prompt 116 : « En savoir plus » devient la réplique « Dites-m'en plus » (dernière de la liste) ; plus de bouton en double
 	if (PLUS.ouvert) corpsEnquete(d, x + 32, y, l, Math.max(120, yr - 16 - y));
 	else if (peutPublierDossier(d)) {
-		bouton(x + 32, y, Math.min(400, l), 52, '→ ' + t('applis.publier'), () => publierDepuisDossier(d), false, true);
+		bouton(x + 32, y, Math.min(400, l), hCible(52, 70), '→ ' + t('applis.publier'), () => publierDepuisDossier(d), false, true); // prompt 217
 		textAlign(LEFT, TOP);
 	}
 	if (phase === 'contradiction') return dessinerChoixSource(d, x + 32, yr, l);
@@ -268,17 +270,17 @@ function dessinerPanneauSignalement(d, x, base) {
 	});
 	// « Dites-m'en plus » : pas une décision — ouvre / referme les sources de l'enquête (comme E)
 	const py = yr + 36 + rs.length * pas;
-	const survolP = mouseX >= x + 32 && mouseX <= x + 32 + l && mouseY >= py && mouseY <= py + 62;
+	const survolP = mouseX >= x + 32 && mouseX <= x + 32 + l && mouseY >= py && mouseY <= py + hP;
 	noStroke();
 	fill(survolP ? DS.blanc15 : DS.blanc05);
-	rect(x + 32, py, l, 62);
+	rect(x + 32, py, l, hP);
 	fill(DS.blanc15);
-	rect(x + 32, py, 44, 62);
+	rect(x + 32, py, 44, hP);
 	dsTexte('E', x + 54, py + 18, 20, DS.blanc, 'center');
 	dessinerTexte('« ' + t(PLUS.ouvert ? 'dialogue.plusFerme' : 'dialogue.plus') + ' »', x + 92, py + 6, l - 76, { taille: 20, couleur: C.texte, maxLignes: 1, interligne: 25 });
 	dsTexte(t('dialogue.plusAide'), x + 92, py + 34, 16, DS.blanc50, 'left');
-	boutons.push({ x: x + 32, y: py, l, h: 62, action: basculerPlus });
-	cibleGuide('sources', x + 32, py, l, 62);
+	boutons.push({ x: x + 32, y: py, l, h: hP, action: basculerPlus });
+	cibleGuide('sources', x + 32, py, l, hP);
 }
 /** Prompt 116 : les répliques d'un dossier, le pseudo du plaignant cité une seule fois */
 function repliquesDuDossier(rs, d) {

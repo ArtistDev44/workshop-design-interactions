@@ -923,5 +923,5 @@ function fenetreRapportVeille() {
 	textLeading(32);
 	fill(C.texte);
 	text(texteRapportVeille(), x + 56, y + 56, l - 112, h - 180);
-	bouton(x + l - 56 - 300, y + h - 100, 300, 64, t('commun.fermer'), fermer);
+	bouton(x + l - 56 - 300, y + h - 100, 300, hCible(64, 74), t('commun.fermer'), fermer); // prompt 217
 }

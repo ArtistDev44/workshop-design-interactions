@@ -351,19 +351,20 @@ function dessinerControlesCarte(z) {
 /** Boutons + / − / Recentrer : une rangée sous les cases des équipes (interface simplifiée), libellé en infobulle */
 function dessinerNavigationCarte(x, y) {
 	let infobulle = null;
+	const c = hCible(48, 84); // prompt 217 : ≥ 44 px CSS en mobile (≈ 0,53 px CSS par px à cet endroit)
 	[
 		['plus', () => zoomer(1.4), t('carte.zoomer')],
 		['minus', () => zoomer(1 / 1.4), t('carte.dezoomer')],
 		['locate-fixed', recentrer, t('carte.recentrer')],
 	].forEach(([lib, action, titre], i) => {
-		const bx = x + i * 56;
-		const sv = mouseX >= bx && mouseX <= bx + 48 && mouseY >= y && mouseY <= y + 48;
+		const bx = x + i * (c + 8);
+		const sv = mouseX >= bx && mouseX <= bx + c && mouseY >= y && mouseY <= y + c;
 		noStroke();
 		fill(sv ? DS.blanc75 : DS.blanc);
-		rect(bx, y, 48, 48);
-		iconeLucide(lib, bx + 12, y + 12, 24, DS.fond); // prompt 170 : icônes Lucide, chacune avec son infobulle
-		boutons.push({ x: bx, y, l: 48, h: 48, action, titre });
-		CARTE.controles.push({ x: bx, y, l: 48, h: 48 });
+		rect(bx, y, c, c);
+		iconeLucide(lib, bx + (c - 24) / 2, y + (c - 24) / 2, 24, DS.fond); // prompt 170 : icônes Lucide, chacune avec son infobulle
+		boutons.push({ x: bx, y, l: c, h: c, action, titre });
+		CARTE.controles.push({ x: bx, y, l: c, h: c });
 		if (sv && titre) infobulle = { titre, bx };
 	});
 	// Infobulle sous le bouton survolé, gardée dans le panneau des équipes
@@ -372,13 +373,13 @@ function dessinerNavigationCarte(x, y) {
 		textFont(DS.policeTexte);
 		textSize(16);
 		const lt = Math.min(P.l, textWidth(infobulle.titre) + 20);
-		const xt = constrain(infobulle.bx + 24 - lt / 2, P.x, P.x + P.l - lt);
+		const xt = constrain(infobulle.bx + c / 2 - lt / 2, P.x, P.x + P.l - lt);
 		noStroke();
 		fill(DS.blanc);
-		rect(xt, y + 56, lt, 30);
-		dsTexte(infobulle.titre, xt + 10, y + 62, 16, DS.fond, 'left');
+		rect(xt, y + c + 8, lt, 30);
+		dsTexte(infobulle.titre, xt + 10, y + c + 14, 16, DS.fond, 'left');
 	}
-	return y + 48;
+	return y + c;
 }
 function couperLargeurCarte(txt, l, taille) {
 	textFont(DS.policeTexte);
@@ -457,8 +458,11 @@ function dessinerMarqueur(m) {
 		noStroke();
 	}
 	CARTE.depots.push({ x: x - 16, y: y - 16, l: 60, h: 60, index: m.it.index });
-	if (CARTE.jetonChoisi) boutons.push({ x: x - 6, y: y - 6, l: 40, h: 40, action: () => deposerJeton(CARTE.jetonChoisi, m.it.index) });
-	else if (!m.courant || (typeof DIALOGUE !== 'undefined' && DIALOGUE.reduit)) boutons.push({ x: x - 6, y: y - 6, l: 40, h: 40, action: () => ouvrirMarqueur(m) });
+	// Prompt 217 : zone de toucher de 70 px en mobile (≥ 44 px CSS), centrée sur le marqueur (40 px sur ordinateur)
+	const zm = hCible(40, 70);
+	const zx = x + 14 - zm / 2, zy = y + 14 - zm / 2;
+	if (CARTE.jetonChoisi) boutons.push({ x: zx, y: zy, l: zm, h: zm, action: () => deposerJeton(CARTE.jetonChoisi, m.it.index) });
+	else if (!m.courant || (typeof DIALOGUE !== 'undefined' && DIALOGUE.reduit)) boutons.push({ x: zx, y: zy, l: zm, h: zm, action: () => ouvrirMarqueur(m) });
 }
 /** Prompt 121 : signalements répondus dont une équipe intervient encore — marqueur CREUX (contour à la couleur de
  * gravité, sablier pixel) à leur lieu réel, jusqu'au retour du plaignant ; ni cliquable ni cible d'une équipe */

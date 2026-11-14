@@ -203,9 +203,10 @@ function contenuCentreNotifications(e, pret) {
 	const onglets = ['notifs', 'agenda'].concat(directDisponible() ? ['direct'] : []);
 	if (!onglets.includes(TELN.onglet)) TELN.onglet = 'notifs';
 	const lo = (l - 32 - (onglets.length - 1) * 6) / onglets.length;
-	onglets.forEach((o, i) => bouton(x + 16 + i * (lo + 6), e.y + 170, lo, 48, t('tel.onglet.' + o), () => ((TELN.onglet = o), (TELN.focus = 0), annoncer(t('tel.onglet.' + o))), false, TELN.onglet !== o));
-	const yc = e.y + 232;
-	const hc = e.h - 232 - 130 - 28; // prompt 175 : 28 px rendus au nom du réglage « Ne pas déranger », au-dessus de son interrupteur
+	const hT = hCible(48, 60); // prompt 217 : cibles du téléphone ≥ 44 px CSS en mobile (≈ 0,73 px CSS par px)
+	onglets.forEach((o, i) => bouton(x + 16 + i * (lo + 6), e.y + 170, lo, hT, t('tel.onglet.' + o), () => ((TELN.onglet = o), (TELN.focus = 0), annoncer(t('tel.onglet.' + o))), false, TELN.onglet !== o));
+	const yc = e.y + 184 + hT; // 232 sur ordinateur
+	const hc = e.h - (yc - e.y) - 130 - 28; // prompt 175 : 28 px rendus au nom du réglage « Ne pas déranger », au-dessus de son interrupteur
 	if (TELN.onglet === 'agenda') contenuAgendaTel(x, yc, l, hc);
 	else if (TELN.onglet === 'direct') contenuDirectTel(x, yc, l, hc);
 	else contenuGroupesTel(x, yc, l, hc);
@@ -217,7 +218,7 @@ function contenuCentreNotifications(e, pret) {
 		const lw = (l - 40) / 2;
 		const y0 = e.y + e.h - 112;
 		const npd = !!Confort.Reglages.npd;
-		dsInterrupteur(x + 16 + dsLargeurInterrupteur(npd), y0 + 6, npd, basculerNpd);
+		dsInterrupteur(x + 16 + dsLargeurInterrupteur(npd), y0 + 6, npd, basculerNpd, undefined, false, hCible(44, 60));
 		iconeLucide('moon', x + 16, y0 - 22, 20, '#ffffff');
 		noStroke();
 		fill('#ffffff');
@@ -229,7 +230,7 @@ function contenuCentreNotifications(e, pret) {
 		text(t('tel.npd'), x + 42, y0 - 13);
 		zoneTexteFin();
 		textAlign(LEFT, TOP);
-		bouton(x + 24 + (l - 40) / 2, e.y + e.h - 112, (l - 40) / 2, 56, t('commun.fermer'), fermer);
+		bouton(x + 24 + (l - 40) / 2, e.y + e.h - 112, (l - 40) / 2, hCible(56, 60), t('commun.fermer'), fermer);
 	}
 }
 /** Prompt 170 : icônes d'appli Lucide (icones-lucide.js) sur pastille blanche ; toujours accompagnées du nom de l'appli */
@@ -282,16 +283,20 @@ function contenuGroupesTel(x, y0, l, h) {
 			text(court(NotifsTel.texte(n), 96), x + 30, y + 44, l - 130, 76); // prompt 114 : 3 lignes au plus (texte complet à l’ouverture)
 			boutons.push({ x: x + 16, y, l: l - 132, h: nh, action: () => ouvrirNotifTel(n) });
 			// Ignorer : carré sombre, croix Lucide (cible 56 px), libellé lu par l'annonce
+			const hX = hCible(56, 60); // prompt 217
+			const xX = x + l - 28 - hX;
+			const yX = y + 62 - hX / 2;
 			fill('#0b1b33');
-			rect(x + l - 84, y + 34, 56, 56, 10);
-			iconeLucide('x', x + l - 68, y + 50, 24, '#ffffff'); // prompt 170
-			boutons.push({ x: x + l - 84, y: y + 34, l: 56, h: 56, action: () => ignorerNotifTel(n) });
+			rect(xX, yX, hX, hX, 10);
+			iconeLucide('x', xX + (hX - 24) / 2, yX + (hX - 24) / 2, 24, '#ffffff'); // prompt 170
+			boutons.push({ x: xX, y: yX, l: hX, h: hX, action: () => ignorerNotifTel(n) });
 			y += nh + 8;
 		});
-		if (g.liste.length > 1 && y + 46 <= y0 + h) {
-			bouton(x + 16, y, (l - 40) / 2, 46, ouvert ? t('tel.replier') : t('tel.autres', { n: g.liste.length - 1 }), () => (TELN.ouverts[g.app] = !ouvert), false, true);
-			bouton(x + 24 + (l - 40) / 2, y, (l - 40) / 2, 46, t('tel.toutEffacer'), () => effacerGroupeTel(g.app), false, true);
-			y += 54;
+		const hA = hCible(46, 60); // prompt 217
+		if (g.liste.length > 1 && y + hA <= y0 + h) {
+			bouton(x + 16, y, (l - 40) / 2, hA, ouvert ? t('tel.replier') : t('tel.autres', { n: g.liste.length - 1 }), () => (TELN.ouverts[g.app] = !ouvert), false, true);
+			bouton(x + 24 + (l - 40) / 2, y, (l - 40) / 2, hA, t('tel.toutEffacer'), () => effacerGroupeTel(g.app), false, true);
+			y += hA + 8;
 		}
 		y += 6;
 	});

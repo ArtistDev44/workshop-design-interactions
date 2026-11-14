@@ -259,10 +259,10 @@ function appPatron(z) {
 	if (etroit) {
 		y += 56;
 		barreOutils(z.x, y, z.l, 0);
-		y += 60;
+		y += hCible(44, 70) + 16; // prompt 217 : 60 sur ordinateur
 	} else {
 		barreOutils(z.x + 368, y, z.l - 368, 536);
-		y += 64;
+		y += hCible(44, 70) + 20; // prompt 217 : 64 sur ordinateur
 	}
 	if (panne) {
 		noStroke();
@@ -275,8 +275,9 @@ function appPatron(z) {
 	// Dossiers : colonne à gauche (rangée en haut en portrait)
 	let x = z.x;
 	if (portrait) {
-		zoneDossiers(z.x, y, z.l, 56, true);
-		y += Math.ceil(FILTRES_PATRON.length / colonnesDossiersMails(z.l, true)) * 64; // prompt 205
+		const hd = hCible(56, 70); // prompt 217 : dossiers ≥ 44 px CSS
+		zoneDossiers(z.x, y, z.l, hd, true);
+		y += Math.ceil(FILTRES_PATRON.length / colonnesDossiersMails(z.l, true)) * (hd + 8); // prompt 205
 	} else {
 		zoneDossiers(z.x, y, 352, h, false); // prompt 195 : « Boîte de réception » et ses deux compteurs en entier
 		x += 368;
@@ -309,7 +310,9 @@ function appPatron(z) {
 function barreOutils(x, y, l, rech) {
 	const m = PATRON.sel;
 	const actions = actionsMails(m);
-	const pas = 52;
+	const hB = hCible(44, 70); // prompt 217 : cibles de la barre ≥ 44 px CSS en mobile
+	const yI = y + 4 + (hB - 24) / 2; // icônes centrées dans la cible
+	const pas = hB + 8;
 	const la = actions.length * pas;
 	const lr = rech ? rech - 16 : Math.max(200, l - la - 16);
 	const focusBarre = PATRON.zoneFocus === 'barre';
@@ -318,49 +321,49 @@ function barreOutils(x, y, l, rech) {
 	const fr = focusBarre && PATRON.outil === 0;
 	noStroke();
 	fill(DS.blanc05);
-	rect(x, y + 4, lr, 44);
-	if (fr) contourFocus(x, y + 4, lr, 44);
+	rect(x, y + 4, lr, hB);
+	if (fr) contourFocus(x, y + 4, lr, hB);
 	else {
 		noFill();
 		stroke(DS.blanc15);
 		strokeWeight(1);
-		rect(x + 0.5, y + 4.5, lr - 1, 43);
+		rect(x + 0.5, y + 4.5, lr - 1, hB - 1);
 		noStroke();
 	}
-	iconeLucide('search', x + 12, y + 14, 24, DS.blanc75);
+	iconeLucide('search', x + 12, yI, 24, DS.blanc75);
 	const q = PATRON.recherche || '';
 	const place = lr - 96;
 	const lib = q ? couperDebut(q, place, 18) : t('patron.recherche');
-	dsTexte(q ? lib : couperLargeurCarte(lib, place, 18), x + 48, y + 16, 18, q ? DS.blanc : DS.blanc50, 'left');
+	dsTexte(q ? lib : couperLargeurCarte(lib, place, 18), x + 48, yI + 2, 18, q ? DS.blanc : DS.blanc50, 'left');
 	if (fr && (reduireAnimations || Math.floor(millis() / 500) % 2 === 0)) {
 		textFont(DS.policeTexte);
 		textSize(18);
 		fill(DS.blanc);
-		rect(x + 48 + (q ? textWidth(lib) : 0) + 2, y + 14, 2, 24); // curseur (fixe si mouvements réduits)
+		rect(x + 48 + (q ? textWidth(lib) : 0) + 2, yI, 2, 24); // curseur (fixe si mouvements réduits)
 	}
-	zoneTexteDeclarer('barreMails', x, y, l, 52);
-	boutons.push({ x, y: y + 4, l: lr - (q ? 44 : 0), h: 44, action: () => focusRecherche() });
+	zoneTexteDeclarer('barreMails', x, y, l, hB + 8);
+	boutons.push({ x, y: y + 4, l: lr - (q ? hB : 0), h: hB, action: () => focusRecherche() });
 	if (q) {
-		const ex = x + lr - 44;
-		iconeLucide('x', ex + 10, y + 14, 24, DS.blanc75);
-		if (survole(ex, y + 4, 44, 44)) PATRON.bulle = { txt: t('patron.recherche.effacer'), x: ex - 6, y: y + 6, ancre: 'gauche' }; // sur la ligne de la barre, à gauche du × : ne couvre pas la liste
-		boutons.push({ x: ex, y: y + 4, l: 44, h: 44, action: () => ((PATRON.recherche = ''), majRecherche()) });
+		const ex = x + lr - hB;
+		iconeLucide('x', ex + (hB - 24) / 2, yI, 24, DS.blanc75);
+		if (survole(ex, y + 4, hB, hB)) PATRON.bulle = { txt: t('patron.recherche.effacer'), x: ex - 6, y: y + 6, ancre: 'gauche' }; // sur la ligne de la barre, à gauche du × : ne couvre pas la liste
+		boutons.push({ x: ex, y: y + 4, l: hB, h: hB, action: () => ((PATRON.recherche = ''), majRecherche()) });
 	}
 	// Actions : icônes 24 px dans des cibles 44 × 44, infobulle au survol et au focus
 	let ax = x + lr + 16;
 	const finBarre = ax + actions.length * pas; // infobulles des actions : sur la ligne de la barre, à droite des icônes (elles couvraient l'objet du mail ouvert)
 	actions.forEach((a, k) => {
 		const foc = focusBarre && PATRON.outil === k + 1;
-		const sur = survole(ax, y + 4, 44, 44);
+		const sur = survole(ax, y + 4, hB, hB);
 		noStroke();
 		if (sur && a.actif) {
 			fill(DS.blanc15);
-			rect(ax, y + 4, 44, 44);
+			rect(ax, y + 4, hB, hB);
 		}
-		iconeLucide(a.icone, ax + 10, y + 14, 24, a.actif ? DS.blanc : DS.blanc50);
-		if (foc) contourFocus(ax, y + 4, 44, 44);
+		iconeLucide(a.icone, ax + (hB - 24) / 2, yI, 24, a.actif ? DS.blanc : DS.blanc50);
+		if (foc) contourFocus(ax, y + 4, hB, hB);
 		if (sur || foc) PATRON.bulle = { txt: a.lib, x: finBarre, y: y + 6 };
-		if (a.actif) boutons.push({ x: ax, y: y + 4, l: 44, h: 44, action: a.faire });
+		if (a.actif) boutons.push({ x: ax, y: y + 4, l: hB, h: hB, action: a.faire });
 		ax += pas;
 	});
 }

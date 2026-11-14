@@ -184,7 +184,7 @@ function autorisationsPortrait(el, focus) {
 		const s = AUTOR.etat[cle];
 		const usage = t('autor.' + cle + '.usage') + ' ' + (cle !== 'son' && (s === 'refuse' || s === 'absent') ? t('autor.' + cle + '.sans') : '');
 		const hu = hauteurTexte(usage, l - 64, ou);
-		const hL = 20 + 40 + hu + 12 + 28 + 16 + 64 + 20;
+		const hL = 20 + 40 + hu + 12 + 28 + 16 + 74 + 20; // prompt 217 : bouton de 74 px (≥ 44 px CSS)
 		p = F.place(hL + 16);
 		const x = p.x;
 		const y = p.y;
@@ -197,9 +197,9 @@ function autorisationsPortrait(el, focus) {
 		dessinerTexte(usage, x + 32, y + 60, l - 64, ou);
 		dessinerTexte(t('autor.statut.' + s), x + 32, y + 60 + hu + 12, l - 64, { taille: 20, interligne: 28, police: POLICE_DONNEES, couleur: s === 'autorise' ? DS.succesClair : s === 'refuse' || s === 'coupe' ? DS.erreurClair : DS.blanc75 });
 		const e = el[i + 1];
-		const yb = y + hL - 20 - 64;
-		dsBouton(x + 32, yb, l - 64, 64, e.libelle, e.action, 'contour', e.desactive || AUTOR.enCours);
-		if (focus(i + 1)) cadreFocusAutor(x + 32, yb, l - 64, 64);
+		const yb = y + hL - 20 - 74;
+		dsBouton(x + 32, yb, l - 64, 74, e.libelle, e.action, 'contour', e.desactive || AUTOR.enCours);
+		if (focus(i + 1)) cadreFocusAutor(x + 32, yb, l - 64, 74);
 	});
 	p = F.place(100);
 	dsBouton(p.x, p.y + 12, l, 76, el[0].libelle, el[0].action, 'primaire', el[0].desactive || AUTOR.enCours);

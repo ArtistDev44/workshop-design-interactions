@@ -161,6 +161,9 @@ function composerPortrait() {
 		// en boutons dans le rail droit
 		const y0 = PORTRAIT.paysage ? 20 : 150;
 		region({ x: 0, y: 0, l: L, h: H }, 0, y0, PL);
+		// Prompt 217 : la pièce est un décor — ses objets y font 8 à 28 px CSS ; on les touche par les grands boutons
+		// (boutonsBureau), jamais par l'image (un toucher dessus ne fait rien : pas de clic involontaire)
+		PORTRAIT.regions[PORTRAIT.regions.length - 1].inerte = true;
 		// Prompt 209 : textes utiles de la pièce repris à l'échelle d'une colonne de 640 px — l'heure dans la bande du haut,
 		// la consigne, « Fin de journée. » et la bulle du guide entre l'image et les boutons
 		let y = y0 + (H * PL) / L + 16;
@@ -643,6 +646,7 @@ function pointPortrait(e) {
 function viserDepuisPortrait(p) {
 	for (let i = PORTRAIT.regions.length - 1; i >= 0; i--) {
 		const r = PORTRAIT.regions[i];
+		if (r.inerte) continue; // prompt 217 : décor (pièce du bureau)
 		const dy = r.defile ? PORTRAIT.defil : 0;
 		if (r.defile && (p.y < PORTRAIT.hautDefil || p.y > PORTRAIT.basDefil)) continue;
 		const d = r.dst;

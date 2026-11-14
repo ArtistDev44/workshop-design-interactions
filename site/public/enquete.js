@@ -370,8 +370,9 @@ function basculerLireTout(cle) {
 function corpsEnquete(d, x, y0, l, h) {
 	const e = enqueteDossier();
 	dessinerOngletsIncident(x, y0, l);
-	y0 += 62; // prompt 98 : onglets 44 → 52 px
-	h -= 62;
+	const ho = hCible(52, 70) + 10; // prompt 98 : onglets 44 → 52 px ; prompt 217 : 70 en mobile
+	y0 += ho;
+	h -= ho;
 	ENQ_UI.vu = frameCount;
 	if (SELECTION.onglet === 'historique') return (ENQ_UI.zone = null), dessinerHistoriqueLigne(d, x, y0, l, h);
 	if (ENQ_UI.dossier !== d) Object.assign(ENQ_UI, { dossier: d, defil: 0, vise: 0, focus: -1 });

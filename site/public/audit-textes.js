@@ -328,7 +328,7 @@
 					if (b.l >= L - 1 && b.h >= H - 1) return;
 					const cx = b.x + b.l / 2, cy = b.y + b.h / 2;
 					// Le bouton peut paraître dans plusieurs régions (image du bureau, puis loupe en dessous) : la plus grande compte
-					const rs = PORTRAIT.regions.filter((g) => cx >= g.src.x && cx <= g.src.x + g.src.l && cy >= g.src.y && cy <= g.src.y + g.src.h);
+					const rs = PORTRAIT.regions.filter((g) => !g.inerte && cx >= g.src.x && cx <= g.src.x + g.src.l && cy >= g.src.y && cy <= g.src.y + g.src.h);
 					if (!rs.length) return; // hors des régions recomposées : pas à l'écran
 					const e = Math.max(...rs.map((g) => g.dst.l / g.src.l)) * kP;
 					noter('image:' + nomB(b), b.l * e, b.h * e, Math.min(b.l, b.h) * e);

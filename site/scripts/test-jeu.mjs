@@ -4455,6 +4455,33 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	for (const [f, re] of attendus) verifier(re.test(lire(f)), `216 : ${f} — bouton de fenêtre en portrait à 74 px (${re.source.slice(0, 50)}…)`);
 }
 
+// ——— Prompt 217 : toutes les cibles tactiles du mobile ≥ 44 px CSS (hCible) ———
+{
+	const ds = readFileSync(join(pub, 'ds.js'), 'utf8');
+	const f = /function hCible\(h, min\) \{[\s\S]*?\n\}/.exec(ds);
+	verifier(!!f, '217 : ds.js fournit hCible(h, min)');
+	if (f) {
+		const c = vm.createContext({ Math });
+		vm.runInContext(f[0] + '; var PORTRAIT = { actif: false };', c);
+		verifier(vm.runInContext('hCible(44, 70) === 44 && hCible(80, 70) === 80', c), '217 : sur ordinateur, hCible rend la taille d\'origine');
+		vm.runInContext('PORTRAIT.actif = true', c);
+		verifier(vm.runInContext('hCible(44, 70) === 70 && hCible(80, 70) === 80 && hCible(60) === 74', c), '217 : en mobile, hCible relève au minimum (74 par défaut), sans réduire');
+	}
+	const lire = (x) => readFileSync(join(pub, x), 'utf8');
+	const sites = [
+		['panneau.js', /hCible\(44, 70\)[\s\S]{0,300}reduireDialogue/, '« × » de la fiche'], ['panneau.js', /hCible\(62, 70\)/, 'répliques et « Dites-m\'en plus »'], ['panneau.js', /hCible\(52, 70\), '→ ' \+ t\('applis\.publier'\)/, '« Publier sur Community »'],
+		['carte.js', /lb, hCible\(52, 70\), t\('carte\.onglet\.'/, 'onglets Enquête / Historique'], ['enquete.js', /const ho = hCible\(52, 70\) \+ 10/, 'contenu sous les onglets'],
+		['patron.js', /const hB = hCible\(44, 70\)/, 'barre de Mails'], ['patron.js', /const hd = hCible\(56, 70\)/, 'dossiers de Mails'],
+		['notifs-tel.js', /const hT = hCible\(48, 60\)/, 'onglets du téléphone'], ['notifs-tel.js', /const hX = hCible\(56, 60\)/, '« × » des notifications'], ['notifs-tel.js', /const hA = hCible\(46, 60\)/, '« +n autres » / « Tout effacer »'], ['notifs-tel.js', /basculerNpd, undefined, false, hCible\(44, 60\)/, 'Ne pas déranger'],
+		['aide.js', /const la = hCible\(64, 74\), ha = hCible\(60, 74\)/, 'flèches de pages de l\'aide'], ['histoire.js', /300, hCible\(64, 74\), t\('commun\.fermer'\)/, '« Fermer » du rapport de la veille'],
+		['menu.js', /const hc = hCible\(46, 74\)/, 'lien des crédits'], ['guide.js', /const h = hCible\(64, 74\)/, 'option du guide'], ['guide.js', /const hbq = hCible\(48, 74\)/, 'boutons de la bulle du guide'],
+		['autorisations.js', /dsBouton\(x \+ 32, yb, l - 64, 74, e\.libelle/, '« Autoriser »'], ['carte-alertes.js', /const c = hCible\(48, 84\)/, '+ / − / Recentrer'], ['carte-alertes.js', /const zm = hCible\(40, 70\)/, 'marqueurs de la carte'],
+	];
+	for (const [fi, re, nom] of sites) verifier(re.test(lire(fi)), `217 : ${nom} (${fi}) ≥ 44 px CSS en mobile`);
+	const po = lire('portrait.js');
+	verifier(/\.inerte = true;/.test(po) && /if \(r\.inerte\) continue;/.test(po), '217 : la pièce du bureau est un décor en mobile (objets touchés par les grands boutons)');
+}
+
 if (erreurs.length) {
 	console.error(`Test du jeu : ${erreurs.length} erreur(s) sur ${controles + erreurs.length} contrôles`);
 	for (const e of erreurs) console.error(`  ✗ ${e}`);

@@ -371,11 +371,12 @@ function fenetreAide() {
 	const by = y + h - 92 - (portrait && AIDE.pages > 1 && onglet !== 'demarrer' ? 84 : 0); // prompt 209 : pages au-dessus des boutons en portrait
 	if (AIDE.pages > 1) {
 		// Prompt 170 : flèches Lucide (page précédente / suivante), nommées par « Page n / total » juste à côté
-		bouton(cx, by, 64, 60, '', () => pageAide(-1), AIDE.page === 0, true);
-		iconeLucide('arrow-left', cx + 20, by + 18, 24, AIDE.page === 0 ? 'rgba(255,255,255,0.5)' : '#FFFFFF');
-		dsTexte(t('aide.page', { n: AIDE.page + 1, total: AIDE.pages }), cx + 84, by + 18, 20, DS.blanc75, 'left');
-		bouton(cx + 240, by, 64, 60, '', () => pageAide(1), AIDE.page >= AIDE.pages - 1, true);
-		iconeLucide('arrow-right', cx + 260, by + 18, 24, AIDE.page >= AIDE.pages - 1 ? 'rgba(255,255,255,0.5)' : '#FFFFFF');
+		const la = hCible(64, 74), ha = hCible(60, 74); // prompt 217 : flèches ≥ 44 px CSS en mobile
+		bouton(cx, by, la, ha, '', () => pageAide(-1), AIDE.page === 0, true);
+		iconeLucide('arrow-left', cx + (la - 24) / 2, by + (ha - 24) / 2, 24, AIDE.page === 0 ? 'rgba(255,255,255,0.5)' : '#FFFFFF');
+		dsTexte(t('aide.page', { n: AIDE.page + 1, total: AIDE.pages }), cx + la + 20, by + (ha - 24) / 2, 20, DS.blanc75, 'left');
+		bouton(cx + 240, by, la, ha, '', () => pageAide(1), AIDE.page >= AIDE.pages - 1, true);
+		iconeLucide('arrow-right', cx + 240 + (la - 24) / 2, by + (ha - 24) / 2, 24, AIDE.page >= AIDE.pages - 1 ? 'rgba(255,255,255,0.5)' : '#FFFFFF');
 	} else if (!portrait) dsTexte(t('aide.clavier'), cx, by + 20, 18, DS.blanc50, 'left');
 	if (portrait) {
 		// Prompt 209 : rangée du bas, boutons de 72 px (prompt 216 : 74, soit ≥ 44 px CSS ; 72 n'en faisait que 43,6), « Relancer le tutoriel » à gauche de « Fermer »
