@@ -5,7 +5,7 @@
 const TACHE = { courante: null, choix: [], groupe: 0, suite: null, file: [], introVues: null, resultat: null };
 const CLE_INTRO_TACHES = 'pxe-nte001-taches-intro';
 /** Portrait mobile : la fenêtre est réduite à ~1/3 ; les cibles passent à 136 px de canevas (≥ 44 px à l'écran) */
-const enPortrait = () => typeof MOBILE !== 'undefined' && MOBILE.portrait;
+const enPortrait = () => typeof PORTRAIT !== 'undefined' && PORTRAIT.actif; // prompt 215 : portrait ET paysage mobile (recomposés)
 const hb = (h) => (enPortrait() ? Math.max(h, 136) : h);
 
 function introTacheVue(type) {

@@ -4399,6 +4399,48 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	verifier(/const suite = portrait && yy \+ 64 \+ th > y \+ h;[\s\S]{0,200}suiteFenetre\(/.test(readFileSync(join(pub, 'aide.js'), 'utf8')), '214 : aide en portrait — la liste du tutoriel passe dans la suite de la fenêtre si elle déborde');
 }
 
+// ——— Prompt 215 : téléphone en paysage — le portrait « à plat » (colonne au centre, rails sur les côtés) ———
+{
+	const fen = /fenetre: (\{[^}]*\})/.exec(readFileSync(join(pub, 'ds.js'), 'utf8'))[1];
+	const classes = new Set();
+	const c = vm.createContext({
+		console, Math, Object, String, Number, Array, JSON,
+		window: { innerWidth: 915, innerHeight: 412 },
+		document: { body: { classList: { toggle: (k, v) => (v ? classes.add(k) : classes.delete(k)) } }, createElement: () => ({ setAttribute() {}, getContext: () => ({}) }), getElementById: () => ({ appendChild() {} }) },
+		constrain: (v, a, b) => Math.max(a, Math.min(b, v)),
+	});
+	vm.runInContext(`var DS = { fenetre: ${fen} }; var L = 1920, H = 1080;`, c);
+	vm.runInContext(readFileSync(join(pub, 'portrait.js'), 'utf8'), c, { filename: 'portrait.js' });
+	const etat = () => JSON.parse(vm.runInContext('JSON.stringify({ pay: PORTRAIT.paysage, actif: PORTRAIT.actif, PLW, PH, rail: RAIL(), w: PORTRAIT.canevas && PORTRAIT.canevas.width, h: PORTRAIT.canevas && PORTRAIT.canevas.height })', c));
+	vm.runInContext('activerPortrait(true, true)', c);
+	const e = etat();
+	verifier(e.pay && e.actif && e.PH === 1080 && e.PLW === Math.round((1080 * 915) / 412) && e.rail === Math.round((e.PLW - 1080) / 2) && e.w === e.PLW && e.h === 1080 && classes.has('paysage') && classes.has('portrait'), `215 : paysage 915 × 412 → canevas recomposé ${e.PLW} × 1080, colonne de 1080 au centre (${JSON.stringify(e)})`);
+	// Écran bas (740 × 360) : l'échelle du portrait est gardée (canevas moins haut), pas de texte réduit
+	vm.runInContext('window.innerWidth = 740; window.innerHeight = 360; majHauteurPortrait()', c);
+	const b360 = etat();
+	verifier(b360.PH === Math.round((360 * 1080) / 412) && b360.PLW === Math.round((b360.PH * 740) / 360) && b360.w === b360.PLW, `215 : écran de 360 px de haut → canevas de ${b360.PH} px de haut, même échelle qu'en portrait (${JSON.stringify(b360)})`);
+	vm.runInContext('window.innerWidth = 915; window.innerHeight = 412; majHauteurPortrait()', c);
+	// Un écran centré qui dépasse la hauteur (cinématique : 680 × 1080 de l'image → 1715 px de haut) remonte et défile
+	vm.runInContext('PORTRAIT.regions = []; PORTRAIT.boutons = []; PORTRAIT.defil = 0; region({ x: 600, y: 0, l: 680, h: 1080 }, 0, (PH - (1080 * PL) / 680) / 2, PL); defilementGenerique();', c);
+	const r = JSON.parse(vm.runInContext('JSON.stringify({ d: PORTRAIT.regions[0].dst, defile: PORTRAIT.regions[0].defile, max: PORTRAIT.defilMax })', c));
+	verifier(r.d.x === e.rail && r.d.y === 12 && r.defile && Math.abs(r.max - (12 + (1080 * 1080) / 680 + 20 - 1080)) < 1, `215 : contenu trop haut ramené en haut de la colonne et défilable (${JSON.stringify(r)})`);
+	// Un écran qui tient ne défile pas
+	vm.runInContext('PORTRAIT.regions = []; PORTRAIT.defilMax = 0; region({ x: 0, y: 0, l: 1920, h: 1080 }, 0, 100, PL); defilementGenerique();', c);
+	verifier(vm.runInContext('PORTRAIT.defilMax === 0 && !PORTRAIT.regions[0].defile', c), '215 : un écran qui tient en hauteur ne défile pas');
+	// Retour en portrait (412 × 915) puis sur ordinateur : géométrie du portrait, puis rien
+	vm.runInContext('window.innerWidth = 412; window.innerHeight = 915; activerPortrait(true, false)', c);
+	const p2 = etat();
+	verifier(!p2.pay && p2.actif && p2.PLW === 1080 && p2.rail === 0 && p2.w === 1080 && p2.PH === Math.round(1080 * Math.min(21 / 9, Math.max(16 / 9, 915 / 412))) && !classes.has('paysage'), `215 : en portrait, colonne pleine largeur sans rail (${JSON.stringify(p2)})`);
+	vm.runInContext('activerPortrait(false, false)', c);
+	verifier(!etat().pay && !etat().actif && !classes.has('portrait'), '215 : sur ordinateur, ni portrait ni paysage');
+	const mob = readFileSync(join(pub, 'mobile.js'), 'utf8');
+	verifier(/activerPortrait\(MOBILE\.actif, MOBILE\.actif && !MOBILE\.portrait\)/.test(mob), '215 : tout le mobile passe par la recomposition, paysage compris');
+	const po = readFileSync(join(pub, 'portrait.js'), 'utf8');
+	verifier(/if \(PORTRAIT\.paysage\) return dessinerRailGauche\(\)/.test(po) && /abs: true, x: RAIL\(\) \+ PL \+ 20/.test(po), '215 : jauges dans le rail gauche, onglets / actions / objets du bureau dans le rail droit');
+	verifier(/\(\(tch\.clientX - r\.left\) \* PLW\) \/ r\.width/.test(po), '215 : les touchers sont convertis avec la largeur réelle du canevas');
+	verifier(/body\.paysage #scene canvas#portrait \{\s*width: 100vw !important;/.test(readFileSync(join(pub, 'style.css'), 'utf8')), '215 : le canevas recomposé remplit l\'écran en paysage');
+}
+
 if (erreurs.length) {
 	console.error(`Test du jeu : ${erreurs.length} erreur(s) sur ${controles + erreurs.length} contrôles`);
 	for (const e of erreurs) console.error(`  ✗ ${e}`);
