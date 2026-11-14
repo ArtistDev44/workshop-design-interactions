@@ -202,7 +202,8 @@ function majPatron() {
 	if (n > PATRON.vus && PATRON.vus) {
 		const m = Jeu.messagesPatron[n - 1];
 		Confort.Son.bip(typeDe(m) === 'alerte' ? 'alerte' : 'choix');
-		if (!reduireAnimations) PATRON.ecritJusqua = millis() + 800; // « Direction écrit… » 0,8 s, puis le mail arrive
+		const k = typeof facteurRythmeTexte === 'function' ? facteurRythmeTexte() : reduireAnimations ? 0 : 1; // prompt 208 : rythme du texte
+		if (k) PATRON.ecritJusqua = millis() + 800 * k; // « Direction écrit… » 0,8 s (1,6 s au rythme lent), puis le mail arrive
 	}
 	PATRON.vus = n;
 }

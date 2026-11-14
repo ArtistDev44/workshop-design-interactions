@@ -177,6 +177,7 @@ function composerPortrait() {
 	if (typeof SOMMEIL !== 'undefined' && SOMMEIL.k > 0.001 && phase !== 'reveil' && !fenetre) {
 		paupieres(ctx, SOMMEIL.k, PL, PH);
 		if (SOMMEIL.k > 0.5) PORTRAIT.boutons = [];
+		dessinerSousTitresPortrait(ctx, PH - 40); // prompt 208
 		return;
 	}
 	if (defilant && PORTRAIT.defilMax > 0) {
@@ -186,6 +187,27 @@ function composerPortrait() {
 		ctx.fillStyle = 'rgba(255,255,255,0.35)';
 		ctx.fillRect(PL - 10, y, 6, h);
 	}
+	dessinerSousTitresPortrait(ctx, (poste && zone ? zone.bas : PH) - 24); // prompt 208 : au-dessus de la barre d'onglets du poste
+}
+
+/** Prompt 208 : sous-titres des sons en portrait — 40 px portrait (≈ 15 px CSS sur 412 px), blanc sur noir, centrés */
+function dessinerSousTitresPortrait(ctx, bas) {
+	if (!Confort.Reglages.sousTitresSons) return;
+	const liste = Confort.Son.legendesVisibles();
+	if (!liste.length) return;
+	const hl = 72;
+	let y = bas - liste.length * (hl + 8);
+	ctx.save();
+	ctx.font = '400 40px ' + POLICE_PORTRAIT;
+	liste.forEach((l) => {
+		const txt = t('son.legende.' + l.cle);
+		const lt = Math.min(PL - 24, ctx.measureText(txt).width + 48);
+		ctx.fillStyle = 'rgba(0,0,0,0.88)';
+		ctx.fillRect((PL - lt) / 2, y, lt, hl);
+		texteP(ctx, txt, PL / 2, y + 14, 40, '#FFFFFF', 'center');
+		y += hl + 8;
+	});
+	ctx.restore();
 }
 
 /** Prompt 209 : fenêtre — sa colonne (640 px + marges, centrée sur le panneau dessiné), et sa suite éventuelle

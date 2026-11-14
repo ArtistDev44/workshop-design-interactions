@@ -161,6 +161,7 @@ function battreCoeur() {
 	CAFE.battement = m;
 	CAFE.prochainBattement = m + 60000 / bpmBoost();
 	const S = Confort.Son;
+	if (S.legende) S.legende('coeur'); // prompt 208 : sous-titre (au plus une fois toutes les 10 s)
 	if (!Confort.Reglages.son || !S.ctx || !S.maitre) return;
 	const c = S.ctx;
 	const coup = (t0, force) => {
@@ -172,7 +173,7 @@ function battreCoeur() {
 		g.gain.setValueAtTime(0.0001, t0);
 		g.gain.exponentialRampToValueAtTime(force, t0 + 0.012);
 		g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.16);
-		o.connect(g).connect(S.maitre);
+		o.connect(g).connect(S.sortie ? S.sortie('effets') : S.maitre); // prompt 208 : canal des effets
 		o.start(t0);
 		o.stop(t0 + 0.2);
 	};

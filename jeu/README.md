@@ -24,7 +24,7 @@ dossier à trancher sous pression. »*
 | 06 | `06-narration.md` | Textes entre les décisions, progression de la semaine |
 | 07 | `07-fallback-offline.md` | `data/fallback.json` : 6 cas figés, mode hors ligne |
 | 08 | `08-raccourcis.md` | Raccourcis clavier / touch du jeu |
-| 09 | `09-parametres.md` | Paramètres réglables (difficulté, durée, accessibilité) |
+| 09 | `09-parametres.md` | Paramètres réglables (difficulté, durée, accessibilité) ; prompt 208 : volumes par canal, sous-titres des sons, rythme du texte, pause automatique, réinitialiser |
 | 10 | `10-accessibilite-robustesse.md` | Checklist accessibilité et robustesse du jeu |
 | 11 | `11-direction-artistique.md` | Direction artistique verrouillée : palette, polices, low poly léger |
 | 12 | `12-bureau-pixel.md` | Bureau en pixel art : vue d'entrée, PC avec le jeu en direct, zoom au poste |

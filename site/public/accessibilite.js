@@ -74,6 +74,22 @@ function plancherPortrait() {
 	return typeof FENETRE_EN_DESSIN !== 'undefined' && FENETRE_EN_DESSIN && typeof fenetre !== 'undefined' && fenetre !== 'cafe';
 }
 
+/** Prompt 208 : rythme des textes progressifs (« … » avant un SMS, « Direction écrit… » avant un mail) — facteur de durée :
+ * 0 = instantané (et toujours si les animations sont réduites), 1 = normal, 2 = lent */
+const RYTHMES_TEXTE = ['instantane', 'normal', 'lent'];
+function facteurRythmeTexte() {
+	if (reduireAnimations) return 0;
+	return { instantane: 0, normal: 1, lent: 2 }[Confort.Reglages.rythmeTexte] ?? 1;
+}
+function changerRythmeTexte(sens) {
+	const n = RYTHMES_TEXTE.length;
+	const i = Math.max(0, RYTHMES_TEXTE.indexOf(Confort.Reglages.rythmeTexte));
+	Confort.Reglages.choisir('rythmeTexte', RYTHMES_TEXTE[(i + (sens || 1) + n) % n]);
+	annoncer(t('param.rythme') + ' : ' + libelleRythmeTexte());
+	Confort.Son.bip('choix');
+}
+const libelleRythmeTexte = () => t('param.rythme.' + (RYTHMES_TEXTE.includes(Confort.Reglages.rythmeTexte) ? Confort.Reglages.rythmeTexte : 'normal')) + (reduireAnimations && Confort.Reglages.rythmeTexte !== 'instantane' ? ' · ' + t('param.rythme.reduit') : '');
+
 /** Lecture facile : compte à rebours ×1,5 et pas de tic-tac */
 const facteurLecture = () => (Confort.Reglages.lectureFacile ? 1.5 : 1);
 
