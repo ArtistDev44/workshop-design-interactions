@@ -169,7 +169,7 @@ function dessinerBlocsDonnees(z) {
 		b.lignes.forEach((ln) => ls.push(...couperLignes(String(ln), bl - 40, DS.policeTexte, 20)));
 		dsTexte(ls.length > maxL ? ls.slice(0, maxL - 1).concat('…').join('\n') : ls.join('\n'), x + 20, y + 80, 18, DS.blanc75, 'left');
 		dsTexte(src, x + 20, ySrc, 16, DS.blanc50, 'left', bl - 40);
-		dsBouton(x + 20, y + hb - 50, 300, 40, t('donnees.ouvrir'), () => ouvrirLienApi(b.url), 'fantome');
+		dsBouton(x + 20, y + hb - 50, 300, 40, t('donnees.ouvrir'), () => ouvrirLienApi(b.url), 'fantome', false, true); // prompt 211 : « ↗ » seul, sans « › »
 	});
 }
 function ouvrirLienApi(url) {

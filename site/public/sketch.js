@@ -655,7 +655,10 @@ function dessinerDossier(d, meteo) {
 	textSize(16);
 	textAlign(LEFT, TOP);
 	fill(C.gris);
-	text(t('dossier.entete', { n: Jeu.index + 1, total: Jeu.paquet.length, type: tSi('type.' + d.type, d.type).toUpperCase(), affluence: '' }), x + 32, base.y + 24);
+	// Prompt 211 : rang du dossier dans la JOURNÉE (comme le mail « n dossiers attendus aujourd'hui »), plus le total de la
+	// semaine ni le type, que le titre dit déjà
+	const duJour = Jeu.paquet.filter((p) => p.date === d.date);
+	text(t('dossier.entete', { n: Math.max(0, duJour.indexOf(d)) + 1, total: duJour.length }), x + 32, base.y + 24);
 	if (Jeu.defiChrono) {
 		// Mode « Défi chrono » (prompt 87, optionnel) : le compteur d'avant (Q6, Q16, Q55), ralenti, alerte des 5 s, 0 → Q25
 		figerCompteurRalenti(); // prompt 55 : pendant le ralenti, le compteur ne descend pas

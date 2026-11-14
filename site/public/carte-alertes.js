@@ -367,9 +367,9 @@ function dessinerControlesCarte(z) {
 		y += 56;
 	});
 	if (infobulle) infobulleCarte(...infobulle);
-	// zoom et légende : sous la ligne d'état (y + 64), à droite de la partie libre
-	dsTexte(t('carte.niveauZoom', { z: (CARTE.vue.ech / CARTE.ech0).toFixed(1).replace('.', ',') }), z.x + z.l - 16, z.y + 64, 16, DS.blanc50, 'right');
-	if ((Jeu.equipes || []).some((q) => !q.inutile && Jeu.phaseEquipe(q, tempsCarte()) !== 'libre')) dsTexte(couperLargeurCarte(t('carte.volOiseau'), z.l - 32, 20), z.x + z.l - 16, z.y + 92, 16, DS.blanc50, 'right');
+	// légende : sous la ligne d'état (y + 64), à droite de la partie libre
+	// prompt 211 : « Zoom ×n » retiré (aucune décision ne s'appuie dessus)
+	if ((Jeu.equipes || []).some((q) => !q.inutile && Jeu.phaseEquipe(q, tempsCarte()) !== 'libre')) dsTexte(couperLargeurCarte(t('carte.volOiseau'), z.l - 32, 20), z.x + z.l - 16, z.y + 64, 16, DS.blanc50, 'right');
 	CARTE.zoneLibre = z;
 }
 function couperLargeurCarte(txt, l, taille) {
@@ -576,10 +576,10 @@ function dessinerPanneauEquipes() {
 	Jeu.TYPES_EQUIPES.forEach((cle) => {
 		const q = Jeu.EQUIPES[cle];
 		const eff = Jeu.effectifJour ? Jeu.effectifJour(cle) : 1;
-		pictoEquipe(cle, P.x + 16, y + 4, 3, DS.blanc);
-		dsTexte(couperLargeurCarte(String(q.nom), P.l - 64, 20), P.x + 52, y, 18, DS.blanc, 'left');
-		const c = LIEUX.centres && LIEUX.centres[cle];
-		if (c) dsTexte(couperLargeurCarte(c.nom, P.l - 32, 20), P.x + 16, y + 30, 14, DS.blanc50, 'left');
+		// Prompt 211 : plus de pictogramme avant le nom (les cases le portent), plus de base (épingle de la carte, au survol) ;
+		// le coût passe sur la ligne du nom
+		dsTexte(couperLargeurCarte(String(q.nom), P.l - 120, 20), P.x + 16, y, 18, DS.blanc, 'left');
+		if (!verrou) dsTexte(t('equipes.cout', { cout: q.cout }), P.x + P.l - 16, y + 3, 14, DS.blanc75, 'right');
 		// pastilles : équipes engagées (état, secondes restantes), puis disponibles
 		const eng = (Jeu.equipes || []).filter((x) => x.cle === cle && !x.inutile && x.jourIndex === Jeu.jourIndex && Jeu.phaseEquipe(x, tm) !== 'libre');
 		const dispo = verrou ? 0 : Math.max(0, eff - eng.length);
@@ -588,7 +588,7 @@ function dessinerPanneauEquipes() {
 		const premierDispo = ps.findIndex((p) => p.ph === 'dispo');
 		ps.forEach((p, i) => {
 			const px = P.x + 16 + (i % 4) * (lp + 4);
-			const py = y + 60 + Math.floor(i / 4) * 52;
+			const py = y + 32 + Math.floor(i / 4) * 52;
 			const saisi = i === premierDispo && ((CARTE.jeton && CARTE.jeton.cle === cle) || CARTE.jetonChoisi === cle);
 			noStroke();
 			fill(p.ph === 'dispo' ? (saisi ? DS.blanc15 : DS.fond) : p.ph === 'retour' ? DS.blanc05 : DS.blanc15);
@@ -610,13 +610,13 @@ function dessinerPanneauEquipes() {
 			}
 		});
 		const lignesP = Math.max(1, Math.ceil(ps.length / 4));
-		const etat = verrou ? t('histoire.verrou.equipes') : t('equipes.etat', { dispo, eff, cout: q.cout }) // prompt 204 : « libres · coût », plus « disponible · −10 »;
-		dsTexte(couperLargeurCarte(etat, P.l - 32, 20), P.x + 16, y + 60 + lignesP * 52, 14, dispo ? DS.blanc75 : DS.alerteClair, 'left');
-		y += 60 + lignesP * 52 + 40;
+		// Prompt 211 : « n/N libres » retiré, les cases pleines ou vides le disent déjà ; seul le verrou reste écrit
+		if (verrou) dsTexte(couperLargeurCarte(t('histoire.verrou.equipes'), P.l - 32, 20), P.x + 16, y + 30, 14, DS.alerteClair, 'left');
+		y += 32 + (ps.length ? lignesP * 52 : 30) + 22;
 	});
 	// Message (envoi, refus) ou consigne, en bas du panneau
 	const msg = SELECTION.message && millis() - SELECTION.message.t < 5000;
-	const txt = msg ? String(SELECTION.message.texte) : CARTE.jetonChoisi ? t('carte.jetonChoisi', { nom: Jeu.EQUIPES[CARTE.jetonChoisi].nom }) : t('equipes.glisser');
+	const txt = msg ? String(SELECTION.message.texte) : CARTE.jetonChoisi ? t('carte.jetonChoisi', { nom: Jeu.EQUIPES[CARTE.jetonChoisi].nom }) : !(Jeu.equipes || []).length ? t('equipes.glisser') : ''; // prompt 211 : consigne jusqu'au premier envoi
 	const coul = msg ? (SELECTION.message.ok ? (SELECTION.message.adaptee === false ? DS.alerte : DS.succesClair) : DS.alerteClair) : DS.blanc50;
 	dsTexte(txt, P.x + 16, Math.max(y + 8, P.y + P.h - 132), 16, coul, 'left', P.l - 32);
 	// Jeton en cours de glisser
