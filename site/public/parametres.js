@@ -126,7 +126,6 @@ function reglagesParam(cle) {
 			{ id: 'lectureFacile', type: 'inter', icone: 'book-open', titre: t('acc.lecture'), detail: t('acc.lecture.detail'), etat: () => !!R.lectureFacile, activer: basculerLectureFacile },
 			bascule('raccourcisLettres', 'keyboard', t('param.raccourcis'), t('param.raccourcis.detail')), // prompt 210
 			choix('intensiteFeedback', 'vibrate', t('acc.intensite'), t('acc.intensite.detail'), libelleIntensite, changerIntensiteFeedback),
-			{ id: 'micro', type: 'inter', icone: 'mic', titre: t('micro.reglage'), etat: () => R.micro !== false, activer: basculerMicroReglage },
 			{ id: 'webcam', type: 'inter', icone: 'webcam', titre: t('webcam.reglage'), etat: () => !!(CAM.active || R.webcam), libelle: () => (!CAM.active && R.webcam ? t('webcam.etat.attente') : ''), activer: basculerWebcamReglage },
 		].filter(Boolean);
 	// Avancé : mode de jeu, options soumises au groupe (prompts 88 à 91), progression

@@ -40,7 +40,7 @@ function toucherDebut() {
 function toucherFin() {
 	const d = MOBILE.toucher;
 	MOBILE.toucher = null;
-	if (typeof mouseReleased === 'function') mouseReleased(); // micro du poste (prompt 54) relâché
+	if (typeof mouseReleased === 'function') mouseReleased(); // dépôt d'un jeton d'équipe
 	if (!d) return;
 	const dx = mouseX - d.x;
 	const dy = mouseY - d.y;
