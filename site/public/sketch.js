@@ -168,6 +168,7 @@ function draw() {
 	if (CINE) {
 		boutons = [];
 		dessinerCinematique();
+		dessinerSousTitresSons(); // prompt 208
 		majCurseur();
 		return;
 	}
@@ -175,6 +176,7 @@ function draw() {
 	if (GAMEOVER) {
 		boutons = [];
 		dessinerGameOver();
+		dessinerSousTitresSons(); // prompt 208
 		majCurseur();
 		return;
 	}
@@ -188,6 +190,7 @@ function draw() {
 			dessinerFenetre();
 		}
 		dessinerTutoriel();
+		dessinerSousTitresSons(); // prompt 208
 		majCurseur();
 		return;
 	}
@@ -280,6 +283,7 @@ function draw() {
 	dessinerNoirSoir(); // prompt 69 : fondu et écran noir de la sortie
 	dessinerTransitionJour(); // prompt 43 : écran noir entre les journées, au-dessus de tout
 	dessinerClignement(); // prompt 21 § 2 : par-dessus tout, purement visuel (n'intercepte aucune entrée)
+	dessinerSousTitresSons(); // prompt 208
 	majCurseur();
 }
 /** Prompt 29 : curseur « main » au survol de toute zone cliquable (objets de la pièce compris) */
@@ -415,6 +419,51 @@ function basculerPause() {
 		Sauvegarde.auto(true); // prompt 33 : à la pause, avec annonce
 	}
 	Confort.Son.bip('choix');
+}
+
+// ——— Prompt 208 : pause automatique (Paramètres → Avancé, activée par défaut) ———
+// L'onglet est masqué ou la fenêtre perd le focus en pleine partie : le menu du jeu s'ouvre, et le menu ouvert suspend
+// le temps (tempsSuspendu, prompt 174). La reprise se fait à la demande (« Reprendre »), jamais toute seule. Rien ne se
+// passe hors partie (menu principal et sa démo d'exposition, cinématique, licenciement) ni si une fenêtre, les SMS ou
+// le tutoriel sont déjà à l'écran. La sauvegarde à la sortie de l'onglet (sauvegarde.js) n'est pas touchée.
+function pauseAutomatique() {
+	if (!Confort.Reglages.pauseAuto || typeof MENU === 'undefined') return false;
+	if (ecran !== 'jeu' || MENU.actif || CINE || GAMEOVER || fenetre || smsActif || tutoriel) return false;
+	fenetre = 'menu';
+	choixPause = 0;
+	annoncer(t('param.pauseAuto.annonce'));
+	return true;
+}
+if (typeof window !== 'undefined' && window.addEventListener) {
+	document.addEventListener('visibilitychange', () => document.hidden && pauseAutomatique());
+	window.addEventListener('blur', () => pauseAutomatique());
+}
+
+// ——— Prompt 208 : sous-titres des sons (Paramètres → Accessibilité) — bandeau en bas, au-dessus de tout ———
+// En portrait, le canevas portrait les dessine lui-même (portrait.js : dessinerSousTitresPortrait).
+function dessinerSousTitresSons() {
+	if (!Confort.Reglages.sousTitresSons || (typeof PORTRAIT !== 'undefined' && PORTRAIT.actif)) return;
+	const liste = Confort.Son.legendesVisibles();
+	if (!liste.length) return;
+	push();
+	textFont(POLICE_TEXTE);
+	textStyle(NORMAL);
+	textSize(24);
+	textAlign(CENTER, CENTER);
+	const hl = 48;
+	let y = H - 96 - liste.length * (hl + 8);
+	liste.forEach((l) => {
+		const txt = t('son.legende.' + l.cle);
+		const lt = textWidth(txt) + 40;
+		noStroke();
+		fill(0, 0, 0, 225); // blanc sur noir à 88 % : contraste > 15:1 sur n'importe quel fond
+		rect((L - lt) / 2, y, lt, hl);
+		fill('#FFFFFF');
+		text(txt, L / 2, y + hl / 2);
+		y += hl + 8;
+	});
+	pop();
+	textAlign(LEFT, TOP);
 }
 
 function ouvrir(nom) {

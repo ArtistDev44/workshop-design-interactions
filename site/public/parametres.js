@@ -37,7 +37,7 @@ const optionsTitreParam = () => ({ police: POLICE_TEXTE, taille: 20, interligne:
 /** Largeur de la commande d'une carte (elle fixe la place laissée au nom du réglage, qui passe à la ligne au besoin) */
 function largeurCommandeParam(it, l) {
 	if (it.type === 'inter') return dsLargeurInterrupteur(it.etat(), it.libelle && it.libelle());
-	if (it.type === 'curseur') return Math.min(430, l - 190);
+	if (it.type === 'curseur') return Math.min(it.largeur || 430, l - 190); // prompt 208 : curseurs des canaux à 320 px, le nom tient à côté
 	if (it.type === 'langue') return LANGUES.length * 92;
 	if (it.type === 'couleur') return PALETTES_COULEUR.length * 50;
 	// Bouton à la largeur de son libellé (même police que bouton() : 15 px gras), borné à 150–340 px
@@ -58,6 +58,7 @@ function ouvrirParametres(onglet, page) {
 	PARAM.debut = millis();
 	PARAM.vue = frameCount;
 	confirmerRemiseCarriere = 0;
+	confirmerReinitReglages = 0;
 	annoncer(annonceOngletParam(PARAM.onglet));
 }
 function annonceOngletParam(i) {
@@ -71,6 +72,7 @@ function changerOngletParam(i) {
 	PARAM.focus = -1;
 	PARAM.debut = millis();
 	confirmerRemiseCarriere = 0;
+	confirmerReinitReglages = 0;
 	Confort.Son.bip('choix');
 	annoncer(annonceOngletParam(i));
 }
@@ -90,6 +92,38 @@ function reglerVolumeParam(v) {
 	const apres = Confort.Son.reglerVolume(v);
 	if (apres !== avant) Confort.Son.bip('choix');
 	annoncer(t('param.volume') + ' : ' + apres + ' %' + (apres === 0 ? '. ' + t('param.son') + ' : ' + t('commun.desactive') : ''));
+}
+
+/** Prompt 208 : volume d'un canal (musique, effets, ambiance), multiplié par le volume maître ; réglages de confort.js */
+const CANAUX_PARAM = { musique: 'volumeMusique', effets: 'volumeEffets', ambiance: 'volumeAmbiance' };
+const volumeCanal = (canal) => Math.round(Confort.Son.niveauCanal(canal) * 100);
+function reglerCanalParam(canal, v) {
+	const avant = volumeCanal(canal);
+	const apres = Confort.Son.reglerCanal(canal, v);
+	if (apres !== avant) Confort.Son.bip('choix');
+	annoncer(t('param.volume.' + canal) + ' : ' + apres + ' %' + (!Confort.Reglages.son ? '. ' + t('param.son') + ' : ' + t('commun.desactive') : ''));
+}
+let confirmerReinitReglages = 0;
+const reinitReglagesEnAttente = () => confirmerReinitReglages && millis() - confirmerReinitReglages < 5000;
+/** Prompt 208 : « Réinitialiser les réglages » — premier appui : demande de confirmation (5 s) ; second : DEFAUTS
+ * (confort.js). Sauvegardes, meilleurs bilans, carrière, langue et couleur principale (rangées à part) ne bougent pas. */
+function reinitialiserReglagesParam() {
+	if (!reinitReglagesEnAttente()) {
+		confirmerReinitReglages = millis();
+		return annoncer(t('param.reinit.confirmer'));
+	}
+	confirmerReinitReglages = 0;
+	const R = Confort.Reglages;
+	const avant = { son: R.son, musique: R.musique, horsLigneForce: R.horsLigneForce };
+	R.reinitialiser();
+	appliquerReglages();
+	if (R.son !== avant.son) R.son ? Confort.Son.demarrer() : Confort.Son.couper();
+	if (R.son && R.musique !== avant.musique) Confort.Son.musique.changer(R.musique);
+	Confort.Son.appliquerVolume();
+	if (typeof CAM !== 'undefined' && CAM.active && typeof couperWebcam === 'function') couperWebcam(); // webcam : désactivée par défaut
+	if (avant.horsLigneForce && !R.horsLigneForce) (Jeu.enLigne = null), Jeu.verifierConnexion();
+	annoncer(t('param.reinit.fait'));
+	Confort.Son.bip('choix');
 }
 
 /**
@@ -114,6 +148,8 @@ function reglagesParam(cle) {
 		return [
 			bascule('son', R.son ? 'volume-2' : 'volume-x', t('param.son'), t('param.son.detail')),
 			{ id: 'volume', type: 'curseur', icone: 'sliders-horizontal', titre: t('param.volume'), detail: t('param.volume.detail'), valeur: volumeRegle, fixer: reglerVolumeParam, regler: (s) => reglerVolumeParam(volumeRegle() + 10 * s) },
+			// Prompt 208 : un volume par canal, multiplié par le volume maître
+			...Object.keys(CANAUX_PARAM).map((c) => ({ id: 'volume-' + c, type: 'curseur', icone: { musique: 'music', effets: 'bell', ambiance: 'cloud-rain' }[c], titre: t('param.volume.' + c), detail: t('param.volume.' + c + '.detail'), largeur: 320, valeur: () => volumeCanal(c), fixer: (v) => reglerCanalParam(c, v), regler: (s) => reglerCanalParam(c, volumeCanal(c) + 10 * s) })),
 			choix('musique', 'music', t('param.musique'), t('param.musiqueCredits'), () => t('musique.' + (R.musique || 'coquillage')), musiqueSuivante),
 		];
 	if (cle === 'accessibilite')
@@ -125,6 +161,8 @@ function reglagesParam(cle) {
 			choix('tailleTexte', 'a-large-small', t('acc.taille'), '', () => (R.tailleTexte || 100) + ' %', changerTailleTexte),
 			{ id: 'lectureFacile', type: 'inter', icone: 'book-open', titre: t('acc.lecture'), detail: t('acc.lecture.detail'), etat: () => !!R.lectureFacile, activer: basculerLectureFacile },
 			bascule('raccourcisLettres', 'keyboard', t('param.raccourcis'), t('param.raccourcis.detail')), // prompt 210
+			bascule('sousTitresSons', 'captions', t('param.sousTitres'), t('param.sousTitres.detail')), // prompt 208
+			choix('rythmeTexte', 'text-cursor', t('param.rythme'), t('param.rythme.detail'), libelleRythmeTexte, changerRythmeTexte), // prompt 208
 			choix('intensiteFeedback', 'vibrate', t('acc.intensite'), t('acc.intensite.detail'), libelleIntensite, changerIntensiteFeedback),
 			{ id: 'micro', type: 'inter', icone: 'mic', titre: t('micro.reglage'), etat: () => R.micro !== false, activer: basculerMicroReglage },
 			{ id: 'webcam', type: 'inter', icone: 'webcam', titre: t('webcam.reglage'), etat: () => !!(CAM.active || R.webcam), libelle: () => (!CAM.active && R.webcam ? t('webcam.etat.attente') : ''), activer: basculerWebcamReglage },
@@ -132,12 +170,14 @@ function reglagesParam(cle) {
 	// Avancé : mode de jeu, options soumises au groupe (prompts 88 à 91), progression
 	const g = Taches.grade();
 	const confirmer = confirmerRemiseCarriere && millis() - confirmerRemiseCarriere < 5000;
-	return [bascule('horsLigneForce', 'cloud-off', t('param.horsLigne'), t('param.horsLigne.detail')), bascule('defiChrono', 'timer', t('param.defiChrono'), t('param.defiChrono.detail'))]
+	const confirmerReinit = reinitReglagesEnAttente();
+	return [bascule('horsLigneForce', 'cloud-off', t('param.horsLigne'), t('param.horsLigne.detail')), bascule('defiChrono', 'timer', t('param.defiChrono'), t('param.defiChrono.detail')), bascule('pauseAuto', 'circle-pause', t('param.pauseAuto'), t('param.pauseAuto.detail'))] // prompt 208 : pause automatique
 		.concat(OPTIONS_JEU.map((nom) => ({ id: nom, type: 'inter', icone: ICONES_OPTIONS_JEU[nom] || 'settings', titre: t('optjeu.' + nom), detail: t('optjeu.' + nom + '.detail'), etat: () => !!R[nom], activer: () => basculerOptionJeu(nom) })))
 		.concat([
 			action('exporter', 'download', t('parametres.exporter.titre'), t('parametres.exporter.detail'), () => t('parametres.exporter'), () => Sauvegarde.exporter()),
 			action('copier', 'copy', t('parametres.copier.titre'), t('parametres.copier.detail'), () => t('parametres.copier'), () => Sauvegarde.copier()),
 			action('importer', 'upload', t('parametres.import.titre'), t('parametres.importer.detail'), () => t('parametres.importer'), () => Sauvegarde.ouvrirImport()),
+			action('reinitialiserReglages', 'undo-2', t('param.reinit'), confirmerReinit ? t('param.reinit.confirmer') : t('param.reinit.detail'), () => t(confirmerReinit ? 'optjeu.confirmerBouton' : 'param.reinit.bouton'), reinitialiserReglagesParam), // prompt 208
 			action('carriere', 'rotate-ccw', t('optjeu.carriere', { grade: t('grade.' + g.i), xp: g.xp }), confirmer ? t('optjeu.confirmer') : '', () => t(confirmer ? 'optjeu.confirmerBouton' : 'optjeu.remettre'), remettreCarriere),
 			// Lecture seule : version du build (version.js, réécrit par scripts/generer-sw.mjs au build)
 			{ id: 'version', type: 'info', icone: 'info', titre: t('param.version'), detail: t('param.version.detail'), valeur: () => (typeof VERSION_BUILD !== 'undefined' ? VERSION_BUILD : '—') },

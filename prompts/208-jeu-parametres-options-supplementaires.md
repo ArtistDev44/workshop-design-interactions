@@ -1,6 +1,6 @@
 # Prompt 208 — Jeu : compléter les Paramètres (son par canal, pause auto, sous-titres sonores, rythme du texte, réinitialiser)
 
-Origine : demande du groupe (13/11/2026). Statut : **à exécuter**.
+Origine : demande du groupe (13/11/2026). Statut : **exécuté le 14/11/2026** — compte rendu dans `jeu/09-parametres.md` § « Prompt 208 ».
 Fichiers : `site/public/parametres.js`, `confort.js`, `accessibilite.js`, `i18n.js` (FR + EN), `jeu/09-parametres.md`.
 
 ## Constat

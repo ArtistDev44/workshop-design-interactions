@@ -29,7 +29,7 @@
 	};
 
 	// ——— Réglages (écran Paramètres, 11-direction-artistique) ———
-	const DEFAUTS = { intensiteFeedback: 100, son: true, volume: 100, horsLigneForce: false, reduireAnimations: false, contrasteRenforce: false, masquerViolence: false, musique: 'coquillage', daltonisme: 'normal', tailleTexte: 100, lectureFacile: false, defiChrono: false, chaines: false, deblocages: false, arbitrage: false, deVisible: false, eclairageJauges: false, npd: false, deblocageApplis: false, toutDebloque: false, somnolenceNecessaire: false, micro: true, webcam: false, raccourcisLettres: true }; // prompt 210 : raccourcis d'une lettre (désactivables, WCAG 2.1.4) // prompt 57 : webcam désactivée par défaut (opt-in) // prompt 48 : accessibilité ; prompt 54 : micro (push-to-talk) // prompt 44 : choix de la musique ; prompt 62 : Chillin' Poupi par défaut
+	const DEFAUTS = { intensiteFeedback: 100, son: true, volume: 100, horsLigneForce: false, reduireAnimations: false, contrasteRenforce: false, masquerViolence: false, musique: 'coquillage', daltonisme: 'normal', tailleTexte: 100, lectureFacile: false, defiChrono: false, chaines: false, deblocages: false, arbitrage: false, deVisible: false, eclairageJauges: false, npd: false, deblocageApplis: false, toutDebloque: false, somnolenceNecessaire: false, micro: true, webcam: false, raccourcisLettres: true, volumeMusique: 100, volumeEffets: 100, volumeAmbiance: 100, sousTitresSons: false, rythmeTexte: 'normal', pauseAuto: true }; // prompt 208 : volumes par canal, sous-titres des sons, rythme du texte, pause automatique // prompt 210 : raccourcis d'une lettre (désactivables, WCAG 2.1.4) // prompt 57 : webcam désactivée par défaut (opt-in) // prompt 48 : accessibilité ; prompt 54 : micro (push-to-talk) // prompt 44 : choix de la musique ; prompt 62 : Chillin' Poupi par défaut
 	const Reglages = Object.assign({}, DEFAUTS, lire(CLE_REGLAGES, {}));
 	// Prompt 210 : en exposition, chaque visiteur repart sans caméra ni micro hérités du précédent (consentement),
 	// et les commentaires violents sont masqués d'office (aussi forcé dans Jeu.violenceMasquee)
@@ -38,6 +38,11 @@
 	// gardent leur état (son coupé = muet) et prennent le volume par défaut, 100 %. Un volume stocké à 0 = son coupé.
 	const borneVolume = (v) => (Number.isFinite(Number(v)) ? Math.max(0, Math.min(100, Math.round(Number(v) / 10) * 10)) : DEFAUTS.volume);
 	Reglages.volume = borneVolume(Reglages.volume);
+	// Prompt 208 : volumes par canal (musique, effets, ambiance), 0–100 par pas de 10 ; un réglage enregistré avant 208 n'a
+	// pas ces clés : Object.assign les a mises à 100 (DEFAUTS), borneVolume corrige une valeur abîmée
+	const CANAUX = { musique: 'volumeMusique', effets: 'volumeEffets', ambiance: 'volumeAmbiance' };
+	Object.values(CANAUX).forEach((k) => (Reglages[k] = borneVolume(Reglages[k])));
+	if (!['instantane', 'normal', 'lent'].includes(Reglages.rythmeTexte)) Reglages.rythmeTexte = DEFAUTS.rythmeTexte;
 	if (Reglages.volume === 0) Reglages.son = false;
 	const GAIN_MAITRE = 0.16; // prompt 49 : bruitages, ambiance et radio en retrait (0,5 avant) ; la musique lofi passe par son propre élément audio
 	// Prompt 49 : une seule fois, la musique passe au lofi (l'ancien défaut « chillin » n'était pas un choix)
@@ -70,6 +75,13 @@
 		}
 		return Reglages[nom];
 	};
+	/** Prompt 208 : tous les réglages reprennent leur valeur de DEFAUTS (sauvegardes, bilans et carrière ont leurs propres
+	 * clés : ils ne sont pas touchés). En exposition, les valeurs imposées par le prompt 210 sont réappliquées. */
+	Reglages.reinitialiser = function () {
+		Object.keys(DEFAUTS).forEach((k) => (Reglages[k] = DEFAUTS[k]));
+		if (typeof EXPO !== 'undefined' && EXPO.actif) Reglages.masquerViolence = true;
+		ecrire(CLE_REGLAGES, Object.assign({}, DEFAUTS, { masquerViolence: Reglages.masquerViolence }));
+	};
 	/** Prompt 44 : réglage à valeur (musique), mémorisé comme les autres */
 	Reglages.choisir = function (nom, valeur) {
 		Reglages[nom] = valeur;
@@ -101,6 +113,18 @@
 		maitre: null,
 		/** Prompt 175 : volume effectif, 0 à 1 (0 si le son est coupé) */
 		niveau: () => (Reglages.son ? borneVolume(Reglages.volume) / 100 : 0),
+		/** Prompt 208 : volume d'un canal ('musique' | 'effets' | 'ambiance'), 0 à 1, sans le volume maître */
+		niveauCanal: (canal) => borneVolume(Reglages[CANAUX[canal]]) / 100,
+		/** Règle le volume d'un canal (0–100, pas de 10), le mémorise et l'applique tout de suite */
+		reglerCanal: function (canal, v) {
+			v = borneVolume(v);
+			Reglages.choisir(CANAUX[canal], v);
+			Son.appliquerVolume();
+			return v;
+		},
+		bus: {}, // prompt 208 : un gain par canal, branché sur le gain maître (créés avec le contexte audio)
+		/** Sortie d'un canal (le gain maître tant que les bus n'existent pas) */
+		sortie: (canal) => Son.bus[canal] || Son.maitre,
 		/** Règle le volume (0–100, pas de 10), le mémorise et l'applique tout de suite ; 0 % = son désactivé */
 		reglerVolume: function (v) {
 			v = borneVolume(v);
@@ -113,6 +137,7 @@
 		/** Gain maître (bruitages, ambiances, musique composée) et élément audio de la musique en fichier */
 		appliquerVolume: function () {
 			if (Son.maitre && Son.ctx) Son.maitre.gain.setTargetAtTime(GAIN_MAITRE * Son.niveau(), Son.ctx.currentTime, 0.03);
+			Object.keys(Son.bus).forEach((c) => Son.ctx && Son.bus[c].gain.setTargetAtTime(Son.niveauCanal(c), Son.ctx.currentTime, 0.03));
 			if (typeof Musique !== 'undefined') Musique.attenuer(Musique.facteur);
 		},
 		ambiance: null,
@@ -125,6 +150,12 @@
 				Son.maitre = Son.ctx.createGain();
 				Son.maitre.gain.value = GAIN_MAITRE * Son.niveau(); // prompt 175 : gain maître × volume réglé
 				Son.maitre.connect(Son.ctx.destination);
+				Object.keys(CANAUX).forEach((c) => {
+					const g = Son.ctx.createGain();
+					g.gain.value = Son.niveauCanal(c);
+					g.connect(Son.maitre);
+					Son.bus[c] = g;
+				});
 			}
 			if (Son.ctx.state === 'suspended') Son.ctx.resume();
 			if (!Son.ambiance) Son.ambiance = Son.creerAmbiance();
@@ -158,7 +189,7 @@
 			filtre.frequency.value = 320;
 			const gBruit = c.createGain();
 			gBruit.gain.value = 0.05;
-			bruit.connect(filtre).connect(gBruit).connect(Son.maitre);
+			bruit.connect(filtre).connect(gBruit).connect(Son.sortie('ambiance'));
 			// Ronron de ventilation : deux sinus graves légèrement désaccordés
 			const o1 = c.createOscillator();
 			const o2 = c.createOscillator();
@@ -168,7 +199,7 @@
 			gO.gain.value = 0.025;
 			o1.connect(gO);
 			o2.connect(gO);
-			gO.connect(Son.maitre);
+			gO.connect(Son.sortie('ambiance'));
 			bruit.start();
 			o1.start();
 			o2.start();
@@ -177,6 +208,7 @@
 		/** Bip d'interface : 'action' | 'dossier' | 'alerte' | 'choix' | 'fin'
 		 *  Prompt 30 : 'incident' | 'consequence' | 'mail' (signaux d'événements, timbres distincts, < 1 s) */
 		bip: function (type) {
+			if (LEGENDE_BIP[type] && Son.legende) Son.legende(LEGENDE_BIP[type]); // prompt 208
 			if (!Reglages.son || !Son.ctx) return;
 			if (SIGNAUX[type]) return Son.signal(SIGNAUX[type]);
 			const notes = { action: [660], dossier: [520, 780], alerte: [880, 880], choix: [440], fin: [523, 659, 784] }[type] || [600];
@@ -190,12 +222,37 @@
 				g.gain.setValueAtTime(0.0001, t0);
 				g.gain.exponentialRampToValueAtTime(0.12, t0 + 0.01);
 				g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.09);
-				o.connect(g).connect(Son.maitre);
+				o.connect(g).connect(Son.sortie('effets'));
 				o.start(t0);
 				o.stop(t0 + 0.1);
 			});
 		},
 	};
+
+	// ——— Prompt 208 : sous-titres des sons porteurs d'information (réglage sousTitresSons, désactivé par défaut) ———
+	// Légende courte qui décrit le son entendu (un même bip sert à plusieurs événements : le contexte à l'écran dit
+	// lequel). Affichée même son coupé (c'est là qu'elle sert le plus), annoncée au lecteur d'écran. Pas de légende
+	// pour la musique, l'ambiance de salle (souffle, ventilation, pluie, ville, vent, cigales, tram) ni les clics
+	// d'interface (bip « choix », Son.clic). Une même légende ne revient pas avant `espacement` ms.
+	const LEGENDES = { file: [], derniere: {}, duree: 3000 };
+	const ESPACEMENT_LEGENDE = { tic: 4000, coeur: 10000 };
+	Son.legendes = LEGENDES;
+	Son.legende = function (cle) {
+		if (!Reglages.sousTitresSons) return;
+		const maintenant = Date.now();
+		if (maintenant - (LEGENDES.derniere[cle] || 0) < (ESPACEMENT_LEGENDE[cle] || 1200)) return;
+		LEGENDES.derniere[cle] = maintenant;
+		LEGENDES.file.push({ cle: cle, debut: maintenant });
+		if (LEGENDES.file.length > 3) LEGENDES.file.shift();
+		if (typeof global.annoncer === 'function' && typeof global.t === 'function') global.annoncer(global.t('son.legende.' + cle));
+	};
+	/** Légendes encore visibles (les plus anciennes d'abord) */
+	Son.legendesVisibles = function () {
+		const maintenant = Date.now();
+		LEGENDES.file = LEGENDES.file.filter((l) => maintenant - l.debut < LEGENDES.duree);
+		return LEGENDES.file;
+	};
+	const LEGENDE_BIP = { alerte: 'alerte', consequence: 'consequence', mail: 'mail', incident: 'incident', dossier: 'dossier', action: 'validation', fin: 'fin' }; // « choix » = clic d'interface : pas de légende
 
 	// ——— Prompt 30 : signaux d'événements (courts, non agressifs, timbres distincts des bips) ———
 	// notes : [fréquence Hz, départ s, durée s] ; volume crête faible ; onde propre à chaque signal.
@@ -209,7 +266,7 @@
 		const f = c.createBiquadFilter();
 		f.type = 'lowpass';
 		f.frequency.value = s.filtre;
-		f.connect(Son.maitre);
+		f.connect(Son.sortie('effets'));
 		s.notes.forEach(([freq, depart, duree]) => {
 			const o = c.createOscillator();
 			const g = c.createGain();
@@ -240,7 +297,7 @@
 		f.frequency.value = 2500;
 		const g = c.createGain();
 		g.gain.value = 0.12;
-		src.connect(f).connect(g).connect(Son.maitre);
+		src.connect(f).connect(g).connect(Son.sortie('effets'));
 		src.start();
 	};
 
@@ -278,14 +335,14 @@
 			const glfo = c.createGain();
 			glfo.gain.value = 0.3;
 			lfo.connect(glfo).connect(gOnde.gain);
-			pluie.connect(fp).connect(gOnde).connect(gp).connect(Son.maitre);
+			pluie.connect(fp).connect(gOnde).connect(gp).connect(Son.sortie('ambiance'));
 			const ville = Ambiances.bruit(c, 4);
 			const fv = c.createBiquadFilter();
 			fv.type = 'lowpass';
 			fv.frequency.value = 160;
 			const gv = c.createGain();
 			gv.gain.value = 0;
-			ville.connect(fv).connect(gv).connect(Son.maitre);
+			ville.connect(fv).connect(gv).connect(Son.sortie('ambiance'));
 			// Prompt 44 § 6 : vent (rafales réelles ≥ 50 km/h) et chaleur (≥ 30 °C : stridulations de cigales)
 			const vent = Ambiances.bruit(c, 4);
 			const fve = c.createBiquadFilter();
@@ -300,7 +357,7 @@
 			lfoVent.connect(glv).connect(gveOnde.gain);
 			const gve = c.createGain();
 			gve.gain.value = 0;
-			vent.connect(fve).connect(gveOnde).connect(gve).connect(Son.maitre);
+			vent.connect(fve).connect(gveOnde).connect(gve).connect(Son.sortie('ambiance'));
 			const cigale = Ambiances.bruit(c, 2);
 			const fc = c.createBiquadFilter();
 			fc.type = 'bandpass';
@@ -315,7 +372,7 @@
 			lfoC.connect(glc).connect(gcOnde.gain);
 			const gc = c.createGain();
 			gc.gain.value = 0;
-			cigale.connect(fc).connect(gcOnde).connect(gc).connect(Son.maitre);
+			cigale.connect(fc).connect(gcOnde).connect(gc).connect(Son.sortie('ambiance'));
 			pluie.start();
 			ville.start();
 			lfo.start();
@@ -380,7 +437,7 @@
 			g.gain.setValueAtTime(0.0001, t0);
 			g.gain.exponentialRampToValueAtTime(0.012, t0 + 1.2);
 			g.gain.exponentialRampToValueAtTime(0.0001, t0 + 3);
-			o.connect(f).connect(g).connect(Son.maitre);
+			o.connect(f).connect(g).connect(Son.sortie('ambiance'));
 			o.start(t0);
 			o.stop(t0 + 3.1);
 		},
@@ -411,13 +468,14 @@
 		g.gain.setValueAtTime(0.0001, t0);
 		g.gain.exponentialRampToValueAtTime(gain, t0 + 0.012);
 		g.gain.exponentialRampToValueAtTime(0.0001, t0 + duree);
-		o.connect(g).connect(sortie || Son.maitre);
+		o.connect(g).connect(sortie || Son.sortie('effets'));
 		o.start(t0);
 		o.stop(t0 + duree + 0.03);
 	}
 	/** 1. Radio de la salle : rafales de bruit en passe-bande modulées (voix radio indistincte), puis bip de fin
 	 *  de transmission. Les annonces « liées à une ligne » suivent le rythme du nom de la ligne (une rafale par signe). */
 	Son.radio = function (motif, force) {
+		if (motif !== 'ambiance') Son.legende('radio'); // prompt 208 : annonce liée à une ligne ; la radio d'ambiance n'a pas de légende
 		if (!pret()) return;
 		const c = Son.ctx;
 		const syllabes = String(motif || 'xxxx').slice(0, 8);
@@ -431,7 +489,7 @@
 		dist.curve = courbe;
 		const g = c.createGain();
 		g.gain.value = 0.05 * (force || 1);
-		f.connect(dist).connect(g).connect(Son.maitre);
+		f.connect(dist).connect(g).connect(Son.sortie('ambiance'));
 		let t0 = c.currentTime + 0.05;
 		Array.from(syllabes).forEach((ch) => {
 			const s = c.createBufferSource();
@@ -441,11 +499,12 @@
 			s.start(t0);
 			t0 += 0.16 + (ch.charCodeAt(0) % 3) * 0.05;
 		});
-		ton(1200, t0 + 0.05, 0.08, 0.05, 'square', Son.maitre); // fin de transmission
+		ton(1200, t0 + 0.05, 0.08, 0.05, 'square', Son.sortie('ambiance')); // fin de transmission
 		setTimeout(() => g.disconnect(), (t0 - c.currentTime + 0.5) * 1000);
 	};
 	/** 2. Alerte d'arrivée de dossier, propre à la source ; intensité selon le nombre d'incidents du jour */
 	Son.alerteDossier = function (type, intensite) {
+		Son.legende(type === 'ligne en difficulté' ? 'signalement.retard' : type === 'alerte météo' ? 'signalement.meteo' : type === 'perturbation' ? 'signalement.perturbation' : 'signalement.autre'); // prompt 208
 		if (!pret()) return;
 		const c = Son.ctx;
 		const k = Math.min(1.8, 1 + 0.2 * Math.max(0, (intensite || 1) - 1));
@@ -466,6 +525,7 @@
 	};
 	/** 3. Tic-tac du compte à rebours (urgence 0 → 1 : plus aigu et plus fort) */
 	Son.tic = function (urgence) {
+		Son.legende('tic'); // prompt 208
 		if (!pret()) return;
 		const u = Math.max(0, Math.min(1, urgence || 0));
 		ton(900 + u * 700, Son.ctx.currentTime, 0.03, 0.03 + u * 0.1, 'square'); // prompt 53 : plus fort quand l'échéance approche
@@ -482,16 +542,20 @@
 	};
 	/** 5. Jauges audibles : chute brutale (stinger grave) ou remontée nette (carillon léger) */
 	Son.jauges = function (deltas) {
-		if (!pret() || !deltas) return;
+		if (!deltas) return;
 		const v = Array.isArray(deltas) ? deltas : Object.values(deltas);
 		const min = Math.min(...v);
 		const somme = v.reduce((a, b) => a + b, 0);
+		if (min <= -8) Son.legende('jauges.chute'); // prompt 208 : mêmes seuils que le son
+		else if (somme >= 8) Son.legende('jauges.hausse');
+		if (!pret()) return;
 		const t0 = Son.ctx.currentTime + 0.25;
 		if (min <= -8) (ton(220, t0, 0.25, 0.1, 'sawtooth', null, 110), ton(165, t0 + 0.05, 0.3, 0.06, 'square', null, 82));
 		else if (somme >= 8) [784, 1047].forEach((f, i) => ton(f, t0 + i * 0.09, 0.2, 0.05, 'sine'));
 	};
 	/** 7. Signature sonore de chaque fin */
 	Son.signatureFin = function (type) {
+		Son.legende('signatureFin'); // prompt 208
 		if (!pret()) return;
 		const t0 = Son.ctx.currentTime + 0.2;
 		const motifs = {
@@ -569,7 +633,7 @@
 			const filtre = c.createBiquadFilter();
 			filtre.type = 'lowpass';
 			filtre.frequency.value = piste().filtre;
-			Musique.bus.connect(filtre).connect(Son.maitre);
+			Musique.bus.connect(filtre).connect(Son.sortie('musique'));
 			Musique.croche = 60 / piste().bpm / 2;
 			Musique.pas = 0;
 			Musique.prochaine = c.currentTime + 0.1;
@@ -581,7 +645,7 @@
 			Musique.facteur = f;
 			const a = Musique.audio;
 			const p = piste();
-			if (a && Musique.minuterie === 'fichier' && p && p.volume) a.volume = p.volume * f * Son.niveau(); // prompt 175 : × volume réglé
+			if (a && Musique.minuterie === 'fichier' && p && p.volume) a.volume = p.volume * f * Son.niveau() * Son.niveauCanal('musique'); // prompt 175 : × volume réglé ; prompt 208 : × volume de la musique
 			if (Musique.bus && Son.ctx) Musique.bus.gain.setTargetAtTime(Math.max(0.0001, Musique.volume * f), Son.ctx.currentTime, 0.33);
 		},
 		/** Morceau CC0 : élément audio en boucle (OGG, ou MP3 si le navigateur ne lit pas l'OGG), fondu d'entrée 2 s */
@@ -607,7 +671,7 @@
 			let k = 0;
 			Musique.minuterie = setInterval(() => {
 				k = Math.min(1, k + 0.05);
-				if (Musique.audio === a) a.volume = p.volume * k * Musique.facteur * Son.niveau();
+				if (Musique.audio === a) a.volume = p.volume * k * Musique.facteur * Son.niveau() * Son.niveauCanal('musique');
 				if (k >= 1) {
 					clearInterval(Musique.minuterie);
 					Musique.minuterie = 'fichier'; // marqueur « en cours de lecture »

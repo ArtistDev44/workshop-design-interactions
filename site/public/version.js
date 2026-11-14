@@ -1,3 +1,3 @@
 /* Généré au build par scripts/generer-sw.mjs — ne pas modifier à la main.
  * Même empreinte que la constante VERSION de sw.js ; affichée dans la fenêtre des paramètres. */
-const VERSION_BUILD = 'nte-regulation-efaca1601b';
+const VERSION_BUILD = 'nte-regulation-8d4e234707';

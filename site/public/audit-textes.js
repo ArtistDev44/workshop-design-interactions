@@ -409,9 +409,11 @@
 		// Prompt 175 : les quatre sections de la fenêtre des paramètres (page 2 de « Avancé » comprise), focus clavier compris
 		add('paramètres · écran', () => (H.raz(), H.poste(), ouvrirParametres(0)), 12);
 		add('paramètres · son', () => (ouvrirParametres(1), (PARAM.focus = 1)), 12);
+		add('paramètres · son 2', () => pageParam(1), 12); // prompt 208 : volumes par canal (2 pages en portrait)
 		add('paramètres · accessibilité', () => (ouvrirParametres(2), (PARAM.focus = 5)), 12);
+		[2, 3].forEach((n) => add('paramètres · accessibilité ' + n, () => pageParam(1), 12)); // prompt 208 : sous-titres, rythme du texte
 		add('paramètres · avancé', () => ouvrirParametres(3), 12);
-		add('paramètres · avancé 2', () => pageParam(1), 12);
+		[2, 3, 4, 5, 6].forEach((n) => add('paramètres · avancé ' + n, () => pageParam(1), 12)); // prompt 208 : pause auto, réinitialiser (6 pages en portrait)
 		add('paramètres · fermés', () => fermer(), 2);
 		// Partie : bureau, poste, applis
 		add('partie semaine 1 · bureau', () => (H.partie(0), (vue = 'bureau')), 20);

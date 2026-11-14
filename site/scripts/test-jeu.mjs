@@ -4231,6 +4231,51 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	verifier(r.texte.includes('ODbL'), '210 : appli Données — le changelog GTFS est sous ODbL (Semitan)');
 }
 
+// ——— Prompt 208 : réglages ajoutés (volumes par canal, sous-titres des sons, rythme du texte, pause auto, réinitialiser) ———
+{
+	const CLE = 'pxe-nte001:jeu:reglages';
+	// 1. Défauts, et migration d'un réglage enregistré avant 208 (sans les nouvelles clés, une valeur abîmée)
+	const st = new Map([[CLE, JSON.stringify({ son: true, volume: 70, volumeEffets: 'n/a', rythmeTexte: 'turbo' })], ['pxe-nte001:jeu:bilans', '{"x":1}']]);
+	const c = contexte('fr', st, true);
+	const R = JSON.parse(vm.runInContext('JSON.stringify(Confort.Reglages)', c));
+	verifier(R.volumeMusique === 100 && R.volumeEffets === 100 && R.volumeAmbiance === 100, `208 : volumes par canal à 100 % pour un ancien réglage : ${R.volumeMusique}/${R.volumeEffets}/${R.volumeAmbiance}`);
+	verifier(R.volume === 70 && R.sousTitresSons === false && R.rythmeTexte === 'normal' && R.pauseAuto === true, `208 : défauts (sous-titres désactivés, rythme normal, pause auto activée, volume maître gardé) : ${JSON.stringify(R)}`);
+	// 2. Réglage d'un canal : borné, au pas de 10, mémorisé
+	vm.runInContext("Confort.Son.reglerCanal('musique', 44); Confort.Son.reglerCanal('effets', 130);", c);
+	const memo = JSON.parse(st.get(CLE));
+	verifier(memo.volumeMusique === 40 && memo.volumeEffets === 100 && vm.runInContext("Confort.Son.niveauCanal('musique')", c) === 0.4, `208 : volume de canal borné et mémorisé : ${JSON.stringify(memo)}`);
+	// 3. Sous-titres : rien quand le réglage est désactivé ; sinon une légende, pas deux fois de suite, la radio d'ambiance exclue
+	vm.runInContext("var annonces208 = []; annoncer = (s) => annonces208.push(s); Confort.Son.bip('alerte'); Confort.Son.radio('ambiance', 0.5);", c);
+	verifier(vm.runInContext('Confort.Son.legendesVisibles().length', c) === 0, '208 : aucune légende tant que les sous-titres sont désactivés');
+	vm.runInContext("Confort.Reglages.choisir('sousTitresSons', true); Confort.Son.bip('alerte'); Confort.Son.bip('alerte'); Confort.Son.bip('choix'); Confort.Son.radio('ambiance', 0.5); Confort.Son.alerteDossier('alerte météo', 1); Confort.Son.jauges({ a: -10, b: 0 });", c);
+	const leg = JSON.parse(vm.runInContext('JSON.stringify(Confort.Son.legendesVisibles().map((l) => l.cle))', c));
+	verifier(JSON.stringify(leg) === JSON.stringify(['alerte', 'signalement.meteo', 'jauges.chute']), `208 : légendes attendues (alerte une fois, ni clic ni radio d'ambiance) : ${JSON.stringify(leg)}`);
+	const ann = vm.runInContext('annonces208', c);
+	verifier(ann.length === 3 && /bip d’alerte/.test(ann[0]) && /alerte météo/.test(ann[1]), `208 : chaque légende est annoncée au lecteur d'écran : ${JSON.stringify(ann)}`);
+	// 4. Chaque clé de légende appelée dans le code existe en FR et en EN
+	const sources = ['confort.js', 'cafe.js'].map((f) => readFileSync(join(pub, f), 'utf8')).join('\n');
+	const cles = new Set([...sources.matchAll(/legende\('([a-zA-Z.]+)'\)/g)].map((m) => m[1]).concat(['signalement.retard', 'signalement.meteo', 'signalement.perturbation', 'signalement.autre', 'alerte', 'consequence', 'mail', 'incident', 'dossier', 'validation', 'fin']));
+	for (const langue of ['fr', 'en']) {
+		const cl = contexte(langue);
+		for (const k of cles) verifier(vm.runInContext(`T('son.legende.${k}')`, cl) !== 'son.legende.' + k, `208 : légende « ${k} » absente en ${langue}`);
+		for (const k of ['param.volume.musique', 'param.volume.effets', 'param.volume.ambiance', 'param.sousTitres', 'param.rythme', 'param.rythme.lent', 'param.pauseAuto', 'param.pauseAuto.annonce', 'param.reinit', 'param.reinit.confirmer', 'param.reinit.fait'])
+			verifier(vm.runInContext(`T('${k}')`, cl) !== k, `208 : texte « ${k} » absent en ${langue}`);
+	}
+	// 5. Réinitialiser : DEFAUTS partout, bilans (autre clé) intacts
+	vm.runInContext("Confort.Reglages.choisir('rythmeTexte', 'lent'); Confort.Reglages.basculer('pauseAuto'); Confort.Reglages.reinitialiser();", c);
+	const apres = JSON.parse(st.get(CLE));
+	verifier(apres.volume === 100 && apres.volumeMusique === 100 && apres.volumeEffets === 100 && apres.sousTitresSons === false && apres.rythmeTexte === 'normal' && apres.pauseAuto === true, `208 : « Réinitialiser » remet DEFAUTS : ${JSON.stringify(apres)}`);
+	verifier(st.get('pxe-nte001:jeu:bilans') === '{"x":1}', '208 : « Réinitialiser » ne touche pas aux bilans');
+	// 6. Câblage : chaque son passe par un canal (plus aucune connexion directe au gain maître hors des bus), fenêtre et rythme
+	const cf = readFileSync(join(pub, 'confort.js'), 'utf8');
+	verifier((cf.match(/connect\(Son\.maitre\)/g) || []).length === 1 && /g\.connect\(Son\.maitre\)/.test(cf), '208 : seuls les bus de canal sont branchés directement sur le gain maître');
+	const pa = readFileSync(join(pub, 'parametres.js'), 'utf8');
+	verifier(/'sousTitresSons'/.test(pa) && /'rythmeTexte'/.test(pa) && /'pauseAuto'/.test(pa) && /'reinitialiserReglages'/.test(pa) && /CANAUX_PARAM/.test(pa), '208 : les nouveaux réglages sont dans la fenêtre des paramètres');
+	verifier(/800 \* k/.test(readFileSync(join(pub, 'patron.js'), 'utf8')) && /650 \* kR/.test(readFileSync(join(pub, 'telephone-main.js'), 'utf8')), '208 : « Direction écrit… » et « … » des SMS suivent le rythme du texte');
+	const sk = readFileSync(join(pub, 'sketch.js'), 'utf8');
+	verifier(/function pauseAutomatique\(\)[\s\S]{0,200}Confort\.Reglages\.pauseAuto[\s\S]{0,200}MENU\.actif/.test(sk) && /visibilitychange', \(\) => document\.hidden && pauseAutomatique\(\)/.test(sk), '208 : pause auto liée à visibilitychange, désactivable, jamais au menu principal (démo d\'exposition)');
+}
+
 if (erreurs.length) {
 	console.error(`Test du jeu : ${erreurs.length} erreur(s) sur ${controles + erreurs.length} contrôles`);
 	for (const e of erreurs) console.error(`  ✗ ${e}`);
