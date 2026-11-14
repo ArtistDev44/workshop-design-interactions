@@ -15,7 +15,7 @@
 		virale: { clashs: 4 }, // le clash est tentant (prompt 196) : 3 restaient à portée d'un joueur au hasard
 		burnout: { joursMin: 3, cafesParJour: 1, partRenforts: 0.4 }, // un café par jour au plus (cafe.js) : un café chaque jour joué
 		imposteur: { score: 180, partBons: 0.4 },
-		fauteuil: { score: 240 }, // = Jeu.SEUILS_FIN.bonne
+		fauteuil: { score: 230, partBons: 0.6 }, // score = Jeu.SEUILS_FIN.bonne (prompt 213 : 240 → 230) ; prompt 213 : 60 % de bonnes décisions au moins (au hasard, le fauteuil sortait encore)
 		diplomate: { reponses: 5, partBonnes: 0.8, score: 150 },
 		insoumis: { objectifsRates: 2, score: 160 }, // objectifs du jour bas (fluidité ≥ 40…) : en rater deux suffit à marquer
 		usagers: { budget: 25, fluiditeReputation: 130 },
@@ -103,6 +103,8 @@
 			joursCafe: p.joursCafe.length,
 			siestes: p.siestes,
 			departs: p.departs,
+			rappelsExces: Jeu.rappelsExces || 0, // prompt 213 : rappels à l'ordre pour excès (deux soirs de suite)
+			soirsExces: (Jeu.excesSoirs || []).filter((x) => x.budget !== null || x.reputation !== null).length,
 			score: Jeu.score(),
 			jauges: Object.assign({}, Jeu.jauges),
 			meteo,
@@ -115,7 +117,7 @@
 		if (!l.length) return null;
 		const somme = (k) => l.reduce((s, x) => s + (Number(x[k]) || 0), 0);
 		const c = {};
-		['decisions', 'bons', 'rates', 'nonTraites', 'renforts', 'mauvaisesSources', 'clashs', 'clashsDecisions', 'clashsQuai', 'objectifs', 'objectifsRates', 'joursJoues', 'cafes', 'joursCafe', 'siestes', 'departs'].forEach((k) => (c[k] = somme(k)));
+		['decisions', 'bons', 'rates', 'nonTraites', 'renforts', 'mauvaisesSources', 'clashs', 'clashsDecisions', 'clashsQuai', 'objectifs', 'objectifsRates', 'joursJoues', 'cafes', 'joursCafe', 'siestes', 'rappelsExces', 'soirsExces', 'departs'].forEach((k) => (c[k] = somme(k)));
 		c.quai = { reponses: l.reduce((s, x) => s + ((x.quai && x.quai.reponses) || 0), 0), bonnes: l.reduce((s, x) => s + ((x.quai && x.quai.bonnes) || 0), 0), signalees: l.reduce((s, x) => s + ((x.quai && x.quai.signalees) || 0), 0) };
 		c.partBons = part(c.bons, c.decisions);
 		c.partBonsDecides = part(c.bons, c.decisions - c.nonTraites);
@@ -138,7 +140,7 @@
 		if (s.clashs >= S.virale.clashs) return 'virale';
 		if (s.joursJoues >= S.burnout.joursMin && s.joursCafe >= s.joursJoues * S.burnout.cafesParJour && s.siestes === 0 && s.departs === 0 && s.partRenforts >= S.burnout.partRenforts) return 'burnout';
 		if (lisible && s.score >= S.imposteur.score && s.partBons <= S.imposteur.partBons) return 'imposteur';
-		if (s.score >= S.fauteuil.score) return 'fauteuil';
+		if (s.score >= S.fauteuil.score && (!lisible || s.partBons >= S.fauteuil.partBons)) return 'fauteuil';
 		if (s.clashs === 0 && s.quai.reponses >= S.diplomate.reponses && s.partBonnesQuai >= S.diplomate.partBonnes && s.score >= S.diplomate.score) return 'diplomate';
 		if (s.objectifsRates >= S.insoumis.objectifsRates && s.score >= S.insoumis.score) return 'insoumis';
 		if (j.budget <= S.usagers.budget && j.fluidite + j.reputation >= S.usagers.fluiditeReputation) return 'usagers';

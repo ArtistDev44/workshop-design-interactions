@@ -17,9 +17,12 @@ Jeu.REGLAGES.somnolence = {
 	delaiInactifMs: 8000,
 	recuperationParSeconde: 12, // −12 par seconde réelle de sieste (environ 8 s pour revenir de 100 à 0)
 	cafe: 30, // la tasse (prompt 52) retire 30
+	parDossier: 3, // prompt 213 : chaque dossier traité fatigue un peu (la fatigue suit l'activité, pas seulement l'horloge)
+	contrecoupCafe: 40, // prompt 213 : deux heures de jeu après le café, le contrecoup
+	contrecoupMinutes: 120,
 	forcee: 100, // sieste forcée
 };
-const SOMNO = { v: 0, jourCle: '', forcee: false, bilan: null, alarmes: new Set() };
+const SOMNO = { v: 0, jourCle: '', forcee: false, bilan: null, alarmes: new Set(), contrecoup: null };
 
 const cleJourSomno = () => (Jeu.etat && Jeu.etat.semaine ? Jeu.etat.semaine.lundi : Jeu.etat ? Jeu.etat.mode : '') + '|' + Jeu.jourIndex;
 /** Peut-on s'endormir maintenant ? (journée de travail, pas de fenêtre ni de narration) */
@@ -33,6 +36,17 @@ function majSomnolence(dt, dMinutes) {
 	if (SOMNO.jourCle !== cle) {
 		SOMNO.jourCle = cle; // chaque matin, on arrive reposé
 		if (!enSieste) SOMNO.v = 0;
+	}
+	// Prompt 213 : contrecoup du café (cafe.js) — la fatigue revient, le même jour, deux heures de jeu après la tasse
+	const cc = SOMNO.contrecoup;
+	if (cc && (cc.jour !== cle || (Jeu.horloge && Jeu.horloge.minutes >= cc.minute))) {
+		SOMNO.contrecoup = null;
+		if (cc.jour === cle) {
+			SOMNO.v = Math.min(R.forcee - 1, SOMNO.v + R.contrecoupCafe);
+			const m = { cle: 'cafe.contrecoup', vars: { n: R.contrecoupCafe } };
+			if (typeof ajouterFil === 'function') ajouterFil(m, 'rythme');
+			annoncer(t(m.cle, m.vars));
+		}
 	}
 	if (enSieste) SOMNO.v = Math.max(0, SOMNO.v - (dt / 1000) * R.recuperationParSeconde);
 	else {
@@ -54,7 +68,7 @@ function dormir(volontaire) {
 	if (volontaire && Jeu.noterPosture) Jeu.noterPosture('siestes'); // prompt 207 : une sieste choisie écarte le « burn-out »
 	SOMNO.forcee = !volontaire;
 	SOMNO.alarmes = new Set();
-	SOMNO.bilan = { arrives: 0, expires: 0, minutes: Jeu.horloge.minutes, jauges: Object.assign({}, Jeu.jauges) };
+	SOMNO.bilan = { arrives: 0, expires: 0, minutes: Jeu.horloge.minutes, jauges: Object.assign({}, Jeu.jauges), patience: patienceEnAttente() };
 	if (vue === 'poste') seLever(); // on se cale dans le fauteuil : retour à la vue bureau
 	Confort.Son.bip('choix');
 	annoncer(t(volontaire ? 'sieste.volontaire' + (Jeu.defiChrono ? 'Chrono' : '') : 'sieste.forcee')); // prompt 161 : la règle du mode joué
@@ -74,17 +88,16 @@ function reveiller() {
 		const m = { cle: b.expires ? 'sieste.bilan' : 'sieste.bilanSans', vars: { duree: dureeJeu(Jeu.horloge.minutes - b.minutes), arrives: b.arrives, expires: b.expires, delta: delta.map((v, i) => t('jaugeTitre.' + Jeu.NOMS_JAUGES[i]) + ' ' + (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v)).join(', ') } };
 		if (typeof ajouterFil === 'function') ajouterFil(m, b.expires ? 'courage' : 'rythme');
 		if (typeof notifier === 'function') notifier({ titre: t('sieste.bilanTitre'), extrait: t(m.cle, m.vars), icone: 'signalements', action: () => ouvrirSignalements() });
-	}
-	// Prompt 91 § 5 : la sieste n'est pas du temps perdu — les équipes en route sont arrivées, et le prochain signalement est annoncé
-	const maintenant = (typeof tempsEquipes === 'function' ? tempsEquipes() : millis()); // prompt 95 : temps de jeu
-	(Jeu.equipes || []).forEach((q) => {
-		if (!q.inutile && q.arrivee > maintenant) {
-			const decal = q.arrivee - maintenant;
-			q.arrivee -= decal;
-			q.finIntervention -= decal;
-			q.libre -= decal;
+		// Prompt 213 : la patience des usagers a baissé pendant le sommeil (comptée à la décision de chaque dossier)
+		const perdue = patienceEnAttente() - (b.patience || 0);
+		if (perdue > 0) {
+			const mp = { cle: 'sieste.patience', vars: { n: perdue } };
+			if (typeof ajouterFil === 'function') ajouterFil(mp, 'courage');
+			annoncer(t(mp.cle, mp.vars));
 		}
-	});
+	}
+	// Prompt 213 : le bonus du prompt 91 § 5 (équipes en route arrivées au réveil) est retiré — il rendait la sieste meilleure
+	// que l'attente ; le prochain signalement reste annoncé
 	const prochain = Jeu.prochainDuJour ? Jeu.prochainDuJour() : null;
 	if (prochain && prochain.minute > Jeu.horloge.minutes) {
 		const txt = t('sieste.prevision', { type: t('enq.signalement.' + prochain.type), heure: Jeu.formaterHeure(prochain.minute) });
@@ -104,6 +117,21 @@ const dureeJeu = (min) => {
 function basculerSieste() {
 	if (enSieste) return phase === 'reveil' ? seReveiller() : reveiller();
 	dormir(true);
+}
+/** Prompt 213 : patience déjà perdue par les signalements arrivés et pas encore traités (réputation, comptée à la décision) */
+function patienceEnAttente() {
+	if (!Jeu.pertePatience || !Jeu.horloge || typeof fileIncidents !== 'function') return 0;
+	return fileIncidents().reduce((s, it) => s + Jeu.pertePatience(it.d, Jeu.horloge.minutes), 0);
+}
+/** Prompt 213 : chaque dossier décidé (pas « laissé filer ») fatigue un peu */
+if (typeof Jeu !== 'undefined' && Jeu.decider && !Jeu.decider.fatigue) {
+	const deciderSansFatigue = Jeu.decider;
+	Jeu.decider = function (action) {
+		const r = deciderSansFatigue.apply(this, arguments);
+		if (r && action !== 'temps' && !enSieste) SOMNO.v = Math.min(Jeu.REGLAGES.somnolence.forcee - 1, SOMNO.v + Jeu.REGLAGES.somnolence.parDossier);
+		return r;
+	};
+	Jeu.decider.fatigue = true;
 }
 /** Un signalement arrive pendant la sieste : seul un signalement de gravité élevée déclenche le réveil d'urgence */
 function signalementUrgentPendantSieste() {

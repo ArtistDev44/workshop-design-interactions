@@ -33,6 +33,19 @@ function dessinerSeuilObjectif(cle, bx, by, bl, bh) {
 	rect(sx - 1, by - 5, 2, bh + 10);
 	return true;
 }
+/** Prompt 213 : hachures de la zone d'excès (motif, pas seulement une couleur), de x0 à x1 sur la barre */
+function hachuresExces(x0, x1, y, h) {
+	stroke(255, 255, 255, 150);
+	strokeWeight(1);
+	for (let xx = x0 - h; xx < x1; xx += 4) {
+		const a = Math.max(xx, x0);
+		const b = Math.min(xx + h, x1);
+		if (b > a) line(a, y + h - (a - xx), b, y + h - (b - xx));
+	}
+	noStroke();
+	fill(255, 255, 255, 170);
+	rect(x0 - 1, y - 3, 2, h + 6); // début de la zone
+}
 function dessinerBandeau() {
 	// Prompts 144 et 145 : UNE ligne de 44 px (au lieu de deux lignes, 84 px) — trois jauges compactes (barre de 10 px
 	// à la hauteur du texte), puis « Priorités · Objectif » en un seul élément ; la date et l'heure du jeu sont sorties
@@ -53,19 +66,35 @@ function dessinerBandeau() {
 		textSize(16);
 		fill(C.texte);
 		const lib = t('jaugeTitre.' + cle); // prompt 143 : plus de valeur chiffrée, la barre suffit
+		const va = aff[cle];
+		// Prompt 213 : zone d'excès (Budget, Réputation) — libellé et barre à la couleur d'alerte quand la jauge y est, « ⚠ »
+		// après la barre (place réservée : les jauges suivantes ne bougent pas)
+		const seuilEx = Jeu.seuilExces ? Jeu.seuilExces(cle) : null;
+		const enEx = seuilEx !== null && va >= seuilEx;
+		fill(enEx ? C.orange : C.texte);
 		text(lib, x, cy);
 		const bx = x + textWidth(lib) + 8;
 		fill(C.piste);
 		rect(bx, by, lbar, hb);
-		const va = aff[cle];
-		const c = color(va < 20 ? C.rougeFonce : va < 40 ? C.orange : C.vert);
+		const c = color(va < 20 ? C.rougeFonce : va < 40 || enEx ? C.orange : C.vert);
 		if (va < 20) c.setAlpha(255 * opaciteCritique());
 		fill(c);
 		rect(bx, by, (lbar * constrain(va, 0, 100)) / 100, hb);
+		if (seuilEx !== null) hachuresExces(bx + (lbar * seuilEx) / 100, bx + lbar, by, hb);
+		if (enEx && mouseX >= bx - 4 && mouseX <= bx + lbar + 4 && mouseY >= z.y && mouseY <= z.y + z.h) BANDEAU.survol = t('jauge.exces', { seuil: seuilEx });
 		// prompt 211 : repères fixes 20 / 40 retirés — la couleur (rouge < 20, orange < 40) les dit ; seul le repère d'objectif reste
 		if (dessinerSeuilObjectif(cle, bx, by, lbar, hb) && mouseX >= bx - 4 && mouseX <= bx + lbar + 4 && mouseY >= z.y && mouseY <= z.y + z.h) BANDEAU.survol = texteSeuilObjectif(cle); // prompt 143
 		dessinerDeltasJauge(cle, bx, by, lbar, hb);
 		x = bx + lbar + 18;
+		if (seuilEx !== null) {
+			textFont(POLICE_TEXTE);
+			textSize(16);
+			textAlign(LEFT, CENTER);
+			noStroke();
+			fill(C.orange);
+			if (enEx) text('⚠', x - 10, cy);
+			x += textWidth('⚠') + 4;
+		}
 	});
 	cibleGuide('jauges', z.x, z.y, x - z.x, z.h); // prompt 204 : le voile percé éclaire les trois jauges seules, pas « Priorités »
 	// Priorités et objectif du jour fusionnés (prompt 144) ; thème du jour et « hors ligne » à la suite
@@ -285,14 +314,37 @@ const PAS_REPONSE = 92;
  * symbole porte le sens, la couleur le double ; prompt 211 : le nom de la jauge est l'en-tête de la colonne. Le clash (prompt 117) compte son malus de réputation : la tendance
  * reste honnête. Pastille « conseillé » en option (Pression visible). */
 function dessinerTendanceReponse(r, d, x, y, l) {
+	const cols = colonnesTendance(x, l);
+	tendancesReponse(r, d).forEach((o, j) => dsTexte(o.sym, cols[j], y, 16, o.sym === '≈' || o.sym === '?' ? C.gris : o.versExces || !o.sym.includes('▲') ? C.orange : C.vert, 'center'));
+	zoneTexteDeclarer('tendanceReponse', cols[0] - 30, y, cols[2] - cols[0] + 60, 22); // prompt 93 : audit des textes
+}
+/** Prompt 213 : seuil de fatigue au-delà duquel les tendances deviennent illisibles (« ? »), et celui où une source se perd */
+const FATIGUE_TENDANCES = 70;
+const FATIGUE_SOURCES = 90;
+const fatigueJeu = () => (typeof SOMNO !== 'undefined' ? SOMNO.v : 0);
+/** Tendance d'une réplique sur les 3 jauges : symbole, et « vers l'excès » (prompt 213) si la hausse mène dans la zone
+ * d'excès ; au-delà de FATIGUE_TENDANCES de somnolence, « ? » (l'information est retirée, et dite) */
+function tendancesReponse(r, d) {
 	const e = Jeu.effetsAttendus(r.cle, d).slice();
 	if (r.clash) e[1] += Jeu.REGLAGES.malusClash || 0;
-	const cols = colonnesTendance(x, l);
-	['fluidite', 'reputation', 'budget'].forEach((k, j) => {
-		const sym = tendance(e[j]);
-		dsTexte(sym, cols[j], y, 16, sym === '≈' ? C.gris : sym.includes('▲') ? C.vert : C.orange, 'center');
+	const flou = fatigueJeu() >= FATIGUE_TENDANCES;
+	return ['fluidite', 'reputation', 'budget'].map((k, j) => {
+		const seuil = Jeu.seuilExces ? Jeu.seuilExces(k) : null;
+		const sym = flou ? '?' : tendance(e[j]);
+		return { k, sym, versExces: !flou && seuil !== null && e[j] > 0 && Jeu.jauges[k] + e[j] >= seuil };
 	});
-	zoneTexteDeclarer('tendanceReponse', cols[0] - 30, y, cols[2] - cols[0] + 60, 22); // prompt 93 : audit des textes
+}
+/** Prompt 213 : tendances d'une réplique en mots, pour le lecteur d'écran */
+function texteTendancesReponse(r, d) {
+	return tendancesReponse(r, d)
+		.map((o) => t('tendance.ligne', { jauge: t('jaugeCourt.' + o.k), sens: t('tendance.' + ({ '▲▲': 'hausseForte', '▲': 'hausse', '≈': 'stable', '▼': 'baisse', '▼▼': 'baisseForte', '?': 'illisible' })[o.sym]) }) + (o.versExces ? ' ' + t('tendance.versExces') : ''))
+		.join(', ');
+}
+/** Prompt 213 : à l'arrivée d'un dossier, les répliques et leurs tendances sont dites (touche, réplique, tendances) */
+function texteRepliquesAnnonce(d) {
+	const rs = reponsesDialogue(d);
+	const txt = repliquesDuDossier(rs, d);
+	return rs.map((r, i) => t('tendance.replique', { touche: TOUCHES_REPONSES[i], texte: txt[i], tendances: texteTendancesReponse(r, d) })).join(' ') + (fatigueJeu() >= FATIGUE_TENDANCES ? ' ' + t('tendance.fatigue') : '');
 }
 /** Prompt 211 : centres des 3 colonnes de tendance, calées à droite de la ligne de réponse (x, largeur l) */
 function colonnesTendance(x, l) {

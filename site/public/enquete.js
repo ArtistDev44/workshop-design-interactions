@@ -39,7 +39,14 @@ function dossierConnu(i) {
 const enquetePossible = () => ecran === 'jeu' && (phase === 'decision' || phase === 'contradiction') && !!Jeu.dossierCourant();
 
 /** Révèle une source. payant : consultée depuis l'appli (−4 s de compteur) ; sinon geste dans la pièce */
+/** Prompt 213 : au-delà de FATIGUE_SOURCES de somnolence, la dernière source pas encore consultée échappe au joueur */
+function sourcePerdueFatigue(e) {
+	if (typeof fatigueJeu !== 'function' || fatigueJeu() < FATIGUE_SOURCES || !e) return null;
+	const restantes = SOURCES_ENQ.filter((s) => !e.revele[s.cle]);
+	return restantes.length ? restantes[restantes.length - 1].cle : null;
+}
 function revelerSource(cle, payant) {
+	if (cle && cle === sourcePerdueFatigue(enqueteDossier())) return annoncer(t('enq.fatigue')), false; // prompt 213
 	if (!enquetePossible()) return false;
 	if (payant && Jeu.ralentiActif && Jeu.ralentiActif(millis())) return annoncer(t('ralenti.sourcesSuspendues')), false; // prompt 55
 	const e = enqueteDossier();
@@ -380,10 +387,13 @@ function corpsEnquete(d, x, y0, l, h) {
 			yy += r.h + 12;
 		});
 	const hb = MOBILE.actif ? 80 : 72;
-	SOURCES_ENQ.filter((s) => !e.revele[s.cle]).forEach((s) => {
+	const perdue = sourcePerdueFatigue(e); // prompt 213 : trop fatigué·e, une source échappe
+	SOURCES_ENQ.filter((s) => !e.revele[s.cle] && s.cle !== perdue).forEach((s) => {
 		items.push({ s, cle: s.cle, revele: false, y: yy, h: hb });
 		yy += hb + 10;
 	});
+	const yPerdue = perdue ? yy : null;
+	if (perdue) yy += 40;
 	ENQ_UI.items = items;
 	ENQ_UI.zone = { x, y: y0, l, h };
 	ENQ_UI.defilMax = Math.max(0, yy - 10 - h);
@@ -412,6 +422,7 @@ function corpsEnquete(d, x, y0, l, h) {
 		carteSource(it.m, x, yg, lc, { ouvert: !!(e.ouvert && e.ouvert[it.cle]), heure: e.heure && e.heure[it.cle], focus: i === ENQ_UI.focus, zoneY: y0, zoneH: h }, true);
 		ctx.globalAlpha = 1;
 	});
+	if (yPerdue !== null) dsTexte(t('enq.fatigue'), x, Math.round(y0 + yPerdue - ENQ_UI.defil) + 6, 16, DS.blanc75, 'left', lc); // prompt 213
 	zoneTexteFin();
 	ctx.restore();
 	// Barre de défilement DS
