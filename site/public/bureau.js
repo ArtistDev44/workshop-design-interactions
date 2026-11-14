@@ -991,7 +991,8 @@ function composerVue() {
 	if (phase === 'soir' && (SOIR.sortie || respirationSoir())) return; // prompt 69 : pendant la sortie, pas de consigne ; prompt 191 : ni pendant « Fin de journée. »
 	// Prompt 124 : la consigne « Cliquez sur le PC… » n'est plus affichée en permanence (immersion) ; elle ne revient
 	// qu'après 10 s sans geste, pour qui hésite. Les messages d'état (incident, mail, soir) restent.
-	const consigne = msg === t('bureau.installer') || msg === t('bureau.installerMobile');
+	// Prompt 211 : « Incident en cours » suit la même règle — la pastille sur l'écran du PC l'annonce déjà
+	const consigne = msg === t('bureau.installer') || msg === t('bureau.installerMobile') || msg === t('bureau.incident');
 	if (consigne && typeof inactifDepuis !== 'undefined' && millis() - inactifDepuis < 10000) return;
 	textFont(POLICE_DONNEES);
 	textSize(22);
@@ -1017,7 +1018,11 @@ function dessinerBoutonQuitterPC() {
 	const b = rectBoutonQuitter();
 	if (clignement) return; // pendant qu'on se lève, le bouton disparaît
 	const raison = raisonRetenuAuPC(); // prompt 182 : un choix attend → bouton désactivé, avec sa raison
-	bouton(b.x, b.y, b.l, b.h, t(GUIDE.actif ? 'poste.quitter_pc_guide' : 'poste.quitter_pc'), quitterPC, !!raison); // prompt 174 : pendant le guide, Échap quitte le guide — le libellé ne la promet pas
+	// Prompt 211 : bouton secondaire (contour) sur un fond sombre — le rouge primaire en faisait l'élément le plus saillant
+	noStroke();
+	fill(13, 12, 12, 225);
+	rect(b.x, b.y, b.l, b.h);
+	bouton(b.x, b.y, b.l, b.h, t(GUIDE.actif ? 'poste.quitter_pc_guide' : 'poste.quitter_pc'), quitterPC, !!raison, true); // prompt 174 : pendant le guide, Échap quitte le guide — le libellé ne la promet pas
 	cibleGuide('quitterPC', b.x, b.y, b.l, b.h); // prompt 37
 	if (raison) boutons.push({ x: b.x, y: b.y, l: b.l, h: b.h, action: quitterPC }); // clic / toucher sur le bouton désactivé : la raison est dite (infobulle + annonce), sans sortie
 	if (raison && !fenetre && !smsActif) {

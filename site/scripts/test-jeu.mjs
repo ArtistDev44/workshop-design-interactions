@@ -3156,7 +3156,7 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	const kp = sk.slice(sk.indexOf('function keyPressed()'), sk.indexOf('function mouseWheel('));
 	verifier(!/seLever\(\)/.test(kp) && (kp.match(/quitterPC\(\)/g) || []).length >= 4, 'prompt 182 : au clavier, toute sortie du PC doit passer par quitterPC() (Échap, Entrée sur le bouton), jamais par seLever()');
 	verifier(/scrollSortiePC\(dy < 0 \? -150 : 150\)/.test(lire182('mobile.js')) && /action: quitterPC, primaire: false, desactive: !!raisonRetenuAuPC\(\)/.test(lire182('portrait.js')), 'prompt 182 : balayage (mobile) et bouton « Se lever » (portrait) doivent suivre la même règle de sortie');
-	verifier(/bouton\(b\.x, b\.y, b\.l, b\.h, t\(GUIDE\.actif \? 'poste\.quitter_pc_guide' : 'poste\.quitter_pc'\), quitterPC, !!raison\)/.test(bu), 'prompt 182 : le bouton « Quitter le PC » doit être désactivé tant qu\'un choix attend');
+	verifier(/bouton\(b\.x, b\.y, b\.l, b\.h, t\(GUIDE\.actif \? 'poste\.quitter_pc_guide' : 'poste\.quitter_pc'\), quitterPC, !!raison(, true)?\)/.test(bu), 'prompt 182 : le bouton « Quitter le PC » doit être désactivé tant qu\'un choix attend');
 	verifier(/t\('bureau\.inviteInstaller'\)/.test(bu) && /else if \(vue === 'bureau'\) \{[\s\S]{0,200}fill\(13, 12, 12, 96\)/.test(bu), 'prompt 182 : en vue bureau, écran assombri et invite « S\'installer au PC »');
 	const c = vm.createContext({ Math });
 	vm.runInContext(
