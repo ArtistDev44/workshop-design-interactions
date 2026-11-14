@@ -97,6 +97,7 @@ function setup() {
 	if (msgChargement) msgChargement.textContent = t('chargement.message'); // prompt 27 : dans la langue active
 	const c = createCanvas(L, H);
 	c.parent('scene');
+	c.elt.setAttribute('aria-hidden', 'true'); // prompt 210 : le contenu du canevas est repris en DOM (lecteur-ecran.js)
 	c.elt.addEventListener('mouseleave', () => (sourisDansCanevas = false)); // prompt 25 : la caméra se recentre
 	pixelDensity(1);
 	randomSeed(Jeu.fallback ? Jeu.fallback.seed : 1001);
@@ -1105,7 +1106,7 @@ function bouton(x, y, l, h, label, action, desactive, secondaire) {
 	text(label, x + l / 2, y + h / 2);
 	zoneTexteFin();
 	textStyle(NORMAL);
-	if (!desactive) boutons.push({ x, y, l, h, action });
+	if (!desactive) boutons.push({ x, y, l, h, action, titre: label ? String(label) : undefined }); // prompt 210 : libellé (lecteur-ecran.js)
 }
 
 function easeOut(t) {
@@ -1178,7 +1179,13 @@ if (typeof document !== 'undefined' && document.addEventListener) document.addEv
 function saisieOuRaccourciNavigateur() {
 	const a = typeof document !== 'undefined' ? document.activeElement : null;
 	if (a && (/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) || a.isContentEditable)) return true;
+	if (a && a.closest && a.closest('#nouvelle-version, #commandes-jeu')) return true; // prompt 210
 	return keyIsDown(CONTROL) || keyIsDown(ALT) || keyIsDown(91) || keyIsDown(93);
+}
+/** Prompt 210 (audit 206, WCAG 2.1.4) : réglage « Raccourcis d'une lettre » désactivé → une lettre seule ne fait plus
+ * rien (une frappe accidentelle ou une commande vocale ne déclenche plus d'action) ; Maj + la lettre garde le raccourci */
+function raccourciLettreBloque() {
+	return Confort.Reglages.raccourcisLettres === false && typeof key === 'string' && /^[a-z]$/i.test(key) && !keyIsDown(SHIFT);
 }
 function keyPressed() {
 	// Prompt 33 : boîte d'import ouverte (champ texte, fichier) → le clavier lui appartient
@@ -1192,6 +1199,7 @@ function keyPressed() {
 	interaction();
 	if (typeof guideFiltre === 'function' && guideFiltre() && toucheGuide()) return false; // prompt 181 : guide contraignant — liste blanche de touches (guide.js)
 	if (!smsActif && !tutoriel && typeof saisieRechercheMails === 'function' && saisieRechercheMails()) return false; // prompt 195 : le champ de recherche de Mails a le focus — la frappe lui appartient (aucune lettre n'atteint les raccourcis)
+	if (raccourciLettreBloque()) return false; // prompt 210 : raccourcis d'une lettre coupés (Paramètres → Accessibilité) — Maj + lettre reste possible
 	// Intro SMS (§ 2) : clic / Entrée pour avancer
 	if (smsActif) {
 		if (keyCode === ENTER || keyCode === RETURN || key === ' ') avancerConversation(); // prompt 42

@@ -1,0 +1,44 @@
+# Prompt 210 (audit 206, constat 6) : vérification automatique de main et des branches.
+# L'ancien workflow « Déployer le site » publiait sur GitHub Pages (adresse en 404) sans lancer les tests ;
+# la publication se fait sur Cloudflare Pages (https://workshop-design-interactions.pages.dev/).
+# Ici : build, tests sans navigateur (smoke + jeu), puis le jeu lancé dans Chromium sans interface.
+name: Tests
+
+on:
+  push:
+    paths:
+      - 'site/**'
+      - '.github/workflows/tests.yml'
+  pull_request:
+    paths:
+      - 'site/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22' # engines de site/package.json (>=22.23.4)
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+      - name: Installer et construire le site
+        working-directory: site
+        run: |
+          npm ci
+          npm run build
+      - name: Navigateur de test (hors dépendances du site)
+        working-directory: site
+        run: |
+          npm i --no-save playwright-core
+          npx playwright-core install --with-deps chromium
+      - name: Tests
+        working-directory: site
+        env:
+          EXIGER_NAVIGATEUR: '1'
+        run: npm test

@@ -9,7 +9,7 @@
    "nature": "manifestation",
    "lignes": [],
    "retard": null,
-   "source": "Changelog du GTFS Naolib (Open Data Nantes Métropole, Licence Ouverte)",
+   "source": "Changelog du GTFS Naolib (Semitan via Open Data Nantes Métropole, ODbL)",
    "texte_source": "Manifestation 13/10"
   },
   {
@@ -18,7 +18,7 @@
    "nature": "mouvement social",
    "lignes": [],
    "retard": null,
-   "source": "Changelog du GTFS Naolib (Open Data Nantes Métropole, Licence Ouverte)",
+   "source": "Changelog du GTFS Naolib (Semitan via Open Data Nantes Métropole, ODbL)",
    "texte_source": "Mouvement de grève chez STAO"
   },
   {
@@ -27,7 +27,7 @@
    "nature": "manifestation",
    "lignes": [],
    "retard": null,
-   "source": "Changelog du GTFS Naolib (Open Data Nantes Métropole, Licence Ouverte)",
+   "source": "Changelog du GTFS Naolib (Semitan via Open Data Nantes Métropole, ODbL)",
    "texte_source": "Manifestation + Service Garanti le 17/10"
   }
  ],

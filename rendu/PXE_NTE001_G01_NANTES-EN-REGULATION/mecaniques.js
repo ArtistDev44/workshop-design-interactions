@@ -135,7 +135,7 @@ function lignesPalmares() {
 function fenetrePalmares() {
 	const l = DS.fenetre.large; // prompt 173 (était 1400)
 	const lignes = lignesPalmares();
-	const h = 300 + lignes.length * 96;
+	const h = 300 + lignes.length * 96 + 90; // prompt 207 : l'aide passe au-dessus des boutons (bouton « Fins découvertes »)
 	const x = (L - l) / 2;
 	const y = (H - h) / 2;
 	panneau(x, y, l, h, C.accent);
@@ -178,9 +178,60 @@ function fenetrePalmares() {
 	fill(C.gris);
 	push(); // prompt 173 : fenêtre large (1280) → le texte tient sur 4 lignes à interligne 24 (interligne local)
 	textLeading(24);
-	text(t('palmares.aide'), x + 56, y + h - 122, l - 112 - 340, 110); // prompt 93 : 70 → 100 px (le texte était coupé)
+	text(t('palmares.aide'), x + 56, y + h - 212, l - 112, 96); // prompt 93 ; prompt 207 : pleine largeur au-dessus des boutons
 	pop();
+	if (Jeu.Galerie) bouton(x + l - 56 - 300 - 24 - 376, y + h - 108, 376, 68, t('fins.bouton', { d: Jeu.Galerie.decouvertes(), n: Jeu.FINS_SEMAINE.length }), ouvrirFins, false, true); // prompt 207
 	bouton(x + l - 56 - 300, y + h - 108, 300, 68, t('commun.fermer'), fermer);
+}
+
+// ——— Prompt 207 : galerie des dix fins de semaine (découvertes / à découvrir), depuis le palmarès ———
+function ouvrirFins() {
+	if (!Jeu.Galerie) return;
+	ouvrir('fins');
+	const g = Jeu.Galerie.lire();
+	annoncer(
+		t('fins.titre') + '. ' + t('fins.compte', { d: Jeu.Galerie.decouvertes(), n: Jeu.FINS_SEMAINE.length }) + ' ' +
+			Jeu.FINS_SEMAINE.map((f, i) => (i + 1) + '. ' + String(g[f.cle] ? t('fin.' + f.cle + '.nom') : t('fins.cachee')) + ' — ' + String(t('fin.' + f.cle + '.indice'))).join(' ; ')
+	);
+}
+function fenetreFins() {
+	const l = DS.fenetre.large;
+	const g = Jeu.Galerie ? Jeu.Galerie.lire() : {};
+	const fins = Jeu.FINS_SEMAINE || [];
+	const rangs = Math.ceil(fins.length / 2);
+	const hc = 112;
+	const h = 236 + rangs * (hc + 12) + 100;
+	const x = (L - l) / 2;
+	const y = Math.max(16, (H - h) / 2);
+	panneau(x, y, l, h, C.accent);
+	dsTitre(t('fins.titre'), x + 56, y + 40, 52, C.texte, 'left');
+	noStroke();
+	textAlign(LEFT, TOP);
+	dessinerTexte(t('fins.compte', { d: Jeu.Galerie ? Jeu.Galerie.decouvertes() : 0, n: fins.length }), x + 56, y + 116, l - 112, { taille: 18, couleur: C.gris, police: POLICE_DONNEES, maxLignes: 2, interligne: 24 });
+	const cl = (l - 112 - 24) / 2;
+	fins.forEach((f, i) => {
+		const cx = x + 56 + (i % 2) * (cl + 24);
+		const cy = y + 188 + Math.floor(i / 2) * (hc + 12);
+		const vu = g[f.cle];
+		fill(255, 255, 255, vu ? 22 : 9);
+		rect(cx, cy, cl, hc);
+		textFont(POLICE_DONNEES);
+		textSize(16);
+		fill(C.gris);
+		text(String(i + 1).padStart(2, '0'), cx + 16, cy + 14);
+		textFont(POLICE_TEXTE);
+		textStyle(BOLD);
+		textSize(24);
+		fill(vu ? C.texte : C.gris);
+		text(vu ? t('fin.' + f.cle + '.nom') : t('fins.cachee'), cx + 56, cy + 10, cl - 72, 32);
+		textStyle(NORMAL);
+		const ligne = vu ? t('fins.obtenue', { le: vu.le.split('-').reverse().join('/'), s: vu.score, n: vu.n || 1 }) + ' — ' + t('fin.' + f.cle + '.indice') : t('fin.' + f.cle + '.indice');
+		dessinerTexte(ligne, cx + 56, cy + 46, cl - 72, { taille: 17, couleur: C.gris, maxLignes: 2, interligne: 23 });
+	});
+	bouton(x + l - 56 - 300, y + h - 92, 300, 64, t('fins.retour'), fermerFins);
+}
+function fermerFins() {
+	ouvrir('palmares');
 }
 
 // ——— Clavier (appelé par keyPressed avant les fenêtres génériques) ; true = touche traitée ———
@@ -198,6 +249,11 @@ function toucheMecaniques() {
 	}
 	if (fenetre === 'palmares') {
 		if (keyCode === ESCAPE || keyCode === ENTER || keyCode === RETURN) fermer();
+		else if (key === 'g' || key === 'G') ouvrirFins(); // prompt 207 : galerie des fins (F = plein écran)
+		return true;
+	}
+	if (fenetre === 'fins') {
+		if (keyCode === ESCAPE || keyCode === ENTER || keyCode === RETURN || keyCode === BACKSPACE) fermerFins();
 		return true;
 	}
 	if (fenetre || smsActif || MENU.actif || ecran !== 'jeu' || phase === 'fin') return false;

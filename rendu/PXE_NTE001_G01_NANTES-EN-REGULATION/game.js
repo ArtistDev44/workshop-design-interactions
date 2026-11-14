@@ -296,6 +296,8 @@
 		Jeu.patronEnAttente = []; // prompt 86
 		Jeu.commentaires = []; // prompt 22 : app « Community manager »
 		Jeu.plaintes = []; // prompt 28 : plaintes des Nantais (data/messages.json)
+		Jeu.interactionsPrevues = []; // prompt 198 : interactions à venir (3 de plus par plainte déclenchée)
+		Jeu.derniersTextes = {}; // prompt 198 : historique circulaire des variantes tirées, par catégorie
 		Jeu.equipes = []; // prompt 22 : équipes envoyées depuis la carte
 		Jeu.aggravationLignes = {}; // prompt 79
 		Jeu.statutPatron = nouveauStatut(); // prompt 84
@@ -355,6 +357,8 @@
 			messagesPatron: Jeu.messagesPatron,
 			commentaires: Jeu.commentaires,
 			plaintes: (Jeu.plaintes || []).map((p) => Object.assign({}, p, { def: undefined, depuis: p.depuis === undefined ? undefined : p.depuis - maintenant })), // prompt 79 : délai relatif
+			interactionsPrevues: Jeu.interactionsPrevues || [], // prompt 198
+			derniersTextes: Jeu.derniersTextes || {},
 			equipes: (Jeu.equipes || []).map((q) => Object.assign({}, q, { depart: q.depart - maintenant, arrivee: q.arrivee - maintenant, finIntervention: (q.finIntervention || q.arrivee) - maintenant, libre: (q.libre || q.arrivee) - maintenant })), // prompt 68 : cycle complet
 			nonLus: Object.assign({}, Jeu.nonLus),
 			alertesJauges: Object.assign({}, Jeu.alertesJauges),
@@ -407,6 +411,8 @@
 		Jeu.plaintes = (s.plaintes || [])
 			.map((p) => Object.assign({}, p, { def: Jeu.MESSAGES.plaintes.find((x) => x.id === p.id), depuis: p.depuis === undefined || p.depuis === null ? undefined : p.depuis + maintenant }))
 			.filter((p) => p.def); // une plainte retirée de messages.json depuis la sauvegarde est ignorée
+		Jeu.interactionsPrevues = (s.interactionsPrevues || []).map((x) => Object.assign({}, x)); // prompt 198
+		Jeu.derniersTextes = JSON.parse(JSON.stringify(s.derniersTextes || {}));
 		Jeu.equipes = (s.equipes || []).map((q) => Object.assign({}, q, { depart: q.depart + maintenant, arrivee: q.arrivee + maintenant, finIntervention: (q.finIntervention === undefined ? q.arrivee : q.finIntervention) + maintenant, libre: (q.libre === undefined ? q.arrivee : q.libre) + maintenant, remercie: q.remercie === undefined ? q.arrivee_sim !== null : q.remercie })); // prompt 121 : ancienne sauvegarde → pas de remerciement en double
 		Jeu.refusEquipes = s.refusEquipes || 0;
 		Jeu.aggravationLignes = Object.assign({}, s.aggravationLignes || {}); // prompt 79
@@ -715,7 +721,8 @@
 	};
 	/** Texte d'une réponse à afficher dans Community (clash : généré, sinon champ texte du JSON) */
 	Jeu.texteReponse = function (plainte, r) {
-		return r && r.clash ? Jeu.repliqueClashPlainte(plainte) : Jeu.texteMessage(r && r.texte, plainte.vars);
+		if (r && r.signaler) return String(T('commu.signaler')); // prompt 202 : bouton « Signaler » à la place de la réponse bienveillante
+		return r && r.clash && !r.texte ? Jeu.repliqueClashPlainte(plainte) : Jeu.texteMessage(r && r.texte, plainte.vars); // prompt 202 : clash froid = texte propre
 	};
 	/** Prompt 197 : réaction de connard du plaignant d'une plainte Community après un clash (variantes reactionClash.*, prompt 196) */
 	Jeu.reactionClashPlainte = function (plainte) {
@@ -1475,6 +1482,15 @@
 	// ({ligne}, {retard}, {nature}) sont remplies avec les données de ce dossier — jamais inventées.
 	// =====================================================================
 	Jeu.MESSAGES = { plaintes: [] };
+	// Prompt 198 : ton d'une interaction (au plus 1/3 de provoquantes par journée) et catégorie (« plainte » par défaut)
+	const TONS_INTERACTION = ['provoquant', 'neutre', 'positif'];
+	const CATEGORIES_INTERACTION = ['plainte', 'question', 'remerciement', 'suggestion', 'temoignage', 'relance', 'doublon', 'accessibilite', 'photo'];
+	const categorieDe = (p) => (p && p.categorie) || 'plainte';
+	const estPrincipale = (p) => categorieDe(p) === 'plainte'; // seule une plainte ouvre un fil ; les autres catégories s'y ajoutent
+	const tonDe = (p) => (p && TONS_INTERACTION.includes(p.ton) ? p.ton : 'neutre');
+	Jeu.CATEGORIES_INTERACTION = CATEGORIES_INTERACTION;
+	Jeu.categorieInteraction = (plainte) => categorieDe(plainte && plainte.def);
+	Jeu.tonInteraction = (plainte) => tonDe(plainte && plainte.def);
 	/** Valide et retient les plaintes (entrée invalide ignorée, avec un avertissement en console) */
 	Jeu.chargerMessages = function (donnees) {
 		const ok = [];
@@ -1487,11 +1503,17 @@
 				Array.isArray(p.reponses) &&
 				p.reponses.length >= 2 &&
 				// prompt 197 : une réponse « clash » n'a pas de texte (tiré des clés clash.*) ; 3 réponses dont une bonne et une clash
-				p.reponses.every((r) => r && (r.clash === true || (r.texte && typeof r.texte.fr === 'string'))) &&
+				p.reponses.every((r) => r && (r.clash === true || r.signaler === true || (r.texte && typeof r.texte.fr === 'string'))) && // prompt 202 : « signaler » sans texte
+				p.reponses.filter((r) => r.signaler === true).length <= 1 &&
+				p.reponses.every((r) => !r.suite || (typeof r.suite.fr === 'string' && typeof r.suite.en === 'string')) && // prompt 202 : suite bilingue
 				p.reponses.some((r) => r.bonne === true) &&
-				p.reponses.filter((r) => r.clash === true).length <= 1;
+				p.reponses.filter((r) => r.clash === true).length <= 1 &&
+				// prompt 198 : ton et catégorie connus ; une interaction hors « plainte » est bilingue
+				(p.ton === undefined || TONS_INTERACTION.includes(p.ton)) &&
+				(p.categorie === undefined || CATEGORIES_INTERACTION.includes(p.categorie)) &&
+				(estPrincipale(p) || (typeof p.texte.en === 'string' && p.reponses.every((r) => (r.clash === true && !r.texte) || r.signaler === true || typeof r.texte.en === 'string')));
 			if (valide) ok.push(p);
-			else if (global.console) console.warn('messages.json : plainte n° ' + i + ' ignorée (id, texte.fr, réponses valides dont une « bonne » et au plus une « clash » requis)');
+			else if (global.console) console.warn('messages.json : plainte n° ' + i + ' ignorée (id, texte.fr, réponses valides dont une « bonne » et au plus une « clash », ton et catégorie connus requis)');
 		});
 		// Prompt 85 : modèles d'info trafic (FR + EN, « coherent »), validés comme les plaintes
 		const modeles = ((donnees && donnees.modeles) || []).filter((m) => m && typeof m.id === 'string' && m.texte && typeof m.texte.fr === 'string' && typeof m.texte.en === 'string' && Array.isArray(m.coherent));
@@ -1500,7 +1522,9 @@
 	};
 	Jeu.chargerMessages(global.MESSAGES); // data/messages.js (double clic, hors ligne)
 	// Servi par un serveur : on relit le JSON brut, pour qu'une modification à la main soit prise sans rien régénérer
-	if (typeof fetch === 'function' && global.location && global.location.protocol !== 'file:')
+	// Prompt 210 : en développement local seulement — en ligne, messages.js (généré au build depuis ce JSON) suffit, le
+	// second chargement (499 Ko, sans cache) pesait ≈ 30 % de la première visite
+	if (typeof fetch === 'function' && global.location && global.location.protocol !== 'file:' && /^(localhost|127\.0\.0\.1|\[::1\])$/.test(global.location.hostname || ''))
 		fetch('./data/messages.json', { cache: 'no-store' })
 			.then((r) => (r.ok ? r.json() : null))
 			.then((d) => d && Jeu.chargerMessages(d))
@@ -1515,11 +1539,14 @@
 		return v;
 	}
 	function variablesUtilisees(p) {
-		const textes = [p.texte.fr, p.texte.en || ''].concat(p.reponses.map((r) => (r.clash ? '' : r.texte.fr + ' ' + (r.texte.en || '')))); // prompt 197 : le clash n'a pas de texte propre
+		const bi = (o) => (o ? o.fr + ' ' + (o.en || '') : '');
+		const textes = [p.texte.fr, p.texte.en || ''].concat(p.reponses.map((r) => bi(r.texte) + ' ' + bi(r.suite))); // prompt 197 : le clash n'a pas de texte propre ; prompt 202 : clash froid, signaler et suites
 		return (textes.join(' ').match(/\{(\w+)\}/g) || []).map((m) => m.slice(1, -1));
 	}
-	function plainteCorrespond(p, d, vars) {
+	function plainteCorrespond(p, d, vars, index) {
 		const c = p.condition || {};
+		if (p.incitation && Jeu.violenceMasquee()) return false; // prompt 210 : masquage actif (et toujours en exposition) → aucune incitation tirée
+		if (c.fil && !(Jeu.plaintes || []).some((x) => x.index === index && !x.extra)) return false; // prompt 198 : relance / doublon d'un fil qui existe
 		if (c.type && c.type !== '*' && c.type !== d.type) return false;
 		if (c.retard_min !== undefined && !(typeof d.retard === 'number' && d.retard >= c.retard_min)) return false;
 		if (c.ligne !== undefined && !(d.lignes || []).includes(String(c.ligne))) return false;
@@ -1530,12 +1557,13 @@
 	}
 	const specificite = (p) => Object.keys(p.condition || {}).filter((k) => !(k === 'type' && p.condition.type === '*')).length;
 
-	/** Prompt 118 : environ 1 dossier sur 3 a un plaignant au ton agressif (si une plainte agressive correspond) ;
-	 * choix déterministe par numéro de dossier, sans dé */
-	function choisirSelonTon(meilleures, index) {
-		const agressif = (index * 7 + 3) % 3 === 0;
-		const pool = meilleures.filter((p) => (p.ton === 'agressif') === agressif);
-		const liste = pool.length ? pool : meilleures.filter((p) => p.ton !== 'agressif').length ? meilleures.filter((p) => p.ton !== 'agressif') : meilleures;
+	/** Prompt 118 : environ 1 dossier sur 3 a un plaignant au ton provoquant (si une plainte provoquante correspond) ;
+	 * choix déterministe par numéro de dossier, sans dé. Prompt 198 : « permis » = false interdit la provocation
+	 * (quota de 1/3 de la journée atteint, ou provocation juste avant) */
+	function choisirSelonTon(meilleures, index, permis) {
+		const agressif = permis !== false && (index * 7 + 3) % 3 === 0;
+		const pool = meilleures.filter((p) => (p.ton === 'provoquant') === agressif);
+		const liste = pool.length ? pool : meilleures.filter((p) => p.ton !== 'provoquant').length ? meilleures.filter((p) => p.ton !== 'provoquant') : meilleures;
 		return liste[index % liste.length];
 	}
 	/** Texte d'une plainte ou d'une réponse dans la langue active (repli : français), variables remplies */
@@ -1546,7 +1574,13 @@
 	};
 
 	/** Prompt 162 : texte d'une plainte reçue, marqué « Fictif · » si elle porte sur le dossier fictif */
-	Jeu.textePlainte = (p) => String(marquerFictif(p && Jeu.paquet ? Jeu.paquet[p.index] : null, Jeu.texteMessage(p.def.texte, p.vars)));
+	/** Prompt 202 : réglage de confort « masquer les commentaires violents » (Confort.Reglages.masquerViolence) */
+	// Prompt 210 : toujours masqués en mode exposition (?expo=1), quel que soit le réglage du visiteur précédent
+	Jeu.violenceMasquee = () => !!((typeof EXPO !== 'undefined' && EXPO.actif) || (global.Confort && global.Confort.Reglages && global.Confort.Reglages.masquerViolence));
+	Jeu.textePlainte = function (p) {
+		if (p && p.def && p.def.ton === 'provoquant' && (p.signalee || Jeu.violenceMasquee())) return String(T(p.signalee ? 'commu.masqueSignale' : 'commu.masqueViolent')); // prompt 202
+		return String(marquerFictif(p && Jeu.paquet ? Jeu.paquet[p.index] : null, Jeu.texteMessage(p.def.texte, p.vars)));
+	};
 	/** Prompt 117 : meilleure réponse attendue pour ce dossier (même calcul que le Journal), lecture seule */
 	Jeu.meilleureReponse = function (d) {
 		// Prompt 130 : la meilleure réponse au sens de l'évaluation — effets pondérés par le besoin des jauges actuelles
@@ -1572,10 +1606,10 @@
 	Jeu.plaignantPour = function (index) {
 		const d = (Jeu.paquet || [])[index];
 		if (!d || !Jeu.MESSAGES) return null;
-		const deja = (Jeu.plaintes || []).find((p) => p.index === index);
+		const deja = (Jeu.plaintes || []).find((p) => p.index === index && !p.extra);
 		if (deja) return { id: deja.id, auteur: deja.auteur, texte: Jeu.texteMessage(deja.def.texte, deja.vars), ton: deja.def.ton || 'normal' };
 		const vars = variablesDossier(d);
-		const candidates = (Jeu.MESSAGES.plaintes || []).filter((p) => plainteCorrespond(p, d, vars));
+		const candidates = (Jeu.MESSAGES.plaintes || []).filter((p) => estPrincipale(p) && plainteCorrespond(p, d, vars));
 		if (!candidates.length) return null;
 		const max = Math.max(...candidates.map(specificite));
 		const def = choisirSelonTon(candidates.filter((p) => specificite(p) === max), index);
@@ -1584,20 +1618,128 @@
 	/** À la présentation d'un dossier : au plus une plainte, la plus spécifique parmi celles qui correspondent */
 	Jeu.declencherPlainte = function (index) {
 		const d = (Jeu.paquet || [])[index];
-		if (!d || !Jeu.plaintes || Jeu.plaintes.some((p) => p.index === index)) return null;
-		if (Jeu.plaintesEnAttente().length >= Jeu.MAX_PLAINTES_EN_ATTENTE) return null; // pas trop difficile : file courte
+		if (!d || !Jeu.plaintes || Jeu.plaintes.some((p) => p.index === index && !p.extra)) return null;
+		if (Jeu.plaintesEnAttente().filter((p) => !p.extra).length >= Jeu.MAX_PLAINTES_EN_ATTENTE) return null; // pas trop difficile : file courte (prompt 198 : les interactions en plus ont leur propre attente)
 		const vars = variablesDossier(d);
-		const candidates = Jeu.MESSAGES.plaintes.filter((p) => plainteCorrespond(p, d, vars));
+		const candidates = Jeu.MESSAGES.plaintes.filter((p) => estPrincipale(p) && plainteCorrespond(p, d, vars));
 		if (!candidates.length) return null;
 		const dejaVues = new Set(Jeu.plaintes.map((p) => p.id));
 		const neuves = candidates.filter((p) => !dejaVues.has(p.id));
-		const pool = neuves.length ? neuves : candidates;
+		// Prompt 198 : provocation interdite (tiers du jour atteint, ou provocation juste avant) → la plainte la plus proche du contexte parmi les autres tons
+		const permis = Jeu.provocationPermise();
+		const calme = (liste) => liste.filter((p) => tonDe(p) !== 'provoquant');
+		const pool = permis ? (neuves.length ? neuves : candidates) : calme(neuves).length ? calme(neuves) : calme(candidates).length ? calme(candidates) : candidates;
 		const max = Math.max(...pool.map(specificite));
-		const def = choisirSelonTon(pool.filter((p) => specificite(p) === max), index); // déterministe : ne touche pas au tirage des dés
-		const plainte = { id: def.id, def, vars, index, heure: maintenantSim(), auteur: def.auteur || '@usager_44', reponse: null };
+		const def = choisirSelonTon(pool.filter((p) => specificite(p) === max), index, permis); // déterministe : ne touche pas au tirage des dés
+		const plainte = { id: def.id, def, vars, index, heure: maintenantSim(), auteur: def.auteur || '@usager_44', reponse: null, jour: Jeu.jourIndex };
+		Jeu.plaintes.push(plainte);
+		Jeu.nonLus.community++;
+		Jeu.programmerInteractions(index); // prompt 198 : 3 interactions de plus sur le même fait réel
+		return plainte;
+	};
+
+	// =====================================================================
+	// Prompt 198 — variété des interactions Community : chaque plainte déclenchée amène NB_INTERACTIONS_EN_PLUS
+	// interactions de plus sur le même fait réel (volume × 4), d'autres catégories (question, remerciement,
+	// suggestion, témoignage, relance, doublon, accessibilité, photo), tirées par un générateur semé
+	// (jamais Math.random : dés reproductibles, prompt 63), sans répétition récente, avec au plus 1/3
+	// d'interactions provoquantes par journée jouée et jamais deux de suite.
+	// =====================================================================
+	Jeu.NB_INTERACTIONS_EN_PLUS = 3;
+	const PSEUDOS_VARIES = PSEUDOS.concat(['@tram_de_8h', '@doulon_express', '@pieton_presse', '@bouffay_by_night', '@erdre_et_loire', '@talensac_addict', '@navibus_fan', '@zola_matinale', '@beaujoire_44', '@petit_port', '@dervallieres_bus', '@malakoff_velo', '@graslin_soir', '@pirmil_pendulaire']); // pseudonymes fictifs
+	/** Générateur déterministe (mulberry32) semé par la graine de la partie et une clé (dossier + jour + rang) :
+	 * même partie → mêmes tirages ; ne consomme pas les dés de la partie (Jeu.alea) */
+	Jeu.hasard = (graine) => mulberry32(hacher(String(Jeu.graine) + '|hasard|' + String(graine)));
+	/** Tons des interactions arrivées ce jour-là, dans l'ordre d'arrivée */
+	Jeu.tonsDuJour = function (jour) {
+		const du = (Jeu.plaintes || []).filter((p) => p.jour === jour);
+		return { total: du.length, provoquant: du.filter((p) => tonDe(p.def) === 'provoquant').length, dernier: du.length ? tonDe(du[du.length - 1].def) : null };
+	};
+	/** Une provocation de plus est-elle permise maintenant ? (au plus 1/3 du jour, elle comprise ; jamais deux de suite) */
+	Jeu.provocationPermise = function () {
+		const s = Jeu.tonsDuJour(Jeu.jourIndex);
+		return s.dernier !== 'provoquant' && 3 * (s.provoquant + 1) <= s.total + 1;
+	};
+	/** Tire une variante parmi « candidats » (même catégorie) en évitant celles de l'historique circulaire
+	 * Jeu.derniersTextes[catégorie] (taille : pool de la catégorie − 1) ; pool épuisé → la plus ancienne revient */
+	Jeu.tirerVarie = function (categorie, candidats, rnd) {
+		if (!candidats || !candidats.length) return null;
+		Jeu.derniersTextes = Jeu.derniersTextes || {};
+		const h = (Jeu.derniersTextes[categorie] = Jeu.derniersTextes[categorie] || []);
+		const neufs = candidats.filter((p) => !h.includes(p.id));
+		const def = neufs.length ? neufs[Math.floor(rnd() * neufs.length)] : candidats.slice().sort((a, b) => h.lastIndexOf(a.id) - h.lastIndexOf(b.id))[0];
+		const taille = Math.max(0, Jeu.MESSAGES.plaintes.filter((p) => categorieDe(p) === categorie).length - 1);
+		const i = h.indexOf(def.id);
+		if (i >= 0) h.splice(i, 1);
+		h.push(def.id);
+		while (h.length > taille) h.shift();
+		Jeu.derniersTextes['*'] = [def.id]; // dernière variante tirée, toutes catégories confondues
+		return def;
+	};
+	/** Réserve les interactions en plus d'un dossier : heures d'apparition tirées (ordre d'arrivée = ordre des heures) */
+	Jeu.programmerInteractions = function (index) {
+		if (!Jeu.interactionsPrevues) Jeu.interactionsPrevues = [];
+		if (Jeu.interactionsPrevues.some((x) => x.index === index) || (Jeu.plaintes || []).some((p) => p.index === index && p.extra)) return [];
+		const rnd = Jeu.hasard('heures|' + index + '|' + Jeu.jourIndex);
+		const base = Jeu.horloge ? Math.floor(Jeu.horloge.minutes) : 0;
+		const fin = Jeu.finJournee();
+		let m = base;
+		const prevues = [];
+		for (let k = 1; k <= Jeu.NB_INTERACTIONS_EN_PLUS; k++) {
+			m += 3 + Math.floor(rnd() * [25, 40, 60][(k - 1) % 3]);
+			// dans la journée tant que c'est possible ; sinon l'interaction arrive le lendemain matin (majInteractions)
+			const x = { index, jour: Jeu.jourIndex, minute: base < fin - 4 ? Math.min(m, fin - 4 + k) : m, k };
+			prevues.push(x);
+			Jeu.interactionsPrevues.push(x);
+		}
+		return prevues;
+	};
+	/** Fait arriver une interaction réservée : catégorie, variante et auteur tirés par Jeu.hasard(dossier + jour + rang) */
+	function livrerInteraction(x) {
+		const d = (Jeu.paquet || [])[x.index];
+		if (!d) return null;
+		const vars = variablesDossier(d);
+		const duFil = Jeu.plaintes.filter((p) => p.index === x.index);
+		const pris = new Set(duFil.map((p) => p.id));
+		let cands = Jeu.MESSAGES.plaintes.filter((p) => !pris.has(p.id) && plainteCorrespond(p, d, vars, x.index));
+		// Ton : une provocation dès qu'elle est permise (≈ 1/3), sinon neutre ou positif — jamais au-delà du tiers
+		const vives = cands.filter((p) => tonDe(p) === 'provoquant');
+		cands = Jeu.provocationPermise() && vives.length ? vives : cands.filter((p) => tonDe(p) !== 'provoquant');
+		const dernier = ((Jeu.derniersTextes || {})['*'] || [])[0];
+		if (cands.some((p) => p.id !== dernier)) cands = cands.filter((p) => p.id !== dernier); // jamais la même variante deux fois de suite
+		if (!cands.length) return null;
+		const rnd = Jeu.hasard('interaction|' + x.index + '|' + x.jour + '|' + x.k);
+		const dejaCat = new Set(duFil.map((p) => categorieDe(p.def)));
+		let cats = CATEGORIES_INTERACTION.filter((c) => cands.some((p) => categorieDe(p) === c));
+		if (cats.some((c) => !dejaCat.has(c))) cats = cats.filter((c) => !dejaCat.has(c)); // d'abord une catégorie absente du fil
+		const cat = cats[Math.floor(rnd() * cats.length)];
+		const def = Jeu.tirerVarie(cat, cands.filter((p) => categorieDe(p) === cat), rnd);
+		const auteursDuFil = new Set(duFil.map((p) => p.auteur));
+		let auteur = def.auteur;
+		if (!auteur || auteursDuFil.has(auteur)) {
+			const libres = PSEUDOS_VARIES.filter((a) => !auteursDuFil.has(a));
+			auteur = (libres.length ? libres : PSEUDOS_VARIES)[Math.floor(rnd() * (libres.length || PSEUDOS_VARIES.length))];
+		}
+		const plainte = { id: def.id, def, vars, index: x.index, heure: maintenantSim(), auteur, reponse: null, jour: Jeu.jourIndex, extra: true };
 		Jeu.plaintes.push(plainte);
 		Jeu.nonLus.community++;
 		return plainte;
+	}
+	/** Livre les interactions arrivées à échéance (heure de jeu dépassée, ou journée suivante), tant que la file
+	 * d'attente n'est pas pleine (sinon elles patientent) ; renvoie le nombre livré */
+	Jeu.majInteractions = function () {
+		if (!Jeu.interactionsPrevues || !Jeu.interactionsPrevues.length || !Jeu.horloge || !Jeu.plaintes || !Jeu.paquet) return 0;
+		let n = 0;
+		Jeu.interactionsPrevues
+			.slice()
+			.sort((a, b) => a.jour - b.jour || a.minute - b.minute || a.index - b.index || a.k - b.k)
+			.forEach((x) => {
+				const echu = Jeu.jourIndex > x.jour ? Jeu.horloge.minutes >= Jeu.debutJournee() + 3 + x.k * 6 : Jeu.jourIndex === x.jour && Jeu.horloge.minutes >= x.minute;
+				if (!echu || Jeu.plaintesEnAttente().length >= Jeu.MAX_PLAINTES_EN_ATTENTE) return;
+				Jeu.interactionsPrevues.splice(Jeu.interactionsPrevues.indexOf(x), 1);
+				if (livrerInteraction(x)) n++;
+			});
+		return n;
 	};
 
 	Jeu.MAX_PLAINTES_EN_ATTENTE = 3;
@@ -1648,6 +1790,15 @@
 		plainte.reponse = ri; // index réel stocké (affichage et sauvegarde inchangés)
 		plainte.bonne = r.bonne === true;
 		Jeu.appliquerDeltas(effets);
+		// Prompt 202 : « Signaler » — le commentaire est masqué, une notice de modération le dit (3114 pour une incitation au suicide),
+		// pas de réponse publique ni de réaction en chaîne
+		if (r.signaler === true) {
+			plainte.signalee = true;
+			plainte.suivis = [];
+			const notice = T(plainte.def.incitation ? 'commu.signale.incitation' : 'commu.signale', { auteur: plainte.auteur });
+			Jeu.commentaires.push({ heure: maintenantSim(), auteur: T('commu.moderation'), texte: notice, delta: effets.reputation || 0, moderation: true });
+			return { effets, bonne: plainte.bonne, tardive, clash: false, signale: true, notice, reaction: null };
+		}
 		Jeu.commentaires.push({
 			heure: maintenantSim(),
 			auteur: T('plainte.reponseDe'),
@@ -1657,7 +1808,7 @@
 		// Prompt 197 : après un clash, le plaignant (toujours gentil d'habitude) répond par un commentaire de connard (mots masqués hors alphabet)
 		let reaction = null;
 		if (r.clash === true) {
-			reaction = Jeu.reactionClashPlainte(plainte);
+			reaction = r.suite ? Jeu.texteMessage(r.suite, plainte.vars) : Jeu.reactionClashPlainte(plainte); // prompt 202 : la suite propre au clash remplace la réaction générique
 			Jeu.appliquerDeltas({ reputation: DELTA_REPUTATION.mauvais });
 			if (plainte.def && plainte.def.prive) {
 				plainte.relances = (plainte.relances || []).concat({ heure: maintenantSim(), texte: reaction, delta: DELTA_REPUTATION.mauvais });
@@ -1668,14 +1819,17 @@
 			}
 		}
 		Jeu.programmerSuivis(plainte); // prompt 63 : 0 à 3 réactions, à des heures variées
-		return { effets, bonne: plainte.bonne, tardive, clash: r.clash === true, reaction };
+		return { effets, bonne: plainte.bonne, tardive, clash: r.clash === true, froid: r.froid === true, reaction };
 	};
 
 	// Prompt 63 — réactions en chaîne : tirées par hachage (graine + plainte), sans toucher aux dés de la partie
 	Jeu.NB_MODELES_SUIVI = 4; // textes : i18n.js, suivi.<bonne|mauvaise>.<n>
 	Jeu.programmerSuivis = function (plainte) {
 		const h = (k) => hacher(String(Jeu.graine) + '|suivi|' + plainte.id + '|' + plainte.index + '|' + k);
-		const n = plainte.def && plainte.def.prive ? h('n') % 2 : h('n') % 4; // 0 à 3 réactions ; message privé (prompt 85) : au plus 1 relance
+		const rep = plainte.def && plainte.reponse !== null && plainte.reponse !== undefined ? plainte.def.reponses[plainte.reponse] : null;
+		const avecSuite = !!(rep && rep.suite && !rep.clash); // prompt 202 : la suite propre à la réponse arrive en première réaction (le clash l'a déjà en réaction immédiate)
+		let n = plainte.def && plainte.def.prive ? h('n') % 2 : h('n') % 4; // 0 à 3 réactions ; message privé (prompt 85) : au plus 1 relance
+		if (avecSuite) n = Math.max(1, n);
 		const base = Jeu.horloge ? Math.floor(Jeu.horloge.minutes) : 0;
 		plainte.suivis = [];
 		for (let i = 0; i < n; i++) {
@@ -1684,6 +1838,7 @@
 				jour: Jeu.jourIndex,
 				minute: base + delai + i * 7,
 				modele: h('m' + i) % Jeu.NB_MODELES_SUIVI,
+				suite: avecSuite && i === 0, // prompt 202
 				auteur: i === 0 ? plainte.auteur : PSEUDOS[h('a' + i) % PSEUDOS.length],
 				delta: plainte.bonne ? 1 : -1,
 				livre: false,
@@ -1703,9 +1858,10 @@
 				if (!echu) return;
 				sv.livre = true; // le modèle 0 cite la nature du dossier : il n'est pris que si elle existe
 				n++;
+				const suite = sv.suite && p.def.reponses[p.reponse] && p.def.reponses[p.reponse].suite ? Jeu.texteMessage(p.def.reponses[p.reponse].suite, p.vars) : null; // prompt 202
 				if (p.def && p.def.prive) {
 					// Prompt 85 : relance privée, dans la conversation (pas de réaction publique en chaîne)
-					p.relances = (p.relances || []).concat({ heure: maintenantSim(), texte: T('suivi.prive.' + (p.bonne ? 'bonne' : 'mauvaise')), delta: sv.delta });
+					p.relances = (p.relances || []).concat({ heure: maintenantSim(), texte: suite || T('suivi.prive.' + (p.bonne ? 'bonne' : 'mauvaise')), delta: sv.delta });
 					Jeu.nonLus.community++;
 					Jeu.appliquerDeltas({ reputation: sv.delta });
 					return;
@@ -1713,7 +1869,7 @@
 				Jeu.commentaires.push({
 					heure: maintenantSim(),
 					auteur: sv.auteur,
-					texte: T('suivi.' + (p.bonne ? 'bonne' : 'mauvaise') + '.' + (!p.vars.nature && sv.modele === 0 ? 1 : sv.modele), { ligne: p.vars.ligne || '', nature: p.vars.nature || '', auteur: p.auteur }),
+					texte: suite || T('suivi.' + (p.bonne ? 'bonne' : 'mauvaise') + '.' + (!p.vars.nature && sv.modele === 0 ? 1 : sv.modele), { ligne: p.vars.ligne || '', nature: p.vars.nature || '', auteur: p.auteur }),
 					delta: sv.delta,
 					suivi: true,
 				});
@@ -2380,7 +2536,7 @@
 		const basse = NOMS_JAUGES.slice().sort((a, b) => s.jauges[a] - s.jauges[b])[0];
 		const lignes = [T('finSemaine.intro', { score: s.score, traites: s.traites, recus: s.recus })];
 		if (total && ok === total) lignes.push(T('finSemaine.bravo', { objectifs: s.objectifs }));
-		else lignes.push(T('finSemaine.objectifs', { objectifs: s.objectifs }));
+		else if (total) lignes.push(T('finSemaine.objectifs', { objectifs: s.objectifs })); // prompt 204 : rien à reprocher quand aucun objectif n'a été fixé (« 0/0 »)
 		if (s.jauges[basse] < 40) lignes.push(T('finSemaine.alerte', { jauge: LIBELLES_JAUGES[basse], v: s.jauges[basse] }));
 		if (rates.length) lignes.push(T('finSemaine.defisRates', { liste: rates.map((r) => T('defi.' + r.id)).join(', ') }));
 		else if (res.length) lignes.push(T('finSemaine.defisTenus'));

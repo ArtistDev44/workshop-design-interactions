@@ -94,6 +94,15 @@ const Sauvegarde = (function () {
 	// ——— Modèle ———
 	const cleEmplacement = (id) => PREFIXE + id;
 
+	/** Prompt 210 (audit 206, constat 4) : p.depuis des plaintes Community est daté sur tempsPlaintes() (temps de jeu
+	 * ACTIF, immersion.js), mais Jeu.instantane / restaurerInstantane le rendent relatif à millis() — décalage en ms.
+	 * Sans ce recalage, une plainte reprise après 50 s d'écran titre expirait aussitôt. */
+	const tempsPlaintesOu = (repli) => (typeof tempsPlaintes === 'function' ? tempsPlaintes() : repli);
+	function recalerPlaintes(liste, decalage) {
+		(liste || []).forEach((p) => {
+			if (typeof p.depuis === 'number') p.depuis += decalage;
+		});
+	}
 	/** Prompt 95 : les horodatages des équipes suivent l'horloge de jeu (TEMPS_EQUIPES), pas millis() — décalage en ms */
 	function recalerEquipes(liste, decal) {
 		(liste || []).forEach((q) => ['depart', 'arrivee', 'finIntervention', 'libre'].forEach((k) => typeof q[k] === 'number' && (q[k] += decal)));
@@ -106,6 +115,7 @@ const Sauvegarde = (function () {
 		const s = Jeu.instantane(maintenant);
 		if (!s) return null;
 		recalerEquipes(s.equipes, maintenant - (typeof tempsEquipes === 'function' ? tempsEquipes() : maintenant)); // prompt 95 : délais des équipes en temps de jeu
+		recalerPlaintes(s.plaintes, maintenant - tempsPlaintesOu(maintenant)); // prompt 210 : délais Community en temps de jeu actif
 		const historique = s.historique;
 		const evenements = s.evenementsJournee;
 		s.historique = undefined;
@@ -289,7 +299,10 @@ const Sauvegarde = (function () {
 			let ok = false;
 			try {
 				ok = Jeu.restaurerInstantane(s, maintenant);
-				if (ok) recalerEquipes(Jeu.equipes, (typeof tempsEquipes === 'function' ? tempsEquipes() : maintenant) - maintenant); // prompt 95
+				if (ok) {
+					recalerEquipes(Jeu.equipes, (typeof tempsEquipes === 'function' ? tempsEquipes() : maintenant) - maintenant); // prompt 95
+					recalerPlaintes(Jeu.plaintes, tempsPlaintesOu(maintenant) - maintenant); // prompt 210
+				}
 			} catch (e) {
 				ok = false;
 			}
@@ -553,6 +566,7 @@ const Sauvegarde = (function () {
 	}
 
 	return {
+		recalerPlaintes, // prompt 210 : exposé pour test-jeu.mjs
 		auto,
 		effacer,
 		effacerCourante,

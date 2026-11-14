@@ -9,10 +9,10 @@
     "dev": "astro dev",
     "messages": "node scripts/generer-messages.mjs",
     "auteurs": "node scripts/auteurs-prompts.mjs",
-    "prebuild": "node scripts/generer-messages.mjs && node scripts/construire-slides.mjs && node scripts/generer-sw.mjs",
+    "prebuild": "node scripts/generer-messages.mjs && node scripts/generer-sw.mjs",
     "build": "astro build",
     "preview": "astro preview",
-    "test": "node scripts/smoke.mjs && node scripts/test-jeu.mjs",
+    "test": "node scripts/smoke.mjs && node scripts/test-jeu.mjs && node scripts/test-navigateur.mjs",
     "astro": "astro",
     "sw": "node scripts/generer-sw.mjs",
     "build:slides": "node scripts/construire-slides.mjs"

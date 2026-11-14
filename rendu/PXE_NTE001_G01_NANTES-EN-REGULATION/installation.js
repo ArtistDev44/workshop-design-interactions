@@ -99,15 +99,26 @@ function bandeauNouvelleVersion() {
 	f.textContent = t('commun.fermer');
 	f.addEventListener('click', () => d.remove());
 	d.append(p, b, f);
+	// Prompt 210 (audit 206, accessibilité) : le jeu capte Tab — le bandeau prend donc le focus à son apparition
+	// (Échap le ferme et rend le clavier au jeu) ; sketch.js ignore les touches tant qu'un bouton du DOM a le focus
+	d.addEventListener('keydown', (ev) => {
+		if (ev.key === 'Escape') {
+			d.remove();
+			const c = document.querySelector('canvas');
+			if (c) c.focus();
+		}
+	});
 	document.body.appendChild(d);
 	annoncer(t('pwa.nouvelleVersion'));
+	b.focus();
 }
 if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
 	window.addEventListener('load', () => {
 		const avait = !!navigator.serviceWorker.controller; // première visite : pas de bandeau
 		navigator.serviceWorker
 			.register('./sw.js')
-			.then(() => {
+			.then((reg) => {
+				if (reg && reg.update) reg.update().catch(() => {}); // prompt 210 : chercher tout de suite une version plus récente
 				navigator.serviceWorker.addEventListener('controllerchange', () => {
 					if (avait) bandeauNouvelleVersion();
 				});

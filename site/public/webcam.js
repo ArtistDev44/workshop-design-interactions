@@ -18,6 +18,9 @@ const CAM = {
 	mouvement: 0,
 	absentDepuis: 0, // millis() du début de l'absence (0 = présent)
 	refus: false,
+	jeton: 0, // prompt 210 : demande en cours (couperWebcam l'incrémente)
+	enCours: false,
+	coupeeMasquee: false, // prompt 210 : coupée parce que l'onglet était masqué
 };
 const CAM_L = 48;
 const CAM_H = 27;
@@ -26,23 +29,38 @@ const webcamAutorisee = () => Confort.Reglages.webcam === true;
 
 async function activerWebcam() {
 	if (CAM.active) return true;
+	if (CAM.enCours) return false; // prompt 210 : une demande est déjà en cours (double clic) — pas de second flux
+	CAM.enCours = true;
+	const jeton = ++CAM.jeton;
+	let flux = null;
 	try {
 		if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('getUserMedia absent');
-		CAM.flux = await navigator.mediaDevices.getUserMedia({ video: { width: 160, height: 90, facingMode: 'user' }, audio: false });
+		flux = await navigator.mediaDevices.getUserMedia({ video: { width: 160, height: 90, facingMode: 'user' }, audio: false });
 	} catch (e) {
+		CAM.enCours = false;
+		if (jeton !== CAM.jeton) return false; // coupée pendant la demande : pas de message
 		CAM.refus = true;
 		CAM.flux = null;
 		PIECE.message = { texte: t('webcam.indisponible'), objet: 'webcam', jusqua: millis() + 4000 };
 		annoncer(t('webcam.indisponible'));
 		return false;
 	}
+	const perime = () => {
+		if (jeton === CAM.jeton) return false;
+		flux.getTracks().forEach((p) => p.stop()); // coupée (ou onglet masqué) pendant la demande : le flux arrivé est fermé
+		CAM.enCours = false;
+		return true;
+	};
+	if (perime()) return false;
+	CAM.flux = flux;
 	CAM.video = document.createElement('video'); // jamais ajoutée à la page : aucune image affichée
 	CAM.video.muted = true;
 	CAM.video.playsInline = true;
-	CAM.video.srcObject = CAM.flux;
+	CAM.video.srcObject = flux;
 	try {
 		await CAM.video.play();
 	} catch (e) {}
+	if (perime()) return false;
 	CAM.canevas = document.createElement('canvas');
 	CAM.canevas.width = CAM_L;
 	CAM.canevas.height = CAM_H;
@@ -51,12 +69,16 @@ async function activerWebcam() {
 	CAM.historique = [];
 	CAM.absentDepuis = 0;
 	CAM.active = true;
+	CAM.enCours = false;
+	clearInterval(CAM.minuterie);
 	CAM.minuterie = setInterval(analyserImage, 400); // hors draw
 	annoncer(t('webcam.on'));
 	return true;
 }
 function couperWebcam() {
 	const etait = CAM.active;
+	CAM.jeton++; // prompt 210 : une demande encore en cours fermera son flux à l'arrivée
+	CAM.enCours = false;
 	clearInterval(CAM.minuterie);
 	CAM.minuterie = null;
 	if (CAM.flux) CAM.flux.getTracks().forEach((p) => p.stop()); // la caméra s'éteint (voyant du navigateur aussi)
@@ -137,6 +159,19 @@ function dessinerWebcamPoste(g) {
 		{ once: true },
 	),
 );
+
+// Prompt 210 : onglet masqué → caméra coupée (le réglage est gardé) ; elle revient au retour si elle tournait
+document.addEventListener('visibilitychange', () => {
+	if (document.hidden) {
+		if (CAM.active || CAM.enCours) {
+			CAM.coupeeMasquee = true;
+			couperWebcam();
+		}
+	} else if (CAM.coupeeMasquee) {
+		CAM.coupeeMasquee = false;
+		if (webcamAutorisee() && !CAM.refus) activerWebcam();
+	}
+});
 
 // ——— Prompt 67 : reconnaître une main (couleur peau, localement) pour lancer ou interrompre la sieste ———
 // Pixels « peau » repérés en YCbCr (Cb 77–127, Cr 133–173, seuils classiques). Le visage, à distance normale,

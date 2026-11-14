@@ -29,8 +29,11 @@
 	};
 
 	// ——— Réglages (écran Paramètres, 11-direction-artistique) ———
-	const DEFAUTS = { intensiteFeedback: 100, son: true, volume: 100, horsLigneForce: false, reduireAnimations: false, contrasteRenforce: false, masquerViolence: false, musique: 'coquillage', daltonisme: 'normal', tailleTexte: 100, lectureFacile: false, defiChrono: false, chaines: false, deblocages: false, arbitrage: false, deVisible: false, eclairageJauges: false, npd: false, deblocageApplis: false, toutDebloque: false, somnolenceNecessaire: false, micro: true, webcam: false }; // prompt 57 : webcam désactivée par défaut (opt-in) // prompt 48 : accessibilité ; prompt 54 : micro (push-to-talk) // prompt 44 : choix de la musique ; prompt 62 : Chillin' Poupi par défaut
+	const DEFAUTS = { intensiteFeedback: 100, son: true, volume: 100, horsLigneForce: false, reduireAnimations: false, contrasteRenforce: false, masquerViolence: false, musique: 'coquillage', daltonisme: 'normal', tailleTexte: 100, lectureFacile: false, defiChrono: false, chaines: false, deblocages: false, arbitrage: false, deVisible: false, eclairageJauges: false, npd: false, deblocageApplis: false, toutDebloque: false, somnolenceNecessaire: false, micro: true, webcam: false, raccourcisLettres: true }; // prompt 210 : raccourcis d'une lettre (désactivables, WCAG 2.1.4) // prompt 57 : webcam désactivée par défaut (opt-in) // prompt 48 : accessibilité ; prompt 54 : micro (push-to-talk) // prompt 44 : choix de la musique ; prompt 62 : Chillin' Poupi par défaut
 	const Reglages = Object.assign({}, DEFAUTS, lire(CLE_REGLAGES, {}));
+	// Prompt 210 : en exposition, chaque visiteur repart sans caméra ni micro hérités du précédent (consentement),
+	// et les commentaires violents sont masqués d'office (aussi forcé dans Jeu.violenceMasquee)
+	if (typeof EXPO !== 'undefined' && EXPO.actif) Object.assign(Reglages, { webcam: DEFAUTS.webcam, micro: DEFAUTS.micro, masquerViolence: true });
 	// Prompt 175 : volume maître 0–100 (pas de 10). Les réglages déjà stockés n'ont que « son: true / false » : ils
 	// gardent leur état (son coupé = muet) et prennent le volume par défaut, 100 %. Un volume stocké à 0 = son coupé.
 	const borneVolume = (v) => (Number.isFinite(Number(v)) ? Math.max(0, Math.min(100, Math.round(Number(v) / 10) * 10)) : DEFAUTS.volume);
@@ -595,8 +598,8 @@
 				Musique.minuterie = null;
 				Musique.demarrer();
 			});
-			const ogg = a.canPlayType('audio/ogg; codecs="vorbis"');
-			a.src = p.fichier + (ogg ? '.ogg' : '.mp3');
+			// Prompt 210 : MP3 partout (lu par tous les navigateurs) — un seul format précaché, l'OGG reste dans le dépôt
+			a.src = p.fichier + '.mp3';
 			a.loop = true;
 			a.volume = 0;
 			a.play().catch(() => {}); // lecture refusée (autoplay) : le prochain geste relancera Son.demarrer
@@ -710,5 +713,21 @@
 	};
 	Son.musique = Musique;
 
+	// Prompt 210 (audit 206, performance) : onglet masqué → contexte audio suspendu et musique en pause, repris au retour
+	if (global.document && global.document.addEventListener)
+		global.document.addEventListener('visibilitychange', () => {
+			const cache = global.document.hidden;
+			const a = Musique.audio;
+			if (cache) {
+				Son.suspenduMasque = !!(Son.ctx && Son.ctx.state === 'running');
+				if (Son.suspenduMasque) Son.ctx.suspend().catch(() => {});
+				Musique.pauseMasque = !!(a && !a.paused);
+				if (Musique.pauseMasque) a.pause();
+			} else {
+				if (Son.suspenduMasque && Son.ctx) Son.ctx.resume().catch(() => {});
+				if (Musique.pauseMasque && a && Musique.audio === a) a.play().catch(() => {});
+				Son.suspenduMasque = Musique.pauseMasque = false;
+			}
+		});
 	global.Confort = { Reglages: Reglages, Bilans: Bilans, Son: Son };
 })(typeof window !== 'undefined' ? window : globalThis);

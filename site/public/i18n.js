@@ -242,6 +242,10 @@ const TRADUCTIONS = {
 		"profil.aucun": "aucun",
 		"page.titre": "Nantes en régulation — PXE-NTE001-G01-W01",
 		"page.aria": "Nantes en régulation — salle de contrôle des transports nantais",
+		"lecteur.commandes": "Commandes de l’écran",
+		"lecteur.texte": "Texte de l’écran",
+		"lecteur.sansNom": "Commande {n} (sans libellé)",
+		"lecteur.langue": "Langue : français",
 		"locale": "fr-FR",
 		"langue.titre": "Langue",
 		"accueil.semaine": "Semaine du {debut} au {fin}",
@@ -488,6 +492,8 @@ const TRADUCTIONS = {
 		"param.contraste": "Contraste renforcé",
 		"param.violence": "Masquer les commentaires violents",
 		"param.violence.detail": "Community : les commentaires injurieux s’affichent masqués, toujours signalables",
+		"param.raccourcis": "Raccourcis d’une lettre",
+		"param.raccourcis.detail": "Désactivés : Maj + la lettre garde le raccourci (Maj + Z pour la sieste…)",
 		"commu.signaler": "Signaler ce commentaire",
 		"commu.moderation": "Modération",
 		"commu.signale": "Commentaire de {auteur} signalé et masqué. Le compte est suspendu le temps de l’examen.",
@@ -1439,6 +1445,8 @@ const TRADUCTIONS = {
 		"mp.partager.clavier": "↑ ↓ ou Tab : choisir · Entrée : ouvrir · Échap : fermer",
 		"mp.credits": "Mattéo Brevet & Guillaume Renoult",
 		"mp.credits.infobulle": "Voir les crédits : l’équipe, la licence, l’usage de l’IA",
+		"mp.avertissement": "Contient des propos injurieux et des allusions au suicide · conseillé dès 12 ans",
+		"mp.avertissement.expo": "Commentaires violents masqués · conseillé dès 12 ans",
 		"credits.titre": "Crédits",
 		"credits.atelier": "Atelier ESD Nantes · B3 Design · novembre 2026",
 		"credits.licence.titre": "Licence",
@@ -1447,7 +1455,7 @@ const TRADUCTIONS = {
 		"credits.lic.code": "Code",
 		"credits.lic.code.v": "MIT, © 2026 Mattéo Brevet & Guillaume Renoult (code et documentation)",
 		"credits.lic.donnees": "Données",
-		"credits.lic.donnees.v": "Open Data Nantes Métropole, dont le réseau Naolib (Licence Ouverte ou ODbL selon le jeu) · Open-Meteo (CC BY 4.0) · Hub’Eau ([À COMPLÉTER])",
+		"credits.lic.donnees.v": "Open Data Nantes Métropole : GTFS Naolib (ODbL, Semitan), agenda et temps réel (Licence Ouverte), parkings, vélos, trafic (ODbL) · OpenStreetMap (ODbL) · Open-Meteo (CC BY 4.0) · Hub’Eau (Licence Ouverte, auteur PHyC / Vigicrues)",
 		"credits.lic.lieux": "Lieux",
 		"credits.lic.lieux.v": "© contributeurs OpenStreetMap (ODbL)",
 		"credits.lic.biblio": "Bibliothèque",
@@ -2276,6 +2284,10 @@ const TRADUCTIONS = {
 		"profil.aucun": "none",
 		"page.titre": "Nantes in Control — PXE-NTE001-G01-W01",
 		"page.aria": "Nantes in Control — Nantes public transport control room",
+		"lecteur.commandes": "Screen controls",
+		"lecteur.texte": "Screen text",
+		"lecteur.sansNom": "Control {n} (unlabelled)",
+		"lecteur.langue": "Language: English",
 		"locale": "en-GB",
 		"langue.titre": "Language",
 		"accueil.semaine": "Week of {debut} to {fin}",
@@ -2522,6 +2534,8 @@ const TRADUCTIONS = {
 		"param.contraste": "High contrast",
 		"param.violence": "Hide abusive comments",
 		"param.violence.detail": "Community: abusive comments are shown hidden, and can still be reported",
+		"param.raccourcis": "Single-key shortcuts",
+		"param.raccourcis.detail": "Off: Shift + the key keeps the shortcut (Shift + Z to nap…)",
 		"commu.signaler": "Report this comment",
 		"commu.moderation": "Moderation",
 		"commu.signale": "Comment by {auteur} reported and hidden. The account is suspended pending review.",
@@ -3473,6 +3487,8 @@ const TRADUCTIONS = {
 		"mp.partager.clavier": "↑ ↓ or Tab: choose · Enter: open · Esc: close",
 		"mp.credits": "Mattéo Brevet & Guillaume Renoult",
 		"mp.credits.infobulle": "See the credits: the team, the licence, the use of AI",
+		"mp.avertissement": "Contains abusive language and references to suicide · suggested age 12+",
+		"mp.avertissement.expo": "Abusive comments hidden · suggested age 12+",
 		"credits.titre": "Credits",
 		"credits.atelier": "ESD Nantes workshop · B3 Design · November 2026",
 		"credits.licence.titre": "Licence",
@@ -3481,7 +3497,7 @@ const TRADUCTIONS = {
 		"credits.lic.code": "Code",
 		"credits.lic.code.v": "MIT, © 2026 Mattéo Brevet & Guillaume Renoult (code and documentation)",
 		"credits.lic.donnees": "Data",
-		"credits.lic.donnees.v": "Nantes Métropole Open Data, including the Naolib network (Licence Ouverte or ODbL depending on the dataset) · Open-Meteo (CC BY 4.0) · Hub’Eau ([À COMPLÉTER])",
+		"credits.lic.donnees.v": "Nantes Métropole Open Data: Naolib GTFS (ODbL, Semitan), events and real time (Licence Ouverte), car parks, bikes, traffic (ODbL) · OpenStreetMap (ODbL) · Open-Meteo (CC BY 4.0) · Hub’Eau (Licence Ouverte, author PHyC / Vigicrues)",
 		"credits.lic.lieux": "Places",
 		"credits.lic.lieux.v": "© OpenStreetMap contributors (ODbL)",
 		"credits.lic.biblio": "Library",
@@ -4212,6 +4228,7 @@ const Langue = {
 			localStorage.setItem(CLE_LANGUE, code);
 		} catch (e) {}
 		if (!initial) this.ecouteurs.forEach((f) => f(code));
+		if (!initial) annoncer(t('lecteur.langue')); // prompt 210 : changement de langue annoncé
 	},
 	suivante() {
 		const i = LANGUES.findIndex((l) => l.code === this.actuelle);
@@ -4221,6 +4238,7 @@ const Langue = {
 
 /** Annonce pour les lecteurs d'écran (région aria-live de index.html), toujours dans la langue active */
 function annoncer(texte) {
+	if (typeof annoncerDansFile === 'function' && annoncerDansFile(texte)) return; // prompt 210 : file (role="log"), plus d'écrasement
 	const el = typeof document !== 'undefined' && document.getElementById('annonces');
 	if (el) el.textContent = String(texte);
 }
