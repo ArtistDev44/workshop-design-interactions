@@ -1748,7 +1748,7 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 	const g = readFileSync(join(pub, 'game.js'), 'utf8');
 	verifier(/\(Jeu\.somnolenceElevee \? 1\.5 : 1\)/.test(g) && /Jeu\.DELAI_EQUIPE_MS \* \(Jeu\.somnolenceElevee \? 1\.5 : 1\)/.test(g), 'somnolence (option) : au-delà de 70, aggravation ×1,5 et équipes plus lentes');
 	const sx = readFileSync(join(pub, 'sieste.js'), 'utf8');
-	verifier(/q\.arrivee -= decal/.test(sx) && /sieste\.prevision/.test(sx) && /somnolenceNecessaire \? 2 : 1/.test(sx), 'somnolence : la sieste fait arriver les équipes et annonce le prochain signalement ; option ×2');
+	verifier(!/q\.arrivee -= decal/.test(sx) && /sieste\.prevision/.test(sx) && /somnolenceNecessaire \? 2 : 1/.test(sx), 'somnolence : la sieste annonce le prochain signalement, sans faire arriver les équipes (prompt 213) ; option ×2');
 	verifier(!/return tacheInfo\(r, n\)/.test(readFileSync(join(pub, 'taches.js'), 'utf8')), 'info trafic (prompt 88) remplacée par la publication Community');
 }
 
@@ -2382,7 +2382,7 @@ for (const langue of ['fr', 'en']) {
 	for (const k of ['famille.renfort', 'famille.devier', 'famille.retenir', 'famille.rien', 'rapport.sourcesTitre', 'rapport.versPage3', 'rapport.page3', 'rapport.periodeSemaine', 'rapport.typeFin.bonne', 'rapport.typeFin.moyenne', 'rapport.typeFin.mauvaise', 'defi.sansObjet', 'stats.sansObjet', 'qualite.moins bonne', 'finSemaine.faitAgenda'])
 		verifier(typeof dico[k] === 'string' && dico[k].length > 0, `prompt 163 : clé ${k} absente (${langue})`);
 	verifier(!/sept jours|seven days/.test(['bonne', 'moyenne', 'mauvaise'].map((ty) => dico['fin.' + ty + '.texte']).join(' ')), `prompt 163 : « sept jours » dans le texte de fin (${langue})`);
-	verifier(/240/.test(vm.runInContext(`String(T('rapport.typeFin.bonne', { s: Jeu.SEUILS_FIN.bonne }))`, contexte(langue))), `prompt 163 : seuil de la bonne fin absent (${langue})`);
+	verifier(/230/.test(vm.runInContext(`String(T('rapport.typeFin.bonne', { s: Jeu.SEUILS_FIN.bonne }))`, contexte(langue))), `prompt 163 : seuil de la bonne fin absent (${langue})`);
 }
 {
 	const h163 = readFileSync(join(pub, 'histoire.js'), 'utf8');
@@ -4088,7 +4088,7 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	const attendu = { virale: 'virale', burnout: 'burnout', burnoutSieste: 'fauteuil', imposteur: 'imposteur', fauteuil: 'fauteuil', diplomate: 'diplomate', diplomateClash: 'correcte', insoumis: 'insoumis', usagers: 'usagers', bouc: 'boucEmissaire', correcte: 'correcte', reprimande: 'reprimande' };
 	Object.entries(attendu).forEach(([k, v]) => verifier(table[k] === v, `207 : ligne « ${k} » de la table → ${table[k]} (attendu ${v})`));
 	verifier(table.ordre === 'virale,burnout,imposteur,fauteuil,diplomate,insoumis,usagers,boucEmissaire,correcte,reprimande', `207 : ordre des dix fins : ${table.ordre}`);
-	verifier(table.seuils, '207 : le fauteuil du patron reprend le seuil de la bonne fin (240), la semaine correcte celui de la moyenne (150)');
+	verifier(table.seuils, '207 : le fauteuil du patron reprend le seuil de la bonne fin (230), la semaine correcte celui de la moyenne (150)');
 	// 2. Profils scriptés sur les vraies semaines : chaque fin atteinte ; le joueur neutre n'est pas avalé par une seule fin
 	const sem = vm.runInContext('Jeu.semainesProposees().map((x) => x.lundi)', c);
 	const atteintes = {};
@@ -4227,6 +4227,103 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	const r = vm.runInContext(`(() => { Jeu.chargerHorsLigne(); const b = blocsDonnees(); return { n: Jeu.fallback.dossiers.length, texte: JSON.stringify(b) }; })()`, c);
 	verifier(r.n > 0 && !/« ?0 dossier|\b0 dossier/.test(r.texte) && r.texte.includes(String(r.n)), `210 : appli Données hors ligne — ${r.n} dossiers attendus : ${r.texte.slice(0, 300)}`);
 	verifier(r.texte.includes('ODbL'), '210 : appli Données — le changelog GTFS est sous ODbL (Semitan)');
+}
+
+// Prompt 213 : équilibre à deux bords (zone d'excès), patience des usagers, poids négatifs de l'évaluation, sauvegarde,
+// textes ; bornes d'équilibrage sur les semaines archivées (audit 201, point 10)
+{
+	const c = contexte('fr');
+	vm.runInContext(readFileSync(join(pub, 'posture.js'), 'utf8'), c, { filename: 'posture.js' });
+	vm.runInContext(readFileSync(join(pub, 'panneau.js'), 'utf8').replace(/^const (BANDEAU|PANNEAU|PLUS|TOUCHES_REPONSES|RAISONS)\b/gm, 'var $1'), c, { filename: 'panneau.js' });
+	const sem = vm.runInContext('Jeu.semainesProposees().map((x) => x.lundi)', c);
+	const r = vm.runInContext(`(() => {
+		const out = {};
+		Jeu.chargerSemaine(${JSON.stringify(sem[0])});
+		Jeu.nouvellePartie();
+		const E = Jeu.REGLAGES.exces;
+		// Poids : en excès négatif, à l'approche nul, Fluidité sans zone d'excès
+		const p = Jeu.poidsBesoin({ fluidite: 95, reputation: E.reputation + 1, budget: E.budget - 5 });
+		out.poids = p[0] > 0 && p[1] < 0 && p[2] === 0;
+		// Soir en excès : crédits rendus, réputation qui retombe, miracle le lendemain, rappel au 2e soir
+		Jeu.jauges.budget = 90; Jeu.jauges.reputation = 92; Jeu.jauges.fluidite = 60;
+		const n0 = Jeu.messagesPatron.length;
+		Jeu.excesDuSoir();
+		out.soir1 = Jeu.jauges.budget === 90 - E.creditsPerdus && Jeu.jauges.reputation === 92 - E.retombee && Jeu.miracleDemain === true && Jeu.rappelsExces === 0;
+		Jeu.jauges.reputation = 95;
+		Jeu.excesDuSoir();
+		out.rappel = Jeu.rappelsExces === 1 && Jeu.messagesPatron.slice(n0).some((m) => m.type === 'reproche' && m.meta.exces === 'reputation');
+		out.messages = Jeu.messagesPatron.slice(n0).every((m) => !/[{}]/.test(String(m.texte)));
+		Jeu.journeeSuivante();
+		out.miracle = Jeu.attenteMiracle === true && Jeu.miracleDemain === false;
+		const r0 = Jeu.jauges.reputation;
+		Jeu.appliquerDeltas({ reputation: -10 });
+		out.multiplie = Jeu.jauges.reputation === r0 - 15;
+		// Sauvegarde
+		const inst = JSON.parse(JSON.stringify(Jeu.instantane(0)));
+		Jeu.restaurerInstantane(inst, 0);
+		out.reprise = Jeu.attenteMiracle === true && Jeu.rappelsExces === 1 && Jeu.exces.reputation === 2;
+		delete inst.exces; delete inst.attenteMiracle; delete inst.rappelsExces;
+		Jeu.restaurerInstantane(inst, 0);
+		out.ancienne = Jeu.attenteMiracle === false && Jeu.rappelsExces === 0 && Jeu.exces.budget === 0;
+		// Patience : grâce, palier, plafond ; rien en défi chrono
+		const P = Jeu.REGLAGES.patience;
+		const d = { minute: 600 };
+		Jeu.defiChrono = false;
+		out.patience = [Jeu.pertePatience(d, 600 + P.grace - 1), Jeu.pertePatience(d, 600 + P.grace + P.minutesParPoint), Jeu.pertePatience(d, 600 + 10000)];
+		Jeu.defiChrono = true;
+		out.patienceChrono = Jeu.pertePatience(d, 600 + 10000);
+		Jeu.defiChrono = false;
+		return out;
+	})()`, c);
+	verifier(r.poids, '213 : poids de l\'évaluation — négatif en excès, nul à l\'approche, Fluidité sans zone d\'excès');
+	verifier(r.soir1 && r.rappel && r.messages, `213 : soir en excès (crédits rendus, réputation qui retombe, rappel au 2e soir) : ${JSON.stringify(r)}`);
+	verifier(r.miracle && r.multiplie, '213 : « on attend des miracles » — le lendemain, une perte de réputation compte ×1,5');
+	verifier(r.reprise && r.ancienne, '213 : sauvegarde de l\'excès (et ancienne sauvegarde sans excès)');
+	verifier(r.patience.join() === '0,1,' + vm.runInContext('Jeu.REGLAGES.patience.plafond', c) && r.patienceChrono === 0, `213 : patience (grâce, palier, plafond, rien en défi chrono) : ${r.patience}`);
+	// Bornes d'équilibrage : la meilleure réplique obtient le fauteuil du patron chaque semaine ; au hasard, la bonne fin
+	// reste rare (≤ 5 %) et le palier « moyen » sous la moitié des parties
+	const b = vm.runInContext(`(() => {
+		const jouer = (lundi, hasard, graine) => {
+			let s = graine >>> 0; const alea = () => ((s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296);
+			Jeu.chargerSemaine(lundi); Jeu.nouvellePartie(); Taches.nouvellePartie(); Taches.matin && Taches.matin();
+			let garde = 0;
+			while (!(Jeu.terminee || Jeu.statutPatron.licencie) && garde++ < 400) {
+				if (Jeu.prochainDuJour()) {
+					const d = Jeu.dossierCourant();
+					if (d.minute !== undefined) Jeu.horloge.minutes = Math.max(Jeu.horloge.minutes, d.minute + (hasard ? Math.floor(alea() * 91) : 10));
+					const rs = reponsesDialogue(d);
+					const best = Jeu.meilleureReponse(d);
+					const choix = hasard ? rs[Math.floor(alea() * rs.length)] : rs.find((x) => !x.clash && x.cle === best) || rs.find((x) => !x.clash);
+					Jeu.clashSuivant = !!choix.clash;
+					const res = Jeu.decider(choix.cle);
+					Jeu.clashSuivant = false;
+					Taches.apresDecision(res, Jeu.index - 1);
+				} else {
+					Jeu.finDeJourneeTactique();
+					if (Jeu.statutPatron.licencie || !Jeu.jours[Jeu.jourIndex + 1]) break;
+					Jeu.journeeSuivante(); Taches.matin && Taches.matin();
+				}
+			}
+			return { fin: Jeu.statutPatron.licencie ? 'licencie' : Jeu.finDeSemaine(), palier: Jeu.statutPatron.licencie ? 'licencie' : Jeu.typeFin() };
+		};
+		const lundis = ${JSON.stringify(sem)};
+		const meilleure = lundis.map((l) => jouer(l, false, 1).fin);
+		let n = 0, bonnes = 0, moyens = 0;
+		lundis.forEach((l) => { for (let g = 1; g <= 60; g++) { const x = jouer(l, true, g * 7919); n++; if (x.fin === 'fauteuil' || x.fin === 'diplomate') bonnes++; if (x.palier === 'moyenne') moyens++; } });
+		return { meilleure, bonnes: bonnes / n, moyens: moyens / n };
+	})()`, c);
+	verifier(b.meilleure.every((f) => f === 'fauteuil'), `213 : la meilleure réplique doit mener au fauteuil du patron chaque semaine : ${b.meilleure}`);
+	verifier(b.bonnes <= 0.05, `213 : au hasard, la bonne fin doit rester rare (≤ 5 %) : ${Math.round(b.bonnes * 100)} %`);
+	verifier(b.moyens < 0.5, `213 : au hasard, le palier moyen doit rester sous la moitié des parties : ${Math.round(b.moyens * 100)} %`);
+	// Textes : l'aide, le guide et les crédits disent la règle (FR + EN), comme une règle du jeu
+	['fr', 'en'].forEach((lg) => {
+		const T = vm.runInContext(`TRADUCTIONS.${lg}`, c);
+		verifier(/zone d'excès|excess zone/.test(T['aide.texte']) && /[Rr]ègle du jeu|[Gg]ame rule/.test(T['aide.texte']) && /excès|excess/.test(T['guide.jauges']) && /règles du jeu|game rules/.test(T['credits.ia.donnees.v']), `213 : aide, guide et crédits disent la zone d'excès comme règle du jeu (${lg})`);
+		['patron.creditsPerdus', 'patron.miracle', 'patron.rappelExces', 'narr.patience', 'tendance.versExces', 'enq.fatigue', 'sieste.patience', 'cafe.contrecoup', 'journal.patience', 'jauge.exces'].forEach((k) => verifier(typeof T[k] === 'string' && T[k].length > 0, `213 : clé ${k} absente (${lg})`));
+	});
+	const sx = readFileSync(join(pub, 'sieste.js'), 'utf8'), cf = readFileSync(join(pub, 'cafe.js'), 'utf8'), pn = readFileSync(join(pub, 'panneau.js'), 'utf8');
+	verifier(/parDossier/.test(sx) && /contrecoup/.test(sx) && /SOMNO\.contrecoup = /.test(cf) && /patienceEnAttente\(\)/.test(sx), '213 : fatigue par dossier, contrecoup du café, patience perdue pendant la sieste');
+	verifier(/FATIGUE_TENDANCES/.test(pn) && /hachuresExces/.test(pn) && /texteRepliquesAnnonce/.test(readFileSync(join(pub, 'sketch.js'), 'utf8')), '213 : tendances « ? » sous la fatigue, hachures de l\'excès, répliques annoncées');
 }
 
 // ——— Prompt 208 : réglages ajoutés (volumes par canal, sous-titres des sons, rythme du texte, pause auto, réinitialiser) ———

@@ -365,7 +365,7 @@ function nouveauDossier() {
 	if (Jeu.conflit()) phase = 'conflit';
 	else if (Jeu.dossierCourant().contradiction) phase = 'contradiction';
 	else phase = 'decision';
-	annoncer(t('annonce.signalement', { quoi: t('enq.signalement.' + dInc.type) })); // prompt 53 : arrivée annoncée (aria-live)
+	annoncer(t('annonce.signalement', { quoi: t('enq.signalement.' + dInc.type) }) + (phase === 'decision' && typeof texteRepliquesAnnonce === 'function' ? ' ' + texteRepliquesAnnonce(Jeu.dossierCourant()) : '')); // prompt 53 : arrivée annoncée (aria-live) ; prompt 213 : répliques et tendances
 }
 
 /* Décision du joueur (ou compteur à 0 → 'temps', Q25) */

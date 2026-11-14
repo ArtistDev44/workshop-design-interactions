@@ -81,6 +81,7 @@ const JournalDonnees = (() => {
 			const groupe = [];
 			eqDe(idx).forEach((q) => (vus.equipes.add(q), groupe.push({ sorte: 'equipe', q })));
 			plDe(idx).forEach((p) => (vus.plaintes.add(p), groupe.push({ sorte: 'plainte', p })));
+			if (e.resultat && e.resultat.patience) groupe.push({ sorte: 'patience', e }); // prompt 213 : l'usager a attendu
 			out.push({ sorte: 'signalement', e, idx, heure: e.heure, minute: minutes(e.heure), eval: Jeu.evaluer(e), groupe });
 		});
 		(Jeu.equipes || []).filter((q) => q.jour === j.date && !vus.equipes.has(q)).forEach((q) => out.push({ sorte: 'equipe', q, heure: q.heure, minute: minutes(q.heure), groupe: [] }));

@@ -285,7 +285,7 @@ function dessinerCarteAlertes() {
 	const sv = CARTE.marqueurs.find((m) => m.survol) || (phase === 'selection' ? CARTE.marqueurs[SELECTION.focus] : null);
 	const svAtt = CARTE.suivis.find((m) => m.survol);
 	if (svAtt) infobulleCarte(texteSuivi(svAtt), svAtt.x + 14, svAtt.y);
-	else if (sv && sv.x !== undefined) infobulleCarte(Jeu.formaterHeure(sv.it.d.minute) + ' · ' + t('enq.signalement.' + sv.it.d.type) + ' · ' + t('carte.gravite', { g: t('gravite.' + Jeu.gravite(sv.it.d)) }) + (texteLieu(sv.lieu, sv.it.d) ? ' · ' + texteLieu(sv.lieu, sv.it.d) : ''), sv.x + 14, sv.y); // prompt 133 : gravité écrite
+	else if (sv && sv.x !== undefined) infobulleCarte(Jeu.formaterHeure(sv.it.d.minute) + ' · ' + t('enq.signalement.' + sv.it.d.type) + ' · ' + t('carte.gravite', { g: t('gravite.' + Jeu.gravite(sv.it.d)) }) + (texteLieu(sv.lieu, sv.it.d) ? ' · ' + texteLieu(sv.lieu, sv.it.d) : '') + (Jeu.pertePatience && Jeu.horloge && Jeu.pertePatience(sv.it.d, Jeu.horloge.minutes) ? ' · ' + t('carte.patience', { n: Jeu.pertePatience(sv.it.d, Jeu.horloge.minutes) }) : ''), sv.x + 14, sv.y); // prompt 133 : gravité écrite ; prompt 213 : patience
 	else if (CARTE.centreSurvol) infobulleCarte(CARTE.centreSurvol, mouseX, mouseY - 10);
 	else if (CARTE.ligneSurvol && dansZone({ x: mouseX, y: mouseY }, z)) infobulleCarte(t('sujet.ligne', { ligne: CARTE.ligneSurvol.nom }) + ' · ' + CARTE.ligneSurvol.libelle, mouseX, mouseY - 10);
 	if (f.length && CARTE.marqueurs[0].x !== undefined) cibleGuide('fileSignalements', CARTE.marqueurs[0].x - 8, CARTE.marqueurs[0].y - 8, 44, 44);
@@ -390,6 +390,23 @@ function couperLargeurCarte(txt, l, taille) {
 }
 const tempsCarte = () => (typeof tempsEquipes === 'function' ? tempsEquipes() : millis());
 
+/** Prompt 213 : barre d'attente (patience) à droite du marqueur — se remplit avec l'attente (délai de grâce puis plafond),
+ * blanc tant que rien n'est perdu, couleur d'alerte ensuite ; aucun clignotement. Hors défi chrono seulement. */
+function dessinerAttentePatience(d, x, y) {
+	if (Jeu.defiChrono || !Jeu.horloge || d.minute === undefined || !Jeu.REGLAGES.patience) return;
+	const P = Jeu.REGLAGES.patience;
+	const attente = Math.max(0, Jeu.horloge.minutes - d.minute);
+	if (attente <= 0) return;
+	const k = Math.min(1, attente / (P.grace + P.plafond * P.minutesParPoint));
+	const perdu = Jeu.pertePatience(d, Jeu.horloge.minutes);
+	noStroke();
+	fill(DS.fond);
+	rect(x - 1, y - 1, 8, 26);
+	fill(DS.blanc15);
+	rect(x, y, 6, 24);
+	fill(perdu ? DS.alerte : DS.blanc75);
+	rect(x, y + 24 - Math.round(24 * k), 6, Math.round(24 * k));
+}
 function dessinerMarqueur(m) {
 	const d = m.it.d;
 	const x = m.x;
@@ -419,6 +436,7 @@ function dessinerMarqueur(m) {
 		for (let dx = -3; dx <= 3; dx += 3) for (let dy = -3; dy <= 3; dy += 3) if (dx || dy) dessinerIconePixel(ICONE_PIN, xm + dx, ym + dy, tm, blanc);
 	}
 	dessinerIconePixel(ICONE_PIN, xm, ym, tm, { P: couleurGravite(g), W: g === 'elevee' ? DS.blanc : DS.fond });
+	dessinerAttentePatience(d, x + 36, y + 2); // prompt 213
 	if (m.courant || m.actif || (phase === 'selection' && m.r === SELECTION.focus)) {
 		noFill();
 		stroke(m.courant ? DS.primaireTrait : DS.blanc);

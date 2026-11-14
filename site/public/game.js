@@ -178,6 +178,16 @@
 		// jauges < 20), effondrement (score < 45 ou une jauge à 0). Hystérésis : on ne sort de la vigilance qu'à
 		// score ≥ 140, du danger qu'à score ≥ 110.
 		licenciement: { vigilance: { score: 120, deux: 25 }, danger: { score: 90, deux: 20 }, effondrement: 45, sortieVigilance: 140, sortieDanger: 110 },
+		// Prompt 213 — équilibre à deux bords (hypothèse du jeu) : au-dessus du seuil, le Budget et la Réputation sont « en
+		// excès ». Le soir : crédits non consommés rendus (budget −creditsPerdus) ; réputation trop haute → elle retombe
+		// (−retombee) et, le lendemain, les pertes de réputation comptent ×miracle. Deux soirs de suite sur la même jauge : rappel à l'ordre (message, pas de
+		// licenciement). Dans l'évaluation, une jauge en excès a un poids négatif (poidsExces) : la faire baisser est le bon
+		// choix ; à l'approche (approche points sous le seuil), ses gains ne comptent plus. Valeurs : jeu/213-*.md.
+		exces: { budget: 85, reputation: 85, approche: 10, poidsExces: -0.75, creditsPerdus: 15, retombee: 10, miracle: 1.5, soirsRappel: 2 },
+		// Prompt 213 — patience des usagers (hors défi chrono, rien n'expire) : un dossier arrivé et pas encore traité coûte,
+		// après un délai de grâce (le temps de lire : au poste, 1 min de jeu par seconde), 1 point de réputation par tranche
+		// de minutesParPoint minutes de jeu d'attente, au plus plafond, compté à la décision
+		patience: { grace: 20, minutesParPoint: 30, plafond: 4 },
 		// Prompt 87 — sans chrono (par défaut), la difficulté règle la CHARGE : signalements actifs à la fois, vitesse
 		// d'aggravation des retards et budget de départ (exceptions Q6, Q16, Q40, Q55, documentées dans jeu/09). En mode
 		// « Défi chrono », comportement d'avant (compteur selon la semaine, budget 50, aggravation ×1).
@@ -301,6 +311,11 @@
 		Jeu.equipes = []; // prompt 22 : équipes envoyées depuis la carte
 		Jeu.aggravationLignes = {}; // prompt 79
 		Jeu.statutPatron = nouveauStatut(); // prompt 84
+		Jeu.exces = { budget: 0, reputation: 0 }; // prompt 213 : soirs de suite en excès
+		Jeu.excesSoirs = [];
+		Jeu.rappelsExces = 0;
+		Jeu.miracleDemain = false;
+		Jeu.attenteMiracle = false;
 		Jeu.postsJoueur = []; // prompt 85
 		Jeu.refusEquipes = 0; // prompt 68 : envois refusés faute d'effectif
 		Jeu.nonLus = { patron: 0, community: 0 };
@@ -369,6 +384,11 @@
 			refusEquipes: Jeu.refusEquipes || 0,
 			aggravationLignes: Object.assign({}, Jeu.aggravationLignes), // prompt 79
 			statutPatron: JSON.parse(JSON.stringify(Jeu.statutPatron)), // prompt 84 : niveau, avertissements, dates, file
+			exces: Object.assign({}, Jeu.exces || {}), // prompt 213
+			excesSoirs: JSON.parse(JSON.stringify(Jeu.excesSoirs || [])),
+			rappelsExces: Jeu.rappelsExces || 0,
+			miracleDemain: !!Jeu.miracleDemain,
+			attenteMiracle: !!Jeu.attenteMiracle,
 			defiChrono: !!Jeu.defiChrono, // prompt 87
 			variantesDuJour: Object.assign({}, Jeu.variantesDuJour), // prompt 88
 			taches: Jeu.taches ? JSON.parse(JSON.stringify(Jeu.taches)) : null,
@@ -417,6 +437,11 @@
 		Jeu.refusEquipes = s.refusEquipes || 0;
 		Jeu.aggravationLignes = Object.assign({}, s.aggravationLignes || {}); // prompt 79
 		Jeu.statutPatron = Object.assign(nouveauStatut(), s.statutPatron || {}); // prompt 84 (ancienne sauvegarde : statut neuf)
+		Jeu.exces = Object.assign({ budget: 0, reputation: 0 }, s.exces || {}); // prompt 213 (ancienne sauvegarde : aucun excès)
+		Jeu.excesSoirs = s.excesSoirs || [];
+		Jeu.rappelsExces = s.rappelsExces || 0;
+		Jeu.miracleDemain = !!s.miracleDemain;
+		Jeu.attenteMiracle = !!s.attenteMiracle;
 		Jeu.variantesDuJour = Object.assign({}, s.variantesDuJour || {}); // prompt 88
 		Jeu.taches = s.taches ? JSON.parse(JSON.stringify(s.taches)) : null;
 		if (Jeu.taches) delete Jeu.taches.carnet; // prompt 142 : une sauvegarde d'avant ne restaure plus de carnet
@@ -555,6 +580,8 @@
 		};
 	}
 
+	/** Prompt 213 : « 45 min », « 1 h 20 » */
+	const dureeCourte = (m) => (m >= 60 ? Math.floor(m / 60) + ' h ' + String(m % 60).padStart(2, '0') : m + ' min');
 	function borner(v) {
 		return Math.max(-REGLAGES.bornesEffet, Math.min(REGLAGES.bornesEffet, v));
 	}
@@ -631,6 +658,10 @@
 		}
 
 		if (clash) deltas[1] = borner(deltas[1] + REGLAGES.malusClash); // prompt 117
+		const patience = Jeu.horloge ? Jeu.pertePatience(d, Jeu.horloge.minutes) : 0; // prompt 213 : l'attente se paie en réputation
+		const attente = patience && Jeu.horloge ? Math.max(0, Math.floor(Jeu.horloge.minutes - d.minute)) : 0;
+		if (patience) (deltas[1] -= patience), Jeu.compterMalus('patience');
+		if (Jeu.attenteMiracle && deltas[1] < 0) deltas[1] = Math.round(deltas[1] * REGLAGES.exces.miracle); // prompt 213 : « on attend des miracles »
 		if (Jeu.modificateurActif && Jeu.modificateurActif() === 'meteo_aggravee') deltas = deltas.map((v) => borner(Math.round(v * 1.5))); // prompt 23 § 2.3
 		if (action === 'temps') Jeu.compterMalus('non_traite');
 		const jaugesAvant = Object.assign({}, Jeu.jauges); // prompt 130 : l'évaluation pondère selon les jauges d'avant la décision
@@ -646,6 +677,8 @@
 			contexte: ctx,
 			mauvaiseSource,
 			clash,
+			patience, // prompt 213
+			attente,
 			communique: reponse ? !!reponse.communique : action !== 'temps' && !!(REGLAGES.effets[action] || {}).communique,
 		};
 		resultat.minuteSim = Jeu.horloge ? Math.floor(Jeu.horloge.minutes) : null; // heure de la partie (prompt 20)
@@ -663,6 +696,7 @@
 			resultat.aggravation = { lignes: d.lignes.slice(), plus: A.durable };
 		}
 		resultat.narration = Jeu.narrer(resultat);
+		if (patience) resultat.narration.texte = T('narr.patience', { texte: resultat.narration.texte, attente: dureeCourte(attente), n: patience }); // prompt 213
 		if (clash) resultat.narration.texte = T('narr.avecClash', { texte: resultat.narration.texte, reaction: Jeu.reactionClash(d, Jeu.index) }); // prompt 184 : le malus se voit sur la jauge (segment rouge) ; prompt 196 : le plaignant répond par un commentaire masqué
 		Jeu.historique.push(resultat);
 		Jeu.index++;
@@ -811,7 +845,7 @@
 	}
 	Jeu.RANG_EVALUATION = RANG_EVALUATION;
 	/** Prompt 163 : seuils des fins, cités sur le rapport à côté du tampon */
-	Jeu.SEUILS_FIN = { bonne: 240, moyenne: 150 };
+	Jeu.SEUILS_FIN = { bonne: 230, moyenne: 150 }; // prompt 213 : 240 → 230, la zone d'excès plafonne le Budget et la Réputation vers 85
 	/** Prompt 163 : période en jj/mm (« du 14/09 au 20/09/2026 · 6 jours joués ») ; temps réel : l'horodatage tel quel */
 	Jeu.periodeTexte = function () {
 		const s = Jeu.etat && Jeu.etat.semaine;
@@ -821,7 +855,7 @@
 		return T('rapport.periodeSemaine', { debut: jm(s.lundi), fin: s.dimanche.split('-').reverse().join('/'), n: joues });
 	};
 
-	/** Fin déterminée par le score combiné (Q43, Q48) : bonne ≥ 240, moyenne ≥ 150, mauvaise < 150. */
+	/** Fin déterminée par le score combiné (Q43, Q48) : bonne ≥ 230 (240 avant le prompt 213), moyenne ≥ 150, mauvaise < 150. */
 	Jeu.typeFin = function (score) {
 		const s = score === undefined ? Jeu.score() : score;
 		return s >= Jeu.SEUILS_FIN.bonne ? 'bonne' : s >= Jeu.SEUILS_FIN.moyenne ? 'moyenne' : 'mauvaise';
@@ -950,6 +984,8 @@
 		Jeu.variantesDuJour = {}; // prompt 88 : les variantes repartent chaque matin
 		Jeu.alertesJauges = {};
 		Jeu.aggravationLignes = {}; // prompt 79 : l'aggravation durable vaut pour la journée
+		Jeu.attenteMiracle = !!Jeu.miracleDemain; // prompt 213 : la réputation trop haute de la veille se paie aujourd'hui
+		Jeu.miracleDemain = false;
 		if (Jeu.jourCourant()) {
 			Jeu.debutJourneeTactique();
 			Jeu.messagePatron(consigneDuJour(), 'consigne', metaConsigne());
@@ -1014,7 +1050,24 @@
 	}
 	const somme = (t) => t.reduce((a, b) => a + b, 0);
 	/** Prompt 130 : poids d'une jauge = ce qui lui manque, (100 − v) / 50, borné à [0,25 ; 2] — une jauge basse compte double */
-	Jeu.poidsBesoin = (j) => NOMS_JAUGES.map((k) => Math.max(0.25, Math.min(2, (100 - (j && j[k] !== undefined ? j[k] : 50)) / 50)));
+	Jeu.poidsBesoin = (j) =>
+		NOMS_JAUGES.map((k) => {
+			const v = j && j[k] !== undefined ? j[k] : 50;
+			// Prompt 213 : une jauge en excès compte à l'envers (la faire baisser est le bon choix), à l'approche ses gains ne comptent plus
+			const E = REGLAGES.exces;
+			if (E[k] !== undefined && v >= E[k]) return E.poidsExces;
+			if (E[k] !== undefined && v >= E[k] - E.approche) return 0;
+			return Math.max(0.25, Math.min(2, (100 - v) / 50));
+		});
+	/** Prompt 213 : la jauge est-elle en excès (Budget, Réputation au-dessus du seuil) ? La Fluidité n'a pas de zone d'excès. */
+	Jeu.enExces = (k, v) => REGLAGES.exces[k] !== undefined && (v === undefined ? (Jeu.jauges || {})[k] : v) >= REGLAGES.exces[k];
+	Jeu.seuilExces = (k) => (REGLAGES.exces[k] === undefined ? null : REGLAGES.exces[k]);
+	/** Prompt 213 : perte de patience d'un dossier à une heure de jeu donnée (0 en défi chrono, ou sans heure d'arrivée) */
+	Jeu.pertePatience = function (d, minutes) {
+		if (!d || Jeu.defiChrono || d.minute === undefined || d.minute === null || minutes === undefined || minutes === null) return 0;
+		const P = REGLAGES.patience;
+		return Math.min(P.plafond, Math.floor(Math.max(0, minutes - d.minute - P.grace) / P.minutesParPoint));
+	};
 	const ponderer = (effets, poids) => effets.reduce((a, v, i) => a + v * poids[i], 0);
 	/** Prompt 130 : tolérance (points pondérés) sous laquelle une réponse vaut la meilleure */
 	const TOLERANCE_BON = 1;
@@ -1244,6 +1297,7 @@
 
 	/** Applique des deltas aux jauges avec la même règle de bornes 0–100 que Jeu.decider */
 	Jeu.appliquerDeltas = function (d) {
+		if (Jeu.attenteMiracle && d.reputation < 0) d = Object.assign({}, d, { reputation: Math.round(d.reputation * REGLAGES.exces.miracle) }); // prompt 213
 		Object.keys(d).forEach((k) => (Jeu.jauges[k] = Math.max(0, Math.min(100, Jeu.jauges[k] + d[k]))));
 		Jeu.verifierAlertesPatron();
 		Jeu.majStatutPatron(); // prompt 84
@@ -1264,7 +1318,9 @@
 		const o = Jeu.objectifDuJour();
 		const mo = Jeu.modificateur;
 		const m = mo ? T('patron.mod', { libelle: mo.libelle }) : '';
-		return T('patron.consigne', { n, parts: Jeu.compositionDossiers(j ? j.dossiers : []), date: j ? j.date.split('-').reverse().join('/') : '', objectif: o.libelle, budget: Jeu.jauges.budget, mod: m });
+		// Prompt 213 : à partir du jour 2, une phrase sur l'équilibre ; le jour qui suit un excès de réputation, l'avertissement
+		const ex = (Jeu.jourIndex >= 1 ? T('patron.consigneExces', { seuil: REGLAGES.exces.budget }) : '') + (Jeu.attenteMiracle ? T('patron.consigneMiracle') : '');
+		return T('patron.consigne', { n, parts: Jeu.compositionDossiers(j ? j.dossiers : []), date: j ? j.date.split('-').reverse().join('/') : '', objectif: o.libelle, budget: Jeu.jauges.budget, mod: m + ex });
 	}
 	/** Prompt 162 : composition d'une liste de dossiers dite honnêtement — « réel » réservé aux faits de la source
 	 * (perturbations, retards, alertes météo) ; l'agenda (affluence supposée), l'incident fictif et les conséquences de
@@ -2216,7 +2272,10 @@
 		let effet;
 		if (atteint) {
 			const f = Jeu.facteurBonusObjectif ? Jeu.facteurBonusObjectif() : 1; // semaine 1 du mode histoire : bonus ×1,5 (histoire.js)
-			const bonus = o.jauge === 'budget' ? { reputation: Math.round(5 * f) } : { budget: Math.round(10 * f) };
+			let bonus = o.jauge === 'budget' ? { reputation: Math.round(5 * f) } : { budget: Math.round(10 * f) };
+			// Prompt 213 : le bonus ne pousse pas une jauge déjà en excès (ou à l'approche) — il va à la Fluidité
+			const cible = Object.keys(bonus)[0];
+			if (REGLAGES.exces[cible] !== undefined && Jeu.jauges[cible] >= REGLAGES.exces[cible] - REGLAGES.exces.approche) bonus = { fluidite: Math.round(5 * f) };
 			Jeu.appliquerDeltas(bonus);
 			effet = T('obj.bonus', { liste: Liste(Object.keys(bonus).map((k) => T('delta', { jauge: LIBELLES_JAUGES[k], v: '+' + bonus[k] })), ', ') });
 		} else {
@@ -2231,6 +2290,37 @@
 			Jeu.compterMalus('budget_epuise');
 			Jeu.appliquerDeltas({ reputation: -8 });
 		}
+		Jeu.excesDuSoir(); // prompt 213
+	};
+	/** Prompt 213 : le soir, conséquences des jauges en excès (hypothèse du jeu) — crédits non consommés rendus, attente de
+	 * miracles le lendemain, rappel à l'ordre au 2e soir de suite. Aucune mort par excès. */
+	Jeu.excesDuSoir = function () {
+		const E = REGLAGES.exces;
+		Jeu.exces = Jeu.exces || { budget: 0, reputation: 0 };
+		Jeu.excesSoirs = Jeu.excesSoirs || [];
+		const soir = { jourIndex: Jeu.jourIndex, budget: null, reputation: null };
+		['budget', 'reputation'].forEach((k) => {
+			if (!Jeu.enExces(k)) return void (Jeu.exces[k] = 0);
+			Jeu.exces[k]++;
+			soir[k] = Jeu.jauges[k];
+			if (k === 'budget') {
+				Jeu.compterMalus('credits_perdus');
+				const avant = Jeu.jauges.budget;
+				Jeu.appliquerDeltas({ budget: -E.creditsPerdus });
+				Jeu.messagePatron(T('patron.creditsPerdus', { b: avant, perte: E.creditsPerdus, seuil: E.budget }), 'budget', { b: avant, exces: true });
+			} else {
+				Jeu.compterMalus('attente_miracle');
+				const avant = Jeu.jauges.reputation;
+				Jeu.appliquerDeltas({ reputation: -E.retombee }); // on vous attendait au tournant : la réputation retombe
+				Jeu.miracleDemain = true;
+				Jeu.messagePatron(T('patron.miracle', { r: avant, perte: E.retombee, seuil: E.reputation }), 'alerte', { exces: true });
+			}
+			if (Jeu.exces[k] === E.soirsRappel) {
+				Jeu.messagePatron(T('patron.rappelExces', { jauge: LIBELLES_JAUGES[k], n: E.soirsRappel }), 'reproche', { important: true, exces: k });
+				Jeu.rappelsExces = (Jeu.rappelsExces || 0) + 1;
+			}
+		});
+		Jeu.excesSoirs.push(soir);
 	};
 
 	/** § 4 — Table unique des malus (affichée dans l'aide H) */
@@ -2240,6 +2330,9 @@
 		{ id: 'objectif_rate', libelle: T('malus.objectif_rate.l'), condition: T('malus.objectif_rate.c'), consequence: T('malus.objectif_rate.q') },
 		{ id: 'equipe_inutile', libelle: T('malus.equipe_inutile.l'), condition: T('malus.equipe_inutile.c'), consequence: T('malus.equipe_inutile.q') },
 		{ id: 'budget_epuise', libelle: T('malus.budget_epuise.l'), condition: T('malus.budget_epuise.c'), consequence: T('malus.budget_epuise.q') },
+		{ id: 'credits_perdus', libelle: T('malus.credits_perdus.l'), condition: T('malus.credits_perdus.c', { seuil: REGLAGES.exces.budget }), consequence: T('malus.credits_perdus.q') }, // prompt 213
+		{ id: 'attente_miracle', libelle: T('malus.attente_miracle.l'), condition: T('malus.attente_miracle.c', { seuil: REGLAGES.exces.reputation }), consequence: T('malus.attente_miracle.q') },
+		{ id: 'patience', libelle: T('malus.patience.l'), condition: T('malus.patience.c'), consequence: T('malus.patience.q') },
 	];
 	Jeu.compterMalus = function (id) {
 		Jeu.malus = Jeu.malus || {};

@@ -9,9 +9,9 @@
 const JOURNAL = { jour: null, enquete: null, volet: 0, filtre: 'tout', survol: -1, defil: 0, defilMax: 0, focus: 0, zone: 0, ouvertA: 0, voletA: 0, dernierAnnonce: '' };
 const VOLETS_ENQUETE = ['passe', 'contexte', 'decision', 'suites'];
 const ZONES_JOURNAL = ['jours', 'filtres', 'frise'];
-const HAUTEURS_CARTES = { signalement: 116, equipe: 52, plainte: 64, patron: 52, crise: 52 };
+const HAUTEURS_CARTES = { signalement: 116, equipe: 52, plainte: 64, patron: 52, crise: 52, patience: 52 }; // prompt 213 : patience
 // Prompt 205 : colonne étroite (mobile portrait, 620 px) — l'action de la carte passe sur une ligne à elle, sous le texte
-const HAUTEURS_ETROITES = { signalement: 176, equipe: 100, plainte: 120, patron: 100, crise: 52 };
+const HAUTEURS_ETROITES = { signalement: 176, equipe: 100, plainte: 120, patron: 100, crise: 52, patience: 76 };
 const hCarte = (sorte) => (JOURNAL.etroit ? HAUTEURS_ETROITES : HAUTEURS_CARTES)[sorte];
 
 const animJ = (debut, duree, retard) => (reduireAnimations ? 1 : constrain((millis() - debut - (retard || 0)) / duree, 0, 1));
@@ -297,6 +297,7 @@ function dessinerCarteJournal(c, x, y, l, focus, y0, hz) {
 	if (c.sorte === 'signalement') carteSignalement(c, x, y, l, focus);
 	else if (c.sorte === 'equipe') carteEquipe(c.q, x, y, l, focus);
 	else if (c.sorte === 'plainte') cartePlainte(c.p, x, y, l, focus);
+	else if (c.sorte === 'patience') cadreCarte(x, y, l, h, focus, DS.alerte), dsTexte(texteCarte(c), x + 20, y + 14, 16, DS.blanc, 'left', l - 40); // prompt 213
 	else if (c.sorte === 'patron') cadreCarte(x, y, l, h, focus, DS.alerte), dsTexte('⚠ ' + court(String(c.m.texte), 110), x + 20, y + 14, 16, DS.blanc, 'left', l - 40);
 	else if (c.sorte === 'crise') cadreCarte(x, y, l, h, focus, DS.primaire), dsTexte(t('crise.bandeau') + ' · ' + t(c.c.resultat === 'maitrisee' ? 'journal.criseOk' : c.c.resultat === 'debordee' ? 'journal.criseKo' : 'journal.enCours'), x + 20, y + 14, 17, DS.blanc, 'left', l - 40);
 	// Cartes liées (même dossier) : en retrait, reliées par un trait
@@ -584,6 +585,7 @@ function texteCarte(c) {
 	if (c.sorte === 'signalement') return (c.heure || '') + ' · ' + String(c.e.externeCourt) + (c.e.ligne ? ' · ' + t('dossier.ligne', { lignes: c.e.ligne }) : '') + ' · ' + (c.e.action ? String(c.e.action) : t('journal.aucuneAction')) + ' · ' + t('eval.' + c.eval);
 	if (c.sorte === 'equipe') return t('journal.carteEquipe', { nom: c.q.nom, sujet: c.q.sujet || '', cout: c.q.cout, etat: '' });
 	if (c.sorte === 'plainte') return c.p.auteur + ' : ' + Jeu.textePlainte(c.p);
+	if (c.sorte === 'patience') return t('journal.patience', { attente: c.e.resultat.attente >= 60 ? Math.floor(c.e.resultat.attente / 60) + ' h ' + String(c.e.resultat.attente % 60).padStart(2, '0') : c.e.resultat.attente + ' min', n: c.e.resultat.patience }); // prompt 213
 	if (c.sorte === 'patron') return String(c.m.texte);
 	return t('crise.bandeau');
 }

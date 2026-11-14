@@ -21,8 +21,8 @@ combiné** (somme des 3 jauges, 0–300, poids égaux Q44) :
 
 | Fin | Seuil (Q48) | Scénario (Q49–Q51) | Ambiance (Q53) |
 |---|---|---|---|
-| **Bonne** | score ≥ 240 | La **direction félicite** la salle de contrôle | Décor clair, ensoleillé |
-| **Moyenne** | 150 ≤ score < 240 | **Bilan neutre nuancé** : semaine correcte, quelques incidents mal gérés | Décor neutre |
+| **Bonne** | score ≥ 230 (240 jusqu'au prompt 213) | La **direction félicite** la salle de contrôle | Décor clair, ensoleillé |
+| **Moyenne** | 150 ≤ score < 230 | **Bilan neutre nuancé** : semaine correcte, quelques incidents mal gérés | Décor neutre |
 | **Mauvaise** | score < 150 | La **direction réprimande**, en citant les incidents mal gérés | Décor sombre, pluvieux |
 
 - Si une jauge passe **sous 20** en cours de partie : clignotement discret de la
@@ -48,5 +48,12 @@ la fin (Q53) + boutons Rejouer / changer de semaine.
 > score : une table de dix fins, évaluée dans l'ordre (capture virale, burn-out, imposteur, fauteuil du patron = bonne
 > fin, diplomate de Quai, insoumis, usagers d'abord, bouc émissaire, semaine correcte, réprimande), lit les gestes du
 > joueur (clashs, réponses Quai, cafés, siestes, objectifs du jour, qualité des décisions). Le palier de score (Q48 :
-> 240 / 150) garde le décor et le son (Q53) et sert de seuil au fauteuil et à la semaine correcte. Démission et
+> 230 / 150) garde le décor et le son (Q53) et sert de seuil au fauteuil et à la semaine correcte. Démission et
 > licenciement inchangés. Table et seuils finaux : `jeu/207-dix-fins-posture.md`.
+
+> **Prompt 213 — équilibre à deux bords (hypothèse du jeu).** Le Budget et la Réputation ont une zone d'excès à partir de
+> 85 : le soir, crédits non consommés rendus (budget −15) ; réputation trop haute, elle retombe (−10) et le lendemain
+> chaque perte de réputation compte ×1,5 ; deux soirs de suite sur la même jauge → rappel à l'ordre (message, sans
+> licenciement). La Fluidité garde un seul bord. Le score reste la somme des jauges (Q44) ; la bonne fin passe de 240 à
+> 230, puisque l'excès plafonne deux jauges vers 85. Patience des usagers (hors défi chrono) : après 20 min de grâce,
+> −1 de réputation par 30 min d'attente, −4 au plus par dossier. Détail et simulation : `jeu/213-equilibre-deux-bords-sieste.md`.
