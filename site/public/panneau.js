@@ -62,8 +62,7 @@ function dessinerBandeau() {
 		if (va < 20) c.setAlpha(255 * opaciteCritique());
 		fill(c);
 		rect(bx, by, (lbar * constrain(va, 0, 100)) / 100, hb);
-		fill(255, 255, 255, 170);
-		[20, 40].forEach((s) => rect(bx + (lbar * s) / 100 - 1, by - 3, 2, hb + 6)); // seuils réels
+		// prompt 211 : repères fixes 20 / 40 retirés — la couleur (rouge < 20, orange < 40) les dit ; seul le repère d'objectif reste
 		if (dessinerSeuilObjectif(cle, bx, by, lbar, hb) && mouseX >= bx - 4 && mouseX <= bx + lbar + 4 && mouseY >= z.y && mouseY <= z.y + z.h) BANDEAU.survol = texteSeuilObjectif(cle); // prompt 143
 		dessinerDeltasJauge(cle, bx, by, lbar, hb);
 		x = bx + lbar + 18;
@@ -215,6 +214,12 @@ function dessinerPanneauSignalement(d, x, base) {
 	}
 	if (phase === 'contradiction') return dessinerChoixSource(d, x + 32, yr, l);
 	dsTexte(t('dialogue.titre'), x + 32, yr, 18, DS.blanc75, 'left');
+	// Prompt 211 : les noms des jauges une seule fois, en en-tête de colonnes ; sous chaque réplique, les symboles seuls
+	if (!compact) {
+		const cols = colonnesTendance(x + 32, l);
+		['fluidite', 'reputation', 'budget'].forEach((k, j) => dsTexte(t('jaugeCourt.' + k), cols[j], yr + 2, 16, C.gris, 'center'));
+		zoneTexteDeclarer('tendanceEntete', cols[0] - 60, yr, cols[2] - cols[0] + 120, 22);
+	}
 	// Prompt 130 : tendance des 3 jauges sous chaque réplique (symbole + couleur, jamais la couleur seule) ;
 	// option « Pression visible » : pastille « conseillé » sur la ou les réponses que l'évaluation jugerait bonnes
 	rs.forEach((r, i) => {
@@ -228,7 +233,7 @@ function dessinerPanneauSignalement(d, x, base) {
 		dsTexte(TOUCHES_REPONSES[i], x + 54, ry + (hL - 26) / 2, 20, DS.fond, 'center');
 		const rep = repliquesDuDossier(rs, d)[i];
 		dessinerTexte('« ' + rep + ' »', x + 92, ry + 6, l - 76, { taille: 20, couleur: C.texte, maxLignes: 2, interligne: 25 });
-		if (!compact) dessinerTendanceReponse(r, d, x + 92, ry + 58); // sous la réplique (plus de mention « conseillé », demande du 12/11/2026)
+		if (!compact) dessinerTendanceReponse(r, d, x + 32, ry + 58, l); // sous la réplique (plus de mention « conseillé », demande du 12/11/2026)
 		boutons.push({ x: x + 32, y: ry, l, h: hL, action: () => choisirReplique(r) });
 		if (i === 0) cibleGuide('actions', x + 32, yr + 36, l, rs.length * pas);
 	});
@@ -276,22 +281,24 @@ function repliqueDe(r, d, sansAuteur) {
 /** Prompt 130 : hauteur d'une ligne de réponse (2 lignes de réplique + la tendance) et pas entre deux lignes */
 const H_REPONSE = 84;
 const PAS_REPONSE = 92;
-/** Prompt 130 : tendance d'une réplique sur les 3 jauges — « Flu. ▲ » en vert, « ≈ » en gris, « ▼ » en orange ; le
- * symbole porte le sens, la couleur le double. Le clash (prompt 117) compte son malus de réputation : la tendance
+/** Prompt 130 : tendance d'une réplique sur les 3 jauges — « ▲ » en vert, « ≈ » en gris, « ▼ » en orange ; le
+ * symbole porte le sens, la couleur le double ; prompt 211 : le nom de la jauge est l'en-tête de la colonne. Le clash (prompt 117) compte son malus de réputation : la tendance
  * reste honnête. Pastille « conseillé » en option (Pression visible). */
-function dessinerTendanceReponse(r, d, x, y) {
+function dessinerTendanceReponse(r, d, x, y, l) {
 	const e = Jeu.effetsAttendus(r.cle, d).slice();
 	if (r.clash) e[1] += Jeu.REGLAGES.malusClash || 0;
-	let xx = x;
+	const cols = colonnesTendance(x, l);
 	['fluidite', 'reputation', 'budget'].forEach((k, j) => {
 		const sym = tendance(e[j]);
-		const lib = t('jaugeCourt.' + k);
-		dsTexte(lib, xx, y, 16, C.gris, 'left');
-		xx += textWidth(lib) + 6;
-		dsTexte(sym, xx, y, 16, sym === '≈' ? C.gris : sym.includes('▲') ? C.vert : C.orange, 'left');
-		xx += textWidth(sym) + 18;
+		dsTexte(sym, cols[j], y, 16, sym === '≈' ? C.gris : sym.includes('▲') ? C.vert : C.orange, 'center');
 	});
-	zoneTexteDeclarer('tendanceReponse', x, y, xx - x, 22); // prompt 93 : audit des textes
+	zoneTexteDeclarer('tendanceReponse', cols[0] - 30, y, cols[2] - cols[0] + 60, 22); // prompt 93 : audit des textes
+}
+/** Prompt 211 : centres des 3 colonnes de tendance, calées à droite de la ligne de réponse (x, largeur l) */
+function colonnesTendance(x, l) {
+	const c = Math.min(130, (l - 76) / 3);
+	const fin = x + l - 16 - c / 2;
+	return [fin - 2 * c, fin - c, fin];
 }
 /** Prompt 102 : bulle de dialogue — la plainte écrite par le groupe (data/messages.json) que les faits réels du
  * dossier déclenchent (Jeu.plaignantPour, sans effet de bord), sinon la source réelle ; dessous, le fait réel. */
@@ -334,8 +341,9 @@ function bulleDuPlaignant(d, x, y, l) {
 		yy += 34;
 	}
 	if (pl) {
-		dsTexte(couperLargeurCarte(String(phraseSituation(d)), l, 16), x, yy, 16, DS.blanc50, 'left');
-		yy += 28;
+		// Prompt 211 : deux lignes au lieu d'une coupée — la fin (« Le jeu suppose de l'affluence. ») dit l'hypothèse
+		const r = dessinerTexte(String(phraseSituation(d)), x, yy, l, { police: DS.policeTexte, taille: 16, couleur: DS.blanc50, maxLignes: 2, interligne: 22 });
+		yy += Math.max(28, (r && r.h) || 0) + 6;
 	}
 	return yy + 12;
 }

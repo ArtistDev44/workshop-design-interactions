@@ -629,11 +629,14 @@ function colonneNantes(x, y, l, h) {
 		yy += couperLignes('· ' + ln, l - 28, DS.policeTexte, 18).length * 26 + 8; // prompt 93
 	});
 	yy += 12;
-	dsTexte(t('commu.cites'), x + 14, yy, 20, DS.blanc, 'left');
-	yy += 36;
 	const comptes = {};
 	(Jeu.commentaires || []).forEach((c) => (comptes[c.auteur] = (comptes[c.auteur] || 0) + 1));
 	(Jeu.plaintes || []).forEach((p) => (comptes[p.auteur] = (comptes[p.auteur] || 0) + 1));
+	// Prompt 211 : le titre « Comptes cités » n'apparaît qu'avec au moins un compte
+	if (Object.keys(comptes).some((a) => /^@/.test(a))) {
+		dsTexte(t('commu.cites'), x + 14, yy, 20, DS.blanc, 'left');
+		yy += 36;
+	}
 	Object.entries(comptes)
 		.filter(([a]) => /^@/.test(a))
 		.sort((a, b) => b[1] - a[1])

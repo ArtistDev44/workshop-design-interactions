@@ -764,6 +764,23 @@ function bandeBords(c, e) {
 		ctx.fillRect(rx, ry, rl, rh);
 	});
 }
+let cPiecePoste = null;
+const CACHE_POSTE = { cle: '', t: -1e9 };
+function pieceFloueAuPoste(ox, oy, echelle) {
+	if (!cPiecePoste) cPiecePoste = canevas(L, H);
+	const cle = Math.round(ox) + ',' + Math.round(oy) + ',' + echelle.toFixed(3);
+	if (cle !== CACHE_POSTE.cle || millis() - CACHE_POSTE.t > 500) {
+		const c = cPiecePoste.getContext('2d');
+		c.clearRect(0, 0, L, H);
+		c.imageSmoothingEnabled = false;
+		c.filter = 'blur(2px) brightness(0.85)';
+		c.drawImage(gBureau.elt, ox, oy, L * echelle, H * echelle);
+		c.filter = 'none';
+		CACHE_POSTE.cle = cle;
+		CACHE_POSTE.t = millis();
+	}
+	drawingContext.drawImage(cPiecePoste, 0, 0, L, H);
+}
 function masqueFlouEtVignette(ox, oy, echelle) {
 	if (!cMasqueFlou) {
 		cPieceFloue = canevas(BW, BH);
@@ -855,6 +872,7 @@ function composerVue() {
 	const src = drawingContext.canvas;
 	if (vue === 'bureau') copieBasse.getContext('2d').drawImage(src, 0, 0, copieBasse.width, copieBasse.height);
 	else copieHaute.getContext('2d').drawImage(src, 0, 0);
+	if (typeof lecteurAvantComposition === 'function') lecteurAvantComposition(); // prompt 210 : libellés relevés dans le repère du contenu
 	// Boutons du contenu : cliquables seulement au poste, ramenés en coordonnées réelles
 	if (auPoste) {
 		const k = r.l / L;
@@ -874,8 +892,12 @@ function composerVue() {
 	const ox = r.x - e.x * echelle;
 	const oy = r.y - e.y * echelle;
 	const flou = auPoste; // la pièce n'est floutée qu'au poste (derrière le moniteur) ; plus de flou au bureau en temps accéléré
-	if (flou && !reduireAnimations) drawingContext.filter = auPoste ? 'blur(2px) brightness(0.85)' : 'blur(1.5px)';
-	if (auPoste || !COUCHES_PIECE[0].g) {
+	if (flou && !reduireAnimations) {
+		// Prompt 210 (audit 206, constat 8) : le flou plein écran recalculé à chaque image plafonnait le poste à ≈ 15 FPS.
+		// La pièce floutée est mise en cache et n'est refaite que si le cadrage change (zoom, caméra) ou toutes les
+		// 500 ms (horloge, pluie, lampe derrière le moniteur : invisibles à cette cadence sous le flou).
+		pieceFloueAuPoste(ox, oy, echelle);
+	} else if (auPoste || !COUCHES_PIECE[0].g) {
 		push();
 		translate(ox, oy);
 		scale(echelle);
@@ -971,7 +993,8 @@ function composerVue() {
 	if (phase === 'soir' && (SOIR.sortie || respirationSoir())) return; // prompt 69 : pendant la sortie, pas de consigne ; prompt 191 : ni pendant « Fin de journée. »
 	// Prompt 124 : la consigne « Cliquez sur le PC… » n'est plus affichée en permanence (immersion) ; elle ne revient
 	// qu'après 10 s sans geste, pour qui hésite. Les messages d'état (incident, mail, soir) restent.
-	const consigne = msg === t('bureau.installer') || msg === t('bureau.installerMobile');
+	// Prompt 211 : « Incident en cours » suit la même règle — la pastille sur l'écran du PC l'annonce déjà
+	const consigne = msg === t('bureau.installer') || msg === t('bureau.installerMobile') || msg === t('bureau.incident');
 	if (consigne && typeof inactifDepuis !== 'undefined' && millis() - inactifDepuis < 10000) return;
 	if (enPortraitB) {
 		// Prompt 209 : la consigne passe à la ligne dans 640 px (reprise à la loupe sous l'image)
@@ -1007,7 +1030,11 @@ function dessinerBoutonQuitterPC() {
 	const b = rectBoutonQuitter();
 	if (clignement) return; // pendant qu'on se lève, le bouton disparaît
 	const raison = raisonRetenuAuPC(); // prompt 182 : un choix attend → bouton désactivé, avec sa raison
-	bouton(b.x, b.y, b.l, b.h, t(GUIDE.actif ? 'poste.quitter_pc_guide' : 'poste.quitter_pc'), quitterPC, !!raison); // prompt 174 : pendant le guide, Échap quitte le guide — le libellé ne la promet pas
+	// Prompt 211 : bouton secondaire (contour) sur un fond sombre — le rouge primaire en faisait l'élément le plus saillant
+	noStroke();
+	fill(13, 12, 12, 225);
+	rect(b.x, b.y, b.l, b.h);
+	bouton(b.x, b.y, b.l, b.h, t(GUIDE.actif ? 'poste.quitter_pc_guide' : 'poste.quitter_pc'), quitterPC, !!raison, true); // prompt 174 : pendant le guide, Échap quitte le guide — le libellé ne la promet pas
 	cibleGuide('quitterPC', b.x, b.y, b.l, b.h); // prompt 37
 	if (raison) boutons.push({ x: b.x, y: b.y, l: b.l, h: b.h, action: quitterPC }); // clic / toucher sur le bouton désactivé : la raison est dite (infobulle + annonce), sans sortie
 	if (raison && !fenetre && !smsActif) {

@@ -118,8 +118,9 @@ for (const f of sources) {
 	/const VERSION = 'nte-regulation-[0-9a-f]{10}'/.test(sw) ? ok() : echec('sw.js : VERSION non générée (lancer npm run sw ou npm run build)');
 	const liste = new Set([...sw.matchAll(/"(\.\/[^"]*)"/g)].map((x) => x[1]));
 	for (const ref of [...html.matchAll(/(?:src|href)="(\.\/[^"#?]+)"/g)].map((x) => x[1])) liste.has(ref) ? ok() : echec(`sw.js : ${ref} (index.html) absent du précache`);
-	// Prompt 188 : kit de presse — page, communiqué, logo et captures en précache (la vidéo reste ../captures/demo.mp4, non dupliquée)
-	for (const ref of ['./kit-presse/', './kit-presse/index.html', './kit-presse/communique-de-presse.txt', './kit-presse/communique-de-presse.md', './kit-presse/README.md', './kit-presse/logo.svg', './kit-presse/hero.jpg', './kit-presse/detail-01.jpg', './kit-presse/process.jpg', './kit-presse/thumb.jpg', './captures/demo.mp4']) liste.has(ref) ? ok() : echec(`sw.js : ${ref} (kit de presse) absent du précache`);
+	// Prompt 188 : kit de presse — page, communiqué, logo et captures en précache (la vidéo reste ../captures/demo.mp4, non dupliquée) ; prompt 210 : la vidéo (captures/demo.mp4) est servie en ligne, hors précache
+	for (const ref of ['./kit-presse/', './kit-presse/index.html', './kit-presse/communique-de-presse.txt', './kit-presse/communique-de-presse.md', './kit-presse/README.md', './kit-presse/logo.svg', './kit-presse/hero.jpg', './kit-presse/detail-01.jpg', './kit-presse/process.jpg', './kit-presse/thumb.jpg']) liste.has(ref) ? ok() : echec(`sw.js : ${ref} (kit de presse) absent du précache`);
+	!liste.has('./captures/demo.mp4') && !liste.has('./audio/night-in-a-seashell.ogg') ? ok() : echec('sw.js : vidéo de démo ou musique OGG encore en précache (prompt 210)');
 	{
 		const kit = readFileSync(join(pub, 'kit-presse', 'index.html'), 'utf8');
 		const refs = [...kit.matchAll(/(?:src|href|poster)="([^"#:]+)"/g)].map((x) => x[1]);

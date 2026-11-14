@@ -128,6 +128,8 @@ function dessinerSomnolence() {
 	const z = ZONE_SOMNO;
 	const v = Math.round(SOMNO.v);
 	const survol = mouseX >= z.x && mouseX <= z.x + z.l && mouseY >= z.y && mouseY <= z.y + z.h;
+	// Prompt 211 : sous 30 %, la jauge ne sert aucune décision — masquée (Z reste actif), sauf au survol et pendant le guide
+	if (v < 30 && !survol && !(typeof GUIDE !== 'undefined' && GUIDE.actif)) return boutons.push({ x: z.x, y: z.y - 18, l: z.l, h: z.h + 18, action: basculerSieste });
 	noStroke();
 	fill(survol ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.08)');
 	rect(z.x, z.y, z.l, z.h);

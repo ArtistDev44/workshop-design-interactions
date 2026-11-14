@@ -272,7 +272,7 @@ function appPatron(z) {
 	let x = z.x;
 	if (portrait) {
 		zoneDossiers(z.x, y, z.l, 56, true);
-		y += 64;
+		y += Math.ceil(FILTRES_PATRON.length / colonnesDossiersMails(z.l, true)) * 64; // prompt 205
 	} else {
 		zoneDossiers(z.x, y, 352, h, false); // prompt 195 : « Boîte de réception » et ses deux compteurs en entier
 		x += 368;
@@ -408,6 +408,10 @@ function saisieRechercheMails() {
 }
 /** Colonne des dossiers : « Boîte de réception », puis les catégories, puis « Archives » ; non lus (pastille
  * d'accent) et total alignés à droite */
+/** Prompt 205 : nombre de dossiers par rangée (portrait) — tous sur une ligne s'ils tiennent, sinon 3 */
+function colonnesDossiersMails(l, rangee) {
+	return rangee && l < 1000 ? 3 : FILTRES_PATRON.length;
+}
 function zoneDossiers(x, y, l, h, rangee) {
 	const n = FILTRES_PATRON.length;
 	let yy = y;
@@ -422,7 +426,8 @@ function zoneDossiers(x, y, l, h, rangee) {
 			rect(x + 14, yy + 8, l - 28, 1);
 			yy += 16;
 		}
-		const r = rangee ? { x: x + (k * l) / n, y, l: l / n - 8, h } : { x, y: yy, l, h: 52 };
+		const cols = colonnesDossiersMails(l, rangee); // prompt 205 : en colonne étroite, grille de 3 par rangée
+		const r = rangee ? { x: x + ((k % cols) * l) / cols, y: y + Math.floor(k / cols) * (h + 8), l: l / cols - 8, h } : { x, y: yy, l, h: 52 };
 		yy += 56;
 		const actif = PATRON.filtre === f.cle;
 		const c = compteursMails(f.cle);

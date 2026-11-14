@@ -247,10 +247,13 @@ function appPatron(z) {
 	// En-tête (56 px) : icône, nom de l'appli, statut ; en grand, la barre d'outils sur la même ligne
 	iconeLucide('mail', z.x, z.y + 4, 32, DS.blanc);
 	dsTexte(t('app.patron'), z.x + 44, z.y + 4, 24, DS.blanc, 'left');
-	noStroke();
-	fill(panne ? DS.erreur : DS.succes);
-	rect(z.x + 160, z.y + 14, 12, 12);
-	dsTexte(t(panne ? 'patron.statut.horsLigne' : 'patron.statut.enLigne'), z.x + 180, z.y + 8, 18, panne ? DS.erreurClair : DS.blanc50, 'left');
+	// Prompt 211 : le statut n'est écrit qu'en panne (« en ligne » ne servait aucune décision)
+	if (panne) {
+		noStroke();
+		fill(DS.erreur);
+		rect(z.x + 160, z.y + 14, 12, 12);
+		dsTexte(t('patron.statut.horsLigne'), z.x + 180, z.y + 8, 18, DS.erreurClair, 'left');
+	}
 	let y = z.y;
 	if (etroit) {
 		y += 56;
@@ -444,9 +447,9 @@ function zoneDossiers(x, y, l, h, rangee) {
 		// Compteurs à droite : non lus (pastille d'accent) puis total
 		textFont(DS.policeTexte);
 		textSize(18);
-		const totTxt = String(c.n);
+		const totTxt = c.n ? String(c.n) : ''; // prompt 211 : les compteurs à 0 ne sont plus écrits
 		const wt = textWidth(totTxt);
-		dsTexte(totTxt, r.x + r.l - 12, r.y + 16, 18, DS.blanc75, 'right');
+		if (totTxt) dsTexte(totTxt, r.x + r.l - 12, r.y + 16, 18, DS.blanc75, 'right');
 		let wnl = 0;
 		if (c.nl && !f.archives) {
 			const txt = String(c.nl);

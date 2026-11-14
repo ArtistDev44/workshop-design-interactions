@@ -14,7 +14,7 @@ const PALETTES = {
 	tritan: { bon: '#00C2B8', alerte: '#FF9EC4', critique: '#E8003D', critiqueTexte: '#FF9EB0', papier: { bon: '#00756e', alerte: '#a3366a', critique: '#b0002e' } },
 };
 const ORDRE_DALTONISME = ['normal', 'protan', 'deutan', 'tritan'];
-const TAILLES_TEXTE = [100, 115, 130];
+const TAILLES_TEXTE = [100, 115, 130]; // prompt 210 : paliers 160 / 200 % essayés puis retirés — audit des textes 1920 × 1080 : 117 défauts à 130 %, 923 à 160 %, 1 396 à 200 % (mises en page fixes du canevas) ; voir jeu/210-corrections-audit-206.md
 const palette = () => PALETTES[Confort.Reglages.daltonisme] || PALETTES.normal;
 /** Couleur d'une jauge sur le papier du rapport (encre lisible sur le crème) */
 function couleurPapier(v) {

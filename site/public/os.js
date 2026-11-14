@@ -281,7 +281,7 @@ let retourPlainte = null; // { texte, bonne, jusqua } : résultat affiché quelq
 function repondrePlainte(i, cible) {
 	const p = cible || cibleCommunity(); // prompt 85 : la plainte visée (mention ou conversation privée)
 	if (!p) return;
-	const r = Jeu.repondrePlainte(p, i, millis()); // prompt 79 : réponse rapide ou tardive
+	const r = Jeu.repondrePlainte(p, i, typeof tempsPlaintes === 'function' ? tempsPlaintes() : millis()); // prompt 79 : réponse rapide ou tardive ; prompt 210 : même horloge que p.depuis
 	if (!r) return;
 	focusReponse = -1;
 	if (r.clash && !r.froid && typeof feedback === 'function') feedback('large'); // prompt 202 : pas de secousse pour un clash froid // prompt 197 : le clash est récompensé à l'instant (choc « large »), conséquences inchangées (réputation −8, réponse « mauvaise »)

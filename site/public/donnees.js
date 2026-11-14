@@ -16,6 +16,7 @@ const urlMeteoArchive = (debut, fin) =>
 	fin;
 const urlAgenda = (debut, fin) => TEL.url + '?limit=20&where=' + encodeURIComponent("date>=date'" + debut + "' AND date<=date'" + fin + "'");
 const LICENCE_NM = 'Licence Ouverte (Nantes Métropole)';
+const LICENCE_GTFS = 'ODbL (éditeur Semitan, via Open Data Nantes Métropole)'; // prompt 210 : licence lue dans les métadonnées de l'API le 2026-11-14
 
 ICONES_OS.push({ cle: 'donnees', nom: T('app.donnees'), dessin: (x, y, s) => iconeDonnees(x, y, s || 1) });
 
@@ -88,7 +89,12 @@ function blocsDonnees() {
 			url: urlAgenda(date, date),
 		});
 	} else {
-		const s = Jeu.etat.semaine || (Jeu.fallback && { lundi: Jeu.fallback.semaine.lundi, dimanche: Jeu.fallback.semaine.dimanche, dossiers: Jeu.fallback.dossiers || [], evenements: [], meteo: Jeu.fallback.meteo || [] });
+		// Prompt 210 (audit 206, constat 10) : hors ligne, Jeu.etat.semaine n'est que { lundi, dimanche } (game.js,
+		// chargerHorsLigne) — l'appli affichait « 0 dossier ». On lit alors la semaine de référence (Jeu.fallback) :
+		// ses 6 dossiers réels, sa météo, et ses événements (dossiers de type « événement »).
+		const fb = Jeu.fallback;
+		const etatSem = Jeu.etat.semaine;
+		const s = etatSem && Array.isArray(etatSem.dossiers) ? etatSem : fb ? { lundi: fb.semaine.lundi, dimanche: fb.semaine.dimanche, dossiers: fb.dossiers || [], evenements: (fb.dossiers || []).filter((d) => d.type === 'événement'), meteo: fb.meteo || [] } : { lundi: null, dimanche: null, dossiers: [], evenements: [], meteo: [] };
 		const periode = t('donnees.archive', { debut: dFr(s.lundi), fin: dFr(s.dimanche) });
 		const parType = {};
 		(s.dossiers || []).forEach((d) => (parType[d.type] = (parType[d.type] || 0) + 1));
@@ -97,7 +103,7 @@ function blocsDonnees() {
 			lignes: [t('donnees.incidents.n', { n: (s.dossiers || []).length })].concat(Object.keys(parType).map((k) => tSi('type.' + k, k) + ' : ' + parType[k])),
 			statut: periode,
 			source: 'Changelog daté du GTFS Naolib',
-			licence: LICENCE_NM,
+			licence: LICENCE_GTFS,
 			url: URL_GTFS,
 		});
 		b.push({
@@ -169,7 +175,7 @@ function dessinerBlocsDonnees(z) {
 		b.lignes.forEach((ln) => ls.push(...couperLignes(String(ln), bl - 40, DS.policeTexte, 20)));
 		dsTexte(ls.length > maxL ? ls.slice(0, maxL - 1).concat('…').join('\n') : ls.join('\n'), x + 20, y + 80, 18, DS.blanc75, 'left');
 		dsTexte(src, x + 20, ySrc, 16, DS.blanc50, 'left', bl - 40);
-		dsBouton(x + 20, y + hb - 50, 300, 40, t('donnees.ouvrir'), () => ouvrirLienApi(b.url), 'fantome');
+		dsBouton(x + 20, y + hb - 50, 300, 40, t('donnees.ouvrir'), () => ouvrirLienApi(b.url), 'fantome', false, true); // prompt 211 : « ↗ » seul, sans « › »
 	});
 }
 function ouvrirLienApi(url) {

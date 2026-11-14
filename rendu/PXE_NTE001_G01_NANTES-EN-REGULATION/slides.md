@@ -38,7 +38,7 @@ Auteurs : [À COMPLÉTER]
 
 # Les sources réelles
 
-- **Offre et perturbations Naolib** (GTFS + changelog daté) — Licence Ouverte, Nantes Métropole — [jeu de données](https://data.nantesmetropole.fr/explore/dataset/244400404_transports_commun_naolib_nantes_metropole_gtfs/)
+- **Offre et perturbations Naolib** (GTFS + changelog daté) — ODbL, éditeur Semitan (via Open Data Nantes Métropole) — [jeu de données](https://data.nantesmetropole.fr/explore/dataset/244400404_transports_commun_naolib_nantes_metropole_gtfs/)
 - **Temps réel Naolib** (GTFS-RT, retards par ligne) — Licence Ouverte, Nantes Métropole
 - **Agenda des événements** de Nantes Métropole — Licence Ouverte — [API](https://data.nantesmetropole.fr/explore/dataset/244400404_agenda-evenements-nantes-metropole_v2/)
 - **Météo** Open-Meteo (prévision et archive ERA5) — CC BY 4.0 — [open-meteo.com](https://open-meteo.com/)

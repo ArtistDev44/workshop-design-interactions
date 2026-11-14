@@ -75,7 +75,7 @@ function dessinerMenuApp() {
 		const nb = !actif && !verrou ? nombreBadge(cle) : 0;
 		const b = nb ? texteBadge(nb) : cle === 'signalements' && !actif && typeof badgeIcone === 'function' ? badgeIcone(cle) : ''; // « ! » : incident en cours (prompt 68)
 		if (b) dsBadge(r.x + r.l - (portrait ? 30 : 28), r.y + 8, b, 'erreur');
-		boutons.push({ x: r.x, y: r.y, l: r.l, h: r.h, action: () => ouvrirEntreeMenu(cle) });
+		boutons.push({ x: r.x, y: r.y, l: r.l, h: r.h, action: () => ouvrirEntreeMenu(cle), titre: libelleEntreeMenu(cle) }); // prompt 210 : libellé (lecteur-ecran.js)
 		if (k === 1) cibleGuide('iconesOS', M.x, M.y + 112, M.l, 4 * 112); // prompt 37 : le guide montre le menu
 	});
 }

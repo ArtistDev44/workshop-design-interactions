@@ -434,7 +434,7 @@ function dessinerCinematique() {
 
 /** Prompt 209 : mobile portrait — bandes, titre, « Passer » et sous-titre dans la colonne centrale de 640 px
  * (recomposée pleine largeur) : titre et bouton pleine largeur en haut, sous-titre à 28 px en bas */
-const COLONNE_CINE = { x: L / 2 - 320, l: 640, haut: 180, bas: 280 };
+const COLONNE_CINE = { x: 1920 / 2 - 320 /* L / 2 − 320 (L = 1920, sketch.js) : littéral pour le test du jeu, qui charge histoire.js sans sketch.js */, l: 640, haut: 180, bas: 280 };
 function piedCinematiquePortrait(c, p) {
 	const C0 = COLONNE_CINE;
 	noStroke();

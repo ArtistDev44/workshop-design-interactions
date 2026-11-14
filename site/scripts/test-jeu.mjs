@@ -2388,7 +2388,13 @@ for (const langue of ['fr', 'en']) {
 	const h163 = readFileSync(join(pub, 'histoire.js'), 'utf8');
 	verifier(!/parAction|action\.devier|stats\.final|rapport\.defis/.test(h163), 'prompt 163 : le rapport utilise encore les anciennes clés (parAction, action.devier, jauges finales, défis en page 1)');
 	verifier(/fenetreRapportSources/.test(h163) && /PAGES_RAPPORT = 3/.test(h163), 'prompt 163 : page « Sources et faits de la semaine » absente');
-	verifier((h163.match(/dessinerCourbesJauges\(/g) || []).length === 1 && (h163.match(/stats\.defis/g) || []).length === 1, 'prompt 163 : courbes ou défis en double dans le rapport');
+	{
+		// prompt 209 : la colonne portrait (blocsRapportPortrait) recompose les mêmes pages ; une seule occurrence de chaque côté
+		const iP = h163.indexOf('function blocsRapportPortrait(');
+		const paysage = iP > 0 ? h163.slice(0, iP) : h163, portrait = iP > 0 ? h163.slice(iP) : '';
+		const n = (s, re) => (s.match(re) || []).length;
+		verifier(n(paysage, /dessinerCourbesJauges\(/g) === 1 && n(paysage, /stats\.defis/g) === 1 && n(portrait, /dessinerCourbesJauges\(/g) <= 1 && n(portrait, /stats\.defis/g) <= 1, 'prompt 163 : courbes ou défis en double dans le rapport');
+	}
 	verifier(/changerPageRapport\(keyIsDown\(SHIFT\) \? -1 : 1\)/.test(readFileSync(join(pub, 'journee.js'), 'utf8')), 'prompt 163 : Maj + Tab ne recule pas dans le rapport');
 	verifier(/rapport page 3/.test(readFileSync(join(pub, 'audit-textes.js'), 'utf8')), 'prompt 163 : audit des textes sans la page 3 du rapport');
 }
@@ -2512,7 +2518,7 @@ for (const langue of ['fr', 'en']) {
 		vm.runInContext("installerJeu(); var sans = ouvertes.join(); var joue = 0; PWA.invite = { prompt() { joue++; }, userChoice: Promise.resolve({ outcome: 'accepted' }) }; installerJeu();", c);
 		verifier(vm.runInContext("sans === 'installation' && joue === 1 && ouvertes.length === 1 && /pwa\\.aide\\.titre/.test(annonces[0])", c), 'prompt 171 : installerJeu ne joue pas l\'invitation ou n\'ouvre pas l\'explication');
 	}
-	verifier(/push\(\);[^\n]*\n\ttextLeading\(40\)/.test(menu171) && !/textLeading\(interligneAvant\)/.test(menu171), 'prompt 171 : interlignage du sous-titre du menu (≈ 1,4 × 28 px) non fixé ou non rendu');
+	verifier(/push\(\);[^\n]*\n\ttextLeading\((?:menuPortrait\(\) \? 32 : )?40\)/.test(menu171) && !/textLeading\(interligneAvant\)/.test(menu171), 'prompt 171 : interlignage du sous-titre du menu (≈ 1,4 × 28 px) non fixé ou non rendu');
 	verifier(/sansChevron \? label : label \+ '  ›'/.test(lire('ds.js')) && /'contour', false, retour\)/.test(lire('credits.js')) && !/[←‹]/.test(menu171.slice(menu171.indexOf('function dessinerChoixSemaine'), menu171.indexOf('function toucheMenu'))), 'prompt 171 : flèche encore présente sur un bouton « Retour » du menu');
 	for (const langue of ['fr', 'en']) {
 		const dico = vm.runInContext(`TRADUCTIONS[${JSON.stringify(langue)}]`, contexte(langue));
@@ -3156,7 +3162,7 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	const kp = sk.slice(sk.indexOf('function keyPressed()'), sk.indexOf('function mouseWheel('));
 	verifier(!/seLever\(\)/.test(kp) && (kp.match(/quitterPC\(\)/g) || []).length >= 4, 'prompt 182 : au clavier, toute sortie du PC doit passer par quitterPC() (Échap, Entrée sur le bouton), jamais par seLever()');
 	verifier(/scrollSortiePC\(dy < 0 \? -150 : 150\)/.test(lire182('mobile.js')) && /action: quitterPC, primaire: false, desactive: !!raisonRetenuAuPC\(\)/.test(lire182('portrait.js')), 'prompt 182 : balayage (mobile) et bouton « Se lever » (portrait) doivent suivre la même règle de sortie');
-	verifier(/bouton\(b\.x, b\.y, b\.l, b\.h, t\(GUIDE\.actif \? 'poste\.quitter_pc_guide' : 'poste\.quitter_pc'\), quitterPC, !!raison\)/.test(bu), 'prompt 182 : le bouton « Quitter le PC » doit être désactivé tant qu\'un choix attend');
+	verifier(/bouton\(b\.x, b\.y, b\.l, b\.h, t\(GUIDE\.actif \? 'poste\.quitter_pc_guide' : 'poste\.quitter_pc'\), quitterPC, !!raison(, true)?\)/.test(bu), 'prompt 182 : le bouton « Quitter le PC » doit être désactivé tant qu\'un choix attend');
 	verifier(/t\('bureau\.inviteInstaller'\)/.test(bu) && /else if \(vue === 'bureau'\) \{[\s\S]{0,200}fill\(13, 12, 12, 96\)/.test(bu), 'prompt 182 : en vue bureau, écran assombri et invite « S\'installer au PC »');
 	const c = vm.createContext({ Math });
 	vm.runInContext(
@@ -3783,7 +3789,7 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	// 3. Musique hors ligne : Range servi depuis le cache (206), morceaux précachés, repli WebAudio si le fichier échoue
 	const sw = lire193('sw.js');
 	verifier(/headers\.has\('range'\)\) \{\n\t\te\.respondWith\(caches\.match\(req\.url, \{ ignoreSearch: true \}\)\.then\(\(enCache\) => \(enCache \? reponsePartielle\(req, enCache\) : fetch\(req\)\)\)\);/.test(sw), 'prompt 193 : requêtes Range servies depuis le cache');
-	for (const f of readdirSync(join(pub, 'audio')).filter((f) => /\.(ogg|mp3)$/.test(f))) verifier(sw.includes(`"./audio/${f}"`), `prompt 193 : ${f} doit être précaché`);
+	for (const f of readdirSync(join(pub, 'audio')).filter((f) => /\.mp3$/.test(f))) verifier(sw.includes(`"./audio/${f}"`), `prompt 193 : ${f} doit être précaché (prompt 210 : MP3 seul, lu partout)`);
 	verifier(readFileSync(join(pub, '..', 'scripts', 'generer-sw.mjs'), 'utf8').includes('reponsePartielle\\(req, enCache\\)'), 'prompt 193 : le générateur refuse un sw.js sans lecture partielle depuis le cache');
 	if (typeof Response === 'function' && typeof Blob === 'function') {
 		const fn = sw.slice(sw.indexOf('function reponsePartielle'));
@@ -4167,6 +4173,62 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	verifier(pendant.e === 640 && pendant.m === 640 && pendant.l === 640 && pendant.c.every((v) => v === 680), `prompt 209 : en portrait, DS.fenetre doit valoir 640 (cadre 680) : ${JSON.stringify(pendant)}`);
 	verifier(JSON.stringify(apres) === JSON.stringify(avant) && avant.l > 640, `prompt 209 : en sortant du portrait, DS.fenetre doit reprendre ses valeurs : ${JSON.stringify(avant)} → ${JSON.stringify(apres)}`);
 	verifier(/appliquerFenetresPortrait\(oui\)/.test(readFileSync(join(pub, 'portrait.js'), 'utf8')), 'prompt 209 : activerPortrait doit appliquer les largeurs de fenêtre');
+}
+
+// Prompt 210 (audit 206, constat 4) : délai des plaintes Community sur UNE horloge (tempsPlaintes, temps de jeu actif).
+// Sauvegarde à millis() = 60 s / tempsPlaintes = 12 s, reprise après 50 s d'écran titre (millis() = 50,5 s,
+// tempsPlaintes = 0) : la plainte doit garder le même temps restant, et ne pas expirer à la reprise.
+{
+	const c = contexte('fr');
+	vm.runInContext('window.addEventListener = () => {}; document.addEventListener = () => {};', c);
+	vm.runInContext(readFileSync(join(pub, 'sauvegarde.js'), 'utf8'), c, { filename: 'sauvegarde.js' });
+	const r = vm.runInContext(`(() => {
+		Jeu.chargerSemaine('2026-10-12'); Jeu.nouvellePartie();
+		let p = null;
+		for (let i = 0; i < Jeu.paquet.length && !p; i++) p = Jeu.declencherPlainte(i);
+		if (!p) return { aucune: true };
+		p.depuis = 10000;
+		const avant = Jeu.resteReponse(p, 12000);
+		const snap = JSON.parse(JSON.stringify(Jeu.instantane(60000)));
+		Sauvegarde.recalerPlaintes(snap.plaintes, 60000 - 12000);
+		Jeu.restaurerInstantane(snap, 50500);
+		Sauvegarde.recalerPlaintes(Jeu.plaintes, 0 - 50500);
+		const q = Jeu.plaintes.find((x) => x.id === p.id && x.index === p.index);
+		const apres = Jeu.resteReponse(q, 0);
+		const expirees = (Jeu.majPlaintes(0) || []).filter((x) => x.id === p.id).length;
+		return { avant, apres, expirees };
+	})()`, c);
+	verifier(!r.aucune && r.avant > 0 && r.avant === r.apres && r.expirees === 0, `210 : plainte Community reprise avec le même délai (une seule horloge) : ${JSON.stringify(r)}`);
+	const os = readFileSync(join(pub, 'os.js'), 'utf8');
+	verifier(/Jeu\.repondrePlainte\(p, i, typeof tempsPlaintes === 'function' \? tempsPlaintes\(\)/.test(os), '210 : la réponse Community doit être datée sur tempsPlaintes(), pas millis()');
+	// Exposition : violence masquée d'office, aucune incitation tirée quand le masquage est actif
+	const m = vm.runInContext(`(() => {
+		globalThis.EXPO = { actif: true };
+		const masque = Jeu.violenceMasquee();
+		Jeu.chargerSemaine('2026-10-12'); Jeu.nouvellePartie();
+		const tirees = [];
+		for (let i = 0; i < Jeu.paquet.length; i++) { const p = Jeu.declencherPlainte(i); if (p) tirees.push(p.def.incitation ? 1 : 0); }
+		const prevues = (Jeu.interactionsPrevues || []).length;
+		delete globalThis.EXPO;
+		return { masque, incitations: tirees.reduce((a, b) => a + b, 0), plaintes: tirees.length, prevues };
+	})()`, c);
+	verifier(m.masque && m.incitations === 0 && m.plaintes > 0, `210 : en exposition, violence masquée et aucune incitation tirée : ${JSON.stringify(m)}`);
+	const conf = readFileSync(join(pub, 'confort.js'), 'utf8');
+	verifier(/EXPO\.actif\) Object\.assign\(Reglages, \{ webcam: DEFAUTS\.webcam, micro: DEFAUTS\.micro, masquerViolence: true \}\)/.test(conf), '210 : en exposition, webcam et micro remis à leur défaut à chaque visiteur');
+	const cam = readFileSync(join(pub, 'webcam.js'), 'utf8');
+	const mic = readFileSync(join(pub, 'micro.js'), 'utf8');
+	verifier(/if \(CAM\.enCours\) return false;/.test(cam) && /CAM\.jeton\+\+/.test(cam) && /visibilitychange/.test(cam), '210 : webcam — garde contre la double demande, coupure à l\'onglet masqué');
+	verifier(/MICRO\.demande = \(async/.test(mic) && /MICRO\.jeton\+\+/.test(mic) && /clearInterval\(MICRO\.minuterieAnalyse\);\n\tMICRO\.minuterieAnalyse = setInterval/.test(mic), '210 : micro — une seule demande d\'autorisation, jeton invalidé au relâchement');
+}
+
+// Prompt 210 (audit 206, constat 10) : appli « Données » hors ligne alimentée par la semaine de référence
+{
+	const c = contexte('fr');
+	vm.runInContext('var ICONES_OS = []; var nombreFr = (v) => String(v); var TEL = { url: "" }; var tSi = (k, r) => r; var LOIRE = { hauteur: 1, source: "repli", date: null };', c);
+	vm.runInContext(readFileSync(join(pub, 'donnees.js'), 'utf8'), c, { filename: 'donnees.js' });
+	const r = vm.runInContext(`(() => { Jeu.chargerHorsLigne(); const b = blocsDonnees(); return { n: Jeu.fallback.dossiers.length, texte: JSON.stringify(b) }; })()`, c);
+	verifier(r.n > 0 && !/« ?0 dossier|\b0 dossier/.test(r.texte) && r.texte.includes(String(r.n)), `210 : appli Données hors ligne — ${r.n} dossiers attendus : ${r.texte.slice(0, 300)}`);
+	verifier(r.texte.includes('ODbL'), '210 : appli Données — le changelog GTFS est sous ODbL (Semitan)');
 }
 
 if (erreurs.length) {

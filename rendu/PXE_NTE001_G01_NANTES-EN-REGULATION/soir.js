@@ -147,6 +147,8 @@ function finirSoir() {
 	if (Confort.Son.musique && Confort.Son.musique.attenuer) Confort.Son.musique.attenuer(1);
 	// prompt 88 : SMS de Camille la veille de l'inspection ; prompt 189 : sinon, SMS de Camille sur la météo réelle du jour joué
 	if (typeof smsVeilleInspection === 'function' && smsVeilleInspection(journeeSuivante)) return;
+	const meteo = () => (typeof smsMeteoCamille === 'function' && smsMeteoCamille(journeeSuivante)) || journeeSuivante();
+	if (typeof smsPostureCamille === 'function' && smsPostureCamille(meteo)) return; // prompt 207 : Camille commente la posture du joueur, puis la météo
 	if (typeof smsMeteoCamille === 'function' && smsMeteoCamille(journeeSuivante)) return;
 	journeeSuivante(); // inchangé : allerFin() le dernier jour
 }

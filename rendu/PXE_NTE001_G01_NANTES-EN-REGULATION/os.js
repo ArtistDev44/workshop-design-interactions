@@ -275,22 +275,24 @@ function derniers(liste, n) {
 
 
 // ——— Prompt 28 : plaintes des Nantais (contenu : data/messages.json) ———
-let focusReponse = 0; // réponse sélectionnée au clavier (Tab / Entrée, ou 1 / 2 / 3)
+let focusReponse = -1; // réponse sélectionnée au clavier (Tab / Entrée, ou 1 / 2 / 3) ; prompt 204 : −1 = aucune, pour qu'Entrée n'envoie jamais une réponse (le clash peut être en tête) sans choix explicite
 let retourPlainte = null; // { texte, bonne, jusqua } : résultat affiché quelques secondes après une réponse
 
 function repondrePlainte(i, cible) {
 	const p = cible || cibleCommunity(); // prompt 85 : la plainte visée (mention ou conversation privée)
 	if (!p) return;
-	const r = Jeu.repondrePlainte(p, i, millis()); // prompt 79 : réponse rapide ou tardive
+	const r = Jeu.repondrePlainte(p, i, typeof tempsPlaintes === 'function' ? tempsPlaintes() : millis()); // prompt 79 : réponse rapide ou tardive ; prompt 210 : même horloge que p.depuis
 	if (!r) return;
-	focusReponse = 0;
-	if (r.clash && typeof feedback === 'function') feedback('large'); // prompt 197 : le clash est récompensé à l'instant (choc « large »), conséquences inchangées (réputation −8, réponse « mauvaise »)
+	focusReponse = -1;
+	if (r.clash && !r.froid && typeof feedback === 'function') feedback('large'); // prompt 202 : pas de secousse pour un clash froid // prompt 197 : le clash est récompensé à l'instant (choc « large »), conséquences inchangées (réputation −8, réponse « mauvaise »)
 	const fx = Object.keys(r.effets)
 		.map((k) => t('jauge.' + k) + ' ' + (r.effets[k] > 0 ? '+' : '') + r.effets[k])
 		.join(' · ');
 	const texte = t(r.bonne ? 'plainte.bonne' : 'plainte.mauvaise', { effets: fx || '0' }) + (r.tardive ? ' ' + t('plainte.tardive') : '') + (r.clash && r.reaction ? ' ' + t('commu.reactionClash', { auteur: p.auteur, reaction: r.reaction }) : ''); // prompt 197 : réaction de connard du plaignant
-	retourPlainte = { texte, bonne: r.bonne, jusqua: millis() + 5000 };
-	annoncer(typeof lireMasques === 'function' ? lireMasques(texte) : texte); // aria-live ; prompt 197 : masques hors alphabet lus « mot masqué »
+	if (r.signale) retourPlainte = { texte: r.notice, bonne: true, jusqua: millis() + 7000 }; // prompt 202 : notice de modération
+	else retourPlainte = { texte, bonne: r.bonne, jusqua: millis() + 5000 };
+	const lu = retourPlainte.texte;
+	annoncer(typeof lireMasques === 'function' ? lireMasques(lu) : lu); // aria-live ; prompt 197 : masques hors alphabet lus « mot masqué »
 	Confort.Son.bip(r.bonne ? 'action' : 'alerte');
 }
 
@@ -339,10 +341,13 @@ function couleurJauge(v) {
 /** Dessinée par-dessus l'appli (coordonnées de l'écran du PC) */
 function dessinerIndicateurs() {
 	if (!PC.flottant || PC.etat === 'eteint' || PC.etat === 'demarrage') return;
+	// Prompt 204 : retiré pendant un dossier (les jauges restent dans le bandeau) — posé sur la fiche ou sur la partie
+	// libre de la carte, il cachait la conclusion ou le marqueur ; il revient seul au dossier suivant
+	if (typeof dossierOuvert === 'function' && dossierOuvert() && PC.etat === 'appli' && !INDIC.prise) return;
 	const I = INDIC;
 	const survol = mouseX >= I.pos.x && mouseX <= I.pos.x + I.l && mouseY >= I.pos.y && mouseY <= I.pos.y + I.h;
 	const deplie = I.deplie || !!I.prise || survol;
-	I.h = deplie ? INDIC_H.deplie : INDIC_H.replie;
+	I.h = deplie ? Math.max(INDIC_H.deplie, I.hDeplie || 0) : INDIC_H.replie; // prompt 204 : hauteur dépliée mesurée
 	if (I.prise) {
 		if (mouseIsPressed) {
 			I.pos.x = constrain(mouseX - I.prise.dx, 0, L - I.l);
@@ -414,22 +419,32 @@ function dessinerIndicateurs() {
 	// Bouton à la même place dans les deux états (le survol déplie sans le déplacer sous la souris)
 	dsBouton(x + 18, y + 268, 300, 44, t(I.deplie ? 'journal.detailsMasquer' : 'journal.details') + ' (V)', basculerDetailsIndicateurs, 'fantome');
 	if (!deplie) return;
+	// Prompt 204 : blocs empilés selon leur hauteur réelle (texte relevé à 20 px, coupé sur plusieurs lignes) — les
+	// positions fixes d'avant faisaient chevaucher objectif, budget et statut
+	let yy = y + 328;
+	const bloc = (txt, coul) => {
+		const n = couperLignes(txt, I.l - 36, DS.policeTexte, 16).length;
+		dsTexte(txt, x + 18, yy, 16, coul, 'left', I.l - 36);
+		yy += Math.max(1, n) * textLeading() + 14;
+	};
 	const o = Jeu.objectifDuJour ? Jeu.objectifDuJour() : null;
-	if (o) dsTexte(t('indic.objectif', { libelle: o.libelle, ok: Jeu.jauges[o.jauge] >= o.seuil ? '✓' : '✗' }), x + 18, y + 328, 16, DS.blanc75, 'left', I.l - 36);
+	if (o) bloc(t('indic.objectif', { libelle: o.libelle, ok: Jeu.jauges[o.jauge] >= o.seuil ? '✓' : '✗' }), DS.blanc75);
 	const b = Jeu.jauges.budget;
-	dsTexte(t(b < 20 ? 'indic.budgetBas' : b >= 70 ? 'indic.budgetHaut' : 'indic.budgetMoyen'), x + 18, y + 380, 16, DS.blanc50, 'left', I.l - 36);
+	bloc(t(b < 20 ? 'indic.budgetBas' : b >= 70 ? 'indic.budgetHaut' : 'indic.budgetMoyen'), DS.blanc50);
 	// Prompt 84 : statut auprès du patron (niveau et avertissements)
 	const S = Jeu.statutPatron || { niveau: 0, avertissements: 0 };
-	dsTexte(t('indic.statut', { statut: t(['statut.normal', 'statut.surveillance', 'statut.dernier'][S.niveau] || 'statut.normal'), n: S.avertissements }), x + 18, y + 428, 16, S.niveau === 2 ? DS.erreurClair : S.niveau === 1 ? DS.alerte : DS.blanc75, 'left', I.l - 36);
+	bloc(t('indic.statut', { statut: t(['statut.normal', 'statut.surveillance', 'statut.dernier'][S.niveau] || 'statut.normal'), n: S.avertissements }), S.niveau === 2 ? DS.erreurClair : S.niveau === 1 ? DS.alerte : DS.blanc75);
 	// Prompt 88 : grade (carrière, entre les parties) et vitrine des badges — faits de la partie uniquement
 	if (typeof Taches !== 'undefined') {
 		const g = Taches.grade();
-		dsTexte(t('indic.grade', { grade: t('grade.' + g.i), xp: g.xp }), x + 18, y + 496, 16, DS.blanc, 'left', I.l - 36);
+		bloc(t('indic.grade', { grade: t('grade.' + g.i), xp: g.xp }), DS.blanc);
 		const c = Taches.carriere();
 		Taches.R.badges.forEach((b, i) => {
 			const obtenu = !!(c.badges[b] && c.badges[b].n);
-			dessinerBadge(b, x + 18 + i * 108, y + 536, 40, obtenu);
-			if (obtenu && c.badges[b].n > 1) dsTexte('×' + c.badges[b].n, x + 64 + i * 108, y + 556, 14, DS.blanc75, 'left');
+			dessinerBadge(b, x + 18 + i * 108, yy, 40, obtenu);
+			if (obtenu && c.badges[b].n > 1) dsTexte('×' + c.badges[b].n, x + 64 + i * 108, yy + 20, 14, DS.blanc75, 'left');
 		});
+		yy += 64;
 	}
+	I.hDeplie = yy + 16 - y;
 }

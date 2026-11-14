@@ -29,12 +29,30 @@ Ne sont PAS couverts par cette licence :
 
 - site/public/lib/p5.min.js — bibliothèque p5.js, sous sa propre licence
   (LGPL-2.1, voir https://p5js.org) ;
-- les données, qui gardent leur licence d'origine :
-  * Open Data Nantes Métropole (GTFS / GTFS-RT Naolib, agenda, jeux du
-    prompt 11) — Licence Ouverte (Etalab), ou ODbL selon le jeu
-    (champ « licence » de site/src/lib/datasets.js) ;
+- les données, qui gardent leur licence d'origine (vérifiée dans les métadonnées
+  de l'API Open Data Nantes Métropole le 2026-11-14) :
+  * GTFS Naolib (offre et changelog daté, source patrimoniale du jeu) — Open
+    Database License (ODbL), éditeur Semitan, via Open Data Nantes Métropole.
+    Les extraits dérivés de site/public/data/ (lignes, semaines, fallback)
+    restent sous ODbL : attribution et partage à l'identique de la base ;
+  * GTFS-RT Naolib et agenda des événements — Licence Ouverte (Nantes
+    Métropole) ;
+  * parkings publics, fluidité des axes routiers (Nantes Métropole) et vélos
+    libre-service (JCDecaux), interrogés par le téléphone du jeu — ODbL ;
+    autres jeux du prompt 11 : champ « licence » de site/src/lib/datasets.js ;
+  * site/public/data/lieux.json — © les contributeurs d'OpenStreetMap, ODbL
+    (https://www.openstreetmap.org/copyright), géocodé via Nominatim ;
   * Open-Meteo — Creative Commons Attribution 4.0 International (CC BY 4.0),
     attribution obligatoire (https://open-meteo.com/en/licence) ;
+  * Hub'Eau (hauteur de la Loire) — Licence Ouverte Etalab ; auteur : PHyC,
+    Service Central Vigicrues ;
+- les ressources tierces livrées avec le jeu :
+  * icônes Lucide — licence ISC (site/public/licences/lucide-LICENSE.txt) ;
+  * police JetBrains Mono — SIL Open Font License 1.1
+    (site/public/licences/OFL-jetbrains-mono.txt) ;
+  * musiques Komiku et Loyalty Freak Music — CC0 1.0 ; musique du trailer
+    « Heroic Age » (Kevin MacLeod) — CC BY 4.0 (site/public/audio/CREDITS.md,
+    trailer/CREDITS.md) ;
 - les textes du livret et du framework PATRIMOINE.EXE (contexte/), propriété
   de leurs auteurs (ESD Nantes, 2026) ;
 - design-system/ : couleurs et échelle relevées sur metropole.nantes.fr à titre
