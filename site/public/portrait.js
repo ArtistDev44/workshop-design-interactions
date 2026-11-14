@@ -123,10 +123,10 @@ function composerPortrait() {
 	else if (scene === 'menu' && MENU.ecran === 'semaines') regionsChoixSemaine(); // prompt 209
 	else if (scene === 'menu' && (MENU.ecran === 'credits' || MENU.ecran === 'autorisations')) regionsFlux(MENU.ecran); // prompt 209
 	else if (scene === 'menu') {
-		// Prompt 199 : en haut à droite, la pile FR / EN · plein écran · télécharger ; puis la colonne du menu (titre, cartes)
+		// Prompt 199 : en haut à droite, la pile FR / EN · télécharger (prompt 214 : plus de plein écran) ; puis la colonne du menu (titre, cartes)
 		// jusqu'à Paramètres ; puis la rangée Livrables · Kit de presse · Présentation · Dépôt · Partager et le pied de page. Pile et rangée agrandies ×2 :
 		// boutons de 60 et 68 px → ≥ 44 px à l'écran sur un téléphone de 412 px de large
-		const lp = LARGEUR_PILE() + 24, hp = 3 * HAUT_MENU.h + 2 * 16 + 24;
+		const lp = LARGEUR_PILE() + 24, hp = 2 * HAUT_MENU.h + 16 + 24; // prompt 214 : deux rangées (FR / EN, télécharger)
 		region({ x: L - HAUT_MENU.marge - lp + 12, y: HAUT_MENU.y - 12, l: lp, h: hp }, PL - 20 - 2 * lp, 30, 2 * lp);
 		// Prompt 209 : écran titre en colonne de 640 px (x 130 → 810) ; les autres écrans du menu gardent 908 px (x 110 → 1018)
 		const titre = MENU.ecran === 'titre';
@@ -436,12 +436,13 @@ function boutonsBureau(y0) {
 	// Prompt 69 : le soir, la sortie devient la grande cible principale (← Sortie)
 	if (typeof sortieVisible === 'function' && sortieVisible()) objets = [{ nom: 'sortie', label: '← ' + t('soir.sortie'), action: quitterBureau }].concat(objets.filter((o) => o.nom !== 'sortie'));
 	const lb = (PL - 60) / 2;
-	const hp = objets[0].nom === 'sortie' ? 124 : 96; // prompt 69 : la sortie ≥ 44 px CSS sur un téléphone de 412 px
+	// Prompt 214 : tous les boutons à 124 px (≥ 44 px CSS sur un téléphone de 412 px : 124 × 412 / 1080 ≈ 47) ; 96 n'en faisait que 37
+	const hp = 124; // prompt 69 : la sortie ≥ 44 px CSS
 	objets.forEach((o, i) => {
 		const premier = i === 0;
 		const col = premier ? 0 : (i - 1) % 2;
 		const ligne = premier ? 0 : 1 + Math.floor((i - 1) / 2);
-		PORTRAIT.boutons.push({ x: premier ? 20 : 20 + col * (lb + 20), y: premier ? y0 : y0 + hp + 14 + (ligne - 1) * 110, l: premier ? PL - 40 : lb, h: premier ? hp : 96, texte: o.label, action: o.action, primaire: premier });
+		PORTRAIT.boutons.push({ x: premier ? 20 : 20 + col * (lb + 20), y: premier ? y0 : y0 + hp + 14 + (ligne - 1) * 138, l: premier ? PL - 40 : lb, h: 124, texte: o.label, action: o.action, primaire: premier });
 	});
 }
 function dessinerBoutonPortrait(b) {

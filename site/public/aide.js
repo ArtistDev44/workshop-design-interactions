@@ -417,14 +417,23 @@ function dessinerDemarrerAide(x, y, l, h, portrait) {
 		miniJaugeAide(x + i * pas, yy + 38, pas - 40, 10, [72, 31, 12][i]);
 	});
 	// Le tutoriel
-	const tx = portrait ? x : x + lg + 64;
-	const ty = portrait ? yy + 64 : y;
-	const tl = portrait ? l : l - lg - 64;
 	const total = typeof ETAPES_TUTORIEL !== 'undefined' ? ETAPES_TUTORIEL : 0;
 	const deuxLignes = true; // prompt 173 : fenêtre large (1280) → l'accroche du tutoriel passe sur deux lignes ; prompt 209 : en portrait aussi (640 px)
 	// Prompt 209 : en portrait, les étapes sur deux colonnes et le bouton du tutoriel dans le pied de la fenêtre
 	const parCol = total; // prompt 209 : une seule colonne (« Le menu et la somnolence » ne tient pas sur une demi-largeur)
 	const th = 42 + 44 + (deuxLignes ? 28 : 0) + parCol * 34 + 28 + (portrait ? 0 : 76 + 32);
+	// Prompt 214 : en portrait, l'objectif s'est allongé (prompt 213, zone d'excès) et la liste du tutoriel sortait de la
+	// fenêtre, sous les boutons. Elle passe dans la SUITE de la fenêtre (colonne à droite dans l'image, empilée dessous et
+	// défilable au doigt sur le canevas portrait, portrait.js : regionsFenetre)
+	const suite = portrait && yy + 64 + th > y + h;
+	if (suite) {
+		const sx = L - 640 - 4;
+		dsPanneau(sx, 60, 640, th + 96);
+		suiteFenetre(sx, 60, 640, th + 96);
+	}
+	const tx = suite ? L - 640 - 4 + 48 : portrait ? x : x + lg + 64;
+	const ty = suite ? 60 + 48 : portrait ? yy + 64 : y;
+	const tl = portrait ? l : l - lg - 64;
 	noStroke();
 	fill(DS.blanc05);
 	rect(tx, ty, tl, th);

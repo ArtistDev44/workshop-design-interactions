@@ -1219,8 +1219,13 @@ function basculerPleinEcran() {
 	try {
 		if (document.fullscreenElement) document.exitFullscreen();
 		else if (pleinEcranNavigateur()) annoncer(t('pleinEcran.f11'));
-		else document.documentElement.requestFullscreen().catch(() => {});
+		else entrerPleinEcran().catch(() => {});
 	} catch (e) {}
+}
+/** Prompt 214 : demande d'entrée en plein écran (promesse) — partagée par la touche F, les Paramètres et le plein écran
+ * automatique du mobile (mobile.js) */
+function entrerPleinEcran() {
+	return document.documentElement.requestFullscreen();
 }
 if (typeof document !== 'undefined' && document.addEventListener) document.addEventListener('fullscreenchange', () => annoncer(t(document.fullscreenElement ? 'pleinEcran.entree' : 'pleinEcran.sortie')));
 /** Prompt 174 : true si la touche n'est pas pour le jeu — un champ de saisie HTML a le focus (le texte tapé lui
