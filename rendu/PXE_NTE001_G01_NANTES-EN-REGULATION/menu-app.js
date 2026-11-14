@@ -13,7 +13,7 @@ const VUES_APP = ['patron', 'community', 'journal', 'donnees'];
 const ENTREES_MENU = ['signalements', 'patron', 'community', 'journal', 'donnees'];
 const ZONE_VUE = { x: 184, y: 92, l: 1696, h: 940 }; // prompt 145
 const MENU_FOCUS = { actif: false }; // Tab dans le menu (Entrée ouvre l'entrée focalisée)
-const MENU_BAS = { x: 40, y: 1036, l: 1840, h: 40 }; // portrait : barre d'onglets
+const MENU_BAS = { x: 40, y: 1036, l: 1840, h: 40 }; // portrait (avant le prompt 205) : barre d'onglets
 
 /** Une vue intégrée est affichée (une autre appli, dans l'appli principale) */
 function vueIntegree() {
@@ -33,6 +33,9 @@ function dessinerMenuApp() {
 	ENTREES_MENU.forEach((cle, k) => {
 		const i = ICONES_OS.findIndex((ic) => ic.cle === cle);
 		if (i < 0) return;
+		// Prompt 205 : en portrait, la barre d'onglets est dessinée sur le canevas portrait (portrait.js) ; ici, seulement
+		// marquer la vue affichée comme vue (remise à zéro de son badge)
+		if (portrait) return void (entreeActive() === cle && vue === 'poste' && marquerVue(cle));
 		const ic = ICONES_OS[i];
 		const r = portrait ? { x: MENU_BAS.x + k * (MENU_BAS.l / n), y: MENU_BAS.y, l: MENU_BAS.l / n - 6, h: MENU_BAS.h } : { x: M.x, y: M.y + k * 112, l: M.l, h: 104 };
 		const actif = entreeActive() === cle;
@@ -72,7 +75,7 @@ function dessinerMenuApp() {
 		const nb = !actif && !verrou ? nombreBadge(cle) : 0;
 		const b = nb ? texteBadge(nb) : cle === 'signalements' && !actif && typeof badgeIcone === 'function' ? badgeIcone(cle) : ''; // « ! » : incident en cours (prompt 68)
 		if (b) dsBadge(r.x + r.l - (portrait ? 30 : 28), r.y + 8, b, 'erreur');
-		boutons.push({ x: r.x, y: r.y, l: r.l, h: r.h, action: () => ouvrirEntreeMenu(cle) });
+		boutons.push({ x: r.x, y: r.y, l: r.l, h: r.h, action: () => ouvrirEntreeMenu(cle), titre: libelleEntreeMenu(cle) }); // prompt 210 : libellé (lecteur-ecran.js)
 		if (k === 1) cibleGuide('iconesOS', M.x, M.y + 112, M.l, 4 * 112); // prompt 37 : le guide montre le menu
 	});
 }

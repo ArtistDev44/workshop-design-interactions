@@ -224,7 +224,7 @@ function contenuCentreNotifications(e, pret) {
 		textFont(POLICE_TEXTE);
 		textStyle(NORMAL);
 		textAlign(LEFT, CENTER);
-		zoneTexteDebut('npdTel', x + 42, y0 - 24, lw - 26, 24);
+		zoneTexteDebut('npdTel', x + 42, y0 - 28, lw - 26, 30); // prompt 209 : 20 px en portrait (plancher), boîte agrandie
 		ajusterTaille(t('tel.npd'), lw - 26, 18, 14);
 		text(t('tel.npd'), x + 42, y0 - 13);
 		zoneTexteFin();
@@ -275,7 +275,7 @@ function contenuGroupesTel(x, y0, l, h) {
 			textFont(POLICE_DONNEES);
 			textSize(15);
 			fill('#3d4b5f');
-			text(t('tel.app.' + g.app) + ' · ' + (n.heureReelle ? t('tel.releve', { heure: n.heureReelle }) : Jeu.formaterHeure(n.minute)) + (!n.lu ? ' · ●' : ''), x + 70, y + 14, l - 120, 20);
+			text(t('tel.app.' + g.app) + ' · ' + (n.heureReelle ? t('tel.releve', { heure: n.heureReelle }) : Jeu.formaterHeure(n.minute)) + (!n.lu ? ' · ●' : ''), x + 70, y + (typeof PORTRAIT !== 'undefined' && PORTRAIT.actif ? 10 : 14), l - 120, typeof PORTRAIT !== 'undefined' && PORTRAIT.actif ? 28 : 20); // prompt 209 : plancher de 20 px en portrait
 			textFont(POLICE_TEXTE);
 			textSize(17);
 			fill('#0b1b33');

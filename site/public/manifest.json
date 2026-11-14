@@ -11,14 +11,20 @@
 	"heritage_source": {
 		"title": "Réseau de transports collectifs Naolib — offre, perturbations et temps réel (Open Data Nantes Métropole)",
 		"url": "https://data.nantesmetropole.fr/explore/dataset/244400404_transports_commun_naolib_nantes_metropole_gtfs/",
-		"rights": "Licence Ouverte (Nantes Métropole)"
+		"rights": "ODbL (Open Database License), éditeur Semitan, via Open Data Nantes Métropole — vérifié le 2026-11-14"
 	},
 	"mode": ["interactive", "data"],
 	"stack": ["p5.js", "Web Audio API", "Astro (site statique)"],
 	"data_sources": [
-		{ "name": "Naolib GTFS (offre et changelog daté)", "provider": "Open Data Nantes Métropole", "id": "244400404_transports_commun_naolib_nantes_metropole_gtfs", "rights": "Licence Ouverte" },
+		{ "name": "Naolib GTFS (offre et changelog daté)", "provider": "Semitan via Open Data Nantes Métropole", "id": "244400404_transports_commun_naolib_nantes_metropole_gtfs", "rights": "ODbL" },
 		{ "name": "Naolib GTFS-RT (temps réel)", "provider": "Open Data Nantes Métropole", "id": "244400404_reseau-transports-collectifs-naolib", "rights": "Licence Ouverte" },
 		{ "name": "Agenda des événements", "provider": "Open Data Nantes Métropole", "id": "244400404_agenda-evenements-nantes-metropole_v2", "rights": "Licence Ouverte" },
+		{ "name": "Parkings publics (disponibilités, téléphone du jeu)", "provider": "Nantes Métropole via Open Data Nantes Métropole", "id": "244400404_parkings-publics-nantes-disponibilites", "rights": "ODbL" },
+		{ "name": "Vélos libre-service Naolib (téléphone du jeu)", "provider": "JCDecaux via Open Data Nantes Métropole", "id": "244400404_disponibilite-temps-reel-velos-libre-service-naolib-nantes-metropole", "rights": "ODbL" },
+		{ "name": "Fluidité des axes routiers (téléphone du jeu)", "provider": "Nantes Métropole via Open Data Nantes Métropole", "id": "244400404_fluidite-axes-routiers-nantes-metropole", "rights": "ODbL" },
+		{ "name": "Lieux géocodés (data/lieux.json)", "provider": "© les contributeurs d'OpenStreetMap", "url": "https://www.openstreetmap.org/copyright", "rights": "ODbL" },
+		{ "name": "Icônes Lucide", "provider": "Lucide Contributors", "url": "https://lucide.dev/", "rights": "ISC (licences/lucide-LICENSE.txt)" },
+		{ "name": "Police JetBrains Mono", "provider": "JetBrains", "url": "https://github.com/JetBrains/JetBrainsMono", "rights": "SIL Open Font License 1.1 (licences/OFL-jetbrains-mono.txt)" },
 		{ "name": "Météo (prévision et archive ERA5)", "provider": "Open-Meteo", "url": "https://open-meteo.com/", "rights": "CC BY 4.0" },
 		{ "name": "Hauteur de la Loire à Nantes (station M800001010)", "provider": "Hub'Eau — Hydrométrie (eaufrance)", "url": "https://hubeau.eaufrance.fr/", "rights": "Licence Ouverte Etalab (CGU Hub'Eau § 5.1.3, vérifié le 2026-11-11 ; citer l'auteur : PHyC, Service Central Vigicrues)" },
 		{ "name": "Musiques (Komiku)", "provider": "Wikimedia Commons", "url": "https://commons.wikimedia.org/", "rights": "CC0 1.0" },

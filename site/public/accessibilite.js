@@ -14,7 +14,7 @@ const PALETTES = {
 	tritan: { bon: '#00C2B8', alerte: '#FF9EC4', critique: '#E8003D', critiqueTexte: '#FF9EB0', papier: { bon: '#00756e', alerte: '#a3366a', critique: '#b0002e' } },
 };
 const ORDRE_DALTONISME = ['normal', 'protan', 'deutan', 'tritan'];
-const TAILLES_TEXTE = [100, 115, 130];
+const TAILLES_TEXTE = [100, 115, 130]; // prompt 210 : paliers 160 / 200 % essayés puis retirés — audit des textes 1920 × 1080 : 117 défauts à 130 %, 923 à 160 %, 1 396 à 200 % (mises en page fixes du canevas) ; voir jeu/210-corrections-audit-206.md
 const palette = () => PALETTES[Confort.Reglages.daltonisme] || PALETTES.normal;
 /** Couleur d'une jauge sur le papier du rapport (encre lisible sur le crème) */
 function couleurPapier(v) {
@@ -57,12 +57,21 @@ function installerEchelleTexte() {
 		let v = s < 24 ? Math.min(s * ECHELLE_TEXTE, 24) : s;
 		// Prompt 49 : sur l'écran du PC (affiché à 90 %), aucun texte sous 18 px (≈ 16 px à l'écran)
 		if (typeof espaceDessin !== 'undefined' && espaceDessin === 'pc') v = Math.max(v, typeof transformAppli !== 'undefined' && transformAppli ? 20 : TAILLE_MIN_PC); // prompt 50 : 20 px dans l'appli, réduite à 91 % en fenêtre
+		// Prompt 209 : mobile portrait — dans les écrans recomposés en colonne de 640 px (fenêtres…), aucun texte sous 20 px
+		// (≈ 12 px CSS sur un écran de 412 px de large)
+		if (typeof PORTRAIT !== 'undefined' && PORTRAIT.actif && plancherPortrait()) v = Math.max(v, 20);
 		return tailleOrigine(v);
 	};
 	window.textLeading = function (s) {
 		if (s === undefined) return interligneOrigine();
 		return interligneOrigine(Math.max(s, tailleOrigine() * 1.25)); // l'interligne suit le texte agrandi
 	};
+}
+
+/** Prompt 209 : écrans dessinés en colonne étroite en portrait (le plancher de 20 px s'y applique) */
+function plancherPortrait() {
+	if (typeof TEL_EN_DESSIN !== 'undefined' && TEL_EN_DESSIN) return true; // écran du téléphone en main (SMS, notifications)
+	return typeof FENETRE_EN_DESSIN !== 'undefined' && FENETRE_EN_DESSIN && typeof fenetre !== 'undefined' && fenetre !== 'cafe';
 }
 
 /** Lecture facile : compte à rebours ×1,5 et pas de tic-tac */

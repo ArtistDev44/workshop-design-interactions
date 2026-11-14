@@ -32,7 +32,7 @@ Une partie (une semaine rejouée) dure **10 à 20 minutes** ; le mode histoire (
 - [Astro](https://astro.build) 7, rendu **100 % statique** (seule dépendance : `astro`).
 - CSS maison d'après `design-system/DESIGN.md` (sans police externe), JavaScript natif.
 - Validation du registre par schéma (`astro/zod`) : une fiche d'œuvre incomplète bloque le build.
-- Déploiement : URL canonique sur Cloudflare Pages. ⚠ Incohérence connue : `.github/workflows/deploy.yml` utilise les actions **GitHub Pages** (`upload-pages-artifact`, `deploy-pages`), dont l'adresse renvoie une 404 ; la façon dont Cloudflare Pages construit le site n'est pas documentée dans le dépôt ([À COMPLÉTER], voir `todo.md`).
+- Déploiement : URL canonique sur Cloudflare Pages ; la façon dont Cloudflare Pages construit le site n'est pas documentée dans le dépôt ([À COMPLÉTER], voir `todo.md`). Depuis le prompt 210, `.github/workflows/tests.yml` lance `npm run build` puis `npm test` (avec le test navigateur) à chaque push ; l'ancien workflow GitHub Pages (adresse en 404) est supprimé.
 - Smoke test sans dépendance : `npm test` (`scripts/smoke.mjs`).
 
 ## Données
@@ -109,7 +109,7 @@ Wi-Fi coupé sur la machine d'exposition.
 ## Déploiement et QR codes
 
 - URL canonique : https://workshop-design-interactions.pages.dev/ (Cloudflare Pages, racine du domaine, `base: '/'`).
-- Le workflow `.github/workflows/deploy.yml` construit `site/` à chaque push sur `main` et publie sur **GitHub Pages** — adresse en 404, donc sans effet visible ; le mécanisme de publication Cloudflare est [À COMPLÉTER] (voir `todo.md`).
+- Le workflow `.github/workflows/tests.yml` (prompt 210) construit `site/` et lance `npm test` (smoke, jeu, navigateur Chromium) à chaque push ; il ne publie rien. Le mécanisme de publication Cloudflare est [À COMPLÉTER] (voir `todo.md`). Le diaporama (`public/presentation/`) n'est plus reconstruit par `prebuild` : `npm run build:slides` à la demande.
 - QR codes dans `public/assets/` : `qr-edition.png` (accueil, crédits) et `qr-{slug}.png` (page de chaque œuvre). Pour en régénérer un :
 
   ```sh
@@ -143,7 +143,7 @@ Les décisions de jeu (Q1–Q61, `jeu/`) et les prompts ont été rédigés en a
 
 ## Sources / droits
 
-- Données : Open Data Nantes Métropole (Naolib GTFS / GTFS-RT, agenda) — Licence Ouverte ; Open-Meteo — CC BY 4.0 (vérifié le 10/11/2026, attribution requise) ; jeux du prompt 11 (dont Air Pays de la Loire) — Licence Ouverte ou ODbL selon le jeu (champ `licence` de `src/lib/datasets.js`).
+- Données : Open Data Nantes Métropole : GTFS Naolib — ODbL, éditeur Semitan ; GTFS-RT et agenda — Licence Ouverte (vérifié le 14/11/2026) ; OpenStreetMap (`data/lieux.json`) — ODbL ; Open-Meteo — CC BY 4.0 (vérifié le 10/11/2026, attribution requise) ; jeux du prompt 11 (dont Air Pays de la Loire) — Licence Ouverte ou ODbL selon le jeu (champ `licence` de `src/lib/datasets.js`).
 - Code : licence MIT (Mattéo Brevet & Guillaume Renoult), voir `LICENSE` à la racine.
 - Textes : framework PATRIMOINE.EXE et livret étudiant Nantes 001 (ESD Nantes, 2026).
 - Design : couleurs et échelle inspirées des tokens extraits de metropole.nantes.fr ; ce site n'est pas un site officiel de Nantes Métropole.

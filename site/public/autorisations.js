@@ -128,6 +128,7 @@ function dessinerAutorisations() {
 	noStroke();
 	dsVoile(); // prompt 173 : voile unique du DS (0,8)
 	const focus = (i) => AUTOR.choix === i;
+	if (portrait) return autorisationsPortrait(el, focus); // prompt 209
 	dsTitre(t('autor.titre'), x, y0, portrait ? 52 : 64, DS.blanc, 'left');
 	dsTexte(t('autor.intro'), x, y0 + 96, 24, DS.blanc75, 'left', l);
 	let y = y0 + 190;
@@ -172,6 +173,53 @@ function dessinerAutorisations() {
 	textAlign(LEFT, TOP);
 	text(t(mediasDisponibles() ? 'autor.pied' : 'autor.piedAbsent'), x, yj + 104, l, 80);
 	text(t('autor.clavier'), x, H - 70);
+}
+/** Prompt 209 : mobile portrait — titre, intro, une carte par périphérique (statut puis bouton pleine largeur), boutons
+ * et pieds en flux dans deux colonnes de 640 px (portrait.js, fluxPortrait) ; texte à 20 px au moins */
+function autorisationsPortrait(el, focus) {
+	const F = fluxPortrait();
+	const l = F.l;
+	let tt = 52;
+	while (tt > 36 && largeurTitreDS(t('autor.titre'), tt) > l) tt -= 4;
+	let p = F.place(tt + 24);
+	dsTitre(t('autor.titre'), p.x, p.y, tt, DS.blanc, 'left');
+	const oi = { taille: 24, interligne: 32, couleur: DS.blanc75, police: DS.policeTexte };
+	p = F.place(hauteurTexte(t('autor.intro'), l, oi) + 24);
+	dessinerTexte(t('autor.intro'), p.x, p.y, l, oi);
+	const ou = { taille: 20, interligne: 28, couleur: DS.blanc75, police: DS.policeTexte };
+	LIGNES_AUTOR.forEach((cle, i) => {
+		const s = AUTOR.etat[cle];
+		const usage = t('autor.' + cle + '.usage') + ' ' + (cle !== 'son' && (s === 'refuse' || s === 'absent') ? t('autor.' + cle + '.sans') : '');
+		const hu = hauteurTexte(usage, l - 64, ou);
+		const hL = 20 + 40 + hu + 12 + 28 + 16 + 64 + 20;
+		p = F.place(hL + 16);
+		const x = p.x;
+		const y = p.y;
+		noStroke();
+		fill(DS.blanc05);
+		rect(x, y, l, hL);
+		fill(s === 'autorise' ? DS.succes : s === 'refuse' || s === 'coupe' ? DS.primaire : DS.blanc15);
+		rect(x, y, 6, hL);
+		dessinerTexte(t('autor.' + cle), x + 32, y + 20, l - 64, { taille: 28, interligne: 36, couleur: DS.blanc, police: DS.policeTexte, style: BOLD });
+		dessinerTexte(usage, x + 32, y + 60, l - 64, ou);
+		dessinerTexte(t('autor.statut.' + s), x + 32, y + 60 + hu + 12, l - 64, { taille: 20, interligne: 28, police: POLICE_DONNEES, couleur: s === 'autorise' ? DS.succesClair : s === 'refuse' || s === 'coupe' ? DS.erreurClair : DS.blanc75 });
+		const e = el[i + 1];
+		const yb = y + hL - 20 - 64;
+		dsBouton(x + 32, yb, l - 64, 64, e.libelle, e.action, 'contour', e.desactive || AUTOR.enCours);
+		if (focus(i + 1)) cadreFocusAutor(x + 32, yb, l - 64, 64);
+	});
+	p = F.place(100);
+	dsBouton(p.x, p.y + 12, l, 76, el[0].libelle, el[0].action, 'primaire', el[0].desactive || AUTOR.enCours);
+	if (focus(0)) cadreFocusAutor(p.x, p.y + 12, l, 76);
+	p = F.place(100);
+	const j = el.length - 1;
+	dsBouton(p.x, p.y + 12, l, 76, el[j].libelle, el[j].action, auMoinsUneAutorisation() ? 'secondaire' : 'contour');
+	if (focus(j)) cadreFocusAutor(p.x, p.y + 12, l, 76);
+	const op = { taille: 20, interligne: 28, couleur: DS.blanc75, police: POLICE_DONNEES };
+	[t(mediasDisponibles() ? 'autor.pied' : 'autor.piedAbsent'), t('autor.clavier')].forEach((txt) => {
+		p = F.place(hauteurTexte(txt, l, op) + 24);
+		dessinerTexte(txt, p.x, p.y + 16, l, op);
+	});
 }
 function cadreFocusAutor(x, y, l, h) {
 	noFill();

@@ -125,7 +125,7 @@ rédigées en amont ; les données sont réelles.
 
 ## Sources / droits
 
-- Open Data Nantes Métropole (Naolib GTFS, GTFS-RT, agenda) : Licence Ouverte.
+- GTFS Naolib (source patrimoniale) : ODbL, éditeur Semitan, via Open Data Nantes Métropole (vérifié le 14/11/2026) ; GTFS-RT et agenda : Licence Ouverte (Nantes Métropole) ; parkings, vélos (JCDecaux), fluidité : ODbL ; lieux (`data/lieux.json`) : © contributeurs OpenStreetMap, ODbL.
 - Open-Meteo : CC BY 4.0 (attribution affichée dans le jeu, vérifiée le 10/11/2026).
 - Hub'Eau — Hydrométrie : Licence Ouverte Etalab (auteur cité : PHyC, Service Central Vigicrues).
 - Musiques : Komiku et Loyalty Freak Music, CC0 1.0 (`audio/CREDITS.md`).

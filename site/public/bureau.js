@@ -764,6 +764,23 @@ function bandeBords(c, e) {
 		ctx.fillRect(rx, ry, rl, rh);
 	});
 }
+let cPiecePoste = null;
+const CACHE_POSTE = { cle: '', t: -1e9 };
+function pieceFloueAuPoste(ox, oy, echelle) {
+	if (!cPiecePoste) cPiecePoste = canevas(L, H);
+	const cle = Math.round(ox) + ',' + Math.round(oy) + ',' + echelle.toFixed(3);
+	if (cle !== CACHE_POSTE.cle || millis() - CACHE_POSTE.t > 500) {
+		const c = cPiecePoste.getContext('2d');
+		c.clearRect(0, 0, L, H);
+		c.imageSmoothingEnabled = false;
+		c.filter = 'blur(2px) brightness(0.85)';
+		c.drawImage(gBureau.elt, ox, oy, L * echelle, H * echelle);
+		c.filter = 'none';
+		CACHE_POSTE.cle = cle;
+		CACHE_POSTE.t = millis();
+	}
+	drawingContext.drawImage(cPiecePoste, 0, 0, L, H);
+}
 function masqueFlouEtVignette(ox, oy, echelle) {
 	if (!cMasqueFlou) {
 		cPieceFloue = canevas(BW, BH);
@@ -855,6 +872,7 @@ function composerVue() {
 	const src = drawingContext.canvas;
 	if (vue === 'bureau') copieBasse.getContext('2d').drawImage(src, 0, 0, copieBasse.width, copieBasse.height);
 	else copieHaute.getContext('2d').drawImage(src, 0, 0);
+	if (typeof lecteurAvantComposition === 'function') lecteurAvantComposition(); // prompt 210 : libellés relevés dans le repère du contenu
 	// Boutons du contenu : cliquables seulement au poste, ramenés en coordonnées réelles
 	if (auPoste) {
 		const k = r.l / L;
@@ -874,8 +892,12 @@ function composerVue() {
 	const ox = r.x - e.x * echelle;
 	const oy = r.y - e.y * echelle;
 	const flou = auPoste; // la pièce n'est floutée qu'au poste (derrière le moniteur) ; plus de flou au bureau en temps accéléré
-	if (flou && !reduireAnimations) drawingContext.filter = auPoste ? 'blur(2px) brightness(0.85)' : 'blur(1.5px)';
-	if (auPoste || !COUCHES_PIECE[0].g) {
+	if (flou && !reduireAnimations) {
+		// Prompt 210 (audit 206, constat 8) : le flou plein écran recalculé à chaque image plafonnait le poste à ≈ 15 FPS.
+		// La pièce floutée est mise en cache et n'est refaite que si le cadrage change (zoom, caméra) ou toutes les
+		// 500 ms (horloge, pluie, lampe derrière le moniteur : invisibles à cette cadence sous le flou).
+		pieceFloueAuPoste(ox, oy, echelle);
+	} else if (auPoste || !COUCHES_PIECE[0].g) {
 		push();
 		translate(ox, oy);
 		scale(echelle);
@@ -929,7 +951,7 @@ function composerVue() {
 		dessinerBoutonQuitterPC();
 		return;
 	}
-	// Au bureau : survol de l'écran, objets, horloge numérique, invitation
+	// Au bureau : survol de l'écran, objets, invitation
 	survolEcran = mouseX >= r.x && mouseX <= r.x + r.l && mouseY >= r.y && mouseY <= r.y + r.h;
 	if (survolEcran || focusBureau === 0) {
 		contourSurvol(r.x - 7 * PIX, r.y - 7 * PIX, r.l + 14 * PIX, r.h + 15 * PIX);
@@ -938,7 +960,8 @@ function composerVue() {
 	cibleGuide('ecranPC', r.x, r.y, r.l, r.h); // prompt 37
 	// Prompt 182 : l'invite « S'installer au PC » au survol / focus de l'écran (toujours au doigt : pas de survol)
 	const tactile = typeof MOBILE !== 'undefined' && MOBILE.actif;
-	if ((survolEcran || focusBureau === 0 || tactile) && !(phase === 'soir' && SOIR.sortie) && !fenetre && !smsActif) {
+	const enPortraitB = typeof PORTRAIT !== 'undefined' && PORTRAIT.actif; // prompt 209 : le bouton portrait « S'installer » porte l'invite
+	if ((survolEcran || focusBureau === 0 || tactile) && !enPortraitB && !(phase === 'soir' && SOIR.sortie) && !fenetre && !smsActif) {
 		const invite = t('bureau.inviteInstaller');
 		textFont(POLICE_DONNEES);
 		textSize(18);
@@ -946,19 +969,8 @@ function composerVue() {
 	}
 	if (typeof dessinerFlecheSortie === 'function') dessinerFlecheSortie(); // prompt 69
 	zonesObjetsBureau();
-	if (ecran === 'jeu' && phase !== 'fin') {
-		const hA = heureAffichee();
-		textFont(POLICE_DONNEES);
-		textSize(22);
-		const lib = String(hA.h).padStart(2, '0') + ':' + String(hA.m).padStart(2, '0') + (tempsCompresse() ? '  ▶▶ ×' + IMMERSION.compression : '');
-		const lh = textWidth(lib) + 24;
-		const ph = versEcranBureau(HORLOGE_MURALE.x, HORLOGE_MURALE.y + HORLOGE_MURALE.r + 6, 0, 0, 0.7); // sous l'horloge murale, plan « baie » (prompt 40)
-		fill(13, 12, 12, 225);
-		rect(ph.x - lh / 2, ph.y, lh, 34);
-		fill('#FFFFFF');
-		textAlign(CENTER, CENTER);
-		text(lib, ph.x, ph.y + 17);
-	}
+	// Prompt 212 : plus d'heure numérique sous l'horloge murale — l'horloge à aiguilles la dit au bureau, le coin du poste
+	// au PC (3e affichage de l'heure, revue ux-informations-2026-11-14 § 3)
 	const msg = incidentActif()
 		? t('bureau.incident')
 		: phase === 'soir'
@@ -969,8 +981,19 @@ function composerVue() {
 	if (phase === 'soir' && (SOIR.sortie || respirationSoir())) return; // prompt 69 : pendant la sortie, pas de consigne ; prompt 191 : ni pendant « Fin de journée. »
 	// Prompt 124 : la consigne « Cliquez sur le PC… » n'est plus affichée en permanence (immersion) ; elle ne revient
 	// qu'après 10 s sans geste, pour qui hésite. Les messages d'état (incident, mail, soir) restent.
-	const consigne = msg === t('bureau.installer') || msg === t('bureau.installerMobile');
+	// Prompt 211 : « Incident en cours » suit la même règle — la pastille sur l'écran du PC l'annonce déjà
+	const consigne = msg === t('bureau.installer') || msg === t('bureau.installerMobile') || msg === t('bureau.incident');
 	if (consigne && typeof inactifDepuis !== 'undefined' && millis() - inactifDepuis < 10000) return;
+	if (enPortraitB) {
+		// Prompt 209 : la consigne passe à la ligne dans 640 px (reprise à la loupe sous l'image)
+		const o = { taille: 22, interligne: 30, couleur: '#FFFFFF', police: POLICE_DONNEES, align: 'center' };
+		const hm = hauteurTexte(String(msg), 600, o) + 20;
+		fill(13, 12, 12, 225);
+		rect(L / 2 - 320, H - 28 - hm, 640, hm);
+		loupePortrait(L / 2 - 320, H - 28 - hm, 640, hm);
+		dessinerTexte(String(msg), L / 2 - 300, H - 28 - hm + 10, 600, o);
+		return;
+	}
 	textFont(POLICE_DONNEES);
 	textSize(22);
 	const lm = textWidth(msg) + 40;
@@ -995,7 +1018,11 @@ function dessinerBoutonQuitterPC() {
 	const b = rectBoutonQuitter();
 	if (clignement) return; // pendant qu'on se lève, le bouton disparaît
 	const raison = raisonRetenuAuPC(); // prompt 182 : un choix attend → bouton désactivé, avec sa raison
-	bouton(b.x, b.y, b.l, b.h, t(GUIDE.actif ? 'poste.quitter_pc_guide' : 'poste.quitter_pc'), quitterPC, !!raison); // prompt 174 : pendant le guide, Échap quitte le guide — le libellé ne la promet pas
+	// Prompt 211 : bouton secondaire (contour) sur un fond sombre — le rouge primaire en faisait l'élément le plus saillant
+	noStroke();
+	fill(13, 12, 12, 225);
+	rect(b.x, b.y, b.l, b.h);
+	bouton(b.x, b.y, b.l, b.h, t(GUIDE.actif ? 'poste.quitter_pc_guide' : 'poste.quitter_pc'), quitterPC, !!raison, true); // prompt 174 : pendant le guide, Échap quitte le guide — le libellé ne la promet pas
 	cibleGuide('quitterPC', b.x, b.y, b.l, b.h); // prompt 37
 	if (raison) boutons.push({ x: b.x, y: b.y, l: b.l, h: b.h, action: quitterPC }); // clic / toucher sur le bouton désactivé : la raison est dite (infobulle + annonce), sans sortie
 	if (raison && !fenetre && !smsActif) {

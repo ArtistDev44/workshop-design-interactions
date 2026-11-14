@@ -16,6 +16,7 @@ const urlMeteoArchive = (debut, fin) =>
 	fin;
 const urlAgenda = (debut, fin) => TEL.url + '?limit=20&where=' + encodeURIComponent("date>=date'" + debut + "' AND date<=date'" + fin + "'");
 const LICENCE_NM = 'Licence Ouverte (Nantes Métropole)';
+const LICENCE_GTFS = 'ODbL (éditeur Semitan, via Open Data Nantes Métropole)'; // prompt 210 : licence lue dans les métadonnées de l'API le 2026-11-14
 
 ICONES_OS.push({ cle: 'donnees', nom: T('app.donnees'), dessin: (x, y, s) => iconeDonnees(x, y, s || 1) });
 
@@ -88,7 +89,12 @@ function blocsDonnees() {
 			url: urlAgenda(date, date),
 		});
 	} else {
-		const s = Jeu.etat.semaine || (Jeu.fallback && { lundi: Jeu.fallback.semaine.lundi, dimanche: Jeu.fallback.semaine.dimanche, dossiers: Jeu.fallback.dossiers || [], evenements: [], meteo: Jeu.fallback.meteo || [] });
+		// Prompt 210 (audit 206, constat 10) : hors ligne, Jeu.etat.semaine n'est que { lundi, dimanche } (game.js,
+		// chargerHorsLigne) — l'appli affichait « 0 dossier ». On lit alors la semaine de référence (Jeu.fallback) :
+		// ses 6 dossiers réels, sa météo, et ses événements (dossiers de type « événement »).
+		const fb = Jeu.fallback;
+		const etatSem = Jeu.etat.semaine;
+		const s = etatSem && Array.isArray(etatSem.dossiers) ? etatSem : fb ? { lundi: fb.semaine.lundi, dimanche: fb.semaine.dimanche, dossiers: fb.dossiers || [], evenements: (fb.dossiers || []).filter((d) => d.type === 'événement'), meteo: fb.meteo || [] } : { lundi: null, dimanche: null, dossiers: [], evenements: [], meteo: [] };
 		const periode = t('donnees.archive', { debut: dFr(s.lundi), fin: dFr(s.dimanche) });
 		const parType = {};
 		(s.dossiers || []).forEach((d) => (parType[d.type] = (parType[d.type] || 0) + 1));
@@ -97,7 +103,7 @@ function blocsDonnees() {
 			lignes: [t('donnees.incidents.n', { n: (s.dossiers || []).length })].concat(Object.keys(parType).map((k) => tSi('type.' + k, k) + ' : ' + parType[k])),
 			statut: periode,
 			source: 'Changelog daté du GTFS Naolib',
-			licence: LICENCE_NM,
+			licence: LICENCE_GTFS,
 			url: URL_GTFS,
 		});
 		b.push({
@@ -136,27 +142,40 @@ function dessinerAppliDonnees(z) {
 }
 /** Prompt 103 : les mêmes blocs dans une zone (une ligne d'intro, mode en texte secondaire, 2 × 2 blocs) */
 function dessinerBlocsDonnees(z) {
-	dsTexte(t('donnees.intro') + ' · ' + (modeDonnees() === 'direct' ? t('donnees.mode.direct') : t('donnees.mode.archive')), z.x, z.y, 18, DS.blanc75, 'left', z.l);
+	const intro = t('donnees.intro') + ' · ' + (modeDonnees() === 'direct' ? t('donnees.mode.direct') : t('donnees.mode.archive'));
+	dsTexte(intro, z.x, z.y, 18, DS.blanc75, 'left', z.l);
 	const blocs = blocsDonnees();
 	const e = 24;
-	const y0 = z.y + 76;
-	const bl = (z.l - e) / 2;
-	const bh = (z.h - 76 - e) / 2;
+	// Prompt 205 : en portrait, deux colonnes de 620 px dessinées côte à côte (la vue et sa suite, GEO_PORTRAIT.suite),
+	// que le canevas portrait empile : deux blocs par colonne, pleine largeur
+	const portrait = typeof PORTRAIT !== 'undefined' && PORTRAIT.actif && typeof GEO_PORTRAIT !== 'undefined';
+	const hIntro = portrait ? couperLignes(intro, z.l, DS.policeTexte, 18).length * 26 + 20 : 76;
+	const y0 = z.y + hIntro;
+	const bl = portrait ? z.l : (z.l - e) / 2;
+	const bh = portrait ? (z.h - hIntro - e) / 2 : (z.h - 76 - e) / 2;
+	const S = portrait ? GEO_PORTRAIT.suite : null;
+	const bhS = portrait ? (S.h - e) / 2 : bh;
 	blocs.forEach((b, i) => {
-		const x = z.x + (i % 2) * (bl + e);
-		const y = y0 + Math.floor(i / 2) * (bh + e);
+		const x = portrait ? (i < 2 ? z.x : S.x) : z.x + (i % 2) * (bl + e);
+		const y = portrait ? (i < 2 ? y0 + i * (bh + e) : S.y + (i - 2) * (bhS + e)) : y0 + Math.floor(i / 2) * (bh + e);
+		const hb = portrait && i >= 2 ? bhS : bh; // hauteur du bloc (la suite a sa propre hauteur)
 		noStroke();
 		fill(DS.blanc05);
-		rect(x, y, bl, bh);
+		rect(x, y, bl, hb);
 		dsTexte(String(b.titre), x + 20, y + 16, 20, DS.blanc, 'left');
-		dsTexte(b.statut, x + 20, y + 48, 16, b.statut === t('donnees.repli') ? DS.alerte : DS.succesClair, 'left');
+		dsTexte(portrait ? couperLargeurCarte(b.statut, bl - 40, 20) : b.statut, x + 20, y + 48, 16, b.statut === t('donnees.repli') ? DS.alerte : DS.succesClair, 'left');
+		// Prompt 204 : la source (licence comprise) prend la hauteur de ses lignes réelles, juste au-dessus du bouton —
+		// à 3 lignes (Hub'Eau), elle débordait sur « Ouvrir l'API »
+		const src = t('donnees.source', { source: b.source, licence: b.licence });
+		const nSrc = couperLignes(src, bl - 40, DS.policeTexte, 16).length;
+		const ySrc = y + hb - 62 - nSrc * 26; // 26 px : interligne du texte rendu à 20 px
 		// prompt 103 : autant de lignes que la place le permet (texte rendu à 20 px dans l'appli), « … » sinon
-		const maxL = Math.max(1, Math.floor((bh - 200) / 26));
+		const maxL = Math.max(1, Math.floor((ySrc - 12 - (y + 80)) / 26));
 		const ls = [];
 		b.lignes.forEach((ln) => ls.push(...couperLignes(String(ln), bl - 40, DS.policeTexte, 20)));
 		dsTexte(ls.length > maxL ? ls.slice(0, maxL - 1).concat('…').join('\n') : ls.join('\n'), x + 20, y + 80, 18, DS.blanc75, 'left');
-		dsTexte(t('donnees.source', { source: b.source, licence: b.licence }), x + 20, y + bh - 112, 16, DS.blanc50, 'left', bl - 40); // 2 lignes au plus (20 px rendus)
-		dsBouton(x + 20, y + bh - 50, 300, 40, t('donnees.ouvrir'), () => ouvrirLienApi(b.url), 'fantome');
+		dsTexte(src, x + 20, ySrc, 16, DS.blanc50, 'left', bl - 40);
+		dsBouton(x + 20, y + hb - 50, 300, 40, t('donnees.ouvrir'), () => ouvrirLienApi(b.url), 'fantome');
 	});
 }
 function ouvrirLienApi(url) {

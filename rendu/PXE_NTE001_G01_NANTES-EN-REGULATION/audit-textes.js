@@ -13,7 +13,7 @@
  *   d'ancrage du texte (la plus au premier plan), sinon le canevas (l'écran du PC pendant le dessin du PC) ;
  * - défaut si la boîte sort de la zone de plus de 1 px, ou si un texte en boîte est coupé par p5 (hauteur
  *   nécessaire > h) ; catégories A (bouton, pastille), B (multi-ligne coupé), C (carte, panneau), D (écran / canevas),
- *   E (deux textes qui se chevauchent dans une même zone).
+ *   E (deux textes qui se chevauchent dans une même zone), T (prompt 205 : mobile portrait, texte rendu sous 12 px CSS).
  * Restitution : contours rouges (texte) et orange (zone), fixes ; panneau de rapport repliable ;
  * window.AUDIT_TEXTES.rapport() ; ?audit=textes&parcours=1 enchaîne tous les écrans (FR / EN, contraste renforcé
  * ou non) puis propose le rapport agrégé en téléchargement (audit-textes-AAAA-MM-JJ.json) et le résume en console.
@@ -168,6 +168,19 @@
 			if (!A.petits.has(k)) A.petits.set(k, { ecran: A.ecran, texte: s.slice(0, 80), taille: Math.round(tAff * 10) / 10, tailleEcranCSS: Math.round(tAff * echelleCSS * 10) / 10, appelant: appelant() });
 		}
 		const b = versEcran(bx, by, bl, bh, tampon);
+		// Prompt 205 : mobile portrait — taille RENDUE à l'écran après recomposition (région de l'image principale
+		// agrandie ou réduite sur le canevas portrait, lui-même mis à la largeur du téléphone) : défaut « T » sous 12 px CSS,
+		// compté une fois par texte et par langue (le premier écran où il apparaît)
+		if (A.enParcours && A.enregistre && !tampon && typeof PORTRAIT !== 'undefined' && PORTRAIT.actif && PORTRAIT.canevas && PORTRAIT.regions.length) {
+			const cx = b.x + b.l / 2;
+			const cy = b.y + b.h / 2;
+			const r = [...PORTRAIT.regions].reverse().find((g) => cx >= g.src.x && cx <= g.src.x + g.src.l && cy >= g.src.y && cy <= g.src.y + g.src.h);
+			if (r) {
+				const css = tAff * (r.dst.l / r.src.l) * (PORTRAIT.canevas.getBoundingClientRect().width / PL);
+				const cle = 'T|' + (typeof Langue !== 'undefined' ? Langue.actuelle : '') + '|' + s.slice(0, 50);
+				if (css < 12 && !A.defauts.has(cle)) A.defauts.set(cle, { ecran: A.ecran, cat: 'T', texte: s.slice(0, 140), tailleCSS: Math.round(css * 10) / 10, depassePx: 0, zone: 'portrait', zoneRect: [r.src.x, r.src.y, r.src.l, r.src.h].map(Math.round), boite: [b.x, b.y, b.l, b.h].map(Math.round), langue: typeof Langue !== 'undefined' ? Langue.actuelle : '?', taille: window.innerWidth + '×' + window.innerHeight, etape: A.etape });
+			}
+		}
 		const anc = versEcran(enBoite ? x : bx + (ha === RIGHT ? bl : ha === CENTER ? bl / 2 : 0), enBoite ? y : by + Math.min(bh, asc), 0, 0, tampon);
 		const z = zoneReference(anc.x, anc.y, tampon);
 		const clipE = [...A.pile].reverse().find((x) => x.clip && x.espace === espace());
@@ -375,7 +388,7 @@
 		add('menu autorisations · tout autorisé', () => (AUTOR.etat = { son: 'autorise', micro: 'autorise', camera: 'autorise' }));
 		[0, 1, 2].forEach((c) => add('menu semaines ' + c, () => (H.raz(), (MENU.actif = true), (MENU.ecran = 'semaines'), (MENU.choixSemaine = c))));
 		// Prompt 171 : l'aide ne s'ouvre plus depuis le menu titre (elle est auditée en partie, plus bas) ; + explication d'installation
-		['parametres', 'palmares', 'partage', 'installation'].forEach((f) => add('menu fenêtre ' + f, () => (H.raz(), (MENU.actif = true), (MENU.ecran = 'titre'), ouvrir(f))));
+		['parametres', 'palmares', 'fins', 'partage', 'installation'].forEach((f) => add('menu fenêtre ' + f, () => (H.raz(), (MENU.actif = true), (MENU.ecran = 'titre'), ouvrir(f))));
 		add('menu titre · focus installer', () => (H.raz(), (MENU.actif = true), (MENU.ecran = 'titre'), (MENU.choix = entreesMenu().length + EXTRAS_MENU.length - 1)));
 		add('menu titre · retour au premier choix', () => (MENU.choix = 0), 2);
 		// Prompt 123 : les onglets de l'aide (la fenêtre s'ouvre sur le premier), page 2 des règles comprise ; prompt 171 : ouverte en partie, au poste

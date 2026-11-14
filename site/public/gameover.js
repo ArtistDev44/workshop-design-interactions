@@ -63,6 +63,7 @@ function dessinerGameOver() {
 	fill(0, 0, 0, 255 * a);
 	rect(0, 0, L, H);
 	if (a < 1) return;
+	if (typeof PORTRAIT !== 'undefined' && PORTRAIT.actif) return gameOverPortrait(u); // prompt 209
 	dsTitre(t('gameover.titre'), 120, 70, 88, DS.primaireTrait, 'left');
 	noStroke();
 	textFont(POLICE_TEXTE);
@@ -131,6 +132,71 @@ function dessinerGameOver() {
 			stroke(DS.blanc); // prompt 173 : focus clavier en double bordure blanche du DS (plus de jaune)
 			strokeWeight(4);
 			rect(bx - 8, y + h + 32, lb + 16, 88);
+			noStroke();
+		}
+	});
+	textAlign(LEFT, TOP);
+}
+/** Prompt 209 : mobile portrait — colonne A (titre, lettre ou journal, 640 px) puis colonne B (boutons pleine largeur),
+ * empilées et défilables par portrait.js (GEO_GAMEOVER) ; mêmes textes que sur ordinateur */
+const GEO_GAMEOVER = { a: { x: 40, y: 20, l: 640, h: 1040 }, b: { x: 760, y: 360, l: 640, h: 320 } };
+function gameOverPortrait(u) {
+	const G = GAMEOVER;
+	const L0 = G.lettre;
+	const A = GEO_GAMEOVER.a;
+	const B = GEO_GAMEOVER.b;
+	let tt = 72;
+	while (tt > 40 && largeurTitreDS(t('gameover.titre'), tt) > A.l) tt -= 4;
+	dsTitre(t('gameover.titre'), A.x, A.y + 10, tt, DS.primaireTrait, 'left');
+	noStroke();
+	let y = A.y + 10 + tt + 20;
+	y += dessinerTexte(String(t('gameover.sous')), A.x, y, A.l, { taille: 24, interligne: 32, couleur: 'rgba(255,255,255,0.75)' }).h + 20;
+	const hp = A.y + A.h - y;
+	fill(G.vue === 'lettre' ? '#f2ead8' : '#171616');
+	rect(A.x, y, A.l, hp);
+	zoneTexteDeclarer('panneau', A.x, y, A.l, hp);
+	const m = 32;
+	if (G.vue === 'lettre') {
+		// Tampon « RÉSILIÉ » en haut à droite, l'objet à gauche, la lettre dessous sur toute la largeur
+		const k = reduireAnimations ? 1 : Math.min(1, (u - 800) / 300);
+		push();
+		translate(A.x + A.l - 150, y + 70);
+		rotate(-0.18);
+		scale(0.7 + 0.3 * k);
+		noFill();
+		stroke(DS.primaireTrait);
+		strokeWeight(6);
+		rect(-120, -40, 240, 80);
+		noStroke();
+		fill(DS.primaireTrait);
+		textAlign(CENTER, CENTER);
+		textFont(POLICE_TEXTE);
+		textStyle(BOLD);
+		textSize(36);
+		zoneTexteDebut('tampon', -120, -40, 240, 80);
+		text(t('gameover.tampon'), 0, 2);
+		zoneTexteFin();
+		textStyle(NORMAL);
+		pop();
+		const yo = y + m + dessinerTexte(String(t('gameover.objet')), A.x + m, y + m, A.l - 2 * m - 300, { taille: 24, interligne: 30, style: BOLD, couleur: '#1c2733' }).h;
+		const lignes = [String(L0.quand), t('gameover.jauges', { liste: String(L0.jauges), score: L0.score }), String(L0.avertissements)];
+		if (L0.pires.length) lignes.push(t('gameover.pires'), ...L0.pires.map((p) => '— ' + String(p)));
+		if (L0.malus) lignes.push(String(L0.malus));
+		lignes.push('', t('gameover.cause.' + L0.cause), String(L0.conseil));
+		dessinerTexte(lignes.map(String).join('\n'), A.x + m, Math.max(yo + 16, y + 130), A.l - 2 * m, { taille: 20, interligne: 27, couleur: '#1c2733', maxLignes: Math.floor((y + hp - m - Math.max(yo + 16, y + 130)) / 27) });
+	} else {
+		const ev = (Jeu.evenementsJournee || []).map((e) => e.jour.split('-').reverse().join('/') + ' ' + String(Jeu.ligneMail(e)));
+		dessinerTexte((ev.length ? ev.slice(-12) : [t('gameover.journalVide')]).join('\n'), A.x + m, y + m, A.l - 2 * m, { taille: 20, interligne: 27, couleur: '#FFFFFF', police: POLICE_DONNEES, maxLignes: Math.floor((hp - 2 * m) / 27) });
+	}
+	textAlign(LEFT, TOP);
+	ACTIONS_GAMEOVER.forEach((b, i) => {
+		const by = B.y + 16 + i * 96;
+		bouton(B.x, by, B.l, 80, t(b.cle), b.action, false, i > 0);
+		if (G.focus === i) {
+			noFill();
+			stroke(DS.blanc);
+			strokeWeight(4);
+			rect(B.x - 8, by - 8, B.l + 16, 96);
 			noStroke();
 		}
 	});

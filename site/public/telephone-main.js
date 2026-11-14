@@ -7,6 +7,9 @@
  */
 const TEL_MAIN = { debut: 0, descente: 0, auFin: null, l: 520, h: 940 };
 const DUREE_TEL_MAIN = 450;
+let TEL_EN_DESSIN = false; // prompt 209 : écran du téléphone en cours de dessin (plancher de 20 px en portrait)
+/** Prompt 209 : abscisse du téléphone en main (aussi utilisée par le cadrage portrait) */
+const xTelephoneMain = () => L / 2 - TEL_MAIN.l / 2 + 160;
 
 function leverTelephone() {
 	TEL_MAIN.debut = millis();
@@ -42,7 +45,7 @@ function dessinerTelephoneEnMain(contenu, objet) {
 	if (k <= 0) return;
 	const pl = TEL_MAIN.l;
 	const ph = TEL_MAIN.h;
-	const x = L / 2 - pl / 2 + 160;
+	const x = xTelephoneMain();
 	const y = lerp(H + 60, 36, k);
 	noStroke();
 	dsVoile(k); // prompt 173 : même voile que les fenêtres (DS.voile), au rythme de la montée du téléphone
@@ -62,8 +65,14 @@ function dessinerTelephoneEnMain(contenu, objet) {
 		circle(x + pl / 2, e.y + 24, 16); // caméra
 	}
 	zoneTexteDeclarer('telephone', e.x, e.y, e.l, e.h); // prompt 93 : cadre de l'écran du téléphone
-	if (contenu) contenu(e, k >= 1);
-	dessinerMain(x, y);
+	TEL_EN_DESSIN = true;
+	try {
+		if (contenu) contenu(e, k >= 1);
+	} finally {
+		TEL_EN_DESSIN = false;
+	}
+	// Prompt 209 : en portrait, le téléphone seul (recadré sur son écran) ; la tasse garde sa main
+	if (!(objet !== true && typeof PORTRAIT !== 'undefined' && PORTRAIT.actif)) dessinerMain(x, y);
 }
 
 /** Main qui tient le téléphone, en pixel art (même grain et même palette que la tasse en main, cafe.js) :

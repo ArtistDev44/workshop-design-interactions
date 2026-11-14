@@ -166,7 +166,7 @@ async function construireSemaine(lundi, entrees) {
 			nature: e.nature,
 			lignes: await lignesCitees(e.contenu),
 			retard: null, // le changelog ne donne pas de durée de retard : rien n'est inventé
-			source: 'Changelog du GTFS Naolib (Open Data Nantes Métropole, Licence Ouverte)',
+			source: 'Changelog du GTFS Naolib (Semitan via Open Data Nantes Métropole, ODbL)',
 			texte_source: e.contenu,
 		});
 	}

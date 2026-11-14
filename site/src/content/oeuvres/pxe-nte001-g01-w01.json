@@ -13,7 +13,7 @@
     "type": "Données ouvertes temps réel",
     "url": "https://data.nantesmetropole.fr/explore/dataset/244400404_reseau-transports-collectifs-naolib/",
     "date_acces": "2026-11-09",
-    "droits": "Licence Ouverte (Nantes Métropole) ; Open-Meteo : CC BY 4.0 (vérifié le 2026-11-10 sur open-meteo.com/en/licence)"
+    "droits": "GTFS Naolib : ODbL, éditeur Semitan (via Open Data Nantes Métropole, vérifié le 2026-11-14) ; agenda et GTFS-RT : Licence Ouverte (Nantes Métropole) ; Open-Meteo : CC BY 4.0 (vérifié le 2026-11-10 sur open-meteo.com/en/licence)"
   },
   "grammaire": {
     "regle": "Un fait daté de la source — perturbation du réseau, météo extrême de la semaine, événement de l'agenda — devient un dossier à trancher. En temps réel, un retard mesuré d'au moins 10 minutes en devient un aussi.",

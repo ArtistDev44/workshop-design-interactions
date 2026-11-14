@@ -120,14 +120,15 @@ function reglagesParam(cle) {
 		return [
 			bascule('reduireAnimations', 'pause', t('param.animations'), t('param.animations.detail')),
 			bascule('contrasteRenforce', 'contrast', t('param.contraste')),
-			bascule('masquerViolence', 'eye-off', t('param.violence'), t('param.violence.detail')), // prompt 202
+			!(typeof EXPO !== 'undefined' && EXPO.actif) && bascule('masquerViolence', 'eye-off', t('param.violence'), t('param.violence.detail')), // prompt 202 ; prompt 210 : imposé en exposition
 			Object.assign(choix('daltonisme', 'eye', t('acc.daltonisme'), '', () => t('acc.dalt.' + (R.daltonisme || 'normal')), changerDaltonisme), { extra: { h: 30, dessin: apercuPaletteParam } }),
 			choix('tailleTexte', 'a-large-small', t('acc.taille'), '', () => (R.tailleTexte || 100) + ' %', changerTailleTexte),
 			{ id: 'lectureFacile', type: 'inter', icone: 'book-open', titre: t('acc.lecture'), detail: t('acc.lecture.detail'), etat: () => !!R.lectureFacile, activer: basculerLectureFacile },
+			bascule('raccourcisLettres', 'keyboard', t('param.raccourcis'), t('param.raccourcis.detail')), // prompt 210
 			choix('intensiteFeedback', 'vibrate', t('acc.intensite'), t('acc.intensite.detail'), libelleIntensite, changerIntensiteFeedback),
 			{ id: 'micro', type: 'inter', icone: 'mic', titre: t('micro.reglage'), etat: () => R.micro !== false, activer: basculerMicroReglage },
 			{ id: 'webcam', type: 'inter', icone: 'webcam', titre: t('webcam.reglage'), etat: () => !!(CAM.active || R.webcam), libelle: () => (!CAM.active && R.webcam ? t('webcam.etat.attente') : ''), activer: basculerWebcamReglage },
-		];
+		].filter(Boolean);
 	// Avancé : mode de jeu, options soumises au groupe (prompts 88 à 91), progression
 	const g = Taches.grade();
 	const confirmer = confirmerRemiseCarriere && millis() - confirmerRemiseCarriere < 5000;
@@ -182,10 +183,12 @@ function apercuPaletteParam(x, y, l) {
 function carteParam(it, i) {
 	const od = optionsDetailParam();
 	const ot = optionsTitreParam();
-	const lt = (l) => l - 54 - 16 - largeurCommandeParam(it, l) - 16;
+	// Prompt 209 : en portrait, un bouton dont le libellé est long (morceau de musique) passe sous la carte, pleine largeur
+	const dessous = (l) => typeof PORTRAIT !== 'undefined' && PORTRAIT.actif && !['inter', 'curseur', 'langue', 'couleur', 'info'].includes(it.type) && largeurCommandeParam(it, l) >= 300;
+	const lt = (l) => l - 54 - 16 - (dessous(l) ? 0 : largeurCommandeParam(it, l) + 16);
 	const he = (l) => Math.max(58, 16 + hauteurTexte(it.titre, lt(l), ot) + 12); // en-tête : nom (1 ou 2 lignes) et commande
 	const hd = (l) => (it.detail ? hauteurTexte(it.detail, l - 32, od) + 6 : 0);
-	const hauteur = (l) => he(l) + hd(l) + (it.extra ? it.extra.h + 6 : 0) + 8;
+	const hauteur = (l) => he(l) + hd(l) + (it.extra ? it.extra.h + 6 : 0) + 8 + (dessous(l) ? 84 : 0);
 	return {
 		i,
 		h: hauteur,
@@ -214,6 +217,7 @@ function carteParam(it, i) {
 			else if (it.type === 'langue') selecteurLangue(xd, cy, 44);
 			else if (it.type === 'couleur') selecteurCouleur(xd, cy + 2, 40);
 			else if (it.type === 'info') dsTexte(etatParam(it), xd, cy + 12, 18, DS.blanc75, 'right');
+			else if (dessous(l)) bouton(x + 16, y + h - 84, l - 32, 72, etatParam(it), () => activerParam(i), false, true);
 			else bouton(xd - lc, cy, lc, 44, etatParam(it), () => activerParam(i), false, true);
 			dessinerTexte(it.titre, x + 54, y + 16, lt(l), ot);
 			textStyle(NORMAL);
@@ -236,11 +240,13 @@ function fenetreParametres() {
 	dsPanneau(x, y, l, h, t('param.titre'));
 	// ——— Onglets (mêmes formes que l'aide), avec leur icône ———
 	const n = ONGLETS_PARAM.length;
-	const lo = (l - 96 - (n - 1) * 12) / n;
-	const ho = portrait ? 96 : 60;
+	const parRangee = portrait ? 2 : n; // prompt 209 : en portrait (fenêtre de 640 px), onglets sur deux rangées
+	const lo = (l - 96 - (parRangee - 1) * 12) / parRangee;
+	const ho = portrait ? 80 : 60;
+	const rangees = Math.ceil(n / parRangee);
 	ONGLETS_PARAM.forEach((o, i) => {
-		const ox = x + 48 + i * (lo + 12);
-		const oy = y + 80;
+		const ox = x + 48 + (i % parRangee) * (lo + 12);
+		const oy = y + 80 + Math.floor(i / parRangee) * (ho + 16);
 		const actif = i === PARAM.onglet;
 		const survol = mouseX >= ox && mouseX <= ox + lo && mouseY >= oy && mouseY <= oy + ho;
 		noStroke();
@@ -277,7 +283,7 @@ function fenetreParametres() {
 	});
 	// ——— Cartes des réglages : deux colonnes, paginées si besoin ———
 	const cx = x + 48;
-	const cy = y + 80 + ho + 36;
+	const cy = y + 80 + rangees * ho + (rangees - 1) * 16 + 36;
 	const cl = l - 96;
 	const ch = y + h - 116 - cy;
 	const items = reglagesParam(ONGLETS_PARAM[PARAM.onglet].cle);

@@ -117,6 +117,22 @@ function dsTitre(txt, x, y, taille, couleur, align) {
 	return l;
 }
 
+/** Prompt 209 : largeur d'un titre dsTitre() sans le dessiner (police pixel installée, ou rendu binarisé) */
+function largeurTitreDS(txt, taille) {
+	if (DS.policeTitreInstallee) {
+		push();
+		textFont('Bitsy Pixels');
+		textSize(taille);
+		const w = textWidth(txt);
+		pop();
+		return w;
+	}
+	const f = facteurPixel(taille);
+	const ctx = (largeurTitreDS.c = largeurTitreDS.c || document.createElement('canvas').getContext('2d'));
+	ctx.font = 'bold ' + Math.max(8, Math.round(taille / f)) + 'px "' + DS.policeTexte + '", monospace';
+	return (Math.ceil(ctx.measureText(txt).width) + 2) * f;
+}
+
 function dsTexte(txt, x, y, taille, couleur, align, largeur) {
 	textFont(DS.policeTexte);
 	textStyle(NORMAL);
@@ -179,7 +195,7 @@ function dsBouton(x, y, l, h, label, action, variante, desactive, sansChevron) {
 	zoneTexteDebut('bouton', x, y, l, h); // prompt 93
 	text(libelle, x + l / 2, y + h / 2);
 	zoneTexteFin();
-	if (!desactive) boutons.push({ x, y, l, h, action });
+	if (!desactive) boutons.push({ x, y, l, h, action, titre: label ? String(label) : undefined }); // prompt 210 : libellé (lecteur-ecran.js)
 }
 
 /** Badge (compteur / statut) : type 'erreur' | 'succes' | 'alerte' | 'info' */
@@ -382,7 +398,10 @@ function dsPanneau(x, y, l, h, titre, couleurBarre) {
 		stroke(DS.blanc15);
 		line(x + 2, y + 58, x + l - 2, y + 58);
 		noStroke();
-		dsTitre(titre, x + 24, y + 12, 32, DS.blanc, 'left');
+		// Prompt 209 : fenêtre de 640 px en portrait — le titre se réduit pour tenir dans sa barre (24 px au moins ≈ 14 px CSS)
+		let tt = 32;
+		if (typeof PORTRAIT !== 'undefined' && PORTRAIT.actif) while (tt > 24 && largeurTitreDS(titre, tt) > l - 48) tt -= 2;
+		dsTitre(titre, x + 24, y + 12 + (32 - tt) / 2, tt, DS.blanc, 'left');
 	}
 }
 

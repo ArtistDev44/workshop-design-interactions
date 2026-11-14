@@ -14,7 +14,7 @@ export const DATASETS = [
 		code: 'T1',
 		titre: 'Places libres dans les parkings publics',
 		producteur: 'Nantes Métropole',
-		licence: 'Licence Ouverte',
+		licence: 'ODbL', // prompt 210 : métadonnées de l'API, 2026-11-14
 		frequence: 'Temps réel (quelques minutes)',
 		mode: 'live',
 		refreshMs: 5 * MIN,
@@ -40,7 +40,7 @@ export const DATASETS = [
 		code: 'T2',
 		titre: 'Vélos libre-service Naolib : stations les plus vides',
 		producteur: 'Nantes Métropole',
-		licence: 'Licence Ouverte',
+		licence: 'ODbL', // prompt 210 : métadonnées de l'API, 2026-11-14
 		frequence: 'Temps réel (quelques minutes)',
 		mode: 'live',
 		refreshMs: 5 * MIN,

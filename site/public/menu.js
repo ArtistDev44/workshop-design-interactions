@@ -169,9 +169,13 @@ function carteMenu(x, y, l, h, titre, sous, action, sel, icone, desactive) {
 	textStyle(BOLD);
 	ajusterTaille(titre, l - (tx - x) - 24, 30);
 	fill(actif ? MENU_C.encre : MENU_C.blanc);
-	text(titre, tx, sous ? y + h / 2 + 4 : y + h / 2);
+	text(titre, tx, sous ? y + h / 2 + (menuPortrait() ? -10 : 4) : y + h / 2);
 	textStyle(NORMAL);
-	if (sous) {
+	if (sous && menuPortrait()) {
+		// Prompt 209 : en portrait, sous-titre à 20 px sur deux lignes au plus (colonne de 640 px recomposée pleine largeur)
+		zoneTexteDeclarer('sousTitreMenu', tx, y + h / 2 + 8, l - (tx - x) - 24, 56);
+		dessinerTexte(String(sous), tx, y + h / 2 + 8, l - (tx - x) - 24, { police: POLICE_DONNEES, taille: 20, interligne: 26, maxLignes: 2, couleur: actif ? 'rgba(13,12,12,0.75)' : MENU_C.doux });
+	} else if (sous) {
 		// Prompt 120 : une seule ligne, taille ajustée à la largeur (18 → 14 px) — plus jamais de 2e ligne masquée
 		textAlign(LEFT, TOP);
 		textFont(POLICE_DONNEES);
@@ -208,7 +212,10 @@ function carteMenuGrisee(x, y, l, h, titre, sous, icone) {
 	fill(gris);
 	text(titre, tx, sous ? y + h / 2 + 4 : y + h / 2);
 	textStyle(NORMAL);
-	if (sous) {
+	if (sous && menuPortrait()) {
+		zoneTexteDeclarer('sousTitreMenu', tx, y + h / 2 + 8, l - (tx - x) - 24, 56); // prompt 209
+		dessinerTexte(String(sous), tx, y + h / 2 + 8, l - (tx - x) - 24, { police: POLICE_DONNEES, taille: 20, interligne: 26, maxLignes: 2, couleur: gris });
+	} else if (sous) {
 		textAlign(LEFT, TOP);
 		textFont(POLICE_DONNEES);
 		ajusterTaille(sous, l - (tx - x) - 24, 18, 14);
@@ -216,6 +223,10 @@ function carteMenuGrisee(x, y, l, h, titre, sous, icone) {
 		text(sous, tx, y + h / 2 + 10);
 	}
 }
+/** Prompt 209 : mobile portrait (le menu est recomposé en colonne de 640 px) */
+const menuPortrait = () => typeof PORTRAIT !== 'undefined' && PORTRAIT.actif;
+/** Prompt 209 : colonne du menu en portrait (x 130 → 810 : cartes de 620 px à x 160, marges de 30 px) */
+const COLONNE_MENU_PORTRAIT = { x: 130, l: 680 };
 
 function dessinerMenuPrincipal() {
 	fondMenu();
@@ -230,15 +241,20 @@ function dessinerMenuPrincipal() {
 	// même marge au bord (HAUT_MENU) ; plus de mention de code projet « PXE-… ». En portrait mobile, la colonne recadrée
 	// commence après le logo (portrait.js) : il n'y est pas dessiné, pour ne pas apparaître coupé.
 	if (!(typeof PORTRAIT !== 'undefined' && PORTRAIT.actif)) dessinerLogoPXE(HAUT_MENU.marge, HAUT_MENU.y, HAUT_MENU.h);
-	dsTitre(t('accueil.titre'), x0, 160, 88, MENU_C.blanc, 'left'); // titre au style pixel (Bitsy Pixels)
+	// Prompt 205 : en portrait, la colonne recadrée fait 908 px (x 110 → 1018) ; à 88 px le titre en sortait
+	// (« Nantes en régulat… ») — 64 px y tiennent (≈ 28 px CSS sur un écran de 412 px)
+	// Prompt 209 : colonne de 640 px en portrait — le titre se réduit pour y tenir (48 px au moins)
+	let tTitre = menuPortrait() ? 64 : 88;
+	if (menuPortrait()) while (tTitre > 48 && largeurTitreDS(t('accueil.titre'), tTitre) > 640) tTitre -= 4;
+	dsTitre(t('accueil.titre'), x0, menuPortrait() ? 172 + (64 - tTitre) / 2 : 160, tTitre, MENU_C.blanc, 'left'); // titre au style pixel (Bitsy Pixels)
 	noStroke();
 	textAlign(LEFT, TOP);
 	textFont(POLICE_DONNEES);
-	textSize(28);
+	textSize(menuPortrait() ? 24 : 28); // prompt 209 : deux lignes dans la colonne de 640 px
 	push(); // l'interligne de p5 est un état global (valeur + drapeau « fixé ») : push / pop le rend tel quel aux écrans suivants
-	textLeading(40); // prompt 171 : interligne ≈ 1,45 × le corps (échelle du DS), 2 lignes au plus en FR comme en EN
+	textLeading(menuPortrait() ? 32 : 40); // prompt 171 : interligne ≈ 1,45 × le corps (échelle du DS), 2 lignes au plus en FR comme en EN
 	fill(MENU_C.doux);
-	text(t('accueil.sousTitre'), x0, 276, 900, 84);
+	text(t('accueil.sousTitre'), x0, 276, menuPortrait() ? 630 : 900, 84);
 	pop();
 	const e = entreesMenu();
 	if (MENU.choix >= e.length + EXTRAS_MENU.length || (e[MENU.choix] && e[MENU.choix].desactive)) MENU.choix = 0;
@@ -248,7 +264,7 @@ function dessinerMenuPrincipal() {
 	// prompt 125 : le pied de page n'a plus qu'une ligne (nos noms, à H − 40) ; 16 px de marge ; prompt 199 : la rangée
 	// Livrables · Dépôt · Partager se place sous les cartes (24 px d'écart), sauf en exposition où elle n'existe pas
 	const basPile = EXTRAS_MENU.length ? BLOC_PARTAGE.y - 24 : H - 74 - 16;
-	const hauteurs = (c) => e.map((it) => (it.sous ? (c ? 92 : 104) : c ? 72 : 84));
+	const hauteurs = (c) => e.map((it) => (it.sous ? (c ? 92 : 104) + (menuPortrait() ? 26 : 0) : c ? 72 : 84)); // prompt 209 : sous-titre sur deux lignes en portrait
 	const somme = (hs) => hs.reduce((a, b) => a + b, 0);
 	let hs = hauteurs(false);
 	if (somme(hs) + 12 * (e.length - 1) > basPile - yc) hs = hauteurs(true);
@@ -274,8 +290,29 @@ function dessinerMenuPrincipal() {
 	// Prompt 124 : plus de ligne d'aide clavier sous les cartes (elle nuisait à l'immersion)
 	// Prompt 125 : plus de ligne « Données réelles… » ni de lien de licence ici — tout est dans l'écran Crédits
 	piedCredits(x0, H - 40, e.length);
+	avertissementContenu(x0);
 	blocPartage(e.length, Math.min(BLOC_PARTAGE.y, yc - ecart + 24)); // prompt 199 : 24 px sous Paramètres, jamais sur le pied de page
 	if (typeof EXPO !== 'undefined' && EXPO.actif) marqueExpo();
+}
+/** Prompt 210 : avertissement de contenu et âge conseillé, toujours visibles sur l'écran titre (audit 206, constat 1).
+ * Paysage : à droite du pied de page (à gauche de la marque EXPO) ; portrait : au-dessus des noms, dans la colonne recadrée. */
+function avertissementContenu(x0) {
+	const expo = typeof EXPO !== 'undefined' && EXPO.actif;
+	const portrait = typeof PORTRAIT !== 'undefined' && PORTRAIT.actif;
+	textFont(POLICE_DONNEES);
+	textStyle(NORMAL);
+	textSize(18);
+	noStroke();
+	fill(MENU_C.doux);
+	const txt = t(expo ? 'mp.avertissement.expo' : 'mp.avertissement');
+	if (portrait) {
+		textAlign(LEFT, BOTTOM);
+		text(txt, x0, H - 74);
+	} else {
+		textAlign(RIGHT, BOTTOM);
+		text(txt, expo ? L - 80 - textWidth('EXPO') - 24 - 24 : L - 80, H - 40);
+	}
+	textAlign(LEFT, TOP);
 }
 /** Prompt 160 : marque discrète « EXPO » en bas à droite de l'écran titre (blanc sur pastille nuit opaque : ≈ 19:1, quel que soit le fond flouté) */
 function marqueExpo() {
@@ -337,7 +374,7 @@ function boutonCarreHaut(x, y, l, h, focus, icone, bulle, action) {
 	}
 	noStroke();
 	iconeLucide(icone, x + (l - 32) / 2, y + (h - 32) / 2, 32, '#FFFFFF');
-	boutons.push({ x, y, l, h, action });
+	boutons.push({ x, y, l, h, action, titre: bulle }); // prompt 210 : libellé pour les lecteurs d'écran (lecteur-ecran.js)
 	if (survol || focus) {
 		textFont(POLICE_DONNEES);
 		textSize(18);
@@ -349,7 +386,7 @@ const focusExtra = (n, cle) => MENU.choix - n === EXTRAS_MENU.findIndex((x) => x
 function piedCredits(x, y, n) {
 	const credits = t('mp.credits');
 	textFont(POLICE_DONNEES);
-	textSize(18);
+	textSize(menuPortrait() ? 20 : 18); // prompt 209
 	textAlign(LEFT, BOTTOM);
 	// Prompt 113 : les noms mènent à l'écran « Crédits » (lien souligné)
 	const cw = textWidth(credits);
@@ -411,6 +448,7 @@ function blocPartage(n, y) {
 	RANGEE_MENU.forEach((r, i) => {
 		const focus = focusExtra(n, r.cle);
 		const survol = boutonIcone(b.x + i * (b.l + 16), b.y, b.l, b.h, r.icone, r.action, focus);
+		if (boutons.length) boutons[boutons.length - 1].titre = t('mp.' + r.cle); // prompt 210 : icône seule → libellé pour les lecteurs d'écran
 		if (focus || (survol && !bulle)) bulle = t('mp.' + r.cle) + ' — ' + t('mp.' + r.cle + '.infobulle'); // le libellé passe de l'écran à l'infobulle
 	});
 	if (bulle) infobulle(bulle, b.x + RANGEE_MENU.length * (b.l + 16) + 8, b.y + (b.h - 40) / 2); // à droite de la rangée, sur sa ligne
@@ -500,6 +538,11 @@ function fenetrePartage() {
 		const lib = o.copie && PARTAGE.copie && millis() - PARTAGE.copie < 3000 ? t('mp.partager.copie') : libellePartage(o);
 		boutonIcone(x + 48, by, l - 96, ho, o.cle, lib, () => activerPartage(i), PARTAGE.focus === i);
 	});
+	if (portrait) {
+		// Prompt 209 : fenêtre de 640 px — « Fermer » pleine largeur, sans le rappel du clavier (au doigt)
+		bouton(x + 48, y + h - 112, l - 96, 80, t('mp.partager.fermer'), fermer, false, PARTAGE.focus !== OPTIONS_PARTAGE.length);
+		return textAlign(LEFT, TOP);
+	}
 	bouton(x + l - 48 - 260, y + h - 96, 260, 60, t('mp.partager.fermer'), fermer, false, PARTAGE.focus !== OPTIONS_PARTAGE.length);
 	if (PARTAGE.focus === OPTIONS_PARTAGE.length) {
 		noFill();
@@ -587,6 +630,7 @@ const annonceModeIndisponible = (m) => t('mp.mode.indispo', { titre: m.titre, ra
 function dessinerChoixSemaine() {
 	const modes = modesNouvellePartie();
 	recalerChoixMode(modes);
+	if (menuPortrait()) return choixSemainePortrait(modes); // prompt 209
 	noStroke();
 	dsTitre(t('mp.semaines.titre'), 160, 100, 60, MENU_C.blanc, 'left');
 	noStroke();
@@ -665,6 +709,82 @@ function dessinerChoixSemaine() {
 	const o = modes[MENU.choixSemaine];
 	bouton(L - 160 - 420, H - 150, 420, 84, t('mp.lancer'), lancerDepuisMenu, !o || o.desactive);
 	bouton(160, H - 140, 260, 68, t('mp.retour'), () => ((MENU.ecran = 'titre'), (MENU.debut = millis())), false, true);
+}
+
+/** Prompt 209 : géométrie du choix du mode en portrait — colonne A (titre, cartes) et colonne B (option, boutons) */
+const GEO_CHOIX_SEMAINE = { a: { x: 160, y: 60, l: 620, h: 1000 }, b: { x: 900, y: 300, l: 620, h: 340 } };
+/** Prompt 209 : choix du mode en portrait — les deux cartes l'une sous l'autre (620 px), puis l'option du guide et les
+ * boutons pleine largeur dans une seconde colonne de l'image (empilée dessous par portrait.js) ; mêmes textes */
+function choixSemainePortrait(modes) {
+	const A = GEO_CHOIX_SEMAINE.a;
+	const B = GEO_CHOIX_SEMAINE.b;
+	noStroke();
+	let tt = 60;
+	while (tt > 40 && largeurTitreDS(t('mp.semaines.titre'), tt) > A.l) tt -= 4;
+	dsTitre(t('mp.semaines.titre'), A.x, A.y + 20, tt, MENU_C.blanc, 'left');
+	let y = A.y + 100;
+	y += dessinerTexte(String(t('mp.mode.sous')), A.x, y, A.l, { taille: 24, interligne: 32, couleur: MENU_C.doux }).h + 24;
+	const hc = 400;
+	modes.forEach((o, i) => {
+		const x = A.x;
+		const lc = A.l;
+		const yc = y + i * (hc + 24);
+		const sel = i === MENU.choixSemaine && !o.desactive;
+		const survol = mouseX >= x && mouseX <= x + lc && mouseY >= yc && mouseY <= yc + hc;
+		const actif = (sel || survol) && !o.desactive;
+		noStroke();
+		fill(actif ? MENU_C.blanc : 'rgba(255,255,255,0.06)');
+		rect(x, yc, lc, hc);
+		if (!actif) {
+			stroke(255, 255, 255, 60);
+			strokeWeight(2);
+			noFill();
+			rect(x + 1, yc + 1, lc - 2, hc - 2);
+			noStroke();
+		}
+		if (sel) {
+			noFill();
+			stroke(DS.primaireTrait);
+			strokeWeight(4);
+			rect(x - 6, yc - 6, lc + 12, hc + 12);
+			noStroke();
+		}
+		const encre = o.desactive ? 'rgba(255,255,255,0.55)' : actif ? MENU_C.encre : MENU_C.blanc;
+		if (o.recommande) {
+			fill(MENU_C.bleu);
+			rect(x, yc, 300, 40);
+			fill('#ffffff');
+			textAlign(LEFT, CENTER);
+			textFont(POLICE_DONNEES);
+			textSize(20);
+			text(t('mp.mode.recommande'), x + 20, yc + 20);
+		}
+		if (o.verrou) {
+			stroke('rgba(255,255,255,0.7)');
+			strokeWeight(6);
+			noFill();
+			arc(x + lc - 70, yc + 66, 40, 46, PI, TWO_PI);
+			noStroke();
+			fill('rgba(255,255,255,0.7)');
+			rect(x + lc - 98, yc + 66, 56, 42);
+		}
+		textAlign(LEFT, TOP);
+		textFont(POLICE_TEXTE);
+		textStyle(BOLD);
+		ajusterTaille(o.titre, lc - 160, 36);
+		fill(encre);
+		text(o.titre, x + 32, yc + 58);
+		textStyle(NORMAL);
+		const hd = dessinerTexte(String(o.detail), x + 32, yc + 112, lc - 64, { taille: 22, interligne: 30, couleur: o.desactive ? encre : actif ? MENU_C.bleu : MENU_C.doux, maxLignes: 4 }).h;
+		dessinerTexte(String(o.info), x + 32, yc + 112 + hd + 12, lc - 64, { taille: 20, interligne: 26, couleur: o.desactive ? encre : actif ? 'rgba(13,12,12,0.75)' : MENU_C.doux, maxLignes: 5 });
+		boutons.push({ x, y: yc, l: lc, h: hc, action: () => (o.desactive ? annoncer(annonceModeIndisponible(o)) : MENU.choixSemaine === i ? lancerDepuisMenu() : (MENU.choixSemaine = i)) });
+	});
+	GEO_CHOIX_SEMAINE.a.h = Math.min(H - A.y, y + modes.length * (hc + 24) - A.y);
+	// Colonne B : option du guide (case à cocher), « Lancer », « Retour »
+	if (typeof dessinerOptionsNouvellePartie === 'function') dessinerOptionsNouvellePartie(B.x, B.y + 20, B.l);
+	const o = modes[MENU.choixSemaine];
+	bouton(B.x, B.y + 112, B.l, 84, t('mp.lancer'), lancerDepuisMenu, !o || o.desactive);
+	bouton(B.x, B.y + 216, B.l, 80, t('mp.retour'), () => ((MENU.ecran = 'titre'), (MENU.debut = millis())), false, true);
 }
 
 // ——— Prompt 178 : écran « Reprendre une partie » — les emplacements de sauvegarde, le plus récent d'abord ———
@@ -749,11 +869,12 @@ function dessinerSauvegardes() {
 	noStroke();
 	textAlign(LEFT, TOP);
 	textFont(POLICE_TEXTE);
-	textSize(24);
+	const sp = typeof PORTRAIT !== 'undefined' && PORTRAIT.actif; // prompt 209 : colonne de 908 px en portrait → 28 px
+	textSize(sp ? 27 : 24);
 	push(); // interligne : état global de p5, rendu tel quel par pop()
 	textLeading(34);
 	fill(MENU_C.doux);
-	text(MENU.apresSuppr ? t('sauv.limite', { max: Sauvegarde.MAX }) : liste.length ? t('sauv.sous', { n: liste.length, max: Sauvegarde.MAX }) : t('sauv.vide'), Z.x, 186, Z.l, 72);
+	text(MENU.apresSuppr ? t('sauv.limite', { max: Sauvegarde.MAX }) : liste.length ? t('sauv.sous', { n: liste.length, max: Sauvegarde.MAX }) : t('sauv.vide'), Z.x, sp ? 168 : 186, Z.l, sp ? 104 : 72); // prompt 209 : trois lignes en portrait
 	pop();
 	// MAX lignes tiennent à l'écran ; au-delà (emplacements en trop, jamais créés par le menu), la liste suit la sélection
 	const debut = Math.max(0, Math.min(MENU.choixSauv - 2, liste.length - Sauvegarde.MAX));

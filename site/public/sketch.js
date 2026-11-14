@@ -97,6 +97,7 @@ function setup() {
 	if (msgChargement) msgChargement.textContent = t('chargement.message'); // prompt 27 : dans la langue active
 	const c = createCanvas(L, H);
 	c.parent('scene');
+	c.elt.setAttribute('aria-hidden', 'true'); // prompt 210 : le contenu du canevas est repris en DOM (lecteur-ecran.js)
 	c.elt.addEventListener('mouseleave', () => (sourisDansCanevas = false)); // prompt 25 : la caméra se recentre
 	pixelDensity(1);
 	randomSeed(Jeu.fallback ? Jeu.fallback.seed : 1001);
@@ -210,6 +211,8 @@ function draw() {
 	boutons = [];
 	// 1. Contenu de l'écran du PC, en 1920×1080 : l'appli de régulation, ou le système (démarrage, bureau)
 	ciblesGuide = {}; // prompt 37 : cibles des flèches, relevées pendant le dessin
+	const vignettePC = vue === 'bureau'; // prompt 209 : vu de la pièce, l'écran du PC n'est qu'une vignette de 336 × 189 px (décor)
+	if (vignettePC) zoneTexteDecor(true);
 	espaceDessin = 'pc';
 	sourisVersEcran();
 	background(C.fond);
@@ -246,12 +249,13 @@ function draw() {
 	dessinerIndicateurs(); // prompt 36 : app flottante, au premier plan
 	sourisRestaurer();
 	espaceDessin = 'ecran';
+	if (vignettePC) zoneTexteDecor(false);
 	// 2. La pièce et le moniteur autour (bureau, zoom, ou « au poste » avec la pièce visible)
 	const d0 = typeof Juice !== 'undefined' ? Juice.decalage(millis()) : { x: 0, y: 0 }; // prompt 96 : secousse par trauma² (temps réel)
 	const secousse = d0.x || d0.y ? d0 : null;
 	if (secousse) push(), translate(secousse.x, secousse.y);
 	composerVue();
-	if (vue === 'bureau' && !fenetre) badgeEcranBureau(); // prompt 111 : PC « fermé » : un seul badge, le total, au coin de l'écran
+	if (vue === 'bureau' && !fenetre && !(typeof PORTRAIT !== 'undefined' && PORTRAIT.actif)) badgeEcranBureau(); // prompt 209 : en portrait, dans le bouton « S'installer » // prompt 111 : PC « fermé » : un seul badge, le total, au coin de l'écran
 	if (secousse) pop();
 	dessinerBoost(); // prompt 52 : cœur, pulsation rouge, lignes de vitesse, flou
 	dessinerMicro(); // prompt 54 : oscilloscope et mesures pendant l'appui
@@ -267,6 +271,7 @@ function draw() {
 	}
 	if (smsActif) {
 		boutons = [];
+		zoneTexteCalque(); // prompt 209
 		dessinerSMS();
 	}
 	dessinerGuide(); // prompt 37 : flèches « Prendre en main »
@@ -433,11 +438,18 @@ const FERMETURE_FOND = {
 	partage: fermer,
 	installation: fermer,
 	palmares: fermer,
+	fins: () => fermerFins(), // prompt 207
 	menu: fermer,
 	telephone: fermer,
 };
 let ZONE_FENETRE = null; // rectangle de la fenêtre dessinée à cette image (premier panneau), null hors fenêtre
 let FENETRE_EN_DESSIN = false;
+// Prompt 209 : mobile portrait — seconde colonne d'une fenêtre trop haute pour 640 × 1080 (dessinée à côté dans l'image,
+// empilée dessous et défilable sur le canevas portrait) ; null sinon. Posée par la fenêtre à chaque image.
+let FENETRE_SUITE = null;
+function suiteFenetre(x, y, l, h) {
+	if (FENETRE_EN_DESSIN) FENETRE_SUITE = { x, y, l, h };
+}
 function zoneFenetre(x, y, l, h) {
 	if (FENETRE_EN_DESSIN && !ZONE_FENETRE) ZONE_FENETRE = { x, y, l, h };
 }
@@ -446,6 +458,8 @@ function clicFondFenetre() {
 	const z = ZONE_FENETRE;
 	if (!fenetre || !z || tutoriel || smsActif || FENETRES_BLOQUANTES.includes(fenetre) || !FERMETURE_FOND[fenetre]) return false;
 	if (mouseX >= z.x && mouseX <= z.x + z.l && mouseY >= z.y && mouseY <= z.y + z.h) return false;
+	const sf = FENETRE_SUITE; // prompt 209 : la suite de la fenêtre (portrait) n'est pas le fond
+	if (sf && mouseX >= sf.x && mouseX <= sf.x + sf.l && mouseY >= sf.y && mouseY <= sf.y + sf.h) return false;
 	FERMETURE_FOND[fenetre]();
 	Confort.Son.clic();
 	return true;
@@ -521,7 +535,8 @@ function dessinerJeuAttente() {
 	dessinerBandeau();
 	dessinerCarteAlertes(); // prompt 102 : carte pleine largeur entre deux signalements
 	if (enSieste) {
-		Object.assign(PANNEAU, { x: ZONE_CARTE.x + (ZONE_CARTE.l - FENETRE_DIALOGUE.l) / 2, y: ZONE_CARTE.y + 16, l: FENETRE_DIALOGUE.l, h: FENETRE_DIALOGUE.h }); // prompt 107
+		if (typeof PORTRAIT !== 'undefined' && PORTRAIT.actif) Object.assign(PANNEAU, GEO_PORTRAIT.panneau); // prompt 205
+		else Object.assign(PANNEAU, { x: ZONE_CARTE.x + (ZONE_CARTE.l - FENETRE_DIALOGUE.l) / 2, y: ZONE_CARTE.y + 16, l: FENETRE_DIALOGUE.l, h: FENETRE_DIALOGUE.h }); // prompt 107
 		dessinerAttente(); // sieste : le panneau d'attente dit qu'on dort (prompt 194 : plus de mail plein écran le soir)
 	}
 }
@@ -653,7 +668,10 @@ function dessinerDossier(d, meteo) {
 	textSize(16);
 	textAlign(LEFT, TOP);
 	fill(C.gris);
-	text(t('dossier.entete', { n: Jeu.index + 1, total: Jeu.paquet.length, type: tSi('type.' + d.type, d.type).toUpperCase(), affluence: '' }), x + 32, base.y + 24);
+	// Prompt 211 : rang du dossier dans la JOURNÉE (comme le mail « n dossiers attendus aujourd'hui »), plus le total de la
+	// semaine ni le type, que le titre dit déjà
+	const duJour = Jeu.paquet.filter((p) => p.date === d.date);
+	text(t('dossier.entete', { n: Math.max(0, duJour.indexOf(d)) + 1, total: duJour.length }), x + 32, base.y + 24);
 	if (Jeu.defiChrono) {
 		// Mode « Défi chrono » (prompt 87, optionnel) : le compteur d'avant (Q6, Q16, Q55), ralenti, alerte des 5 s, 0 → Q25
 		figerCompteurRalenti(); // prompt 55 : pendant le ralenti, le compteur ne descend pas
@@ -780,31 +798,36 @@ function dessinerNarration() {
 	// Prompt 121 : statut du signalement — clos (aucune équipe) ou en attente du retour du plaignant (équipe envoyée)
 	const iSig = Jeu.paquet.indexOf(r.dossier);
 	const stSig = iSig >= 0 && Jeu.statutSignalement ? Jeu.statutSignalement(iSig) : null;
+	const etroitN = z.l < 800; // prompt 205 : fiche étroite (mobile portrait) — statut sous l'en-tête, le reste descend
+	let dyN = 0;
 	if (stSig && stSig !== 'ouvert') {
 		const eqSig = (Jeu.equipes || []).filter((q) => q.index === iSig && !q.inutile).map((q) => String(q.nom)).join(', ');
 		const libSig = t('sig.statut.' + stSig, { equipe: eqSig });
 		textSize(18);
-		const lSig = Math.min(z.l - 420, textWidth(libSig) + 28);
+		const lSig = etroitN ? Math.min(z.l - 64, textWidth(libSig) + 28) : Math.min(z.l - 420, textWidth(libSig) + 28);
+		const xSig = etroitN ? z.x + 32 : z.x + z.l - 32 - lSig;
+		const ySig = etroitN ? z.y + 62 : z.y + 24;
+		if (etroitN) dyN = 44;
 		noFill();
 		stroke(stSig === 'attente' ? C.orange : C.gris);
 		strokeWeight(2);
-		rect(z.x + z.l - 32 - lSig, z.y + 24, lSig, 34);
+		rect(xSig, ySig, lSig, 34);
 		noStroke();
 		fill(stSig === 'attente' ? C.orange : C.gris);
 		textAlign(CENTER, CENTER);
 		ajusterTaille(libSig, lSig - 20, 18, 14);
-		zoneTexteDeclarer('statutSignalement', z.x + z.l - 32 - lSig + 10, z.y + 28, lSig - 20, 26);
-		text(libSig, z.x + z.l - 32 - lSig / 2, z.y + 41);
+		zoneTexteDeclarer('statutSignalement', xSig + 10, ySig + 4, lSig - 20, 26);
+		text(libSig, xSig + lSig / 2, ySig + 17);
 		textAlign(LEFT, TOP);
 	}
 	fill(C.texte);
 	textFont(POLICE_TEXTE);
 	textStyle(BOLD);
 	textSize(34);
-	text(r.narration.titre, z.x + 32, z.y + 70, z.l - 64, 100);
+	text(r.narration.titre, z.x + 32, z.y + 70 + dyN, z.l - 64, 100);
 	textStyle(NORMAL);
 	textSize(26);
-	text(r.narration.texte, z.x + 32, z.y + 190, z.l - 64, 260);
+	text(r.narration.texte, z.x + 32, z.y + 190 + dyN, z.l - 64, 260 - dyN);
 
 	// Prompt 184 : plus de liste des écarts (« Fluidité −9 (dé : 3) », « Effets : … ») — les jauges du bandeau s'animent
 	// (segment vert / rouge, feedback.js) ; le détail chiffré reste dans l'appli Journal. Restent le contexte qui a
@@ -1042,6 +1065,8 @@ function tracer(t) {
 function zoneTexteDebut() {}
 function zoneTexteFin() {}
 function zoneTexteDeclarer() {}
+function zoneTexteCalque() {} // prompt 209 : début d'un calque au premier plan (fenêtre, SMS) — audit des textes seulement
+function zoneTexteDecor() {} // prompt 209 : textes purement décoratifs (audit, défaut T exclu) — appel encadrant : zoneTexteDecor(true) … zoneTexteDecor(false)
 function ajusterTaille(txt, largeur, tailleMax, tailleMin) {
 	textSize(tailleMax);
 	while (textSize() > (tailleMin || 12) && textWidth(String(txt)) > largeur) textSize(textSize() - 1);
@@ -1095,7 +1120,7 @@ function bouton(x, y, l, h, label, action, desactive, secondaire) {
 	text(label, x + l / 2, y + h / 2);
 	zoneTexteFin();
 	textStyle(NORMAL);
-	if (!desactive) boutons.push({ x, y, l, h, action });
+	if (!desactive) boutons.push({ x, y, l, h, action, titre: label ? String(label) : undefined }); // prompt 210 : libellé (lecteur-ecran.js)
 }
 
 function easeOut(t) {
@@ -1168,7 +1193,13 @@ if (typeof document !== 'undefined' && document.addEventListener) document.addEv
 function saisieOuRaccourciNavigateur() {
 	const a = typeof document !== 'undefined' ? document.activeElement : null;
 	if (a && (/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) || a.isContentEditable)) return true;
+	if (a && a.closest && a.closest('#nouvelle-version, #commandes-jeu')) return true; // prompt 210
 	return keyIsDown(CONTROL) || keyIsDown(ALT) || keyIsDown(91) || keyIsDown(93);
+}
+/** Prompt 210 (audit 206, WCAG 2.1.4) : réglage « Raccourcis d'une lettre » désactivé → une lettre seule ne fait plus
+ * rien (une frappe accidentelle ou une commande vocale ne déclenche plus d'action) ; Maj + la lettre garde le raccourci */
+function raccourciLettreBloque() {
+	return Confort.Reglages.raccourcisLettres === false && typeof key === 'string' && /^[a-z]$/i.test(key) && !keyIsDown(SHIFT);
 }
 function keyPressed() {
 	// Prompt 33 : boîte d'import ouverte (champ texte, fichier) → le clavier lui appartient
@@ -1182,6 +1213,7 @@ function keyPressed() {
 	interaction();
 	if (typeof guideFiltre === 'function' && guideFiltre() && toucheGuide()) return false; // prompt 181 : guide contraignant — liste blanche de touches (guide.js)
 	if (!smsActif && !tutoriel && typeof saisieRechercheMails === 'function' && saisieRechercheMails()) return false; // prompt 195 : le champ de recherche de Mails a le focus — la frappe lui appartient (aucune lettre n'atteint les raccourcis)
+	if (raccourciLettreBloque()) return false; // prompt 210 : raccourcis d'une lettre coupés (Paramètres → Accessibilité) — Maj + lettre reste possible
 	// Intro SMS (§ 2) : clic / Entrée pour avancer
 	if (smsActif) {
 		if (keyCode === ENTER || keyCode === RETURN || key === ' ') avancerConversation(); // prompt 42
@@ -1392,7 +1424,9 @@ function dessinerPause() {
 function dessinerFenetre() {
 	// Prompt 173 : la zone de la fenêtre (premier panneau dessiné) sert au clic sur le fond
 	ZONE_FENETRE = null;
+	FENETRE_SUITE = null; // prompt 209
 	FENETRE_EN_DESSIN = true;
+	zoneTexteCalque(); // prompt 209
 	try {
 		contenuFenetre();
 	} finally {
@@ -1410,6 +1444,7 @@ function contenuFenetre() {
 	if (fenetre === 'tache') return fenetreTache(); // prompt 88
 	if (fenetre === 'demission') return fenetreDemission(); // prompt 47
 	if (fenetre === 'palmares') return fenetrePalmares(); // prompt 47
+	if (fenetre === 'fins') return fenetreFins(); // prompt 207
 	if (fenetre === 'partir') return fenetrePartir(); // prompt 51
 	if (fenetre === 'blame') return fenetreBlame(); // prompt 51
 	if (fenetre === 'partage') return fenetrePartage(); // prompt 81
@@ -1425,7 +1460,8 @@ function contenuFenetre() {
 
 function fenetreReset() {
 	const l = DS.fenetre.moyenne; // prompt 173 (était 760)
-	const h = 300;
+	const portrait = typeof PORTRAIT !== 'undefined' && PORTRAIT.actif; // prompt 209 : 640 px, texte en boîte, boutons empilés
+	const h = portrait ? 480 : 300;
 	const x = (L - l) / 2;
 	const y = (H - h) / 2;
 	panneau(x, y, l, h, C.orange);
@@ -1437,8 +1473,15 @@ function fenetreReset() {
 	textSize(40);
 	text(t('reset.titre'), L / 2, y + 48);
 	textStyle(NORMAL);
-	ajusterTaille(t('reset.texte'), l - 80, 22);
 	fill(C.gris);
+	if (portrait) {
+		textSize(22);
+		text(t('reset.texte'), x + 48, y + 110, l - 96, 120);
+		bouton(x + 48, y + h - 200, l - 96, 72, t('reset.oui'), confirmerReset);
+		bouton(x + 48, y + h - 112, l - 96, 72, t('reset.non'), fermer, false, true);
+		return;
+	}
+	ajusterTaille(t('reset.texte'), l - 80, 22);
 	text(t('reset.texte'), L / 2, y + 110);
 	bouton(x + 48, y + h - 112, (l - 112) / 2, 72, t('reset.oui'), confirmerReset);
 	bouton(x + 64 + (l - 112) / 2, y + h - 112, (l - 112) / 2, 72, t('reset.non'), fermer, false, true);
