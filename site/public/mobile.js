@@ -24,7 +24,9 @@ function majModeMobile() {
 	MOBILE.actif = estMobile();
 	MOBILE.portrait = MOBILE.actif && window.innerHeight > window.innerWidth;
 	document.body.classList.toggle('mobile', MOBILE.actif);
-	activerPortrait(MOBILE.portrait); // prompt 60b : mise en page portrait dédiée (portrait.js)
+	// Prompt 60b : mise en page portrait dédiée (portrait.js) ; prompt 215 : en paysage aussi (colonne du portrait au centre,
+	// rails à gauche et à droite) — l'image 1920 × 1080 réduite d'un bloc donnait des cibles de 17 px CSS
+	activerPortrait(MOBILE.actif, MOBILE.actif && !MOBILE.portrait);
 }
 // ——— Prompt 214 : sur mobile, le jeu se met en plein écran par défaut ———
 // Le navigateur n'accepte la demande que pendant un geste qui « active » la page : elle part donc du premier toucher

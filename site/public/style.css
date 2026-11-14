@@ -242,6 +242,11 @@ body.portrait #scene canvas.p5Canvas {
 	height: auto;
 	touch-action: none;
 }
+/* Prompt 215 : téléphone en paysage — le canevas recomposé a la forme de l'écran (colonne au centre, rails sur les côtés) */
+body.paysage #scene canvas#portrait {
+	width: 100vw !important; /* l'emporte sur la largeur 16:9 du canevas mobile (body.mobile #scene canvas) */
+	height: 100dvh;
+}
 
 /* Prompt 65 : bandeau « Nouvelle version disponible » (HTML, au-dessus du jeu, sans flash) */
 #nouvelle-version {

@@ -184,7 +184,7 @@
 			const loupes = typeof scenePortrait === 'function' && scenePortrait() === 'bureau' ? (PORTRAIT.loupes || []).map((z) => ({ src: z, dst: { l: z.l * Math.min(PL / 680, (PL - 40) / z.l) } })) : [];
 			const r = [...PORTRAIT.regions, ...loupes].reverse().find((g) => cx >= g.src.x && cx <= g.src.x + g.src.l && cy >= g.src.y && cy <= g.src.y + g.src.h);
 			if (r) {
-				const css = tAff * (r.dst.l / r.src.l) * (PORTRAIT.canevas.getBoundingClientRect().width / PL);
+				const css = tAff * (r.dst.l / r.src.l) * (PORTRAIT.canevas.getBoundingClientRect().width / PORTRAIT.canevas.width);
 				const cle = 'T|' + (typeof Langue !== 'undefined' ? Langue.actuelle : '') + '|' + s.slice(0, 50);
 				if (css < 12 && !A.defauts.has(cle)) A.defauts.set(cle, { ecran: A.ecran, cat: 'T', texte: s.slice(0, 140), tailleCSS: Math.round(css * 10) / 10, depassePx: 0, zone: 'portrait', appelant: appelant(), zoneRect: [r.src.x, r.src.y, r.src.l, r.src.h].map(Math.round), boite: [b.x, b.y, b.l, b.h].map(Math.round), langue: typeof Langue !== 'undefined' ? Langue.actuelle : '?', taille: window.innerWidth + '×' + window.innerHeight, etape: A.etape });
 			}
@@ -323,7 +323,7 @@
 			const portrait = typeof PORTRAIT !== 'undefined' && PORTRAIT.actif && PORTRAIT.canevas;
 			const nomB = (b) => String(b.titre || b.nom || (b.x | 0) + ',' + (b.y | 0));
 			if (portrait) {
-				const kP = PORTRAIT.canevas.getBoundingClientRect().width / PL;
+				const kP = PORTRAIT.canevas.getBoundingClientRect().width / PORTRAIT.canevas.width;
 				boutons.forEach((b) => {
 					if (b.l >= L - 1 && b.h >= H - 1) return;
 					const cx = b.x + b.l / 2, cy = b.y + b.h / 2;

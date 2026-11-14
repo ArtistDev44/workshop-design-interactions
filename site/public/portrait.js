@@ -10,7 +10,7 @@
  */
 const PL = 1080;
 let PH = 1920; // prompt 205 : suit la proportion de l'écran (9:16 à 9:21), pour que la barre d'onglets soit en bas
-const PORTRAIT = { actif: false, canevas: null, ctx: null, regions: [], boutons: [], defil: 0, defilMax: 0, cible: null, dernierDossier: -1, toucher: null, cleContenu: null, feuille: -9999 };
+const PORTRAIT = { paysage: false, actif: false, canevas: null, ctx: null, regions: [], boutons: [], defil: 0, defilMax: 0, cible: null, dernierDossier: -1, toucher: null, cleContenu: null, feuille: -9999 };
 
 // ——— Prompt 205 : géométrie portrait de l'appli ———
 // Le jeu dessine toujours dans l'image 1920×1080, mais en portrait la carte, les vues (Mails, Community, Journal,
@@ -20,6 +20,12 @@ const PORTRAIT = { actif: false, canevas: null, ctx: null, regions: [], boutons:
 // seule est dessinée à la fois) ; la fiche a la sienne, à droite, pour ne jamais se superposer à la carte.
 const GEO_PORTRAIT = { carte: { x: 184, y: 92, l: 620, h: 980 }, vue: { x: 184, y: 92, l: 620, h: 980 }, panneau: { x: 820, y: 92, l: 620, h: 980 }, suite: { x: 820, y: 92, l: 620, h: 980 } }; // h 980 : jusqu'au bas de l'image (y 1072), la colonne remplit l'écran d'un téléphone 9:20 // suite : seconde colonne d'une vue (Données)
 let geoOrigine = null;
+// ——— Prompt 215 : téléphone en paysage — le même portrait « à plat » ———
+// Canevas recomposé de PLW × PH (PH = 1080, moins sur un écran de moins de 412 px de haut ; PLW = PH × largeur / hauteur) : même échelle qu'en portrait (≈ 0,38 px CSS
+// par px), donc mêmes tailles de texte et de cibles. La colonne du portrait (PL = 1080) est au centre, sur toute la hauteur ;
+// à gauche et à droite, deux rails de largeur RAIL() (jauges et équipes à gauche ; onglets, actions, objets du bureau à droite).
+let PLW = PL;
+const RAIL = () => (PORTRAIT.paysage ? Math.round((PLW - PL) / 2) : 0);
 function appliquerGeometriePortrait(oui) {
 	if (typeof ZONE_CARTE === 'undefined' || typeof ZONE_VUE === 'undefined') return;
 	if (!geoOrigine) geoOrigine = { carte: Object.assign({}, ZONE_CARTE), vue: Object.assign({}, ZONE_VUE) };
@@ -29,11 +35,23 @@ function appliquerGeometriePortrait(oui) {
 }
 function majHauteurPortrait() {
 	const r = window.innerHeight / Math.max(1, window.innerWidth);
-	PH = Math.round(PL * Math.min(21 / 9, Math.max(16 / 9, r)));
+	if (PORTRAIT.paysage) {
+		// Prompt 215 : échelle du portrait sur un écran de 412 px (1080 px → 412 px CSS, soit ≈ 0,38) gardée quelle que soit la
+		// hauteur : sur un écran de 360 px de haut, le canevas fait 944 px de haut au lieu de réduire le texte sous 12 px CSS ;
+		// au-delà de 412 px, 1080 (tout grandit). La largeur suit la forme de l'écran.
+		PH = Math.min(PL, Math.round((window.innerHeight * PL) / 412));
+		PLW = Math.round(PH * Math.min(3, Math.max(16 / 9, 1 / Math.max(0.01, r))));
+	} else {
+		PH = Math.round(PL * Math.min(21 / 9, Math.max(16 / 9, r)));
+		PLW = PL;
+	}
 	if (PORTRAIT.canevas && PORTRAIT.canevas.height !== PH) PORTRAIT.canevas.height = PH;
+	if (PORTRAIT.canevas && PORTRAIT.canevas.width !== PLW) PORTRAIT.canevas.width = PLW;
 }
 
-function activerPortrait(oui) {
+function activerPortrait(oui, paysage) {
+	PORTRAIT.paysage = !!(oui && paysage);
+	if (typeof document !== 'undefined' && document.body) document.body.classList.toggle('paysage', PORTRAIT.paysage);
 	if (oui) majHauteurPortrait();
 	if (oui === PORTRAIT.actif) return;
 	PORTRAIT.actif = oui;
@@ -43,7 +61,7 @@ function activerPortrait(oui) {
 	if (oui && !PORTRAIT.canevas) {
 		const c = document.createElement('canvas');
 		c.id = 'portrait';
-		c.width = PL;
+		c.width = PLW;
 		c.height = PH;
 		c.setAttribute('aria-hidden', 'true'); // les annonces aria-live restent celles du jeu
 		document.getElementById('scene').appendChild(c);
@@ -62,7 +80,7 @@ function appliVersImage(r) {
 }
 function region(src, dx, dy, dl, defile) {
 	const dh = (src.h * dl) / src.l;
-	PORTRAIT.regions.push({ src, dst: { x: dx, y: dy, l: dl, h: dh }, defile: !!defile });
+	PORTRAIT.regions.push({ src, dst: { x: dx + RAIL(), y: dy, l: dl, h: dh }, defile: !!defile }); // prompt 215 : colonne décalée du rail gauche
 	return dh;
 }
 // Prompt 173 : les fenêtres n'ont plus que trois largeurs (DS.fenetre) ; le cadrage portrait = largeur + 40 px
@@ -105,6 +123,7 @@ function composerPortrait() {
 	PORTRAIT.boutons = [];
 	const loupes = PORTRAIT.loupes || []; // prompt 209 : relevées pendant le dessin de cette image
 	PORTRAIT.loupes = [];
+	if (PORTRAIT.paysage) (PORTRAIT.defilMax = 0), (PORTRAIT.hautDefil = 0), (PORTRAIT.basDefil = PH); // prompt 215 : pas d'état hérité de l'écran précédent
 	const scene = scenePortrait();
 	if (scene === 'appli' || scene === 'vueApp') regionsPoste(scene); // prompt 205
 	else if (scene === 'main') {
@@ -138,24 +157,43 @@ function composerPortrait() {
 		region({ x: xc, y: H - 80, l: lc, h: 56 }, 0, y, PL); // pied de page (nos noms → Crédits)
 	}
 	else if (scene === 'bureau') {
-		region({ x: 0, y: 0, l: L, h: H }, 0, 150, PL);
+		// Prompt 215 : en paysage, la pièce en haut de la colonne, l'heure (loupe « haut ») dans le rail gauche, les objets
+		// en boutons dans le rail droit
+		const y0 = PORTRAIT.paysage ? 20 : 150;
+		region({ x: 0, y: 0, l: L, h: H }, 0, y0, PL);
 		// Prompt 209 : textes utiles de la pièce repris à l'échelle d'une colonne de 640 px — l'heure dans la bande du haut,
 		// la consigne, « Fin de journée. » et la bulle du guide entre l'image et les boutons
-		let y = 150 + (H * PL) / L + 16;
+		let y = y0 + (H * PL) / L + 16;
 		loupes.forEach((z) => {
 			const s = Math.min(PL / 680, (PL - 40) / z.l);
 			const dl = z.l * s;
-			if (z.haut) region(z, (PL - dl) / 2, Math.max(4, (150 - z.h * s) / 2), dl);
+			if (z.haut && PORTRAIT.paysage) region(z, -RAIL() + 20, 20, Math.min(RAIL() - 40, z.l * s));
+			else if (z.haut) region(z, (PL - dl) / 2, Math.max(4, (150 - z.h * s) / 2), dl);
 			else y += region(z, (PL - dl) / 2, y, dl) + 12;
 		});
 		boutonsBureau(y + 8);
+		if (PORTRAIT.paysage) defilementGenerique(); // la consigne et le guide peuvent dépasser la hauteur
 	} else region({ x: 0, y: 0, l: L, h: H }, 0, (PH - (H * PL) / L) / 2, PL);
+	const poste = scene === 'appli' || scene === 'vueApp';
+	// Prompt 215 : en paysage, tout écran qui dépasse la hauteur (1080) remonte en haut et défile au doigt ; les boutons
+	// propres au portrait (bureau) sont décalés dans la colonne, sauf ceux posés dans un rail (abs)
+	if (PORTRAIT.paysage) {
+		if (PORTRAIT.scenePaysage !== scene) (PORTRAIT.scenePaysage = scene), (PORTRAIT.defil = 0);
+		if (!poste && scene !== 'bureau') defilementGenerique();
+		PORTRAIT.boutons.forEach((b) => {
+			if (!b.abs) b.x += RAIL();
+		});
+	}
 	// Dessin
 	ctx.fillStyle = '#0D0C0C';
-	ctx.fillRect(0, 0, PL, PH);
+	ctx.fillRect(0, 0, PLW, PH);
+	if (PORTRAIT.paysage) {
+		ctx.fillStyle = '#171616'; // rails, un ton au-dessus du fond
+		ctx.fillRect(0, 0, RAIL(), PH);
+		ctx.fillRect(RAIL() + PL, 0, PLW - RAIL() - PL, PH);
+	}
 	ctx.imageSmoothingEnabled = true;
-	const poste = scene === 'appli' || scene === 'vueApp';
-	const defilant = poste || ((scene === 'fenetre' || scene === 'rapport' || scene === 'menu' || scene === 'gameover') && PORTRAIT.defilMax > 0); // prompt 209 : fenêtre avec une suite, choix du mode
+	const defilant = poste || ((scene === 'fenetre' || scene === 'rapport' || scene === 'menu' || scene === 'gameover' || PORTRAIT.paysage) && PORTRAIT.defilMax > 0); // prompt 209 : fenêtre avec une suite, choix du mode ; prompt 215 : tout écran en paysage
 	const zone = defilant ? { haut: PORTRAIT.hautDefil, bas: PORTRAIT.basDefil } : null;
 	// Prompt 205 : la fiche du dossier monte du bas à son arrivée (0,3 s ; immédiate si les animations sont réduites)
 	const kF = reduireAnimations ? 1 : Math.min(1, (millis() - PORTRAIT.feuille) / 300);
@@ -165,7 +203,7 @@ function composerPortrait() {
 		ctx.save();
 		if (r.defile && zone) {
 			ctx.beginPath();
-			ctx.rect(0, zone.haut, PL, zone.bas - zone.haut);
+			ctx.rect(RAIL(), zone.haut, PL, zone.bas - zone.haut); // prompt 215 : la colonne seule (les rails restent nets)
 			ctx.clip();
 		}
 		ctx.drawImage(src, r.src.x, r.src.y, r.src.l, r.src.h, d.x, d.y, d.l, d.h);
@@ -175,7 +213,7 @@ function composerPortrait() {
 	PORTRAIT.boutons.forEach((b) => dessinerBoutonPortrait(b));
 	// Sieste : les paupières couvrent aussi tout le portrait (boutons compris), sauf pendant l'alarme de réveil
 	if (typeof SOMMEIL !== 'undefined' && SOMMEIL.k > 0.001 && phase !== 'reveil' && !fenetre) {
-		paupieres(ctx, SOMMEIL.k, PL, PH);
+		paupieres(ctx, SOMMEIL.k, PLW, PH);
 		if (SOMMEIL.k > 0.5) PORTRAIT.boutons = [];
 		dessinerSousTitresPortrait(ctx, PH - 40); // prompt 208
 		return;
@@ -185,9 +223,30 @@ function composerPortrait() {
 		const h = ((zone.bas - zone.haut) * (zone.bas - zone.haut)) / (zone.bas - zone.haut + PORTRAIT.defilMax);
 		const y = zone.haut + ((zone.bas - zone.haut - h) * PORTRAIT.defil) / PORTRAIT.defilMax;
 		ctx.fillStyle = 'rgba(255,255,255,0.35)';
-		ctx.fillRect(PL - 10, y, 6, h);
+		ctx.fillRect(RAIL() + PL - 10, y, 6, h);
 	}
 	dessinerSousTitresPortrait(ctx, (poste && zone ? zone.bas : PH) - 24); // prompt 208 : au-dessus de la barre d'onglets du poste
+}
+
+/** Prompt 215 : paysage — le contenu de la colonne qui dépasse 1080 px de haut remonte en haut (les écrans centrés
+ * verticalement en portrait, téléphone ou cinématique, partaient au-dessus de l'écran) et défile au doigt */
+function defilementGenerique() {
+	const rs = PORTRAIT.regions.filter((r) => r.dst.x + r.dst.l > RAIL() && r.dst.x < RAIL() + PL); // la colonne, pas les rails
+	if (!rs.length) return;
+	const haut = Math.min(...rs.map((r) => r.dst.y));
+	const bas = Math.max(...rs.map((r) => r.dst.y + r.dst.h)) + 20;
+	const bb = PORTRAIT.boutons.filter((b) => !b.abs);
+	const basB = bb.length ? Math.max(...bb.map((b) => b.y + b.h)) + 20 : 0;
+	if (bas - haut <= PH && basB <= PH) {
+		if (haut < 0) rs.forEach((r) => (r.dst.y += -haut + 12));
+		return;
+	}
+	const decalage = haut < 12 ? 12 - haut : 0;
+	rs.forEach((r) => ((r.dst.y += decalage), (r.defile = true)));
+	PORTRAIT.hautDefil = 0;
+	PORTRAIT.basDefil = PH;
+	PORTRAIT.defilMax = Math.max(0, Math.max(bas + decalage, basB) - PH);
+	PORTRAIT.defil = constrain(PORTRAIT.defil, 0, PORTRAIT.defilMax);
 }
 
 /** Prompt 208 : sous-titres des sons en portrait — 40 px portrait (≈ 15 px CSS sur 412 px), blanc sur noir, centrés */
@@ -202,9 +261,10 @@ function dessinerSousTitresPortrait(ctx, bas) {
 	liste.forEach((l) => {
 		const txt = t('son.legende.' + l.cle);
 		const lt = Math.min(PL - 24, ctx.measureText(txt).width + 48);
+		const cx = RAIL() + PL / 2; // prompt 215 : centrés sur la colonne
 		ctx.fillStyle = 'rgba(0,0,0,0.88)';
-		ctx.fillRect((PL - lt) / 2, y, lt, hl);
-		texteP(ctx, txt, PL / 2, y + 14, 40, '#FFFFFF', 'center');
+		ctx.fillRect(cx - lt / 2, y, lt, hl);
+		texteP(ctx, txt, cx, y + 14, 40, '#FFFFFF', 'center');
 		y += hl + 8;
 	});
 	ctx.restore();
@@ -307,8 +367,9 @@ function bandeEquipesVisible() {
 }
 function regionsPoste(scene) {
 	const bande = scene === 'appli' && bandeEquipesVisible();
-	const haut = BARRE_HAUT + 12;
-	const bas = PH - BARRE_ONGLETS - RANGEE_ACTIONS - (bande ? BANDE_EQUIPES : 0) - 8;
+	const pay = PORTRAIT.paysage; // prompt 215 : barres dans les rails, colonne sur toute la hauteur
+	const haut = pay ? 12 : BARRE_HAUT + 12;
+	const bas = pay ? PH - 12 : PH - BARRE_ONGLETS - RANGEE_ACTIONS - (bande ? BANDE_EQUIPES : 0) - 8;
 	PORTRAIT.hautDefil = haut;
 	PORTRAIT.basDefil = bas;
 	const feuille = scene === 'appli' && feuilleOuverte();
@@ -328,7 +389,18 @@ function regionsPoste(scene) {
 	}
 	PORTRAIT.defil = constrain(PORTRAIT.defil, 0, PORTRAIT.defilMax);
 	// Bande des équipes : un toucher envoie l'équipe sur le dossier ouvert (comme glisser sa pastille sur la fiche)
-	if (bande) {
+	if (bande && pay) {
+		// Prompt 215 : rail gauche, sous les jauges — deux colonnes de boutons de 120 px
+		const tm = typeof tempsCarte === 'function' ? tempsCarte() : millis();
+		const lb = (RAIL() - 52) / 2;
+		Jeu.TYPES_EQUIPES.forEach((c, i) => {
+			const q = Jeu.EQUIPES[c];
+			const eff = Jeu.effectifJour ? Jeu.effectifJour(c) : 1;
+			const eng = (Jeu.equipes || []).filter((x) => x.cle === c && !x.inutile && x.jourIndex === Jeu.jourIndex && Jeu.phaseEquipe(x, tm) !== 'libre').length;
+			const dispo = Math.max(0, eff - eng);
+			PORTRAIT.boutons.push({ abs: true, x: 20 + (i % 2) * (lb + 12), y: Y_EQUIPES_PAYSAGE + 130 + Math.floor(i / 2) * 132, l: lb, h: 120, texte: String(q.nom), sous: t('portrait.libres', { n: dispo, cout: q.cout }), action: () => deposerJeton(c, Jeu.index), desactive: !dispo });
+		});
+	} else if (bande) {
 		const y = PH - BARRE_ONGLETS - RANGEE_ACTIONS - BANDE_EQUIPES + 58;
 		const n = Jeu.TYPES_EQUIPES.length;
 		const lb = (PL - 40 - (n - 1) * 12) / n;
@@ -341,18 +413,21 @@ function regionsPoste(scene) {
 			PORTRAIT.boutons.push({ x: 20 + i * (lb + 12), y, l: lb, h: 120, texte: String(q.nom), sous: t('portrait.libres', { n: dispo, cout: q.cout }), action: () => deposerJeton(c, Jeu.index), desactive: !dispo });
 		});
 	}
-	// Rangée d'actions : somnolence (se reposer / se réveiller) et « Se lever »
-	const ya = PH - BARRE_ONGLETS - RANGEE_ACTIONS + 10;
-	const la = (PL - 52) / 2;
+	// Rangée d'actions : somnolence (se reposer / se réveiller) et « Se lever » ; prompt 215 : en bas du rail droit
+	const ya = pay ? PH - 20 - 116 : PH - BARRE_ONGLETS - RANGEE_ACTIONS + 10;
+	const xa = pay ? RAIL() + PL + 20 : 20;
+	const la = pay ? (RAIL() - 52) / 2 : (PL - 52) / 2;
 	const v = typeof SOMNO !== 'undefined' ? Math.round(SOMNO.v) : 0;
-	PORTRAIT.boutons.push({ x: 20, y: ya, l: la, h: 116, texte: t(typeof enSieste !== 'undefined' && enSieste ? 'portrait.reveiller' : 'portrait.reposer'), sous: t('portrait.somnolence', { v }), jauge: v, action: () => typeof basculerSieste === 'function' && basculerSieste() });
-	PORTRAIT.boutons.push({ x: 32 + la, y: ya, l: la, h: 116, texte: t('portrait.seLeverCourt'), action: quitterPC, primaire: false, desactive: !!raisonRetenuAuPC() }); // prompt 182 : estompé tant qu'un choix attend
+	PORTRAIT.boutons.push({ abs: pay, x: xa, y: ya, l: la, h: 116, texte: t(typeof enSieste !== 'undefined' && enSieste ? 'portrait.reveiller' : 'portrait.reposer'), sous: t('portrait.somnolence', { v }), jauge: v, action: () => typeof basculerSieste === 'function' && basculerSieste() });
+	PORTRAIT.boutons.push({ abs: pay, x: xa + 12 + la, y: ya, l: la, h: 116, texte: t('portrait.seLeverCourt'), action: quitterPC, primaire: false, desactive: !!raisonRetenuAuPC() }); // prompt 182 : estompé tant qu'un choix attend
 	// Barre d'onglets : les entrées du menu de l'appli (badges, verrous), l'entrée affichée soulignée de rouge
 	const ent = typeof ENTREES_MENU !== 'undefined' ? ENTREES_MENU : [];
 	const lo = PL / Math.max(1, ent.length);
+	const po = pay ? Math.min(132, (ya - 40) / Math.max(1, ent.length)) : 0; // prompt 215 : onglets empilés dans le rail droit
 	ent.forEach((c, i) => {
 		const verrou = c !== 'signalements' && typeof appliDebloquee === 'function' && !appliDebloquee(c);
-		PORTRAIT.boutons.push({ onglet: true, x: i * lo, y: PH - BARRE_ONGLETS, l: lo, h: BARRE_ONGLETS, texte: c === 'signalements' ? t('menuApp.carte') : t('menuApp.' + c), actif: entreeActive() === c, badge: typeof nombreBadge === 'function' && entreeActive() !== c ? nombreBadge(c) : 0, verrou, action: () => ouvrirEntreeMenu(c) });
+		const geo = pay ? { abs: true, x: RAIL() + PL + 20, y: 20 + i * po, l: RAIL() - 40, h: Math.max(116, po - 12) } : { x: i * lo, y: PH - BARRE_ONGLETS, l: lo, h: BARRE_ONGLETS };
+		PORTRAIT.boutons.push({ onglet: true, ...geo, texte: c === 'signalements' ? t('menuApp.carte') : t('menuApp.' + c), actif: entreeActive() === c, badge: typeof nombreBadge === 'function' && entreeActive() !== c ? nombreBadge(c) : 0, verrou, action: () => ouvrirEntreeMenu(c) });
 	});
 }
 /** Couleur (texte clair, contraste ≥ 4,5:1 sur le fond sombre) d'une jauge selon ses seuils 40 / 20 */
@@ -384,7 +459,50 @@ function hachuresPortrait(ctx, x0, x1, y, h) {
 	ctx.fillRect(x0 - 1, y - 4, 3, h + 8);
 }
 /** Barre du haut (jauges chiffrées, heure) et titre de la bande des équipes */
+/** Texte de 32 px replié sur trois lignes au plus dans la largeur du rail (« … » au-delà) */
+function texteRail(ctx, s, x, y, l, couleur) {
+	ctx.font = '400 32px ' + POLICE_PORTRAIT;
+	const mots = String(s).split(' ');
+	const lignes = [''];
+	mots.forEach((m) => {
+		const essai = lignes[lignes.length - 1] ? lignes[lignes.length - 1] + ' ' + m : m;
+		if (ctx.measureText(essai).width <= l || !lignes[lignes.length - 1]) lignes[lignes.length - 1] = essai;
+		else lignes.push(m);
+	});
+	if (lignes.length > 3) lignes[2] += ' …';
+	lignes.slice(0, 3).forEach((li, i) => texteP(ctx, li, x, y + i * 40, 32, couleur));
+}
+const Y_EQUIPES_PAYSAGE = 540; // prompt 215 : titre « Envoyer une équipe » dans le rail gauche, sous les jauges
+/** Prompt 215 : rail gauche du paysage — vitesse et heure, puis les trois jauges l'une sous l'autre, puis le titre des équipes */
+function dessinerRailGauche() {
+	const ctx = PORTRAIT.ctx;
+	const lr = RAIL() - 40;
+	ctx.save();
+	const h = heureAffichee();
+	texteP(ctx, t('temps.' + vitesseTemps()), 20, 20, 32, 'rgba(255,255,255,0.75)');
+	texteP(ctx, String(h.h).padStart(2, '0') + ':' + String(h.m).padStart(2, '0'), 20, 58, 48, '#FFFFFF', 'left', true);
+	const aff = typeof jaugesAffichees === 'function' ? jaugesAffichees() : Jeu.jauges || {};
+	['fluidite', 'reputation', 'budget'].forEach((k, i) => {
+		const y = 150 + i * 130;
+		const va = Math.round(aff[k] || 0);
+		const seuil = Jeu.seuilExces ? Jeu.seuilExces(k) : null;
+		const enEx = seuil !== null && va >= seuil;
+		texteP(ctx, t('jaugeTitre.' + k), 20, y + 8, 32, '#FFFFFF');
+		texteP(ctx, String(va) + (enEx ? ' ⚠' : ''), 20 + lr, y, 48, enEx ? DS.alerteClair : couleurJaugePortrait(va), 'right', true);
+		ctx.fillStyle = 'rgba(255,255,255,0.15)';
+		ctx.fillRect(20, y + 66, lr, 12);
+		ctx.fillStyle = enEx ? DS.alerte : couleurBarrePortrait(va);
+		ctx.fillRect(20, y + 66, (lr * Math.max(0, Math.min(100, va))) / 100, 12);
+		if (seuil !== null) hachuresPortrait(ctx, 20 + (lr * seuil) / 100, 20 + lr, y + 66, 12);
+	});
+	if (bandeEquipesVisible() && scenePortrait() === 'appli') {
+		const msg = typeof SELECTION !== 'undefined' && SELECTION.message && millis() - SELECTION.message.t < 5000 ? SELECTION.message : null;
+		texteRail(ctx, msg ? String(msg.texte) : t('portrait.envoyerEquipe'), 20, Y_EQUIPES_PAYSAGE, lr, msg ? (msg.ok ? DS.succesClair : DS.erreurClair) : 'rgba(255,255,255,0.75)');
+	}
+	ctx.restore();
+}
 function dessinerBarresPortrait() {
+	if (PORTRAIT.paysage) return dessinerRailGauche();
 	const ctx = PORTRAIT.ctx;
 	ctx.save();
 	ctx.fillStyle = '#171616';
@@ -438,6 +556,14 @@ function boutonsBureau(y0) {
 	const lb = (PL - 60) / 2;
 	// Prompt 214 : tous les boutons à 124 px (≥ 44 px CSS sur un téléphone de 412 px : 124 × 412 / 1080 ≈ 47) ; 96 n'en faisait que 37
 	const hp = 124; // prompt 69 : la sortie ≥ 44 px CSS
+	if (PORTRAIT.paysage) {
+		// Prompt 215 : rail droit, un bouton par ligne (120 px ≈ 46 px CSS), « S'installer au PC » (ou la sortie) en tête ;
+		// sur deux colonnes si la hauteur manque (écran bas, sortie du soir en plus)
+		const cols = (PH - 40) / objets.length >= 128 ? 1 : 2;
+		const lb = (RAIL() - 40 - (cols - 1) * 12) / cols;
+		objets.forEach((o, i) => PORTRAIT.boutons.push({ abs: true, x: RAIL() + PL + 20 + (i % cols) * (lb + 12), y: 20 + Math.floor(i / cols) * 132, l: lb, h: 120, texte: o.label, action: o.action, primaire: i === 0 }));
+		return;
+	}
 	objets.forEach((o, i) => {
 		const premier = i === 0;
 		const col = premier ? 0 : (i - 1) % 2;
@@ -511,7 +637,7 @@ function dessinerBoutonPortrait(b) {
 function pointPortrait(e) {
 	const tch = (e && e.changedTouches && e.changedTouches[0]) || (e && e.touches && e.touches[0]) || e;
 	const r = PORTRAIT.canevas.getBoundingClientRect();
-	return { x: ((tch.clientX - r.left) * PL) / r.width, y: ((tch.clientY - r.top) * PH) / r.height };
+	return { x: ((tch.clientX - r.left) * PLW) / r.width, y: ((tch.clientY - r.top) * PH) / r.height }; // prompt 215 : largeur réelle du canevas
 }
 /** Place la souris du jeu sur le point correspondant ; renvoie false si le point ne tombe sur aucune région */
 function viserDepuisPortrait(p) {
@@ -540,7 +666,7 @@ function portraitDeplacement(e) {
 	if (!d) return;
 	const p = pointPortrait(e);
 	const sc = scenePortrait();
-	if ((sc === 'appli' || sc === 'vueApp' || ((sc === 'fenetre' || sc === 'rapport' || sc === 'menu' || sc === 'gameover') && PORTRAIT.defilMax > 0)) && Math.abs(p.y - d.y) > 12) {
+	if ((sc === 'appli' || sc === 'vueApp' || ((sc === 'fenetre' || sc === 'rapport' || sc === 'menu' || sc === 'gameover' || PORTRAIT.paysage) && PORTRAIT.defilMax > 0)) && Math.abs(p.y - d.y) > 12) {
 		PORTRAIT.cible = null;
 		PORTRAIT.defil = constrain(d.defil - (p.y - d.y), 0, PORTRAIT.defilMax); // le doigt fait défiler la colonne
 	}
