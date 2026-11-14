@@ -1958,7 +1958,7 @@ for (const f of ['enquete.js', 'carte.js', 'journal.js']) verifier(!/\*\s*1\.05\
 		const b = vm.runInContext(`t(${JSON.stringify(cle)}, { reponse: 'X' })`, en94);
 		verifier(a !== '[À COMPLÉTER]' && b !== '[À COMPLÉTER]' && a !== b, `prompt 94 : clé ${cle} absente en FR ou en EN`);
 	}
-	verifier(!/debutGlisser|relacherGlisser|dessinerCartesReponses/.test(['sketch.js', 'micro.js', 'panneau.js', 'glisser.js'].map((f) => readFileSync(join(pub, f), 'utf8')).join('\n')), 'glisser-déposer (prompt 94) : retiré avec les cartes de réponse (prompt 200)');
+	verifier(!/debutGlisser|relacherGlisser|dessinerCartesReponses/.test(['sketch.js', 'panneau.js', 'glisser.js'].map((f) => readFileSync(join(pub, f), 'utf8')).join('\n')), 'glisser-déposer (prompt 94) : retiré avec les cartes de réponse (prompt 200)');
 }
 
 // Prompt 95 : journées synchronisées et expliquées — une seule horloge (équipes en temps de jeu), titres de
@@ -2156,7 +2156,7 @@ for (const s of semaines) {
 // Prompt 161 : les textes décrivent le jeu qui tourne (prolonge le contrôle du prompt 131 sur sms.*) — pas de chrono par
 // défaut (prompt 87), équipes dès la semaine 1 (prompt 108), trois répliques (prompt 117), archives sans minutes de retard
 {
-	const PREFIXES = ['histoire.c', 'histoire.prochain', 'mp.mode.', 'mp.difficulte', 'mp.actifs.', 'poste.', 'sieste.', 'cafe.', 'credits.', 'fin.', 'guide.somnolence', 'tuto.', 'objet.micro.', 'webcam.', 'enq.revele.'];
+	const PREFIXES = ['histoire.c', 'histoire.prochain', 'mp.mode.', 'mp.difficulte', 'mp.actifs.', 'poste.', 'sieste.', 'cafe.', 'credits.', 'fin.', 'guide.somnolence', 'tuto.', 'webcam.', 'enq.revele.'];
 	const PERIMEES = {
 		fr: [/15 secondes/i, /quatre répliques/i, /\b1 à 4\b/, /expirent sont perdus/i, /Nouveauté : vous pouvez envoyer des équipes/i, /un nouvel élément de jeu/i, /\bDévier\b|\bRetenir\b|Ne rien faire|ne rien faire/, /retards ×/, /chrono est long/i, /ne se met pas en pause/i, /ne dépend que de l'inactivité/i, /Révèle le retard/i],
 		en: [/15 seconds/i, /four replies/i, /\b1 to 4\b/, /expire are lost/i, /New this week: you can send/i, /new game element/i, /\bDivert\b|Hold at terminus|Do nothing|do nothing/, /delays ×/, /timer is long/i, /can.t be paused/i, /only depend on inactivity/i, /Reveals the delay/i],
@@ -2201,7 +2201,7 @@ for (const s of semaines) {
 	const imm161 = readFileSync(join(pub, 'immersion.js'), 'utf8');
 	// Fenêtre « Votre poste » supprimée (12/11/2026) : plus de fenêtre, d'ouverture automatique ni de textes poste.*
 	verifier(!/function (fenetrePoste|majExplicationPoste)|GESTES_POSTE|explicationVue/.test(imm161) && !/ouvrir\('poste'\)|fenetre === 'poste'/.test(readFileSync(join(pub, 'sketch.js'), 'utf8')) && !/explicationVue/.test(readFileSync(join(pub, 'taches-ui.js'), 'utf8')), 'fenêtre « Votre poste » : encore présente ou encore attendue par les tâches');
-	verifier(/survolChrono/.test(imm161), 'prompt 161 : infobulle du micro selon le défi chrono');
+	verifier(!/'micro'|clicMicro|survolChrono/.test(imm161) && !existsSync(join(pub, 'micro.js')), 'interface simplifiée : le micro du poste est retiré (objet, push-to-talk, souffle)');
 	const menu161 = readFileSync(join(pub, 'menu.js'), 'utf8');
 	const diff = menu161.slice(menu161.indexOf('function texteDifficulteChapitre'), menu161.indexOf('function modesNouvellePartie'));
 	verifier(!/aggravation/.test(diff) && /mp\.difficulteChrono/.test(diff), 'prompt 161 : difficulté du menu sans « retards × », budget réel en défi chrono');
@@ -3367,7 +3367,7 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	verifier(!/\b(lu|archive|reponse)\b[^\n]*Jeu\.(jauges|score)/.test(pj), 'prompt 195 : archiver / non lu / répondre sans effet de jeu');
 	verifier(/messagesPatron: Jeu\.messagesPatron,/.test(readFileSync(join(pub, 'game.js'), 'utf8')), 'prompt 195 : Jeu.instantane sauve les mails tels quels (archive comprise)');
 	const sk = readFileSync(join(pub, 'sketch.js'), 'utf8');
-	verifier(/toucheGuide\(\)\) return false;[^\n]*\n\tif \(!smsActif && !tutoriel && typeof saisieRechercheMails === 'function' && saisieRechercheMails\(\)\) return false;/.test(sk) && /rechercheMailsActive\(\)\)\) return;/.test(readFileSync(join(pub, 'micro.js'), 'utf8')), 'prompt 195 : la frappe dans la recherche de Mails passe avant les raccourcis (M compris)');
+	verifier(/toucheGuide\(\)\) return false;[^\n]*\n\tif \(!smsActif && !tutoriel && typeof saisieRechercheMails === 'function' && saisieRechercheMails\(\)\) return false;/.test(sk), 'prompt 195 : la frappe dans la recherche de Mails passe avant les raccourcis (M compris)');
 	for (const langue of ['fr', 'en']) {
 		const dico = vm.runInContext(`TRADUCTIONS.${langue}`, contexte(langue));
 		const cles = ['patron.filtre.archives', 'patron.categories', 'patron.recherche', 'patron.recherche.effacer', 'patron.recherche.resultats', 'patron.action.repondre', 'patron.action.archiver', 'patron.action.desarchiver', 'patron.action.nonLu', 'patron.archive', 'patron.desarchive', 'patron.marqueNonLu', 'patron.indisponible', 'patron.vide', 'patron.videRecherche', 'patron.jour.aujourdhui', 'patron.jour.hier', 'patron.de', 'patron.a', 'patron.aDe', 'patron.vous', 'patron.repondreA', 'patron.reponses', 'patron.citation', 'patron.zone.barre'];
@@ -4214,11 +4214,9 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	})()`, c);
 	verifier(m.masque && m.incitations === 0 && m.plaintes > 0, `210 : en exposition, violence masquée et aucune incitation tirée : ${JSON.stringify(m)}`);
 	const conf = readFileSync(join(pub, 'confort.js'), 'utf8');
-	verifier(/EXPO\.actif\) Object\.assign\(Reglages, \{ webcam: DEFAUTS\.webcam, micro: DEFAUTS\.micro, masquerViolence: true \}\)/.test(conf), '210 : en exposition, webcam et micro remis à leur défaut à chaque visiteur');
+	verifier(/EXPO\.actif\) Object\.assign\(Reglages, \{ webcam: DEFAUTS\.webcam, masquerViolence: true \}\)/.test(conf), '210 : en exposition, webcam remise à son défaut à chaque visiteur (micro retiré)');
 	const cam = readFileSync(join(pub, 'webcam.js'), 'utf8');
-	const mic = readFileSync(join(pub, 'micro.js'), 'utf8');
 	verifier(/if \(CAM\.enCours\) return false;/.test(cam) && /CAM\.jeton\+\+/.test(cam) && /visibilitychange/.test(cam), '210 : webcam — garde contre la double demande, coupure à l\'onglet masqué');
-	verifier(/MICRO\.demande = \(async/.test(mic) && /MICRO\.jeton\+\+/.test(mic) && /clearInterval\(MICRO\.minuterieAnalyse\);\n\tMICRO\.minuterieAnalyse = setInterval/.test(mic), '210 : micro — une seule demande d\'autorisation, jeton invalidé au relâchement');
 }
 
 // Prompt 210 (audit 206, constat 10) : appli « Données » hors ligne alimentée par la semaine de référence

@@ -6,3 +6,12 @@
 function sourisPC() {
 	return typeof pointeurEcranPC === 'function' ? pointeurEcranPC(mouseX, mouseY) : { x: mouseX, y: mouseY }; // prompt 182 : hors du poste, le pointeur n'est « nulle part » pour l'appli (bureau.js)
 }
+/** Relâchement : dépôt d'un jeton d'équipe sur la carte (déplacé de micro.js, retiré avec le micro) */
+function mouseReleased() {
+	if (typeof relacherJeton === 'function') relacherJeton(); // prompt 102
+}
+function touchEnded(e) {
+	if (horsCanevas(e)) return; // prompt 60
+	if (MOBILE.actif) return (PORTRAIT.actif ? portraitFin(e) : toucherFin()), false; // prompt 60 : tap, appui long, swipe ; 60b : portrait
+	mouseReleased();
+}

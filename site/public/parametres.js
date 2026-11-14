@@ -164,7 +164,6 @@ function reglagesParam(cle) {
 			bascule('sousTitresSons', 'captions', t('param.sousTitres'), t('param.sousTitres.detail')), // prompt 208
 			choix('rythmeTexte', 'text-cursor', t('param.rythme'), t('param.rythme.detail'), libelleRythmeTexte, changerRythmeTexte), // prompt 208
 			choix('intensiteFeedback', 'vibrate', t('acc.intensite'), t('acc.intensite.detail'), libelleIntensite, changerIntensiteFeedback),
-			{ id: 'micro', type: 'inter', icone: 'mic', titre: t('micro.reglage'), etat: () => R.micro !== false, activer: basculerMicroReglage },
 			{ id: 'webcam', type: 'inter', icone: 'webcam', titre: t('webcam.reglage'), etat: () => !!(CAM.active || R.webcam), libelle: () => (!CAM.active && R.webcam ? t('webcam.etat.attente') : ''), activer: basculerWebcamReglage },
 		].filter(Boolean);
 	// Avancé : mode de jeu, options soumises au groupe (prompts 88 à 91), progression

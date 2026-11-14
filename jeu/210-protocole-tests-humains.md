@@ -24,7 +24,7 @@ humains ») : **aucun résultat n'est inventé ici**, tout ce qui dépend d'une 
 | Visiteur suivant | `?expo=1`, allumer la webcam, attendre le rechargement d'inactivité (90 s + 15 s) | voyant webcam éteint, aucune demande de caméra au geste suivant | [À COMPLÉTER] |
 | Commentaires violents | `?expo=1`, jouer jusqu'aux messages Community | commentaires injurieux masqués, réglage absent des Paramètres | [À COMPLÉTER] |
 | Hors ligne | câble réseau débranché, page rechargée | jeu jouable, appli « Données » avec 6 dossiers | [À COMPLÉTER] |
-| Avertissement | écran titre | « Contient des propos injurieux… · conseillé dès 12 ans » lisible à 1 m | [À COMPLÉTER] |
+| Avertissement | écran titre | « Contient des propos injurieux » lisible à 1 m | [À COMPLÉTER] |
 
 ## 3. Téléphone réel (10 min)
 
