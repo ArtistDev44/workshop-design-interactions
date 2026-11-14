@@ -253,7 +253,7 @@ function dessinerCarteAlertes() {
 	const zl = zoneLibreCarte();
 	const sans = CARTE.marqueurs.filter((m) => !m.lieu.pt).concat(CARTE.suivis.filter((m) => !m.lieu.pt)); // prompt 121 : en attente, sans lieu connu
 	if (sans.length) {
-		const parLigne = Math.max(1, Math.floor((zl.l - 112) / 44)); // la colonne des boutons de zoom reste libre
+		const parLigne = Math.max(1, Math.floor((zl.l - 32) / 44)); // les boutons de zoom sont passés sous les équipes
 		const lignes = Math.ceil(sans.length / parLigne);
 		const lc = 16 + Math.min(sans.length, parLigne) * 44;
 		const hc = 16 + lignes * 44;
@@ -341,36 +341,44 @@ function ligneSous(pr, mx, my) {
 	}
 	return best;
 }
-/** Boutons + / − / Recentrer (bas droite de la carte), zoom et légende des trajets */
+/** Légende des trajets ; les boutons de navigation sont sous les équipes (dessinerNavigationCarte) */
 function dessinerControlesCarte(z) {
-	const x = z.x + z.l - 64;
-	let y = z.y + z.h - 196; // prompt 147 : plus de place réservée à la case « Lieu à préciser »
-	// Prompt 146 : « Recentrer » devient le 3e bouton carré blanc 48 × 48 (icône Lucide depuis le prompt 170), libellé en infobulle
+	// légende : sous la ligne d'état (y + 64), à droite de la partie libre
+	// prompt 211 : « Zoom ×n » retiré (aucune décision ne s'appuie dessus)
+	if ((Jeu.equipes || []).some((q) => !q.inutile && Jeu.phaseEquipe(q, tempsCarte()) !== 'libre')) dsTexte(couperLargeurCarte(t('carte.volOiseau'), z.l - 32, 20), z.x + z.l - 16, z.y + 64, 16, DS.blanc50, 'right');
+	CARTE.zoneLibre = z;
+}
+/** Boutons + / − / Recentrer : une rangée sous les cases des équipes (interface simplifiée), libellé en infobulle */
+function dessinerNavigationCarte(x, y) {
 	let infobulle = null;
 	[
 		['plus', () => zoomer(1.4), t('carte.zoomer')],
 		['minus', () => zoomer(1 / 1.4), t('carte.dezoomer')],
 		['locate-fixed', recentrer, t('carte.recentrer')],
-	].forEach(([lib, action, titre]) => {
-		const sv = mouseX >= x && mouseX <= x + 48 && mouseY >= y && mouseY <= y + 48;
+	].forEach(([lib, action, titre], i) => {
+		const bx = x + i * 56;
+		const sv = mouseX >= bx && mouseX <= bx + 48 && mouseY >= y && mouseY <= y + 48;
 		noStroke();
 		fill(sv ? DS.blanc75 : DS.blanc);
-		rect(x, y, 48, 48);
-		iconeLucide(lib, x + 12, y + 12, 24, DS.fond); // prompt 170 : icônes Lucide, chacune avec son infobulle
-		boutons.push({ x, y, l: 48, h: 48, action, titre });
-		CARTE.controles.push({ x, y, l: 48, h: 48 });
-		if (sv && titre) {
-			textFont(DS.policeTexte);
-			textSize(16);
-			infobulle = [titre, x - 8 - (textWidth(titre) + 20) / 2, y + 49]; // à gauche du bouton, sans couvrir « − »
-		}
-		y += 56;
+		rect(bx, y, 48, 48);
+		iconeLucide(lib, bx + 12, y + 12, 24, DS.fond); // prompt 170 : icônes Lucide, chacune avec son infobulle
+		boutons.push({ x: bx, y, l: 48, h: 48, action, titre });
+		CARTE.controles.push({ x: bx, y, l: 48, h: 48 });
+		if (sv && titre) infobulle = { titre, bx };
 	});
-	if (infobulle) infobulleCarte(...infobulle);
-	// légende : sous la ligne d'état (y + 64), à droite de la partie libre
-	// prompt 211 : « Zoom ×n » retiré (aucune décision ne s'appuie dessus)
-	if ((Jeu.equipes || []).some((q) => !q.inutile && Jeu.phaseEquipe(q, tempsCarte()) !== 'libre')) dsTexte(couperLargeurCarte(t('carte.volOiseau'), z.l - 32, 20), z.x + z.l - 16, z.y + 64, 16, DS.blanc50, 'right');
-	CARTE.zoneLibre = z;
+	// Infobulle sous le bouton survolé, gardée dans le panneau des équipes
+	if (infobulle) {
+		const P = PANNEAU_EQUIPES;
+		textFont(DS.policeTexte);
+		textSize(16);
+		const lt = Math.min(P.l, textWidth(infobulle.titre) + 20);
+		const xt = constrain(infobulle.bx + 24 - lt / 2, P.x, P.x + P.l - lt);
+		noStroke();
+		fill(DS.blanc);
+		rect(xt, y + 56, lt, 30);
+		dsTexte(infobulle.titre, xt + 10, y + 62, 16, DS.fond, 'left');
+	}
+	return y + 48;
 }
 function couperLargeurCarte(txt, l, taille) {
 	textFont(DS.policeTexte);
@@ -564,11 +572,7 @@ function pictoEquipe(cle, x, y, s, c) {
 function dessinerPanneauEquipes() {
 	const P = PANNEAU_EQUIPES;
 	CARTE.jetons = [];
-	noStroke();
-	fill(DS.fond);
-	rect(P.x, P.y, P.l, P.h);
-	fill(DS.blanc05);
-	rect(P.x, P.y, P.l, P.h);
+	// Interface simplifiée : plus de fond derrière le panneau des équipes
 	dsTexte(t('equipes.titre'), P.x + 16, P.y + 14, 20, DS.blanc, 'left');
 	const tm = tempsCarte();
 	const verrou = !Jeu.elementDebloque('equipes');
@@ -614,11 +618,13 @@ function dessinerPanneauEquipes() {
 		if (verrou) dsTexte(couperLargeurCarte(t('histoire.verrou.equipes'), P.l - 32, 20), P.x + 16, y + 30, 14, DS.alerteClair, 'left');
 		y += 32 + (ps.length ? lignesP * 52 : 30) + 22;
 	});
-	// Message (envoi, refus) ou consigne, en bas du panneau
+	// Boutons de navigation de la carte, sous les cases des équipes
+	if (CARTE.pr) y = dessinerNavigationCarte(P.x + 16, y) + 24;
+	// Message (envoi, refus, équipe choisie) sous les boutons ; la consigne « Glissez une équipe… » est retirée
 	const msg = SELECTION.message && millis() - SELECTION.message.t < 5000;
-	const txt = msg ? String(SELECTION.message.texte) : CARTE.jetonChoisi ? t('carte.jetonChoisi', { nom: Jeu.EQUIPES[CARTE.jetonChoisi].nom }) : !(Jeu.equipes || []).length ? t('equipes.glisser') : ''; // prompt 211 : consigne jusqu'au premier envoi
+	const txt = msg ? String(SELECTION.message.texte) : CARTE.jetonChoisi ? t('carte.jetonChoisi', { nom: Jeu.EQUIPES[CARTE.jetonChoisi].nom }) : '';
 	const coul = msg ? (SELECTION.message.ok ? (SELECTION.message.adaptee === false ? DS.alerte : DS.succesClair) : DS.alerteClair) : DS.blanc50;
-	dsTexte(txt, P.x + 16, Math.max(y + 8, P.y + P.h - 132), 16, coul, 'left', P.l - 32);
+	if (txt) dsTexte(txt, P.x + 16, y, 16, coul, 'left', P.l - 32);
 	// Jeton en cours de glisser
 	if (CARTE.jeton) {
 		noStroke();

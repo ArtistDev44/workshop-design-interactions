@@ -6,7 +6,7 @@
  * 250 ms, rien si animations réduites) et une annonce aria-live, une seule fois. ?jours=N : outil de test
  * (n'écrit rien). Remettre la carrière à zéro vide le bureau.
  */
-const OBJETS_PROGRESSION = { tasse: 1, aide: 2, plante: 2, dossiers: 3, micro: 4, stress: 5, postit: 6, cadre: 8, planteGrande: 10 };
+const OBJETS_PROGRESSION = { tasse: 1, aide: 2, plante: 2, dossiers: 3, stress: 5, postit: 6, cadre: 8, planteGrande: 10 };
 const CLE_BUREAU_ANNONCES = 'pxe-nte001-bureau-annonces';
 const PROG = { apparu: {}, annonces: null, test: null };
 (() => {

@@ -49,7 +49,6 @@ const OBJETS_BUREAU = [
 	{ nom: 'fenetre', piece: true, label: T('piece.fenetre'), infobulle: T('piece.fenetre.survol'), x: 334, y: 14, l: 64, h: 96 }, // prompt 31 : la baie s'arrête au pan de mur
 	{ nom: 'horloge', label: T('objet.horloge'), infobulle: T('objet.horloge.survol'), x: 404, y: 30, l: 28, h: 29 }, // prompt 51 : finir sa journée
 	{ nom: 'webcam', label: T('objet.webcam'), infobulle: T('objet.webcam.survol'), x: 234, y: 39, l: 13, h: 8 }, // prompt 57 : webcam posée sur l'écran
-	{ nom: 'micro', label: T('objet.micro'), infobulle: { toString: () => t(Jeu.defiChrono ? 'objet.micro.survolChrono' : 'objet.micro.survol') }, x: 150, y: 170, l: 12, h: 24, visible: () => typeof objetPresent !== 'function' || objetPresent('micro') }, // prompt 54 : micro du poste (appui maintenu) ; prompt 104 ; prompt 161 : infobulle « compteur » seulement en défi chrono
 	{ nom: 'sortie', label: T('soir.sortie'), infobulle: T('soir.infobulle'), x: 41, y: 92, l: 34, h: 56, visible: () => typeof sortieVisible === 'function' && sortieVisible() }, // prompt 69 : flèche du soir (soir.js)
 ];
 
@@ -919,7 +918,6 @@ function ouvrirObjetBureau(nom) {
 	if (nom === 'aide' || nom === 'stress') return ouvrir('aide'); // prompt 172 : les livres ouvrent la fenêtre d'aide illustrée (le tutoriel s'y lance, touche T)
 	if (nom === 'horloge') return clicHorloge(); // prompt 51
 	if (nom === 'tasse') return boireCafe(); // prompt 52 : le café en main, puis le boost
-	if (nom === 'micro') return clicMicro(); // prompt 54 : push-to-talk
 	if (nom === 'webcam') return clicWebcam(); // prompt 57 : présence
 	if (OBJETS_BUREAU.some((o) => o.nom === nom && o.piece)) return interagirPiece(nom); // prompt 29
 }

@@ -1,10 +1,9 @@
 /* Nantes en régulation — prompt 110 : toutes les autorisations demandées AVANT de jouer.
  * Écran du menu (MENU.ecran = 'autorisations') entre le choix de la semaine (ou « Reprendre ») et la partie.
  * - Son : démarré au clic « Tout autoriser » (geste utilisateur, règle d'autoplay des navigateurs).
- * - Micro + caméra : UN seul getUserMedia({ audio, video }) → une seule fenêtre du navigateur ; en cas d'échec,
- *   micro et caméra sont redemandés séparément pour savoir lequel manque. Les pistes sont arrêtées aussitôt
- *   (le voyant s'éteint) : la permission reste retenue par le navigateur, micro.js et webcam.js rouvrent leur
- *   flux au geste en jeu, sans nouvelle fenêtre.
+ * - Caméra : getUserMedia({ video }) ; la piste est arrêtée aussitôt (le voyant s'éteint) : la permission reste
+ *   retenue par le navigateur, webcam.js rouvre son flux au geste en jeu, sans nouvelle fenêtre.
+ *   Le micro a été retiré du jeu (interface simplifiée) : il n'est plus demandé.
  * - La webcam reste opt-in (réglage « Webcam » inchangé) : autoriser ici ne l'allume jamais.
  * - Refus, API absente ou page non sécurisée (rendu/ en file://) : le jeu reste entièrement jouable.
  */
@@ -14,9 +13,9 @@ const AUTOR = {
 	choix: 0,
 	debut: 0,
 	enCours: false,
-	etat: { son: 'nonDemande', micro: 'nonDemande', camera: 'nonDemande' }, // nonDemande | autorise | refuse | absent | coupe
+	etat: { son: 'nonDemande', camera: 'nonDemande' }, // nonDemande | autorise | refuse | absent | coupe
 };
-const LIGNES_AUTOR = ['son', 'micro', 'camera'];
+const LIGNES_AUTOR = ['son', 'camera'];
 const mediasDisponibles = () => !!(window.isSecureContext && navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
 
 /** Statut réel lu auprès du navigateur quand l'API Permissions le permet (sinon : dernier résultat connu) */
@@ -24,7 +23,7 @@ async function lireAutorisations() {
 	const E = AUTOR.etat;
 	E.son = !Confort.Reglages.son ? 'coupe' : Confort.Son.ctx && Confort.Son.ctx.state === 'running' ? 'autorise' : E.son === 'autorise' ? 'autorise' : 'nonDemande';
 	if (!mediasDisponibles()) {
-		E.micro = E.camera = 'absent';
+		E.camera = 'absent';
 		return;
 	}
 	const lire = async (nom, cle) => {
@@ -33,7 +32,7 @@ async function lireAutorisations() {
 			E[cle] = p.state === 'granted' ? 'autorise' : p.state === 'denied' ? 'refuse' : E[cle] === 'absent' ? 'absent' : 'nonDemande';
 		} catch (e) {} // Firefox / Safari : nom non pris en charge → on garde le dernier résultat
 	};
-	if (navigator.permissions && navigator.permissions.query) await Promise.all([lire('microphone', 'micro'), lire('camera', 'camera')]);
+	if (navigator.permissions && navigator.permissions.query) await lire('camera', 'camera');
 }
 /** Tout est réglé (aucune ligne « non demandée ») : l'écran n'a pas lieu d'être */
 const autorisationsReglees = () => LIGNES_AUTOR.every((k) => AUTOR.etat[k] !== 'nonDemande');
@@ -75,18 +74,12 @@ async function autoriser(quoi) {
 	if (AUTOR.enCours) return;
 	const E = AUTOR.etat;
 	if (quoi === 'son' || quoi === 'tout') demarrerSonAutor();
-	const medias = quoi === 'tout' ? ['micro', 'camera'].filter((k) => E[k] !== 'autorise' && E[k] !== 'absent') : quoi === 'son' ? [] : [quoi];
-	if (medias.length && mediasDisponibles()) {
+	const camera = quoi === 'camera' || (quoi === 'tout' && E.camera !== 'autorise' && E.camera !== 'absent');
+	if (camera && mediasDisponibles()) {
 		AUTOR.enCours = true;
-		if (medias.length === 2) {
-			const r = await demanderMedia({ audio: true, video: true });
-			if (r === 'autorise') E.micro = E.camera = 'autorise';
-			else for (const k of medias) E[k] = await demanderMedia(k === 'micro' ? { audio: true } : { video: true }); // savoir lequel manque
-		} else E[medias[0]] = await demanderMedia(medias[0] === 'micro' ? { audio: true } : { video: true });
+		E.camera = await demanderMedia({ video: true });
 		AUTOR.enCours = false;
-	} else if (medias.length) medias.forEach((k) => (E[k] = 'absent'));
-	if (E.micro === 'autorise' && Confort.Reglages.micro === false) Confort.Reglages.choisir('micro', true);
-	if (E.micro === 'autorise' && typeof MICRO !== 'undefined') MICRO.refus = false;
+	} else if (camera) E.camera = 'absent';
 	if (E.camera === 'autorise' && typeof CAM !== 'undefined') CAM.refus = false;
 	annoncer(LIGNES_AUTOR.map(libelleLigneAutor).join('. '));
 	AUTOR.choix = LIGNES_AUTOR.length + 1; // focus sur « Jouer »

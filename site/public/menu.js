@@ -92,7 +92,7 @@ function lancerDepuisMenu() {
 	} else choixAccueil = optionsAccueil().findIndex((o) => o.type === 'direct');
 	if (choixAccueil < 0) return;
 	const c = choixAccueil;
-	avantDeJouer(() => ((choixAccueil = c), lancerPartie())); // prompt 110 : micro, caméra et son demandés avant la partie ; prompt 178 : plus de fenêtre de rappel, la partie prend un nouvel emplacement
+	avantDeJouer(() => ((choixAccueil = c), lancerPartie())); // prompt 110 : caméra et son demandés avant la partie ; prompt 178 : plus de fenêtre de rappel, la partie prend un nouvel emplacement
 }
 
 // ——— Dessin ———

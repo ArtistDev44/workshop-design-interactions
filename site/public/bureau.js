@@ -154,7 +154,7 @@ const COUCHES_PIECE = [
 	},
 ];
 /** Coefficient de plan des objets cliquables : leurs zones suivent leur plan */
-const COEF_OBJETS = { rapport: 1.25, aide: 1.25, stress: 1.25, tasse: 1.25, telephone: 1.25, plante: 1.1, dossiers: 1.1, lampe: 0.7, fenetre: 0.7, horloge: 0.7, micro: 1.1, webcam: 1 }; // prompt 51 : horloge (mur)
+const COEF_OBJETS = { rapport: 1.25, aide: 1.25, stress: 1.25, tasse: 1.25, telephone: 1.25, plante: 1.1, dossiers: 1.1, lampe: 0.7, fenetre: 0.7, horloge: 0.7, webcam: 1 }; // prompt 51 : horloge (mur)
 
 function dessinerPieceBureau() {
 	COUCHES_PIECE.forEach((c) => {
@@ -610,7 +610,6 @@ function dessinerObjetsDuFond(g) {
 		feuillage(g, 77, 158 + dy, 6);
 		if (present('planteGrande')) feuillage(g, 79, 151 + dy + pose('planteGrande'), 4);
 	}
-	if (present('micro')) dessinerMicroPoste(g); // prompt 54 : micro du poste, entre la tasse et le clavier
 	if (typeof dessinerCadreDos === 'function') dessinerCadreDos(g); // prompt 104
 }
 function dessinerObjetsProches(g) {

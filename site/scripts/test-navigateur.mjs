@@ -2,7 +2,7 @@
 // test-jeu.mjs charge game.js dans Node, mais jamais sketch.js : un setup() ou un draw() cassé passait inaperçu.
 // Ici, Chromium sans interface ouvre le jeu servi en local, réseau externe coupé (mode hors ligne réel), en
 // 1366 × 768 puis en mobile portrait 412 × 915, lance une partie, va au poste, et vérifie : aucune erreur de page,
-// la boucle de dessin avance. Puis le mode exposition (?expo=1) : violence masquée, ni webcam ni micro hérités.
+// la boucle de dessin avance. Puis le mode exposition (?expo=1) : violence masquée, ni webcam héritée.
 //
 // playwright-core n'est PAS une dépendance du site (seule dépendance : astro). Il est cherché :
 //   1. installé à côté (CI : `npm i --no-save playwright-core`) ;
@@ -177,7 +177,7 @@ try {
 		await ctx.route('**/*', (route) => (route.request().url().startsWith(base) ? route.continue() : route.abort()));
 		await ctx.addInitScript(() => {
 			try {
-				localStorage.setItem('pxe-nte001:jeu:reglages', JSON.stringify({ webcam: true, micro: false, masquerViolence: false }));
+				localStorage.setItem('pxe-nte001:jeu:reglages', JSON.stringify({ webcam: true, masquerViolence: false }));
 			} catch (e) {}
 		});
 		const page = await ctx.newPage();
@@ -185,8 +185,8 @@ try {
 		page.on('pageerror', (e) => fautes.push(String(e.message).split('\n')[0]));
 		await page.goto(base + 'index.html?expo=1', { waitUntil: 'load' });
 		await page.waitForFunction(() => typeof frameCount === 'number' && frameCount > 10, null, { timeout: 20000 }).catch(() => {});
-		const r = await page.evaluate(() => ({ expo: EXPO.actif, masque: Jeu.violenceMasquee(), webcam: Confort.Reglages.webcam, micro: Confort.Reglages.micro, camActive: CAM.active }));
-		verifier(r.expo && r.masque && r.webcam === false && r.micro === true && !r.camActive, `exposition : réglages du visiteur précédent remis à zéro — ${JSON.stringify(r)}`);
+		const r = await page.evaluate(() => ({ expo: EXPO.actif, masque: Jeu.violenceMasquee(), webcam: Confort.Reglages.webcam, camActive: CAM.active }));
+		verifier(r.expo && r.masque && r.webcam === false && !r.camActive, `exposition : réglages du visiteur précédent remis à zéro — ${JSON.stringify(r)}`);
 		verifier(!fautes.length, `exposition : erreur(s) de page — ${fautes.slice(0, 3).join(' | ')}`);
 		await ctx.close();
 	}

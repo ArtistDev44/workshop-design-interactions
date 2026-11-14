@@ -233,7 +233,7 @@ function draw() {
 			dessinerJeu();
 			dessinerMenuApp(); // prompt 103
 			bandeauEtat(); // prompt 43
-			indicateurSauvegarde(); // prompt 33
+			// « Partie sauvegardée à … » n'est plus écrit sur la carte (interface simplifiée) ; la sauvegarde reste annoncée au lecteur d'écran
 			// Prompt 93 : ligne complète du bandeau ; prompt 98 : infobulle après 350 ms de survol (validations : tooltip-no-delay)
 			if (BANDEAU.survol !== BANDEAU.survolPrec) (BANDEAU.survolPrec = BANDEAU.survol), (BANDEAU.survolDepuis = millis());
 			if (BANDEAU.survol && millis() - BANDEAU.survolDepuis >= 350) infobulle(BANDEAU.survol, Math.min(BANDEAU.survolX ? BANDEAU.survolX - textWidth(BANDEAU.survol) - 28 : BANDEAU.x + 16, L - 28 - textWidth(BANDEAU.survol)), BANDEAU.y + BANDEAU.h + 4); // prompt 144 : sous la date quand c'est elle
@@ -258,7 +258,6 @@ function draw() {
 	if (vue === 'bureau' && !fenetre && !(typeof PORTRAIT !== 'undefined' && PORTRAIT.actif)) badgeEcranBureau(); // prompt 209 : en portrait, dans le bouton « S'installer » // prompt 111 : PC « fermé » : un seul badge, le total, au coin de l'écran
 	if (secousse) pop();
 	dessinerBoost(); // prompt 52 : cœur, pulsation rouge, lignes de vitesse, flou
-	dessinerMicro(); // prompt 54 : oscilloscope et mesures pendant l'appui
 	dessinerOffreDemission(); // prompt 47 : les trois jauges sous 20 → « Rendre son badge »
 	dessinerSommeil(); // sieste : paupières plein écran, au-dessus de tout le contenu (fenêtres et réveil exceptés)
 	if (phase === 'reveil' && reveil && ecran === 'jeu' && !smsActif) {
@@ -499,19 +498,6 @@ function texteResteJournee() {
 	const venir = j.dossiers.filter((d) => Jeu.paquet.indexOf(d) >= Jeu.index && d.minute > Jeu.horloge.minutes).map((d) => d.minute);
 	if (!n) return t('jour.resteAucun', { fin: Jeu.formaterHeure(Jeu.finJournee()) });
 	return venir.length ? t('jour.reste', { n, heure: Jeu.formaterHeure(Math.min(...venir)) }) : t('jour.resteArrives', { n });
-}
-function indicateurSauvegarde() {
-	const r = texteResteJournee();
-	// Prompt 102 : « reste de la journée » dans la ligne d'état de la carte (carte-alertes.js) ; plus de doublon ici
-	const s = Sauvegarde.texteIndicateur();
-	if (!s || phase === 'narration') return; // prompt 131 : il chevauchait le titre de la narration
-	textFont(POLICE_DONNEES);
-	textSize(16);
-	textAlign(RIGHT, BOTTOM);
-	noStroke();
-	fill(C.gris);
-	const zc = typeof CARTE !== 'undefined' && (CARTE.zoneLibre || CARTE.zone) ? CARTE.zoneLibre || CARTE.zone : FILE_SIG; // prompt 114 : partie libre de la carte
-	text(couperLargeurCarte(s, zc.l - 32, 20), zc.x + zc.l - 16, zc.y + zc.h - 212); // prompt 114 : au-dessus des boutons de zoom (les notifications occupent le haut) // prompt 114 : sous le zoom et la légende ; correctif : en haut à droite de la carte, sous le zoom (H_PLATEAU n'existe plus depuis le prompt 108 — l'erreur figeait l'écran)
 }
 
 function dessinerJeu() {
@@ -1283,7 +1269,7 @@ function keyPressed() {
 			return false;
 		}
 		if (keyCode === ENTER || keyCode === RETURN || key === ' ') ouvrirObjetBureau(focusBureau > 0 ? OBJETS_BUREAU[focusBureau].nom : 'ecran');
-		if (key === 'm' || key === 'M') toucheMEnfoncee(); // prompt 54 : brève = son, maintenue = micro
+		if (key === 'm' || key === 'M') basculerSon(); // M : couper / rallumer le son (le micro a été retiré)
 		if (key === 'h' || key === 'H' || key === '?') ouvrir('aide');
 		return false;
 	}
@@ -1338,7 +1324,7 @@ function keyPressed() {
 	if (focusQuitter && (keyCode === ENTER || keyCode === RETURN || key === ' ')) return quitterPC(), false;
 	// Touches valables partout
 	if (key === 'h' || key === 'H' || key === '?') return ouvrir('aide'), false;
-	if (key === 'm' || key === 'M') return toucheMEnfoncee(), false; // prompt 54 : brève = son, maintenue = micro
+	if (key === 'm' || key === 'M') return basculerSon(), false; // M : couper / rallumer le son (le micro a été retiré)
 	if (ecran === 'jeu') {
 		// Prompt 174 : R = ralenti tactique (défi chrono) seulement ; « Recommencer la semaine », action rare et destructrice, n'a plus de touche (menu du jeu)
 		if ((key === 'r' || key === 'R') && Jeu.defiChrono && ['decision', 'contradiction', 'conflit'].includes(phase)) return demanderRalentiUI(), false;

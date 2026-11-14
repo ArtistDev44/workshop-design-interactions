@@ -392,9 +392,9 @@
 		const add = (nom, prep, n) => E.push({ nom, prep, n: n || 8 });
 		// Menu principal
 		add('menu titre', () => (H.raz(), (MENU.actif = true), (MENU.ecran = 'titre')));
-		add('menu autorisations', () => (H.raz(), (MENU.actif = true), (MENU.ecran = 'autorisations'), (AUTOR.etat = { son: 'nonDemande', micro: 'refuse', camera: 'absent' }))); // prompt 110
+		add('menu autorisations', () => (H.raz(), (MENU.actif = true), (MENU.ecran = 'autorisations'), (AUTOR.etat = { son: 'nonDemande', camera: 'absent' }))); // prompt 110
 		add('menu crédits', () => (H.raz(), (MENU.actif = true), ouvrirCredits()), 12); // prompt 113
-		add('menu autorisations · tout autorisé', () => (AUTOR.etat = { son: 'autorise', micro: 'autorise', camera: 'autorise' }));
+		add('menu autorisations · tout autorisé', () => (AUTOR.etat = { son: 'autorise', camera: 'autorise' }));
 		[0, 1, 2].forEach((c) => add('menu semaines ' + c, () => (H.raz(), (MENU.actif = true), (MENU.ecran = 'semaines'), (MENU.choixSemaine = c))));
 		// Prompt 171 : l'aide ne s'ouvre plus depuis le menu titre (elle est auditée en partie, plus bas) ; + explication d'installation
 		['parametres', 'palmares', 'fins', 'partage', 'installation'].forEach((f) => add('menu fenêtre ' + f, () => (H.raz(), (MENU.actif = true), (MENU.ecran = 'titre'), ouvrir(f))));
