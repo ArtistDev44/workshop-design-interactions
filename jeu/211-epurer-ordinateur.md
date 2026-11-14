@@ -39,6 +39,9 @@ depuis le prompt 204. La capture avait été prise pendant l'animation. Rien n'a
 
 ## Laissé au groupe
 
-L'heure numérique sous l'horloge murale ; le bandeau réduit à ✓ / ✗ ; l'alignement des compteurs « actifs 1/3 »
+L'heure numérique sous l'horloge murale a été retirée au prompt 212.
+
+
+Le bandeau réduit à ✓ / ✗ ; l'alignement des compteurs « actifs 1/3 »
 (carte) et « 0/1 » (Journal) sur le compteur du jour ; les filtres du Journal masqués à zéro (liés à la navigation
 au clavier, prompt 186). Ressenti des joueurs : [À COMPLÉTER].
