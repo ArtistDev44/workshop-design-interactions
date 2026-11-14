@@ -351,7 +351,7 @@ function dessinerControlesCarte(z) {
 /** Boutons + / − / Recentrer : une rangée sous les cases des équipes (interface simplifiée), libellé en infobulle */
 function dessinerNavigationCarte(x, y) {
 	let infobulle = null;
-	const c = hCible(48, 84); // prompt 217 : ≥ 44 px CSS en mobile (≈ 0,53 px CSS par px à cet endroit)
+	const c = hCible(50, 84); // prompt 218 : 50 sur ordinateur (45 px à l'écran) // prompt 217 : ≥ 44 px CSS en mobile (≈ 0,53 px CSS par px à cet endroit)
 	[
 		['plus', () => zoomer(1.4), t('carte.zoomer')],
 		['minus', () => zoomer(1 / 1.4), t('carte.dezoomer')],
@@ -459,7 +459,7 @@ function dessinerMarqueur(m) {
 	}
 	CARTE.depots.push({ x: x - 16, y: y - 16, l: 60, h: 60, index: m.it.index });
 	// Prompt 217 : zone de toucher de 70 px en mobile (≥ 44 px CSS), centrée sur le marqueur (40 px sur ordinateur)
-	const zm = hCible(40, 70);
+	const zm = hCible(50, 70); // prompt 218 : 50 sur ordinateur
 	const zx = x + 14 - zm / 2, zy = y + 14 - zm / 2;
 	if (CARTE.jetonChoisi) boutons.push({ x: zx, y: zy, l: zm, h: zm, action: () => deposerJeton(CARTE.jetonChoisi, m.it.index) });
 	else if (!m.courant || (typeof DIALOGUE !== 'undefined' && DIALOGUE.reduit)) boutons.push({ x: zx, y: zy, l: zm, h: zm, action: () => ouvrirMarqueur(m) });
@@ -615,19 +615,20 @@ function dessinerPanneauEquipes() {
 		const dispo = verrou ? 0 : Math.max(0, eff - eng.length);
 		const ps = eng.map((x) => ({ ph: Jeu.phaseEquipe(x, tm), q: x })).concat(Array.from({ length: dispo }, () => ({ ph: 'dispo' })));
 		const lp = 64;
+		const hj = 50; // prompt 218 : jetons de 50 px (45 px à l'écran en 1920 × 1080 ; 46 en faisaient 41)
 		const premierDispo = ps.findIndex((p) => p.ph === 'dispo');
 		ps.forEach((p, i) => {
 			const px = P.x + 16 + (i % 3) * (lp + 4);
-			const py = y + 32 + Math.floor(i / 3) * 52;
+			const py = y + 32 + Math.floor(i / 3) * (hj + 6);
 			const saisi = i === premierDispo && ((CARTE.jeton && CARTE.jeton.cle === cle) || CARTE.jetonChoisi === cle);
 			noStroke();
 			fill(p.ph === 'dispo' ? (saisi ? DS.blanc15 : DS.fond) : p.ph === 'retour' ? DS.blanc05 : DS.blanc15);
-			rect(px, py, lp, 46);
+			rect(px, py, lp, hj);
 			stroke(p.ph === 'dispo' ? DS.blanc75 : DS.blanc15);
 			strokeWeight(saisi ? 2 : 1);
 			if (saisi) drawingContext.setLineDash([5, 5]);
 			noFill();
-			rect(px, py, lp, 46);
+			rect(px, py, lp, hj);
 			drawingContext.setLineDash([]);
 			noStroke();
 			pictoEquipe(cle, px + 6, py + 7, 2.5, p.ph === 'dispo' ? DS.blanc : DS.blanc50);
@@ -635,14 +636,14 @@ function dessinerPanneauEquipes() {
 				const fin = p.ph === 'route' ? p.q.arrivee : p.ph === 'place' ? p.q.finIntervention : p.q.libre;
 				dsTexte(Math.max(0, Math.ceil((fin - tm) / 1000)) + 's', px + lp - 4, py + 22, 14, DS.blanc75, 'right');
 			} else {
-				CARTE.jetons.push({ x: px, y: py, l: lp, h: 46, cle, actif: true });
-				boutons.push({ x: px, y: py, l: lp, h: 46, action: () => (typeof MOBILE !== 'undefined' && MOBILE.actif && dossierOuvert() ? deposerJeton(cle, Jeu.index) : choisirJeton(cle)), titre: t('equipe.' + cle) }); // prompt 210 : libellé (lecteur-ecran.js)
+				CARTE.jetons.push({ x: px, y: py, l: lp, h: hj, cle, actif: true });
+				boutons.push({ x: px, y: py, l: lp, h: hj, action: () => (typeof MOBILE !== 'undefined' && MOBILE.actif && dossierOuvert() ? deposerJeton(cle, Jeu.index) : choisirJeton(cle)), titre: t('equipe.' + cle) }); // prompt 210 : libellé (lecteur-ecran.js)
 			}
 		});
 		const lignesP = Math.max(1, Math.ceil(ps.length / 3));
 		// Prompt 211 : « n/N libres » retiré, les cases pleines ou vides le disent déjà ; seul le verrou reste écrit
 		if (verrou) dsTexte(couperLargeurCarte(t('histoire.verrou.equipes'), P.l - 32, 20), P.x + 16, y + 30, 14, DS.alerteClair, 'left');
-		y += 32 + (ps.length ? lignesP * 52 : 30) + 22;
+		y += 32 + (ps.length ? lignesP * 56 : 30) + 22; // prompt 218 : rangées de jetons de 50 + 6
 	});
 	// Boutons de navigation de la carte, sous les cases des équipes
 	if (CARTE.pr) y = dessinerNavigationCarte(P.x + 16, y + 40) + 24; // bien séparés des équipes
