@@ -341,45 +341,12 @@ function ligneSous(pr, mx, my) {
 	}
 	return best;
 }
-/** Légende des trajets ; les boutons de navigation sont sous les équipes (dessinerNavigationCarte) */
+/** Légende des trajets (prompt 219 : plus de boutons de navigation — molette, + / −, Origine, pincement) */
 function dessinerControlesCarte(z) {
 	// légende : sous la ligne d'état (y + 64), à droite de la partie libre
 	// prompt 211 : « Zoom ×n » retiré (aucune décision ne s'appuie dessus)
 	if ((Jeu.equipes || []).some((q) => !q.inutile && Jeu.phaseEquipe(q, tempsCarte()) !== 'libre')) dsTexte(couperLargeurCarte(t('carte.volOiseau'), z.l - 32, 20), z.x + z.l - 16, z.y + 64, 16, DS.blanc50, 'right');
 	CARTE.zoneLibre = z;
-}
-/** Boutons + / − / Recentrer : une rangée sous les cases des équipes (interface simplifiée), libellé en infobulle */
-function dessinerNavigationCarte(x, y) {
-	let infobulle = null;
-	const c = hCible(50, 84); // prompt 218 : 50 sur ordinateur (45 px à l'écran) // prompt 217 : ≥ 44 px CSS en mobile (≈ 0,53 px CSS par px à cet endroit)
-	[
-		['plus', () => zoomer(1.4), t('carte.zoomer')],
-		['minus', () => zoomer(1 / 1.4), t('carte.dezoomer')],
-		['locate-fixed', recentrer, t('carte.recentrer')],
-	].forEach(([lib, action, titre], i) => {
-		const bx = x + i * (c + 8);
-		const sv = mouseX >= bx && mouseX <= bx + c && mouseY >= y && mouseY <= y + c;
-		noStroke();
-		fill(sv ? DS.blanc75 : DS.blanc);
-		rect(bx, y, c, c);
-		iconeLucide(lib, bx + (c - 24) / 2, y + (c - 24) / 2, 24, DS.fond); // prompt 170 : icônes Lucide, chacune avec son infobulle
-		boutons.push({ x: bx, y, l: c, h: c, action, titre });
-		CARTE.controles.push({ x: bx, y, l: c, h: c });
-		if (sv && titre) infobulle = { titre, bx };
-	});
-	// Infobulle sous le bouton survolé, gardée dans le panneau des équipes
-	if (infobulle) {
-		const P = PANNEAU_EQUIPES;
-		textFont(DS.policeTexte);
-		textSize(16);
-		const lt = Math.min(P.l, textWidth(infobulle.titre) + 20);
-		const xt = constrain(infobulle.bx + c / 2 - lt / 2, P.x, P.x + P.l - lt);
-		noStroke();
-		fill(DS.blanc);
-		rect(xt, y + c + 8, lt, 30);
-		dsTexte(infobulle.titre, xt + 10, y + c + 14, 16, DS.fond, 'left');
-	}
-	return y + c;
 }
 function couperLargeurCarte(txt, l, taille) {
 	textFont(DS.policeTexte);
@@ -645,8 +612,7 @@ function dessinerPanneauEquipes() {
 		if (verrou) dsTexte(couperLargeurCarte(t('histoire.verrou.equipes'), P.l - 32, 20), P.x + 16, y + 30, 14, DS.alerteClair, 'left');
 		y += 32 + (ps.length ? lignesP * 56 : 30) + 22; // prompt 218 : rangées de jetons de 50 + 6
 	});
-	// Boutons de navigation de la carte, sous les cases des équipes
-	if (CARTE.pr) y = dessinerNavigationCarte(P.x + 16, y + 40) + 24; // bien séparés des équipes
+	// Prompt 219 : plus de boutons + / − / Recentrer — molette, + / −, Origine ; pincement à deux doigts sur mobile
 	// Message (envoi, refus, équipe choisie) sous les boutons ; la consigne « Glissez une équipe… » est retirée
 	const msg = SELECTION.message && millis() - SELECTION.message.t < 5000;
 	const txt = msg ? String(SELECTION.message.texte) : CARTE.jetonChoisi ? t('carte.jetonChoisi', { nom: Jeu.EQUIPES[CARTE.jetonChoisi].nom }) : '';

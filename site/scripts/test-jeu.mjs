@@ -2460,7 +2460,7 @@ for (const langue of ['fr', 'en']) {
 	for (const langue of ['fr', 'en']) {
 		const dico = vm.runInContext(`TRADUCTIONS[${JSON.stringify(langue)}]`, contexte(langue));
 		verifier(/Lucide/.test(dico['credits.lic.icones.v'] || '') && /ISC/.test(dico['credits.lic.icones.v'] || '') && dico['credits.lic.icones'], `prompt 170 : crédit Lucide absent des Crédits (${langue})`);
-		for (const k of ['carte.zoomer', 'carte.dezoomer']) verifier(typeof dico[k] === 'string' && dico[k].length > 0, `prompt 170 : clé ${k} absente (${langue})`);
+		for (const k of ['carte.zoomer', 'carte.dezoomer']) verifier(dico[k] === undefined, `prompt 219 : clé ${k} retirée avec les boutons de zoom (${langue})`);
 	}
 	verifier(/'icones'/.test(readFileSync(join(pub, 'credits.js'), 'utf8')) && /lucide\.dev/.test(readFileSync(join(pub, '..', 'src', 'pages', 'cartel.astro'), 'utf8')), 'prompt 170 : Lucide non crédité (credits.js, cartel)');
 }
@@ -4475,7 +4475,7 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 		['notifs-tel.js', /const hT = hCible\(48, 60\)/, 'onglets du téléphone'], ['notifs-tel.js', /const hX = hCible\(56, 60\)/, '« × » des notifications'], ['notifs-tel.js', /const hA = hCible\(46, 60\)/, '« +n autres » / « Tout effacer »'], ['notifs-tel.js', /basculerNpd, undefined, false, hCible\(44, 60\)/, 'Ne pas déranger'],
 		['aide.js', /const la = hCible\(64, 74\), ha = hCible\(60, 74\)/, 'flèches de pages de l\'aide'], ['histoire.js', /300, hCible\(64, 74\), t\('commun\.fermer'\)/, '« Fermer » du rapport de la veille'],
 		['menu.js', /const hc = hCible\(46, 74\)/, 'lien des crédits'], ['guide.js', /const h = hCible\(64, 74\)/, 'option du guide'], ['guide.js', /const hbq = hCible\(48, 74\)/, 'boutons de la bulle du guide'],
-		['autorisations.js', /dsBouton\(x \+ 32, yb, l - 64, 74, e\.libelle/, '« Autoriser »'], ['carte-alertes.js', /const c = hCible\(50, 84\)/, '+ / − / Recentrer'], ['carte-alertes.js', /const zm = hCible\(50, 70\)/, 'marqueurs de la carte'],
+		['autorisations.js', /dsBouton\(x \+ 32, yb, l - 64, 74, e\.libelle/, '« Autoriser »'], ['carte-alertes.js', /const zm = hCible\(50, 70\)/, 'marqueurs de la carte'],
 	];
 	for (const [fi, re, nom] of sites) verifier(re.test(lire(fi)), `217 : ${nom} (${fi}) ≥ 44 px CSS en mobile`);
 	const po = lire('portrait.js');
@@ -4487,10 +4487,19 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	const lire = (x) => readFileSync(join(pub, x), 'utf8');
 	const ca = lire('carte-alertes.js');
 	verifier(/const hj = 50;/.test(ca) && /h: hj, action: \(\) => \(typeof MOBILE/.test(ca) && /lignesP \* 56/.test(ca), '218 : jetons des équipes à 50 px (rangées de 56)');
-	verifier(/const c = hCible\(50, 84\)/.test(ca) && /const zm = hCible\(50, 70\)/.test(ca), '218 : + / − / Recentrer et marqueurs de la carte à 50 px sur ordinateur');
+	verifier(/const zm = hCible\(50, 70\)/.test(ca), '218 : marqueurs de la carte à 50 px sur ordinateur');
 	verifier(/const hB = hCible\(50, 70\)/.test(lire('patron.js')) && /const tx = hCible\(50, 70\)/.test(lire('panneau.js')), '218 : barre de Mails et « × » de la fiche à 50 px');
 	verifier(/selecteurCouleur\(xd, cy, 44\)/.test(lire('parametres.js')), '218 : pastilles de couleur des Paramètres à 44 px');
 	verifier(/const lz = Math\.max\(44, r0\.l\), hz = Math\.max\(44, r0\.h\);/.test(lire('immersion.js')), '218 : objets de la pièce cliquables sur 44 px au moins');
+}
+
+// ——— Prompt 219 : carte sans boutons de navigation ; zoom à la molette, au clavier, au pincement (mobile) ———
+{
+	const ca = readFileSync(join(pub, 'carte-alertes.js'), 'utf8');
+	verifier(!/dessinerNavigationCarte/.test(ca), '219 : plus de boutons + / − / Recentrer sur la carte');
+	verifier(/function molletteCarte/.test(ca) && /key === '\+' \|\| key === '='\) return zoomer\(1\.4\)/.test(ca) && /keyCode === 36\) return recentrer\(\)/.test(ca), '219 : molette, + / − et Origine restent');
+	const po = readFileSync(join(pub, 'portrait.js'), 'utf8');
+	verifier(/function pincementCarte\(e\)/.test(po) && /if \(pincementCarte\(e\)\) return;/.test(po) && /if \(d && d\.pince\) return;/.test(po), '219 : pincement à deux doigts sur la carte en mobile, sans tap ni swipe à la fin');
 }
 
 if (erreurs.length) {
