@@ -93,7 +93,7 @@ for (const lundi of semaines) {
 		verifier(p.score === p.jauges.fluidite + p.jauges.reputation + p.jauges.budget && p.bilan.score === p.score, `${nom} : score incohérent`);
 		verifier(['bonne', 'moyenne', 'mauvaise'].includes(p.bilan.type), `${nom} : type de fin inconnu`);
 		const textes = JSON.stringify(p.traces.mails) + JSON.stringify(p.bilan);
-		verifier(!textes.includes('[À COMPLÉTER]') && !textes.includes('undefined'), `${nom} : texte manquant dans un mail ou le bilan`);
+		verifier(!textes.includes('[non renseigné]') && !textes.includes('undefined'), `${nom} : texte manquant dans un mail ou le bilan`);
 		verifier(p.traces.mails.length >= 1, `${nom} : aucun mail de fin de journée`);
 		verifier(p.traces.inspections <= 1, `${nom} : plus d'une inspection dans la semaine`);
 		if (p.traces.inspection) verifier(p.traces.inspection.juste === true && p.traces.inspection.effet === 3, `${nom} : inspection juste mal comptée`);
@@ -180,7 +180,7 @@ const dep = vm.runInContext(
 verifier(dep.laisses === dep.restants && dep.restants > 0, `départ anticipé : ${dep.laisses} dossier(s) laissés au lieu de ${dep.restants}`);
 verifier(dep.toutRegle, 'départ anticipé : des dossiers du jour restent en suspens');
 verifier(dep.delta === Math.max(-dep.avant, -8), `départ anticipé : blâme de ${dep.delta} au lieu de −8`);
-verifier(dep.blame && dep.blame.includes('09:30') && !dep.blame.includes('[À COMPLÉTER]'), 'départ anticipé : mail du patron sans l\'heure du départ');
+verifier(dep.blame && dep.blame.includes('09:30') && !dep.blame.includes('[non renseigné]'), 'départ anticipé : mail du patron sans l\'heure du départ');
 verifier(dep.encore === 0, `départ anticipé : blâme appliqué deux fois (${dep.encore})`);
 
 // Prompt 55 : défis tirés par la graine, bonus une seule fois ; ralenti une fois par jour
@@ -221,7 +221,7 @@ const st = vm.runInContext(
 verifier(st.s.recus === st.n && st.s.traites + st.s.expires === st.n, `rapport : reçus ${st.s.recus}, traités ${st.s.traites}, expirés ${st.s.expires}, décisions ${st.n}`);
 verifier(JSON.stringify(st.s.parFamille) === JSON.stringify(st.attendu), `rapport : décisions par famille ${JSON.stringify(st.s.parFamille)} ≠ ${JSON.stringify(st.attendu)}`);
 verifier(st.s.score === st.s.jauges.fluidite + st.s.jauges.reputation + st.s.jauges.budget, 'rapport : score ≠ somme des jauges');
-verifier(st.mail.length >= 2 && st.mail[0].includes(String(st.s.score)) && !st.mail.join(' ').includes('[À COMPLÉTER]'), 'mail du dernier soir : chiffres absents ou texte manquant');
+verifier(st.mail.length >= 2 && st.mail[0].includes(String(st.s.score)) && !st.mail.join(' ').includes('[non renseigné]'), 'mail du dernier soir : chiffres absents ou texte manquant');
 const stockage = new Map();
 const h1 = contexte('fr', stockage, true);
 const prog = vm.runInContext(
@@ -258,7 +258,7 @@ const sv = vm.runInContext(
 verifier(JSON.stringify(sv.a) === JSON.stringify(sv.b) && sv.a.length > 0, 'réactions : tirage non reproductible ou aucune plainte');
 verifier(sv.nbs.every((n) => n >= 0 && n <= 3), `réactions : plus de 3 pour une réponse (${sv.nbs})`);
 verifier(sv.livres + sv.avant === sv.total && sv.encore === 0, `réactions : ${sv.avant} + ${sv.livres} livrées sur ${sv.total}, ${sv.encore} en double`);
-verifier(sv.comm.length + sv.rel === sv.total && sv.comm.every((x) => x && !x.includes('[À COMPLÉTER]') && !x.includes('« »')), 'réactions : texte manquant ou vide (réactions publiques + relances privées du prompt 85)');
+verifier(sv.comm.length + sv.rel === sv.total && sv.comm.every((x) => x && !x.includes('[non renseigné]') && !x.includes('« »')), 'réactions : texte manquant ou vide (réactions publiques + relances privées du prompt 85)');
 
 // Prompt 68 : gravité, pertinence, équipes limitées (effectif, cycle, refus, remise à zéro, effet hors sujet, sauvegarde)
 const eq = vm.runInContext(
@@ -308,7 +308,7 @@ verifier(eq.policeAvant === 1 && eq.policeMatin === 2, `équipes : effectifs non
 for (const [nom, ctx] of [['fr', contexte('fr')], ['en', contexte('en')]]) {
 	const r = vm.runInContext(`({ n: t('aide.texte').split('\\n\\n').length, titres: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => t('aide.carte.' + i)), autres: ['aide.onglet.demarrer', 'aide.onglet.annonce', 'aide.page', 'aide.clavier', 'aide.tuto.titre', 'aide.tuto.texte', 'aide.groupe.signalement', 'aide.groupe.equipes', 'aide.groupe.bureau', 'aide.groupe.general'].map((k) => t(k)) })`, ctx);
 	verifier(r.n === 10, `aide (${nom}) : ${r.n} paragraphes de règles au lieu de 10 (les cartes de aide.js suivent cet ordre)`);
-	verifier(r.titres.concat(r.autres).every((x) => x && !/^aide\./.test(x) && !x.includes('[À COMPLÉTER]')), `aide (${nom}) : titre ou libellé manquant`);
+	verifier(r.titres.concat(r.autres).every((x) => x && !/^aide\./.test(x) && !x.includes('[non renseigné]')), `aide (${nom}) : titre ou libellé manquant`);
 }
 {
 	const aide = readFileSync(join(pub, 'aide.js'), 'utf8');
@@ -355,7 +355,7 @@ for (const [nom, ctx] of [['fr', contexte('fr')], ['en', contexte('en')]]) {
 	verifier(r.ouvert === 'ouvert' && r.ok && r.clos === 'clos', `retour : sans équipe ${r.clos} (attendu clos), avant réponse ${r.ouvert}`);
 	verifier(r.attente === 'attente' && r.nAtt === 1 && r.surPlace === 'attente', `retour : avec équipe ${r.attente}, sur place ${r.surPlace}, en attente ${r.nAtt}`);
 	verifier(r.termine === 'termine' && r.retour && r.index === 0 && r.unSeul === 1 && r.gainRep === 1, `retour : fin ${r.termine}, ${r.unSeul} retour(s), réputation +${r.gainRep}`);
-	verifier((!r.attendu || r.auteur === r.attendu) && r.texte && !r.texte.includes('{') && !r.texte.includes('[À COMPLÉTER]'), `retour : auteur ${r.auteur} (plaignant ${r.attendu}), texte « ${r.texte} »`);
+	verifier((!r.attendu || r.auteur === r.attendu) && r.texte && !r.texte.includes('{') && !r.texte.includes('[non renseigné]'), `retour : auteur ${r.auteur} (plaignant ${r.attendu}), texte « ${r.texte} »`);
 	verifier(r.inutileOk === false && r.closApres === 'clos' && r.doublon === 0 && r.fin === 0, `retour : équipe inutile ${r.closApres}, doublon à la reprise ${r.doublon}, encore en attente ${r.fin}`);
 }
 
@@ -803,7 +803,7 @@ for (const [nom, ctx] of [['fr', contexte('fr')], ['en', contexte('en')]]) {
 	verifier(!/mp\.licence|mp\.sources|mp\.clavier/.test(menu) && !/cle: 'licence'/.test(menu.slice(menu.indexOf('const EXTRAS_MENU'), menu.indexOf('const focusExtra'))) && /LICENCE_URL/.test(readFileSync(join(pub, 'credits.js'), 'utf8')), 'prompt 125 : pied du menu réduit aux noms, licence dans les Crédits');
 	verifier(vm.runInContext("['mp.clavier', 'mp.sources', 'mp.licence', 'mp.licence.infobulle'].every((k) => !TRADUCTIONS.fr[k] && !TRADUCTIONS.en[k]) && /Naolib/.test(TRADUCTIONS.fr['credits.lic.donnees.v']) && /Naolib/.test(TRADUCTIONS.en['credits.lic.donnees.v'])", fr), 'prompt 125 : clés du pied de page supprimées, Naolib cité dans les Crédits');
 	const lic = readFileSync(join(pub, '..', '..', 'LICENSE'), 'utf8');
-	verifier(/MIT License/.test(lic) && /Copyright \(c\) 2026 Mattéo Brevet & Guillaume Renoult/.test(lic) && /THE SOFTWARE IS PROVIDED "AS IS"/.test(lic) && /Nantes en régulation/.test(lic) && !/À COMPLÉTER/.test(lic), 'LICENSE : texte MIT complet, crédits, en-tête conservé');
+	verifier(/MIT License/.test(lic) && /Copyright \(c\) 2026 Mattéo Brevet & Guillaume Renoult/.test(lic) && /THE SOFTWARE IS PROVIDED "AS IS"/.test(lic) && /Nantes en régulation/.test(lic) && !/non renseigné/.test(lic), 'LICENSE : texte MIT complet, crédits, en-tête conservé');
 	verifier(!/ouvrirPartage|fenetrePartage/.test(readFileSync(join(pub, 'immersion.js'), 'utf8')), 'menu : le partage reste sur l\'écran titre (pas dans le menu Échap)');
 }
 
@@ -968,7 +968,7 @@ const manquantes = vm.runInContext('Object.keys(TRADUCTIONS.fr).filter((k) => TR
 verifier(manquantes.length === 0, `clés sans traduction anglaise : ${manquantes.slice(0, 8).join(', ')}`);
 // Une partie en anglais ne laisse pas de texte manquant
 const en = jouer(contexte('en'), semaines[0], SUITES[0]);
-verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails anglais : texte manquant');
+verifier(!JSON.stringify(en.traces.mails).includes('[non renseigné]'), 'mails anglais : texte manquant');
 
 // Prompt 87 : décider sans chrono — catégories réelles, réponses sans dominante, tendance honnête, horloge en pause
 {
@@ -1074,7 +1074,7 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 					rs.forEach((rp, k) => {
 						const txt = txts[k];
 						out.n++;
-						if (!txt || /\{\w+\}/.test(txt) || txt === '[À COMPLÉTER]') out.vides.push(rp.cle + ' : ' + txt);
+						if (!txt || /\{\w+\}/.test(txt) || txt === '[non renseigné]') out.vides.push(rp.cle + ' : ' + txt);
 						(out.parCat[cat] = out.parCat[cat] || new Set()).add(txt);
 					});
 				});
@@ -1624,7 +1624,7 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 					if (n.app === 'agenda' && !Jeu.evenementsAffluence(jr.date).length) out.erreurs.push(jr.date + ' agenda vide');
 					if (n.app === 'loire' && !(jr.date >= window.PXE_LOIRE.periode.du.slice(0, 10) && jr.date <= window.PXE_LOIRE.periode.au.slice(0, 10))) out.erreurs.push(jr.date + ' Loire hors période');
 					if (n.de === 'chauffeur' && !(Jeu.paquet[n.dossier] && Jeu.paquet[n.dossier].lignes.length)) out.erreurs.push('chauffeur sans dossier');
-					if (/\\{\\w+\\}|undefined|\\[À COMPLÉTER\\]/.test(NotifsTel.texte(n))) out.erreurs.push('texte ' + NotifsTel.texte(n));
+					if (/\\{\\w+\\}|undefined|\\[non renseigné\\]/.test(NotifsTel.texte(n))) out.erreurs.push('texte ' + NotifsTel.texte(n));
 				});
 				// Rythme : une journée simulée par pas de 5 min de jeu
 				const et = NotifsTel.etatVide();
@@ -1739,7 +1739,7 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 		const jauges = JSON.stringify(Jeu.jauges);
 		const p = Jeu.publierBrouillon(i);
 		const deux = Jeu.publierBrouillon(i);
-		return { faits, ligneOk: faits[0].includes(d.lignes[0]), causeOk: faits[1] === String(d.nature).split(',')[0].trim(), jaugesIntactes: JSON.stringify(Jeu.jauges) === jauges, publie: !!p && p.brouillon, une: deux === null, invente: faits.some((f) => /undefined|\\[À COMPLÉTER\\]/.test(f)) };
+		return { faits, ligneOk: faits[0].includes(d.lignes[0]), causeOk: faits[1] === String(d.nature).split(',')[0].trim(), jaugesIntactes: JSON.stringify(Jeu.jauges) === jauges, publie: !!p && p.brouillon, une: deux === null, invente: faits.some((f) => /undefined|\\[non renseigné\\]/.test(f)) };
 	})()`,
 		cb,
 	);
@@ -1819,7 +1819,7 @@ for (const langue of ['fr', 'en']) {
 				for (const cle of ['lignes', 'trafic', 'meteo', 'agenda']) {
 					const m = modeleSource(cle, d);
 					const tout = [m.fait, m.provenance].concat(m.paires.flat(), (m.puces || []).map((x) => x.txt), (m.liste || []).map((x) => x.titre)).join(' | ');
-					if (!m.fait || /undefined|\\[À COMPLÉTER\\]|\\{\\w+\\}|NaN/.test(tout)) err(cle + ' : texte manquant ' + tout);
+					if (!m.fait || /undefined|\\[non renseigné\\]|\\{\\w+\\}|NaN/.test(tout)) err(cle + ' : texte manquant ' + tout);
 					if (cle === 'trafic' && d.texte_source && m.citation !== String(d.texte_source)) err('citation reformulée');
 					if (cle === 'trafic' && d.texte_source && !annonceSource(m).includes(n(String(d.texte_source)))) err('annonce : citation incomplète');
 				}
@@ -1956,7 +1956,7 @@ for (const f of ['enquete.js', 'carte.js', 'journal.js']) verifier(!/\*\s*1\.05\
 	for (const cle of ['quitter.bouton']) {
 		const a = vm.runInContext(`t(${JSON.stringify(cle)}, { reponse: 'X' })`, fr94);
 		const b = vm.runInContext(`t(${JSON.stringify(cle)}, { reponse: 'X' })`, en94);
-		verifier(a !== '[À COMPLÉTER]' && b !== '[À COMPLÉTER]' && a !== b, `prompt 94 : clé ${cle} absente en FR ou en EN`);
+		verifier(a !== '[non renseigné]' && b !== '[non renseigné]' && a !== b, `prompt 94 : clé ${cle} absente en FR ou en EN`);
 	}
 	verifier(!/debutGlisser|relacherGlisser|dessinerCartesReponses/.test(['sketch.js', 'panneau.js', 'glisser.js'].map((f) => readFileSync(join(pub, f), 'utf8')).join('\n')), 'glisser-déposer (prompt 94) : retiré avec les cartes de réponse (prompt 200)');
 }
@@ -2000,7 +2000,7 @@ for (const f of ['enquete.js', 'carte.js', 'journal.js']) verifier(!/\*\s*1\.05\
 	verifier(/sauvegarde\.autoJeu/.test(readFileSync(join(pub, 'sauvegarde.js'), 'utf8')) && /recalerEquipes/.test(readFileSync(join(pub, 'sauvegarde.js'), 'utf8')), 'journées : indicateur de sauvegarde en heure de jeu, équipes recalées à la reprise');
 	const en95 = contexte('en');
 	for (const cle of ['temps.pause', 'temps.normal', 'temps.accelere', 'temps.explication', 'jour.reste', 'jour.resteAucun', 'jour.resteArrives', 'transition.jourArchive', 'transition.prevus', 'transition.service', 'transition.rythme', 'transition.finir', 'transition.courte', 'transition.passer', 'sauvegarde.autoJeu']) {
-		verifier(vm.runInContext(`t(${JSON.stringify(cle)})`, c95) !== '[À COMPLÉTER]' && vm.runInContext(`t(${JSON.stringify(cle)})`, en95) !== '[À COMPLÉTER]', `prompt 95 : clé ${cle} absente en FR ou EN`);
+		verifier(vm.runInContext(`t(${JSON.stringify(cle)})`, c95) !== '[non renseigné]' && vm.runInContext(`t(${JSON.stringify(cle)})`, en95) !== '[non renseigné]', `prompt 95 : clé ${cle} absente en FR ou EN`);
 	}
 }
 
@@ -2038,7 +2038,7 @@ for (const f of ['enquete.js', 'carte.js', 'journal.js']) verifier(!/\*\s*1\.05\
 	const sk96 = readFileSync(join(pub, 'sketch.js'), 'utf8');
 	verifier(/feedback\(dernierResultat\.clash \? 'large' : Juice\.tierDeltas\(dernierResultat\.deltas\)\)/.test(sk96) && /Juice\.decalage\(millis\(\)\)/.test(sk96) && /Juice\.echelleTemps\(maintenant\)/.test(readFileSync(join(pub, 'immersion.js'), 'utf8')), 'game feel : décision, secousse et hit-stop branchés (prompt 196 : un clash force le tier « large »)');
 	verifier(!/Jeu\.|game\.js/.test(readFileSync(join(pub, 'juice.js'), 'utf8').replace(/\/\*[\s\S]*?\*\//, '')), 'game feel : juice.js ne doit pas toucher la simulation (Jeu)');
-	verifier(vm.runInContext("t('acc.intensite')", contexte('fr')) !== '[À COMPLÉTER]' && vm.runInContext("t('acc.intensite')", contexte('en')) !== '[À COMPLÉTER]', 'game feel : clé acc.intensite FR / EN');
+	verifier(vm.runInContext("t('acc.intensite')", contexte('fr')) !== '[non renseigné]' && vm.runInContext("t('acc.intensite')", contexte('en')) !== '[non renseigné]', 'game feel : clé acc.intensite FR / EN');
 }
 
 // Prompt 97 (skill game-design-theory) : apprendre vite — l'aide H et le guide nomment les gestes (glisser / clic,
@@ -2372,11 +2372,11 @@ for (const langue of ['fr', 'en']) {
 		verifier(langue === 'fr' ? /^du \d\d\/\d\d au \d\d\/\d\d\/\d{4} · \d jours? joués?$/.test(r.periode) : /^\d\d\/\d\d to \d\d\/\d\d\/\d{4} · \d day/.test(r.periode), `${nom} : période ${r.periode}`);
 		verifier(r.l3.length >= 7 && r.l3.some((x) => x === r.compo || x.includes(r.compo)) && r.l3.some((x) => /Open-Meteo/.test(x)) && r.l3.some((x) => /archives/.test(x)) && r.l3.filter((x) => /Période|Period/.test(x)).every((x) => (x.match(/Période|Period/g) || []).length === 1), `${nom} : page des sources incomplète ${JSON.stringify(r.l3)}`);
 		if (r.fictifs) verifier(/fictif|fictional/i.test(r.compo), `${nom} : composition sans l'incident fictif (${r.compo})`);
-		verifier(!r.l3.join(' ').includes('[À COMPLÉTER]') && !r.l3.join(' ').includes('undefined'), `${nom} : texte manquant page 3`);
+		verifier(!r.l3.join(' ').includes('[non renseigné]') && !r.l3.join(' ').includes('undefined'), `${nom} : texte manquant page 3`);
 		const pl = r.defis.find((x) => x.id === 'plaintes');
 		if (pl && !r.plaintes.total) verifier(pl.sansObjet && !pl.tenu && pl.bonus === 0, `${nom} : défi des plaintes 0/0 compté tenu ${JSON.stringify(pl)}`);
 		verifier(r.fait && r.mail.includes(r.fait) && /Open|réel|real/.test(r.fait), `${nom} : le mail de fin de semaine ne cite aucune donnée de la source`);
-		verifier(r.profil && !r.profil.includes('[À COMPLÉTER]') && (r.profil.match(/Profil|Profile/g) || []).length === 1, `${nom} : profil du rapport ${r.profil}`);
+		verifier(r.profil && !r.profil.includes('[non renseigné]') && (r.profil.match(/Profil|Profile/g) || []).length === 1, `${nom} : profil du rapport ${r.profil}`);
 	}
 	const dico = vm.runInContext(`TRADUCTIONS[${JSON.stringify(langue)}]`, contexte(langue));
 	for (const k of ['famille.renfort', 'famille.devier', 'famille.retenir', 'famille.rien', 'rapport.sourcesTitre', 'rapport.versPage3', 'rapport.page3', 'rapport.periodeSemaine', 'rapport.typeFin.bonne', 'rapport.typeFin.moyenne', 'rapport.typeFin.mauvaise', 'defi.sansObjet', 'stats.sansObjet', 'qualite.moins bonne', 'finSemaine.faitAgenda'])
@@ -2866,7 +2866,7 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	verifier(/desactive: !n/.test(entrees) && /allerSauvegardes\(\)/.test(entrees) && /while \(choisi\(\)\.desactive\)/.test(menu) && /carteMenuGrisee/.test(menu), 'prompt 178 : sans sauvegarde, l\'entrée est grisée et sautée au clavier');
 	const touches = menu.slice(menu.indexOf('function toucheSauvegardes'), menu.indexOf('/** Clavier du menu principal'));
 	verifier(['UP_ARROW', 'DOWN_ARROW', 'ENTER', 'DELETE', 'ESCAPE'].every((k) => touches.includes('keyCode === ' + k)) && /MENU\.confirmeSauv/.test(touches) && /annonceSauvegarde/.test(touches), 'prompt 178 : écran des sauvegardes au clavier (↑ ↓, Entrée, Suppr avec confirmation, Échap) et annoncé');
-	verifier(/"sauv\.annonce": "Sauvegarde \{i\} sur \{n\} : /.test(i18n178) && /\[À COMPLÉTER\]/.test(menu.slice(menu.indexOf('function infosSauvegarde'), menu.indexOf('function annonceSauvegarde'))), 'prompt 178 : annonce « sauvegarde 2 sur 3 : … » et champ absent → [À COMPLÉTER]');
+	verifier(/"sauv\.annonce": "Sauvegarde \{i\} sur \{n\} : /.test(i18n178) && /\[non renseigné\]/.test(menu.slice(menu.indexOf('function infosSauvegarde'), menu.indexOf('function annonceSauvegarde'))), 'prompt 178 : annonce « sauvegarde 2 sur 3 : … » et champ absent → [non renseigné]');
 	verifier(!/"reprise\.(titre|texte|reprendre|nouvelle|annuler)"|"accueil\.continuerDetail"/.test(i18n178) && !/fenetreReprise|reprendreSemaineChoisie|'reprise'/.test(sk + lire('portrait.js')), 'prompt 178 : la modale de rappel / d\'écrasement et ses textes doivent avoir disparu');
 	const garder = (lire('expo.js').match(/const GARDER = \[([^\]]*)\]/) || [])[1] || '';
 	verifier(!/partie/.test(garder) && /const PREFIXE = 'pxe-nte001-partie-'/.test(lire('sauvegarde.js')), 'prompt 178 : la purge du mode exposition doit vider les emplacements de sauvegarde');
@@ -3670,7 +3670,7 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 					const e = sc.fait.evenement, txt = String(sc.fait.texte);
 					if (!txt.includes(e.heure) || !txt.includes(e.externe) || (e.cleAction !== 'temps' && !txt.includes(e.action))) out.erreurs.push('fait sans heure / nature / décision : ' + txt);
 					if (e.ligne && !txt.includes(String(e.ligne))) out.erreurs.push('fait sans ligne : ' + txt);
-					if (txt.includes('{') || txt.includes('[À COMPLÉTER]')) out.erreurs.push('gabarit non rempli : ' + txt);
+					if (txt.includes('{') || txt.includes('[non renseigné]')) out.erreurs.push('gabarit non rempli : ' + txt);
 					const chiffres = (txt.match(/\\d+/g) || []).filter((n) => !(e.heure + ' ' + (e.ligne || '') + ' ' + e.externe + ' ' + e.action + ' ' + e.meilleureAction + ' ' + e.retard + ' ' + e.retardEffectif).includes(n));
 					if (chiffres.length) out.erreurs.push('chiffre non issu du dossier : ' + chiffres.join(','));
 				}
@@ -4687,7 +4687,7 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 					[{ cle }, Object.assign({}, plein, { cle })].forEach((d) => {
 						let txt = '';
 						try { txt = String(q.sous(d)); } catch (e) { return out.defauts.push(cle + '.' + n + ' : ' + e.message); }
-						if (!txt || /\{\w+\}|À COMPLÉTER|^video\./.test(txt) || typeof q.dessin !== 'function') out.defauts.push(cle + '.' + n + ' : « ' + txt + ' »');
+						if (!txt || /\{\w+\}|non renseigné|^video\./.test(txt) || typeof q.dessin !== 'function') out.defauts.push(cle + '.' + n + ' : « ' + txt + ' »');
 					});
 				});
 			});

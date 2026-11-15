@@ -107,7 +107,7 @@ Intervenant : Kamel Ghabte. Groupes de 2 à 3 étudiant·es.
 - Langue de travail : **français**.
 - Lancer le site : `cd site && npm install`, puis `npm run dev` (développement), `npm run build` (build statique) ou `npm test` (smoke test sans dépendance). Site servi à la racine du domaine (`base: '/'`) : URL canonique https://workshop-design-interactions.pages.dev/ (Cloudflare Pages). L'ancienne adresse GitHub Pages (`artistdev44.github.io/…/patrimoine-exe/nantes/001/`) est historique et renvoie une 404.
 - Exécuter les `prompts/NN-*.md` un par un, dans l'ordre, en vérifiant avant de passer au suivant.
-- Aucune donnée, œuvre ou source inventée : inconnu → `"[À COMPLÉTER]"`.
+- Aucune donnée, œuvre ou source inventée : inconnu → `"[non renseigné]"`.
 - Aucun secret, clé ou token dans le code.
 - Accessibilité : contraste ≥ 4,5:1, navigation clavier, `prefers-reduced-motion`, pas de flash.
 - À chaque push : une ligne en tête du tableau de [`journal.md`](journal.md) (date, commit, fichiers, résumé).

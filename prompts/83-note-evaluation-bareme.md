@@ -11,7 +11,7 @@ Ce prompt est un **méta-prompt** (hors jeu) : il ne modifie **aucun fichier de 
 (`site/public/*.js`, `rendu/**/*.js`) — il ne crée que `note-eval.md` à la racine du dépôt.
 
 Règles absolues : travailler en **français** ; aucun secret, clé ou token ; **aucune donnée,
-œuvre ou source inventée** (inconnu → `"[À COMPLÉTER]"`) ; **n'attribuer des points que pour ce
+œuvre ou source inventée** (inconnu → `"[non renseigné]"`) ; **n'attribuer des points que pour ce
 qui est vérifiable dans le dépôt à la date du jour** (preuve = fichier, symbole, commande
 rejouée, commit) — sinon indiquer le manque et ne pas prendre les points ; branche dédiée, pas
 de fusion dans `main` sans demande ; à chaque push, une entrée en tête de `journal.md`.
@@ -41,7 +41,7 @@ Pour chaque critère, collecter des preuves concrètes, par exemple :
   relevés, 3 propriétés observables, 1 propriété écartée) ; `manifest.json` (sources et
   droits) ; `LICENSE` et `site/public/audio/CREDITS.md` (droits des données et médias) ;
   `contexte/audit-api-open-data-nantes.md` ; instantanés horodatés `site/public/data/fallback/*.json`.
-  Repérer les `[À COMPLÉTER]` restants (`grep -rn "À COMPLÉTER"` hors `node_modules`) : licence
+  Repérer les `[non renseigné]` restants (`grep -rn "non renseigné"` hors `node_modules`) : licence
   Hub'Eau, confirmation de la propriété écartée, licence Loyalty Freak Music…
 - **Grammaire & concept** : `jeu/00-concept.md` (phrase-problématique, spec verrouillée Q1–Q61,
   mapping justifié en une phrase) ; `grammar.md` / `site/public/grammar.md` (règle structurante,
@@ -62,7 +62,7 @@ Pour chaque critère, collecter des preuves concrètes, par exemple :
 - **Processus, test & documentation** : `journal.md` (une ligne par push ;
   `git log --oneline | wc -l`, `git shortlog -sn --all`) ; `prompts/` 01–83 + statuts dans
   `prompts/README.md` ; itérations documentées (prompts 58/59/66, rapport dans `notes.md`) ;
-  README complet (`rendu/…/README.md` : Auteurs/Contributions/AI usage encore `[À COMPLÉTER]`) ;
+  README complet (`rendu/…/README.md` : Auteurs/Contributions/AI usage encore `[non renseigné]`) ;
   cartel 80–120 mots (`cartel.md`, `/cartel/`) ; `manifest.json` ; QR codes (scan réel restant).
 
 ## 3. Rédiger `note-eval.md` à la racine du dépôt
@@ -81,7 +81,7 @@ un point n'est attribué que s'il est prouvable dans le dépôt.
 ## 2. Projet commun — critère par critère (/70)
 ### <Critère> — X / <max>
 - **Preuves** : … (fichier/symbole/commande + résultat observé)
-- **Manques / risques** : … (ex. `[À COMPLÉTER]` auteurs, licence, scan QR non fait…)
+- **Manques / risques** : … (ex. `[non renseigné]` auteurs, licence, scan QR non fait…)
 [répéter pour les 6 critères]
 
 ## 3. Évaluation individuelle (/30)
@@ -113,7 +113,7 @@ action vérifiable.
 
 - `note-eval.md` existe à la racine, se relit de haut en bas, totaux cohérents (≤ 70, ≤ 30),
   note /20 recalculée à la main et identique à celle du fichier.
-- `grep -n "À COMPLÉTER" note-eval.md` : les seuls `[À COMPLÉTER]` présents sont ceux qui
+- `grep -n "non renseigné" note-eval.md` : les seuls `[non renseigné]` présents sont ceux qui
   désignent une saisie humaine réelle du groupe (ils apparaissent comme manques, pas comme
   oublis de l'évaluateur).
 - Aucun secret, aucune donnée inventée ; aucune modification de `site/public/`, `rendu/` ou

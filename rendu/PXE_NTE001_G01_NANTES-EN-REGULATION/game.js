@@ -1569,7 +1569,7 @@
 	/** Texte d'une plainte ou d'une réponse dans la langue active (repli : français), variables remplies */
 	Jeu.texteMessage = function (champ, vars) {
 		const langue = typeof Langue !== 'undefined' ? Langue.actuelle : 'fr'; // const de i18n.js (pas une propriété de window)
-		const s = (champ && (champ[langue] || champ.fr)) || '[À COMPLÉTER]';
+		const s = (champ && (champ[langue] || champ.fr)) || '[non renseigné]';
 		return s.replace(/\{(\w+)\}/g, (m, k) => (vars && vars[k] !== undefined ? String(vars[k]) : m));
 	};
 

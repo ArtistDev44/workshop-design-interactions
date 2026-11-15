@@ -55,8 +55,8 @@ Sur la base du prompt 196 (mêmes mécaniques dans le panneau de décision).
 - `npm run build` vert ; `npm test` : `test-jeu.mjs` vert (5788 contrôles) ; smoke : le prompt 197
   est listé (README + auteurs) — le prompt 164 (autre session, non enregistré) reste signalé, hors
   périmètre (déjà noté au prompt 196).
-- Audit des textes (`?audit=textes`) à 0 défaut A–D sur les nouveaux textes : [À COMPLÉTER].
-- Ressenti en vraie partie (tentation du clash dans Community, friction de la réaction) : [À COMPLÉTER].
+- Audit des textes (`?audit=textes`) à 0 défaut A–D sur les nouveaux textes : [non renseigné].
+- Ressenti en vraie partie (tentation du clash dans Community, friction de la réaction) : [non renseigné].
 
 ## Hors périmètre
 

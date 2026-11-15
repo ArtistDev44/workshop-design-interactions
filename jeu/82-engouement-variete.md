@@ -140,7 +140,7 @@ effets des réponses (Q57–Q61, prompt 87) sont inchangés : vérifié par `npm
 - Chromium : briefing, rapport, récapitulatif, info trafic (résultat faux → plainte), préparation, crise
   (bandeau, morceau « Régulation »), options, conséquence chaînée, Indicateurs, aide ; FR et EN ; animations
   réduites ; portrait mobile ; 3 semaines complètes jouées au clavier sans erreur console.
-- **Test de jeu humain** (au moins 2 personnes du groupe, 2 journées) : [À COMPLÉTER] — ce qui donne envie de
+- **Test de jeu humain** (au moins 2 personnes du groupe, 2 journées) : [non renseigné] — ce qui donne envie de
   continuer, ce qui ennuie, ce qui est incompris, et les corrections faites.
 - Limite connue : en portrait mobile, les fenêtres (comme l'inspection) sont réduites à environ un tiers ; les
   cibles des tâches font au moins 44 px, mais le texte y reste petit.

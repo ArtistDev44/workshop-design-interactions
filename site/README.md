@@ -38,7 +38,7 @@ Une partie (une semaine rejouée) dure **10 à 20 minutes** ; le mode histoire (
 - [Astro](https://astro.build) 7, rendu **100 % statique** (seule dépendance : `astro`).
 - CSS maison d'après `design-system/DESIGN.md` (sans police externe), JavaScript natif.
 - Validation du registre par schéma (`astro/zod`) : une fiche d'œuvre incomplète bloque le build.
-- Déploiement : URL canonique sur Cloudflare Pages ; la façon dont Cloudflare Pages construit le site n'est pas documentée dans le dépôt ([À COMPLÉTER], voir `todo.md`). Depuis le prompt 210, `.github/workflows/tests.yml` lance `npm run build` puis `npm test` (avec le test navigateur) à chaque push ; l'ancien workflow GitHub Pages (adresse en 404) est supprimé.
+- Déploiement : URL canonique sur Cloudflare Pages ; la façon dont Cloudflare Pages construit le site n'est pas documentée dans le dépôt. Depuis le prompt 210, `.github/workflows/tests.yml` lance `npm run build` puis `npm test` (avec le test navigateur) à chaque push ; l'ancien workflow GitHub Pages (adresse en 404) est supprimé.
 - Smoke test sans dépendance : `npm test` (`scripts/smoke.mjs`).
 
 ## Données
@@ -115,7 +115,7 @@ et un test réel Wi-Fi coupé sur la machine d'exposition.
 ## Déploiement et QR codes
 
 - URL canonique : https://workshop-design-interactions.pages.dev/ (Cloudflare Pages, racine du domaine, `base: '/'`).
-- Le workflow `.github/workflows/tests.yml` (prompt 210) construit `site/` et lance `npm test` (smoke, jeu, navigateur Chromium) à chaque push ; il ne publie rien. Le mécanisme de publication Cloudflare est [À COMPLÉTER] (voir `todo.md`). Le diaporama (`public/presentation/`) n'est plus reconstruit par `prebuild` : `npm run build:slides` à la demande.
+- Le workflow `.github/workflows/tests.yml` (prompt 210) construit `site/` et lance `npm test` (smoke, jeu, navigateur Chromium) à chaque push ; il ne publie rien. Le mécanisme de publication Cloudflare n'est pas documenté dans le dépôt. Le diaporama (`public/presentation/`) n'est plus reconstruit par `prebuild` : `npm run build:slides` à la demande.
 - QR codes dans `public/assets/` : `qr-edition.png` (accueil, crédits) et `qr-{slug}.png` (page de chaque œuvre). Pour en régénérer un :
 
   ```sh

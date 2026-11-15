@@ -7,7 +7,7 @@ boucle de jeu.
 
 Ce prompt est un **méta-prompt** : il orchestre l'exécution des autres prompts. Règles absolues :
 travailler en **français** ; aucun secret, clé ou token ; aucune donnée, œuvre ou source inventée
-(inconnu → `"[À COMPLÉTER]"`) ; aucune dépendance ajoutée à `site/package.json` ; le site reste
+(inconnu → `"[non renseigné]"`) ; aucune dépendance ajoutée à `site/package.json` ; le site reste
 relançable hors ligne (`npm run build` dans `site/`, double clic sur `site/public/index.html`) ;
 ne pas fusionner dans `main` sans demande explicite.
 

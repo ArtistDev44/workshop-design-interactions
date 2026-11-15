@@ -53,4 +53,4 @@ centrée ; s'ils dépassent la hauteur, ils défilent au doigt (plus de colonne 
 - Contraste ≥ 4,5:1, `prefers-reduced-motion`, pas de flash ; lecteur d'écran : le miroir HTML (prompt 210) reste la
   voie d'accès.
 - `npm run build` puis `npm test` à chaque étape ; tests ajoutés dans `test-jeu.mjs`.
-- Rapport `jeu/215-mobile-paysage.md` : chiffres avant / après, limites. Ressenti sur un vrai téléphone : [À COMPLÉTER].
+- Rapport `jeu/215-mobile-paysage.md` : chiffres avant / après, limites. Ressenti sur un vrai téléphone : [non renseigné].

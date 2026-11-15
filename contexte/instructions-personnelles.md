@@ -16,8 +16,8 @@ Règles de travail personnelles pour ce dépôt. Toute personne ou assistant IA 
 
 ## À compléter (préférences personnelles)
 
-- [ ] Conventions de commit : [À COMPLÉTER]
-- [ ] Composition du groupe et rôles : [À COMPLÉTER]
-- [ ] Environnements de test disponibles (machines, écrans, navigateurs) : [À COMPLÉTER]
-- [ ] Outils IA utilisés et périmètre autorisé : [À COMPLÉTER]
-- [ ] Autres contraintes personnelles : [À COMPLÉTER]
+- [ ] Conventions de commit : [non renseigné]
+- [ ] Composition du groupe et rôles : [non renseigné]
+- [ ] Environnements de test disponibles (machines, écrans, navigateurs) : [non renseigné]
+- [ ] Outils IA utilisés et périmètre autorisé : [non renseigné]
+- [ ] Autres contraintes personnelles : [non renseigné]

@@ -43,7 +43,7 @@ Lire et appliquer le skill `slidev` (`~/.claude/skills/slidev/SKILL.md` et ses r
 3. **Polices du design system** (§ 1.3) : JetBrains Mono (paragraphes) auto-hébergée dans
    `slides/public/fonts/` (`@font-face`, SIL OFL 1.1), Bitsy Pixels (titres) déclarée en
    `local()` — fichier non versionné tant que la licence de redistribution n'est pas vérifiée
-   ([À COMPLÉTER]) ; repli JetBrains Mono ExtraBold en capitales. Aucun appel externe.
+   ([non renseigné]) ; repli JetBrains Mono ExtraBold en capitales. Aucun appel externe.
 4. **Compositions variées** : une mise en page propre à chaque slide (fenêtre « RégulOS » du jeu
    sur la couverture, sommaire en actes numérotés, citation centrée, énoncé à étiquette, grand
    « 0 » + maillons au clic, chiffre + jauge de 20 cases, actes en filigrane numéroté, tableau

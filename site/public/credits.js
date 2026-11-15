@@ -2,7 +2,7 @@
  * L'équipe (portraits fournis par le groupe, ./assets/credits/), la licence (d'après LICENSE et audio/CREDITS.md)
  * et l'usage de l'IA (d'après l'historique du dépôt). Dessiné par le code avec le Pixel DS (prompt 120 : fenêtres et
  * lignes libellé / valeur) ; aucun fait inventé :
- * ce que le dépôt ne dit pas reste « [À COMPLÉTER] ». Échap / « Retour » ramènent au menu.
+ * ce que le dépôt ne dit pas reste « [non renseigné] ». Échap / « Retour » ramènent au menu.
  */
 const CREDITS = { choix: 0, images: {} };
 const EQUIPE = [

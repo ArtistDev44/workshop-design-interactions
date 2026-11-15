@@ -47,7 +47,7 @@ Troisième des prompts 105 → 109.
 - **Agression en cours :** les sources ouvertes du jeu ne contiennent **aucun** fait de ce type. Le groupe
   ne l'invente pas. La catégorie et ses répliques sont prévues (« On intervient », « Essayez de rester à
   distance, on arrive », « On vous envoie la police »), mais elles ne se déclenchent qu'avec une source
-  réelle. Laquelle ? [À COMPLÉTER].
+  réelle. Laquelle ? [non renseigné].
 
 ## Vérifications
 

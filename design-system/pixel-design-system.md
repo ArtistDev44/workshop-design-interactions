@@ -148,5 +148,5 @@ Conversion : `Measures/N` = N × 4 px.
 ## 4. Sources et licence
 
 - Fichier Figma Community « Pixel Design System (Community) » — export PDF local : `pixel-design-system-community.pdf`.
-- Source et licence du fichier communautaire : à compléter (voir page Community de Figma).
+- Source et licence du fichier communautaire : non renseignées (voir page Community de Figma).
 - Connexion au compte Figma vérifiée via l'API REST le 2026-11-10 (voir en-tête).

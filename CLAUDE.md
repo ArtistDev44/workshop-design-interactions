@@ -15,7 +15,7 @@ Lire ce fichier plutôt que le livret complet. N'ouvrir `contexte/` que si un pr
 
 ## Règles
 - Exécuter les `prompts/NN-*.md` un par un, dans l'ordre ; vérifier avant de passer au suivant.
-- Aucune donnée, œuvre ou source inventée : inconnu → `"[À COMPLÉTER]"`.
+- Aucune donnée, œuvre ou source inventée : inconnu → `"[non renseigné]"`.
 - Aucun secret, clé ou token dans le code. Site relançable sans réseau.
 - Accessibilité : contraste ≥ 4,5:1, clavier, `prefers-reduced-motion`, pas de flash.
 - À chaque push : une ligne en tête du tableau de `journal.md` (racine) — date, commit, fichiers, résumé.

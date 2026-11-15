@@ -11,7 +11,7 @@
 
 Jouer : [workshop-design-interactions.pages.dev](/)
 
-Auteurs : [À COMPLÉTER]
+Auteurs : Mattéo Brevet, Guillaume Renoult
 
 ---
 
@@ -108,6 +108,6 @@ Auteurs : [À COMPLÉTER]
 - Musiques libres **CC0** : Komiku, Loyalty Freak Music (Wikimedia Commons) — détail dans `audio/CREDITS.md`
 - Données : Nantes Métropole, Naolib, Open-Meteo, Hub'Eau
 - Outils : p5.js, Web Audio, Astro
-- Réalisé avec un assistant IA à partir de prompts écrits par le groupe (dossier `prompts/`) ; part humaine et relecture : [À COMPLÉTER]
+- Réalisé avec un assistant IA à partir de prompts écrits par le groupe (dossier `prompts/`) ; part humaine : prompts commandés par le groupe, décisions de jeu verrouillées avant le code, chaque étape validée par une fusion, test croisé par un autre groupe
 
 Merci — **à vous de réguler.**

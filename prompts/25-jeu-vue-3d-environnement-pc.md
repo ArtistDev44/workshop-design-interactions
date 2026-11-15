@@ -68,7 +68,7 @@ dessiné par le code).
   subtil souris hors cadre / retour au centre, flèches directionnelles, recentrage au
   relâchement, aucun mouvement au poste, `prefers-reduced-motion` (vue fixe), clavier
   seul, hors ligne (fallback), contraste ≥ 4,5:1 sur les nouveaux éléments du décor.
-- Tous les nouveaux textes passent par `t(...)` en FR et EN ; aucun `À COMPLÉTER`.
+- Tous les nouveaux textes passent par `t(...)` en FR et EN ; aucun `non renseigné`.
 - Aucune régression des prompts 14–24 (partie complète rejouée).
 - Documenter dans `jeu/18-vue-3d-pc.md` + sommaire de `jeu/README.md`.
 - Branche `jeu/prompt-25-vue-3d-pc`. À chaque push : entrée en tête de `journal.md`.

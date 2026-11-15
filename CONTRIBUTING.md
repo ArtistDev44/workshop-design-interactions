@@ -7,7 +7,7 @@ Les règles du projet sont dans `CLAUDE.md` ; la description du jeu, fichier par
 
 ## Règles communes
 - **Aucune donnée inventée.** Un dossier, une plainte ou un événement vient d'une source réelle,
-  datée et citée. Inconnu → `[À COMPLÉTER]`.
+  datée et citée. Inconnu → `[non renseigné]`.
 - Aucun secret, clé ou token. Le jeu doit rester **jouable hors ligne** (double clic sur
   `site/public/index.html`).
 - Accessibilité : contraste ≥ 4,5:1, tout au clavier, `prefers-reduced-motion` respecté, pas de flash.
@@ -47,7 +47,7 @@ node scripts/preparer-semaines.mjs --semaines 2025-09-22,…   # écrit data/sem
   puis un bloc `en: { … }` : ajouter la **même clé dans les deux blocs**, au même endroit
   (près d'une clé voisine du même écran).
 - Une clé absente en anglais retombe sur le français ; absente partout, elle affiche
-  `[À COMPLÉTER]` (repérable à l'écran).
+  `[non renseigné]` (repérable à l'écran).
 - Nouvelle langue : l'ajouter à `LANGUES` (fin de `i18n.js`) et créer son bloc, en
   partant d'une copie du bloc `en`.
 - Variables : `t('tel.annonce', { n: 3 })` remplace `{n}` dans le texte.

@@ -32,11 +32,11 @@ Date : 14/11/2026. Vérification : `npm run build`, `npm test` (smoke 658, jeu 6
   se recadre au zoom du navigateur : le zoom reste sans effet réel sur le jeu. Seul le réglage de taille du texte agit.
 - **Numéro 3114** : pas ajouté à côté des messages (consigne du groupe). La notice existante après « Signaler » est inchangée.
 - **Saisies humaines** (rôles, contributions, part humaine de l'IA, fiche individuelle, test croisé) : restent
-  `[À COMPLÉTER]`, à remplir par le groupe.
+  `[non renseigné]`, à remplir par le groupe.
 - **Diaporama en ligne** : `slides/slides.md` corrigé (ODbL), mais `site/public/presentation/` n'est pas reconstruit
   (Slidev absent du worktree) : lancer `npm run build:slides` sur le poste où Slidev est installé.
 - **CSP** : en Report-Only ; à passer en blocage après lecture de la console sur le jeu, le cartel, le making-of et la présentation.
-- **Publication Cloudflare** : mécanisme toujours non documenté (`[À COMPLÉTER]`) ; la CI vérifie, elle ne publie pas.
+- **Publication Cloudflare** : mécanisme toujours non documenté (`[non renseigné]`) ; la CI vérifie, elle ne publie pas.
 - **Lecteur d'écran** : non testé avec NVDA ni VoiceOver ; les textes dessinés dans des tampons hors écran
   (Community, une partie du bureau) ne sont pas relevés, et quelques commandes restent « sans libellé ».
 - **Tests humains** : protocole dans `jeu/210-protocole-tests-humains.md`, aucun résultat inventé.

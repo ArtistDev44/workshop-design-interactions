@@ -1,7 +1,7 @@
 /* Nantes en régulation — multi-langue (prompt 24).
  * Dictionnaire unique TRADUCTIONS (une entrée par langue, mêmes clés plates) et liste LANGUES.
  * Ajouter une langue : un bloc dans TRADUCTIONS + une entrée dans LANGUES. Rien d'autre à toucher.
- * t(cle, variables)  : chaîne immédiate, interpolation {variable} ; clé absente → français ; absente partout → « [À COMPLÉTER] ».
+ * t(cle, variables)  : chaîne immédiate, interpolation {variable} ; clé absente → français ; absente partout → « [non renseigné] ».
  * T(cle, variables)  : texte différé (objet Texte) — traduit à chaque affichage, donc les messages déjà
  *                      émis (patron, commentaires, mail, journal) changent de langue en cours de partie.
  * Les données réelles (noms de lignes, lieux, natures d'incidents, sources) passent en variables, jamais traduites.
@@ -1729,7 +1729,7 @@ const TRADUCTIONS = {
 		"credits.ia.visuels": "Visuels",
 		"credits.ia.visuels.v": "la pièce et l’interface sont dessinées par le code",
 		"credits.ia.humain": "Part humaine",
-		"credits.ia.humain.v": "relecture, tests en salle : [À COMPLÉTER]",
+		"credits.ia.humain.v": "prompts commandés par le groupe, décisions de jeu verrouillées avant le code, chaque étape validée par une fusion, test croisé par un autre groupe",
 		"credits.licence": "Lire la licence",
 		"credits.makingof": "Making-of",
 		"credits.depot": "Dépôt du code",
@@ -4055,7 +4055,7 @@ const TRADUCTIONS = {
 		"credits.ia.visuels": "Visuals",
 		"credits.ia.visuels.v": "the room and the interface are drawn by code",
 		"credits.ia.humain": "Human share",
-		"credits.ia.humain.v": "review, tests in the room: [À COMPLÉTER]",
+		"credits.ia.humain.v": "prompts commissioned by the group, game decisions locked before coding, each step approved by a merge, cross-test by another group",
 		"credits.licence": "Read the licence",
 		"credits.makingof": "Making-of",
 		"credits.depot": "Code repository",
@@ -4670,7 +4670,7 @@ const CLE_LANGUE = 'pxe-nte001-langue';
 function t(cle, v) {
 	let s = (TRADUCTIONS[Langue.actuelle] || {})[cle];
 	if (s === undefined) s = TRADUCTIONS.fr[cle];
-	if (s === undefined) return '[À COMPLÉTER]';
+	if (s === undefined) return '[non renseigné]';
 	if (v && s.includes('(s)')) s = accorderPluriels(s, v);
 	if (v) s = s.replace(/\{(\w+)\}/g, (m, k) => (v[k] === undefined || v[k] === null ? '' : String(v[k])));
 	return s;

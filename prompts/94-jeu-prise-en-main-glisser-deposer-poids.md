@@ -85,7 +85,7 @@ Le jeu paraît « plat » : les conséquences manquent de sensation physique.
   présentes en FR et EN ; fonctions de glisser-déposer présentes et appelables dans un contexte `vm` (appui
   sur carte → drag → dépôt sur la zone = `decider(cle)` ; dépôt ailleurs = aucun choix ; simple clic =
   `decider`) ; `quitterJourneeRapide()` enchaîne mail → soir → sortie sans changer les jauges ; aucun
-  `[À COMPLÉTER]`.
+  `[non renseigné]`.
 - `npm run build` vert ; `npm run sw` régénère le précache avec le nouveau fichier.
 - Test manuel (Chromium, FR + EN, animations réduites comprises) : quitter la journée en 2 gestes (Q puis
   Entrée) ; décider 3 signalements par glisser-déposer et 3 par clic / clavier ; vérifier la secousse et

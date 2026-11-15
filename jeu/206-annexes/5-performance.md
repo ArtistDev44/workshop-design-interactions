@@ -130,7 +130,7 @@ Appels p5 par image au poste : environ 31 `text`, 102 `textWidth`, 54 `textFont`
 
 - FPS et consommation sur un vrai GPU (PC d'expo) et sur un vrai téléphone.
 - Durée réelle du précache SW sur un réseau mobile.
-- La fenêtre « fin de session » de la mesure (`draw` 45 ms sur desktop, 243 mutations DOM/s) correspond à un état de partie que le script n'a pas identifié : `[À COMPLÉTER]`.
+- La fenêtre « fin de session » de la mesure (`draw` 45 ms sur desktop, 243 mutations DOM/s) correspond à un état de partie que le script n'a pas identifié : `[non renseigné]`.
 - Surcoût propre au mode portrait (P6) hors effet du flou.
 
 ## 5. Priorités suggérées

@@ -56,7 +56,7 @@ Les dix fins sont atteintes ; aucune ne dépasse 33 % des parties du joueur neut
 - `npm run build` : vert. `npm test` : jeu 6 934 contrôles réussis ; smoke vert après `npm run auteurs`.
 - Audit des textes `?audit=textes&parcours=1` en 1920 × 1080 (FR + EN, contraste normal et renforcé, fenêtre « fins »
   ajoutée au parcours) : **0 défaut**.
-- Non vérifié : lecteur d'écran réel, ressenti joueur `[À COMPLÉTER]`.
+- Non vérifié : lecteur d'écran réel, ressenti joueur `[non renseigné]`.
 
 ## Limites
 

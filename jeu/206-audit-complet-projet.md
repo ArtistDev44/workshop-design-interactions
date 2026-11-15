@@ -94,7 +94,7 @@ chacun leur rôle.
   ne bouge en 30 s faute de `registration.update()` (`installation.js:105-116`), puis tout le cache est
   retéléchargé (`sw.js:243`).
 - **Précache** : voir § 5.
-- Mineurs : Hub'Eau « [À COMPLÉTER] » dans les crédits (`i18n.js:1353`, `:3291`) alors que la licence est vérifiée
+- Mineurs : Hub'Eau « [non renseigné] » dans les crédits (`i18n.js:1353`, `:3291`) alors que la licence est vérifiée
   dans `manifest.json` ; notifications « en direct » du téléphone sans licence ni producteur ; tronçons « Saturé »
   ignorés par le compteur trafic (`notifs-tel.js:337`) ; `Jeu.enLigne` ne dépend que d'Open-Meteo ; docs qui
   présentent encore `data/fallback/` comme le repli du jeu et annoncent CORS `*` pour toutes les API (`jeu/api.md:5`).
@@ -107,7 +107,7 @@ webcam et micro facultatifs ; boîte d'import de sauvegarde exemplaire ; pages A
 
 - **Canevas muet pour les lecteurs d'écran** — bloquant, L. `index.html:127-129` : seule `#annonces` parle, et
   `annoncer` remplace le texte (`i18n.js`). Piste : miroir DOM hors écran (titre d'écran, boutons des actions,
-  ligne d'état des jauges), ou au minimum une touche « relire ». Test NVDA / VoiceOver : `[À COMPLÉTER]`.
+  ligne d'état des jauges), ou au minimum une touche « relire ». Test NVDA / VoiceOver : `[non renseigné]`.
 - **Zoom** — majeur, M. Canevas à 1 365 px physiques à 100, 200 et 300 % ; `index.html:5`
   `maximum-scale=1, user-scalable=no` ; « Taille du texte » 100/115/130 %, plafond 24 px (`accessibilite.js:17`, `:57`).
 - **Raccourcis d'une lettre non désactivables** (Z, F, L, I, V, H, M, J, D, Q…) — majeur, S. `sketch.js:1202-1259`,
@@ -178,7 +178,7 @@ Node 22.23.4 existe ; lockfile cohérent.
 - **Déploiement hors git** — majeur (processus), S. Pendant l'audit, la production (`49fdacccde`) servait la copie
   de travail non commitée du prompt 204 ; elle correspond maintenant à `main` (`cd7c1be`), donc le déploiement a
   précédé le commit et les tests. Piste : intégration Git de Cloudflare sur `main`, ou script `deploy` qui refuse un
-  arbre sale ; documenter le mécanisme (`deploy.yml:6-8`, `site/README.md` à `[À COMPLÉTER]`).
+  arbre sale ; documenter le mécanisme (`deploy.yml:6-8`, `site/README.md` à `[non renseigné]`).
 - **Le build réécrit 96 fichiers là où Slidev est installé** — majeur, S. `construire-slides.mjs:11-13` (prebuild)
   reconstruit `public/presentation/`, qui ne correspond plus à ses sources : diff parasite à chaque « build avant
   push » sur le poste principal. Piste : sortir le deck du `prebuild`.
@@ -195,7 +195,7 @@ dans `journal.md` existent ; `note-eval.md` fidèle au barème.
 
 - **Saisies humaines vides** — bloquant pour la note, S (groupe). Rôles, contributions, part humaine de l'IA :
   `site/README.md:11,133,142`, `rendu/…/README.md:44,112,124`, `manifest.json:28`, écran Crédits du jeu (« Part
-  humaine : [À COMPLÉTER] » visible par le joueur). Pas de fiche individuelle.
+  humaine : [non renseigné] » visible par le joueur). Pas de fiche individuelle.
 - **Test croisé et tests humains** — bloquant (obligation du livret). `todo.md:57`, `notes.md:452-454` vides.
 - **Copie `rendu/` désynchronisée** — majeur, S. 19 fichiers diffèrent de `site/public/` sur `cd7c1be` (prompts 202 et
   204 absents) ; `rendu/…/slides.md` est un ancien diaporama. À resynchroniser **en dernier**.
@@ -267,6 +267,6 @@ Picon dans le code servi ; décor pixel volontairement hors palette.
 ## Ce que cet audit ne dit pas
 
 - Ressenti des joueurs, compréhension réelle, test d'un lecteur d'écran, FPS sur le PC d'exposition et sur un vrai
-  téléphone : `[À COMPLÉTER]` après des tests humains.
+  téléphone : `[non renseigné]` après des tests humains.
 - La limite Okina (1 requête / 30 s) s'applique-t-elle par IP ou à toute la passerelle : non vérifié.
 - Gameplay, équilibrage et UX écran par écran : voir `jeu/201` et `jeu/203`, non refaits ici.

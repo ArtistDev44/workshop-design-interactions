@@ -53,4 +53,4 @@ le bandeau. Priorité tenue → bonus existant (+2 de réputation).
 `npm run build`, `npm test` (374 contrôles : noms globaux uniques, déblocage par semaine et temps réel, pile de
 navigation, brouillon = faits du dossier sans effet de jauge, priorités 2 puis 3, somnolence). Chromium FR / EN :
 dossier → B → brouillon → Échap revient au dossier ; icônes verrouillées ; options ; semaine complète sans erreur.
-Test humain (semaine 1 puis 2) : [À COMPLÉTER].
+Test humain (semaine 1 puis 2) : [non renseigné].

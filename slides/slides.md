@@ -474,7 +474,7 @@ class: diapo-livrables
     <div><dt>Musiques</dt><dd>libres <strong>CC0</strong> : Komiku, Loyalty Freak Music — <code>audio/CREDITS.md</code></dd></div>
     <div><dt>Données</dt><dd>Nantes Métropole, Naolib, Open-Meteo, Hub'Eau</dd></div>
     <div><dt>Outils</dt><dd>p5.js, Web Audio, Astro, Slidev</dd></div>
-    <div><dt>IA</dt><dd>écrit par des assistants IA — Claude Code (Anthropic), ponctuellement Mistral Vibe — à partir des prompts rédigés et relus par le groupe (<code>prompts/</code>, <a href="/making-of/">/making-of/</a>) ; part humaine détaillée : [À COMPLÉTER]</dd></div>
+    <div><dt>IA</dt><dd>écrit par des assistants IA — Claude Code (Anthropic), ponctuellement Mistral Vibe — à partir des prompts rédigés et relus par le groupe (<code>prompts/</code>, <a href="/making-of/">/making-of/</a>) ; part humaine : chaque étape validée par une fusion, test croisé par un autre groupe (README, section AI usage)</dd></div>
   </dl>
 </aside>
 </div>

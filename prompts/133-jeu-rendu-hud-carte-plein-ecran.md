@@ -19,7 +19,7 @@ Demande d'origine (12/11/2026) : prompts tirés de `audit-2026-11-12.md`, sectio
    pour en sortir ; la touche est listée dans l'Aide (H). Rien si l'API est absente. FR et EN. Le menu titre n'est
    pas modifié ici : il est refait en parallèle par une autre session (prompt « Crédits et menu »), comme l'écran Crédits.
 
-Hors champ : l'écran Crédits (mise en page portrait, licence Hub'Eau encore « [À COMPLÉTER] » alors que
+Hors champ : l'écran Crédits (mise en page portrait, licence Hub'Eau encore « [non renseigné] » alors que
 `manifest.json` la donne) est laissé à la session qui redessine les Crédits ; le lui signaler.
 
 ## Vérifications

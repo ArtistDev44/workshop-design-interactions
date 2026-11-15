@@ -16,8 +16,8 @@ Le jeu, écrit en p5.js, se lance en ligne ou hors ligne, s'installe comme une a
 - Jouer : https://workshop-design-interactions.pages.dev/
 - Présentation : https://workshop-design-interactions.pages.dev/presentation/
 - Code (licence MIT) : https://github.com/ArtistDev44/workshop-design-interactions
-- Exposition : [À COMPLÉTER]
+- Exposition : micro-exposition de l’atelier, ESD Nantes, 12 novembre 2026
 
 ## Contact
 
-[À COMPLÉTER]
+Par le dépôt GitHub : https://github.com/ArtistDev44/workshop-design-interactions
