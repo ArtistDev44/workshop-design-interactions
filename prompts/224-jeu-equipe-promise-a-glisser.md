@@ -2,7 +2,7 @@
 
 Origine : demande du 15/11/2026 (« pour certains dossiers de la carte, il faudrait pouvoir glisser les unités d'équipe
 dans les champs convenus à chaque réponse. Par exemple, je dis que j'envoie une équipe de pompiers, je dois déplacer
-l'unité de pompier dans le champ dédié. Si je ne le fais pas, des conséquences apparaissent »). Statut : **à exécuter**.
+l'unité de pompier dans le champ dédié. Si je ne le fais pas, des conséquences apparaissent »). Statut : **exécuté le 15/11/2026**.
 
 ## Constat
 
@@ -34,3 +34,29 @@ part, sans lien avec la réponse.
 `npm run build`, `npm test` (promesse créée par la réponse, tenue par l'envoi du bon jeton, conséquences à l'échéance,
 reprise) ; audit des textes et des cibles à 0 en 1920 × 1080, 1366 × 768, 412 × 915 ; essai Chromium : réponse
 « secours », glisser l'ambulance dans le champ.
+
+## Fait
+
+- `game.js` : `REGLAGES.promesse` (45 s, réputation −6, fluidité −3), `Jeu.promettreEquipe` (réponse avec `equipe`,
+  équipes débloquées, unité pas encore envoyée), `Jeu.majPromesses` (échéance au temps des équipes),
+  `Jeu.romprePromessesDuJour` (appelée par `finDeJourneeTactique`), `Jeu.promessePour`. `Jeu.envoyerEquipe` accepte
+  l'unité promise sur un dossier déjà répondu (sinon « équipe inutile », inchangé) et tient la promesse. Malus
+  « Promesse non tenue » dans la table (aide H, icône `circle-x`), message du patron. Sauvegarde : délais relatifs.
+- `sketch.js` : promesse créée à la décision (annonce + message sous les équipes) ; rupture dite, son d'alerte.
+- `carte-alertes.js` : section **« À envoyer »** sous les jetons — un champ par promesse (case en pointillés au
+  pictogramme attendu, lieu, secondes ; à 15 s ou moins, couleur d'alerte, sans clignotement). Glisser le bon jeton
+  (ou le choisir puis cliquer le champ) envoie l'équipe ; un autre jeton est refusé avec l'unité attendue.
+- `carte.js` : Maj + 1 à 4 hors d'un dossier ouvert remplit le plus ancien champ qui attend cette unité ; mobile :
+  toucher le jeton hors dossier l'envoie vers ce champ (`indexDepotEquipe`).
+- Hors champ : pas de champ à côté du marqueur (le dossier répondu sans équipe quitte la carte) — le champ est dans le
+  panneau des équipes.
+
+## Vérifié
+
+- `npm run build`, `npm test` (+6 contrôles : promesse seulement pour une réponse à équipe, tenue par le bon jeton,
+  autre unité inutile, rupture à 45 s avec −6 / −3 et malus, sauvegarde, fin de journée).
+- Chromium 1920 × 1080 : réponse « agents » sur un événement → champ « Police · Exposition · 45 s » ; vrai glisser du
+  jeton Police dans le champ → « Police en route (−10 budget). Promesse tenue. » ; sans rien faire, 45 s plus tard :
+  réputation 59 → 53, fluidité 50 → 47, « Promesse non tenue… » ; Maj + 1 remplit le champ.
+- Audit : 0 défaut de texte, 0 cible sous 44 px CSS en 1920 × 1080, 1366 × 768, 412 × 915 (écran « équipe promise »
+  ajouté au parcours).

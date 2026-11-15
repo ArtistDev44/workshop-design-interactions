@@ -2,7 +2,7 @@
  * Clavier : 1 à 4 = choisir, Tab = groupe ou case suivante, Entrée = valider, Échap = passer.
  * La logique (options, effets, rotation) est dans taches.js ; ici, l'affichage et les annonces (aria-live).
  */
-const TACHE = { courante: null, choix: [], groupe: 0, suite: null, file: [], introVues: null, resultat: null };
+const TACHE = { courante: null, choix: [], groupe: 0, suite: null, file: [], introVues: null, resultat: null, bilan: null }; // prompt 222 : bilan = rapport du soir envoyé (même fenêtre)
 const CLE_INTRO_TACHES = 'pxe-nte001-taches-intro';
 /** Portrait mobile : la fenêtre est réduite à ~1/3 ; les cibles passent à 136 px de canevas (≥ 44 px à l'écran) */
 const enPortrait = () => typeof PORTRAIT !== 'undefined' && PORTRAIT.actif; // prompt 215 : portrait ET paysage mobile (recomposés)
@@ -43,16 +43,24 @@ function ouvrirTache(tache, suite) {
 	TACHE.choix = [];
 	TACHE.groupe = 0;
 	TACHE.resultat = null;
+	TACHE.bilan = null;
 	TACHE.suite = suite || null;
 	TACHE.premiere = !introTacheVue(tache.type);
+	// Prompt 222 : un seul fait marquant → choisi d'office, on passe à la demande
+	const unique = tache.type === 'rapport' && tache.donnees && tache.donnees.faits.length === 1 ? tache.donnees.faits[0] : null;
+	if (unique) {
+		TACHE.choix[0] = unique.id;
+		TACHE.groupe = 1;
+	}
 	ouvrir('tache');
 	Confort.Son.bip('dossier');
-	annoncer(t('tache.titre.' + tache.type) + '. ' + (TACHE.premiere ? t('tache.intro.' + tache.type) + ' ' : '') + t('tache.consigne.' + tache.type));
+	annoncer(t(tache.type === 'rapport' ? 'tache.titre.recap' : 'tache.titre.' + tache.type) + '. ' + (TACHE.premiere ? t('tache.intro.' + tache.type) + ' ' : '') + (unique ? t('tache.rapport.faitUnique', { fait: unique.texte }) + ' ' : '') + t('tache.consigne.' + tache.type));
 }
 function fermerTache() {
 	const tache = TACHE.courante;
 	if (tache) marquerIntroTache(tache.type);
 	TACHE.courante = null;
+	TACHE.bilan = null;
 	fermer();
 	const suite = TACHE.suite;
 	TACHE.suite = null;
@@ -71,7 +79,7 @@ function tachesFinJournee() {
 // ——— Choix ———
 function basculerChoix(i) {
 	const tache = TACHE.courante;
-	if (!tache) return;
+	if (!tache || TACHE.bilan) return; // prompt 222 : rapport envoyé, les choix sont figés
 	if (tache.type === 'evenement' || tache.type === 'arbitrage') {
 		const o = tache.options[i];
 		if (!o) return;
@@ -90,7 +98,7 @@ function basculerChoix(i) {
 function validerTache(passer) {
 	const tache = TACHE.courante;
 	if (!tache) return;
-	if (TACHE.resultat || tache.type === 'recap') return fermerTache(); // écran de résultat ou récapitulatif : Entrée / Échap pour continuer
+	if (TACHE.resultat) return fermerTache(); // écran de résultat : Entrée / Échap pour continuer
 	if (tache.type === 'evenement' || tache.type === 'arbitrage') {
 		if (!passer && !TACHE.choix[0]) return annoncer(t('tache.' + tache.type + '.incomplet'));
 		const r = Taches.resoudre(tache, passer ? null : TACHE.choix[0]);
@@ -105,13 +113,17 @@ function validerTache(passer) {
 		return;
 	}
 	if (tache.type === 'rapport') {
+		if (TACHE.bilan) return fermerTache(); // prompt 222 : bilan affiché → Entrée / Échap pour continuer
 		if (!passer && (!TACHE.choix[0] || !TACHE.choix[1])) return annoncer(t('tache.rapport.incomplet'));
 		const r = Taches.validerRapport(TACHE.choix[0] || null, passer ? null : TACHE.choix[1]);
-		annoncer(t('tache.rapport.ok') + ' ' + texteDemande(r));
-		// Récapitulatif du soir (§ 4), puis la suite de la fin de journée
+		// Prompt 222 : le bilan du soir (§ 4) s'affiche dans la MÊME fenêtre, puis « Continuer » mène à la suite
 		const j = Taches.jour(tache.donnees.date);
+		marquerIntroTache('rapport');
+		TACHE.bilan = { date: tache.donnees.date, rapport: r, recap: j.recap };
+		TACHE.debutRecap = millis();
 		Confort.Son.bip('choix');
-		return ouvrirRecap({ date: tache.donnees.date, rapport: r, recap: j.recap });
+		annoncer(t('tache.rapport.ok') + ' ' + texteDemande(r) + ' ' + texteAnnonceRecap(j.recap));
+		return;
 	}
 	Confort.Son.bip('choix');
 	fermerTache();
@@ -128,7 +140,7 @@ function toucheTaches() {
 	if (!tache) return fermer(), true;
 	if (['1', '2', '3', '4'].includes(key)) basculerChoix(Number(key) - 1);
 	else if (keyCode === TAB) {
-		if (tache.type === 'rapport') {
+		if (tache.type === 'rapport' && !TACHE.bilan) {
 			TACHE.groupe = 1 - TACHE.groupe;
 			annoncer(t(TACHE.groupe ? 'tache.rapport.groupeDemande' : 'tache.rapport.groupeFait'));
 		}
@@ -142,16 +154,18 @@ function fenetreTache() {
 	const tache = TACHE.courante;
 	if (!tache) return fermer();
 	const l = DS.fenetre.large; // prompt 173 (était 1240)
-	const h = enPortrait() ? H - 20 : 820;
+	// Prompt 222 : en portrait, la fenêtre de fin de journée ne garde que les faits marquants (la suite est dessous)
+	const h = enPortrait() ? (tache.type === 'rapport' ? Math.min(H - 20, 200 + tache.donnees.faits.length * (hb(56) + 8)) : H - 20) : 820;
 	const x = (L - l) / 2;
 	const y = (H - h) / 2;
 	panneau(x, y, l, h, C.accent);
 	noStroke();
 	fill(C.accent);
 	rect(x, y, 12, h);
-	dsTitre(t('tache.titre.' + tache.type).toUpperCase(), x + 56, y + 40, 40, C.texte, 'left');
+	dsTitre(t(tache.type === 'rapport' ? 'tache.titre.recap' : 'tache.titre.' + tache.type).toUpperCase(), x + 56, y + 40, 40, C.texte, 'left'); // prompt 222 : « Fin de journée »
 	let yy = y + 104;
 	textAlign(LEFT, TOP);
+	if (tache.type === 'rapport') return fenetreFinJournee(tache, x, y, l, h);
 	if (TACHE.premiere) {
 		// Carte d'introduction : une phrase + un exemple, la première fois seulement (rappel dans l'aide H)
 		fill('rgba(255,255,255,0.06)');
@@ -169,9 +183,7 @@ function fenetreTache() {
 	}
 	if (TACHE.resultat) yy = corpsResultat(tache, TACHE.resultat, x + 56, yy, l - 112);
 	else if (tache.type === 'evenement') yy = corpsPreparation(tache, x + 56, yy, l - 112);
-	else if (tache.type === 'recap') yy = corpsRecap(tache.donnees, x + 56, yy, l - 112);
 	else if (tache.type === 'arbitrage') yy = corpsArbitrage(tache, x + 56, yy, l - 112);
-	else if (tache.type === 'rapport') yy = corpsRapport(tache.donnees, x + 56, yy, l - 112);
 	// Pied : consigne clavier + boutons
 	textFont(POLICE_DONNEES);
 	textSize(18);
@@ -179,10 +191,87 @@ function fenetreTache() {
 	fill(C.gris);
 	const hp = hb(68);
 	const yp = y + h - hp - 36;
-	if (!enPortrait()) text(t(TACHE.resultat || tache.type === 'recap' ? 'tache.consigne.resultat' : 'tache.consigne.' + tache.type), x + 56, yp, l - 112 - 560, 70);
-	if (TACHE.resultat || tache.type === 'recap') return bouton(x + l - 56 - 260, yp, 260, hp, t('tache.continuer'), fermerTache);
+	if (!enPortrait()) text(t(TACHE.resultat ? 'tache.consigne.resultat' : 'tache.consigne.' + tache.type), x + 56, yp, l - 112 - 560, 70);
+	if (TACHE.resultat) return bouton(x + l - 56 - 260, yp, 260, hp, t('tache.continuer'), fermerTache);
 	bouton(x + l - 56 - 260, yp, 260, hp, t('tache.valider'), () => validerTache(false));
 	bouton(x + l - 56 - 260 - 276, yp, 260, hp, t('tache.passer'), () => validerTache(true), false, true);
+}
+/** Prompt 222 : « Fin de journée » — rapport du soir (fait marquant, demande) et bilan dans la même fenêtre.
+ * Ordinateur : rapport à gauche, bilan à droite (avant l'envoi : l'introduction et ce que le bilan montrera).
+ * Mobile : rapport, puis — une fois envoyé — le bilan à sa place (le fait retenu et la demande restent écrits). */
+function fenetreFinJournee(tache, x, y, l, h) {
+	const portrait = enPortrait();
+	const x0 = x + 56;
+	const lt = l - 112;
+	const lg = portrait ? lt : 600; // colonne du rapport
+	const xd = x0 + lg + 48; // colonne du bilan
+	const ld = lt - lg - 48;
+	let yy = y + 104;
+	const sousTitre = (txt, xx, yv) => {
+		textAlign(LEFT, TOP);
+		textFont(POLICE_DONNEES);
+		textStyle(BOLD);
+		textSize(18);
+		fill(C.accent);
+		text(txt.toUpperCase(), xx, yv);
+		textStyle(NORMAL);
+	};
+	sousTitre(t('tache.titre.rapport'), x0, yy);
+	if (portrait) return finJourneeSuite(tache, x, y, l, h, sousTitre);
+	corpsRapport(tache.donnees, x0, yy + 40, lg);
+	{
+		// Colonne du bilan : filet de séparation, puis le bilan (après l'envoi) ou ce qu'il contiendra
+		noStroke();
+		fill(DS.blanc15);
+		rect(xd - 24, yy, 1, h - 104 - 180);
+		sousTitre(t('tache.bilan'), xd, yy);
+		if (TACHE.bilan) corpsRecap(TACHE.bilan, xd, yy + 40, ld, true);
+		else {
+			textAlign(LEFT, TOP);
+			textFont(POLICE_TEXTE);
+			textSize(20);
+			textLeading(28);
+			fill(C.texte);
+			text(t('tache.intro.rapport') + '\n\n' + t('tache.exemple.rapport'), xd, yy + 40, ld, 260);
+			fill(C.gris);
+			text(t('tache.bilan.attente'), xd, yy + 320, ld, 120);
+		}
+	}
+	// Pied : consigne clavier + boutons (après l'envoi : un seul bouton, « Continuer »)
+	textFont(POLICE_DONNEES);
+	textSize(18);
+	textAlign(LEFT, TOP);
+	fill(C.gris);
+	const hp = hb(68);
+	const yp = y + h - hp - 36;
+	if (!portrait) text(t(TACHE.bilan ? 'tache.consigne.resultat' : 'tache.consigne.rapport'), x0, yp - 44, lt, 30); // au-dessus des boutons, sur toute la largeur
+	if (TACHE.bilan) return bouton(x + l - 56 - 300, yp, 300, hp, t('tache.continuer'), fermerTache);
+	bouton(x + l - 56 - 340, yp, 340, hp, t('tache.rapport.envoyer'), () => validerTache(false));
+	bouton(x + l - 56 - 340 - 16 - 380, yp, 380, hp, t('tache.rapport.envoyerSans'), () => validerTache(true), false, true);
+}
+/** Prompt 222, mobile : la fenêtre (640 px) garde les faits marquants ; la suite — demande et boutons, ou le bilan et
+ * « Continuer » une fois le rapport envoyé — est un second panneau, empilé dessous et défilable (suiteFenetre, prompt 209) */
+function finJourneeSuite(tache, x, y, l, h, sousTitre) {
+	corpsRapport(tache.donnees, x + 56, y + 144, l - 112, 0);
+	const x2 = x + l + 40;
+	const hp = hb(68);
+	const h2 = TACHE.bilan ? 860 : 80 + 3 * (hb(56) + 8) + 60 + 2 * hp + 16 + 36;
+	const y2 = (H - h2) / 2;
+	panneau(x2, y2, l, h2, C.accent);
+	suiteFenetre(x2, y2, l, h2);
+	noStroke();
+	fill(C.accent);
+	rect(x2, y2, 12, h2);
+	y = y2;
+	h = h2;
+	if (TACHE.bilan) {
+		sousTitre(t('tache.bilan'), x2 + 56, y + 40);
+		corpsRecap(TACHE.bilan, x2 + 56, y + 80, l - 112, true);
+		return bouton(x2 + 56, y + h - 36 - hp, l - 112, hp, t('tache.continuer'), fermerTache);
+	}
+	corpsRapport(tache.donnees, x2 + 56, y + 40, l - 112, 1);
+	bouton(x2 + 56, y + h - 36 - hp, l - 112, hp, t('tache.rapport.envoyer'), () => validerTache(false));
+	bouton(x2 + 56, y + h - 36 - 2 * hp - 16, l - 112, hp, t('tache.rapport.envoyerSans'), () => validerTache(true), false, true);
 }
 function ligneInfo(txt, x, y, l) {
 	textFont(POLICE_TEXTE);
@@ -192,27 +281,29 @@ function ligneInfo(txt, x, y, l) {
 	text(txt, x, y, l, 56);
 	return y + (textWidth(txt) > l ? 56 : 30);
 }
-function corpsRapport(rp, x, y, l) {
+function corpsRapport(rp, x, y, l, seul) {
 	const groupe = (titre, liste, g, libelle) => {
 		textAlign(LEFT, TOP); // bouton() laisse l'alignement centré
 		textFont(POLICE_DONNEES);
 		textStyle(BOLD);
 		textSize(18);
-		fill(TACHE.groupe === g ? C.primaireTexte : C.gris);
-		text(titre.toUpperCase() + (TACHE.groupe === g ? '  ◀' : ''), x, y);
+		const actif = TACHE.groupe === g && !TACHE.bilan;
+		fill(actif ? C.primaireTexte : C.gris);
+		text(titre.toUpperCase() + (actif ? '  ◀' : ''), x, y);
 		textStyle(NORMAL);
 		y += 30;
-		const cols = enPortrait() ? 2 : 1;
+		const cols = 1; // prompt 222 : une colonne (en portrait, deux colonnes coupaient les libellés)
 		const lc = (l - (cols - 1) * 12) / cols;
 		liste.forEach((o, i) => {
 			const pris = TACHE.choix[g] === o.id;
-			bouton(x + (i % cols) * (lc + 12), y + Math.floor(i / cols) * (hb(56) + 8), lc, hb(56), i + 1 + '  ' + (pris ? '✓ ' : '') + court(libelle(o), cols > 1 ? 40 : 90), () => ((TACHE.groupe = g), basculerChoix(i)), false, !pris);
+			const fige = !!TACHE.bilan && !pris; // prompt 222 : rapport envoyé, les choix non retenus s'estompent
+			bouton(x + (i % cols) * (lc + 12), y + Math.floor(i / cols) * (hb(56) + 8), lc, hb(56), i + 1 + '  ' + (pris ? '✓ ' : '') + court(libelle(o), Math.min(90, Math.floor(lc / (enPortrait() ? 13 : 11)))), () => ((TACHE.groupe = g), basculerChoix(i)), fige, !pris);
 		});
 		y += Math.ceil(liste.length / cols) * (hb(56) + 8);
 		y += 10;
 	};
-	groupe(t('tache.rapport.fait'), rp.faits, 0, (o) => o.texte);
-	groupe(t('tache.rapport.demande'), rp.demandes, 1, (o) => t('tache.demande.' + o.id, o.vars));
+	if (seul !== 1) groupe(t('tache.rapport.fait'), rp.faits, 0, (o) => o.texte);
+	if (seul !== 0) groupe(t('tache.rapport.demande'), rp.demandes, 1, (o) => t('tache.demande.' + o.id, o.vars));
 	return y;
 }
 
@@ -287,21 +378,20 @@ function smsVeilleInspection(suite) {
 	return true;
 }
 
-// ——— Récapitulatif du soir (§ 4) : expérience, badges, priorités, fait marquant ; sans animation si réduites ———
-function ouvrirRecap(donnees) {
-	const suite = TACHE.suite;
-	marquerIntroTache('rapport');
-	TACHE.courante = { type: 'recap', donnees };
-	TACHE.premiere = !introTacheVue('recap');
-	TACHE.resultat = null;
-	TACHE.suite = suite;
-	TACHE.debutRecap = millis();
-	const rc = donnees.recap || { xp: { total: 0, lignes: [] }, badges: [], grade: Taches.grade() };
-	annoncer(t('recap.annonce', { xp: rc.xp.total, grade: t('grade.' + rc.grade.i) }) + (rc.badges.length ? ' ' + t('recap.badges', { liste: rc.badges.map((b) => t('badge.' + b)).join(', ') }) : '') + (rc.monte ? ' ' + t('recap.monte', { grade: t('grade.' + rc.grade.i) }) : ''));
+// ——— Bilan du soir (§ 4) : expérience, badges, priorités, demande ; sans animation si réduites (prompt 222 : dans la fenêtre du rapport) ———
+/** Prompt 222 : annonce du bilan (expérience, grade, badges) — le bilan s'affiche dans la fenêtre du rapport du soir */
+function texteAnnonceRecap(recap) {
+	const rc = recap || { xp: { total: 0, lignes: [] }, badges: [], grade: Taches.grade() };
+	return t('recap.annonce', { xp: rc.xp.total, grade: t('grade.' + rc.grade.i) }) + (rc.badges.length ? ' ' + t('recap.badges', { liste: rc.badges.map((b) => t('badge.' + b)).join(', ') }) : '') + (rc.monte ? ' ' + t('recap.monte', { grade: t('grade.' + rc.grade.i) }) : '');
 }
-function corpsRecap(d, x, y, l) {
+function corpsRecap(d, x, y, l, sansFait) {
 	const rc = d.recap || { xp: { total: 0, lignes: [] }, badges: [], grade: Taches.grade() };
 	const k = reduireAnimations ? 1 : constrain((millis() - TACHE.debutRecap) / 1200, 0, 1);
+	// Prompt 222 : colonne étroite (à côté du rapport) → grade et barre sous l'XP
+	const etroit = l < 700;
+	const gx = etroit ? x : x + 260;
+	const gl = etroit ? l : l - 260;
+	const gy = etroit ? y + 56 : y;
 	textAlign(LEFT, TOP);
 	textFont(POLICE_TEXTE);
 	textStyle(BOLD);
@@ -312,22 +402,24 @@ function corpsRecap(d, x, y, l) {
 	textSize(20);
 	fill(C.texte);
 	const g = rc.grade;
-	text(t('recap.grade', { grade: t('grade.' + g.i), xp: g.xp }) + (g.prochain !== null ? ' · ' + t('recap.prochain', { reste: g.prochain - g.xp, grade: t('grade.' + (g.i + 1)) }) : ''), x + 260, y + 4, l - 260, 30);
+	const ligneGrade = t('recap.grade', { grade: t('grade.' + g.i), xp: g.xp }) + (g.prochain !== null ? ' · ' + t('recap.prochain', { reste: g.prochain - g.xp, grade: t('grade.' + (g.i + 1)) }) : '');
+	const hg = etroit && textWidth(ligneGrade) > gl ? 56 : 30;
+	text(ligneGrade, gx, gy + 4, gl, hg);
 	if (g.prochain !== null) {
 		const bas = Taches.R.grades[g.i];
 		fill(C.piste);
-		rect(x + 260, y + 36, l - 260, 10);
+		rect(gx, gy + hg + 6, gl, 10);
 		fill(C.primaireTrait); // barre de progression : couleur d'accent (prompt 176)
-		rect(x + 260, y + 36, ((l - 260) * (g.xp - bas)) / (g.prochain - bas), 10);
+		rect(gx, gy + hg + 6, (gl * (g.xp - bas)) / (g.prochain - bas), 10);
 	}
 	if (rc.monte) {
 		fill(C.accent);
 		textStyle(BOLD);
 		const opt = Jeu.taches && Jeu.taches.options && Jeu.taches.options.deblocages;
-		text(t('recap.monte', { grade: t('grade.' + g.i) }) + (opt ? ' ' + t('deblocage.grade.' + g.i) : ''), x + 260, y + 50, l - 260, 30);
+		text(t('recap.monte', { grade: t('grade.' + g.i) }) + (opt ? ' ' + t('deblocage.grade.' + g.i) : ''), gx, gy + hg + 20, gl, 30);
 		textStyle(NORMAL);
 	}
-	y += 88;
+	y = gy + hg + 20 + (rc.monte ? 40 : 8);
 	textFont(POLICE_DONNEES);
 	textSize(18);
 	rc.xp.lignes.forEach((ln) => {
@@ -340,24 +432,32 @@ function corpsRecap(d, x, y, l) {
 	textSize(20);
 	(d.rapport && d.rapport.priorites ? d.rapport.priorites : []).forEach((p) => {
 		fill(p.etat === 'tenue' ? C.vert : p.etat === 'manquee' ? C.orange : C.gris);
-		text((p.etat === 'tenue' ? '✓ ' : p.etat === 'manquee' ? '✗ ' : '· ') + t('tache.prio.' + p.id, p.vars) + ' — ' + t('tache.etat.' + p.etat), x, y, l, 28);
-		y += 30;
+		const lp = (p.etat === 'tenue' ? '✓ ' : p.etat === 'manquee' ? '✗ ' : '· ') + t('tache.prio.' + p.id, p.vars) + ' — ' + t('tache.etat.' + p.etat);
+		const hp = textWidth(lp) > l ? 56 : 28; // prompt 222 : deux lignes en colonne étroite
+		textLeading(26);
+		text(lp, x, y, l, hp);
+		y += hp + 2;
 	});
 	fill(C.texte);
 	if (d.rapport) {
-		text(t('recap.fait', { fait: d.rapport.fait }), x, y + 4, l, 56);
-		y += textWidth(t('recap.fait', { fait: d.rapport.fait })) > l ? 62 : 34;
+		if (!sansFait) {
+			text(t('recap.fait', { fait: d.rapport.fait }), x, y + 4, l, 56);
+			y += textWidth(t('recap.fait', { fait: d.rapport.fait })) > l ? 62 : 34;
+		}
 		fill(C.gris);
 		text(texteDemande(d.rapport), x, y, l, 30);
 		y += 40;
 	}
+	const parRangee = Math.max(1, Math.floor((l + 20) / 280)); // prompt 222 : badges sur plusieurs rangées en colonne étroite
 	rc.badges.forEach((b, i) => {
-		dessinerBadge(b, x + i * 280, y, 44, true);
+		const bx = x + (i % parRangee) * 280;
+		const by = y + Math.floor(i / parRangee) * 56;
+		dessinerBadge(b, bx, by, 44, true);
 		fill(C.texte);
 		textSize(18);
-		text(t('badge.' + b), x + i * 280 + 54, y + 10, 220, 30);
+		text(t('badge.' + b), bx + 54, by + 10, 220, 30);
 	});
-	return y + 56;
+	return y + Math.max(1, Math.ceil(rc.badges.length / parRangee)) * 56;
 }
 
 /** Badges pixel (design system) : motif 8 × 8 dessiné par le code ; gris si pas encore obtenu */

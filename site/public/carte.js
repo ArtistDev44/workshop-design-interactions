@@ -101,7 +101,11 @@ function envoyerEquipeIncident(cle) {
 /** Raccourcis Maj + 1/2/3/4 (keyCode 49–52 : indépendant AZERTY / QWERTY) ; true si la touche est prise */
 function toucheEquipes() {
 	if (!keyIsDown(SHIFT) || keyCode < 49 || keyCode > 52) return false;
-	envoyerEquipeIncident(Jeu.TYPES_EQUIPES[keyCode - 49]);
+	const cle = Jeu.TYPES_EQUIPES[keyCode - 49];
+	// Prompt 224 : hors d'un dossier ouvert, Maj + n remplit le plus ancien champ qui attend cette unité
+	const p = Jeu.promessePour && Jeu.promessePour(cle);
+	if (p && !['decision', 'contradiction', 'conflit'].includes(phase) && typeof deposerJeton === 'function') return deposerJeton(cle, p.index), true;
+	envoyerEquipeIncident(cle);
 	return true;
 }
 

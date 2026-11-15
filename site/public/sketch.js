@@ -214,6 +214,7 @@ function draw() {
 	majDemarrageJour(); // prompt 71 : démarrage du PC en début de journée (jours 1 à 3)
 	avancerTemps(); // horloge simulée, sieste, arrivée des incidents, fin de journée (immersion.js)
 	if (Jeu.equipes) Jeu.majEquipes((typeof tempsEquipes === 'function' ? tempsEquipes() : millis())); // prompt 95 : temps de jeu // équipes envoyées depuis les signalements (prompts 22, 68)
+	if (Jeu.majPromesses && ecran === 'jeu') Jeu.majPromesses(typeof tempsEquipes === 'function' ? tempsEquipes() : millis()).forEach(promesseRompue); // prompt 224
 	majRetardsEtCommunity(); // prompt 79 : retards qui s'aggravent, plaintes qui s'enveniment
 	boutons = [];
 	// 1. Contenu de l'écran du PC, en 1920×1080 : l'appli de régulation, ou le système (démarrage, bureau)
@@ -432,6 +433,7 @@ function decider(action) {
 	dernierResultat = Jeu.decider(action, sourceChoisie);
 	if (!dernierResultat) return;
 	retirerActif(dDecide); // prompt 77 : ce signalement n'est plus actif
+	if (action !== 'temps') promettreEquipeApres(dDecide, action); // prompt 224 : la réponse annonce une équipe → son champ
 	if (action !== 'temps') Object.assign(dernierResultat, mesures);
 	else dernierResultat.sources = mesures.sources;
 	dernierResultat.contexteNarr = Rythme.contexteNarration(dernierResultat, Jeu.index - 1); // prompt 74 : phrase de contexte réelle
@@ -449,6 +451,22 @@ function decider(action) {
 }
 
 /** Prompt 184 : sens des écarts en une phrase pour le lecteur d'écran (jauges inchangées omises) */
+/** Prompt 224 : la réponse choisie annonce une équipe → champ « À envoyer » (panneau des équipes), dit et affiché */
+function promettreEquipeApres(d, action) {
+	if (!Jeu.promettreEquipe || !d) return;
+	const p = Jeu.promettreEquipe(Jeu.paquet.indexOf(d), action, typeof tempsEquipes === 'function' ? tempsEquipes() : millis());
+	if (!p) return;
+	const txt = t('promesse.creee', { nom: String(p.nom), s: Math.round((p.echeance - p.creee) / 1000), touche: Jeu.TYPES_EQUIPES.indexOf(p.cle) + 1 });
+	if (typeof SELECTION !== 'undefined') SELECTION.message = { texte: txt, ok: true, t: millis() };
+	annoncer(txt);
+}
+/** Prompt 224 : promesse non tenue (échéance passée) — dite, son d'alerte, message sous les équipes */
+function promesseRompue(p) {
+	const txt = t('promesse.ratee', { nom: String(p.nom), sujet: String(p.sujet || ''), r: Jeu.REGLAGES.promesse.reputation, f: Jeu.REGLAGES.promesse.fluidite });
+	if (typeof SELECTION !== 'undefined') SELECTION.message = { texte: txt, ok: false, t: millis() };
+	annoncer(txt);
+	Confort.Son.bip('alerte');
+}
 function phraseEcarts(deltas) {
 	const p = ['fluidite', 'reputation', 'budget'].map((k, i) => [k, deltas[i]]).filter(([, v]) => v).map(([k, v]) => t(v > 0 ? 'annonce.hausse' : 'annonce.baisse', { jauge: t('jaugeTitre.' + k).toLowerCase() }));
 	if (!p.length) return t('narr.aucunEffet');

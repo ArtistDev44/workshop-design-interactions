@@ -401,7 +401,7 @@ function regionsPoste(scene) {
 			const eff = Jeu.effectifJour ? Jeu.effectifJour(c) : 1;
 			const eng = (Jeu.equipes || []).filter((x) => x.cle === c && !x.inutile && x.jourIndex === Jeu.jourIndex && Jeu.phaseEquipe(x, tm) !== 'libre').length;
 			const dispo = Math.max(0, eff - eng);
-			PORTRAIT.boutons.push({ abs: true, x: 20 + (i % 2) * (lb + 12), y: Y_EQUIPES_PAYSAGE + 130 + Math.floor(i / 2) * 132, l: lb, h: 120, texte: String(q.nom), sous: t('portrait.libres', { n: dispo, cout: q.cout }), action: () => deposerJeton(c, Jeu.index), desactive: !dispo });
+			PORTRAIT.boutons.push({ abs: true, x: 20 + (i % 2) * (lb + 12), y: Y_EQUIPES_PAYSAGE + 130 + Math.floor(i / 2) * 132, l: lb, h: 120, texte: String(q.nom), sous: t('portrait.libres', { n: dispo, cout: q.cout }), action: () => deposerJeton(c, typeof indexDepotEquipe === 'function' ? indexDepotEquipe(c) : Jeu.index), desactive: !dispo }); // prompt 224 : hors dossier, vers le champ qui attend cette unité
 		});
 	} else if (bande) {
 		const y = PH - BARRE_ONGLETS - RANGEE_ACTIONS - BANDE_EQUIPES + 58;

@@ -1,5 +1,5 @@
 {
- "_lisezMoi": "Plaintes des Nantais (prompt 28). Fichier brut modifiable à la main : ajouter une plainte = ajouter une entrée dans « plaintes », sans toucher au code. Après modification, lancer « npm run messages » dans site/ pour régénérer messages.js (double clic hors ligne) ; servi par un serveur, le jeu relit directement ce JSON. condition : type (« ligne en difficulté », « perturbation », « événement », « alerte météo » ou « * »), retard_min (minutes), ligne (nom exact), nature_contient (texte), pointe (true = 7–9 h ou 17–19 h), meteo (« pluie » = au moins 1 mm ce jour-là). Variables remplies par le dossier réel joué : {ligne}, {retard}, {nature} (les dossiers d’archive et d’agenda n’ont souvent pas de ligne : préférer {nature}). Une plainte dont une variable n'existe pas pour le dossier n'est pas proposée. effets : points ajoutés aux jauges fluidite, reputation, budget (bornés à ±15, puis jauges bornées 0–100). bonne : true pour la réponse de bon sens (au moins une par plainte). Prompt 85 : « prive »: true envoie la plainte dans la messagerie privée du compte (une relance au plus) ; « modeles » = les 3 modèles d’info trafic que le joueur peut publier ({sujet}, {action}), « coherent » = actions (ou « meteo ») avec lesquelles le message est cohérent (+1 réputation, sinon −2). Prompt 189 : « registre » (etudiant, senior, touriste, travailleur, parent) = registre de langage de l’usager ; seul le vocabulaire change, les faits restent ceux du dossier réel. Prompt 197 : chaque plainte a exactement 3 réponses dont une « clash » (clash: true, sans champ texte : le texte est tiré des clés clash.<catégorie>.1..3, mots grossiers masqués hors alphabet) ; effets du clash : réputation -8, réponse toujours « mauvaise ». Ordre d’affichage mélangé de façon déterministe (aucun marqueur visuel du clash). Prompt 198 : « ton » (provoquant, neutre, positif) sur chaque entrée — au plus 1/3 d’interactions provoquantes par journée jouée, jamais deux de suite ; « categorie » (plainte par défaut, question, remerciement, suggestion, temoignage, relance, doublon, accessibilite, photo) : une plainte déclenchée amène 3 interactions de plus sur le même fait réel, tirées par Jeu.hasard (graine de la partie + dossier + jour + rang) sans répétition récente ; sans « auteur », le pseudonyme fictif est tiré aussi ; condition « fil »: true = seulement si le fait a déjà une plainte (relance, doublon).",
+ "_lisezMoi": "Plaintes des Nantais (prompt 28). Fichier brut modifiable à la main : ajouter une plainte = ajouter une entrée dans « plaintes », sans toucher au code. Après modification, lancer « npm run messages » dans site/ pour régénérer messages.js (double clic hors ligne) ; servi par un serveur, le jeu relit directement ce JSON. condition : type (« ligne en difficulté », « perturbation », « événement », « alerte météo » ou « * »), retard_min (minutes), ligne (nom exact), nature_contient (texte), pointe (true = 7–9 h ou 17–19 h), meteo (« pluie » = au moins 1 mm ce jour-là). Variables remplies par le dossier réel joué : {ligne}, {retard}, {nature} (les dossiers d’archive et d’agenda n’ont souvent pas de ligne : préférer {nature}). Une plainte dont une variable n'existe pas pour le dossier n'est pas proposée. effets : points ajoutés aux jauges fluidite, reputation, budget (bornés à ±15, puis jauges bornées 0–100). bonne : true pour la réponse de bon sens (au moins une par plainte). Prompt 85 : « prive »: true envoie la plainte dans la messagerie privée du compte (une relance au plus) ; « modeles » = les 3 modèles d’info trafic que le joueur peut publier ({sujet}, {action}), « coherent » = actions (ou « meteo ») avec lesquelles le message est cohérent (+1 réputation, sinon −2). Prompt 189 : « registre » (etudiant, senior, touriste, travailleur, parent) = registre de langage de l’usager ; seul le vocabulaire change, les faits restent ceux du dossier réel. Prompt 197 : chaque plainte a exactement 3 réponses dont une « clash » (clash: true, sans champ texte : le texte est tiré des clés clash.<catégorie>.1..3, mots grossiers masqués hors alphabet) ; effets du clash : réputation -8, réponse toujours « mauvaise ». Ordre d’affichage mélangé de façon déterministe (aucun marqueur visuel du clash). Prompt 198 : « ton » (provoquant, neutre, positif) sur chaque entrée — au plus 1/3 d’interactions provoquantes par journée jouée, jamais deux de suite ; « categorie » (plainte par défaut, question, remerciement, suggestion, temoignage, relance, doublon, accessibilite, photo) : une plainte déclenchée amène 3 interactions de plus sur le même fait réel, tirées par Jeu.hasard (graine de la partie + dossier + jour + rang) sans répétition récente ; sans « auteur », le pseudonyme fictif est tiré aussi ; condition « fil »: true = seulement si le fait a déjà une plainte (relance, doublon). Prompt 223 : « theme » (accessibilite, vehicule, info, itineraire, abri, tarif, rassurer, justificatif) = ce que demande le plaignant ; les répliques du dossier y répondent (repl.theme.<thème>.<famille>.<n> dans i18n.js), sans changer l’action jouée ni ses effets.",
  "version": 1,
  "plaintes": [
   {
@@ -66,6 +66,7 @@
   },
   {
    "id": "retard_20",
+   "theme": "justificatif",
    "auteur": "@nantaise_du_tram",
    "registre": "etudiant",
    "condition": {
@@ -191,6 +192,7 @@
   },
   {
    "id": "correspondance",
+   "theme": "itineraire",
    "auteur": "@chantenay_matin",
    "registre": "touriste",
    "condition": {
@@ -253,6 +255,7 @@
   },
   {
    "id": "manifestation",
+   "theme": "itineraire",
    "auteur": "@quai_de_la_fosse",
    "registre": "touriste",
    "condition": {
@@ -315,6 +318,7 @@
   },
   {
    "id": "mouvement_social",
+   "theme": "info",
    "auteur": "@ile_de_nantes",
    "registre": "etudiant",
    "condition": {
@@ -438,6 +442,7 @@
   },
   {
    "id": "affluence",
+   "theme": "accessibilite",
    "auteur": "@nantaise_du_tram",
    "registre": "parent",
    "condition": {
@@ -499,6 +504,7 @@
   },
   {
    "id": "affluence_proprete",
+   "theme": "vehicule",
    "auteur": "@chantenay_matin",
    "registre": "senior",
    "condition": {
@@ -684,6 +690,7 @@
   },
   {
    "id": "vent",
+   "theme": "info",
    "auteur": "@ile_de_nantes",
    "registre": "senior",
    "condition": {
@@ -746,6 +753,7 @@
   },
   {
    "id": "temperature",
+   "theme": "abri",
    "auteur": "@quai_de_la_fosse",
    "registre": "senior",
    "condition": {
@@ -808,6 +816,7 @@
   },
   {
    "id": "pluie_abri",
+   "theme": "abri",
    "auteur": "@usager_44",
    "registre": "senior",
    "condition": {
@@ -870,6 +879,7 @@
   },
   {
    "id": "travaux_deviation",
+   "theme": "itineraire",
    "auteur": "@quai_de_la_fosse",
    "registre": "travailleur",
    "condition": {
@@ -993,6 +1003,7 @@
   },
   {
    "id": "affluence_accessibilite",
+   "theme": "accessibilite",
    "auteur": "@velo_et_bus",
    "condition": {
     "type": "événement"
@@ -1053,6 +1064,7 @@
   },
   {
    "id": "perturbation_horaires",
+   "theme": "info",
    "auteur": "@chantenay_matin",
    "registre": "senior",
    "condition": {
@@ -1176,6 +1188,7 @@
   },
   {
    "id": "prive_accessibilite",
+   "theme": "accessibilite",
    "auteur": "@usager_44",
    "condition": {
     "type": "événement"
@@ -1237,6 +1250,7 @@
   },
   {
    "id": "prive_deviation",
+   "theme": "itineraire",
    "auteur": "@quai_de_la_fosse",
    "registre": "parent",
    "condition": {
@@ -5147,6 +5161,7 @@
   },
   {
    "id": "pl_n_ligne_correspondance",
+   "theme": "itineraire",
    "categorie": "plainte",
    "ton": "neutre",
    "registre": "travailleur",
@@ -5208,6 +5223,7 @@
   },
   {
    "id": "pl_n_ligne_poussette",
+   "theme": "accessibilite",
    "categorie": "plainte",
    "ton": "neutre",
    "registre": "parent",
@@ -5269,6 +5285,7 @@
   },
   {
    "id": "pl_n_retard10_reunion",
+   "theme": "justificatif",
    "categorie": "plainte",
    "ton": "neutre",
    "registre": "travailleur",
@@ -5331,6 +5348,7 @@
   },
   {
    "id": "pl_n_retard10_froid_arret",
+   "theme": "abri",
    "categorie": "plainte",
    "ton": "neutre",
    "registre": "senior",
@@ -5393,6 +5411,7 @@
   },
   {
    "id": "pl_n_retard20_examen",
+   "theme": "justificatif",
    "categorie": "plainte",
    "ton": "neutre",
    "registre": "etudiant",
@@ -5455,6 +5474,7 @@
   },
   {
    "id": "pl_n_retard20_nounou",
+   "theme": "justificatif",
    "categorie": "plainte",
    "ton": "neutre",
    "registre": "parent",
@@ -5517,6 +5537,7 @@
   },
   {
    "id": "pl_n_retard20_touriste",
+   "theme": "info",
    "categorie": "plainte",
    "ton": "neutre",
    "registre": "touriste",
@@ -5641,6 +5662,7 @@
   },
   {
    "id": "pl_n_perturbation_info",
+   "theme": "info",
    "categorie": "plainte",
    "ton": "neutre",
    "registre": "senior",
@@ -5825,6 +5847,7 @@
   },
   {
    "id": "pl_n_travaux_bruit",
+   "theme": "itineraire",
    "categorie": "plainte",
    "ton": "neutre",
    "registre": "senior",
@@ -5887,6 +5910,7 @@
   },
   {
    "id": "pl_n_manif_bloque",
+   "theme": "info",
    "categorie": "plainte",
    "ton": "neutre",
    "registre": "etudiant",
@@ -5949,6 +5973,7 @@
   },
   {
    "id": "pl_n_manif_retour",
+   "theme": "itineraire",
    "categorie": "plainte",
    "ton": "neutre",
    "registre": "travailleur",
@@ -6011,6 +6036,7 @@
   },
   {
    "id": "pl_n_meteo_general",
+   "theme": "info",
    "categorie": "plainte",
    "ton": "neutre",
    "registre": "parent",
@@ -6072,6 +6098,7 @@
   },
   {
    "id": "pl_n_vent_navibus",
+   "theme": "info",
    "categorie": "plainte",
    "ton": "neutre",
    "registre": "touriste",
@@ -6134,6 +6161,7 @@
   },
   {
    "id": "pl_n_vent_attente",
+   "theme": "abri",
    "categorie": "plainte",
    "ton": "neutre",
    "registre": "travailleur",
@@ -6196,6 +6224,7 @@
   },
   {
    "id": "pl_n_chaleur_clim",
+   "theme": "vehicule",
    "categorie": "plainte",
    "ton": "neutre",
    "registre": "senior",
@@ -6258,6 +6287,7 @@
   },
   {
    "id": "pl_n_froid_quai",
+   "theme": "abri",
    "categorie": "plainte",
    "ton": "neutre",
    "registre": "etudiant",
@@ -6381,6 +6411,7 @@
   },
   {
    "id": "pl_n_evenement_tarif",
+   "theme": "tarif",
    "categorie": "plainte",
    "ton": "neutre",
    "registre": "touriste",
@@ -6504,6 +6535,7 @@
   },
   {
    "id": "pl_n_evenement_pluie",
+   "theme": "accessibilite",
    "categorie": "plainte",
    "ton": "neutre",
    "registre": "parent",
@@ -6566,6 +6598,7 @@
   },
   {
    "id": "pl_n_incident_info",
+   "theme": "info",
    "categorie": "plainte",
    "ton": "neutre",
    "registre": "travailleur",
@@ -6627,6 +6660,7 @@
   },
   {
    "id": "pl_n_incident_agression",
+   "theme": "rassurer",
    "categorie": "plainte",
    "ton": "neutre",
    "registre": "senior",
@@ -6689,6 +6723,7 @@
   },
   {
    "id": "pl_n_incident_vol",
+   "theme": "rassurer",
    "categorie": "plainte",
    "ton": "neutre",
    "registre": "etudiant",
@@ -6751,6 +6786,7 @@
   },
   {
    "id": "pl_n_general_proprete",
+   "theme": "vehicule",
    "categorie": "plainte",
    "ton": "neutre",
    "registre": "senior",
@@ -6812,6 +6848,7 @@
   },
   {
    "id": "pl_n_general_annonces",
+   "theme": "vehicule",
    "categorie": "plainte",
    "ton": "neutre",
    "registre": "etudiant",
@@ -6873,6 +6910,7 @@
   },
   {
    "id": "pl_n_pluie_abri",
+   "theme": "abri",
    "categorie": "plainte",
    "ton": "neutre",
    "registre": "travailleur",
@@ -6935,6 +6973,7 @@
   },
   {
    "id": "pl_n_pluie_glissant",
+   "theme": "vehicule",
    "categorie": "plainte",
    "ton": "neutre",
    "registre": "parent",
