@@ -14,7 +14,7 @@ tension, bug Community « tardive ») sans le répéter : ici, on regarde **ce q
      licenciement), en 1366 × 768 et en mobile portrait 412 × 915.
 - **Lu dans le code** : vérifications ponctuelles, avec `fichier:ligne`.
 - **Non fait** : aucun test avec un humain, aucun lecteur d'écran réel, aucun test tactile réel. Les rubriques
-  « ressenti joueur » restent `[non renseigné]` après des tests à l'expo.
+  « ressenti joueur » restent non renseignés après des tests à l'expo.
 
 Captures : `jeu/203-captures/` (01 entrée en jeu, 02 prise en main, 03 dossier, 04 applis, 05 journal / données /
 indicateurs, 06–07 mobile).
@@ -139,7 +139,7 @@ chargement.
 Points faibles :
 - Tout le jeu est un canevas : **Tab ne passe jamais dans le DOM** (`document.activeElement` reste `BODY`) ; la
   navigation clavier est réimplémentée par le jeu. Les annonces passent par `#annonces` — à tester avec NVDA /
-  VoiceOver `[non renseigné]`.
+  VoiceOver non renseigné.
 - Textes secondaires en gris moyen sur fond noir à 10–12 px (indications d'aide, « Glissez une équipe… »,
   pied de Paramètres) : contraste et taille à mesurer, probablement sous 4,5:1 pour certains.
 - Le pied de Paramètres déborde : « … Échap : fermer » coupé sur deux lignes au ras du bord.
@@ -181,7 +181,7 @@ portrait pour le poste (une appli plein écran à la fois, HUD réduit à 3 past
 | 6 | Fiche dossier ancrée à droite, marqueur visible | 5 | ½ j |
 | 7 | Mobile portrait : décider (avis « jouez sur ordinateur » ou vraie mise en page) ; audit de taille rendue | 1 | 1 h ou plusieurs jours |
 | 8 | Autorisations micro / caméra au moment de la mécanique | § 1 | ½ j |
-| 9 | Tests avec 5 joueurs à l'expo : temps jusqu'au 1er dossier, erreurs Community, compréhension des jauges | tous | `[non renseigné]` |
+| 9 | Tests avec 5 joueurs à l'expo : temps jusqu'au 1er dossier, erreurs Community, compréhension des jauges | tous | non renseigné |
 
 ## Ce que cet audit ne dit pas
 

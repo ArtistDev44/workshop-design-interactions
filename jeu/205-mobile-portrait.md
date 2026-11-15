@@ -54,4 +54,4 @@ il a été repris et terminé. Rien ne change sur ordinateur : tout passe par `P
   (colonne étroite dans l'image, recomposée pleine largeur).
 - Le reflet diagonal de l'écran du poste reste visible sur la colonne (il vient de l'image du jeu).
 - En paysage (915 × 412), la mise en page est celle de l'ordinateur réduite : le défaut T ne s'y applique pas.
-- Non vérifié : téléphone réel, lecteur d'écran mobile ; ressenti joueur `[non renseigné]`.
+- Non vérifié : téléphone réel, lecteur d'écran mobile ; ressenti joueur non renseigné.

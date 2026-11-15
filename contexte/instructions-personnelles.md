@@ -16,8 +16,8 @@ Règles de travail personnelles pour ce dépôt. Toute personne ou assistant IA 
 
 ## À compléter (préférences personnelles)
 
-- [ ] Conventions de commit : [non renseigné]
-- [ ] Composition du groupe et rôles : [non renseigné]
-- [ ] Environnements de test disponibles (machines, écrans, navigateurs) : [non renseigné]
-- [ ] Outils IA utilisés et périmètre autorisé : [non renseigné]
-- [ ] Autres contraintes personnelles : [non renseigné]
+- [ ] Conventions de commit : non précisé à la clôture
+- [x] Composition du groupe et rôles : Mattéo Brevet, Guillaume Renoult (G01) ; rôles dans les README (« Auteurs », « Contributions »)
+- [ ] Environnements de test disponibles (machines, écrans, navigateurs) : non précisé à la clôture
+- [x] Outils IA utilisés : Claude Code (Anthropic), ponctuellement Mistral Vibe (crédits du jeu, README « AI usage »)
+- [ ] Autres contraintes personnelles : non précisé à la clôture

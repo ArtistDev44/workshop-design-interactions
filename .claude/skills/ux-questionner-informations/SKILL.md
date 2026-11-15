@@ -68,5 +68,5 @@ Un fichier Markdown daté à la racine (`ux-informations-AAAA-MM-JJ.md`) :
 - Ne pas juger un texte sans lire sa traduction anglaise et sa longueur réelle à l'écran.
 - Ne pas confondre une information **cachée volontairement** (tension, « Pression visible » désactivée,
   répliques clash indiscernables du prompt 117) avec un oubli : citer l'intention et la questionner.
-- Ne pas proposer de nouvelle donnée sans source : inconnu → « [non renseigné] ».
+- Ne pas proposer de nouvelle donnée sans source : inconnu → le dire en clair, sans inventer.
 - Une recommandation par information, pas une refonte générale.

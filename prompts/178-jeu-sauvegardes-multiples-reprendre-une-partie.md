@@ -18,7 +18,7 @@ Demande d'origine (prise de notes du 12/11/2026) :
 4. **Écran « Reprendre une partie »** : liste des sauvegardes, la plus récente d'abord — mode, semaine, jour
    atteint, date et heure de la dernière sauvegarde, état des trois jauges. Actions : **Reprendre** (Entrée) et
    **Supprimer** (avec confirmation). C'est ici qu'on récupère sa sauvegarde ; aucune donnée inventée, un champ
-   absent d'une ancienne sauvegarde s'affiche `[non renseigné]` ou est masqué.
+   absent d'une ancienne sauvegarde s'affiche non renseigné ou est masqué.
 5. Retirer l'ancienne modale de rappel / d'écrasement et ses textes i18n devenus inutiles.
 6. Mode exposition (prompt 160) : vérifier que la purge de fin de session reste compatible avec les emplacements.
 

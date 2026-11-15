@@ -4,7 +4,7 @@ Demande d'origine (12/11/2026) :
 
 > Modifie le design de la page Crédits. Sur le menu : veille à ce qu'aucun texte ne soit coupé.
 
-Suite du prompt 113. Le contenu reste factuel : rien d'ajouté sans source, inconnu → `[non renseigné]`.
+Suite du prompt 113. Le contenu reste factuel : rien d'ajouté sans source, inconnu → non renseigné.
 
 ## 1. Constat (captures 1920×1080, FR et EN, avec et sans sauvegarde)
 
@@ -47,11 +47,11 @@ Suite du prompt 113. Le contenu reste factuel : rien d'ajouté sans source, inco
     **libellé / valeur** : libellé en capitales jaune DS (`DS.alerte`), valeur en blanc 75 %. C'est la même
     grille que l'encadré « Crédits » du deck.
     - **Licence :** Code (MIT, © 2026), Données (Open Data Nantes Métropole, Open-Meteo, Hub'Eau
-      [non renseigné]), Lieux (OpenStreetMap ODbL), Bibliothèque (p5.js LGPL-2.1), Musiques (CC0 1.0, et les
+      non renseigné), Lieux (OpenStreetMap ODbL), Bibliothèque (p5.js LGPL-2.1), Musiques (CC0 1.0, et les
       autres composées en code).
     - **IA :** Outils (Claude Code d'Anthropic ; ponctuellement Mistral Vibe), Méthode (prompts écrits et
       relus par le groupe, `prompts/` et `/making-of/`), Données (réelles, rien d'inventé), Visuels
-      (dessinés par le code), Part humaine ([non renseigné]).
+      (dessinés par le code), Part humaine (non renseigné).
 - **Liens** (Lire la licence, Making-of, Dépôt du code, Retour) :
   - même rangée en bas ;
   - focus clavier en double bordure du DS (comme `dsBouton`) plutôt que le cadre rouge épais ;

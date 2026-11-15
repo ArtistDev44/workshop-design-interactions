@@ -62,7 +62,7 @@ Paramètres).
   (640 × 360), les rails ne font que 300 px : les noms d'équipe sont resserrés dans leur bouton.
 - Les 98 cibles sous 44 px restantes sont celles du portrait (rapport `jeu/214-mobile-plein-ecran-accessibilite.md`
   § 4).
-- Ressenti sur un vrai téléphone : [non renseigné].
+- Ressenti sur un vrai téléphone : non renseigné.
 
 ## Tests ajoutés (`test-jeu.mjs`, +10)
 

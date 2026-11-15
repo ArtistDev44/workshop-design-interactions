@@ -58,6 +58,6 @@ Date : 12/11/2026. Branche `jeu/103-une-seule-appli` (partie de la branche du pr
 
 ## Reste à vérifier
 
-- Mobile portrait 412 px, sur un vrai téléphone : [non renseigné].
+- Mobile portrait 412 px, sur un vrai téléphone : non renseigné.
 - Mesure `?audit=densite` avant / après sur les 5 vues : l'outil mesure encore des fenêtres. Il faut
-  adapter ses étapes aux vues intégrées : [non renseigné].
+  adapter ses étapes aux vues intégrées : non renseigné.

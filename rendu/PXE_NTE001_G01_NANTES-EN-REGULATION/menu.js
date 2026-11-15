@@ -712,9 +712,9 @@ function quitterSauvegardes() {
 	MENU.confirmeSauv = false;
 	MENU.debut = millis();
 }
-/** Ce qu'on sait d'un emplacement, sans rien inventer : un champ absent (ancienne sauvegarde) → [non renseigné] */
+/** Ce qu'on sait d'un emplacement, sans rien inventer : un champ absent (ancienne sauvegarde) → « — » */
 function infosSauvegarde(o) {
-	const inconnu = '[non renseigné]';
+	const inconnu = '—';
 	const c = (o.etat && o.etat.complet) || {};
 	const ch = o.semaine === 'direct' || o.semaine === 'fallback' ? 0 : semainesHistoire().indexOf(o.semaine) + 1;
 	const mode = o.semaine === 'direct' ? t('mp.mode.direct') : o.semaine === 'fallback' ? t('sauv.mode.reference') : ch ? t('sauv.mode.histoire', { n: ch }) : t('sauv.mode.semaine');

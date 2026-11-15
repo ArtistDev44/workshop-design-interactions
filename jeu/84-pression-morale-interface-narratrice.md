@@ -42,4 +42,4 @@ Aucune règle Q1–Q61 ni valeur d'effet modifiée ; seul l'affichage change.
 ne baisse pas entre deux relevés et figé à la décision, temps écoulé = horloge de jeu, Q25 cite les effets réels,
 dé affiché = dé tiré, options sans effet sur les jauges ni les dés, traces reproductibles par la graine et
 restaurées depuis la sauvegarde. Chromium FR / EN : file avec traces, panneau avec pression, retour avec dés.
-Test humain (« raconter sa journée en regardant seulement la file et le dossier ») : [non renseigné].
+Test humain (« raconter sa journée en regardant seulement la file et le dossier ») : non renseigné.

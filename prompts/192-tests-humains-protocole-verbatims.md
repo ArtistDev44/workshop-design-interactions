@@ -2,12 +2,12 @@
 
 Demande d'origine (12/11/2026) : audit croisé avec le guide wikiHow, Partie 1 étape 8 « Équilibrez la difficulté »
 (« cela demande généralement quelques tests ») et `todo.md` (« Test croisé silencieux par un autre groupe » non
-coché ; plusieurs `[non renseigné]` de tests humains dans `jeu/92`, `jeu/93`, `jeu/94`).
+coché ; plusieurs non renseigné de tests humains dans `jeu/92`, `jeu/93`, `jeu/94`).
 
 ## Constat
 
 - L'équilibrage du jeu n'a été validé que par **simulation** (`test-jeu.mjs`), jamais par des joueurs humains.
-- Plusieurs rapports de prompts contiennent des `[non renseigné]` réservés à des tests humains :
+- Plusieurs rapports de prompts contiennent des champs non renseignés réservés à des tests humains :
   ressenti du game feel (prompt 96), test joueur novice (prompt 97), tests mobile pouce seul et clavier seul
   (prompt 98), partie réelle carte interactive (prompts 102–109).
 - Le `todo.md` exige un « test croisé silencieux par un autre groupe (30 à 60 s, 3 observations notées) ».
@@ -45,17 +45,17 @@ Créer une section « Tests humains — [date] » avec :
   dans ce prompt).
 - Cocher dans `todo.md` la ligne « Test croisé silencieux par un autre groupe ».
 
-### 4. Remplir les `[non renseigné]` des rapports de prompts
+### 4. Remplir les champs non renseignés des rapports de prompts
 
 Dans `jeu/92-game-feel-juice.md`, `jeu/93-boucle-engagement-flow.md`, `jeu/94-revue-ui-hud.md` et
-`jeu/105-109-carte-dialogue-equipes.md`, remplacer chaque `[non renseigné]` de test humain par le résultat
+`jeu/105-109-carte-dialogue-equipes.md`, remplacer chaque non renseigné de test humain par le résultat
 observé (ou « non testé, prévu le [date] » si le test n'a pas eu lieu).
 
 ## Vérifications
 
 - `notes.md` contient la section « Tests humains » avec au moins 3 verbatims de 3 testeurs différents.
 - `todo.md` : la case « Test croisé silencieux » est cochée.
-- Les `[non renseigné]` des 4 fichiers de `jeu/` listés ci-dessus sont remplacés.
+- Les champs non renseignés des 4 fichiers de `jeu/` listés ci-dessus sont remplacés.
 - Aucun fichier de code du jeu modifié (`game.js`, règles Q1–Q61).
 - `prompts/README.md` (ligne 192), `journal.md` au push.
 

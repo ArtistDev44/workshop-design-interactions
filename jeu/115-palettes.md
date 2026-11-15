@@ -52,4 +52,4 @@ Texte blanc sur la couleur, contraste mesuré :
   - en vert : Paramètres avec les 6 pastilles ;
   - en violet : audit des textes complet, 0 défaut.
 - `npm run build` vert ; `npm test` : 491 + 550 contrôles réussis.
-- Toutes les palettes sur tous les écrans, à l'œil et sur un vrai écran : [non renseigné].
+- Toutes les palettes sur tous les écrans, à l'œil et sur un vrai écran : non renseigné.

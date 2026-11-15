@@ -21,8 +21,8 @@
 | Grammaire explicite, au moins une règle structurante | **Présent** | `site/public/grammar.md:5-17`. La règle est formulée telle qu'elle est jouée : le seuil de 10 min ne joue qu'en temps réel, ce qui est assumé. Fiche à 7 champs : l. 38-50. Espace génératif : l. 52. |
 | Prototype lançable dans un navigateur | **Présent** | `rendu/PXE_NTE001_G01_NANTES-EN-REGULATION/index.html` et `site/public/index.html` (V présence ; lancement NV ici). |
 | ≥ 3 paramètres opérants | **Présent** | `site/src/content/oeuvres/pxe-nte001-g01-w01.json`, champ `parametres` : semaine, difficulté, en ligne / hors ligne (V). |
-| Test par un autre groupe + ≥ 1 itération documentée | **Absent (test) / présent (itérations)** | Test croisé : `todo.md:57` non coché ; `README.md:25` et `rendu/…/README.md:23` « [non renseigné] » ; `notes.md:490-499` protocole seul, `notes.md:452-454` verbatims vides (V). Itérations : 189 prompts et `journal.md`. |
-| Documentation pour comprendre et relancer | **Partiel** | Les 12 rubriques du README minimal sont présentes dans `rendu/…/README.md` (titres l. 1-126, V). Mais Contributions (l. 112), rôles (l. 44) et part humaine de l'IA (l. 124) sont « [non renseigné] ». |
+| Test par un autre groupe + ≥ 1 itération documentée | **Absent (test) / présent (itérations)** | Test croisé : `todo.md:57` non coché ; `README.md:25` et `rendu/…/README.md:23` « non renseigné » ; `notes.md:490-499` protocole seul, `notes.md:452-454` verbatims vides (V). Itérations : 189 prompts et `journal.md`. |
+| Documentation pour comprendre et relancer | **Partiel** | Les 12 rubriques du README minimal sont présentes dans `rendu/…/README.md` (titres l. 1-126, V). Mais Contributions (l. 112), rôles (l. 44) et part humaine de l'IA (l. 124) sont « non renseigné ». |
 
 ### 1.2 Livrables (« Ce que chaque groupe remet », l. 691-702)
 
@@ -32,10 +32,10 @@
 | Fiche-source (`.md` + `.pdf`) | **Présent** | `rendu/…/source-sheet.md` et `.pdf`. PDF non ouvert (NV). |
 | Grammaire (diagramme, règles, invariants, variables) | **Partiel** | Règles, invariants et variables présents. **Aucun diagramme** : seule la chaîne en texte (`grammar.md:3`, V). Déjà signalé par `audit-2026-11-12.md` § 5.2. |
 | README | **Partiel** | Voir 1.1 (saisies humaines manquantes). |
-| Manifest | **Partiel** | `site/public/manifest.json:28` : `ai_usage` contient « Relecture et part humaine : [non renseigné] ». `data_sources` omet OSM et les jeux ODbL (voir § 3). |
+| Manifest | **Partiel** | `site/public/manifest.json:28` : `ai_usage` contient « Relecture et part humaine : non renseigné ». `data_sources` omet OSM et les jeux ODbL (voir § 3). |
 | Cartel 80–120 mots + source + système | **Présent** | `rendu/…/cartel.md` : 114 mots (V, `wc -w`). Source, Système, Données et chaîne y figurent. Le `README.md:31` racine annonce « 111 mots », c'est un écart mineur. |
 | Captation (hero, detail-01, process, thumb, demo 20–30 s) | **Présent** | `site/public/captures/` et `rendu/…/` : fichiers identiques (cmp V). Refaits le 12/11 à 23:57 (commit 614ecab), mais 12 commits sur `site/public/*.js` ont suivi (prompts 196–203). Durée de 29 s d'après les docs (L). |
-| Présentation | **Présent** | Deck Slidev `slides/slides.md`, build dans `site/public/presentation/`. `rendu/…/slides.md` est une **ancienne version** (« Auteurs : [non renseigné] » l. 14, part humaine l. 111), différente de `slides/slides.md` (V). |
+| Présentation | **Présent** | Deck Slidev `slides/slides.md`, build dans `site/public/presentation/`. `rendu/…/slides.md` est une **ancienne version** (« Auteurs : non renseigné » l. 14, part humaine l. 111), différente de `slides/slides.md` (V). |
 | Structure de dossier `PXE_NTE001_G01_NOM-PROJET/` | **Présent** | `rendu/PXE_NTE001_G01_NANTES-EN-REGULATION/` (V). |
 | Fiche individuelle (Notation, l. 815-829) | **Absent** | `todo.md:165` non coché ; aucun fichier dédié (V). |
 | Checklist de robustesse (l. 896-907) | **Non cochée par un humain** | `todo.md:189` (V). Les tests automatisés couvrent une partie (L). |
@@ -60,7 +60,7 @@
   - `site/README.md:11, 133, 142` ;
   - `rendu/PXE_NTE001_G01_NANTES-EN-REGULATION/README.md:44, 112, 124` ;
   - `site/public/manifest.json:28` ;
-  - `site/public/i18n.js:1369` et `:3305` (« Part humaine : [non renseigné] » affiché dans l'écran Crédits du jeu).
+  - `site/public/i18n.js:1369` et `:3305` (« Part humaine : non renseigné » affiché dans l'écran Crédits du jeu).
 - **Effort** : S (saisie du groupe). **Preuve** : V (grep).
 - **Piste** : rédiger Rôles, Contributions nominatives et AI usage (3 à 5 lignes : relu, réécrit, testé), puis recopier dans les 4 fichiers et dans `rendu/`. Le barème (`note-eval.md` § 5, leviers 1 à 3) chiffre jusqu'à +8 points individuels.
 
@@ -77,12 +77,12 @@
 ### C3 — Copie figée `rendu/` désynchronisée de `site/public/` — **majeur**
 - **Où** : `rendu/PXE_NTE001_G01_NANTES-EN-REGULATION/`. Le dernier commit qui la touche est 35cc418 ; le prompt 202 (6c304ec) n'y est pas. 13 fichiers diffèrent (V, `diff -rq`), et davantage encore avec le prompt 204 sur origin/main.
 - **Autres incohérences** :
-  - `rendu/…/slides.md` est un ancien diaporama, avec « Auteurs : [non renseigné] » ;
-  - `rendu/README.md:12-13` affirme que auteurs, licence et fiche-source restent « [non renseigné] », ce qui est périmé.
+  - `rendu/…/slides.md` est un ancien diaporama, avec « Auteurs : non renseigné » ;
+  - `rendu/README.md:12-13` affirme que auteurs, licence et fiche-source restent « non renseigné », ce qui est périmé.
 - **Effort** : S. **Preuve** : V.
 - **Piste** : resynchroniser selon la procédure de `rendu/README.md`, remplacer `rendu/…/slides.md` par un renvoi vers `/presentation/` (ou le supprimer), mettre à jour `rendu/README.md`. Le faire **en dernier**, après les corrections et les saisies.
 
-### C4 — Crédits du jeu : Hub'Eau « [non renseigné] » alors que la licence est vérifiée — **majeur (visible à l'écran)**
+### C4 — Crédits du jeu : Hub'Eau « non renseigné » alors que la licence est vérifiée — **majeur (visible à l'écran)**
 - **Où** :
   - `site/public/i18n.js:1351` (FR) et `:3287` (EN) ;
   - même texte dans `rendu/…/i18n.js` et sur origin/main (`i18n.js:1353`).
@@ -115,7 +115,7 @@
 - **Où** : `.github/workflows/deploy.yml:4-8`, `site/README.md:35, 112`, `todo.md:197`.
 - Signalé dans `note-eval.md` (levier 12) et `audit-2026-11-12.md` § 6, toujours ouvert.
 - **Effort** : S. **Preuve** : V.
-- **Piste** : écrire le mode de publication réel (intégration Git Cloudflare ou dépôt manuel : `[non renseigné]` par le groupe), puis supprimer ou désactiver le workflow GitHub Pages.
+- **Piste** : écrire le mode de publication réel (intégration Git Cloudflare ou dépôt manuel : non renseigné par le groupe), puis supprimer ou désactiver le workflow GitHub Pages.
 
 ### C8 — Chiffres et numérotation périmés dans la documentation publique — **mineur**
 Toutes les preuves sont V.
@@ -178,9 +178,9 @@ Toutes les preuves sont V.
 
 ---
 
-## 3. `[non renseigné]` restants (hors node_modules, dist, fallback), classés pour le rendu
+## 3. non renseigné restants (hors node_modules, dist, fallback), classés pour le rendu
 
-Comptage V : 64 fichiers en contiennent. Les occurrences dans `prompts/`, `CLAUDE.md`, `CONTRIBUTING.md`, `note-eval.md` et dans les commentaires ou mécanismes de repli du code (`i18n.js:4, 3893`, `menu.js:691-693`, `game.js:1569`, `credits.js:5`, `cartel.astro:5`, `content.config.ts:17`, `test-jeu.mjs`) sont **voulues** : c'est la règle « inconnu → [non renseigné] » ou des citations.
+Comptage V : 64 fichiers en contiennent. Les occurrences dans `prompts/`, `CLAUDE.md`, `CONTRIBUTING.md`, `note-eval.md` et dans les commentaires ou mécanismes de repli du code (`i18n.js:4, 3893`, `menu.js:691-693`, `game.js:1569`, `credits.js:5`, `cartel.astro:5`, `content.config.ts:17`, `test-jeu.mjs`) sont **voulues** : c'est la règle « inconnu → non renseigné » ou des citations.
 
 | Priorité | Fichier:ligne | Champ |
 |---|---|---|
@@ -209,7 +209,7 @@ Comptage V : 64 fichiers en contiennent. Les occurrences dans `prompts/`, `CLAUD
 | `todo.md` | **Périmé en partie** | C10. Les vrais restes sont listés l. 186-201. |
 | `notes.md` | **Cohérent** | Protocole de tests humains rédigé (l. 471-513), non exécuté. Décisions de groupe du § 6 non tranchées (l. 144-150). |
 | `jeu/README.md` | **Incomplet** | 9 fiches hors sommaire (C11). |
-| `note-eval.md` | **Daté** | Mis à jour pour la dernière fois le 12/11 (prompt 100). Il ne reflète pas les prompts 101 à 203 et cite des chiffres anciens (« 96 fichiers dans prompts/ », 313 + 374 contrôles). Il affirme Hub'Eau « levé » alors que les crédits du jeu l'affichent encore « [non renseigné] » (C4). |
+| `note-eval.md` | **Daté** | Mis à jour pour la dernière fois le 12/11 (prompt 100). Il ne reflète pas les prompts 101 à 203 et cite des chiffres anciens (« 96 fichiers dans prompts/ », 313 + 374 contrôles). Il affirme Hub'Eau « levé » alors que les crédits du jeu l'affichent encore « non renseigné » (C4). |
 
 ---
 
@@ -235,7 +235,7 @@ Légende : ✅ fait · ◐ partiel · ◻ non fait · (204) = fait sur origin/ma
 | 4 Focus clavier unique | NV | — |
 | 4 Zoom bloqué `user-scalable=no` | ◻ | `site/public/index.html:5` (V) |
 | 4 Bitsy Pixels absente | ◻ | Assumé (`fonts/README.md`) |
-| 4 Hub'Eau « [non renseigné] » aux crédits | ◻ | `i18n.js:1351` (V), voir C4 |
+| 4 Hub'Eau « non renseigné » aux crédits | ◻ | `i18n.js:1351` (V), voir C4 |
 | 5.1 Règle des 10 min, affluence supposée, source à 3 libellés | ✅ (documents) | `grammar.md:12-17` (prompt 134) |
 | 5.2 Contributions, test croisé, fiche individuelle | ◻ | C1, C2 |
 | 5.2 Captures sur la version finale | ◐ | Refaites le 12/11 à 23:57, 12 commits JS depuis |
@@ -272,7 +272,7 @@ Légende : ✅ fait · ◐ partiel · ◻ non fait · (204) = fait sur origin/ma
 | 6 | Fiche dossier ancrée, marqueur visible | ◻ | ✅ (204), zoom ×4 `cadrerSur` | constat 5 |
 | 7 | Mobile portrait | ◻ | ◻ (prompt 205 rédigé, non exécuté) | `prompts/205-jeu-mobile-portrait-jouable.md` (origin/main) |
 | 8 | Autorisations micro / caméra au premier usage | ◻ | ◻ | Hors 204 |
-| 9 | Tests avec 5 joueurs | ◻ | ◻ | `[non renseigné]` |
+| 9 | Tests avec 5 joueurs | ◻ | ◻ | non renseigné |
 
 **Bilan : 0 / 9 à f07351b ; 6 / 9 sur origin/main**. Les corrections de 204 sont déclarées vérifiées par build, tests et audit des textes (L, non rejoué ici).
 

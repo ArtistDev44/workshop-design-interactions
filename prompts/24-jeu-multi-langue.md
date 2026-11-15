@@ -47,7 +47,7 @@ seules les **étiquettes d'interface** et les **textes écrits par le jeu** sont
 
 - Fonction globale `t(chemin, variables)` : retourne la chaîne de la langue active, avec
   interpolation `{variable}` ; si la clé manque dans la langue active, **retombe sur le
-  français** ; si elle manque partout, retourne `"[non renseigné]"` (règle du dépôt : jamais de
+  français** ; si elle manque partout, retourne non renseigné (règle du dépôt : jamais de
   chaîne vide ni de clé affichée telle quelle).
 
 ### 1.2 Langue active
@@ -113,7 +113,7 @@ seules les **étiquettes d'interface** et les **textes écrits par le jeu** sont
 - Parcours complet en français puis en anglais : accueil, semaine choisie, salle de contrôle,
   3 actions + « ne rien faire », dossier suivant, jauges, conseil contextuel, bureau + 4 apps,
   modificateur (annonce comprise), fin de journée (mail), écran de fin et bilan, aide,
-  paramètres — aucune chaîne en dur restante, aucune clé affichée, aucun `[non renseigné]`.
+  paramètres — aucune chaîne en dur restante, aucune clé affichée, aucun champ non renseigné.
 - `?lang=en` au chargement ; persistance après rechargement ; changement en cours de partie
   sans perte de progression ; `document.documentElement.lang` correct.
 - Données réelles identiques dans les deux langues (mêmes dossiers, mêmes valeurs) ; graine et

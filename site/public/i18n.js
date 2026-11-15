@@ -1,7 +1,7 @@
 /* Nantes en régulation — multi-langue (prompt 24).
  * Dictionnaire unique TRADUCTIONS (une entrée par langue, mêmes clés plates) et liste LANGUES.
  * Ajouter une langue : un bloc dans TRADUCTIONS + une entrée dans LANGUES. Rien d'autre à toucher.
- * t(cle, variables)  : chaîne immédiate, interpolation {variable} ; clé absente → français ; absente partout → « [non renseigné] ».
+ * t(cle, variables)  : chaîne immédiate, interpolation {variable} ; clé absente → français ; absente partout → « [texte manquant] » (signal d'erreur traqué par les tests, jamais affiché en jeu).
  * T(cle, variables)  : texte différé (objet Texte) — traduit à chaque affichage, donc les messages déjà
  *                      émis (patron, commentaires, mail, journal) changent de langue en cours de partie.
  * Les données réelles (noms de lignes, lieux, natures d'incidents, sources) passent en variables, jamais traduites.
@@ -4670,7 +4670,7 @@ const CLE_LANGUE = 'pxe-nte001-langue';
 function t(cle, v) {
 	let s = (TRADUCTIONS[Langue.actuelle] || {})[cle];
 	if (s === undefined) s = TRADUCTIONS.fr[cle];
-	if (s === undefined) return '[non renseigné]';
+	if (s === undefined) return '[texte manquant]';
 	if (v && s.includes('(s)')) s = accorderPluriels(s, v);
 	if (v) s = s.replace(/\{(\w+)\}/g, (m, k) => (v[k] === undefined || v[k] === null ? '' : String(v[k])));
 	return s;

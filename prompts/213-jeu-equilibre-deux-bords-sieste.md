@@ -135,4 +135,4 @@ Noter ces chiffres « avant » dans le rapport.
 - Une partie jouée au clavier, avec animations réduites, et le lecteur d'écran sur un dossier en zone d'excès et un
   dossier avec fatigue au-dessus de 70.
 - Rapport `jeu/213-equilibre-deux-bords-sieste.md` : chiffres de simulation avant et après, seuils retenus et
-  pourquoi, captures du bandeau en excès et d'une réplique en « ? ». Ressenti des joueurs : [non renseigné].
+  pourquoi, captures du bandeau en excès et d'une réplique en « ? ». Ressenti des joueurs : non renseigné.

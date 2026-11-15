@@ -74,7 +74,7 @@ Aucun travail obligatoire. Sauvegarde et relecture des notes possibles, rien de 
 - [ ] 13:00 Documentation : README complet (Auteurs, Source patrimoniale, Concept, Grammaire/règles, Stack, Data/interaction, Lancer le projet, Fallback/limites, Contributions, AI usage, Sources/droits)
 - [x] Rédiger le cartel : 80 à 120 mots + source patrimoniale + système, au format du livret (fait : `cartel.md` du rendu, page `/cartel/`)
 - [x] Produire manifest.json (modèle du livret) et finaliser source-sheet et grammar (fait : `manifest.json`, `source-sheet.md` / `.pdf`, `grammar.md` / `.pdf` dans le dossier de rendu)
-- [x] Générer un QR code pointant vers le site web de l'œuvre (page en ligne de l'édition ou GitHub Pages du dépôt) — PNG régénérés vers l'URL canonique (commit dea5dc4 ; identiques octet pour octet à `qrencode` sur https://workshop-design-interactions.pages.dev/ et …/cartel/, vérifié le 12/11/2026) ; test au téléphone en salle : [non renseigné]
+- [x] Générer un QR code pointant vers le site web de l'œuvre (page en ligne de l'édition ou GitHub Pages du dépôt) — PNG régénérés vers l'URL canonique (commit dea5dc4 ; identiques octet pour octet à `qrencode` sur https://workshop-design-interactions.pages.dev/ et …/cartel/, vérifié le 12/11/2026) ; test au téléphone en salle : non renseigné
 - [ ] Intégrer le QR code au cartel / à l'affichage et tester le scan en conditions réelles
 - [x] 14:00 Installation + captation : hero.jpg, detail-01.jpg, process.jpg, demo.mp4 (20 à 30 s), thumb.jpg (fait au prompt 46 : `site/public/captures/`, vrai rendu)
 - [ ] 15:00 Micro-exposition + soutenance

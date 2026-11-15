@@ -31,5 +31,5 @@ Aucune police n'est réduite sous la taille minimale, aucune règle ni donnée n
   - 1366 × 768 ;
   - 1920 × 1080 avec la palette violette (prompt 115).
 - `npm run build` vert ; `npm test` : 491 + 550 contrôles réussis.
-- Rapport JSON brut : non enregistré (consulté dans la console) — [non renseigné] si le groupe le veut en
+- Rapport JSON brut : non enregistré (consulté dans la console) — non renseigné si le groupe le veut en
   fichier.

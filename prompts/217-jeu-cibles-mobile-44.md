@@ -35,5 +35,5 @@ bulle du guide (38), marqueurs de la carte (26).
 
 ## Limites
 
-- Pas de vérification sur un vrai téléphone ([non renseigné]).
+- Pas de vérification sur un vrai téléphone (non renseigné).
 - Des zones de toucher de marqueurs voisins sur la carte peuvent se recouvrir quand la carte est dézoomée.

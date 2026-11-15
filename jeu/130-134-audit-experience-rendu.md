@@ -76,7 +76,7 @@ modification de `menu.js` et `credits.js`. Le travail a été fusionné avec `ma
 - Bandeau : la disponibilité des équipes n'est plus répétée sur la seconde ligne (elle est à droite) ; la ligne n'est
   plus tronquée en 1920×1080.
 - Touche **F** : plein écran (entrée et sortie), annoncée ; ajoutée à la ligne « L » de l'aide.
-- **Hors champ** : l'écran Crédits (mise en page portrait, licence Hub'Eau encore « [non renseigné] » dans
+- **Hors champ** : l'écran Crédits (mise en page portrait, licence Hub'Eau encore « non renseigné » dans
   `credits.licence.texte` alors que `manifest.json` la donne) est laissé à la session qui redessine les Crédits (prompt « Crédits et menu », non fusionné à cette heure).
 
 ## 134 — Décrire la règle que le jeu joue vraiment

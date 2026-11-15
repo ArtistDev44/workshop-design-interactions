@@ -45,8 +45,8 @@ Sur la base des prompts 117–118.
 - `npm run build` vert ; `npm test` : smoke + `test-jeu.mjs` (blocs 116–119 et 196 verts).
   - Note : le smoke signale encore le prompt 164 (fichier posé par une autre session, non enregistré
     dans `prompts/README.md` / `auteurs.json`) — hors périmètre de ce prompt.
-- Audit des textes (`?audit=textes`) à 0 défaut A–D sur les nouveaux textes FR/EN : [non renseigné].
-- Ressenti en vraie partie (tentation du clash, friction de la réaction) : [non renseigné].
+- Audit des textes (`?audit=textes`) à 0 défaut A–D sur les nouveaux textes FR/EN : non renseigné.
+- Ressenti en vraie partie (tentation du clash, friction de la réaction) : non renseigné.
 
 ## Hors périmètre
 

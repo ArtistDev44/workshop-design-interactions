@@ -62,4 +62,4 @@ Date : 12/11/2026. Branche `jeu/117-119-clash-plaignants-incidents`.
   - 3 répliques dont le clash ;
   - aucune erreur.
 - Audit des textes en 1920 × 1080, FR et EN, avec l'incident fictif : **0 défaut**.
-- Ressenti en vraie partie (tentation du clash, fréquence des plaignants agressifs) : [non renseigné].
+- Ressenti en vraie partie (tentation du clash, fréquence des plaignants agressifs) : non renseigné.

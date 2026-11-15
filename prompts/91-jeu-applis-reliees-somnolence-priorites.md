@@ -164,7 +164,7 @@ dans la doc.
 - **Test humain** : 2 personnes du groupe jouent la semaine 1 (une seule appli) puis la semaine 2 —
   noter si le déblocage donne envie de continuer et si les redirections sont comprises sans texte.
 - Accessibilité : contraste ≥ 4,5:1, clavier seul, `aria-live`, `prefers-reduced-motion`, aucun flash,
-  hors ligne, 1920×1080 et mobile, FR + EN, aucune clé brute ni `[non renseigné]` affiché.
+  hors ligne, 1920×1080 et mobile, FR + EN, aucune clé brute ni non renseigné affiché.
 - Documenter dans `jeu/86-applis-reliees-somnolence-priorites.md` et ajouter la ligne au sommaire de
   `jeu/README.md`. Mettre à jour `jeu/82-engouement-variete.md` (briefing et info trafic remplacés).
 - Branche `jeu/prompt-91-applis-reliees-somnolence-priorites`. À chaque push : entrée en tête de
