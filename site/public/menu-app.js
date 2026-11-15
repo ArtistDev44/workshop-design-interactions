@@ -103,10 +103,11 @@ function tabMenuApp() {
 	const arrets = ENTREES_MENU.map((cle) => ICONES_OS.findIndex((ic) => ic.cle === cle)).filter((i) => i >= 0 && ICONES_OS[i].cle !== entreeActive());
 	const finir = typeof boutonFinirVisible === 'function' && boutonFinirVisible(); // prompt 221 : « Finir la journée » avant « Quitter le PC »
 	const tout = [null, ...arrets, ...(finir ? ['finir'] : []), 'quitter'];
-	const ici = focusQuitter ? tout.length - 1 : focusFinir && finir ? tout.length - 2 : MENU_FOCUS.actif ? Math.max(0, tout.indexOf(PC.selection)) : 0;
+	const avecFinir = typeof focusFinir !== 'undefined';
+	const ici = focusQuitter ? tout.length - 1 : avecFinir && focusFinir && finir ? tout.length - 2 : MENU_FOCUS.actif ? Math.max(0, tout.indexOf(PC.selection)) : 0;
 	const suivant = tout[(ici + (recul ? tout.length - 1 : 1)) % tout.length];
 	MENU_FOCUS.actif = typeof suivant === 'number';
-	if (focusFinir !== (suivant === 'finir')) basculerFocusFinir(suivant === 'finir');
+	if (avecFinir && focusFinir !== (suivant === 'finir')) basculerFocusFinir(suivant === 'finir');
 	if (focusQuitter !== (suivant === 'quitter')) basculerFocusQuitter(suivant === 'quitter');
 	if (MENU_FOCUS.actif) {
 		PC.selection = suivant;
