@@ -4472,9 +4472,9 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 		['panneau.js', /hCible\(50, 70\)[\s\S]{0,300}reduireDialogue/, '« × » de la fiche'], ['panneau.js', /hCible\(62, 70\)/, 'répliques et « Dites-m\'en plus »'], ['panneau.js', /hCible\(52, 70\), '→ ' \+ t\('applis\.publier'\)/, '« Publier sur Community »'],
 		['carte.js', /lb, hCible\(52, 70\), t\('carte\.onglet\.'/, 'onglets Enquête / Historique'], ['enquete.js', /const ho = hCible\(52, 70\) \+ 10/, 'contenu sous les onglets'],
 		['patron.js', /const hB = hCible\(50, 70\)/, 'barre de Mails'], ['patron.js', /const hd = hCible\(56, 70\)/, 'dossiers de Mails'],
-		['notifs-tel.js', /const hT = hCible\(48, 60\)/, 'onglets du téléphone'], ['notifs-tel.js', /const hX = hCible\(56, 60\)/, '« × » des notifications'], ['notifs-tel.js', /const hA = hCible\(46, 60\)/, '« +n autres » / « Tout effacer »'], ['notifs-tel.js', /basculerNpd, undefined, false, hCible\(44, 60\)/, 'Ne pas déranger'],
+		['notifs-tel.js', /const hT = hCible\(48, 60\)/, 'onglets du téléphone'], ['notifs-tel.js', /const hX = hCible\(56, 60\)/, '« × » des notifications'], ['notifs-tel.js', /const hA = hSerre\(hCible\(46, 60\)\)/, '« +n autres » / « Tout effacer »'], ['notifs-tel.js', /basculerNpd, undefined, false, hCible\(44, 60\)/, 'Ne pas déranger'],
 		['aide.js', /const la = hCible\(64, 74\), ha = hCible\(60, 74\)/, 'flèches de pages de l\'aide'], ['histoire.js', /300, hCible\(64, 74\), t\('commun\.fermer'\)/, '« Fermer » du rapport de la veille'],
-		['menu.js', /const hc = hCible\(46, 74\)/, 'lien des crédits'], ['guide.js', /const h = hCible\(64, 74\)/, 'option du guide'], ['guide.js', /const hbq = hCible\(48, 74\)/, 'boutons de la bulle du guide'],
+		['menu.js', /const hc = hCible\(46, 74\)/, 'lien des crédits'], ['guide.js', /const h = hCible\(64, 74\)/, 'option du guide'], ['guide.js', /const hbq = hSerre\(hCible\(48, 74\)\)/, 'boutons de la bulle du guide'],
 		['autorisations.js', /dsBouton\(x \+ 32, yb, l - 64, 74, e\.libelle/, '« Autoriser »'], ['carte-alertes.js', /const zm = hCible\(50, 70\)/, 'marqueurs de la carte'],
 	];
 	for (const [fi, re, nom] of sites) verifier(re.test(lire(fi)), `217 : ${nom} (${fi}) ≥ 44 px CSS en mobile`);
