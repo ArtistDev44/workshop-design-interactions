@@ -171,7 +171,7 @@ function draw() {
 	// Prompt 41 : cinématique de fin, plein écran
 	if (CINE) {
 		boutons = [];
-		dessinerCinematique();
+		dessinerVideoFin(); // prompt 226 : vidéo de fin en trois séquences
 		dessinerSousTitresSons(); // prompt 208
 		majCurseur();
 		return;
@@ -1344,7 +1344,7 @@ function keyPressed() {
 	if (Sauvegarde.dialogueOuvert) return;
 	if (saisieOuRaccourciNavigateur()) return; // prompt 174 : champ de texte au focus, ou Ctrl / Cmd / Alt (raccourcis du navigateur) → le jeu ne lit rien
 	if (arreterDemo()) return false; // prompt 48 : une touche arrête la démo automatique
-	if (CINE) return toucheCinematique(), false; // prompt 41
+	if (CINE) return toucheVideoFin(), false; // prompt 41 ; prompt 226
 	if (GAMEOVER) return toucheGameOver(), false; // prompt 84
 	if (TRANSITION_JOUR && (keyCode === ENTER || keyCode === RETURN || key === ' ' || keyCode === ESCAPE)) return passerTransitionJour(), false; // prompt 43
 	Confort.Son.demarrer(); // l'audio ne peut démarrer qu'après un geste du joueur

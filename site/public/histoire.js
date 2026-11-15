@@ -103,6 +103,15 @@ function finDeSemaine() {
 	}
 	// Prompt 207 : la fin obtenue entre dans la galerie (pas une démission)
 	if (!b.demission && b.fin && Jeu.Galerie) b.finNouvelle = Jeu.Galerie.noter(b.fin, b.score);
+	// Prompt 226 : la vidéo de la fin (trois séquences) passe d'abord ; semaine 3 du mode histoire : la fin finale
+	const cleVideo = b.demission ? 'demission' : ch === 3 && b.finFinale ? b.finFinale : b.fin;
+	const donneesVideo = typeof donneesVideoFin === 'function' && cleVideo ? donneesVideoFin(cleVideo, b) : null;
+	if (donneesVideo && !b.demission && Jeu.Galerie && Jeu.Galerie.noterVideo) Jeu.Galerie.noterVideo(cleVideo, donneesVideo); // « Revoir la fin »
+	if (donneesVideo && typeof lancerVideoFin === 'function') return lancerVideoFin(cleVideo, donneesVideo, () => imprimerRapportSemaine(b, ch));
+	imprimerRapportSemaine(b, ch);
+}
+/** Le rapport papier (et le mail du patron), après la vidéo de la fin */
+function imprimerRapportSemaine(b, ch) {
 	// Prompt 56 : le rapport (deux pages) vient avant la cinématique de la semaine 3 ; le mail du patron est mis en avant
 	RAPPORT = { debut: millis(), bilan: b, chapitre: ch, mode: Jeu.etat.mode, page: 0, stats: Jeu.statsSemaine(), cine: ch === 3 && !b.demission, mail: b.demission ? null : Jeu.mailFinSemaine() };
 	annoncer(t('rapport.imprime'));
@@ -161,7 +170,7 @@ function actionRapport() {
 	const b = RAPPORT.bilan;
 	RAPPORT = null;
 	fenetre = null;
-	if (cine) return lancerCinematique(b.type, b); // prompt 56 : après le rapport de la semaine 3
+	if (cine) return finHistoire(); // prompt 56 : après le rapport de la semaine 3 ; prompt 226 : la vidéo de la fin finale est passée avant le rapport
 	if (ch) lancerChapitre(demission ? ch : ch + 1); // prompt 47 : après une démission, on reprend la même semaine
 	else rejouer();
 }
@@ -365,195 +374,13 @@ function fenetreRapport() {
 	boutonPageRapport(x + l, y);
 }
 
-// =====================================================================
-// Cinématiques de fin (après la semaine 3) : trois plans par fin, ~6 s chacun, passables
-// =====================================================================
-let CINE = null; // { type, bilan, plan, debut }
-const DUREE_PLAN = 6500;
-function lancerCinematique(type, bilan) {
-	CINE = { type, bilan, plan: 0, debut: millis() };
-	fenetre = null;
-	annoncer(t('cine.' + type + '.0'));
-}
-function planSuivant() {
-	if (!CINE) return;
-	CINE.plan++;
-	CINE.debut = millis();
-	if (CINE.plan > 2) return finCinematique();
-	annoncer(t('cine.' + CINE.type + '.' + CINE.plan));
-}
-function finCinematique() {
-	CINE = null;
+// Prompt 226 : la cinématique par palier du prompt 41 est remplacée par la vidéo de fin en trois séquences (fins-video.js)
+/** Fin du mode histoire (après le rapport de la semaine 3) : retour au menu, mode temps réel débloqué */
+function finHistoire() {
 	ecran = 'accueil';
 	bilanCalcule = null;
 	ouvrirMenuPrincipal();
 	annoncer(t('histoire.debloque'));
-}
-function toucheCinematique() {
-	if (keyCode === ESCAPE) return finCinematique();
-	if (keyCode === ENTER || keyCode === RETURN || key === ' ' || keyCode === RIGHT_ARROW) planSuivant();
-}
-
-function dessinerCinematique() {
-	const c = CINE;
-	const u = (millis() - c.debut) / DUREE_PLAN;
-	if (u >= 1) planSuivant();
-	if (!CINE) return;
-	background(0);
-	if (c.plan === 0) planVille(c.type, u);
-	else if (c.plan === 1) planLettre(c.type, u);
-	else planPiece(c.type, u);
-	// Fondu d'entrée / sortie (aucun avec animations réduites)
-	if (!reduireAnimations) {
-		const f = u < 0.08 ? 1 - u / 0.08 : u > 0.92 ? (u - 0.92) / 0.08 : 0;
-		noStroke();
-		fill(0, 0, 0, 255 * f);
-		rect(0, 0, L, H);
-	}
-	// Bandes noires et sous-titre
-	noStroke();
-	fill(0);
-	rect(0, 0, L, 110);
-	rect(0, H - 150, L, 150);
-	const p = progressionHistoire().scores;
-	if (typeof PORTRAIT !== 'undefined' && PORTRAIT.actif) return piedCinematiquePortrait(c, p); // prompt 209
-	textAlign(CENTER, CENTER);
-	textFont(POLICE_TEXTE);
-	textSize(30);
-	fill('#ffffff');
-	const sous = c.plan === 2 ? t('cine.bilan', { s1: p[1] === undefined ? '—' : p[1], s2: p[2] === undefined ? '—' : p[2], s3: c.bilan.score }) : t('cine.' + c.type + '.' + c.plan);
-	text(sous, 160, H - 150, L - 320, 150);
-	textAlign(LEFT, CENTER);
-	textFont(POLICE_DONNEES);
-	textSize(18);
-	fill('rgba(255,255,255,0.6)');
-	text(c.bilan && c.bilan.finFinale ? t('cine.titreFin', { nom: t('fin.' + c.bilan.finFinale + '.nom') }) : t('cine.titre.' + c.type), 60, 55); // prompt 207 : la fin de l'histoire nommée
-	bouton(L - 360, 30, 300, 56, t('cine.passer'), finCinematique, false, true);
-	boutons.push({ x: 0, y: 110, l: L, h: H - 260, action: planSuivant });
-}
-
-/** Prompt 209 : mobile portrait — bandes, titre, « Passer » et sous-titre dans la colonne centrale de 640 px
- * (recomposée pleine largeur) : titre et bouton pleine largeur en haut, sous-titre à 28 px en bas */
-const COLONNE_CINE = { x: 1920 / 2 - 320 /* L / 2 − 320 (L = 1920, sketch.js) : littéral pour le test du jeu, qui charge histoire.js sans sketch.js */, l: 640, haut: 180, bas: 280 };
-function piedCinematiquePortrait(c, p) {
-	const C0 = COLONNE_CINE;
-	noStroke();
-	fill(0);
-	rect(0, 0, L, C0.haut);
-	rect(0, H - C0.bas, L, C0.bas);
-	const titre = c.bilan && c.bilan.finFinale ? t('cine.titreFin', { nom: t('fin.' + c.bilan.finFinale + '.nom') }) : t('cine.titre.' + c.type);
-	dessinerTexte(String(titre), C0.x, 20, C0.l, { taille: 20, interligne: 26, couleur: 'rgba(255,255,255,0.75)', police: POLICE_DONNEES, maxLignes: 2 });
-	bouton(C0.x, 80, C0.l, 80, t('cine.passer'), finCinematique, false, true);
-	const sous = c.plan === 2 ? t('cine.bilan', { s1: p[1] === undefined ? '—' : p[1], s2: p[2] === undefined ? '—' : p[2], s3: c.bilan.score }) : t('cine.' + c.type + '.' + c.plan);
-	const o = { taille: 28, interligne: 36, couleur: '#ffffff', align: 'center', maxLignes: 6 };
-	const hs = hauteurTexte(String(sous), C0.l, o);
-	zoneTexteDeclarer('sousTitreCine', C0.x, H - C0.bas, C0.l, C0.bas);
-	dessinerTexte(String(sous), C0.x, H - C0.bas + Math.max(12, (C0.bas - hs) / 2), C0.l, o);
-	boutons.push({ x: 0, y: C0.haut, l: L, h: H - C0.haut - C0.bas, action: planSuivant });
-}
-
-/** Plan 1 : la ville et ses trams sur le pont (vitesse et couleurs selon la fin) */
-function planVille(type, u) {
-	const ciel = { bonne: ['#f2b16b', '#7fb5e0'], moyenne: ['#9aa4ad', '#c8cfd5'], mauvaise: ['#0b1220', '#1b2a44'] }[type];
-	const g = drawingContext.createLinearGradient(0, 0, 0, H);
-	g.addColorStop(0, ciel[1]);
-	g.addColorStop(1, ciel[0]);
-	drawingContext.fillStyle = g;
-	drawingContext.fillRect(0, 0, L, H);
-	const nuit = type === 'mauvaise';
-	noStroke();
-	[90, 140, 70, 180, 120, 200, 100, 160, 130, 210, 90, 150, 110, 170, 80, 190].forEach((h, i) => {
-		fill(nuit ? '#0f1626' : '#5b6572');
-		rect(i * 124, 640 - h, 124, h + 10);
-		if (nuit) for (let k = 0; k < 4; k++) (fill('#e8c46a'), rect(i * 124 + 20 + k * 22, 660 - h + k * 18, 8, 8));
-	});
-	fill(nuit ? '#1b2a44' : '#4f7f9f');
-	rect(0, 650, L, 300); // la Loire
-	fill(nuit ? '#2e4264' : '#9cc3da');
-	for (let x = 0; x < L; x += 90) rect(x + ((millis() / 40) % 90) * (reduireAnimations ? 0 : 1), 720 + (x % 3) * 40, 40, 4);
-	fill('#3a3f46');
-	rect(0, 600, L, 26); // pont
-	const vitesse = { bonne: 0.35, moyenne: 0.18, mauvaise: 0 }[type];
-	const n = { bonne: 5, moyenne: 4, mauvaise: 3 }[type];
-	for (let i = 0; i < n; i++) {
-		const x = ((i * L) / n + (reduireAnimations ? 0 : millis() * vitesse)) % (L + 200) - 100;
-		fill('#e9ecef');
-		rect(x, 560, 150, 40);
-		fill(nuit ? '#e8c46a' : '#3c4450');
-		for (let w = 0; w < 4; w++) rect(x + 12 + w * 34, 568, 22, 14);
-		const feu = type === 'mauvaise' ? (Math.floor(millis() / 1000) % 2 ? '#d10b00' : '#7d1a15') : '#00b74f'; // 1 Hz au plus
-		fill(feu);
-		rect(x + 140, 586, 8, 8);
-	}
-	if (type === 'mauvaise' && !reduireAnimations) {
-		fill(200, 215, 230, 120);
-		for (let i = 0; i < 160; i++) rect((i * 97 + millis() * 0.2) % L, (i * 53 + millis() * 0.9) % H, 2, 14);
-	}
-	void u;
-}
-
-/** Plan 2 : la lettre de la direction sur le bureau */
-function planLettre(type, u) {
-	background('#cbb79a');
-	noStroke();
-	fill('#b49f80');
-	for (let y = 0; y < H; y += 46) rect(0, y, L, 2); // veinage du plateau
-	const k = reduireAnimations ? 1 : easeOut(constrain(u / 0.25, 0, 1));
-	const portrait = typeof PORTRAIT !== 'undefined' && PORTRAIT.actif; // prompt 209 : lettre de 600 px dans la colonne centrale
-	const l = portrait ? 600 : 820;
-	const h = portrait ? H - COLONNE_CINE.haut - COLONNE_CINE.bas - 24 : 740;
-	const x = (L - l) / 2;
-	const y = (portrait ? COLONNE_CINE.haut + 12 : 160) + (1 - k) * 80;
-	fill(0, 0, 0, 70);
-	rect(x + 16, y + 20, l, h);
-	fill('#fbf8f0');
-	rect(x, y, l, h);
-	textAlign(LEFT, TOP);
-	textFont(POLICE_DONNEES);
-	textSize(portrait ? 20 : 18);
-	fill('#5a5348');
-	const mx = portrait ? 32 : 60;
-	text(t('cine.lettre.entete'), x + mx, y + (portrait ? 28 : 50));
-	textFont(POLICE_TEXTE);
-	textSize(portrait ? 22 : 24);
-	textLeading(portrait ? 30 : 36);
-	fill('#1d1a16');
-	const finale = CINE && CINE.bilan && CINE.bilan.finFinale; // prompt 207 : la lettre suit la fin (posture cumulée), le ciel suit le score
-	text(t(finale ? 'cine.lettre.fin.' + finale : 'cine.lettre.' + type), x + mx, y + (portrait ? 70 : 120), l - 2 * mx, portrait ? h - 190 : h - 260);
-	if (finale && CINE.bilan.tonFinal) type = CINE.bilan.tonFinal; // tampon de la lettre : couleur de la fin
-	const couleurs = { bonne: '#1e7a3c', moyenne: '#a15c07', mauvaise: '#b3261e' };
-	push();
-	translate(x + l - 190, y + h - 110);
-	rotate(-0.15);
-	noFill();
-	stroke(couleurs[type]);
-	strokeWeight(5);
-	rect(-140, -40, 280, 80);
-	noStroke();
-	fill(couleurs[type]);
-	textAlign(CENTER, CENTER);
-	textStyle(BOLD);
-	textSize(28);
-	text(t('rapport.tampon.' + type), 0, 0);
-	textStyle(NORMAL);
-	pop();
-}
-
-/** Plan 3 : la pièce (zoom lent), atmosphère selon la fin */
-function planPiece(type, u) {
-	if (!dernierRenduBureau || millis() - dernierRenduBureau > 250) {
-		dessinerPieceBureau();
-		dernierRenduBureau = millis();
-	}
-	const z = reduireAnimations ? 1.05 : 1.05 + u * 0.06;
-	drawingContext.imageSmoothingEnabled = false;
-	image(gBureau, (L - L * z) / 2, (H - H * z) / 2, L * z, H * z);
-	drawingContext.imageSmoothingEnabled = true;
-	noStroke();
-	if (type === 'bonne') fill(255, 214, 150, 40);
-	else if (type === 'moyenne') fill(120, 130, 140, 50);
-	else fill(10, 14, 30, 150);
-	rect(0, 0, L, H);
 }
 
 // ——— Prompt 56 : page 2 du rapport — chiffres réels de la semaine ———

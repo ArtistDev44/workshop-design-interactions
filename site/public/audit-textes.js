@@ -76,7 +76,7 @@
 
 	function nomEcran() {
 		try {
-			if (typeof CINE !== 'undefined' && CINE) return 'cinematique:' + CINE.type;
+			if (typeof CINE !== 'undefined' && CINE) return 'video:' + CINE.cle + ':' + (CINE.plan + 1); // prompt 226
 			if (typeof GAMEOVER !== 'undefined' && GAMEOVER) return 'licenciement:' + GAMEOVER.vue;
 			const f = typeof fenetre !== 'undefined' && fenetre ? ' fenetre:' + fenetre : '';
 			if (typeof MENU !== 'undefined' && MENU.actif) return 'menu:' + MENU.ecran + f;
@@ -538,11 +538,22 @@
 		add('mail du soir · Mails', () => (H.raz(), (PLUS.ouvert = false), H.poste(), Jeu.deposerMailDuSoir(), (PC.etat = 'os'), (PC.fenetre = 'patron'), (PATRON.ouvert = false), (PATRON.filtre = 'soirs')), 12); // prompt 194 : le mail du soir est dans l'appli Mails
 		add('soir · sortie', () => (H.raz(), (phase = 'soir'), (SOIR.debut = millis()), (vue = 'bureau')), 20);
 		add('rapport de la veille', () => (H.raz(), (phase = 'attente'), (vue = 'bureau'), ouvrir('rapportVeille')));
-		add('fin de semaine · rapport', () => (H.raz(), allerFin()), 30);
+		add('fin de semaine · rapport', () => (H.raz(), allerFin(), typeof CINE !== 'undefined' && CINE && finVideo()), 30); // prompt 226 : la vidéo de fin (auditée plus bas) est passée
 		add('fin de semaine · rapport ouvert', () => (fenetre === 'mailFin' && (fenetre = null), ouvrirRapport()), 20);
 		add('fin de semaine · rapport page 2', () => RAPPORT && fenetre === 'rapport' && changerPageRapport(1), 12); // prompt 163
 		add('fin de semaine · rapport page 3 (sources)', () => RAPPORT && fenetre === 'rapport' && changerPageRapport(1), 12); // prompt 163
-		['bonne', 'moyenne', 'mauvaise'].forEach((ty) => add('cinématique ' + ty, () => (H.raz(), lancerCinematique(ty, Object.assign({}, (RAPPORT && RAPPORT.bilan) || {}, { type: ty }))), 40));
+		// Prompt 226 : les 36 séquences des vidéos de fin (données de la partie en cours)
+		(typeof FINS_VIDEO !== 'undefined' ? FINS_VIDEO : []).forEach((cle) =>
+			[0, 1, 2].forEach((n) =>
+				add('vidéo ' + cle + ' · ' + (n + 1), () => {
+					H.raz();
+					lancerVideoFin(cle, donneesVideoFin(cle, Jeu.bilan()), null);
+					CINE.plan = n;
+					CINE.debut = millis() - 2500;
+				}, 12),
+			),
+		);
+		add('vidéo · fin', () => (CINE = null), 4);
 		add('licenciement · lettre', () => (H.raz(), (GAMEOVER = { debut: millis() - 5000, lettre: Jeu.lettreLicenciement(), vue: 'lettre', focus: 0 })), 20);
 		// Prompt 121 : signalement répondu avec une équipe en route — badge de statut, puis marqueur creux sur la carte
 		add('retour · dossier', () => {
