@@ -3,6 +3,8 @@
 Guide court pour modifier le jeu sans casser la chaîne **source → grammaire → système → œuvre**.
 Les règles du projet sont dans `CLAUDE.md` ; la description du jeu, fichier par fichier, est dans `jeu/`.
 
+**Statut : projet clôturé le 15/11/2026.** Le jeu, le site et le dossier de rendu sont dans leur version finale ; aucune évolution n'est prévue. Ce guide sert à relancer ou à reprendre le projet.
+
 ## Règles communes
 - **Aucune donnée inventée.** Un dossier, une plainte ou un événement vient d'une source réelle,
   datée et citée. Inconnu → `[À COMPLÉTER]`.

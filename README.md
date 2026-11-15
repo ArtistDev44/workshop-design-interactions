@@ -6,6 +6,8 @@ réseau de transports devient un dossier à trancher sous pression. Public visé
 jeux de gestion ; une partie (une semaine rejouée) dure 10 à 20 minutes, le mode histoire 30 à 45 minutes
 (durées visées, à confirmer par les tests humains).
 
+**Statut : projet clôturé le 15/11/2026.** Le jeu, le site et le dossier de rendu sont dans leur version finale ; aucune évolution n'est prévue.
+
 🎮 [**Jouer à « Nantes en régulation »**](https://workshop-design-interactions.pages.dev/) — le jeu est servi à la racine du site déployé
 📖 [**Découvrir le projet en détail**](#explorer-le-dépôt) — site de l'édition, corpus patrimonial, œuvres des étudiant·es
 

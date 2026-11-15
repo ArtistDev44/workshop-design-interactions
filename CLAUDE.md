@@ -3,6 +3,7 @@
 Lire ce fichier plutôt que le livret complet. N'ouvrir `contexte/` que si un prompt le demande.
 
 ## Projet
+- **Projet clôturé le 15/11/2026** : version finale sur `main`. Toute reprise se fait sur une branche et se note dans `journal.md`.
 - Atelier ESD Nantes, B3 Design, 9, 10 & 12 nov. 2026. Chaîne à tenir : **source → grammaire → système → œuvre**.
 - Langue de travail : français.
 - Site Astro statique dans **`site/`** (commandes `npm` dans `site/`). Seule dépendance : `astro`.

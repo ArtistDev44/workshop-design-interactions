@@ -7,6 +7,8 @@ En ligne : https://workshop-design-interactions.pages.dev/ (jeu) · https://work
 README au format du livret (« README minimal », 12 rubriques), réécrit au prompt 100 (12/11/2026) à partir des
 fichiers du dépôt ; les champs que seul le groupe peut remplir restent `[À COMPLÉTER]`.
 
+**Statut : projet clôturé le 15/11/2026.** Le jeu, le site et le dossier de rendu sont dans leur version finale ; aucune évolution n'est prévue.
+
 ## Conformité au brief
 
 **Nantes en régulation répond point par point au livret PATRIMOINE.EXE · Nantes 001** : chaque obligation du

@@ -2,6 +2,8 @@
 
 # prompts/ — Créer le site Astro.js de l'édition PATRIMOINE.EXE / NTE001
 
+**Projet clôturé le 15/11/2026.** La liste ci-dessous est finale : elle documente les itérations du projet, prompt par prompt.
+
 Ce dossier contient des **prompts numérotés**, à exécuter **dans l'ordre** avec un assistant
 IA dans un projet vide. Chaque prompt produit une étape vérifiable du site web de travail
 à rendre pour l'édition PXE · NTE001 (ESD Nantes, B3 Design, 9, 10 & 12 novembre 2026).
