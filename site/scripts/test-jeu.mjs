@@ -2460,7 +2460,7 @@ for (const langue of ['fr', 'en']) {
 	for (const langue of ['fr', 'en']) {
 		const dico = vm.runInContext(`TRADUCTIONS[${JSON.stringify(langue)}]`, contexte(langue));
 		verifier(/Lucide/.test(dico['credits.lic.icones.v'] || '') && /ISC/.test(dico['credits.lic.icones.v'] || '') && dico['credits.lic.icones'], `prompt 170 : crédit Lucide absent des Crédits (${langue})`);
-		for (const k of ['carte.zoomer', 'carte.dezoomer']) verifier(typeof dico[k] === 'string' && dico[k].length > 0, `prompt 170 : clé ${k} absente (${langue})`);
+		for (const k of ['carte.zoomer', 'carte.dezoomer']) verifier(dico[k] === undefined, `prompt 219 : clé ${k} retirée avec les boutons de zoom (${langue})`);
 	}
 	verifier(/'icones'/.test(readFileSync(join(pub, 'credits.js'), 'utf8')) && /lucide\.dev/.test(readFileSync(join(pub, '..', 'src', 'pages', 'cartel.astro'), 'utf8')), 'prompt 170 : Lucide non crédité (credits.js, cartel)');
 }
@@ -4472,10 +4472,10 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 		['panneau.js', /hCible\(50, 70\)[\s\S]{0,300}reduireDialogue/, '« × » de la fiche'], ['panneau.js', /hCible\(62, 70\)/, 'répliques et « Dites-m\'en plus »'], ['panneau.js', /hCible\(52, 70\), '→ ' \+ t\('applis\.publier'\)/, '« Publier sur Community »'],
 		['carte.js', /lb, hCible\(52, 70\), t\('carte\.onglet\.'/, 'onglets Enquête / Historique'], ['enquete.js', /const ho = hCible\(52, 70\) \+ 10/, 'contenu sous les onglets'],
 		['patron.js', /const hB = hCible\(50, 70\)/, 'barre de Mails'], ['patron.js', /const hd = hCible\(56, 70\)/, 'dossiers de Mails'],
-		['notifs-tel.js', /const hT = hCible\(48, 60\)/, 'onglets du téléphone'], ['notifs-tel.js', /const hX = hCible\(56, 60\)/, '« × » des notifications'], ['notifs-tel.js', /const hA = hCible\(46, 60\)/, '« +n autres » / « Tout effacer »'], ['notifs-tel.js', /basculerNpd, undefined, false, hCible\(44, 60\)/, 'Ne pas déranger'],
+		['notifs-tel.js', /const hT = hCible\(48, 60\)/, 'onglets du téléphone'], ['notifs-tel.js', /const hX = hCible\(56, 60\)/, '« × » des notifications'], ['notifs-tel.js', /const hA = hSerre\(hCible\(46, 60\)\)/, '« +n autres » / « Tout effacer »'], ['notifs-tel.js', /basculerNpd, undefined, false, hCible\(44, 60\)/, 'Ne pas déranger'],
 		['aide.js', /const la = hCible\(64, 74\), ha = hCible\(60, 74\)/, 'flèches de pages de l\'aide'], ['histoire.js', /300, hCible\(64, 74\), t\('commun\.fermer'\)/, '« Fermer » du rapport de la veille'],
-		['menu.js', /const hc = hCible\(46, 74\)/, 'lien des crédits'], ['guide.js', /const h = hCible\(64, 74\)/, 'option du guide'], ['guide.js', /const hbq = hCible\(48, 74\)/, 'boutons de la bulle du guide'],
-		['autorisations.js', /dsBouton\(x \+ 32, yb, l - 64, 74, e\.libelle/, '« Autoriser »'], ['carte-alertes.js', /const c = hCible\(50, 84\)/, '+ / − / Recentrer'], ['carte-alertes.js', /const zm = hCible\(50, 70\)/, 'marqueurs de la carte'],
+		['menu.js', /const hc = hCible\(46, 74\)/, 'lien des crédits'], ['guide.js', /const h = hCible\(64, 74\)/, 'option du guide'], ['guide.js', /const hbq = hSerre\(hCible\(48, 74\)\)/, 'boutons de la bulle du guide'],
+		['autorisations.js', /dsBouton\(x \+ 32, yb, l - 64, 74, e\.libelle/, '« Autoriser »'], ['carte-alertes.js', /const zm = hCible\(50, 70\)/, 'marqueurs de la carte'],
 	];
 	for (const [fi, re, nom] of sites) verifier(re.test(lire(fi)), `217 : ${nom} (${fi}) ≥ 44 px CSS en mobile`);
 	const po = lire('portrait.js');
@@ -4486,11 +4486,39 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 {
 	const lire = (x) => readFileSync(join(pub, x), 'utf8');
 	const ca = lire('carte-alertes.js');
-	verifier(/const hj = 50;/.test(ca) && /h: hj, action: \(\) => \(typeof MOBILE/.test(ca) && /lignesP \* 56/.test(ca), '218 : jetons des équipes à 50 px (rangées de 56)');
-	verifier(/const c = hCible\(50, 84\)/.test(ca) && /const zm = hCible\(50, 70\)/.test(ca), '218 : + / − / Recentrer et marqueurs de la carte à 50 px sur ordinateur');
+	verifier(/const hj = hSerre\(50, 0\.9\);/.test(ca) && /h: hj, action: \(\) => \(typeof MOBILE/.test(ca) && /lignesP \* \(hj \+ 6\)/.test(ca), '218 : jetons des équipes à 50 px (rangées de 56) ; 220 : plus hauts si l\'image est réduite');
+	verifier(/const zm = hCible\(50, 70\)/.test(ca), '218 : marqueurs de la carte à 50 px sur ordinateur');
 	verifier(/const hB = hCible\(50, 70\)/.test(lire('patron.js')) && /const tx = hCible\(50, 70\)/.test(lire('panneau.js')), '218 : barre de Mails et « × » de la fiche à 50 px');
 	verifier(/selecteurCouleur\(xd, cy, 44\)/.test(lire('parametres.js')), '218 : pastilles de couleur des Paramètres à 44 px');
 	verifier(/const lz = Math\.max\(44, r0\.l\), hz = Math\.max\(44, r0\.h\);/.test(lire('immersion.js')), '218 : objets de la pièce cliquables sur 44 px au moins');
+}
+
+// ——— Prompt 219 : carte sans boutons de navigation ; zoom à la molette, au clavier, au pincement (mobile) ———
+{
+	const ca = readFileSync(join(pub, 'carte-alertes.js'), 'utf8');
+	verifier(!/dessinerNavigationCarte/.test(ca), '219 : plus de boutons + / − / Recentrer sur la carte');
+	verifier(/function molletteCarte/.test(ca) && /key === '\+' \|\| key === '='\) return zoomer\(1\.4\)/.test(ca) && /keyCode === 36\) return recentrer\(\)/.test(ca), '219 : molette, + / − et Origine restent');
+	const po = readFileSync(join(pub, 'portrait.js'), 'utf8');
+	verifier(/function pincementCarte\(e\)/.test(po) && /if \(pincementCarte\(e\)\) return;/.test(po) && /if \(d && d\.pince\) return;/.test(po), '219 : pincement à deux doigts sur la carte en mobile, sans tap ni swipe à la fin');
+}
+
+// ——— Prompt 220 : cibles ≥ 44 px CSS quand l'image est réduite (1366 × 768 : ×0,71) ———
+{
+	const lire = (x) => readFileSync(join(pub, x), 'utf8');
+	const sk = lire('sketch.js');
+	verifier(/function elargirCibles\(\)/.test(sk) && /elargirCibles\(\); \/\/ prompt 220/.test(sk) && /const min = 45 \/ k;/.test(sk), '220 : zones de clic agrandies à 44 px CSS (fin d\'image, avant les clics)');
+	verifier(/bas = Math\.min\(bas, gy \/ 2\)/.test(sk) && /droite = Math\.min\(droite, gx \/ 2\)/.test(sk), '220 : sans empiéter sur une voisine (mi-chemin, côté par côté)');
+	verifier(/function hSerre\(h, s\)/.test(lire('ds.js')) && /const lb = hSerre\(h\)/.test(lire('ds.js')), '220 : hSerre, − / + des curseurs');
+	verifier(/hSerre\(hCible\(48, 74\)\)/.test(lire('guide.js')) && /hSerre\(hCible\(46, 60\)\)/.test(lire('notifs-tel.js')) && /hSerre\(52, 0\.9\)/.test(lire('patron.js')) && /function pasCouleurs/.test(lire('theme.js')), '220 : cibles serrées agrandies au dessin (guide, téléphone, dossiers de Mails, pastilles)');
+	// La zone agrandie : simulation sur deux boutons voisins
+	const L = 1920, H = 1080;
+	const code = sk.slice(sk.indexOf('function elargirCibles()'), sk.indexOf('/** Prompt 29 : curseur'));
+	const boutons = [{ x: 100, y: 100, l: 30, h: 30 }, { x: 140, y: 100, l: 30, h: 30 }];
+	const document = { querySelector: () => ({ getBoundingClientRect: () => ({ width: L * 0.711 }) }) };
+	let ECHELLE_ECRAN = 1;
+	new Function('boutons', 'L', 'H', 'document', 'PORTRAIT', 'ECHELLE_ECRAN', code + '; elargirCibles();')(boutons, L, H, document, undefined, ECHELLE_ECRAN);
+	const [a, b] = boutons;
+	verifier(a.x + a.l <= b.x + 0.001 && a.h * 0.711 >= 44 && Math.abs(a.x + a.l - 135) < 0.01 && Math.abs(b.x - 135) < 0.01, '220 : deux voisines à 10 px — chacune s\'arrête au milieu de l\'écart, 44 px CSS en hauteur');
 }
 
 if (erreurs.length) {

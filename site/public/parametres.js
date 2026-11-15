@@ -43,7 +43,7 @@ function largeurCommandeParam(it, l) {
 	if (it.type === 'inter') return dsLargeurInterrupteur(it.etat(), it.libelle && it.libelle());
 	if (it.type === 'curseur') return Math.min(it.largeur || 430, l - 190); // prompt 208 : curseurs des canaux à 320 px, le nom tient à côté
 	if (it.type === 'langue') return LANGUES.length * 92;
-	if (it.type === 'couleur') return portraitParam() ? 0 : PALETTES_COULEUR.length * 54; // prompt 218 : pastilles de 44 // prompt 214 : sous le nom en portrait
+	if (it.type === 'couleur') return portraitParam() ? 0 : PALETTES_COULEUR.length * pasCouleurs(44); // prompt 218 : pastilles de 44 // prompt 214 : sous le nom en portrait
 	// Bouton à la largeur de son libellé (même police que bouton() : 15 px gras), borné à 150–340 px
 	textFont(POLICE_TEXTE);
 	textStyle(BOLD);

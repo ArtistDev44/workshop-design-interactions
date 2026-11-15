@@ -346,7 +346,7 @@ function bulleGuide(texte, cx, y, auDessus, xFixe, centreV) {
 	textSize(22);
 	textLeading(30);
 	const lignes = Math.max(1, Math.ceil((textWidth(texte) * 1.1) / (l - 48)));
-	const hbq = hCible(48, 74); // prompt 209 : boutons de la bulle plus hauts en portrait (libellé ≥ 12 px CSS) ; prompt 217 : 74 (≥ 44 px CSS)
+	const hbq = hSerre(hCible(48, 74)); // prompt 220 : ≥ 44 px CSS en 1366 × 768 // prompt 209 : boutons de la bulle plus hauts en portrait (libellé ≥ 12 px CSS) ; prompt 217 : 74 (≥ 44 px CSS)
 	const h = 32 + lignes * 30 + (avecBoutons ? hbq + 24 : 0);
 	const x = constrain(xFixe !== undefined ? xFixe : cx - l / 2, 24, L - l - 24);
 	const by = constrain(centreV ? y - h / 2 : auDessus ? y - h : y, 24, H - h - 24);

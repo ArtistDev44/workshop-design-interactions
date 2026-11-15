@@ -665,7 +665,26 @@ function portraitDebut(e) {
 	Confort.Son.demarrer();
 	viserDepuisPortrait(p); // survol (infobulles) au point touché
 }
+/** Prompt 219 : pincement à deux doigts sur la carte (le zoom n'a plus de boutons) — facteur = écart des doigts / écart
+ * précédent, centré entre les doigts ; renvoie true s'il a eu lieu (le défilement est alors suspendu) */
+function pincementCarte(e) {
+	const ts = e && e.touches;
+	if (!ts || ts.length < 2) return (PORTRAIT.pince = null), false;
+	const r = PORTRAIT.canevas.getBoundingClientRect();
+	const pt = (k) => ({ x: ((ts[k].clientX - r.left) * PLW) / r.width, y: ((ts[k].clientY - r.top) * PH) / r.height });
+	const a = pt(0), b = pt(1);
+	const ecart = Math.hypot(a.x - b.x, a.y - b.y);
+	const prec = PORTRAIT.pince;
+	PORTRAIT.pince = ecart;
+	if (PORTRAIT.toucher) PORTRAIT.toucher.pince = true; // pas de tap ni de swipe à la fin du geste
+	if (!prec || typeof zoomer !== 'function' || typeof sourisAppli !== 'function' || typeof CARTE === 'undefined' || !CARTE.zone) return true;
+	if (!viserDepuisPortrait({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 })) return true;
+	const p = sourisAppli();
+	if (typeof dansZone === 'function' && dansZone(p, CARTE.zone) && Math.abs(ecart / prec - 1) > 0.01) zoomer(ecart / prec, p.x, p.y);
+	return true;
+}
 function portraitDeplacement(e) {
+	if (pincementCarte(e)) return;
 	const d = PORTRAIT.toucher;
 	if (!d) return;
 	const p = pointPortrait(e);
@@ -678,6 +697,9 @@ function portraitDeplacement(e) {
 function portraitFin(e) {
 	const d = PORTRAIT.toucher;
 	PORTRAIT.toucher = null;
+	if (e && e.touches && e.touches.length) return; // un doigt reste posé (fin d'un pincement) : rien d'autre
+	PORTRAIT.pince = null;
+	if (d && d.pince) return; // prompt 219 : la fin d'un pincement n'est ni un tap ni un swipe
 	if (typeof mouseReleased === 'function') mouseReleased();
 	if (!d) return;
 	const p = pointPortrait(e);

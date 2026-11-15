@@ -111,10 +111,15 @@ function primaireRGBA(a) {
 	return 'rgba(' + parseInt(h.slice(0, 2), 16) + ',' + parseInt(h.slice(2, 4), 16) + ',' + parseInt(h.slice(4, 6), 16) + ',' + a + ')';
 }
 /** Rangée de pastilles (paramètres) : une par palette, la choisie avec la double bordure de focus */
+/** Prompt 220 : pas entre deux pastilles — 10 px d'écart, plus quand l'image est réduite (zone de clic ≥ 44 px CSS) */
+function pasCouleurs(s) {
+	return Math.max(s + 10, typeof hSerre === 'function' ? hSerre(s) + 2 : 0);
+}
 function selecteurCouleur(xDroite, y, taille) {
 	const s = taille || 52;
+	const pas = pasCouleurs(s); // prompt 220
 	PALETTES_COULEUR.forEach((p, i) => {
-		const x = xDroite - (PALETTES_COULEUR.length - i) * (s + 10);
+		const x = xDroite - (PALETTES_COULEUR.length - i) * pas;
 		const actif = p.id === Theme.id;
 		noStroke();
 		fill(p.hex);

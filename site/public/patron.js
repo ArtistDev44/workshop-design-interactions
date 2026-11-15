@@ -434,8 +434,8 @@ function zoneDossiers(x, y, l, h, rangee) {
 			yy += 16;
 		}
 		const cols = colonnesDossiersMails(l, rangee); // prompt 205 : en colonne étroite, grille de 3 par rangée
-		const r = rangee ? { x: x + ((k % cols) * l) / cols, y: y + Math.floor(k / cols) * (h + 8), l: l / cols - 8, h } : { x, y: yy, l, h: 52 };
-		yy += 56;
+		const r = rangee ? { x: x + ((k % cols) * l) / cols, y: y + Math.floor(k / cols) * (h + 8), l: l / cols - 8, h } : { x, y: yy, l, h: hSerre(52, 0.9) };
+		yy += hSerre(52, 0.9) + 4; // prompt 220 : dossiers ≥ 44 px CSS en 1366 × 768 (appli ×0,9)
 		const actif = PATRON.filtre === f.cle;
 		const c = compteursMails(f.cle);
 		noStroke();
