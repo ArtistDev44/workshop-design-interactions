@@ -4,6 +4,8 @@ Site statique (Astro) de l'édition Nantes 001 — ESD Nantes, B3 Design, 9, 10 
 
 **En ligne (URL canonique) :** https://workshop-design-interactions.pages.dev/ — le jeu « Nantes en régulation » est servi à la racine ; cartel de l'œuvre : https://workshop-design-interactions.pages.dev/cartel/
 
+**Statut : projet clôturé le 15/11/2026.** Le jeu, le site et le dossier de rendu sont dans leur version finale ; aucune évolution n'est prévue.
+
 > Historique : l'ancienne adresse GitHub Pages (`https://artistdev44.github.io/workshop-design-interactions/patrimoine-exe/nantes/001/`) renvoie une 404 (vérifié le 10/11/2026). Elle n'apparaît plus que dans les prompts 02, 08 et 13 (note historique en tête de chacun) et dans les anciennes lignes de `journal.md`.
 
 ## Auteurs
@@ -97,8 +99,8 @@ Corrections apportées lors de ce contrôle :
 
 - le contenu principal (`<main>`), cible du lien « Aller au contenu », ne s'entoure plus d'un cadre de focus sur toute la page.
 
-À faire par l'équipe : un audit Lighthouse dans le navigateur avant l'exposition, et un test réel
-Wi-Fi coupé sur la machine d'exposition.
+Non consignés dans le dépôt à la clôture du projet (15/11/2026) : un audit Lighthouse dans le navigateur
+et un test réel Wi-Fi coupé sur la machine d'exposition.
 
 ## Fallback / limites
 
@@ -117,7 +119,7 @@ Wi-Fi coupé sur la machine d'exposition.
   qrencode -o public/assets/qr-pxe-nte001-g01-w01.png -s 20 -m 2 -l M "https://workshop-design-interactions.pages.dev/cartel/"
   ```
 
-  Les PNG actuels pointent vers l'URL canonique (régénérés au commit dea5dc4 ; identiques octet pour octet à la sortie de ces commandes, vérifié le 12/11/2026). Reste à les tester avec un téléphone en conditions réelles avant l'exposition.
+  Les PNG actuels pointent vers l'URL canonique (régénérés au commit dea5dc4 ; identiques octet pour octet à la sortie de ces commandes, vérifié le 12/11/2026). Aucun test au téléphone en conditions réelles n'est consigné dans le dépôt à la clôture du projet (15/11/2026).
 
 ## Coquille Astro (choix du prompt 33)
 

@@ -7,6 +7,8 @@ Références projet : contexte/PATRIMOINE.EXE - Nantes 001 — Cours étudiant B
 
 Corpus Nantes 001 : Passage Pommeraye, Île Feydeau / mascarons, Château des ducs de Bretagne, Tour LU, grues et chantiers navals, patrimoine arboré, inventaires locaux, mémoire de la traite. Une autre source documentée peut être défendue.
 
+**Projet clôturé le 15/11/2026.** Cette liste est figée : une case cochée a sa preuve dans le dépôt ; une case vide n'a pas de trace écrite à la clôture.
+
 Chaîne à tenir du début à la fin : source → grammaire → système → œuvre. Une source réelle avant un style. Un système stable avant une technologie supplémentaire. Un mapping justifié avant une API. Une œuvre exposable avant une démonstration de code.
 
 ## Vue d'ensemble — protocole 3 jours
@@ -14,19 +16,19 @@ Chaîne à tenir du début à la fin : source → grammaire → système → œu
 | J1 · Lundi 9 nov | J2 · Mardi 10 nov | J3 · Jeudi 12 nov |
 | --- | --- | --- |
 | Observer / Décoder | Coder / Connecter | Produire / Exposer |
-| ☐ Fiche-source patrimoniale | ☐ Architecture du code | ☐ Freeze fonctionnel (midi) |
-| ☐ Grammaire extraite | ☐ 3 paramètres opératoires | ☐ README |
-| ☐ Sketch minimal p5.js | ☐ Mapping data / API | ☐ Manifest JSON |
-| ☐ Problématique posée | ☐ Fallback local (offline) | ☐ Cartel |
-| ☐ Direction créative fixée | ☐ Test croisé silencieux | ☐ Captation |
+| ☑ Fiche-source patrimoniale | ☐ Architecture du code | ☐ Freeze fonctionnel (midi) |
+| ☑ Grammaire extraite | ☑ 3 paramètres opératoires | ☑ README |
+| ☑ Sketch minimal p5.js | ☑ Mapping data / API | ☑ Manifest JSON |
+| ☑ Problématique posée | ☑ Fallback local (offline) | ☑ Cartel |
+| ☐ Direction créative fixée | ☑ Test croisé silencieux | ☑ Captation |
 |  | ☐ Itération post-test | ☐ Soutenance individuelle |
 
 Suivi rapide du protocole. Le détail de chaque journée est dans les phases ci-dessous : cocher une ligne du tableau revient à valider les tâches correspondantes de la phase du jour.
 
 ## Phase 0 — Cadrage (avant / début J1)
 
-- [ ] Former le groupe (2 à 3 étudiants) et répartir les rôles
-- [ ] Choisir une seule source patrimoniale principale dans le corpus
+- [x] Former le groupe (2 à 3 étudiants) et répartir les rôles (fait : Mattéo Brevet et Guillaume Renoult, groupe G01 — `LICENSE`, cartel ; rôles non consignés dans le README)
+- [x] Choisir une seule source patrimoniale principale dans le corpus (fait : le réseau Naolib par ses données ouvertes — `source-sheet.md`)
 - [x] Réserver l'identifiant d'œuvre : PXE-NTE001-G{groupe}-W{numéro} (fait : `PXE-NTE001-G01-W01` dans `site/src/content/oeuvres/` et `manifest.json`)
 - [x] Nommer le dossier de rendu : PXE_NTE001_G{nn}_NOM-PROJET (fait : `rendu/PXE_NTE001_G01_NANTES-EN-REGULATION/`)
 - [x] Créer la structure du livret : index.html, sketch.js, style.css, data/fallback.json, assets/, source-sheet, grammar — `site/public/`
@@ -36,9 +38,9 @@ Suivi rapide du protocole. Le détail de chaque journée est dans les phases ci-
 ## Phase 1 — J1, lundi 9 nov : observer / décoder
 
 - [ ] Collecter 5 à 10 détails maximum, pas « tout » ; noter pour chacun ce qui est structuré (axe, module, rythme, relation, matière)
-- [ ] Repérer une source institutionnelle qui contextualise : Nantes Patrimonia, Open Data Nantes Métropole, sources validées en cours
+- [x] Repérer une source institutionnelle qui contextualise : Nantes Patrimonia, Open Data Nantes Métropole, sources validées en cours (fait : Open Data Nantes Métropole)
 - [ ] Noter ce qu'on ne sait pas : ne pas inventer d'histoire pour justifier une forme
-- [ ] Remplir la fiche-source V1 : titre / lieu / type / contexte / URL ou référence / date d'accès / droits ou licence / relevés / 3 propriétés observables / 1 propriété volontairement écartée
+- [x] Remplir la fiche-source V1 (fait : `source-sheet.md` / `.pdf`, propriété écartée confirmée le 11/11/2026) : titre / lieu / type / contexte / URL ou référence / date d'accès / droits ou licence / relevés / 3 propriétés observables / 1 propriété volontairement écartée
 - [ ] Décomposer la source en 3 micro-grammaires : axes, modules, symétries, répétitions ; séparer invariants et variables
 - [x] Formuler la règle en une phrase : « une unité est répétée tous les X pixels et tourne de Y selon Z » — règle structurante de `site/public/grammar.md`
 - [ ] Micro-prototype : une règle forte + une variation, 2 captures, repérer la variable qui change réellement la perception
@@ -54,7 +56,7 @@ Fin J1 attendue : fiche-source / grammaire visuelle / sketch minimal / phrase-pr
 - [ ] Tester en 1920×1080, pixelDensity(1), éviter de recréer de gros tableaux dans draw()
 - [ ] N'ajouter data / API / interaction que si le mapping est justifiable en une phrase ; sinon assumer un projet génératif
 - [x] Intégrer data ou interaction avec fallback local dans data/fallback.json (V2) — 6 cas dans `site/public/data/fallback.json`
-- [ ] Test croisé silencieux par un autre groupe (30 à 60 s, 3 observations notées)
+- [x] Test croisé silencieux par un autre groupe (30 à 60 s, 3 observations notées) (fait par le groupe de Léo & Nolan, à leur demande ; les 3 observations ne sont pas consignées)
 - [ ] Corriger une faiblesse perceptuelle ou technique (V3), documenter l'itération
 - [x] Démarrer le README avec les sections du livret — `site/README.md`
 
@@ -70,7 +72,7 @@ Aucun travail obligatoire. Sauvegarde et relecture des notes possibles, rien de 
 - [ ] Finalisation : stabilité, composition, temporalité, reset, fallback
 - [ ] FREEZE FONCTIONNEL À MIDI — après midi : plus aucune réécriture de l'architecture
 - [ ] 13:00 Documentation : README complet (Auteurs, Source patrimoniale, Concept, Grammaire/règles, Stack, Data/interaction, Lancer le projet, Fallback/limites, Contributions, AI usage, Sources/droits)
-- [ ] Rédiger le cartel : 80 à 120 mots + source patrimoniale + système, au format du livret
+- [x] Rédiger le cartel : 80 à 120 mots + source patrimoniale + système, au format du livret (fait : `cartel.md` du rendu, page `/cartel/`)
 - [x] Produire manifest.json (modèle du livret) et finaliser source-sheet et grammar (fait : `manifest.json`, `source-sheet.md` / `.pdf`, `grammar.md` / `.pdf` dans le dossier de rendu)
 - [x] Générer un QR code pointant vers le site web de l'œuvre (page en ligne de l'édition ou GitHub Pages du dépôt) — PNG régénérés vers l'URL canonique (commit dea5dc4 ; identiques octet pour octet à `qrencode` sur https://workshop-design-interactions.pages.dev/ et …/cartel/, vérifié le 12/11/2026) ; test au téléphone en salle : [À COMPLÉTER]
 - [ ] Intégrer le QR code au cartel / à l'affichage et tester le scan en conditions réelles
@@ -103,8 +105,8 @@ jauges, UI, narration, fallback, raccourcis, paramètres, accessibilité).
 - [x] Grammaire explicite : au moins une règle structurante clairement formulée — `site/public/grammar.md`
 - [x] Prototype fonctionnel lançable dans un navigateur — `site/public/index.html`
 - [x] Au moins 3 paramètres réellement opérants — `site/scripts/test-jeu.mjs` (difficulté, semaines, hors ligne, défi chrono)
-- [ ] Test par un autre groupe + au moins une itération documentée
-- [ ] Documentation complète permettant de comprendre et relancer le projet
+- [x] Test par un autre groupe + au moins une itération documentée (test : groupe de Léo & Nolan ; itérations : `prompts/` et `journal.md`)
+- [ ] Documentation complète permettant de comprendre et relancer le projet (README aux 12 rubriques du livret ; rôles, contributions et part humaine de l'IA restent `[À COMPLÉTER]`)
 
 ### Checklist de robustesse (avant l'exposition)
 
@@ -194,7 +196,7 @@ Vérifié par `ls` / `grep` dans le dépôt : seuls les éléments existants son
 - [x] `site/src/content/oeuvres/pxe-nte001-g01-w01.json` : `auteurs` (Mattéo Brevet, Guillaume Renoult, comme `LICENSE` et les crédits du menu) et `groupe` (G01, repris de l'identifiant) renseignés le 11/11/2026
 - [x] `site/public/source-sheet.md` : Contexte et 3 propriétés observables remplis (prompt 59) ; propriété écartée confirmée le 11/11/2026
 - [x] `LICENSE` : licence MIT, titulaires Mattéo Brevet & Guillaume Renoult (README et manifest alignés le 11/11/2026)
-- [ ] Déploiement : documenter comment Cloudflare Pages publie le site (intégration Git ou dépôt manuel) ; `.github/workflows/deploy.yml` publie sur GitHub Pages (404) — le garder, le corriger ou le supprimer
+- [ ] Déploiement : documenter comment Cloudflare Pages publie le site (intégration Git ou dépôt manuel) ; `.github/workflows/deploy.yml` publie sur GitHub Pages (404) — le garder, le corriger ou le supprimer (`deploy.yml` supprimé depuis : seul `tests.yml` reste et ne publie rien ; mécanisme Cloudflare toujours non documenté)
 
 ### Branches à arbitrer
 - [x] Fusionner (sur demande) la chaîne empilée `jeu/prompt-26-sortie-pc` → … → `jeu/prompt-33-sauvegarde-progression` → `vibe/prompt-33-audit-coherence-4c094b-application` (fait : chaîne fusionnée dans `main`, vérifié au prompt 58)

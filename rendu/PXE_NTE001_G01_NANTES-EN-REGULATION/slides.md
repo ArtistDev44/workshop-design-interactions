@@ -7,7 +7,7 @@
 
 **PATRIMOINE.EXE · NTE001** — ESD Nantes, B3 Design, 9, 10 & 12 novembre 2026
 
-Œuvre `PXE-NTE001-G01-W01` · groupe G01 (à confirmer)
+Œuvre `PXE-NTE001-G01-W01` · groupe G01
 
 Jouer : [workshop-design-interactions.pages.dev](/)
 

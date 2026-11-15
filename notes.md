@@ -2,6 +2,8 @@
 
 Notes libres du projet : une page prête pour le wiki, les liens des API utilisées, et des pistes pour les animations.
 
+**Statut : projet clôturé le 15/11/2026.** Les notes ci-dessous sont datées et gardées telles quelles. Depuis, le test par un autre groupe est consigné (groupe de Léo & Nolan, à leur demande ; voir les README).
+
 ## Page wiki (à copier-coller sur le wiki du dépôt)
 
 ```markdown
@@ -10,6 +12,8 @@ Notes libres du projet : une page prête pour le wiki, les liens des API utilis�
 Bienvenue sur le wiki du dépôt `workshop-design-interactions`.
 
 En ligne : https://workshop-design-interactions.pages.dev/ (jeu « Nantes en régulation » servi à la racine).
+
+Projet clôturé le 15/11/2026 : version finale.
 
 **Édition** : PXE · NTE001 · ESD Nantes · B3 Design — 9, 10 & 12 novembre 2026.
 Intervenant : Kamel Ghabte. Groupes de 2 à 3 étudiants.
