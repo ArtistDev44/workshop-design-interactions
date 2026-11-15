@@ -292,7 +292,7 @@ function contenuGroupesTel(x, y0, l, h) {
 			boutons.push({ x: xX, y: yX, l: hX, h: hX, action: () => ignorerNotifTel(n) });
 			y += nh + 8;
 		});
-		const hA = hCible(46, 60); // prompt 217
+		const hA = hSerre(hCible(46, 60)); // prompt 217 ; prompt 220 : ≥ 44 px CSS en 1366 × 768
 		if (g.liste.length > 1 && y + hA <= y0 + h) {
 			bouton(x + 16, y, (l - 40) / 2, hA, ouvert ? t('tel.replier') : t('tel.autres', { n: g.liste.length - 1 }), () => (TELN.ouverts[g.app] = !ouvert), false, true);
 			bouton(x + 24 + (l - 40) / 2, y, (l - 40) / 2, hA, t('tel.toutEffacer'), () => effacerGroupeTel(g.app), false, true);

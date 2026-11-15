@@ -335,9 +335,19 @@ const dsAnnonceSegment = (prefixe, i, n, lib) => t('ds.segment.annonce', { group
 function hCible(h, min) {
 	return typeof PORTRAIT !== 'undefined' && PORTRAIT.actif ? Math.max(h, min || 74) : h;
 }
+/** Prompt 220 : sur ordinateur, quand l'image du jeu est réduite (fenêtre < 1920 px, ×0,71 en 1366 × 768), échelle
+ * px CSS / px de l'image ; 1 sinon (et en mobile, qui a hCible). Mise à jour à chaque image par elargirCibles (sketch.js). */
+let ECHELLE_ECRAN = 1;
+/** Prompt 220 : hauteur d'une cible SERRÉE (voisines trop proches pour que sa zone de clic soit agrandie autour d'elle) :
+ * au moins 44 px CSS à l'écran quand l'image est réduite ; `s` = réduction propre de la zone dessinée (ex. appli ×0,9). */
+function hSerre(h, s) {
+	if (typeof PORTRAIT !== 'undefined' && PORTRAIT.actif) return h;
+	const k = ECHELLE_ECRAN * (s || 1);
+	return k < 0.999 ? Math.max(h, Math.ceil(45 / k)) : h;
+}
 function dsCurseur(x, y, l, valeur, regler, noms, hauteur) {
 	const h = hauteur || 44; // prompt 214 : 72 en portrait (cibles ≥ 44 px CSS)
-	const lb = h;
+	const lb = hSerre(h); // prompt 220 : − / + plus larges quand l'image est réduite (voisins : les segments)
 	const lv = 84;
 	const px = x + lb + 12;
 	const lp = l - 2 * lb - 24 - lv;

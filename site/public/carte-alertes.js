@@ -581,8 +581,8 @@ function dessinerPanneauEquipes() {
 		const eng = (Jeu.equipes || []).filter((x) => x.cle === cle && !x.inutile && x.jourIndex === Jeu.jourIndex && Jeu.phaseEquipe(x, tm) !== 'libre');
 		const dispo = verrou ? 0 : Math.max(0, eff - eng.length);
 		const ps = eng.map((x) => ({ ph: Jeu.phaseEquipe(x, tm), q: x })).concat(Array.from({ length: dispo }, () => ({ ph: 'dispo' })));
-		const lp = 64;
-		const hj = 50; // prompt 218 : jetons de 50 px (45 px à l'écran en 1920 × 1080 ; 46 en faisaient 41)
+		const hj = hSerre(50, 0.9); // prompt 218 : jetons de 50 px (45 px à l'écran en 1920 × 1080 ; 46 en faisaient 41) ; prompt 220 : plus hauts si l'image est réduite
+		const lp = Math.max(64, hj);
 		const premierDispo = ps.findIndex((p) => p.ph === 'dispo');
 		ps.forEach((p, i) => {
 			const px = P.x + 16 + (i % 3) * (lp + 4);
@@ -610,7 +610,7 @@ function dessinerPanneauEquipes() {
 		const lignesP = Math.max(1, Math.ceil(ps.length / 3));
 		// Prompt 211 : « n/N libres » retiré, les cases pleines ou vides le disent déjà ; seul le verrou reste écrit
 		if (verrou) dsTexte(couperLargeurCarte(t('histoire.verrou.equipes'), P.l - 32, 20), P.x + 16, y + 30, 14, DS.alerteClair, 'left');
-		y += 32 + (ps.length ? lignesP * 56 : 30) + 22; // prompt 218 : rangées de jetons de 50 + 6
+		y += 32 + (ps.length ? lignesP * (hj + 6) : 30) + 22; // prompt 218 : rangées de jetons de 50 + 6 ; prompt 220 : hSerre
 	});
 	// Prompt 219 : plus de boutons + / − / Recentrer — molette, + / −, Origine ; pincement à deux doigts sur mobile
 	// Message (envoi, refus, équipe choisie) sous les boutons ; la consigne « Glissez une équipe… » est retirée

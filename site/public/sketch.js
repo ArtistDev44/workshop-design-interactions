@@ -289,8 +289,59 @@ function draw() {
 	dessinerSousTitresSons(); // prompt 208
 	majCurseur();
 }
+/** Prompt 220 : sur ordinateur, quand l'image du jeu est réduite (fenêtre de moins de 1920 px de large), chaque cible de
+ * moins de 44 px CSS voit sa zone de clic agrandie autour d'elle jusqu'à 44 px CSS (taille qui compte pour WCAG 2.5.5 /
+ * 2.5.8), sans empiéter sur une cible voisine (au plus jusqu'à mi-chemin, côté par côté ; ce qu'un côté ne peut pas
+ * prendre passe au côté opposé). Le dessin ne change pas. Cibles trop serrées : hSerre (ds.js) agrandit le dessin. Appelée en fin d'image
+ * (majCurseur), donc avant les clics et avant l'audit. Le mobile a ses propres tailles (hCible, prompt 217). */
+function elargirCibles() {
+	if (typeof PORTRAIT !== 'undefined' && PORTRAIT.actif) return;
+	const cv = document.querySelector('#scene canvas.p5Canvas');
+	const k = cv ? cv.getBoundingClientRect().width / L : 1;
+	ECHELLE_ECRAN = k > 0 ? Math.min(1, k) : 1; // lue par hSerre (ds.js)
+	if (!(k > 0) || k >= 0.999) return;
+	const min = 45 / k; // en px de l'image (1 px de marge sur l'arrondi)
+	const orig = boutons.map((b) => ({ x: b.x, y: b.y, l: b.l, h: b.h }));
+	// Agrandit un axe : `bas` / `haut` = place libre de chaque côté (jusqu'à mi-chemin d'une voisine, ou au bord de
+	// l'image) ; ce qu'un côté ne peut pas prendre passe à l'autre
+	const axe = (taille, bas, haut) => {
+		const manque = Math.max(0, min - taille);
+		let g = Math.min(bas, manque / 2);
+		let d = Math.min(haut, manque - g);
+		g = Math.min(bas, manque - d);
+		return [g, d];
+	};
+	boutons.forEach((b, i) => {
+		const a = orig[i];
+		if (a.l >= L - 1 && a.h >= H - 1) return; // zone plein écran
+		if (a.l >= min && a.h >= min) return;
+		// Place libre de chaque côté : bord de l'image, puis mi-chemin de chaque voisine qui se trouve en face
+		let gauche = a.x, droite = L - (a.x + a.l), haut = a.y, bas = H - (a.y + a.h);
+		const marge = 2 * min; // au-delà, ni l'une ni l'autre ne peut atteindre le milieu de l'écart
+		orig.forEach((o, j) => {
+			if (j === i) return;
+			const gx = Math.max(o.x - (a.x + a.l), a.x - (o.x + o.l)); // écart horizontal (< 0 : recouvrement)
+			const gy = Math.max(o.y - (a.y + a.h), a.y - (o.y + o.h));
+			if (gx < 0 && gy < 0) return; // superposées (zones imbriquées) : rien à protéger
+			if (gx >= marge || gy >= marge) return; // trop loin pour être atteinte
+			if (gx >= gy) {
+				// voisine à gauche ou à droite
+				if (o.x >= a.x + a.l) droite = Math.min(droite, gx / 2);
+				else gauche = Math.min(gauche, gx / 2);
+			} else if (o.y >= a.y + a.h) bas = Math.min(bas, gy / 2);
+			else haut = Math.min(haut, gy / 2);
+		});
+		const [eg, ed] = axe(a.l, Math.max(0, gauche), Math.max(0, droite));
+		const [eh, eb] = axe(a.h, Math.max(0, haut), Math.max(0, bas));
+		b.x = a.x - eg;
+		b.y = a.y - eh;
+		b.l = a.l + eg + ed;
+		b.h = a.h + eh + eb;
+	});
+}
 /** Prompt 29 : curseur « main » au survol de toute zone cliquable (objets de la pièce compris) */
 function majCurseur() {
+	elargirCibles(); // prompt 220
 	const surZone = boutons.some((b) => mouseX >= b.x && mouseX <= b.x + b.l && mouseY >= b.y && mouseY <= b.y + b.h);
 	if (surZone !== curseurMain) {
 		curseurMain = surZone;
