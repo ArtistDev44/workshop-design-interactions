@@ -361,3 +361,25 @@ Composants ajoutés au prompt 175 (`site/public/ds.js`), employés par la fenêt
 - **Contrôle segmenté** (prompt 186) — `dsSegments(x, y, l, libelles, actif, choisir, focus)` : un seul choix actif parmi quelques options (rôle *radiogroup*), segments de largeur égale séparés de 4 px, haut de 44 px. Segment actif : aplat `DS.primaire`, texte `DS.surPrimaire`, marque « ▪ » devant le libellé (l'état ne dépend pas de la couleur seule) ; inactifs : fond blanc 5 % (15 % au survol), bord blanc 50 %. Focus clavier : bordure blanche autour du groupe. Clavier : ← → (indice voisin en boucle, `dsSegmentVoisin(n, i, sens)`), sans raccourci lettre ; annonce « Filtre 2 sur 4 : Ratés (3) » (`dsAnnonceSegment(groupe, i, n, libellé)`, clé `ds.segment.annonce`). Employé pour les filtres du Journal ; pas pour les dossiers de Mails (colonne de dossiers, prompt 185).
 - **Bouton à icône bascule** (prompt 186, Community) : carré 48 × 48, fond blanc 5 % et bord blanc 50 % (blanc au survol), icône Lucide 24 px blanche qui montre la vue proposée (`list` ↔ `layout-grid`) ; état pressé (vue liste) : fond blanc 15 % et liseré `DS.primaireTrait` sous l'icône. Infobulle (« Afficher en liste / en cartes ») et annonce de la vue active ; choix mémorisé (`pxe-nte001-community-vue`).
 - **Carte de réglage** (fenêtre des paramètres) : icône Lucide 24 px, nom (20 px gras, sur deux lignes au besoin), commande à droite, explication dessous (18 / 28 px, blanc 75 %). Focus clavier : bordure blanche + liseré de couleur principale à gauche.
+
+## Mouvement (jeu « Nantes en régulation », prompt 229)
+
+Un seul langage de mouvement, dans `site/public/mouvement.js` (`Mouvement`).
+
+| Jeton | Valeur | Usage |
+|---|---|---|
+| `rapide` | 120 ms | survol des boutons, retours d'appui |
+| `normal` | 220 ms | ouverture des fenêtres, changement d'appli |
+| `lent` | 420 ms | entrées de contenus importants |
+| `sortie` | ease-out cubique | courbe par défaut : départ vif, arrivée douce |
+| `entreeSortie` | ease-in-out cubique | va-et-vient, déplacements d'un point à un autre |
+| `ressort` | ease-out-back léger (≈ 6 %) | apparition d'un élément qui « se pose » |
+
+- **Fenêtre** : voile en fondu, fenêtre qui monte de 16 px en passant de 97 à 100 % (`normal`, `sortie`) ; les clics
+  attendent 60 % de l'ouverture.
+- **Bouton** : survol lissé (`rapide`) — fond et double bordure en fondu ; appui : enfoncement de 2 px pendant 90 ms ;
+  la zone de clic ne bouge jamais.
+- **Appli** : la vue entrante glisse de 12 px et apparaît en fondu (`normal`).
+- **Vidéo de fin** : zoom lent continu de 100 à 104 % par séquence.
+- Rien ne se déplace de plus de 16 px ; aucun clignotement. Animations réduites (réglage ou `prefers-reduced-motion`) :
+  tout est instantané (`Mouvement.progres` vaut 1, le survol est binaire).

@@ -135,6 +135,12 @@ function dessinerVideoFin() {
 	const u = a.u;
 	background(0);
 	push();
+	if (!reduireAnimations) {
+		// Prompt 229 : léger zoom lent continu (100 → 104 %) sur chaque séquence
+		translate(L / 2, H / 2);
+		scale(1 + 0.04 * u);
+		translate(-L / 2, -H / 2);
+	}
 	const seq = SEQUENCES_FIN[c.cle][c.plan];
 	seq.dessin(u, c.d);
 	pop();

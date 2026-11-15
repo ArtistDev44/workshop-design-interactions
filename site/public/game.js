@@ -309,6 +309,7 @@
 		Jeu.interactionsPrevues = []; // prompt 198 : interactions à venir (3 de plus par plainte déclenchée)
 		Jeu.derniersTextes = {}; // prompt 198 : historique circulaire des variantes tirées, par catégorie
 		Jeu.equipes = []; // prompt 22 : équipes envoyées depuis la carte
+		Jeu.dev = false; // prompt 230 : partie touchée par le mode développeur (hors palmarès)
 		Jeu.promesses = []; // prompt 224 : équipes promises par une réponse, à glisser dans leur champ
 		Jeu.aggravationLignes = {}; // prompt 79
 		Jeu.statutPatron = nouveauStatut(); // prompt 84

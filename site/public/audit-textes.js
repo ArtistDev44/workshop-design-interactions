@@ -584,6 +584,8 @@
 		add('menu sauvegardes', () => (H.raz(), (MENU.actif = true), allerSauvegardes()));
 		add('menu sauvegardes · confirmation', () => demanderSuppressionSauvegarde());
 		add('menu sauvegardes · limite', () => allerSauvegardes(() => {}));
+		// Prompt 230 : les six onglets du mode développeur
+		(typeof ONGLETS_DEV !== 'undefined' ? ONGLETS_DEV : []).forEach((o, i) => add('mode dev · ' + o, () => (H.raz(), (MENU.actif = true), (MENU.ecran = 'titre'), (DEV.onglet = i), (DEV.focus = 0), (DEV.defil = 0), ouvrirDev()), 12));
 		add('retour menu', () => (H.raz(), (MENU.actif = true), (MENU.ecran = 'titre')));
 		return E;
 	}
