@@ -153,7 +153,7 @@ function panneauDecisionOuvert() {
 }
 /** Chaque image (draw) : arrivées spontanées. Aucun appel réseau ici. */
 /** Prompt 225 : FENÊTRES du matin et des moments où le téléphone se tait */
-const FENETRES_SANS_TELEPHONE = ['blame', 'rapportVeille', 'tache', 'mailFin', 'rapport', 'partir', 'demission', 'inspection', 'cafe'];
+const FENETRES_SANS_TELEPHONE = ['blame', 'lettre', 'tache', 'mailFin', 'rapport', 'partir', 'demission', 'inspection', 'cafe'];
 /** Prompt 225 : règle unique — la journée a vraiment commencé : transition finie, PC démarré, aucun SMS, tutoriel,
  * guide, cinématique ni fenêtre du matin, phase de jeu (ni réveil, ni soir, ni fin), horloge ≥ début de service.
  * Tant qu'elle est fausse, le téléphone ne livre rien (ni son, ni vibration, ni annonce) : tout est gardé. */

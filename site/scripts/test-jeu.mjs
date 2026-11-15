@@ -676,7 +676,7 @@ for (const [nom, ctx] of [['fr', contexte('fr')], ['en', contexte('en')]]) {
 		var enSieste = false, debutSieste = 0, reveil = null, inactifDepuis = 0, MENU = { actif: false }, fenetre = null, smsActif = false, tutoriel = null, TRANSITION_JOUR = null, __fil = [];
 		function millis() { return __t; } function facteurLecture() { return 1; } function annoncer() {} function interaction() { inactifDepuis = __t; } function seLever() {}
 		function ajouterFil(m) { __fil.push(m.cle); }
-		var Confort = { Son: { bip() {}, clic() {}, alerteDossier() {} } }; var Sauvegarde = { auto() {} };
+		var Confort = { Son: { bip() {}, clic() {}, alerteDossier() {} }, Reglages: { somnolence: true } }; var Sauvegarde = { auto() {} }; // prompt 228 : l'option est activée pour ces contrôles
 		function nouveauDossier() { debutCompteur = arriveeDossier = millis(); phase = 'decision'; }
 		function decider(a) { const d = Jeu.dossierCourant(); dernierResultat = Jeu.decider(a); retirerActif(d); phase = 'narration'; }`,
 		cz,
@@ -3356,10 +3356,10 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 		c,
 	);
 	verifier(r.init === 'DR,TM,V,?', `prompt 195 : initiales de l'expéditeur (${r.init})`);
-	verifier(r.jours === 'patron.jour.aujourdhui,09:40,09:14,patron.jour.hier,17:40,Lundi 2026-09-10,08:00', `prompt 195 : groupes par jour de jeu (Aujourd'hui, Hier, date) (${r.jours})`);
-	verifier(r.rech === '09:40' && r.rechDe === 4 && r.rechVide === '0 patron.videRecherche{"q":"zzz"}', `prompt 195 : recherche sans casse ni accents sur texte / expéditeur, état vide annoncé (${r.rech} / ${r.rechDe} / ${r.rechVide})`);
+	verifier(r.jours === 'patron.jour.aujourdhui,09:14,patron.jour.hier,17:40,Lundi 2026-09-10,08:00', `prompt 195 / 227 (un briefing par jour) : groupes par jour de jeu (Aujourd'hui, Hier, date) (${r.jours})`);
+	verifier(r.rech === '09:14' && r.rechDe === 3 && r.rechVide === '0 patron.videRecherche{"q":"zzz"}', `prompt 195 : recherche sans casse ni accents sur texte / expéditeur, état vide annoncé (${r.rech} / ${r.rechDe} / ${r.rechVide})`);
 	verifier(r.icones === 'reply+,archive+,mail-,external-link+' && r.iconesInfo === 'reply+,archive+,mail+', `prompt 195 : actions de la barre (Voir le dossier seulement si le mail en cite un) (${r.icones} / ${r.iconesInfo})`);
-	verifier(r.nl0 === 2 && r.arch === 'true,false,0,1,1,1' && r.sauve && r.iconeArch === 'inbox' && r.desarch, `prompt 195 : archiver déplace dans « Archives », hors compteurs et badge, mémorisé dans la sauvegarde (${r.arch})`);
+	verifier(r.nl0 === 1 && r.arch === 'true,false,0,1,1,1' && r.sauve && r.iconeArch === 'inbox' && r.desarch, `prompt 195 : archiver déplace dans « Archives », hors compteurs et badge, mémorisé dans la sauvegarde (${r.arch})`);
 	verifier(r.vide.startsWith('0 patron.vide{'), `prompt 195 : dossier vide annoncé (${r.vide})`);
 	verifier(r.nonLu === false && r.relu === true, 'prompt 195 : « Marquer comme non lu » tient jusqu\'à la prochaine ouverture du mail');
 	verifier(r.rep === 'corrige 10:00 false', `prompt 195 : réponse rapide datée (heure de jeu), plus proposée ensuite (${r.rep})`);
@@ -4473,7 +4473,7 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 		['carte.js', /lb, hCible\(52, 70\), t\('carte\.onglet\.'/, 'onglets Enquête / Historique'], ['enquete.js', /const ho = hCible\(52, 70\) \+ 10/, 'contenu sous les onglets'],
 		['patron.js', /const hB = hCible\(50, 70\)/, 'barre de Mails'], ['patron.js', /const hd = hCible\(56, 70\)/, 'dossiers de Mails'],
 		['notifs-tel.js', /const hT = hCible\(48, 60\)/, 'onglets du téléphone'], ['notifs-tel.js', /const hX = hCible\(56, 60\)/, '« × » des notifications'], ['notifs-tel.js', /const hA = hSerre\(hCible\(46, 60\)\)/, '« +n autres » / « Tout effacer »'], ['notifs-tel.js', /basculerNpd, undefined, false, hCible\(44, 60\)/, 'Ne pas déranger'],
-		['aide.js', /const la = hCible\(64, 74\), ha = hCible\(60, 74\)/, 'flèches de pages de l\'aide'], ['histoire.js', /300, hCible\(64, 74\), t\('commun\.fermer'\)/, '« Fermer » du rapport de la veille'],
+		['aide.js', /const la = hCible\(64, 74\), ha = hCible\(60, 74\)/, 'flèches de pages de l\'aide'], ['lettre.js', /hCible\(56, 74\), t\('lettre\.ranger'\)/, '« Ranger la lettre » (prompt 228)'],
 		['menu.js', /const hc = hCible\(46, 74\)/, 'lien des crédits'], ['guide.js', /const h = hCible\(64, 74\)/, 'option du guide'], ['guide.js', /const hbq = hSerre\(hCible\(48, 74\)\)/, 'boutons de la bulle du guide'],
 		['autorisations.js', /dsBouton\(x \+ 32, yb, l - 64, 74, e\.libelle/, '« Autoriser »'], ['carte-alertes.js', /const zm = hCible\(50, 70\)/, 'marqueurs de la carte'],
 	];
@@ -4636,7 +4636,7 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 		globalThis.TRANSITION_JOUR = { debut: 0 }; cas.transition = journeeCommencee();
 		globalThis.TRANSITION_JOUR = null; globalThis.JOUR_PC.attendu = true; cas.pcAttendu = journeeCommencee();
 		globalThis.JOUR_PC.attendu = false; globalThis.smsActif = true; cas.sms = journeeCommencee();
-		globalThis.smsActif = false; globalThis.fenetre = 'rapportVeille'; cas.veille = journeeCommencee();
+		globalThis.smsActif = false; globalThis.fenetre = 'lettre'; cas.veille = journeeCommencee();
 		globalThis.fenetre = null; globalThis.phase = 'soir'; cas.soir = journeeCommencee();
 		globalThis.phase = 'attente'; Jeu.horloge.minutes = Jeu.debutJournee() - 1; cas.avant8h = journeeCommencee();
 		Jeu.horloge.minutes = Jeu.debutJournee(); cas.commencee = journeeCommencee();
@@ -4703,6 +4703,58 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	verifier(!/lancerCinematique|dessinerCinematique|planSuivant\(/.test(tous), '226 : la cinématique par palier (prompt 41) a disparu');
 	verifier(/return lancerVideoFin\(cleVideo, donneesVideo, \(\) => imprimerRapportSemaine\(b, ch\)\);/.test(lire('histoire.js')) && /lancerVideoFin\('licenciement', donneesVideoFin\('licenciement'\), ecranLettre\)/.test(lire('gameover.js')) && /function revoirFin\(cle\)/.test(lire('mecaniques.js')) && /noterVideo\(cle, donnees\)/.test(lire('posture.js')), '226 : vidéo avant le rapport, avant la lettre de licenciement, « Revoir la fin » dans la galerie');
 	verifier(/<script src="\.\/fins-video\.js"><\/script>/.test(lire('index.html')), '226 : fins-video.js chargé');
+}
+
+// ——— Prompt 227 : un ou deux mails du patron par jour ; réponse aux demandes le lendemain ———
+{
+	const c = contexte('fr');
+	const r = vm.runInContext(
+		`(() => {
+		Jeu.chargerSemaine('2026-10-12'); Jeu.nouvellePartie();
+		const jours = [];
+		let tours = 0;
+		while (!Jeu.terminee && tours++ < 400) {
+			const d = Jeu.prochainDuJour();
+			if (d) Jeu.decider(Jeu.actionsPossibles(d)[tours % 3]);
+			else {
+				Jeu.finDeJourneeTactique();
+				Jeu.deposerMailDuSoir();
+				const date = Jeu.jourCourant().date;
+				const du = Jeu.messagesPatron.filter((m) => m.jour === date);
+				jours.push({ messages: du.length, mails: new Set(du.map(Jeu.groupeMail)).size, nouveaux: du.filter((m) => !m.ajout).length });
+				if (!Jeu.jours[Jeu.jourIndex + 1]) break;
+				Jeu.journeeSuivante();
+			}
+		}
+		return jours;
+	})()`,
+		c,
+	);
+	verifier(r.length >= 3 && r.every((j) => j.mails <= 2 && j.nouveaux <= 2) && r.some((j) => j.messages > 2), `227 : un ou deux mails par jour (briefing + soir), quel que soit le nombre de messages (${JSON.stringify(r)})`);
+	const lire = (x) => readFileSync(join(pub, x), 'utf8');
+	verifier(/return t\('tache\.rapport\.enAttente'\);/.test(lire('taches-ui.js')), '227 : le soir, la demande est « envoyée », sa réponse vient le lendemain');
+	verifier(/\{ cle: 'attente', types: null, attente: true \}/.test(lire('patron.js')) && /function demandeEnAttente\(\)/.test(lire('patron.js')) && /patron\.attente\.bulle/.test(lire('menu-app.js')), '227 : dossier « En attente » et pastille sur Mails avec « réponse demain à 8 h »');
+	verifier(/!\(Jeu\.messagesPatron\[nb\.patron - 1\] \|\| \{\}\)\.ajout/.test(lire('multitache.js')) && /!Jeu\.messagesPatron\[n - 1\]\.ajout/.test(lire('patron.js')), '227 : un ajout au briefing ne fait ni notification ni son');
+}
+
+// ——— Prompt 228 : la lettre du bureau ; somnolence optionnelle, désactivée par défaut ———
+{
+	const lire = (x) => readFileSync(join(pub, x), 'utf8');
+	const le = lire('lettre.js');
+	verifier(/const ORDRE_LETTRES = \['sanction', 'bilan', 'mission'\]/.test(le) && /function lettreSurBureau\(\)/.test(le) && /function dessinerEnveloppeBureau\(g, o\)/.test(le), '228 : lettres de sanction, de bilan, de mission ; enveloppe sur le bureau');
+	verifier(/constrain\(ms \/ 200, 0, 1\)/.test(le) && /constrain\(\(millis\(\) - LETTRE\.fermeture\) \/ 200, 0, 1\)/.test(le) && /reduireAnimations \? 1 :/.test(le), '228 : ouverture et rangement en 200 ms, sans animation si réduites');
+	verifier(/lettresLues\(\)\.push\(/.test(le) && /\{ cle: 'lettres', types: null, lettres: true \}/.test(lire('patron.js')), '228 : lettre rangée → Mails, dossier « Lettres lues »');
+	verifier(!/fenetreRapportVeille|texteRapportVeille/.test(lire('histoire.js') + lire('sketch.js')) && /if \(fenetre === 'lettre'\) return fenetreLettre\(\);/.test(lire('sketch.js')), '228 : la lettre remplace la fenêtre « rapport de la veille »');
+	verifier(/somnolence: false, somnolenceNecessaire: false/.test(lire('confort.js')) && /'somnolence', 'somnolenceNecessaire'\]/.test(lire('taches-ui.js')), '228 : option « Somnolence et sieste », désactivée par défaut');
+	const sx = lire('sieste.js');
+	verifier(/if \(!somnolenceActive\(\) && !enSieste\) \{/.test(sx) && /if \(!enSieste && !somnolenceActive\(\)\) \{/.test(sx) && /phase === 'fin' \|\| !somnolenceActive\(\)\) return;/.test(sx), '228 : option désactivée → ni jauge, ni sieste (volontaire ou forcée)');
+	// Logique : sans l'option, la somnolence reste à 0 et Z ne fait pas dormir
+	const c = contexte('fr');
+	vm.runInContext(`var L = 1920, H = 1080, __t = 0, ecran = 'jeu', phase = 'attente', enPause = false, enSieste = false, reveil = null, inactifDepuis = 0, MENU = { actif: false }, fenetre = null, smsActif = false, tutoriel = null, TRANSITION_JOUR = null, PHASES_ACTIVES = [], __a = [];
+		function millis() { return __t; } function annoncer(x) { __a.push(String(x)); } var Confort = { Son: { bip() {} }, Reglages: { somnolence: false } };`, c);
+	vm.runInContext(sx, c, { filename: 'sieste.js' });
+	const r = vm.runInContext(`(() => { Jeu.chargerSemaine('2026-10-12'); Jeu.nouvellePartie(); SOMNO.v = 50; __t = 999999; majSomnolence(1000, 120); const v = SOMNO.v; const dort = dormir(true); return { v, dort, msg: __a.slice(-1)[0] }; })()`, c);
+	verifier(r.v === 0 && r.dort === false && /désactivées/.test(r.msg), `228 : somnolence à 0 et sieste refusée sans l'option (${JSON.stringify(r)})`);
 }
 
 if (erreurs.length) {

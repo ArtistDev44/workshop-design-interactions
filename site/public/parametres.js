@@ -25,6 +25,7 @@ const ICONES_OPTIONS_JEU = {
 	npd: 'moon',
 	deblocageApplis: 'layout-grid',
 	toutDebloque: 'gamepad-2',
+	somnolence: 'moon', // prompt 228
 	somnolenceNecessaire: 'coffee',
 };
 const ORDRE_INTENSITE = [100, 50, 0];

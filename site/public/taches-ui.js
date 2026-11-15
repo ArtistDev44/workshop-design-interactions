@@ -130,7 +130,7 @@ function validerTache(passer) {
 }
 function texteDemande(r) {
 	if (!r || !r.demande) return t('tache.rapport.sansDemande');
-	return t(r.accordee ? 'tache.rapport.accordee' : 'tache.rapport.refusee', { seuil: Taches.R.seuilAccord });
+	return t('tache.rapport.enAttente'); // prompt 227 : la réponse du patron arrive le lendemain à 8 h, pas le soir même
 }
 
 // ——— Clavier ———
@@ -444,9 +444,8 @@ function corpsRecap(d, x, y, l, sansFait) {
 			text(t('recap.fait', { fait: d.rapport.fait }), x, y + 4, l, 56);
 			y += textWidth(t('recap.fait', { fait: d.rapport.fait })) > l ? 62 : 34;
 		}
-		fill(C.gris);
-		text(texteDemande(d.rapport), x, y, l, 30);
-		y += 40;
+		// Prompt 227 : « Demande envoyée : le patron répondra demain à 8 h » passe à la ligne en colonne étroite
+		y += dessinerTexte(texteDemande(d.rapport), x, y, l, { taille: 20, interligne: 26, couleur: C.gris, maxLignes: 3 }).h + 14;
 	}
 	const parRangee = Math.max(1, Math.floor((l + 20) / 280)); // prompt 222 : badges sur plusieurs rangées en colonne étroite
 	rc.badges.forEach((b, i) => {
@@ -488,7 +487,7 @@ function corpsArbitrage(tache, x, y, l) {
 }
 
 // ——— Lot F : options soumises au groupe (Paramètres → section « Avancé », parametres.js), désactivées par défaut ———
-const OPTIONS_JEU = ['chaines', 'deblocages', 'arbitrage', 'deVisible', 'eclairageJauges', 'npd', 'deblocageApplis', 'toutDebloque', 'somnolenceNecessaire']; // prompt 89 bis : 4 options (§ 6) ; prompt 90 : Ne pas déranger ; prompt 91 : § 7
+const OPTIONS_JEU = ['chaines', 'deblocages', 'arbitrage', 'deVisible', 'eclairageJauges', 'npd', 'deblocageApplis', 'toutDebloque', 'somnolence', 'somnolenceNecessaire']; // prompt 228 : somnolence et sieste, désactivées par défaut // prompt 89 bis : 4 options (§ 6) ; prompt 90 : Ne pas déranger ; prompt 91 : § 7
 let confirmerRemiseCarriere = 0;
 function basculerOptionJeu(nom) {
 	Confort.Reglages.basculer(nom);

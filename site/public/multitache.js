@@ -201,7 +201,8 @@ function majNotifications() {
 	const nb = { patron: (Jeu.messagesPatron || []).length, commentaires: (Jeu.commentaires || []).length, plaintes: (Jeu.plaintes || []).length };
 	if (!NOTIFS.vus) NOTIFS.vus = { patron: nb.patron, commentaires: nb.commentaires, plaintes: nb.plaintes, equipes: new Map() };
 	const V = NOTIFS.vus;
-	if (nb.patron > V.patron) {
+	if (nb.patron > V.patron && !(Jeu.messagesPatron[nb.patron - 1] || {}).ajout) {
+		// prompt 227 : un ajout au briefing du jour n'est pas un nouveau mail — pas de notification
 		const m = Jeu.messagesPatron[nb.patron - 1];
 		notifier({ titre: t('notif.patron'), extrait: extrait(m && (m.texte !== undefined ? m.texte : m), 70), icone: 'patron', action: () => ouvrirAppliNotif('patron') });
 	}

@@ -141,8 +141,8 @@ function dessinerEcranRapportImprime() {
 
 /** Feuille sur la table (plan « proches ») : elle sort de dessous l'écran et glisse vers le joueur */
 function dessinerFeuilleRapport(g) {
-	if (!RAPPORT && !rapportVeille()) return;
 	const o = OBJETS_BUREAU.find((x) => x.nom === 'rapport');
+	if (!RAPPORT) return typeof lettreSurBureau === 'function' && lettreSurBureau() && dessinerEnveloppeBureau(g, o); // prompt 228 : l'enveloppe de la lettre du jour
 	const k = !RAPPORT || reduireAnimations ? 1 : easeOut(constrain((millis() - RAPPORT.debut - 1800) / 900, 0, 1)); // rapport de la veille : posé, immobile
 	const y = Math.round(lerp(o.y - 26, o.y, k));
 	ombreTramee(g, o.x + 2, y + o.h, o.l, 2, 100);
@@ -155,7 +155,7 @@ function dessinerFeuilleRapport(g) {
 	if (RAPPORT && !reduireAnimations && Math.floor(millis() / 700) % 2) px(g, '#f2c94c', o.x - 2, y - 2, 3, 3); // repère discret
 }
 function ouvrirRapport() {
-	if (!RAPPORT) return rapportVeille() ? (ouvrir('rapportVeille'), annoncer(texteRapportVeille())) : undefined;
+	if (!RAPPORT) return typeof ouvrirLettre === 'function' ? ouvrirLettre() : undefined; // prompt 228 : la lettre du jour (sanction, bilan de la veille, mission)
 	livreOuverture = millis();
 	ouvrir('rapport');
 	const b = RAPPORT.bilan;
@@ -731,24 +731,4 @@ function rapportVeille() {
 	const d = dates[dates.length - 1];
 	return Object.assign({ date: d }, Jeu.taches.jours[d].rapport);
 }
-function texteRapportVeille() {
-	const c = rapportVeille();
-	if (!c) return '';
-	const prio = (c.priorites || []).map((p) => t('tache.prio.' + p.id, p.vars) + ' (' + t('tache.etat.' + p.etat) + ')').join(' ; ');
-	return [t('veilleRapport.titre', { date: c.date.split('-').reverse().join('/') }), t('recap.fait', { fait: c.fait }), prio ? t('veilleRapport.prio', { liste: prio }) : '', c.demande ? t('veilleRapport.demande', { demande: t('tache.demande.' + c.demande, Taches.R.demande), etat: t(c.accordee ? 'veilleRapport.accordee' : 'veilleRapport.refusee') }) : ''].filter(Boolean).join('\n');
-}
-function fenetreRapportVeille() {
-	const l = DS.fenetre.large; // prompt 173 (était 1100)
-	const h = 560;
-	const x = (L - l) / 2;
-	const y = (H - h) / 2;
-	panneau(x, y, l, h, C.accent);
-	noStroke();
-	textAlign(LEFT, TOP);
-	textFont(POLICE_TEXTE);
-	textSize(22);
-	textLeading(32);
-	fill(C.texte);
-	text(texteRapportVeille(), x + 56, y + 56, l - 112, h - 180);
-	bouton(x + l - 56 - 300, y + h - 100, 300, hCible(64, 74), t('commun.fermer'), fermer); // prompt 217
-}
+// Prompt 228 : la fenêtre « rapport de la veille » (prompt 89 bis) est remplacée par la lettre du bureau (lettre.js)

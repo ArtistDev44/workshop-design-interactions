@@ -537,7 +537,8 @@
 		}, 40);
 		add('mail du soir · Mails', () => (H.raz(), (PLUS.ouvert = false), H.poste(), Jeu.deposerMailDuSoir(), (PC.etat = 'os'), (PC.fenetre = 'patron'), (PATRON.ouvert = false), (PATRON.filtre = 'soirs')), 12); // prompt 194 : le mail du soir est dans l'appli Mails
 		add('soir · sortie', () => (H.raz(), (phase = 'soir'), (SOIR.debut = millis()), (vue = 'bureau')), 20);
-		add('rapport de la veille', () => (H.raz(), (phase = 'attente'), (vue = 'bureau'), ouvrir('rapportVeille')));
+		// Prompt 228 : la lettre du bureau (mission du jour, ou bilan de la veille), ouverte puis dépliée
+		add('lettre du bureau', () => (H.raz(), (phase = 'attente'), (vue = 'bureau'), ouvrirLettre()), 30);
 		add('fin de semaine · rapport', () => (H.raz(), allerFin(), typeof CINE !== 'undefined' && CINE && finVideo()), 30); // prompt 226 : la vidéo de fin (auditée plus bas) est passée
 		add('fin de semaine · rapport ouvert', () => (fenetre === 'mailFin' && (fenetre = null), ouvrirRapport()), 20);
 		add('fin de semaine · rapport page 2', () => RAPPORT && fenetre === 'rapport' && changerPageRapport(1), 12); // prompt 163

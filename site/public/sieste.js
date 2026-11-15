@@ -25,6 +25,8 @@ Jeu.REGLAGES.somnolence = {
 const SOMNO = { v: 0, jourCle: '', forcee: false, bilan: null, alarmes: new Set(), contrecoup: null };
 
 const cleJourSomno = () => (Jeu.etat && Jeu.etat.semaine ? Jeu.etat.semaine.lundi : Jeu.etat ? Jeu.etat.mode : '') + '|' + Jeu.jourIndex;
+/** Prompt 228 : somnolence et sieste sont une option de jeu (Paramètres → Avancé), désactivée par défaut */
+const somnolenceActive = () => !!(typeof Confort !== 'undefined' && Confort.Reglages && Confort.Reglages.somnolence);
 /** Peut-on s'endormir maintenant ? (journée de travail, pas de fenêtre ni de narration) */
 function peutDormir() {
 	return ecran === 'jeu' && !!Jeu.horloge && !MENU.actif && !fenetre && !smsActif && !tutoriel && !TRANSITION_JOUR && !['fin', 'soir', 'reveil', 'narration'].includes(phase);
@@ -36,6 +38,12 @@ function majSomnolence(dt, dMinutes) {
 	if (SOMNO.jourCle !== cle) {
 		SOMNO.jourCle = cle; // chaque matin, on arrive reposé
 		if (!enSieste) SOMNO.v = 0;
+	}
+	if (!somnolenceActive() && !enSieste) {
+		// Prompt 228 : option désactivée — pas de jauge, pas de sieste, pas de contrecoup du café
+		SOMNO.v = 0;
+		SOMNO.contrecoup = null;
+		return;
 	}
 	// Prompt 213 : contrecoup du café (cafe.js) — la fatigue revient, le même jour, deux heures de jeu après la tasse
 	const cc = SOMNO.contrecoup;
@@ -58,6 +66,10 @@ function majSomnolence(dt, dMinutes) {
 }
 /** S'endormir : volontaire (jauge, Z, main à la webcam) ou forcée (jauge à 100) */
 function dormir(volontaire) {
+	if (!enSieste && !somnolenceActive()) {
+		if (volontaire) annoncer(t('sieste.desactivee')); // prompt 228
+		return false;
+	}
 	if (enSieste || !peutDormir()) {
 		if (volontaire) annoncer(t('sieste.impossible'));
 		return false;
@@ -152,7 +164,7 @@ function siesteExpiration(r) {
 // ——— Jauge dans le bandeau d'état (texte + barre, cliquable, infobulle) ———
 const ZONE_SOMNO = { x: 1556, y: H - 40, l: 340, h: 36 };
 function dessinerSomnolence() {
-	if (ecran !== 'jeu' || phase === 'fin') return;
+	if (ecran !== 'jeu' || phase === 'fin' || !somnolenceActive()) return; // prompt 228 : option désactivée → aucune jauge
 	const z = ZONE_SOMNO;
 	const v = Math.round(SOMNO.v);
 	const survol = mouseX >= z.x && mouseX <= z.x + z.l && mouseY >= z.y && mouseY <= z.y + z.h;

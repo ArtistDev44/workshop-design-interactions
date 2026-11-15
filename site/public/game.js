@@ -1344,12 +1344,18 @@
 	 * au moment de l'envoi (meta). Pendant la panne de messagerie (prompt 23), il attend et arrive « en retard ». */
 	Jeu.TYPES_MESSAGES = ['consigne', 'alerte', 'conseil', 'budget', 'reproche', 'equipes', 'info', 'soir']; // prompt 194 : « soir » = le mail du soir, déposé dans Mails
 	Jeu.patronEnAttente = [];
+	// Prompt 227 : un ou deux mails par jour — tous les messages du jour (consignes, alertes, conseils, reproches…)
+	// forment UN mail, le « briefing du jour » (Mails les regroupe, patron.js) ; le mail du soir est le second.
+	// Un message ajouté à un briefing déjà reçu est un « ajout » : pas de nouveau mail, ni son ni notification.
+	Jeu.groupeMail = (m) => (m.type === 'soir' ? 'soir' : 'jour') + '|' + m.jour;
 	Jeu.messagePatron = function (texte, type, meta) {
 		const m = { heure: maintenantSim(), jour: ((Jeu.jourCourant && Jeu.jourCourant()) || {}).date || null, texte, type: Jeu.TYPES_MESSAGES.includes(type) ? type : 'info', meta: meta || {}, important: !!(meta && meta.important), lu: false };
 		if (Jeu.modificateurActif && Jeu.modificateurActif() === 'panne_messagerie') return Jeu.patronEnAttente.push(Object.assign(m, { enRetard: true }));
+		const memes = Jeu.messagesPatron.filter((x) => !x.archive && Jeu.groupeMail(x) === Jeu.groupeMail(m));
+		if (memes.length) m.ajout = true;
 		Jeu.messagesPatron.push(m);
-		if (typeof annoncer === 'function') annoncer(T('patron.annonce', { type: T('patron.type.' + m.type), texte })); // aria-live avec le type
-		Jeu.nonLus.patron++;
+		if (typeof annoncer === 'function') annoncer(T(m.ajout ? 'patron.annonceAjout' : 'patron.annonce', { type: T('patron.type.' + m.type), texte })); // aria-live avec le type
+		if (!memes.some((x) => !x.lu)) Jeu.nonLus.patron++; // un mail de plus à lire seulement si le briefing était lu (ou absent)
 	};
 
 	/** Alerte du patron quand une jauge passe sous 20 (Q46) — une fois par jauge et par jour */

@@ -350,6 +350,8 @@ const Sauvegarde = (function () {
 			if (typeof PATRON !== 'undefined' && ui.patron && FILTRES_PATRON.some((f) => f.cle === ui.patron.filtre)) Object.assign(PATRON, { filtre: ui.patron.filtre, defil: Number(ui.patron.defil) || 0 }); // prompt 86
 			if (typeof SOMNO !== 'undefined') {
 				SOMNO.v = Math.max(0, Math.min(100, Number(ui.somnolence) || 0)); // prompt 78
+				// Prompt 228 : partie commencée avant l'option, avec de la somnolence en cours → l'option reste active
+				if (SOMNO.v > 0 && !Confort.Reglages.somnolence) Confort.Reglages.somnolence = true; // pour cette session (non enregistré)
 				SOMNO.jourCle = cleJourSomno();
 			}
 			if (typeof FIL !== 'undefined') {
