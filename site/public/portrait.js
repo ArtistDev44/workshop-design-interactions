@@ -421,8 +421,9 @@ function regionsPoste(scene) {
 	const xa = pay ? RAIL() + PL + 20 : 20;
 	const la = pay ? (RAIL() - 52) / 2 : (PL - 52) / 2;
 	const v = typeof SOMNO !== 'undefined' ? Math.round(SOMNO.v) : 0;
-	PORTRAIT.boutons.push({ abs: pay, x: xa, y: ya, l: la, h: 116, texte: t(typeof enSieste !== 'undefined' && enSieste ? 'portrait.reveiller' : 'portrait.reposer'), sous: t('portrait.somnolence', { v }), jauge: v, action: () => typeof basculerSieste === 'function' && basculerSieste() });
-	PORTRAIT.boutons.push({ abs: pay, x: xa + 12 + la, y: ya, l: la, h: 116, texte: t('portrait.seLeverCourt'), action: quitterPC, primaire: false, desactive: !!raisonRetenuAuPC() }); // prompt 182 : estompé tant qu'un choix attend
+	const somno = typeof somnolenceActive === 'function' && somnolenceActive(); // prompt 228 : sans l'option, « Se lever » prend toute la rangée
+	if (somno) PORTRAIT.boutons.push({ abs: pay, x: xa, y: ya, l: la, h: 116, texte: t(typeof enSieste !== 'undefined' && enSieste ? 'portrait.reveiller' : 'portrait.reposer'), sous: t('portrait.somnolence', { v }), jauge: v, action: () => typeof basculerSieste === 'function' && basculerSieste() });
+	PORTRAIT.boutons.push({ abs: pay, x: somno ? xa + 12 + la : xa, y: ya, l: somno ? la : 2 * la + 12, h: 116, texte: t('portrait.seLeverCourt'), action: quitterPC, primaire: false, desactive: !!raisonRetenuAuPC() }); // prompt 182 : estompé tant qu'un choix attend
 	// Barre d'onglets : les entrées du menu de l'appli (badges, verrous), l'entrée affichée soulignée de rouge
 	const ent = typeof ENTREES_MENU !== 'undefined' ? ENTREES_MENU : [];
 	const lo = PL / Math.max(1, ent.length);

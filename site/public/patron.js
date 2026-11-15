@@ -20,6 +20,8 @@ const FILTRES_PATRON = [
 	{ cle: 'reproches', types: ['reproche'] },
 	{ cle: 'budget', types: ['budget'] },
 	{ cle: 'soirs', types: ['soir'] }, // prompt 194 : les mails du soir (fait marquant, mot du patron, bilan)
+	{ cle: 'lettres', types: null, lettres: true }, // prompt 228 : les lettres du bureau, une fois lues
+	{ cle: 'attente', types: null, attente: true }, // prompt 227 : demande au patron envoyée, réponse le lendemain à 8 h
 	{ cle: 'archives', types: null, archives: true }, // prompt 195 : mails archivés (hors des autres dossiers et du badge)
 ];
 const COULEURS_TYPES = { consigne: () => DS.info, alerte: () => DS.erreur, conseil: () => DS.alerte, budget: (m) => (m.meta && m.meta.palier === 'haut' ? DS.succes : DS.alerte), reproche: () => DS.primaire, equipes: () => DS.info, info: () => DS.blanc75, soir: (m) => (m.meta && m.meta.positif ? DS.succes : DS.blanc75) };
@@ -69,16 +71,49 @@ const filtreDe = (cle) => FILTRES_PATRON.find((x) => x.cle === cle) || FILTRES_P
 /** Messages bruts d'un dossier (filtre) — base des compteurs ; les archivés ne sont que dans « Archives » */
 const mailsDuFiltre = (cle) => {
 	const f = filtreDe(cle);
+	if (f.attente) return demandesEnAttente();
+	if (f.lettres) return lettresMails();
 	return (Jeu.messagesPatron || []).filter((m) => !!m.archive === !!f.archives && (!f.types || f.types.includes(typeDe(m))));
 };
+/** Prompt 227 : la demande du rapport du soir, tant que le patron n'a pas répondu (réponse le lendemain à 8 h) —
+ * une entrée grisée du dossier « En attente », hors des mails (ni badge rouge, ni compte des 1 ou 2 mails du jour) */
+const CACHE_ATTENTE = { cle: null, m: null };
+function demandeEnAttente() {
+	const e = typeof Taches !== 'undefined' && Taches.etat ? Taches.etat() : null;
+	const d = e && e.demande;
+	return d && d.pour > (Jeu.jourIndex || 0) ? d : null;
+}
+/** Prompt 228 : les lettres lues, en mails (lecture seule) — mêmes objets d'une image à l'autre */
+const CACHE_LETTRES = new Map();
+function lettresMails() {
+	const l = typeof lettresLues === 'function' ? lettresLues() : [];
+	return l.map((x) => {
+		if (!CACHE_LETTRES.has(x.id)) CACHE_LETTRES.set(x.id, { lettre: true, id: x.id, type: 'info', jour: x.jour, heure: x.heure, objet: x.objet, texte: x.texte, meta: {}, lu: true });
+		return CACHE_LETTRES.get(x.id);
+	});
+}
+function demandesEnAttente() {
+	const d = demandeEnAttente();
+	if (!d) return [];
+	const cle = d.id + '|' + d.pour;
+	if (CACHE_ATTENTE.cle !== cle) {
+		const R = typeof Taches !== 'undefined' ? Taches.R : { demande: {} };
+		CACHE_ATTENTE.cle = cle;
+		CACHE_ATTENTE.m = { attente: true, type: 'info', jour: ((Jeu.jourCourant && Jeu.jourCourant()) || {}).date || null, heure: '', texte: t('patron.attente.texte', { demande: t('tache.demande.' + d.id, R.demande) }), meta: {}, lu: true };
+	}
+	return [CACHE_ATTENTE.m];
+}
 const messagesFiltres = () => mailsDuFiltre(PATRON.filtre);
 /** Compteurs d'un dossier : total et non lus (prompt 185 : toujours affichés) */
 function compteursMails(cle) {
 	const l = mailsDuFiltre(cle);
-	return { n: l.length, nl: l.filter((m) => !m.lu).length };
+	// Prompt 227 : un mail = un groupe (briefing du jour, mail du soir), comme dans la liste
+	const g = new Set(l.map(cleGroupeMail));
+	return { n: g.size, nl: new Set(l.filter((m) => !m.lu).map(cleGroupeMail)).size };
 }
-/** Nombre total de mails non lus (badge de l'appli dans le menu) — prompt 195 : hors archives */
-const mailsNonLus = () => (Jeu.messagesPatron || []).filter((m) => !m.lu && !m.archive).length;
+const cleGroupeMail = (m) => (m.lettre ? 'lettre|' + m.id : m.attente ? 'attente' : typeDe(m) === 'soir' ? 'soir' : 'jour') + '|' + m.jour;
+/** Nombre total de mails non lus (badge de l'appli dans le menu) — prompt 195 : hors archives ; prompt 227 : par mail */
+const mailsNonLus = () => new Set((Jeu.messagesPatron || []).filter((m) => !m.lu && !m.archive).map(cleGroupeMail)).size;
 /** Prompt 195 : recherche locale, sans casse ni accents, sur l'expéditeur, l'objet et le texte */
 const sansAccents = (s) =>
 	String(s || '')
@@ -95,7 +130,7 @@ function listeMails() {
 	const groupes = new Map();
 	brut.forEach((m) => {
 		if (m === cachee) return;
-		const k = typeDe(m) + '|' + m.jour + '|' + String(m.texte);
+		const k = cleGroupeMail(m); // prompt 227 : un mail par jour (briefing) + le mail du soir
 		if (groupes.has(k)) groupes.get(k).push(m);
 		else groupes.set(k, [m]);
 	});
@@ -103,9 +138,9 @@ function listeMails() {
 	PATRON.dernier = brut[brut.length - 1] || null;
 	const q = PATRON.recherche || '';
 	return { liste: [...groupes.values()]
+		.filter((g) => g.some((m) => correspond(m, q))) // prompt 227 : un briefing est trouvé si l'un de ses points correspond
 		.map((g) => g[0])
-		.reverse()
-		.filter((m) => correspond(m, q)), cachee: q ? null : cachee };
+		.reverse(), cachee: q ? null : cachee };
 }
 const groupeDe = (m) => (PATRON.repetes && PATRON.repetes.get(m)) || [m];
 const nonLu = (m) => groupeDe(m).some((x) => !x.lu);
@@ -190,8 +225,8 @@ function actionsMails(m) {
 	const panne = enPanne();
 	const a = [
 		{ cle: 'repondre', icone: 'reply', lib: t('patron.action.repondre'), actif: !!m && !panne && reponsesRapides(m).length > 0, faire: () => repondreMail(m) },
-		{ cle: 'archiver', icone: m && m.archive ? 'inbox' : 'archive', lib: t(m && m.archive ? 'patron.action.desarchiver' : 'patron.action.archiver'), actif: !!m && !panne, faire: () => archiverMail(m) },
-		{ cle: 'nonLu', icone: 'mail', lib: t('patron.action.nonLu'), actif: !!m && !panne && !nonLu(m), faire: () => marquerNonLu(m) },
+		{ cle: 'archiver', icone: m && m.archive ? 'inbox' : 'archive', lib: t(m && m.archive ? 'patron.action.desarchiver' : 'patron.action.archiver'), actif: !!m && !m.attente && !m.lettre && !panne, faire: () => archiverMail(m) },
+		{ cle: 'nonLu', icone: 'mail', lib: t('patron.action.nonLu'), actif: !!m && !m.attente && !m.lettre && !panne && !nonLu(m), faire: () => marquerNonLu(m) },
 	];
 	if (m && typeDe(m) === 'reproche' && aUnBloc(m)) a.push({ cle: 'dossier', icone: 'external-link', lib: t('patron.voirDossier'), actif: !panne, faire: () => voirDossier(m.meta) });
 	return a;
@@ -199,7 +234,8 @@ function actionsMails(m) {
 /** Une fois par image : sons (alerte distincte), indicateur de saisie avant un nouveau message */
 function majPatron() {
 	const n = (Jeu.messagesPatron || []).length;
-	if (n > PATRON.vus && PATRON.vus) {
+	if (n > PATRON.vus && PATRON.vus && !Jeu.messagesPatron[n - 1].ajout) {
+		// prompt 227 : un ajout au briefing du jour n'est pas un nouveau mail — ni son, ni « Direction écrit… »
 		const m = Jeu.messagesPatron[n - 1];
 		Confort.Son.bip(typeDe(m) === 'alerte' ? 'alerte' : 'choix');
 		const k = typeof facteurRythmeTexte === 'function' ? facteurRythmeTexte() : reduireAnimations ? 0 : 1; // prompt 208 : rythme du texte
@@ -207,7 +243,8 @@ function majPatron() {
 	}
 	PATRON.vus = n;
 }
-const objetMail = (m) => (typeDe(m) === 'soir' && m.meta && m.meta.objet ? String(m.meta.objet) : t('patron.type.' + typeDe(m))) + (groupeDe(m).length > 1 ? ' ×' + groupeDe(m).length : '') + (m.enRetard ? ' · ' + t('patron.retard') : '');
+const objetMail = (m) =>
+	(m.lettre ? String(m.objet) : m.attente ? t('patron.attente.objet') : typeDe(m) === 'soir' && m.meta && m.meta.objet ? String(m.meta.objet) : t('patron.briefing') + ' · ' + (groupeDe(m).length > 1 ? t('patron.points', { n: groupeDe(m).length }) : t('patron.type.' + typeDe(m)))) + (m.enRetard ? ' · ' + t('patron.retard') : ''); // prompt 227
 /** Heure de jeu ; date courte si le mail n'est pas du jour */
 function heureMail(m) {
 	const auj = ((Jeu.jourCourant && Jeu.jourCourant()) || {}).date;
@@ -619,12 +656,28 @@ function voletLecture(m, x, y, l, h, panne, avecRetour) {
 	const n0 = boutons.length;
 	let yc = zc.y - PATRON.defilLecture;
 	const lt = Math.min(l - 24, 820); // lignes de lecture confortables
-	yc += dessinerTexte(String(m.texte), x, yc, lt, STYLE_CORPS()).h + 20;
-	if (aUnBloc(m)) {
-		const hb = typeDe(m) === 'reproche' || !blocDeplie(m) ? 32 : typeDe(m) === 'soir' ? blocSoir(m, x, 0, Math.min(lt, 720), false) : { consigne: 56, alerte: 44, conseil: 44, reproche: 60, budget: 44, equipes: 40, info: 0 }[typeDe(m)] || 0;
-		blocEnrichi(m, x, yc, Math.min(lt, 720), panne);
-		yc += hb + 20;
-	}
+	// Prompt 227 : le briefing du jour réunit les messages du jour — un point par message (type, heure), dans l'ordre
+	const points = groupeDe(m);
+	points.forEach((pt, i) => {
+		if (points.length > 1) {
+			picto(typeDe(pt), x, yc + 2, COULEURS_TYPES[typeDe(pt)](pt), 20);
+			dsTexte(t('patron.type.' + typeDe(pt)) + ' · ' + (pt.heure || ''), x + 30, yc, 18, DS.blanc75, 'left');
+			yc += 30;
+		}
+		yc += dessinerTexte(String(pt.texte), x, yc, lt, STYLE_CORPS()).h + 20;
+		if (aUnBloc(pt)) {
+			const hb = typeDe(pt) === 'reproche' || !blocDeplie(pt) ? 32 : typeDe(pt) === 'soir' ? blocSoir(pt, x, 0, Math.min(lt, 720), false) : { consigne: 56, alerte: 44, conseil: 44, reproche: 60, budget: 44, equipes: 40, info: 0 }[typeDe(pt)] || 0;
+			blocEnrichi(pt, x, yc, Math.min(lt, 720), panne);
+			yc += hb + 20;
+		}
+		if (i < points.length - 1) {
+			noStroke();
+			fill(DS.blanc15);
+			rect(x, yc - 6, lt, 1);
+			yc += 14;
+		}
+	});
+
 	if (m.reponse) yc += reponseCitee(m, x, yc, lt);
 	zoneTexteFin();
 	drawingContext.restore();
@@ -770,7 +823,7 @@ function voirDossier(me) {
 }
 /** Réponses rapides (2 ou 3, selon le type du dernier message) : AUCUN effet de jeu, une par message */
 function reponsesRapides(m) {
-	return m && !m.reponse ? REPONSES_RAPIDES[typeDe(m)] || [] : [];
+	return m && !m.reponse && !m.attente && !m.lettre ? REPONSES_RAPIDES[typeDe(m)] || [] : []; // prompt 227 : rien à répondre à sa propre demande en attente
 }
 function barreReponses(m, x, y, l, panne) {
 	const rr = reponsesRapides(m);

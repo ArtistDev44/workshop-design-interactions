@@ -255,6 +255,7 @@ function draw() {
 	} else dessinerOS();
 	// Prompt 111 : plus de cartes de notification sur l'écran du PC — badges rouges chiffrés dans le menu à gauche
 	dessinerIndicateurs(); // prompt 36 : app flottante, au premier plan
+	if (typeof bulleMenuDifferee === 'function') bulleMenuDifferee(); // prompt 227
 	sourisRestaurer();
 	espaceDessin = 'ecran';
 	if (vignettePC) zoneTexteDecor(false);
@@ -552,7 +553,7 @@ function fermer() {
 // FENETRES_BLOQUANTES : elles exigent une réponse (décision, confirmation, bilan à lire, animation) et ne se ferment
 // JAMAIS au clic sur le fond. FERMETURE_FOND : ce que fait Échap dans chaque fenêtre qui se ferme ainsi.
 // Une fenêtre absente des deux listes est traitée comme bloquante.
-const FENETRES_BLOQUANTES = ['reset', 'demission', 'partir', 'blame', 'inspection', 'tache', 'mailFin', 'rapport', 'rapportVeille', 'cafe'];
+const FENETRES_BLOQUANTES = ['reset', 'demission', 'partir', 'blame', 'inspection', 'tache', 'mailFin', 'rapport', 'lettre', 'cafe'];
 const FERMETURE_FOND = {
 	aide: fermer,
 	parametres: fermer,
@@ -1377,6 +1378,7 @@ function keyPressed() {
 	// Prompt 133 : F = plein écran (entrée / sortie), partout hors saisie ; rien si l'API est absente
 	if ((key === 'f' || key === 'F') && !keyIsDown(CONTROL) && !keyIsDown(91)) return basculerPleinEcran(), false;
 	// Langue (prompt 24) : L bascule partout, sans toucher à la partie
+	if (typeof toucheLettre === 'function' && toucheLettre()) return false; // prompt 228 : L ouvre la lettre posée sur le bureau (sinon, la langue)
 	if (key === 'l' || key === 'L') return Langue.suivante(), false;
 	// Prompt 47 : inspection, démission, palmarès ; J = journal de bord, D = rendre son badge
 	if (toucheParametres() || toucheTelephone() || toucheTaches() || toucheMecaniques() || toucheJournee()) return false; // prompts 47 et 51 ; prompt 175 : la fenêtre des paramètres capte le clavier (Tab, flèches, Entrée, Espace)
@@ -1390,7 +1392,7 @@ function keyPressed() {
 		if (fenetre === 'partage' && keyCode !== ESCAPE) return touchePartage(), false; // prompt 81
 		if (fenetre === 'installation' && (keyCode === ENTER || keyCode === RETURN || key === ' ')) return fermer(), false; // prompt 171
 		if (fenetre === 'rapport' && (keyCode === ENTER || keyCode === RETURN)) return actionRapport(), false; // prompt 41
-		if (fenetre === 'rapportVeille' && (keyCode === ENTER || keyCode === RETURN || keyCode === ESCAPE)) return fermer(), false; // prompt 89 bis
+		if (fenetre === 'lettre') return toucheLettre(), false; // prompt 228 : Échap, Entrée, L rangent la lettre
 		if (fenetre === 'menu') {
 			// Prompt 35 : menu Échap modernisé — ↑ ↓ / Tab pour choisir, Entrée pour valider
 			const ENTREES_PAUSE = entreesPause(); // prompt 124
@@ -1577,7 +1579,7 @@ function contenuFenetre() {
 	if (fenetre === 'cafe') return fenetreCafe(); // prompt 52 : même animation, la tasse en main
 	voile();
 	if (fenetre === 'rapport') return fenetreRapport(); // prompt 41
-	if (fenetre === 'rapportVeille') return fenetreRapportVeille(); // prompt 89 bis
+	if (fenetre === 'lettre') return fenetreLettre(); // prompt 228
 	if (fenetre === 'mailFin') return fenetreMailFin(); // prompt 56
 	if (fenetre === 'inspection') return fenetreInspection(); // prompt 47
 	if (fenetre === 'tache') return fenetreTache(); // prompt 88

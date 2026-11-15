@@ -22,6 +22,12 @@ function vueIntegree() {
 /** Entrée active du menu */
 const entreeActive = () => (vueIntegree() ? PC.fenetre : 'signalements');
 
+/** Prompt 227 : infobulle d'une entrée du menu, dessinée après les applis (au premier plan) */
+const BULLE_MENU = { txt: null, x: 0, y: 0 };
+function bulleMenuDifferee() {
+	if (BULLE_MENU.txt && typeof infobulle === 'function') infobulle(BULLE_MENU.txt, BULLE_MENU.x, BULLE_MENU.y);
+	BULLE_MENU.txt = null;
+}
 function dessinerMenuApp() {
 	if (typeof phase !== 'undefined' && phase === 'fin') return;
 	const portrait = typeof PORTRAIT !== 'undefined' && PORTRAIT.actif;
@@ -75,6 +81,12 @@ function dessinerMenuApp() {
 		const nb = !actif && !verrou ? nombreBadge(cle) : 0;
 		const b = nb ? texteBadge(nb) : cle === 'signalements' && !actif && typeof badgeIcone === 'function' ? badgeIcone(cle) : ''; // « ! » : incident en cours (prompt 68)
 		if (b) dsBadge(r.x + r.l - (portrait ? 30 : 28), r.y + 8, b, 'erreur');
+		// Prompt 227 : demande au patron en attente — pastille grise « 1 » en bas à droite, infobulle au survol
+		const attente = cle === 'patron' && !verrou && typeof demandeEnAttente === 'function' && demandeEnAttente();
+		if (attente) {
+			dsBadge(r.x + (portrait ? 30 : 28), r.y + 8, '1', 'info');
+			if (vue === 'poste' && mouseX >= r.x && mouseX <= r.x + r.l && mouseY >= r.y && mouseY <= r.y + r.h) BULLE_MENU.txt = t('patron.attente.bulle'), (BULLE_MENU.x = r.x + r.l + 8), (BULLE_MENU.y = r.y + r.h / 2 - 20);
+		}
 		boutons.push({ x: r.x, y: r.y, l: r.l, h: r.h, action: () => ouvrirEntreeMenu(cle), titre: libelleEntreeMenu(cle) }); // prompt 210 : libellé (lecteur-ecran.js)
 		if (k === 1) cibleGuide('iconesOS', M.x, M.y + 112, M.l, 4 * 112); // prompt 37 : le guide montre le menu
 	});
@@ -83,7 +95,8 @@ function dessinerMenuApp() {
 function libelleEntreeMenu(cle) {
 	const lib = cle === 'signalements' ? t('menuApp.carte') : t('menuApp.' + cle);
 	const n = typeof nombreBadge === 'function' && entreeActive() !== cle ? nombreBadge(cle) : 0;
-	return n ? t('badge.libelle', { appli: lib, n }) : lib;
+	const attente = cle === 'patron' && typeof demandeEnAttente === 'function' && demandeEnAttente() ? ' · ' + t('patron.attente.bulle') : ''; // prompt 227
+	return (n ? t('badge.libelle', { appli: lib, n }) : lib) + attente;
 }
 function ouvrirEntreeMenu(cle) {
 	MENU_FOCUS.actif = false;
