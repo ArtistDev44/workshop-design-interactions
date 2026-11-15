@@ -359,3 +359,4 @@ repassé en ◻. Écarts connus, voulus ou hors de portée de l'assistant :
 | 228 | `228-jeu-lettre-bureau-reelle-sommeil-optionnel.md` | Jeu : **la lettre du bureau devient une vraie lettre** (enveloppe, ouverture, contenu lisible) ; **somnolence optionnelle**, désactivée par défaut | ✅ fait (15/11) |
 | 229 | `229-jeu-animations-modernisees.md` | Jeu : **animations modernisées** — jetons de mouvement communs, fenêtres, boutons, changement d'appli, vidéo de fin ; réduites sur demande | ✅ fait (15/11) |
 | 230 | `230-jeu-mode-dev.md` | Jeu : **mode développeur complet**, ouvert par le logo du menu — animations, fins, partie, écrans, options, outils (118 actions) | ✅ fait (15/11) |
+| 231 | `231-jeu-logo-mode-dev-mobile.md` | Jeu : **le logo du mode dev aussi sur mobile** — recomposé en haut à gauche (×2), un toucher ouvre le mode développeur | ✅ fait (15/11) |

@@ -240,11 +240,11 @@ function dessinerMenuPrincipal() {
 	// Prompt 171 : ligne du haut — le logo à gauche, la langue et l'installation à droite : même y, même hauteur,
 	// même marge au bord (HAUT_MENU) ; plus de mention de code projet « PXE-… ». En portrait mobile, la colonne recadrée
 	// commence après le logo (portrait.js) : il n'y est pas dessiné, pour ne pas apparaître coupé.
-	if (!(typeof PORTRAIT !== 'undefined' && PORTRAIT.actif)) {
-		dessinerLogoPXE(HAUT_MENU.marge, HAUT_MENU.y, HAUT_MENU.h);
-		// Prompt 230 : le logo ouvre le mode développeur (zone de 88 × 76 px)
-		if (typeof ouvrirDev === 'function' && !fenetre) boutons.push({ x: HAUT_MENU.marge - 8, y: HAUT_MENU.y - 8, l: 88, h: HAUT_MENU.h + 16, action: ouvrirDev, titre: td('logo') });
-	}
+	// Prompt 231 : le logo est aussi dessiné en portrait — recomposé en haut à gauche (portrait.js), à côté de la pile FR / EN
+	const xLogo = xLogoMenu();
+	dessinerLogoPXE(xLogo, HAUT_MENU.y, HAUT_MENU.h);
+	// Prompt 230 : le logo ouvre le mode développeur (zone de 88 × 76 px ; ×2 en mobile, ≥ 44 px CSS)
+	if (typeof ouvrirDev === 'function' && !fenetre) boutons.push({ x: xLogo - 8, y: HAUT_MENU.y - 8, l: 88, h: HAUT_MENU.h + 16, action: ouvrirDev, titre: td('logo') });
 	// Prompt 205 : en portrait, la colonne recadrée fait 908 px (x 110 → 1018) ; à 88 px le titre en sortait
 	// (« Nantes en régulat… ») — 64 px y tiennent (≈ 28 px CSS sur un écran de 412 px)
 	// Prompt 209 : colonne de 640 px en portrait — le titre se réduit pour y tenir (48 px au moins)
@@ -348,6 +348,9 @@ const EXTRAS_MENU = typeof EXPO !== 'undefined' && EXPO.actif ? [] : [
 ];
 /** Prompt 171 : ligne du haut de l'écran titre (logo à gauche, langue + installation à droite) */
 const HAUT_MENU = { y: 56, h: 60, marge: 80 };
+/** Prompt 231 : en mobile (portrait, paysage), le logo est tiré à gauche de la colonne recomposée du menu (x ≥ 110) —
+ * il ne s'y voit plus coupé ; portrait.js le recompose en haut à gauche */
+const xLogoMenu = () => (typeof PORTRAIT !== 'undefined' && PORTRAIT.actif ? 16 : HAUT_MENU.marge);
 /** Prompt 199 : largeur commune de la pile du haut = largeur du sélecteur FR / EN (boutons de 84 px, 8 px d'écart) */
 const LARGEUR_PILE = () => LANGUES.length * (84 + 8) - 8;
 /** Prompt 171 : bouton carré à icône « télécharger » (style contour des boutons de langue) — installe le jeu ;
