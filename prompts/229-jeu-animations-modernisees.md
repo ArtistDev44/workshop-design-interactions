@@ -29,3 +29,23 @@ Origine : demande du 15/11/2026 (« modernise les animations »). Statut : **à 
 `npm run build`, `npm test` (jetons, courbes bornées à [0, 1] et finissant à 1, mode réduit instantané, ouverture des
 fenêtres et boutons branchés) ; audit des textes et des cibles à 0 en 1920 × 1080, 1366 × 768, 412 × 915, 915 × 412 ;
 essai Chromium : ouverture d'une fenêtre (images à 0, 110 et 260 ms), survol d'un bouton, passage Carte → Mails.
+
+## Fait
+
+- `site/public/mouvement.js` (nouveau) : `Mouvement.DUREES` (120 / 220 / 420 ms), `COURBES` (sortie, entreeSortie,
+  ressort, linéaire), `progres`, `survol`, `appuyer` / `enfoncement` ; ralenti possible par le mode dev (prompt 230).
+  Section « Mouvement » ajoutée à `design-system/DESIGN.md`.
+- Fenêtres (`sketch.js`, `dessinerFenetre`) : voile et fenêtre en fondu, montée de 16 px, 97 → 100 % ; clics ignorés
+  avant 60 % de l'ouverture (`fenetreEnOuverture`).
+- Boutons (`bouton`) : survol lissé (fond, double bordure), enfoncement de 2 px à l'appui (90 ms) ; la zone de clic
+  reste à sa place.
+- Applis (`entreeVueApp`, `menu-app.js`) : Carte, Mails, Community, Journal, Données entrent en glissant de 12 px.
+- Vidéo de fin (`fins-video.js`) : zoom lent 100 → 104 % par séquence.
+- Animations réduites : tout instantané. Non modifié : jauges et juice (prompt 96), lettre (228), cinématiques internes.
+
+## Vérifié
+
+- `npm run build`, `npm test` (+6 contrôles : courbes bornées et finissant à 1, jetons, transition qui repart, mode
+  réduit instantané, fenêtres, boutons, applis, vidéo, section du design system).
+- Chromium : ouverture des Paramètres mesurée — 0,04 à 10 ms, 0,49 à 110 ms (clics bloqués), 0,97 à 216 ms, 1 à 323 ms.
+- Audit : 0 défaut de texte, 0 cible sous 44 px CSS en 1920 × 1080, 1366 × 768, 412 × 915, 915 × 412.

@@ -4757,6 +4757,47 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	verifier(r.v === 0 && r.dort === false && /désactivées/.test(r.msg), `228 : somnolence à 0 et sieste refusée sans l'option (${JSON.stringify(r)})`);
 }
 
+// ——— Prompt 229 : animations modernisées (langage de mouvement commun) ———
+{
+	const lire = (x) => readFileSync(join(pub, x), 'utf8');
+	const c = vm.createContext({ reduireAnimations: false, __t: 0 });
+	vm.runInContext('function millis() { return __t; }', c);
+	vm.runInContext(lire('mouvement.js'), c, { filename: 'mouvement.js' });
+	const r = vm.runInContext(
+		`(() => {
+		const C = Mouvement.COURBES, out = {};
+		out.bornes = Object.keys(C).every((k) => Math.abs(C[k](0)) < 1e-9 && Math.abs(C[k](1) - 1) < 1e-9 && [0.1, 0.3, 0.5, 0.7, 0.9].every((t) => C[k](t) > -0.01 && C[k](t) < 1.07));
+		out.durees = [Mouvement.DUREES.rapide, Mouvement.DUREES.normal, Mouvement.DUREES.lent].join(',');
+		__t = 1000; const p0 = Mouvement.progres('f', 'a', 'normal'); __t = 1110; const p1 = Mouvement.progres('f', 'a', 'normal'); __t = 1300; const p2 = Mouvement.progres('f', 'a', 'normal');
+		__t = 1310; const p3 = Mouvement.progres('f', 'b', 'normal'); // autre valeur : la transition repart
+		out.progres = [p0, p1 > 0.5 && p1 < 1, p2, p3].join(',');
+		reduireAnimations = true; out.reduit = [Mouvement.progres('g', 'x', 'lent'), Mouvement.survol('s', true), Mouvement.enfoncement('k')].join(',');
+		return out;
+	})()`,
+		c,
+	);
+	verifier(r.bornes, '229 : courbes de mouvement bornées, de 0 à exactement 1');
+	verifier(r.durees === '120,220,420' && r.progres === '0,true,1,0', `229 : jetons 120 / 220 / 420 ms, transition qui repart quand sa clé change (${r.durees} / ${r.progres})`);
+	verifier(r.reduit === '1,1,0', `229 : animations réduites → tout instantané (${r.reduit})`);
+	const sk = lire('sketch.js');
+	verifier(/function avancementFenetre\(\)/.test(sk) && /scale\(0\.97 \+ 0\.03 \* k\)/.test(sk) && /if \(fenetreEnOuverture\(\)\) return;/.test(sk), '229 : fenêtres en fondu et montée, clics après 60 % de l\'ouverture');
+	verifier(/Mouvement\.survol\(cleAnim, survol\)/.test(sk) && /Mouvement\.appuyer\(b\.anim\)/.test(sk) && /boutons\.push\(\{ x, y: y0, l, h,/.test(sk), '229 : boutons — survol lissé, enfoncement à l\'appui, zone de clic fixe');
+	verifier(/function entreeVueApp\(cle, dessin\)/.test(lire('menu-app.js')) && /scale\(1 \+ 0\.04 \* u\)/.test(lire('fins-video.js')) && /## Mouvement/.test(readFileSync(join(pub, '..', '..', 'design-system', 'DESIGN.md'), 'utf8')), '229 : changement d\'appli, zoom lent des vidéos de fin, section Mouvement du design system');
+}
+
+// ——— Prompt 230 : mode développeur, ouvert par le logo du menu ———
+{
+	const lire = (x) => readFileSync(join(pub, x), 'utf8');
+	const dv = lire('dev.js');
+	verifier(/action: ouvrirDev, titre: td\('logo'\)/.test(lire('menu.js')) && /\[\?&\]dev=1/.test(dv) && /<script src="\.\/dev\.js"><\/script>/.test(lire('index.html')), '230 : mode dev ouvert par le logo du menu (et ?dev=1)');
+	verifier(/const ONGLETS_DEV = \['animations', 'fins', 'partie', 'ecrans', 'options', 'outils'\]/.test(dv) && Object.keys(new Function(dv.slice(dv.indexOf('const TEXTES_DEV = '), dv.indexOf('function td(')).replace('const TEXTES_DEV = ', 'return ').replace(/;\s*$/, ''))().en).length >= 60, '230 : six onglets, textes FR + EN');
+	const T = new Function(dv.slice(dv.indexOf('const TEXTES_DEV = '), dv.indexOf('function td(')).replace('const TEXTES_DEV = ', 'return ').replace(/;\s*$/, ''))();
+	verifier(Object.keys(T.fr).every((k) => T.en[k] !== undefined) && Object.keys(T.en).every((k) => T.fr[k] !== undefined), '230 : chaque texte du mode dev existe en FR et en EN');
+	verifier(/bilanFin = Jeu\.demission \|\| Jeu\.dev \?/.test(lire('immersion.js')) && /Jeu\.dev = false;/.test(lire('game.js')) && /function marquerDev\(\)/.test(dv), '230 : partie touchée par le mode dev hors palmarès');
+	verifier(/if \(fenetre === 'dev'\) return fenetreDev\(\);/.test(lire('sketch.js')) && /dessinerSurcoucheDev\(\)/.test(lire('sketch.js')) && /DEV\.vitesse/.test(lire('mouvement.js')), '230 : fenêtre, surcouches (zones de clic, images par seconde), ralenti des animations');
+	verifier(/'mode dev · ' \+ o/.test(lire('audit-textes.js')), '230 : les six onglets dans l\'audit des textes');
+}
+
 if (erreurs.length) {
 	console.error(`Test du jeu : ${erreurs.length} erreur(s) sur ${controles + erreurs.length} contrôles`);
 	for (const e of erreurs) console.error(`  ✗ ${e}`);

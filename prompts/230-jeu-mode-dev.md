@@ -41,3 +41,24 @@ Fenêtre à onglets (← → / Tab / clic), une liste d'actions par onglet, chac
 `npm run build`, `npm test` (ouverture par le logo, chaque action d'un onglet appelle une fonction existante, partie
 « dev » hors palmarès) ; audit des textes et des cibles à 0 sur les six onglets en 1920 × 1080, 1366 × 768, 412 × 915 ;
 essai Chromium : logo → Animations → chaque bouton.
+
+## Fait
+
+- `site/public/dev.js` (nouveau), fenêtre `dev` (`sketch.js`), logo du menu cliquable (`menu.js`, zone 88 × 76 px),
+  `?dev=1`, touche ` sur le menu. Clavier : ← → / Tab onglets, ↑ ↓ actions (le focus reste visible en défilant),
+  Entrée lance, Échap ferme ; molette ; deux colonnes sur ordinateur, une en portrait.
+- **118 actions** sur six onglets — Animations 17 (dont vitesse ×1 / ×0,5 / ×0,25 et animations réduites), Fins 50
+  (12 vidéos entières + 36 séquences, avec ou sans données de la partie, écran de licenciement), Partie 22, Écrans 14,
+  Options 9, Outils 6 (zones de clic colorées selon 44 px CSS avec leur taille, images par seconde, version, données,
+  audit des textes, effacement des données locales avec confirmation).
+- Chaque action appelle les fonctions du jeu ; une erreur est dite dans la fenêtre au lieu de casser la partie.
+- `Jeu.dev` : partie touchée par le mode dev, hors palmarès, bandeau « DEV · partie modifiée (hors palmarès) ».
+- Textes FR + EN dans `dev.js` (outil, hors du dictionnaire du jeu).
+
+## Vérifié
+
+- `npm run build`, `npm test` (+6 contrôles : logo, ?dev=1, script chargé, six onglets, textes FR + EN appariés, hors
+  palmarès, fenêtre et surcouches, onglets dans l'audit).
+- Chromium 1920 × 1080 : clic sur le logo → mode dev ; les 118 actions lancées une à une (hors effacement et
+  rechargement) : aucune erreur de page, aucun « Impossible ».
+- Audit : 0 défaut de texte, 0 cible sous 44 px CSS en 1920 × 1080, 1366 × 768, 412 × 915 (six onglets ; en portrait, les libellés longs sont abrégés, le libellé entier est annoncé).

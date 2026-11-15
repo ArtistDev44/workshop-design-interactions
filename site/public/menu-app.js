@@ -137,8 +137,23 @@ function dessinerVueApp() {
 	const l = PC.fenetre === 'patron' ? Z.l - 48 : Math.min(Z.l - 48, 1440); // largeur de lecture ; prompt 185 : Mails prend toute la largeur (3 zones)
 	const z = { x: Z.x + (Z.l - l) / 2, y: Z.y + 24, l, h: Z.h - 48 };
 	if (Jeu.nonLus && Jeu.nonLus[PC.fenetre] !== undefined) Jeu.nonLus[PC.fenetre] = 0; // lu
-	if (PC.fenetre === 'patron') appPatron(z);
-	else if (PC.fenetre === 'community') appCommunity(z);
-	else if (PC.fenetre === 'journal') appJournal(z);
-	else if (PC.fenetre === 'donnees') dessinerAppliDonnees(z);
+	entreeVueApp(PC.fenetre, () => {
+		if (PC.fenetre === 'patron') appPatron(z);
+		else if (PC.fenetre === 'community') appCommunity(z);
+		else if (PC.fenetre === 'journal') appJournal(z);
+		else if (PC.fenetre === 'donnees') dessinerAppliDonnees(z);
+	});
+}
+/** Prompt 229 : changement d'appli — la vue entrante glisse de 12 px et apparaît en fondu (Mouvement « normal ») */
+function entreeVueApp(cle, dessin) {
+	const k = typeof Mouvement !== 'undefined' ? Mouvement.progres('vueApp', cle, 'normal', 'sortie') : 1;
+	if (k >= 1) return dessin();
+	push();
+	drawingContext.globalAlpha = 0.25 + 0.75 * k;
+	translate(12 * (1 - k), 0);
+	try {
+		dessin();
+	} finally {
+		pop();
+	}
 }

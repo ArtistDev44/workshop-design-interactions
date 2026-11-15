@@ -195,6 +195,7 @@ function draw() {
 		}
 		dessinerTutoriel();
 		dessinerSousTitresSons(); // prompt 208
+		if (typeof dessinerSurcoucheDev === 'function') dessinerSurcoucheDev(); // prompt 230
 		majCurseur();
 		return;
 	}
@@ -238,7 +239,7 @@ function draw() {
 			dessinerVueApp();
 			dessinerMenuApp();
 		} else {
-			dessinerJeu();
+			entreeVueApp('carte', () => dessinerJeu()); // prompt 229 : la carte entre en glissant
 			dessinerMenuApp(); // prompt 103
 			bandeauEtat(); // prompt 43
 			// « Partie sauvegardée à … » n'est plus écrit sur la carte (interface simplifiée) ; la sauvegarde reste annoncée au lecteur d'écran
@@ -289,6 +290,7 @@ function draw() {
 	dessinerTransitionJour(); // prompt 43 : écran noir entre les journées, au-dessus de tout
 	dessinerClignement(); // prompt 21 § 2 : par-dessus tout, purement visuel (n'intercepte aucune entrée)
 	dessinerSousTitresSons(); // prompt 208
+	if (typeof dessinerSurcoucheDev === 'function') dessinerSurcoucheDev(); // prompt 230 : zones de clic, images par seconde, marque DEV
 	majCurseur();
 }
 /** Prompt 220 : sur ordinateur, quand l'image du jeu est réduite (fenêtre de moins de 1920 px de large), chaque cible de
@@ -563,6 +565,7 @@ const FERMETURE_FOND = {
 	fins: () => fermerFins(), // prompt 207
 	menu: fermer,
 	telephone: fermer,
+	dev: fermer, // prompt 230 : mode développeur
 };
 let ZONE_FENETRE = null; // rectangle de la fenêtre dessinée à cette image (premier panneau), null hors fenêtre
 let FENETRE_EN_DESSIN = false;
@@ -1197,12 +1200,17 @@ function bouton(x, y, l, h, label, action, desactive, secondaire) {
 	// Prompt 39 : boutons du Pixel DS — primaire (fond rouge, texte blanc), contour (bordure blanche),
 	// désactivé (fond blanc 15 %, texte blanc 50 %), arrondi 0, survol / focus en double bordure
 	const survol = !desactive && mouseX >= x && mouseX <= x + l && mouseY >= y && mouseY <= y + h;
+	// Prompt 229 : état de survol lissé et enfoncement de 2 px à l'appui (90 ms) — la zone de clic, elle, ne bouge pas
+	const cleAnim = String(label) + '|' + Math.round(x) + ',' + Math.round(y);
+	const s = typeof Mouvement !== 'undefined' ? Mouvement.survol(cleAnim, survol) : survol ? 1 : 0;
+	const y0 = y;
+	y += typeof Mouvement !== 'undefined' ? Mouvement.enfoncement(cleAnim) : 0;
 	noStroke();
 	if (desactive) {
 		fill(255, 255, 255, 38);
 		rect(x, y, l, h);
 	} else if (secondaire) {
-		fill(survol ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.05)');
+		fill(255, 255, 255, 255 * (0.05 + 0.1 * s));
 		stroke('#FFFFFF');
 		strokeWeight(2);
 		rect(x + 1, y + 1, l - 2, h - 2);
@@ -1210,12 +1218,17 @@ function bouton(x, y, l, h, label, action, desactive, secondaire) {
 		fill(C.primaire);
 		rect(x, y, l, h);
 	}
-	if (survol) {
+	// Prompt 229 : survol lissé (Mouvement.survol, « rapide ») — la double bordure apparaît en fondu
+	if (s > 0.01) {
 		noFill();
-		stroke(secondaire ? '#FFFFFF' : C.primaireTrait);
+		const cb = color(secondaire ? '#FFFFFF' : C.primaireTrait);
+		cb.setAlpha(255 * s);
+		stroke(cb);
 		strokeWeight(2);
 		rect(x - 5, y - 5, l + 10, h + 10);
-		stroke(C.fond);
+		const cf = color(C.fond);
+		cf.setAlpha(255 * s);
+		stroke(cf);
 		rect(x - 2, y - 2, l + 4, h + 4);
 	}
 	noStroke();
@@ -1229,7 +1242,7 @@ function bouton(x, y, l, h, label, action, desactive, secondaire) {
 	text(label, x + l / 2, y + h / 2);
 	zoneTexteFin();
 	textStyle(NORMAL);
-	if (!desactive) boutons.push({ x, y, l, h, action, titre: label ? String(label) : undefined }); // prompt 210 : libellé (lecteur-ecran.js)
+	if (!desactive) boutons.push({ x, y: y0, l, h, action, titre: label ? String(label) : undefined, anim: cleAnim }); // prompt 210 : libellé (lecteur-ecran.js) ; prompt 229 : clé d'animation
 }
 
 function easeOut(t) {
@@ -1258,9 +1271,11 @@ function mousePressed() {
 	if (typeof guideBloque === 'function' && guideBloque(mouseX, mouseY)) return rappelerConsigneGuide(); // prompt 181 : guide contraignant — hors de la cible, le clic est ignoré
 	if (typeof debutJeton === 'function' && debutJeton()) return; // prompt 102 : jeton d'équipe saisi (glisser-déposer)
 	if (typeof PATRON !== 'undefined' && PATRON.zoneFocus === 'barre') PATRON.zoneFocus = null; // prompt 195 : un clic hors du champ quitte la recherche de Mails (le champ, cliqué, la reprend)
+	if (fenetreEnOuverture()) return; // prompt 229 : la fenêtre s'ouvre encore
 	for (let i = boutons.length - 1; i >= 0; i--) {
 		const b = boutons[i];
 		if (mouseX >= b.x && mouseX <= b.x + b.l && mouseY >= b.y && mouseY <= b.y + b.h) {
+			if (b.anim && typeof Mouvement !== 'undefined') Mouvement.appuyer(b.anim); // prompt 229 : enfoncement du bouton
 			if (vue === 'poste') Confort.Son.clic(); // prompt 30 : clic très discret au poste
 			b.action();
 			return;
@@ -1347,6 +1362,7 @@ function keyPressed() {
 	if (arreterDemo()) return false; // prompt 48 : une touche arrête la démo automatique
 	if (CINE) return toucheVideoFin(), false; // prompt 41 ; prompt 226
 	if (GAMEOVER) return toucheGameOver(), false; // prompt 84
+	if (typeof toucheDev === 'function' && (toucheDev() || raccourciDev())) return false; // prompt 230 : mode développeur
 	if (TRANSITION_JOUR && (keyCode === ENTER || keyCode === RETURN || key === ' ' || keyCode === ESCAPE)) return passerTransitionJour(), false; // prompt 43
 	Confort.Son.demarrer(); // l'audio ne peut démarrer qu'après un geste du joueur
 	interaction();
@@ -1516,6 +1532,7 @@ function keyPressed() {
 function mouseWheel(event) {
 	interaction();
 	if (typeof guideBloque === 'function' && guideBloque(mouseX, mouseY)) return rappelerConsigneGuide(), false; // prompt 181 : molette hors de la cible du guide
+	if (typeof molletteDev === 'function' && molletteDev(event.delta)) return false; // prompt 230
 	if (typeof molletteCarte === 'function' && molletteCarte(event.delta)) return false; // prompt 106 : zoom de la carte
 	if (molletteCommunity(event.delta)) return false; // prompt 85 : défilement du fil
 	if (mollettePatron(event.delta)) return false; // prompt 86 : historique du patron
@@ -1562,15 +1579,36 @@ function dessinerPause() {
 	bouton((L - 360) / 2, H / 2 + 10, 360, 72, t('pause.reprendre'), basculerPause);
 }
 
+/** Prompt 229 : ouverture d'une fenêtre — voile en fondu, fenêtre qui monte de 16 px en passant de 97 à 100 %
+ * (Mouvement « normal » / « sortie ») ; repart quand une autre fenêtre s'ouvre ou qu'elle n'était pas dessinée */
+const FENETRE_ANIM = { nom: null, vu: -9, debut: 0 };
+function avancementFenetre() {
+	if (typeof Mouvement === 'undefined' || reduireAnimations) return 1;
+	if (frameCount - FENETRE_ANIM.vu > 1 || FENETRE_ANIM.nom !== fenetre) (FENETRE_ANIM.nom = fenetre), (FENETRE_ANIM.debut = millis());
+	FENETRE_ANIM.vu = frameCount;
+	return Mouvement.COURBES.sortie(Math.min(1, (millis() - FENETRE_ANIM.debut) / Mouvement.duree('normal')));
+}
+/** Prompt 229 : pendant les premiers 60 % de l'ouverture, les clics ne déclenchent rien (zones encore en mouvement) */
+const fenetreEnOuverture = () => !!fenetre && FENETRE_ANIM.nom === fenetre && frameCount - FENETRE_ANIM.vu <= 1 && avancementBrut() < 0.6;
+const avancementBrut = () => (typeof Mouvement === 'undefined' || reduireAnimations ? 1 : Math.min(1, (millis() - FENETRE_ANIM.debut) / Mouvement.duree('normal')));
 function dessinerFenetre() {
 	// Prompt 173 : la zone de la fenêtre (premier panneau dessiné) sert au clic sur le fond
 	ZONE_FENETRE = null;
 	FENETRE_SUITE = null; // prompt 209
 	FENETRE_EN_DESSIN = true;
 	zoneTexteCalque(); // prompt 209
+	const k = avancementFenetre();
+	push();
+	if (k < 1) {
+		drawingContext.globalAlpha = k;
+		translate(L / 2, H / 2 + 16 * (1 - k));
+		scale(0.97 + 0.03 * k);
+		translate(-L / 2, -H / 2);
+	}
 	try {
 		contenuFenetre();
 	} finally {
+		pop();
 		FENETRE_EN_DESSIN = false;
 	}
 }
@@ -1580,6 +1618,7 @@ function contenuFenetre() {
 	voile();
 	if (fenetre === 'rapport') return fenetreRapport(); // prompt 41
 	if (fenetre === 'lettre') return fenetreLettre(); // prompt 228
+	if (fenetre === 'dev') return fenetreDev(); // prompt 230
 	if (fenetre === 'mailFin') return fenetreMailFin(); // prompt 56
 	if (fenetre === 'inspection') return fenetreInspection(); // prompt 47
 	if (fenetre === 'tache') return fenetreTache(); // prompt 88
