@@ -12,5 +12,5 @@ jeu lançable (`index.html`, double clic, hors ligne), `README.md`, `manifest.js
 - Captation : vrai rendu du jeu dans Chromium 1920 × 1080 (Playwright), vidéo de 29 s
   sans son (accélérée × 1,25), réencodée en H.264 1280 × 720 ; captures refaites le 12/11/2026.
 - Le numéro de groupe **G01**, les auteurs, la licence et la fiche-source sont confirmés
-  (11–12/11/2026). Restent `[À COMPLÉTER]` dans le README : rôles, contributions nominatives
-  et part humaine de l'AI usage.
+  (11–12/11/2026). Rôles, contributions nominatives et part humaine de l'AI usage
+  complétés le 15/11/2026 à partir de l'historique git.
