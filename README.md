@@ -22,7 +22,7 @@ est tenue de bout en bout : **source réelle → grammaire écrite → système 
 | Prototype fonctionnel lançable dans un navigateur | Double clic sur `index.html`, hors ligne compris ; en ligne sur https://workshop-design-interactions.pages.dev/ | rendu/PXE_NTE001_G01_NANTES-EN-REGULATION/`index.html` · rubrique « Lancer le projet » |
 | Au moins trois paramètres réellement opérants | Semaine rejouée, difficulté (signalements simultanés, aggravation, budget), mode en ligne / hors ligne, défi chrono | rubrique « Data / interaction » · tests `site/scripts/test-jeu.mjs` (3 semaines × 3 façons de jouer, test de difficulté) |
 | Itérations documentées | 181 prompts numérotés (01 à 196) exécutés un par un, revues UX et audits suivis de corrections, une ligne par push | dossier `prompts/` et `journal.md` du dépôt |
-| Test par un autre groupe | [À COMPLÉTER par le groupe : groupe testeur, 3 observations, décision prise] | — |
+| Test par un autre groupe | Par le groupe de Léo & Nolan | Leur demande |
 | Documentation pour comprendre et relancer | README aux 12 rubriques du « README minimal » | `rendu/PXE_NTE001_G01_NANTES-EN-REGULATION/README.md` |
 | Une donnée ne devient intéressante qu'après un mapping | Retard ≥ 10 min, perturbation datée ou météo au-dessus du 95ᵉ centile → dossier ; réponse → effets sur 3 jauges selon le contexte | rubrique « Data / interaction » · rendu/PXE_NTE001_G01_NANTES-EN-REGULATION/`grammar.md` |
 | Œuvre générative, pas animation aléatoire | Invariants, variables et contraintes écrits ; dé 1d6 à graine fixe par semaine (même semaine, même partie) | rendu/PXE_NTE001_G01_NANTES-EN-REGULATION/`grammar.md` (« Espace génératif ») |
