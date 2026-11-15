@@ -1006,7 +1006,7 @@ verifier(!JSON.stringify(en.traces.mails).includes('[À COMPLÉTER]'), 'mails an
 			// sur des perturbations réelles (mêmes lignes, dates et heures), pour couvrir ces deux catégories
 			const types = d0.type === 'perturbation' && d0.lignes && d0.lignes.length ? [{}, { type: 'ligne en difficulté' }, { texte_source: 'Accident — ' + d0.texte_source }] : [{}];
 			for (const v of types) for (const date of dates) for (const heure of ['12:00', '08:00']) for (const retard of (v.type || d0.type) === 'ligne en difficulté' ? [10, 30] : [d0.retard]) {
-				const d = Object.assign({}, d0, v, { date, heure, retard });
+				const d = Object.assign({}, d0, v, { date, heure, minute: heure === '08:00' ? 480 : 720, retard }); // prompt 164 : la pointe suit l'heure de jeu
 				const c = Jeu.categorie(d); if (!c) continue;
 				out.cats[c] = out.cats[c] || 0;
 				const sc = Jeu.actionsPossibles(d).map((k) => [k, Jeu.effetsAttendus(k, d).reduce((a, b) => a + b, 0)]).sort((a, b) => b[1] - a[1]);
@@ -4803,6 +4803,41 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	const mj = readFileSync(join(pub, 'menu.js'), 'utf8');
 	verifier(!/if \(!\(typeof PORTRAIT !== 'undefined' && PORTRAIT\.actif\)\) dessinerLogoPXE/.test(mj) && /dessinerLogoPXE\(xLogo, HAUT_MENU\.y, HAUT_MENU\.h\)/.test(mj) && /PORTRAIT\.actif \? 16 : HAUT_MENU\.marge/.test(mj), '231 : logo dessiné et cliquable en mobile, hors de la colonne recomposée');
 	verifier(/region\(\{ x: xLogoMenu\(\) - 8, y: HAUT_MENU\.y - 8, l: 88, h: HAUT_MENU\.h \+ 16 \}, 20, 30, 176\)/.test(readFileSync(join(pub, 'portrait.js'), 'utf8')), '231 : logo recomposé en haut à gauche (×2, ≥ 44 px CSS)');
+}
+
+// ——— Prompt 164 : contexte avant la décision, trois vraies répliques, raison cohérente ———
+{
+	const c = contexte('fr');
+	const r = vm.runInContext(
+		`(() => {
+		const out = { jumeaux: [], pointe: null, renf: null };
+		for (const lundi of Jeu.semainesProposees().map((x) => x.lundi)) {
+			Jeu.chargerSemaine(lundi); Jeu.nouvellePartie();
+			Jeu.paquet.forEach((d) => {
+				if (!Jeu.categorie(d)) return;
+				const tout = Jeu.reponsesDe(d).map((x) => Jeu.categorie(d) + '.' + x.id);
+				const best = Jeu.meilleureReponse(d);
+				const rien = (k) => Jeu.familleDe(k) === 'rien';
+				// même tirage que reponsesDialogue : si la meilleure est « attendre », le clash ne la double pas
+				if (rien(best)) {
+					const autres = tout.filter((k) => k !== best && !rien(k));
+					if (!autres.length) out.jumeaux.push(d.type);
+				}
+			});
+		}
+		const d = Object.assign({}, Jeu.paquet[0], { heure: '12:00', minute: 17 * 60 + 30 });
+		out.pointe = Jeu.contexteDossier(d).pointe && !Jeu.contexteDossier(Object.assign({}, d, { heure: '17:30', minute: 12 * 60 })).pointe;
+		out.renf = Array.isArray(Jeu.renfortsContexte(d, Jeu.actionsPossibles(d)[0])) && Jeu.renfortsContexte(d, 'temps').length === 0;
+		return out;
+	})()`,
+		c,
+	);
+	verifier(r.pointe, '164 : la pointe se lit sur l\'heure de jeu (d.minute), pas sur l\'heure de la source');
+	verifier(r.renf && r.jumeaux.length === 0, `164 : « effet renforcé » calculé par réponse ; toujours une autre réponse pour porter le clash (${r.jumeaux})`);
+	const lire = (x) => readFileSync(join(pub, x), 'utf8');
+	const pa = lire('panneau.js');
+	verifier(/function ligneContexteDossier\(d\)/.test(pa) && /const porteClash = rien\(a\) \?/.test(pa) && /t\(grave \? 'raison\.grave' : 'raison\.calme'/.test(pa), '164 : ligne de contexte avant les répliques, clash sur une autre famille, plus de « calme » après un dossier grave');
+	verifier(/const SEUILS_METEO_ENQ = \{ pluie: 5, vent: 50 \}/.test(lire('enquete.js')) && /Jeu\.renfortsContexte\(r\.dossier, r\.action\)/.test(lire('sketch.js')) && /k === 'ton\.neutre\.v2' && Jeu\.gravite\(d\) === 'elevee'/.test(lire('game.js')), '164 : seuils météo alignés, « effet renforcé » seulement s\'il a joué, pas de « Rien d\'alarmant » après un dossier grave');
 }
 
 if (erreurs.length) {

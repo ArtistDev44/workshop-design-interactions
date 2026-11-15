@@ -1,6 +1,6 @@
 # Prompt 229 — Jeu : des animations modernes, cohérentes et réduites sur demande
 
-Origine : demande du 15/11/2026 (« modernise les animations »). Statut : **à exécuter**.
+Origine : demande du 15/11/2026 (« modernise les animations »). Statut : **exécuté le 15/11/2026**.
 
 ## Constat
 

@@ -244,6 +244,17 @@ function dessinerPanneauSignalement(d, x, base) {
 		textAlign(LEFT, TOP);
 	}
 	if (phase === 'contradiction') return dessinerChoixSource(d, x + 32, yr, l);
+	// Prompt 164 : la ligne de contexte, juste avant les répliques — ce qui fait varier leurs tendances
+	if (!PLUS.ouvert) {
+		const lc = ligneContexteDossier(d);
+		const oc = { taille: 18, interligne: 22, couleur: DS.blanc75, police: POLICE_DONNEES, maxLignes: 2 }; // deux lignes au plus, jamais tronquée sans le dire
+		const hc = lc ? hauteurTexte(lc, l, oc) : 0;
+		const yc = yr - hc - 12;
+		if (lc && yc > y + (peutPublierDossier(d) ? hCible(52, 70) + 8 : 4)) {
+			dessinerTexte(lc, x + 32, yc, l, oc);
+			zoneTexteDeclarer('contexteDossier', x + 32, yc, l, hc);
+		}
+	}
 	dsTexte(t('dialogue.titre'), x + 32, yr, 18, DS.blanc75, 'left');
 	// Prompt 211 : les noms des jauges une seule fois, en en-tête de colonnes ; sous chaque réplique, les symboles seuls
 	if (!compact) {
@@ -281,6 +292,20 @@ function dessinerPanneauSignalement(d, x, base) {
 	dsTexte(t('dialogue.plusAide'), x + 92, py + 34, 16, DS.blanc50, 'left');
 	boutons.push({ x: x + 32, y: py, l, h: hP, action: basculerPlus });
 	cibleGuide('sources', x + 32, py, l, hP);
+}
+/** Prompt 164 : « Contexte : pluie 6 mm, rafales 52 km/h (défavorable) · 17 h, pointe · affluence · budget bas (38) » —
+ * ce qui fait varier les tendances des répliques (effetAttendu) : météo réelle, heure de jeu, affluence, jauge en manque */
+function ligneContexteDossier(d) {
+	if (!d || !Jeu.contexteDossier) return '';
+	const ctx = Jeu.contexteDossier(d);
+	const m = (Jeu.meteoDuJour && Jeu.meteoDuJour(d.date)) || {};
+	const morceaux = [];
+	if (ctx.meteo) morceaux.push(t('contexte.meteo', { pluie: String(Math.round((m.pluie_mm || 0) * 10) / 10).replace('.', Langue.actuelle === 'fr' ? ',' : '.'), vent: Math.round(m.rafales_max || 0) }));
+	if (typeof d.minute === 'number') morceaux.push(t(ctx.pointe ? 'contexte.pointe' : 'contexte.creuse', { h: Math.floor(d.minute / 60) }));
+	if (ctx.affluence) morceaux.push(t('contexte.affluence'));
+	const basse = ['fluidite', 'reputation', 'budget'].slice().sort((a, b) => Jeu.jauges[a] - Jeu.jauges[b])[0];
+	if (Jeu.jauges[basse] < 45) morceaux.push(t('contexte.basse', { jauge: t('jaugeCourt.' + basse).toLowerCase(), v: Math.round(Jeu.jauges[basse]) }));
+	return morceaux.length ? t('contexte.ligne', { liste: morceaux.join(' · ') }) : '';
 }
 /** Prompt 116 : les répliques d'un dossier, le pseudo du plaignant cité une seule fois */
 function repliquesDuDossier(rs, d) {
@@ -497,7 +522,10 @@ function reponsesDialogue(d) {
 	if (!autres.length) autres = tout.filter((r) => r !== a);
 	const b = autres[(idx * 3) % autres.length];
 	const attendre = tout.find(rien) || tout[tout.length - 1];
-	const c = Object.assign({}, attendre, { clash: true });
+	// Prompt 164 : trois vraies répliques — si la meilleure est déjà « attendre », le clash porte sur une autre réponse
+	// (ni la meilleure, ni la deuxième), pour que les trois effets diffèrent
+	const porteClash = rien(a) ? tout.find((r) => r !== a && r !== b) || attendre : attendre;
+	const c = Object.assign({}, porteClash, { clash: true });
 	const trio = [a, b, c];
 	return PERMUTATIONS_3[(idx * 5 + 2) % 6].map((k) => trio[k]);
 }
@@ -543,10 +571,14 @@ function explicationDecision(r, sansEffets) {
 	let pourquoi = sit ? sit.split('+').map((s) => t(RAISONS[s] || 'raison.calme')).join(', ') : '';
 	// Prompt 130 : le conseil suit aussi la jauge en manque — le dire quand elle est basse (sous 45)
 	if (e.jaugeBasse && e.valeurBasse !== undefined && e.valeurBasse < 45) pourquoi = t('raison.besoin', { jauge: t('jaugeTitre.' + e.jaugeBasse), v: e.valeurBasse }) + (pourquoi ? ', ' + pourquoi : '');
+	// Prompt 164 : jamais « la situation est calme » pour un dossier grave, un incident fictif ou une alerte
+	const d0 = r.dossier;
+	const grave = d0 && (Jeu.gravite(d0) === 'elevee' || d0.type === 'incident fictif' || d0.type === 'alerte météo');
+	if (!pourquoi) pourquoi = t(grave ? 'raison.grave' : 'raison.calme', { g: d0 ? t('gravite.' + Jeu.gravite(d0)) : '' });
 	const ev = Jeu.evaluer(e);
-	if (ev === 'bon') lignes.push(t('retour.bon', { pourquoi: pourquoi || t('raison.calme') }));
+	if (ev === 'bon') lignes.push(t('retour.bon', { pourquoi }));
 	else if (e.cleAction === 'temps') lignes.push(t('retour.tard', { meilleure: String(e.meilleureAction) }));
-	else lignes.push(t('retour.mieux', { meilleure: String(e.meilleureAction), pourquoi: pourquoi || t('raison.calme') }));
+	else lignes.push(t('retour.mieux', { meilleure: String(e.meilleureAction), pourquoi }));
 	return lignes;
 }
 

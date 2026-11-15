@@ -38,3 +38,25 @@ ou recalculer la gravité, hiérarchie plainte / fait réel.
   « calme » après une gravité élevée.
 - Annonce vérifiée dans `#annonces` à l'ouverture d'un dossier.
 - `npm run build` puis `npm test` ; audit des textes ; `prompts/README.md` et `journal.md`.
+
+## Exécuté le 15/11/2026 (sur le code actuel ; branche `164b-…`, l'essai partiel de `wdi-164` n'est pas repris)
+
+1. **Ligne de contexte** avant « Vos réponses » (`ligneContexteDossier`, `panneau.js`) : « Contexte : pluie 7,4 mm,
+   rafales 31 km/h (défavorable) · 17 h, pointe · budget en manque (5) » — météo réelle quand elle est défavorable,
+   heure de jeu (pointe ou creuse), affluence supposée, jauge sous 45 ; deux lignes au plus, jamais tronquée en silence.
+2. **Pointe sur l'heure de jeu** (`contexte`, `game.js`) : `d.minute` (heure affichée), l'heure de la source en repli ;
+   le Journal en profite (il lit le même contexte). Le contrôle d'équilibre des réponses varie désormais l'heure de jeu.
+3. **« (effet renforcé) »** seulement si un bonus de contexte a vraiment joué sur la réponse choisie
+   (`Jeu.renfortsContexte`, même règle qu'`effetAttendu`), et il nomme lequel ; jamais après un clash.
+4. **Seuils météo alignés** : le ⚠ de la source Météo suit le contexte (pluie ≥ 5 mm, rafales ≥ 50 km/h).
+5. **Trois vraies répliques** : quand la meilleure est « attendre », le clash porte sur une autre réponse.
+6. **Raison cohérente** : « le signalement est de gravité élevée » au lieu de « la situation est calme » après un
+   dossier grave, un incident fictif ou une alerte ; plus de « Rien d'alarmant » après un dossier grave.
+7. Déjà fait par le prompt 213 (répliques et tendances annoncées au lecteur d'écran à l'arrivée du dossier).
+8. Déjà fait par le prompt 184 (plus de liste des écarts ; le dé seulement avec l'option « Dé visible »).
+
+Au passage : 21 répliques du prompt 223 raccourcies (elles étaient coupées par « … » sur deux lignes), double guillemet
+retiré du clash des perturbations.
+
+Vérifié : `npm run build`, `npm test` (+4 contrôles) ; Chromium : ligne de contexte sur un dossier réel ; audit : 0
+défaut de texte, 0 cible sous 44 px CSS en 1920 × 1080, 1366 × 768, 412 × 915, 915 × 412.

@@ -576,7 +576,8 @@
 	/* Contexte du dossier (Q24) : météo défavorable, heure de pointe, affluence. */
 	function contexte(d) {
 		const m = Jeu.meteoDuJour(d.date) || {};
-		const h = d.heure ? Number(d.heure.slice(0, 2)) : null;
+		// Prompt 164 : la pointe se lit sur l'heure de JEU affichée au joueur (d.minute), plus sur l'heure de la source
+		const h = typeof d.minute === 'number' ? Math.floor(d.minute / 60) : d.heure ? Number(d.heure.slice(0, 2)) : null;
 		return {
 			meteo: d.type === 'alerte météo' || (m.pluie_mm || 0) >= 5 || (m.rafales_max || 0) >= 50,
 			pointe: h !== null && ((h >= 7 && h < 9) || (h >= 17 && h < 19)),
@@ -584,6 +585,24 @@
 		};
 	}
 
+	/** Prompt 164 : contexte d'un dossier (météo défavorable, pointe, affluence), lecture seule */
+	Jeu.contexteDossier = (d) => (d ? contexte(d) : { meteo: false, pointe: false, affluence: false });
+	/** Prompt 164 : facteurs de contexte qui ont VRAIMENT renforcé l'effet de cette réponse (sinon []) — même règle que
+	 * effetAttendu : réponse de catégorie → bonus si sa liste de situations contient la situation du dossier ;
+	 * table de repli → météo sur la fluidité, pointe / affluence sur la réputation */
+	Jeu.renfortsContexte = function (d, action) {
+		if (!d || !action || action === 'temps') return [];
+		const reponse = Jeu.reponse(d, action);
+		if (reponse) {
+			const sit = Jeu.situation(d);
+			if (!reponse.situations.includes(sit) || !reponse.base.some((b) => b > 0)) return [];
+			return sit.split('+').filter((s) => s !== 'calme');
+		}
+		const ctx = contexte(d);
+		const eff = REGLAGES.effets[action];
+		if (!eff) return [];
+		return [eff.base[0] && ctx.meteo ? 'meteo' : null, eff.base[1] && ctx.pointe ? 'pointe' : null, eff.base[1] && ctx.affluence ? 'affluence' : null].filter(Boolean);
+	};
 	/** Prompt 213 : « 45 min », « 1 h 20 » */
 	const dureeCourte = (m) => (m >= 60 ? Math.floor(m / 60) + ' h ' + String(m % 60).padStart(2, '0') : m + ' min');
 	function borner(v) {
@@ -814,7 +833,7 @@
 				communique: r.communique ? T('narr.communique') : '',
 				source: r.mauvaiseSource ? T('narr.mauvaiseSource') : '',
 				// prompt 184 : plus de liste des écarts dans la narration — les jauges animées la portent, le Journal la détaille
-				reaction: T(Jeu.variante('ton.' + ton, 'ton|' + Jeu.paquet.indexOf(d))), // prompt 88 : 3 variantes
+				reaction: T(((k) => (k === 'ton.neutre.v2' && Jeu.gravite(d) === 'elevee' ? 'ton.neutre' : k))(Jeu.variante('ton.' + ton, 'ton|' + Jeu.paquet.indexOf(d)))), // prompt 88 : 3 variantes ; prompt 164 : pas de « Rien d'alarmant » après un dossier grave
 			}),
 			ton,
 		};

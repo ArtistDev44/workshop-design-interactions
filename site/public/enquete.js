@@ -101,7 +101,7 @@ function texteSource(cle, d) {
 // Les textes des sources sont cités tels quels après un simple nettoyage typographique (texte.js).
 // =====================================================================
 const TAILLES_ENQ = { corps: 22, citation: 21, meta: 18, entete: 16 };
-const SEUILS_METEO_ENQ = { pluie: 1, vent: 40 }; // seuils de « mauvais temps » du jeu (Jeu.meteoAggravante)
+const SEUILS_METEO_ENQ = { pluie: 5, vent: 50 }; // prompt 164 : mêmes seuils que le contexte « météo défavorable » (game.js, contexte)
 const PICTOS_ENQ = {
 	lignes: ['.#####.', '#.....#', '#######', '#.#.#.#', '#######', '.#...#.', '#.....#'],
 	trafic: ['...#...', '..#.#..', '..#.#..', '.#.#.#.', '.#...#.', '#...#.#', '#######'],
