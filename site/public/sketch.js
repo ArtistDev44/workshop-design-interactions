@@ -946,9 +946,11 @@ function dessinerNarration() {
 	// renforcé l'effet, l'explication (pourquoi, meilleure réponse) et la phrase de contexte réelle.
 	textFont(POLICE_DONNEES);
 	textSize(18);
-	const ctx = [r.contexte.meteo && t('ctx.meteo'), r.contexte.pointe && t('ctx.pointe'), r.contexte.affluence && t('ctx.affluence')].filter(Boolean);
+	// Prompt 164 : « (effet renforcé) » seulement si un bonus de contexte a réellement été appliqué à la réponse — et lequel
+	const renf = Jeu.renfortsContexte ? Jeu.renfortsContexte(r.dossier, r.action) : [];
+	const ctx = renf.map((s) => t(s === 'forte' ? 'ctx.forte' : s === 'long' ? 'ctx.long' : 'ctx.' + s));
 	fill(C.gris);
-	if (ctx.length) text(t('narration.contexte', { liste: ctx.join(', ') }), z.x + 32, z.y + 470);
+	if (ctx.length && !r.clash) text(t('narration.contexte', { liste: ctx.join(', ') }), z.x + 32, z.y + 470);
 	// Prompt 74 : une phrase de contexte tirée de la situation réelle (météo, heure, ligne, agenda)
 	// Prompt 87 : avant elle, l'explication — ce qui s'est passé, et pourquoi (ou quelle réponse convenait mieux)
 	const expl = explicationDecision(r, true).concat(r.contexteNarr ? [t(r.contexteNarr.cle, r.contexteNarr.vars)] : []);

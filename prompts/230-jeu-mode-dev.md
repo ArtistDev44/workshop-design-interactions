@@ -1,7 +1,7 @@
 # Prompt 230 — Jeu : un mode développeur complet, ouvert par le logo du menu
 
 Origine : demande du 15/11/2026 (« un mode dev qui me servira notamment à voir les différentes animations ; complet
-dès le début ; accessible en cliquant sur le logo du jeu vidéo dans le menu »). Statut : **à exécuter**.
+dès le début ; accessible en cliquant sur le logo du jeu vidéo dans le menu »). Statut : **exécuté le 15/11/2026**.
 
 ## Accès
 
