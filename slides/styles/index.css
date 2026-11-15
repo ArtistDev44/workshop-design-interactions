@@ -36,7 +36,7 @@
 	unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 /* Bitsy Pixels — police pixel de Paolo Munna « paolomu » (https://paolomu.itch.io/bitsy-pixels).
-   Fichier non versionné (licence de redistribution [À COMPLÉTER]) : reconnue si installée sur la machine de
+   Fichier non versionné (licence de redistribution non vérifiée) : reconnue si installée sur la machine de
    projection ; sinon les titres retombent sur JetBrains Mono ExtraBold en capitales (même pile que le jeu). */
 @font-face {
 	font-family: 'Bitsy Pixels';

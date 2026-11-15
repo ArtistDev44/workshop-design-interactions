@@ -74,7 +74,7 @@ fonction pure `Jeu.finDeSemaine(signaux)` → clé de la table.
 
 - Démission et licenciement inchangés ; palmarès séparé du Défi chrono inchangé.
 - Pas de nouvelle donnée inventée : les fins sont de la fiction de personnages (patron, Camille) ; tout chiffre cité vient
-  du bilan réel. Inconnu → `"[À COMPLÉTER]"`.
+  du bilan réel. Inconnu → `"[non renseigné]"`.
 - Accessibilité : contraste ≥ 4,5:1, clavier, `prefers-reduced-motion`, pas de flash ; la galerie se lit sans souris.
 - Sauvegardes anciennes : signaux absents = 0, pas d'erreur.
 - `npm run build` puis `npm test` avant le push ; `jeu/207-dix-fins-posture.md` (table finale des seuils, répartition

@@ -97,7 +97,7 @@ tests 163 et 207 sont mis à jour.
   - **0 défaut** en 1920 × 1080 et en 1366 × 768 ;
   - en 412 × 915 : 9 défauts « D » dans l'aide portrait, **les mêmes que sur `main`**, donc antérieurs à ce prompt.
 - **Non vérifié :** une partie complète jouée au clavier, avec animations réduites et un vrai lecteur d'écran.
-  [À COMPLÉTER]
+  [non renseigné]
 
 ## Limites
 
@@ -106,4 +106,4 @@ tests 163 et 207 sont mis à jour.
 - La perte de patience est **comptée à la décision**. Pendant l'attente, elle se voit sur la barre de la carte et
   dans l'infobulle, mais la jauge ne bouge pas avant la réponse.
 - Le contrecoup du café n'est pas sauvegardé : après une reprise de partie, il ne tombe pas.
-- Ressenti des joueurs : [À COMPLÉTER].
+- Ressenti des joueurs : [non renseigné].

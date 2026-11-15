@@ -64,4 +64,4 @@ Aucune donnée inventée : chaque interaction cite le fait réel du dossier ; ps
   tirages), même graine → mêmes textes, autre graine → autre habillage, anglais identique, reprise de
   sauvegarde fidèle ; `Jeu.hasard` reproductible ; historique circulaire borné.
 - Audit des textes `?audit=textes&parcours=1` (FR + EN) : voir `journal.md`.
-- Ressenti joueur (le fil paraît-il vivant sans saturer ?) : [À COMPLÉTER] en salle.
+- Ressenti joueur (le fil paraît-il vivant sans saturer ?) : [non renseigné] en salle.

@@ -24,7 +24,7 @@ Captures après correction : `jeu/204-captures/`.
 - Vérifié à l'écran (1366 × 768) : dossier « alerte météo » ouvert → zoom ×4, marqueur à droite de la fiche et à côté
   des équipes (capture 03) ; Community sans réponse surlignée ; Journal, Données et mail de fin de semaine sans
   chevauchement ; « 1 dossier traité sur 16 ».
-- Non vérifié : lecteur d'écran réel ; ressenti joueur `[À COMPLÉTER]`.
+- Non vérifié : lecteur d'écran réel ; ressenti joueur `[non renseigné]`.
 
 ## Limites
 

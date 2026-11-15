@@ -148,10 +148,10 @@ fiche d'enquête un à la fois.
 ### Décisions de groupe (§ 6) — non tranchées, choix conservateur appliqué
 | # | Question | Appliqué |
 |---|---|---|
-| D1 | Rouge réservé à l'action primaire seule, ou aussi à l'élément le plus urgent ? | [À COMPLÉTER] — état actuel gardé : rouge pour la sélection (jour du Journal, onglet actif), le primaire et le liseré d'un dossier raté ; tout le reste en blanc ou en couleur claire |
+| D1 | Rouge réservé à l'action primaire seule, ou aussi à l'élément le plus urgent ? | [non renseigné] — état actuel gardé : rouge pour la sélection (jour du Journal, onglet actif), le primaire et le liseré d'un dossier raté ; tout le reste en blanc ou en couleur claire |
 | D2 | Panneau Indicateurs replié par défaut ? | **Oui** (décision du groupe, 12/11/2026) — replié sur les trois jauges (nom, valeur, barre, dernière variation) ; objectif du jour, palier de budget, statut auprès du patron, grade et badges au survol du panneau, ou épinglés par « Détails (V) » (bouton au même endroit dans les deux états, utilisable au toucher) |
-| D3 | Colonne Nantes de Community : masquée sous quelle largeur, ou déplacée en onglet ? | [À COMPLÉTER] — non modifiée (déjà absente en portrait) |
-| D4 | Actions secondaires du Journal : menu « … » ou raccourcis visibles ? | [À COMPLÉTER] — non modifié (« Copier le résumé (C) » reste en bas à gauche) |
+| D3 | Colonne Nantes de Community : masquée sous quelle largeur, ou déplacée en onglet ? | [non renseigné] — non modifiée (déjà absente en portrait) |
+| D4 | Actions secondaires du Journal : menu « … » ou raccourcis visibles ? | [non renseigné] — non modifié (« Copier le résumé (C) » reste en bas à gauche) |
 
 ### Écarts aux cibles du § 5, justifiés
 - **−30 % d'éléments** atteint ou approché sur le Journal (jour −29 / −46 %, semaine −29 / −20 %), pas sur Community
@@ -171,7 +171,7 @@ fiche d'enquête un à la fois.
   d'onglet Community. En 412×915 tactile : actions de ligne toujours visibles.
 - Contraste : le texte secondaire reste au minimum `DS.blanc50` (5,3:1) ; les évaluations passent en couleurs claires
   (≥ 12:1). Aucune animation ni flash ajouté.
-- Test humain (lisibilité ressentie, test croisé) : [À COMPLÉTER].
+- Test humain (lisibilité ressentie, test croisé) : [non renseigné].
 
 ## Vérification intégrale du 12/11/2026 (prompt 100)
 
@@ -192,7 +192,7 @@ Jour J3, avant le freeze de midi. Seul ce qui a été exécuté et observé est 
 | Accessibilité de l'interaction | micro et webcam doublés au clavier/souris, pas de flash (≤ 3/s), son non indispensable, contraste calculé | ✅ |
 | Webcam : responsabilité | `webcam.js` : 48 × 27 px, jamais affichée, enregistrée ni envoyée ; activée par un geste | ✅ |
 | Cartel 80–120 mots + source + système | 106 mots ; Système, Données et chaîne ajoutés au `cartel.md` de `rendu/` ; registre aligné (4 réponses, perturbations datées) | ✅ |
-| Manifest | `manifest.json` : JSON valide, 16 champs de l'édition, auteurs, sources et droits ; `ai_usage` avec part humaine `[À COMPLÉTER]` | ⚠️ |
+| Manifest | `manifest.json` : JSON valide, 16 champs de l'édition, auteurs, sources et droits ; `ai_usage` avec part humaine `[non renseigné]` | ⚠️ |
 | Captation | `hero.jpg`, `detail-01.jpg`, `process.jpg` 1920×1080, `thumb.jpg` 640×360, `demo.mp4` **28 s** H.264 1280×720 (`ffprobe`) | ✅ |
 | Structure de dossier recommandée | `rendu/PXE_NTE001_G01_NANTES-EN-REGULATION/` **resynchronisé** avec `site/public/` (polices, correctifs du jour) | ✅ |
 | Présentation | `/presentation/` (Slidev, 17 slides), hors ligne, 0 erreur console | ✅ |
@@ -240,7 +240,7 @@ Seuls les points réellement exécutés et observés sont cochés (Chromium 156 
   aucun `fetch` dans un fichier qui définit `draw()`.
 - [x] **Doc ↔ code** : `jeu/README.md` liste les 95 `jeu/*.md` ; symboles cités absents du code tous signalés comme
   retirés dans leur doc (ou API p5 / Slidev) ; compte de prompts mis à jour (102 fichiers, 01 à 99 ; il annonçait encore 93).
-- [ ] Essais humains (pouce, clavier seul par un novice, micro, webcam, test croisé) : [À COMPLÉTER].
+- [ ] Essais humains (pouce, clavier seul par un novice, micro, webcam, test croisé) : [non renseigné].
 
 ### 2. Problèmes trouvés et corrigés
 - **Polices du DS** (modification locale non commitée trouvée en début de séance) : dossier `site/public/fonts/`
@@ -275,7 +275,7 @@ Seuls les points réellement exécutés et observés sont cochés (Chromium auto
   aucun appel réseau dans `draw()` (téléphone : au clic, 10 min, 6 s).
 - [ ] Contraste et daltonisme : non re-mesurés à l'outil aujourd'hui (couleurs des nouvelles fenêtres reprises du
   design system) — à refaire avec un outil de contraste.
-- [ ] Essais humains (micro, webcam, QR, test de jeu des prompts 88 à 91) : [À COMPLÉTER].
+- [ ] Essais humains (micro, webcam, QR, test de jeu des prompts 88 à 91) : [non renseigné].
 
 ### 2. Problèmes trouvés et corrigés
 - **Messagerie du patron figée** (prompt 91 § 1) : `journal.js` redéfinissait la fonction globale `hauteurCarte` de
@@ -345,7 +345,7 @@ scripts Node ; essais humains en salle à prévoir pour le micro, la webcam et l
   `rendu/` resynchronisée, PDF régénérés, relancée hors ligne sans erreur.
 
 ### Reste ouvert (et pourquoi)
-- Saisies humaines `[À COMPLÉTER]` : auteurs, contributions, licence, numéro G01, propriété écartée.
+- Saisies humaines `[non renseigné]` : auteurs, contributions, licence, numéro G01, propriété écartée.
 - Scan réel des QR codes ; essais micro et webcam avec de vrais périphériques (seuils en salle).
 - Variante du prompt 30 du collaborateur non fusionnée : à arbitrer.
 - Licences vérifiées à la source le 11/11/2026 : Hub'Eau (Licence Ouverte Etalab, CGU § 5.1.3) ; Loyalty Freak Music (CC0 1.0 sur Free Music Archive ; la revue Commons reste en attente).
@@ -451,11 +451,11 @@ prompts 72 à 80). Le retard qui s'aggrave (prompt 79) ne se voit qu'en mode « 
 de retard chiffré). Webcam et micro réels : à essayer en salle (prompts 54, 57, 67).
 
 ## Test joueur novice (prompt 97, à faire)
-- Joueur hors projet, semaine 1, sans aide extérieure : 3e décision atteinte en moins de 2 min ? [À COMPLÉTER]
-- Dit à voix haute ce qu'il doit préserver (les 3 jauges) ? [À COMPLÉTER]
-- Verbatim 1 : [À COMPLÉTER]
-- Verbatim 2 : [À COMPLÉTER]
-- Verbatim 3 : [À COMPLÉTER]
+- Joueur hors projet, semaine 1, sans aide extérieure : 3e décision atteinte en moins de 2 min ? [non renseigné]
+- Dit à voix haute ce qu'il doit préserver (les 3 jauges) ? [non renseigné]
+- Verbatim 1 : [non renseigné]
+- Verbatim 2 : [non renseigné]
+- Verbatim 3 : [non renseigné]
 
 ## Revue UI / HUD (prompt 98, 11/11/2026)
 Les écrans ont été audités par le parcours `?audit=textes&parcours=1` : 59 étapes, en FR et en EN, avec et sans contraste renforcé, en 1920×1080 et en mobile portrait. Détail dans `jeu/94-revue-ui-hud.md`.
@@ -470,7 +470,7 @@ Les écrans ont été audités par le parcours `?audit=textes&parcours=1` : 59 �
 | Journal (jour et semaine) | axes et légendes à 12-13 px | 14 px |
 
 - Défauts A à D : 0 avant comme après.
-- Tests humains (pouce seul en mobile portrait, clavier seul de bout en bout) : [À COMPLÉTER].
+- Tests humains (pouce seul en mobile portrait, clavier seul de bout en bout) : [non renseigné].
 
 ## Tests humains — protocole (prompt 192, rédigé le 12/11/2026, à exécuter par le groupe)
 
@@ -502,16 +502,16 @@ Un autre groupe joue 60 secondes sans consigne, note 3 observations et rend le j
 - Partie complète à la souris, au clavier et sur mobile (`jeu/105-109-carte-dialogue-equipes.md`).
 - Durée réelle d'une semaine (10 à 20 min visées, prompt 190) : chronométrer.
 
-### 4. Gabarit à remplir — Tests humains du [À COMPLÉTER]
+### 4. Gabarit à remplir — Tests humains du [non renseigné]
 
 | Testeur | Profil (âge, habitude de jeu) | Compris à la décision n° / temps | Première erreur | Game feel | Entrées utilisées | Verbatim |
 |---|---|---|---|---|---|---|
-| T1 | [À COMPLÉTER] | [À COMPLÉTER] | [À COMPLÉTER] | [À COMPLÉTER] | [À COMPLÉTER] | « [À COMPLÉTER] » |
-| T2 | [À COMPLÉTER] | [À COMPLÉTER] | [À COMPLÉTER] | [À COMPLÉTER] | [À COMPLÉTER] | « [À COMPLÉTER] » |
-| T3 | [À COMPLÉTER] | [À COMPLÉTER] | [À COMPLÉTER] | [À COMPLÉTER] | [À COMPLÉTER] | « [À COMPLÉTER] » |
+| T1 | [non renseigné] | [non renseigné] | [non renseigné] | [non renseigné] | [non renseigné] | « [non renseigné] » |
+| T2 | [non renseigné] | [non renseigné] | [non renseigné] | [non renseigné] | [non renseigné] | « [non renseigné] » |
+| T3 | [non renseigné] | [non renseigné] | [non renseigné] | [non renseigné] | [non renseigné] | « [non renseigné] » |
 
-**Test croisé du [À COMPLÉTER]** — groupe [À COMPLÉTER] : 1. [À COMPLÉTER] · 2. [À COMPLÉTER] · 3. [À COMPLÉTER]
+**Test croisé du [non renseigné]** — groupe [non renseigné] : 1. [non renseigné] · 2. [non renseigné] · 3. [non renseigné]
 
 **Synthèse** (après les tests) : les 3 frictions les plus citées → propositions d'amélioration, chacune en prompt
-séparé (ce prompt mesure, il ne corrige pas) : [À COMPLÉTER].
+séparé (ce prompt mesure, il ne corrige pas) : [non renseigné].
 

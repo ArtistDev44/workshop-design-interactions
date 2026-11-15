@@ -33,5 +33,5 @@ qui est répété ; il ne suffit pas à juger l'encombrement. Mesures complètes
 - `npm run build` vert ; `npm test` : 460 + 541 contrôles réussis.
 - Audit des textes (`?audit=textes`, pane 1024×768) : 0 défaut dans Patron, Community, Journal. 8 défauts
   ailleurs (ligne de sauvegarde du menu titre, une notification en anglais), liés à la petite taille du pane et à
-  une sauvegarde locale ; non vérifiés sur `main` en 1920×1080 : [À COMPLÉTER].
-- Test humain à l'œil sur grand écran : [À COMPLÉTER].
+  une sauvegarde locale ; non vérifiés sur `main` en 1920×1080 : [non renseigné].
+- Test humain à l'œil sur grand écran : [non renseigné].

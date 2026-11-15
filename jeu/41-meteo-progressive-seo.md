@@ -27,7 +27,7 @@
 - **Image OG** `og-image.jpg` (1200×630, 60 ko) : capture du **vrai rendu** de l'écran titre du jeu, recadrée. Rien d'inventé.
 - **Favicon** : nouveau pictogramme pixel du jeu (moniteur à écran rouge du Pixel Design System, ligne de bus, deux arrêts), en `favicon.svg`, `favicon.ico` (16/32/48), `apple-touch-icon.png` (180) et `icon-192` / `icon-512` (rendu au plus proche voisin). Il remplace l'ancien favicon par défaut d'Astro.
 - `manifest.webmanifest` (nom, couleurs, icônes, plein écran).
-- Données structurées JSON-LD `VideoGame` : nom, URL, description, langues, genre, plateforme, gratuit, image. Aucun auteur indiqué, l'information étant encore `[À COMPLÉTER]`.
+- Données structurées JSON-LD `VideoGame` : nom, URL, description, langues, genre, plateforme, gratuit, image. Aucun auteur indiqué, l'information étant encore `[non renseigné]`.
 - Aucun service externe ni traceur.
 
 ## Vérifications

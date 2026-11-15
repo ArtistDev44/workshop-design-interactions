@@ -48,7 +48,7 @@ Règles :
   - ordre de focus logique ;
   - `prefers-reduced-motion` respecté ;
   - pas de flash.
-- Inconnu ou non tranché → `"[À COMPLÉTER]"`. Rien n'est inventé.
+- Inconnu ou non tranché → `"[non renseigné]"`. Rien n'est inventé.
 
 ## 0. Point de départ : lire avant de modifier
 
@@ -154,7 +154,7 @@ retire que ce qui pèse.
   - avatar et nom conservés ;
   - les statistiques (abonnés, etc.) ne s'affichent que dans l'onglet Stats.
 - **Commentaires :** chaque post n'affiche que le **premier commentaire**, puis « Voir les N autres ».
-- **Colonne Nantes :** la masquer par défaut sous [À COMPLÉTER : largeur choisie par le groupe], ou la
+- **Colonne Nantes :** la masquer par défaut sous [non renseigné : largeur choisie par le groupe], ou la
   déplacer dans un onglet. Décision de groupe (§ 6).
 - **Brouillon :** visible seulement quand un brouillon existe.
 
@@ -200,10 +200,10 @@ retire que ce qui pèse.
 
 | # | Question | Choix |
 |---|---|---|
-| D1 | À quoi le rouge est-il réservé : l'action primaire seule, ou aussi l'élément le plus urgent ? | [À COMPLÉTER] |
-| D2 | Le panneau Indicateurs est-il replié par défaut ? | [À COMPLÉTER] |
-| D3 | La colonne Nantes de Community : masquée sous quelle largeur, ou déplacée dans un onglet ? | [À COMPLÉTER] |
-| D4 | Les actions secondaires du Journal : menu `…`, ou seulement des raccourcis visibles en `blanc50` ? | [À COMPLÉTER] |
+| D1 | À quoi le rouge est-il réservé : l'action primaire seule, ou aussi l'élément le plus urgent ? | [non renseigné] |
+| D2 | Le panneau Indicateurs est-il replié par défaut ? | [non renseigné] |
+| D3 | La colonne Nantes de Community : masquée sous quelle largeur, ou déplacée dans un onglet ? | [non renseigné] |
+| D4 | Les actions secondaires du Journal : menu `…`, ou seulement des raccourcis visibles en `blanc50` ? | [non renseigné] |
 
 Tant qu'une décision n'est pas prise, appliquer **le choix le plus conservateur** (ne pas changer l'état par
 défaut) et le noter dans le rapport.

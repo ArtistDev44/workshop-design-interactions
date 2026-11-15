@@ -34,7 +34,7 @@ avec une petite vidéo de fin, pas juste 1 séquence avec 1 écran »). Statut :
    avant d'écrire le code.
 3. **Personnalisée** avec les données réelles de la partie : semaine et dates jouées, lignes et lieux des faits qui ont
    pesé (`bilan.pese`), météo réelle des jours joués, chiffres du bilan (score, jauges, clashs, cafés…). Aucun fait
-   inventé : une donnée absente → la séquence s'en passe (jamais « [À COMPLÉTER] » à l'écran).
+   inventé : une donnée absente → la séquence s'en passe (jamais « [non renseigné] » à l'écran).
 4. **Sous-titres** : une phrase par séquence, FR + EN, lue au lecteur d'écran à chaque séquence.
 5. **Commandes** : Entrée / Espace / → séquence suivante, Échap passer la vidéo (droit au rapport), P pause ; clic ou
    toucher = suivante. Barre de progression discrète (3 segments).

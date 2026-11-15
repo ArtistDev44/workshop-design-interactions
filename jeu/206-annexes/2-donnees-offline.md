@@ -12,7 +12,7 @@ Méthode : lecture ciblée du code ; sondage des API réelles (`limit=1`, `selec
 | 3 | Flux GTFS-RT Okina limité à 1 requête par 30 s : le mode direct se replie en silence | majeur | M | mesuré |
 | 4 | Après un déploiement, l'ancien JS reste servi et la mise à jour retélécharge 38 Mo | majeur | M | mesuré + lu |
 | 5 | Précache de 38 Mo en 295 requêtes à la première visite (deux formats audio, diaporama, kit presse) | majeur | M | mesuré |
-| 6 | Crédits : licence Hub'Eau encore à `[À COMPLÉTER]`, alors qu'elle a été vérifiée ailleurs | mineur | S | lu |
+| 6 | Crédits : licence Hub'Eau encore à `[non renseigné]`, alors qu'elle a été vérifiée ailleurs | mineur | S | lu |
 | 7 | Notifications « en direct » du téléphone : sources ODbL sans licence ni producteur | mineur | S | lu + mesuré |
 | 8 | Compteur trafic : les tronçons « Saturé » sont ignorés | mineur | S | mesuré |
 | 9 | `messages.json` (500 Ko) retéléchargé à chaque chargement en plus de `messages.js` | mineur | S | lu |
@@ -79,8 +79,8 @@ Méthode : lecture ciblée du code ; sondage des API réelles (`limit=1`, `selec
 - **Scénario** : un visiteur scanne le QR code en 4G. Sans le savoir, il télécharge 38 Mo en arrière-plan, puis encore 38 Mo à chaque déploiement (constat 4).
 - **Piste** : précacher le noyau du jeu (environ 3 Mo : `index.html`, JS, `data/*.js`, polices, icônes, la musique par défaut dans un seul format) et mettre le reste en cache à la demande.
 
-### 6. Crédits : licence Hub'Eau encore à `[À COMPLÉTER]` — mineur, effort S, lu dans le code
-- **Où** : `site/public/i18n.js:1351` (FR) et `:3287` (EN) : « Hub'Eau ([À COMPLÉTER]) ».
+### 6. Crédits : licence Hub'Eau encore à `[non renseigné]` — mineur, effort S, lu dans le code
+- **Où** : `site/public/i18n.js:1351` (FR) et `:3287` (EN) : « Hub'Eau ([non renseigné]) ».
 - **Constat** : la licence est déjà vérifiée ailleurs dans le dépôt : `manifest.json` (« Licence Ouverte Etalab (CGU Hub'Eau § 5.1.3, vérifié le 2026-11-11) ») et `i18n.js:1008` (`donnees.licenceHubeau`).
 - **Piste** : reprendre la mention vérifiée dans les crédits.
 

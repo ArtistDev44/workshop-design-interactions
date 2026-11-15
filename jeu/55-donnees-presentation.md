@@ -21,7 +21,7 @@ Code : `donnees.js` ; ouverture dans `os.js` (`ouvrirIconeOS`, `dessinerOS`). R�
 - `slides.md` (racine du dépôt) : 11 slides séparées par `---` — titre, question, chaîne source → grammaire →
   système → œuvre, sources réelles (liens et licences), grammaire, système (règles, 3 jauges, 3 fins,
   démission), œuvre, interactions (clavier, souris, toucher, micro, webcam), accessibilité et hors ligne,
-  livrables, crédits. Auteurs et part humaine : `[À COMPLÉTER]`.
+  livrables, crédits. Auteurs et part humaine : `[non renseigné]`.
 - `site/src/pages/presentation.astro` lit `slides.md` au build (comme `making-of.astro`) et rend un diaporama
   au Pixel Design System : une slide à la fois, ← / →, Début / Fin, boutons, compteur annoncé, sommaire,
   lien direct `#slide-n`, focus visible, responsive ; sans JavaScript, toutes les slides restent lisibles.

@@ -32,7 +32,7 @@ Dernier des prompts 110 → 113.
     de 5 entrées.
 - **Écran du menu :** `MENU.ecran = 'credits'`, même fond que le menu, dessiné par le code avec le Pixel DS.
   Pas de page HTML séparée.
-- **Contenu, sans rien inventer** (inconnu → `[À COMPLÉTER]`) :
+- **Contenu, sans rien inventer** (inconnu → `[non renseigné]`) :
   1. **L'équipe** : les deux portraits côte à côte, avec dessous le nom (Mattéo Brevet, Guillaume Renoult).
      - Ajouter le rôle seulement s'il est connu par le dépôt (README, `prompts/auteurs.json` ou
        `/making-of/`), sinon ne pas en mettre.
@@ -51,7 +51,7 @@ Dernier des prompts 110 → 113.
        `/making-of/`) ;
      - les décisions de design sont verrouillées dans `jeu/` (Q1–Q61) ;
      - les données sont réelles et rien n'est inventé ;
-     - la part humaine détaillée (relecture, tests en salle) reste `[À COMPLÉTER]` par le groupe s'il n'y
+     - la part humaine détaillée (relecture, tests en salle) reste `[non renseigné]` par le groupe s'il n'y
        a pas de source ;
      - aucune image du jeu n'est générée par IA : à vérifier, sinon le dire.
 - **Navigation :** Échap ou « Retour » revient au menu. Tab / ↑ ↓ passent sur les liens (licence, dépôt,
@@ -66,7 +66,7 @@ Dernier des prompts 110 → 113.
   - Style du deck : classes existantes de `slides/styles/index.css`, fenêtre Pixel DS.
   - Notes de présentateur courtes.
 - Dans l'encadré « Crédits » existant, ligne IA : reprendre le même texte factuel que le jeu, au lieu du seul
-  `[À COMPLÉTER]`, et garder `[À COMPLÉTER]` pour la part humaine.
+  `[non renseigné]`, et garder `[non renseigné]` pour la part humaine.
 - Build du deck : `cd slides && npm run build`, ou via `npm run build` dans `site/` s'il le reconstruit. La
   page `/presentation/` doit montrer la diapositive.
 

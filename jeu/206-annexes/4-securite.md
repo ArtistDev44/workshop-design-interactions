@@ -72,7 +72,7 @@ Aucune requête vers le site déployé : les en-têtes réellement servis par Cl
 ## 8. Mentions légales et confidentialité absentes — mineur
 
 - **Où** : grep `mentions légales|confidentialit|données personnelles|RGPD|hébergeur|directeur de la publication` dans `site/src`, `site/public/i18n.js`, `credits.js`, `kit-presse/index.html` : aucun résultat.
-- **Contexte** : le site ne collecte aucune donnée personnelle côté serveur (pas de formulaire, pas d'analytics ni de traceur : grep `analytics|gtag|plausible|matomo|cloudflareinsights|umami|hotjar` négatif hors noms internes de bundles) ; le stockage local est fonctionnel. Une page « Mentions légales » reste attendue pour un site public en France (éditeur, hébergeur Cloudflare, contact) : `[À COMPLÉTER]` pour l'éditeur et le contact.
+- **Contexte** : le site ne collecte aucune donnée personnelle côté serveur (pas de formulaire, pas d'analytics ni de traceur : grep `analytics|gtag|plausible|matomo|cloudflareinsights|umami|hotjar` négatif hors noms internes de bundles) ; le stockage local est fonctionnel. Une page « Mentions légales » reste attendue pour un site public en France (éditeur, hébergeur Cloudflare, contact) : `[non renseigné]` pour l'éditeur et le contact.
 - **Piste** : page Astro `/mentions-legales/` : éditeur, hébergeur, données (aucune collecte, liste des clés `localStorage` et comment les effacer, caméra/micro analysés localement), API tierces appelées depuis le navigateur (l'adresse IP du visiteur leur est transmise : Open Data Nantes, Open-Meteo, Hub'Eau, Okina).
 
 ## 9. `.gitignore` sans `.env` — mineur

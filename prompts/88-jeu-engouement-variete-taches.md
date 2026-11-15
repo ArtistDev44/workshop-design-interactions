@@ -235,7 +235,7 @@ dans la doc.
   - aucun flash ;
   - hors ligne ;
   - 1920×1080 et mobile ;
-  - FR + EN, aucune clé brute ni `[À COMPLÉTER]` affiché.
+  - FR + EN, aucune clé brute ni `[non renseigné]` affiché.
 - Documenter dans `jeu/NN-engouement-variete.md` (numéro libre suivant dans `jeu/`), avec le diagnostic
   avant / après, et ajouter les lignes au sommaire de `jeu/README.md`. Mettre à jour
   `jeu/42-mecaniques-narration.md`, section « Reporté », selon les choix du groupe.

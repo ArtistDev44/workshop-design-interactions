@@ -4,7 +4,7 @@
 - Trois vrais morceaux lo-fi **CC0** de Loyalty Freak Music (Wikimedia Commons, SHA-1 vérifiés) :
   « Softly » (par défaut), « Work », « Standing » — `audio/lofi-*.ogg` + `.mp3`, crédits dans
   `audio/CREDITS.md`. Commons affiche encore « License review needed (audio) » sur ces pages :
-  **[À COMPLÉTER] vérification humaine de la licence à la source** avant diffusion publique.
+  **[non renseigné] vérification humaine de la licence à la source** avant diffusion publique.
 - Les joueurs qui avaient l'ancien défaut (« Chillin' Poupi ») passent une fois au lofi ; un choix fait
   à la main ensuite est conservé. Les autres morceaux restent au choix (Paramètres, touche 8).
 - **Gain maître des bruitages 0,5 → 0,16** : ambiance de salle, radio, bips, tic-tac, signaux des jauges,

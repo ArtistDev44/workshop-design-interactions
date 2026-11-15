@@ -74,7 +74,7 @@ Aucun travail obligatoire. Sauvegarde et relecture des notes possibles, rien de 
 - [ ] 13:00 Documentation : README complet (Auteurs, Source patrimoniale, Concept, Grammaire/règles, Stack, Data/interaction, Lancer le projet, Fallback/limites, Contributions, AI usage, Sources/droits)
 - [x] Rédiger le cartel : 80 à 120 mots + source patrimoniale + système, au format du livret (fait : `cartel.md` du rendu, page `/cartel/`)
 - [x] Produire manifest.json (modèle du livret) et finaliser source-sheet et grammar (fait : `manifest.json`, `source-sheet.md` / `.pdf`, `grammar.md` / `.pdf` dans le dossier de rendu)
-- [x] Générer un QR code pointant vers le site web de l'œuvre (page en ligne de l'édition ou GitHub Pages du dépôt) — PNG régénérés vers l'URL canonique (commit dea5dc4 ; identiques octet pour octet à `qrencode` sur https://workshop-design-interactions.pages.dev/ et …/cartel/, vérifié le 12/11/2026) ; test au téléphone en salle : [À COMPLÉTER]
+- [x] Générer un QR code pointant vers le site web de l'œuvre (page en ligne de l'édition ou GitHub Pages du dépôt) — PNG régénérés vers l'URL canonique (commit dea5dc4 ; identiques octet pour octet à `qrencode` sur https://workshop-design-interactions.pages.dev/ et …/cartel/, vérifié le 12/11/2026) ; test au téléphone en salle : [non renseigné]
 - [ ] Intégrer le QR code au cartel / à l'affichage et tester le scan en conditions réelles
 - [x] 14:00 Installation + captation : hero.jpg, detail-01.jpg, process.jpg, demo.mp4 (20 à 30 s), thumb.jpg (fait au prompt 46 : `site/public/captures/`, vrai rendu)
 - [ ] 15:00 Micro-exposition + soutenance
@@ -191,7 +191,7 @@ Vérifié par `ls` / `grep` dans le dépôt : seuls les éléments existants son
 - [ ] Checklist de robustesse complète au preflight (refresh, sans API, 1920×1080, console)
 - [x] Version finale sauvegardée : `rendu/PXE_NTE001_G01_NANTES-EN-REGULATION/` (lancée hors ligne par `file://`, sans erreur ; prompt 46)
 
-### `[À COMPLÉTER]` qui attendent une saisie humaine du groupe
+### Champs à saisir par le groupe
 - [x] `site/README.md` : Auteurs (noms et rôles), Contributions (nominatives), AI usage (ce qui a été relu, réécrit, testé) (fait le 15/11/2026 d'après l'historique git)
 - [x] `site/src/content/oeuvres/pxe-nte001-g01-w01.json` : `auteurs` (Mattéo Brevet, Guillaume Renoult, comme `LICENSE` et les crédits du menu) et `groupe` (G01, repris de l'identifiant) renseignés le 11/11/2026
 - [x] `site/public/source-sheet.md` : Contexte et 3 propriétés observables remplis (prompt 59) ; propriété écartée confirmée le 11/11/2026

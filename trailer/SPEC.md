@@ -29,4 +29,4 @@ QA:      0,9 (3D lisible), 3,0 (bureau), 6,0 (titre sans masquer le message), 9,
          19,0 (titre + jauges), 22,6 (premier plan du climax), 29,5 (carton complet), durée = 30,0 s.
 
 Storylines non construites (story.md) : B « la donnée devient dossier » (un seul plan continu de lignes.json vers un
-dossier), C « 6 jours en coupes » (un carton JOUR n/6 par mesure). [À COMPLÉTER : validation par le groupe]
+dossier), C « 6 jours en coupes » (un carton JOUR n/6 par mesure). Validation par le groupe : non consignée.

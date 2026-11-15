@@ -69,7 +69,7 @@ engagements de `jeu/10` et `jeu/43` sont tenus sur ces points (détail dans « C
   un `<h1>` pour l'écran courant, la liste des actions de la vue sous forme de `<button>` qui appellent les mêmes fonctions,
   et une ligne d'état « Fluidité 42 / Réputation 61 / Budget 18 ». Donner au canevas `aria-hidden="true"` une fois le miroir
   en place. À défaut, au minimum : une touche « relire » (dossier courant + jauges) et `role="application"` assumé sur
-  `#scene`. Test NVDA / VoiceOver : `[À COMPLÉTER]` (non fait dans cet audit, ni dans `jeu/203`).
+  `#scene`. Test NVDA / VoiceOver : `[non renseigné]` (non fait dans cet audit, ni dans `jeu/203`).
 
 ### 2. Le zoom du navigateur n'agrandit rien, et le zoom tactile est bloqué
 - **Où** : `index.html:5` (`maximum-scale=1, user-scalable=no`) ; mise à l'échelle du canevas dans `mobile.js:29` (`windowResized`).
@@ -231,12 +231,12 @@ engagements de `jeu/10` et `jeu/43` sont tenus sur ces points (détail dans « C
 | Pas de flash rapide | **Tenu** (mesuré + code) |
 | `prefers-reduced-motion` respecté | **Tenu** au chargement ; pas de réaction en cours de partie (constat 7) |
 | Jouable au clavier seul | **Tenu dans le canevas** ; **non tenu** pour le bandeau DOM (constat 4) ; raccourcis à une lettre sans possibilité de les couper (constat 3) |
-| Version fonctionnelle sans audio | Non contredit (les annonces et les visuels doublent les sons). Écoute réelle : `[À COMPLÉTER]` |
+| Version fonctionnelle sans audio | Non contredit (les annonces et les visuels doublent les sons). Écoute réelle : `[non renseigné]` |
 | Taille du texte 100 / 115 / 130 % | Tenu tel que documenté, mais insuffisant au regard de 1.4.4 (constats 2 et 5) |
 | Palettes daltonisme | Tenu : ratios du texte critique 4,5:1 ou plus pour chaque palette |
 
 ## Limites
-- Pas de test avec un vrai lecteur d'écran (NVDA, VoiceOver, TalkBack) : `[À COMPLÉTER]`.
+- Pas de test avec un vrai lecteur d'écran (NVDA, VoiceOver, TalkBack) : `[non renseigné]`.
 - La sonde de contraste prend comme fond la couleur opaque majoritaire sous la boîte du texte. Les textes posés sur des
   dégradés ou sur la pièce en pixel art, et les 281 relevés non mesurables (fond transparent d'un tampon), ne sont pas couverts.
 - La mesure des flashs couvre des séquences de 3 à 5 s sur 6 situations, pas une partie complète.

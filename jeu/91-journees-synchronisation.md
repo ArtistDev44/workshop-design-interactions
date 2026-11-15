@@ -53,4 +53,4 @@ Code :
   - une équipe envoyée pendant la lecture reste en route tant que l'horloge est en pause ;
   - aucune erreur de console.
 - Audit des textes : 0 défaut A à D (1920×1080 et mobile portrait).
-- **Test humain** : [À COMPLÉTER].
+- **Test humain** : [non renseigné].

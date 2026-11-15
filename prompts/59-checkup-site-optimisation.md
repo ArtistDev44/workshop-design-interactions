@@ -6,7 +6,7 @@ le rendu. Ne toucher ni aux décisions verrouillées du jeu (Q1–Q61) ni à la 
 refactor est **pur** (mêmes règles, mêmes tests verts).
 
 Règles absolues : travailler en **français** ; aucun secret, clé ou token ; aucune donnée, œuvre ou
-source inventée (inconnu → `"[À COMPLÉTER]"`) ; **aucune dépendance ajoutée** à `site/package.json`
+source inventée (inconnu → `"[non renseigné]"`) ; **aucune dépendance ajoutée** à `site/package.json`
 (Astro reste la seule) ; le jeu reste **jouable hors ligne** (double clic sur `site/public/index.html`,
 service worker, données de repli) ; branche dédiée, pas de fusion dans `main` sans demande ; à chaque
 push, entrée en tête de `journal.md`.
@@ -19,7 +19,7 @@ push, entrée en tête de `journal.md`.
   clignotement ; `sw.js` enregistré sans erreur console.
 - **Navigation réelle** (menu → tutoriel → partie → décisions → fin → rejouer), sans erreur ni warning
   console, en FR et en EN : aucune clé i18n manquante (toutes les clés `t('…')` existent dans les blocs
-  `fr` et `en` d'`i18n.js`, au même endroit) ; aucun `[À COMPLÉTER]` affiché hors attentes humaines
+  `fr` et `en` d'`i18n.js`, au même endroit) ; aucun `[non renseigné]` affiché hors attentes humaines
   documentées.
 - **Accessibilité** : contraste ≥ 4,5:1 partout (texte du PC inclus), parcours complet au clavier avec
   focus visible, annonces `aria-live` présentes, `prefers-reduced-motion` / « Réduire les animations »
@@ -54,7 +54,7 @@ push, entrée en tête de `journal.md`.
 - `prompts/README.md` : statuts ✅/◻ vérifiés un par un (✅ = preuve dans le code, citée) ; le compte
   de prompts annoncé dans `README.md` / `notes.md` correspond au tableau.
 - `site/README.md`, `README.md`, `CONTRIBUTING.md`, `todo.md`, `notes.md` : URL canonique unique,
-  `[À COMPLÉTER]` restants justifiés (saisie humaine du groupe), chaînes de build à jour.
+  `[non renseigné]` restants justifiés (saisie humaine du groupe), chaînes de build à jour.
 - `grammar.md` et `source-sheet.md` : champs remplis, en s'appuyant sur `jeu/00-concept.md`.
 - `journal.md` : une entrée en tête par push.
 

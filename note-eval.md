@@ -6,7 +6,7 @@
   - `npm run build` ;
   - `npm test` ;
   - `git log` et `git shortlog` ;
-  - `grep -rn "À COMPLÉTER"` (hors `node_modules`, `dist` et `fallback`) ;
+  - `grep -rn "non renseigné"` (hors `node_modules`, `dist` et `fallback`) ;
   - `diff -rq site/public rendu/…` ;
   - `ffprobe` sur la vidéo de démonstration.
 - **Mise à jour du 11/11/2026 (après-midi)** : les leviers 4 à 7 de la section 5 ont été appliqués. Les critères concernés sont rescorés et les manques levés sont barrés.
@@ -86,7 +86,7 @@ Source : `contexte/PATRIMOINE.EXE - Nantes 001 — Cours étudiant B3 Design —
 **Manques / risques (−2, levés par les leviers 6 et 7)**
 
 - ~~La **propriété volontairement écartée** n'est qu'une « proposition à valider par le groupe » dans `source-sheet.md` (ligne 16).~~ Confirmée le 11/11/2026.
-- ~~**Licence Hub'Eau** : `"rights": "[À COMPLÉTER] (licence Hub'Eau à vérifier)"` dans `manifest.json` (ligne 23).~~ Licence Ouverte Etalab, d'après les CGU Hub'Eau (§ 5.1.3), vérifiée le 11/11/2026.
+- ~~**Licence Hub'Eau** : `"rights": "[non renseigné] (licence Hub'Eau à vérifier)"` dans `manifest.json` (ligne 23).~~ Licence Ouverte Etalab, d'après les CGU Hub'Eau (§ 5.1.3), vérifiée le 11/11/2026.
 - ~~**Musique Loyalty Freak** : Commons signale « License review needed » (`CREDITS.md`, ligne 17) ; la vérification humaine reste à faire.~~ CC0 1.0 vérifiée le 11/11/2026 sur les pages Free Music Archive des 3 morceaux. La revue de Commons reste en attente, mais la source ne la contredit pas.
 - ~~**Dates d'accès incohérentes** : 2026-11-09 dans la fiche du cartel (`site/src/content/oeuvres/pxe-nte001-g01-w01.json`), 2026-11-10 dans `source-sheet.md`.~~ Harmonisées sur le 2026-11-09, date du premier instantané versionné.
 
@@ -187,7 +187,7 @@ Source : `contexte/PATRIMOINE.EXE - Nantes 001 — Cours étudiant B3 Design —
 **Manques / risques (−3)**
 
 - Les **contrastes ≥ 4,5:1 n'ont pas été remesurés avec un outil** après les écrans ajoutés aux prompts 85 à 91 (rapport de `notes.md`).
-- Aucun **test joueur humain** n'est consigné pour les prompts 80 et 88 à 91 : `[À COMPLÉTER]` dans `jeu/82-engouement-variete.md`, `jeu/84-…`, `jeu/87-…` et `notes.md` (ligne 104). La hiérarchie et la temporalité ne sont donc validées que par l'auteur.
+- Aucun **test joueur humain** n'est consigné pour les prompts 80 et 88 à 91 : `[non renseigné]` dans `jeu/82-engouement-variete.md`, `jeu/84-…`, `jeu/87-…` et `notes.md` (ligne 104). La hiérarchie et la temporalité ne sont donc validées que par l'auteur.
 - La **densité d'interface** (une dizaine d'applis, des notifications, le patron) peut nuire à la hiérarchie pour un visiteur de 30 secondes en exposition.
 
 ### Processus, test & documentation — 7 / 10
@@ -208,9 +208,9 @@ Source : `contexte/PATRIMOINE.EXE - Nantes 001 — Cours étudiant B3 Design —
 **Manques / risques (−4)**
 
 - **Test croisé silencieux** par un autre groupe (30 à 60 s, 3 observations) : non coché dans `todo.md` (ligne 57), aucune trace ailleurs.
-- **README incomplet** : le README de `rendu/` suit les 12 rubriques du livret depuis le 12/11 et nomme les auteurs, mais Contributions, rôles et part humaine de l'AI usage restent `[À COMPLÉTER]`.
-- ~~**Cartel** : `auteurs` et `groupe` sont `[À COMPLÉTER]`~~ renseignés (Mattéo Brevet, Guillaume Renoult, G01 — vérifié le 12/11) ; la relecture finale par le groupe n'est pas cochée.
-- ~~**Licence incohérente** : `LICENSE` choisit déjà MIT au nom de « Mattéo Brevet & Guillaume Renoult ». Pourtant le `README.md` racine (ligne 64), `site/README.md` (ligne 141) et `manifest.json` (`"license"`) disent encore « [À COMPLÉTER] ».~~ Alignés le 11/11/2026. Les auteurs et le groupe du cartel sont aussi renseignés (levier 4).
+- **README incomplet** : le README de `rendu/` suit les 12 rubriques du livret depuis le 12/11 et nomme les auteurs, mais Contributions, rôles et part humaine de l'AI usage restent `[non renseigné]`.
+- ~~**Cartel** : `auteurs` et `groupe` sont `[non renseigné]`~~ renseignés (Mattéo Brevet, Guillaume Renoult, G01 — vérifié le 12/11) ; la relecture finale par le groupe n'est pas cochée.
+- ~~**Licence incohérente** : `LICENSE` choisit déjà MIT au nom de « Mattéo Brevet & Guillaume Renoult ». Pourtant le `README.md` racine (ligne 64), `site/README.md` (ligne 141) et `manifest.json` (`"license"`) disent encore « [non renseigné] ».~~ Alignés le 11/11/2026. Les auteurs et le groupe du cartel sont aussi renseignés (levier 4).
 - **QR codes** : scan en conditions réelles non fait (`todo.md`).
 - **Déploiement** non documenté : `.github/workflows/deploy.yml` publie sur GitHub Pages, une adresse en 404, alors que le site canonique est sur Cloudflare Pages.
 

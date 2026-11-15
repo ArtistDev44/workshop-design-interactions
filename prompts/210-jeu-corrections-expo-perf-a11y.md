@@ -5,7 +5,7 @@ le numéro de téléphone — règle le bug ; 2. fais tout ; 3. ; 4. ; 5. ». St
 `210-jeu-corrections-expo-perf-a11y`). Rapport : `jeu/210-corrections-audit-206.md`.
 
 Règles : aucune donnée inventée (licences relues dans les métadonnées de l'API le jour même), rien de ce qui dépend du
-groupe n'est rempli à sa place (`[À COMPLÉTER]` conservés), un commit par étape, `npm run build` et `npm test` verts.
+groupe n'est rempli à sa place (`[non renseigné]` conservés), un commit par étape, `npm run build` et `npm test` verts.
 
 ## 1. Avant toute nouvelle exposition
 
@@ -26,7 +26,7 @@ groupe n'est rempli à sa place (`[À COMPLÉTER]` conservés), un commit par é
   CC0 / CC BY dans `LICENSE` ; Hub'Eau aux crédits du jeu.
 - **Appli « Données » hors ligne** alimentée par `Jeu.fallback` (6 dossiers, météo, événements).
 - **`rendu/` resynchronisé** en dernier.
-- Restent au groupe : rôles, contributions, part humaine de l'IA, test croisé (`[À COMPLÉTER]`).
+- Restent au groupe : rôles, contributions, part humaine de l'IA, test croisé (`[non renseigné]`).
 
 ## 3. Qualité et performance
 

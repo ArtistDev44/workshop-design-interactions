@@ -49,5 +49,5 @@ Date : 12/11/2026. Branche `jeu/104-bureau-au-fil-des-journees` (partie de la br
 
 ## Reste à vérifier
 
-- Une vraie partie de deux journées sans paramètre (arrivée de la tasse au 2e matin) : [À COMPLÉTER].
-- Navigation privée (stockage indisponible) : [À COMPLÉTER].
+- Une vraie partie de deux journées sans paramètre (arrivée de la tasse au 2e matin) : [non renseigné].
+- Navigation privée (stockage indisponible) : [non renseigné].

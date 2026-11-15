@@ -58,7 +58,7 @@ Date : 12/11/2026. Branche `jeu/105-109-carte-interactive-dialogue-equipes`.
   - « On affiche l'information aux arrêts… » ;
   - « Merci de patienter… ».
 - **Agression en cours :** aucune source réelle du jeu ne contient ce type de fait, il n'est donc pas
-  inventé. Source à trouver : [À COMPLÉTER].
+  inventé. Source à trouver : [non renseigné].
 - Les textes du guide et du bandeau d'état sont mis à jour ; le mail du soir ne recouvre plus de panneau
   caché.
 
@@ -101,4 +101,4 @@ Date : 12/11/2026. Branche `jeu/105-109-carte-interactive-dialogue-equipes`.
   - fenêtre du plaignant (« Affluence », @nantaise_du_tram, 4 répliques) ;
   - réplique choisie → narration ;
   - police envoyée sur la ligne 97 : tracé depuis le commissariat.
-- Partie complète en conditions réelles, à la souris, au clavier et sur mobile : non testé, prévu en salle (protocole de `notes.md`, « Tests humains », prompt 192) — date [À COMPLÉTER].
+- Partie complète en conditions réelles, à la souris, au clavier et sur mobile : non testé, prévu en salle (protocole de `notes.md`, « Tests humains », prompt 192) — date [non renseigné].
