@@ -67,7 +67,7 @@ Avant tout storyboard, enregistrer le jeu :
 | Démo existante (29 s, sans son) | `site/public/captures/demo.mp4` | secours seulement si une capture échoue |
 
 Interdits : police Picon, identité visuelle Nantes Métropole, faux écran de jeu, faux chiffre, fausse citation de
-presse, fausse note ou faux nombre de joueurs. Toute info manquante → `"[non renseigné]"` dans `SPEC.md` et
+presse, fausse note ou faux nombre de joueurs. Toute info manquante → non renseigné dans `SPEC.md` et
 signalée dans la réponse finale.
 
 ## 3. Musique épique libre de droits (licence vérifiée, jamais supposée)
@@ -159,4 +159,4 @@ plan, liste des clichés bannis (titre sur capture assombrie, logo dans un coin,
 ## Réponse finale attendue
 
 Lien local de la vidéo, durée/poids mesurés, la musique retenue avec sa licence et son crédit exact, la liste des
-captures réelles utilisées, les `"[non renseigné]"` restants, et ce qui a été écarté (et pourquoi).
+captures réelles utilisées, les champs non renseignés restants, et ce qui a été écarté (et pourquoi).

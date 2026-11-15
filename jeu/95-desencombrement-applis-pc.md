@@ -73,10 +73,10 @@ fiche d'enquête un à la fois.
 ## Décisions de groupe (§ 6) — non tranchées, choix conservateur appliqué
 | # | Question | Appliqué |
 |---|---|---|
-| D1 | Rouge réservé à l'action primaire seule, ou aussi à l'élément le plus urgent ? | [non renseigné] — état actuel gardé : rouge pour la sélection (jour du Journal, onglet actif), le primaire et le liseré d'un dossier raté ; tout le reste en blanc ou en couleur claire |
+| D1 | Rouge réservé à l'action primaire seule, ou aussi à l'élément le plus urgent ? | non renseigné — état actuel gardé : rouge pour la sélection (jour du Journal, onglet actif), le primaire et le liseré d'un dossier raté ; tout le reste en blanc ou en couleur claire |
 | D2 | Panneau Indicateurs replié par défaut ? | **Oui** (décision du groupe, 12/11/2026) — replié sur les trois jauges (nom, valeur, barre, dernière variation) ; objectif du jour, palier de budget, statut auprès du patron, grade et badges au survol du panneau, ou épinglés par « Détails (V) » (bouton au même endroit dans les deux états, utilisable au toucher) |
-| D3 | Colonne Nantes de Community : masquée sous quelle largeur, ou déplacée en onglet ? | [non renseigné] — non modifiée (déjà absente en portrait) |
-| D4 | Actions secondaires du Journal : menu « … » ou raccourcis visibles ? | [non renseigné] — non modifié (« Copier le résumé (C) » reste en bas à gauche) |
+| D3 | Colonne Nantes de Community : masquée sous quelle largeur, ou déplacée en onglet ? | non renseigné — non modifiée (déjà absente en portrait) |
+| D4 | Actions secondaires du Journal : menu « … » ou raccourcis visibles ? | non renseigné — non modifié (« Copier le résumé (C) » reste en bas à gauche) |
 
 ## Écarts aux cibles du § 5, justifiés
 - **−30 % d'éléments** atteint ou approché sur le Journal (jour −29 / −46 %, semaine −29 / −20 %), pas sur Community

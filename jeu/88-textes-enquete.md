@@ -104,4 +104,4 @@ Les sources non consultées sont des boutons DS avec la touche (5 à 8), le nom 
   - mobile paysage (915×412) et animations réduites.
   - Aucune erreur de console.
 - **Non vérifié par un outil** : le contraste mesuré pixel par pixel. Il est estimé à partir des opacités (`C.gris` 0,6 sur #171616, soit environ 6:1).
-- **Test humain** de lisibilité : [non renseigné].
+- **Test humain** de lisibilité : non renseigné.

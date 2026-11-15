@@ -9,7 +9,7 @@ Demande d'origine (11/11/2026) :
 Aujourd'hui, le menu principal (écran titre, `menu.js` : `dessinerMenuPrincipal()`) affiche les cartes
 `entreesMenu()` à gauche, le sélecteur de langue et le bouton PWA en haut à droite, et en pied de page
 seulement `mp.clavier` et `mp.sources` en bas à gauche. Aucun lien vers le dépôt, aucun partage, aucun
-crédit, aucune licence. Le fichier `LICENSE` racine contient encore « [non renseigné] ».
+crédit, aucune licence. Le fichier `LICENSE` racine contient encore « non renseigné ».
 
 Constantes du projet (ne pas en inventer) :
 
@@ -46,7 +46,7 @@ Règles Q1–Q61 inchangées : `game.js` non touché, `npm test` reste vert.
    - crédits : clé `mp.credits` « Mattéo Brevet & Guillaume Renoult » ;
    - licence : clé `mp.licence` « Code sous licence MIT » cliquable (lien vers le LICENSE du dépôt,
      `window.open` `_blank noopener`).
-4. **Fichier `LICENSE` racine** : remplacer « [non renseigné] » par le **texte MIT standard complet**,
+4. **Fichier `LICENSE` racine** : remplacer « non renseigné » par le **texte MIT standard complet**,
    `Copyright (c) 2026 Mattéo Brevet & Guillaume Renoult`, en conservant l'en-tête PATRIMOINE.EXE ·
    NTE001 · « Nantes en régulation ».
 5. **i18n** : toutes les nouvelles clés (`mp.partager`, `mp.partager.texte`, `mp.partager.fermer`,

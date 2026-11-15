@@ -118,13 +118,13 @@ branche `jeu/110-113-autorisations-badges-intro-credits`.
   - **L'équipe** : les deux portraits, les noms, et « Atelier ESD Nantes · B3 Design · novembre 2026 ». Pas
     de rôle : le dépôt n'en indique pas.
   - **Licence** : MIT © 2026 (d'après `LICENSE`). Données : Licence Ouverte / ODbL, Open-Meteo CC BY 4.0,
-    OpenStreetMap ODbL. Licence Hub'Eau **[non renseigné]** (déjà signalée au prompt 58). p5.js LGPL-2.1.
+    OpenStreetMap ODbL. Licence Hub'Eau **non renseigné** (déjà signalée au prompt 58). p5.js LGPL-2.1.
     Musiques CC0 (d'après `audio/CREDITS.md`).
   - **Utilisation de l'IA**, d'après l'historique git :
     - 282 commits co-signés Claude Opus (Claude Code) et 16 co-signés Mistral Vibe ;
     - les prompts du groupe sont dans `prompts/` et sur `/making-of/` ;
     - la pièce et l'interface sont dessinées par le code ;
-    - la part humaine détaillée reste **[non renseigné]**.
+    - la part humaine détaillée reste **non renseigné**.
   - **Liens** : Lire la licence, Making-of, Dépôt du code, Retour.
   - **Clavier** : Tab, ← →, Entrée ; Échap revient au menu.
 - **Slidev :**
@@ -140,7 +140,7 @@ branche `jeu/110-113-autorisations-badges-intro-credits`.
   - Écrans ajoutés au parcours : « menu autorisations » (deux états) et « menu crédits ».
 - Copie `rendu/PXE_NTE001_G01_NANTES-EN-REGULATION/` synchronisée : fichiers modifiés et images.
 - Reste à faire par le groupe : un essai avec un vrai micro et une vraie webcam (Chrome, Firefox, Safari), et
-  les champs [non renseigné] ci-dessus.
+  les champs non renseignés ci-dessus.
 
 ## 120 — Écran Crédits redessiné, aucun texte coupé dans le menu
 
@@ -165,7 +165,7 @@ Prompt `prompts/120-jeu-credits-design-menu-sans-texte-coupe.md`, branche `jeu/1
   - les fenêtres **Licence** et **Utilisation de l'IA** en lignes **libellé / valeur** : libellé jaune DS
     en capitales, valeur en blanc 75 %, filet entre les lignes.
   - Les valeurs reprennent les mêmes faits que le prompt 113 ; Hub'Eau et la part humaine restent
-    [non renseigné].
+    non renseigné.
   - Les valeurs passent à la ligne au mot près, avec une hauteur calculée. La taille descend de 19 à 15 px
     si les fenêtres ne tiennent pas au-dessus des boutons.
   - Focus clavier en double bordure du DS.

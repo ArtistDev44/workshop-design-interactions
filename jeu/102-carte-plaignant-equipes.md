@@ -64,5 +64,5 @@ Date : 12/11/2026. Branche `jeu/102-carte-plaignant-equipes` (partie de la corre
 
 ## Reste à vérifier
 
-- Partie complète au clavier seul en semaine 2 : [non renseigné].
-- Mobile portrait 412 px : [non renseigné].
+- Partie complète au clavier seul en semaine 2 : non renseigné.
+- Mobile portrait 412 px : non renseigné.

@@ -19,7 +19,7 @@ Le joueur ne passe plus d'une appli à l'autre : il voit, lit, décide et envoie
 Règle absolue : **rien n'est inventé côté données**.
 - Tout détail affiché vient des sources réelles déjà chargées (GTFS-RT, changelog GTFS, agenda Open Data,
   Open-Meteo, `data/lignes.js`) ou d'un calcul sur ces données.
-- Un détail absent s'affiche « non renseigné », ou `"[non renseigné]"` s'il doit être saisi par le groupe.
+- Un détail absent s'affiche « non renseigné », ou non renseigné s'il doit être saisi par le groupe.
 
 Les décisions verrouillées Q1–Q61 restent valables, à deux exceptions près, à documenter :
 - l'**emplacement** de l'interface de décision ;

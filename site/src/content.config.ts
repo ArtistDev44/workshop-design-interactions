@@ -14,7 +14,7 @@ const oeuvres = defineCollection({
 			.string()
 			.regex(/^PXE-NTE001-G\d{2}-W\d{2}$/, 'Identifiant attendu : PXE-NTE001-G{nn}-W{nn}'),
 		titre: z.string().min(1),
-		auteurs: z.array(z.string().min(1)).min(1, 'Au moins un auteur (ou « [non renseigné] »)'),
+		auteurs: z.array(z.string().min(1)).min(1, 'Au moins un auteur'),
 		groupe: z.string().min(1),
 		statut: z.enum(['STUDENT', 'SELECTED', 'COLLECTION']),
 		source: z.object({

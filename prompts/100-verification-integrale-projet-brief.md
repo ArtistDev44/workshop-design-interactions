@@ -7,7 +7,7 @@ crible, facette par facette, et en premier lieu **contre le brief** (livret « P
 et **rend compte** de ce qui reste à la charge du groupe.
 
 Règles absolues : français ; aucun secret ; aucune donnée, œuvre, source ou contribution inventée
-(inconnu → `"[non renseigné]"`) ; aucune dépendance ajoutée à `site/package.json` ; décisions verrouillées
+(inconnu → non renseigné) ; aucune dépendance ajoutée à `site/package.json` ; décisions verrouillées
 du jeu (Q1–Q61 et exceptions documentées) inchangées ; ne cocher que ce qui a été **réellement exécuté
 et observé** ; branche `100-verification-integrale-projet-brief` ; entrée en tête de `journal.md` à
 chaque push.
@@ -26,7 +26,7 @@ Pour chaque exigence, citer la **preuve** (fichier:ligne, commande rejouée, URL
 | Test de qualité de la grammaire | une personne qui n'a pas vu la source peut reconstruire un comportement proche à la lecture seule de la fiche |
 | Prototype lançable dans un navigateur | double clic sur `index.html` (archive `rendu/` **et** `site/public/`), URL canonique, hors ligne |
 | ≥ 3 paramètres réellement opérants | nommer chaque paramètre, son effet mesurable et le test qui le prouve |
-| Test par un autre groupe + ≥ 1 itération documentée | trace écrite (notes, journal, prompts) ; sinon `[non renseigné]` explicite pour le groupe |
+| Test par un autre groupe + ≥ 1 itération documentée | trace écrite (notes, journal, prompts) ; sinon non renseigné explicite pour le groupe |
 | Documentation pour relancer le projet | README minimal du livret : 12 rubriques présentes (Titre, Auteurs, Source, Concept, Grammaire, Stack, Data/interaction, Lancer, Fallback/limites, Contributions, AI usage, Sources/droits) |
 | Génératif : invariants / variables / plages / cohérence | documentés si le jeu tire au sort (graines, `randomSeed`) |
 | Accessibilité de l'interaction | alternative clavier/touch aux interactions corporelles (micro, webcam), pas de flash, son non indispensable, compréhensible sans explication orale |

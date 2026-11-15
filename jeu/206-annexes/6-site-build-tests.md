@@ -28,7 +28,7 @@ Sondes en ligne (URL canonique, sans données personnelles) : `/nexiste-pas-xyz`
 - **Gravité** : majeur · **Effort** : S (documenter / passer par l'intégration Git Cloudflare) · **Preuve** : forte (empreintes sha1).
 - **Constat** : `game.js`, `sketch.js`, `os.js`, `community.js`, `i18n.js` servis en ligne ≠ origin/main (`f07351b`) et ≠ les 15 dernières versions commitées de `game.js` ; ils sont **identiques octet pour octet** à la copie de travail modifiée du dépôt principal (branche `204-jeu-corrections-audit-ux`, fichiers ` M` non commités), dont `version.js` vaut aussi `49fdacccde`. Le déploiement Cloudflare se fait donc à la main depuis un poste, hors git, hors `npm test`.
 - **Scénario** : une session en cours déploie un état intermédiaire ; le jury ouvre l'URL canonique et joue un code que personne ne peut retrouver dans l'historique ; un retour arrière est impossible.
-- **Piste** : brancher Cloudflare Pages sur `main` (racine `site`, `npm run build && npm test`, sortie `dist`) ou un script `deploy` qui refuse un arbre sale (`git diff --quiet`) et inscrit le commit dans `version.js`. Lever le `[non renseigné]` de `deploy.yml:6-8` et `site/README.md:111`.
+- **Piste** : brancher Cloudflare Pages sur `main` (racine `site`, `npm run build && npm test`, sortie `dist`) ou un script `deploy` qui refuse un arbre sale (`git diff --quiet`) et inscrit le commit dans `version.js`. Lever le non renseigné de `deploy.yml:6-8` et `site/README.md:111`.
 
 ### 2. Le workflow CI publie sur GitHub Pages (404) et ne lance pas les tests
 - **Fichier** : `.github/workflows/deploy.yml:35-54`.

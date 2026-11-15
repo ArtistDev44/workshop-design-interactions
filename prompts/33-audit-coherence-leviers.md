@@ -13,7 +13,7 @@ Fichiers concernés : `README.md`, `notes.md`, `site/README.md`, `site/public/so
 modifié que si une incohérence documentaire l'exige.
 
 Règles absolues : travailler en **français** ; aucun secret, clé ou token dans le code ;
-aucune donnée, œuvre ou source inventée (inconnu → `"[non renseigné]"`) ; aucune dépendance
+aucune donnée, œuvre ou source inventée (inconnu → non renseigné) ; aucune dépendance
 ajoutée à `site/package.json` ; le site doit rester relançable hors ligne (`npm run build`
 dans `site/`, double clic sur `site/public/index.html`).
 
@@ -30,15 +30,15 @@ dans `site/`, double clic sur `site/public/index.html`).
 - Corriger le nombre de prompts annoncé : `README.md` dit « 14 prompts », `notes.md` « 12 prompts »
   — le compte réel est celui de la table de `prompts/README.md` (32 prompts, 33 après celui-ci).
 
-## 2. Supprimer les `[non renseigné]` restants (sans rien inventer)
+## 2. Supprimer les champs non renseignés restants (sans rien inventer)
 - `site/README.md` : section **Auteurs** (noms et rôles du groupe), **Contributions**
   (nominatif, précis) et **AI usage** (3 à 5 lignes) — à remplir par le groupe ; si une
-  information manque, garder `"[non renseigné]"` et le noter dans `todo.md`.
+  information manque, garder non renseigné et le noter dans `todo.md`.
 - `site/public/source-sheet.md` : champs d'analyse de la fiche-source V1 (contexte, licence
   Open-Meteo à vérifier, 3 propriétés observables, 1 propriété écartée).
 - `site/public/grammar.md` : règle structurante formulée en une phrase, en s'appuyant sur
   `jeu/00-concept.md`.
-- Rechercher tous les `[non renseigné]` restants (`grep -rn "non renseigné"`) et ne garder que
+- Rechercher tous les champs non renseignés restants (`grep -rn "non renseigné"`) et ne garder que
   ceux qui attendent réellement une saisie humaine du groupe.
 
 ## 3. Statut réel des prompts 24–32

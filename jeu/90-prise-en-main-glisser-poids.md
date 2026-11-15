@@ -65,4 +65,4 @@ Code :
   - Q de l'après-midi au lendemain ;
   - aucune erreur de console.
 - Audit des textes (`?audit=textes&parcours=1`) : 0 défaut A à D en 1920×1080 et en mobile portrait.
-- **Test humain** (« quitter en 2 gestes », sensation de poids) : [non renseigné].
+- **Test humain** (« quitter en 2 gestes », sensation de poids) : non renseigné.

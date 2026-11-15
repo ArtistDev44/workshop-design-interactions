@@ -35,7 +35,7 @@ statistiques et catalogues générés depuis les mêmes métadonnées).
    `site/src/content/oeuvres/pxe-nte001-g01-w01.json` pour le jeu
    « Nantes en régulation », rempli à partir de `jeu/README.md` et `jeu/00-concept.md`
    uniquement. Toute information absente de ces fichiers (numéro de groupe, auteurs,
-   cartel définitif…) est écrite `"[non renseigné]"` — ne rien inventer. Le cartel
+   cartel définitif…) est écrite non renseigné — ne rien inventer. Le cartel
    provisoire peut résumer `jeu/00-concept.md` en 80–120 mots.
 4. Créer `site/src/lib/oeuvres.ts` avec `getOeuvres()` (appelle
    `getCollection("oeuvres")`, trie par identifiant) et `slugDe(oeuvre)` (identifiant en

@@ -72,4 +72,4 @@ remplacée par un bouton Signaler. »
 - Captures 1920×1080 de l'onglet Mentions : un trio avec « Signaler » et son drapeau, la notice de
   modération, le clash froid et la suite de l'usager.
 - `npm run build` puis `npm test` verts ; audit des textes : voir `journal.md`.
-- Ressenti joueur (la violence des messages, le soulagement du bouton Signaler) : [non renseigné] en salle.
+- Ressenti joueur (la violence des messages, le soulagement du bouton Signaler) : non renseigné en salle.

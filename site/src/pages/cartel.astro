@@ -2,7 +2,7 @@
 // Cartel de l'œuvre servi hors du jeu (prompt 33, section 6) : /cartel/
 // Seule page Astro du site : le jeu reste public/index.html, servi à la racine.
 // Les données viennent du registre validé au build (src/content/oeuvres/, content.config.ts) :
-// rien n'est saisi ici, un champ inconnu reste « [non renseigné] » dans la fiche JSON.
+// rien n'est saisi ici, un champ inconnu est dit tel quel dans la fiche JSON, jamais inventé.
 import { getCollection } from 'astro:content';
 
 const oeuvres = (await getCollection('oeuvres')).map((o) => o.data);

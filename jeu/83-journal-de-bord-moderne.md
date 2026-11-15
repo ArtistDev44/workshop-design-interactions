@@ -51,4 +51,4 @@ résumé copié, sauvegarde de la vue). Chromium FR / EN : vue Jour, 4 volets d'
 semaine complète sans erreur console.
 
 Limite : en portrait mobile, l'appli Journal est affichée réduite avec le reste du PC (pas encore de mise en page
-dédiée en une colonne) ; [non renseigné] si le groupe la juge nécessaire.
+dédiée en une colonne) ; non renseigné si le groupe la juge nécessaire.

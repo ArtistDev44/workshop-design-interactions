@@ -145,7 +145,7 @@ signaler dans la doc.
   en regardant seulement la file et le dossier, sans lire la narration. Noter dans la doc ce que le
   test humain comprend sans texte.
 - Accessibilité : contraste ≥ 4,5:1, clavier seul, `aria-live`, `prefers-reduced-motion`, aucun flash,
-  hors ligne, 1920×1080 et mobile, FR + EN, aucune clé brute ni `[non renseigné]` affiché.
+  hors ligne, 1920×1080 et mobile, FR + EN, aucune clé brute ni non renseigné affiché.
 - Documenter dans `jeu/83-pression-morale-interface-narratrice.md` et ajouter la ligne au sommaire de
   `jeu/README.md`. Mettre à jour `jeu/01`, `jeu/03`, `jeu/06` si leurs sections sont touchées.
 - Branche `jeu/prompt-89-pression-morale-interface-narratrice`. À chaque push : entrée en tête de

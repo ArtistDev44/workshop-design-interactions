@@ -18,7 +18,7 @@ Créer le dossier avec :
   (Open Data Nantes Métropole), 3 jauges à préserver, aucun événement inventé (sauf incidents fictifs marqués
   comme tels). Mentionner : ESD Nantes, atelier B3 Design, novembre 2026, licence MIT, URL du jeu
   (`URL_JEU`), dépôt GitHub (`DEPOT_URL`), présentation (`/presentation/`). Pas de faux chiffres, pas de fausse
-  citation de presse — tout chiffre doit venir du code ou des docs du dépôt, sinon `"[non renseigné]"`.
+  citation de presse — tout chiffre doit venir du code ou des docs du dépôt, sinon non renseigné.
 - **`README.md`** dans le kit : index lisible des fichiers, avec pour chaque : nom, format, taille, licence,
   et à quoi il sert (ex. « hero.jpg — capture 1920×1080 du menu principal, pour illustrer un article »).
 

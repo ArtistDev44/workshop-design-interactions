@@ -65,7 +65,7 @@ Règles :
 ## 4. Vérifications
 
 - `npm test` : ajouter dans `scripts/test-jeu.mjs` un contrôle du tier de trauma selon les deltas
-  (fonction pure testable en `vm`) et l'absence de `[non renseigné]`.
+  (fonction pure testable en `vm`) et l'absence de non renseigné.
 - `npm run build` vert ; test manuel Chromium FR/EN, animations réduites ON/OFF : 5 décisions par clic,
   par touche 1-4 et par glisser-déposer (si prompt 94) — chaque décision « se lit » en < 100 ms,
   aucune nausée, aucune entrée perdue pendant le hit-stop, aucune erreur console.
