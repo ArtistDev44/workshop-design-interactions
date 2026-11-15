@@ -2506,7 +2506,7 @@ for (const langue of ['fr', 'en']) {
 	verifier(!/ouvrir\('aide'\)/.test(menu171), 'prompt 171 : l\'aide s\'ouvre encore depuis le menu titre (entrée ou raccourci H)');
 	verifier(/ouvrirCredits\(\)/.test(menu171.slice(menu171.indexOf('function piedCredits'), menu171.indexOf('function boutonIcone'))) && /function dessinerCredits/.test(lire('credits.js')), 'prompt 171 : les noms du pied de page ne mènent plus aux Crédits');
 	verifier(/mp\.aide/.test(lire('immersion.js')) && (lire('sketch.js').match(/ouvrir\('aide'\)/g) || []).length >= 2 && /function fenetreAide/.test(lire('aide.js')), 'prompt 171 : l\'aide doit rester atteignable en partie (H, menu pause)');
-	verifier(!/PXE-NTE001/.test(menu171) && /dessinerLogoPXE\(HAUT_MENU\.marge, HAUT_MENU\.y, HAUT_MENU\.h\)/.test(menu171) && /const JEU = 'PXE-NTE001-G01-W01'/.test(lire('sauvegarde.js')), 'prompt 171 : mention « PXE- » encore affichée au menu (ou clé de stockage renommée)');
+	verifier(!/PXE-NTE001/.test(menu171) && /dessinerLogoPXE\(xLogo, HAUT_MENU\.y, HAUT_MENU\.h\)/.test(menu171) && /: HAUT_MENU\.marge\);/.test(menu171) && /const JEU = 'PXE-NTE001-G01-W01'/.test(lire('sauvegarde.js')), 'prompt 171 : mention « PXE- » encore affichée au menu (ou clé de stockage renommée)');
 	verifier(/const HAUT_MENU = \{ y: 56, h: 60, marge: 80 \}/.test(menu171) && /selecteurLangue\([^;]*HAUT_MENU\.y, HAUT_MENU\.h\)/.test(menu171) && /boutonInstaller\(xp, yp, focusExtra/.test(menu171) && /const xp = L - HAUT_MENU\.marge - LARGEUR_PILE\(\)/.test(menu171), 'prompt 171 (199 : pile) : logo, langue et installation ne partagent plus y, hauteur et marge');
 	verifier(/boutonCarreHaut\(x, y, LARGEUR_PILE\(\), HAUT_MENU\.h, focus, 'download', t\('mp\.installer'\), installerJeu\)/.test(menu171) && /iconeLucide\(icone,/.test(menu171) && /infobulle\(bulle/.test(menu171.slice(menu171.indexOf('function boutonCarreHaut'))) && /cle: 'installer', action: \(\) => installerJeu\(\)/.test(menu171), 'prompt 171 : icône « télécharger » absente, sans infobulle ou hors du parcours clavier');
 	const inst171 = lire('installation.js');
@@ -4796,6 +4796,13 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	verifier(/bilanFin = Jeu\.demission \|\| Jeu\.dev \?/.test(lire('immersion.js')) && /Jeu\.dev = false;/.test(lire('game.js')) && /function marquerDev\(\)/.test(dv), '230 : partie touchée par le mode dev hors palmarès');
 	verifier(/if \(fenetre === 'dev'\) return fenetreDev\(\);/.test(lire('sketch.js')) && /dessinerSurcoucheDev\(\)/.test(lire('sketch.js')) && /DEV\.vitesse/.test(lire('mouvement.js')), '230 : fenêtre, surcouches (zones de clic, images par seconde), ralenti des animations');
 	verifier(/'mode dev · ' \+ o/.test(lire('audit-textes.js')), '230 : les six onglets dans l\'audit des textes');
+}
+
+// ——— Prompt 231 : le logo du mode dev aussi sur mobile ———
+{
+	const mj = readFileSync(join(pub, 'menu.js'), 'utf8');
+	verifier(!/if \(!\(typeof PORTRAIT !== 'undefined' && PORTRAIT\.actif\)\) dessinerLogoPXE/.test(mj) && /dessinerLogoPXE\(xLogo, HAUT_MENU\.y, HAUT_MENU\.h\)/.test(mj) && /PORTRAIT\.actif \? 16 : HAUT_MENU\.marge/.test(mj), '231 : logo dessiné et cliquable en mobile, hors de la colonne recomposée');
+	verifier(/region\(\{ x: xLogoMenu\(\) - 8, y: HAUT_MENU\.y - 8, l: 88, h: HAUT_MENU\.h \+ 16 \}, 20, 30, 176\)/.test(readFileSync(join(pub, 'portrait.js'), 'utf8')), '231 : logo recomposé en haut à gauche (×2, ≥ 44 px CSS)');
 }
 
 if (erreurs.length) {

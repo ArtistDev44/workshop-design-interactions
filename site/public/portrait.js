@@ -147,6 +147,8 @@ function composerPortrait() {
 		// boutons de 60 et 68 px → ≥ 44 px à l'écran sur un téléphone de 412 px de large
 		const lp = LARGEUR_PILE() + 24, hp = 2 * HAUT_MENU.h + 16 + 24; // prompt 214 : deux rangées (FR / EN, télécharger)
 		region({ x: L - HAUT_MENU.marge - lp + 12, y: HAUT_MENU.y - 12, l: lp, h: hp }, PL - 20 - 2 * lp, 30, 2 * lp);
+		// Prompt 231 : le logo PXE (il ouvre le mode développeur) en haut à gauche, agrandi ×2 comme la pile
+		if (MENU.ecran === 'titre') region({ x: xLogoMenu() - 8, y: HAUT_MENU.y - 8, l: 88, h: HAUT_MENU.h + 16 }, 20, 30, 176);
 		// Prompt 209 : écran titre en colonne de 640 px (x 130 → 810) ; les autres écrans du menu gardent 908 px (x 110 → 1018)
 		const titre = MENU.ecran === 'titre';
 		const b = BLOC_PARTAGE, yr = b.yDessin || b.y, lc = titre ? COLONNE_MENU_PORTRAIT.l : 908, xc = titre ? COLONNE_MENU_PORTRAIT.x : 110;
