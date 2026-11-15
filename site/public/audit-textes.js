@@ -557,6 +557,16 @@
 			if (d && phase === 'decision') decider(Jeu.actionsPossibles(d)[0]);
 		}, 12);
 		add('retour · marqueur en attente', () => continuer(), 12);
+		// Prompt 224 : réponse qui annonce une équipe → champ « À envoyer » sous les jetons
+		add('équipe promise · champ à remplir', () => {
+			H.raz();
+			H.poste();
+			phase = 'attente';
+			const d = Jeu.prochainDuJour();
+			if (!d) return;
+			const cle = Jeu.actionsPossibles(d).find((a) => Jeu.reponse(d, a) && Jeu.reponse(d, a).equipe);
+			if (cle) Jeu.promettreEquipe(Jeu.paquet.indexOf(d), cle, typeof tempsEquipes === 'function' ? tempsEquipes() : millis());
+		}, 20);
 		add('licenciement · journal', () => GAMEOVER && (GAMEOVER.vue = 'journal'), 20);
 		// Prompt 178 : écran « Reprendre une partie » (les parties jouées par l'audit ont laissé leurs emplacements), confirmation de suppression, limite atteinte
 		add('menu sauvegardes', () => (H.raz(), (MENU.actif = true), allerSauvegardes()));

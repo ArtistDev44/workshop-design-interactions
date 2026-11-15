@@ -604,7 +604,7 @@ function dessinerPanneauEquipes() {
 				dsTexte(Math.max(0, Math.ceil((fin - tm) / 1000)) + 's', px + lp - 4, py + 22, 14, DS.blanc75, 'right');
 			} else {
 				CARTE.jetons.push({ x: px, y: py, l: lp, h: hj, cle, actif: true });
-				boutons.push({ x: px, y: py, l: lp, h: hj, action: () => (typeof MOBILE !== 'undefined' && MOBILE.actif && dossierOuvert() ? deposerJeton(cle, Jeu.index) : choisirJeton(cle)), titre: t('equipe.' + cle) }); // prompt 210 : libellé (lecteur-ecran.js)
+				boutons.push({ x: px, y: py, l: lp, h: hj, action: () => (typeof MOBILE !== 'undefined' && MOBILE.actif && (dossierOuvert() || (Jeu.promessePour && Jeu.promessePour(cle))) ? deposerJeton(cle, indexDepotEquipe(cle)) : choisirJeton(cle)), titre: t('equipe.' + cle) }); // prompt 224 : mobile, un champ attend cette unité // prompt 210 : libellé (lecteur-ecran.js)
 			}
 		});
 		const lignesP = Math.max(1, Math.ceil(ps.length / 3));
@@ -612,6 +612,7 @@ function dessinerPanneauEquipes() {
 		if (verrou) dsTexte(couperLargeurCarte(t('histoire.verrou.equipes'), P.l - 32, 20), P.x + 16, y + 30, 14, DS.alerteClair, 'left');
 		y += 32 + (ps.length ? lignesP * (hj + 6) : 30) + 22; // prompt 218 : rangées de jetons de 50 + 6 ; prompt 220 : hSerre
 	});
+	y = dessinerChampsPromesses(P, y, tm); // prompt 224
 	// Prompt 219 : plus de boutons + / − / Recentrer — molette, + / −, Origine ; pincement à deux doigts sur mobile
 	// Message (envoi, refus, équipe choisie) sous les boutons ; la consigne « Glissez une équipe… » est retirée
 	const msg = SELECTION.message && millis() - SELECTION.message.t < 5000;
@@ -633,6 +634,63 @@ function dessinerPanneauEquipes() {
 			rect(lerp(CARTE.retour.x, r.x + 32, k) - 24, lerp(CARTE.retour.y, r.y + 23, k) - 24, 48, 48);
 		} else CARTE.retour = null;
 	}
+}
+
+// ——— Prompt 224 : champs des équipes promises (« À envoyer ») ———
+/** Index du dossier qui reçoit une équipe : le dossier ouvert, sinon le plus ancien champ qui attend cette unité */
+function indexDepotEquipe(cle) {
+	if (dossierOuvert()) return Jeu.index;
+	const p = Jeu.promessePour && Jeu.promessePour(cle);
+	return p ? p.index : Jeu.index;
+}
+/** Sous les jetons : un champ par équipe promise (case en pointillés au pictogramme de l'unité attendue, lieu, secondes
+ * restantes ; à 15 s ou moins, couleur d'alerte, sans clignotement). Renvoie le y suivant. */
+function dessinerChampsPromesses(P, y, tm) {
+	CARTE.champs = [];
+	const pr = Jeu.promessesEnAttente ? Jeu.promessesEnAttente().filter((p) => p.jourIndex === Jeu.jourIndex) : [];
+	if (!pr.length) return y;
+	dsTexte(t('promesse.titre'), P.x + 16, y, 20, DS.blanc, 'left');
+	y += 32;
+	const hc = hSerre(64, 0.9);
+	pr.forEach((p) => {
+		if (y + hc > P.y + P.h - 40) return; // plus de place : les suivants restent au clavier (Maj + n) et dans les annonces
+		const reste = Math.max(0, Math.ceil((p.echeance - tm) / 1000));
+		const urgent = reste <= 15;
+		const z = { x: P.x + 16, y, l: P.l - 32, h: hc, index: p.index, cle: p.cle };
+		const saisi = (CARTE.jeton && CARTE.jeton.cle === p.cle) || CARTE.jetonChoisi === p.cle;
+		noStroke();
+		fill(saisi ? DS.blanc15 : DS.blanc05);
+		rect(z.x, z.y, z.l, z.h);
+		noFill();
+		stroke(urgent ? DS.alerte : DS.blanc75);
+		strokeWeight(2);
+		drawingContext.setLineDash([6, 4]);
+		rect(z.x + 4, z.y + 4, 56, z.h - 8);
+		drawingContext.setLineDash([]);
+		noStroke();
+		pictoEquipe(p.cle, z.x + 12, z.y + (z.h - 30) / 2, 2.5, DS.blanc50);
+		dsTexte(couperLargeurCarte(String(p.nom), z.l - 80, 18), z.x + 72, z.y + 6, 18, DS.blanc, 'left');
+		dsTexte(couperLargeurCarte(String(p.sujet || ''), z.l - 80, 14), z.x + 72, z.y + 28, 14, DS.blanc75, 'left');
+		dsTexte(t('promesse.reste', { s: reste }), z.x + z.l - 8, z.y + 6, 16, urgent ? DS.alerteClair : DS.blanc75, 'right');
+		CARTE.champs.push(z);
+		boutons.push({ x: z.x, y: z.y, l: z.l, h: z.h, action: () => deposerDansChamp(z, CARTE.jetonChoisi), titre: t('promesse.champ', { nom: String(p.nom), sujet: String(p.sujet || ''), s: reste }) });
+		y += hc + 8;
+	});
+	return y + 12;
+}
+/** Dépôt dans un champ : le bon jeton envoie l'équipe (règles et coût de Jeu.envoyerEquipe) ; un autre est refusé */
+function deposerDansChamp(z, cle) {
+	const nom = String(Jeu.EQUIPES[z.cle].nom);
+	if (cle !== z.cle) {
+		CARTE.jetonChoisi = null;
+		const txt = t('promesse.attendue', { nom, touche: Jeu.TYPES_EQUIPES.indexOf(z.cle) + 1 });
+		SELECTION.message = { texte: txt, ok: false, t: millis() };
+		annoncer(txt);
+		if (cle) Confort.Son.bip('alerte');
+		return false;
+	}
+	deposerJeton(cle, z.index);
+	return true;
 }
 
 // ——— Gestes ———
@@ -674,6 +732,8 @@ function debutJeton() {
 	const r = CARTE.jetons.find((k) => k.actif && dansZone(p, k));
 	if (r) return (CARTE.jeton = { cle: r.cle, x0: p.x, y0: p.y }), true;
 	if (CARTE.jetonChoisi) {
+		const champ = (CARTE.champs || []).find((r) => dansZone(p, r)); // prompt 224
+		if (champ) return deposerDansChamp(champ, CARTE.jetonChoisi), true;
 		const zp = zoneDepotPanneau();
 		if (zp && dansZone(p, zp)) return deposerJeton(CARTE.jetonChoisi, Jeu.index), true;
 	}
@@ -701,6 +761,8 @@ function relacherJeton() {
 	CARTE.jeton = null;
 	if (Math.hypot(p.x - j.x0, p.y - j.y0) < 8) return choisirJeton(j.cle), true;
 	const zp = zoneDepotPanneau();
+	const champ = (CARTE.champs || []).find((r) => dansZone(p, r)); // prompt 224 : champ d'une équipe promise
+	if (champ) return deposerDansChamp(champ, j.cle), true;
 	const cible = CARTE.depots.find((r) => dansZone(p, r));
 	if (cible) return deposerJeton(j.cle, cible.index), true;
 	if (zp && dansZone(p, zp)) return deposerJeton(j.cle, Jeu.index), true;

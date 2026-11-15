@@ -309,6 +309,7 @@
 		Jeu.interactionsPrevues = []; // prompt 198 : interactions à venir (3 de plus par plainte déclenchée)
 		Jeu.derniersTextes = {}; // prompt 198 : historique circulaire des variantes tirées, par catégorie
 		Jeu.equipes = []; // prompt 22 : équipes envoyées depuis la carte
+		Jeu.promesses = []; // prompt 224 : équipes promises par une réponse, à glisser dans leur champ
 		Jeu.aggravationLignes = {}; // prompt 79
 		Jeu.statutPatron = nouveauStatut(); // prompt 84
 		Jeu.exces = { budget: 0, reputation: 0 }; // prompt 213 : soirs de suite en excès
@@ -382,6 +383,7 @@
 			modificateur: m ? Object.assign({}, m, { debut: m.debut === null ? null : m.debut - maintenant, fin: m.fin === null ? null : m.fin - maintenant }) : null,
 			paliersBudget: Object.assign({}, Jeu.paliersBudget),
 			refusEquipes: Jeu.refusEquipes || 0,
+			promesses: (Jeu.promesses || []).map((p) => Object.assign({}, p, { creee: p.creee - maintenant, echeance: p.echeance - maintenant })), // prompt 224 : délais relatifs
 			aggravationLignes: Object.assign({}, Jeu.aggravationLignes), // prompt 79
 			statutPatron: JSON.parse(JSON.stringify(Jeu.statutPatron)), // prompt 84 : niveau, avertissements, dates, file
 			exces: Object.assign({}, Jeu.exces || {}), // prompt 213
@@ -435,6 +437,7 @@
 		Jeu.derniersTextes = JSON.parse(JSON.stringify(s.derniersTextes || {}));
 		Jeu.equipes = (s.equipes || []).map((q) => Object.assign({}, q, { depart: q.depart + maintenant, arrivee: q.arrivee + maintenant, finIntervention: (q.finIntervention === undefined ? q.arrivee : q.finIntervention) + maintenant, libre: (q.libre === undefined ? q.arrivee : q.libre) + maintenant, remercie: q.remercie === undefined ? q.arrivee_sim !== null : q.remercie })); // prompt 121 : ancienne sauvegarde → pas de remerciement en double
 		Jeu.refusEquipes = s.refusEquipes || 0;
+		Jeu.promesses = (s.promesses || []).map((p) => Object.assign({}, p, { creee: p.creee + maintenant, echeance: p.echeance + maintenant })); // prompt 224
 		Jeu.aggravationLignes = Object.assign({}, s.aggravationLignes || {}); // prompt 79
 		Jeu.statutPatron = Object.assign(nouveauStatut(), s.statutPatron || {}); // prompt 84 (ancienne sauvegarde : statut neuf)
 		Jeu.exces = Object.assign({ budget: 0, reputation: 0 }, s.exces || {}); // prompt 213 (ancienne sauvegarde : aucun excès)
@@ -2100,7 +2103,8 @@
 		const d = Jeu.paquet[index];
 		if (!q || !d) return { ok: false, message: T('equipe.introuvable') };
 		if ((Jeu.equipes || []).some((x) => x.index === index && x.cle === cle)) return { ok: false, message: T('equipe.deja') }; // une par type et par incident
-		if (index >= Jeu.index && !Jeu.equipesDisponibles(cle, maintenant)) {
+		const promise = index < Jeu.index && promesseEnAttente(index, cle); // prompt 224 : dossier déjà répondu, mais l'équipe y est promise
+		if ((index >= Jeu.index || promise) && !Jeu.equipesDisponibles(cle, maintenant)) {
 			Jeu.refusEquipes = (Jeu.refusEquipes || 0) + 1;
 			return { ok: false, refus: true, message: T('equipe.aucune', { nom: q.nom, s: Jeu.retourEquipe(cle, maintenant) }) };
 		}
@@ -2108,7 +2112,7 @@
 		if (q.palier && Jeu.jauges.budget < q.palier) return { ok: false, message: T('equipe.palier', { nom: q.nom, palier: q.palier, budget: Jeu.jauges.budget }) };
 		Jeu.appliquerDeltas({ budget: -q.cout });
 		const sujet = d.lignes && d.lignes.length ? T('sujet.ligne', { ligne: d.lignes.join(', ') }) : d.nature;
-		if (index < Jeu.index) {
+		if (index < Jeu.index && !promise) {
 			// Équipe inutile (prompt 23 § 4) : l'incident est déjà résolu — coût perdu, réputation −3
 			Jeu.compterMalus('equipe_inutile');
 			Jeu.appliquerDeltas({ reputation: -3 });
@@ -2119,8 +2123,62 @@
 		const arrivee = maintenant + Jeu.DELAI_EQUIPE_MS * (Jeu.somnolenceElevee ? 1.5 : 1); // prompt 91 (option) : fatigué, on coordonne moins vite
 		const finIntervention = arrivee + REGLAGES.equipes[cle].duree;
 		Jeu.equipes.push({ index, cle, nom: q.nom, cout: q.cout, depart: maintenant, arrivee, finIntervention, libre: finIntervention + Jeu.RETOUR_EQUIPE_MS, heure: maintenantSim(), arrivee_sim: null, jour: d.date, jourIndex: Jeu.jourIndex, pertinente, sujet, remercie: false });
-		return { ok: true, message: T(pertinente ? 'equipe.enRoute' : 'equipe.enRouteHorsSujet', { nom: q.nom, cout: q.cout }) };
+		const tenue = tenirPromesse(index, cle); // prompt 224
+		return { ok: true, promesse: !!tenue, message: T(pertinente ? 'equipe.enRoute' : 'equipe.enRouteHorsSujet', { nom: q.nom, cout: q.cout }) + (tenue ? ' ' + T('promesse.tenue') : '') };
 	};
+
+	// =====================================================================
+	// Prompt 224 — L'équipe PROMISE doit être glissée dans son champ. Une réponse qui annonce une équipe
+	// (data/reponses.json, « equipe ») crée une promesse sur le dossier : l'unité attendue doit être envoyée
+	// (Jeu.envoyerEquipe, règles et coût inchangés) avant l'échéance, sinon « promesse non tenue ».
+	// Temps des équipes (pause, ralenti, sieste comme elles). Valeurs verrouillées ici.
+	// =====================================================================
+	REGLAGES.promesse = { delaiMs: 45000, reputation: -6, fluidite: -3 };
+	Jeu.promesses = [];
+	/** Promesse en attente pour ce dossier et cette unité, ou null */
+	const promesseEnAttente = (index, cle) => (Jeu.promesses || []).find((p) => p.etat === 'attente' && p.index === index && (!cle || p.cle === cle)) || null;
+	/** Promesses en attente (les plus anciennes d'abord) */
+	Jeu.promessesEnAttente = () => (Jeu.promesses || []).filter((p) => p.etat === 'attente').sort((a, b) => a.creee - b.creee);
+	/** Première promesse en attente qui attend cette unité, ou null (Maj + 1 à 4, toucher un jeton sur mobile) */
+	Jeu.promessePour = (cle) => Jeu.promessesEnAttente().find((p) => p.cle === cle) || null;
+	/** Après une décision : si la réponse annonce une équipe (équipes débloquées), crée la promesse — sauf si cette
+	 * unité est déjà envoyée sur le dossier. Renvoie la promesse créée, ou null. */
+	Jeu.promettreEquipe = function (index, cleReponse, maintenant) {
+		const d = (Jeu.paquet || [])[index];
+		if (!d || !Jeu.elementDebloque('equipes')) return null;
+		const rep = Jeu.reponse(d, cleReponse);
+		if (!rep || !rep.equipe || !EQUIPES[rep.equipe]) return null;
+		if ((Jeu.equipes || []).some((q) => q.index === index && q.cle === rep.equipe && !q.inutile)) return null; // déjà envoyée : promesse tenue d'office
+		if (promesseEnAttente(index, rep.equipe)) return null;
+		const sujet = d.lignes && d.lignes.length ? T('sujet.ligne', { ligne: d.lignes.join(', ') }) : d.nature;
+		const p = { index, cle: rep.equipe, nom: EQUIPES[rep.equipe].nom, sujet, creee: maintenant, echeance: maintenant + REGLAGES.promesse.delaiMs, etat: 'attente', jourIndex: Jeu.jourIndex, heure: maintenantSim() };
+		Jeu.promesses.push(p);
+		return p;
+	};
+	/** Appelée par Jeu.envoyerEquipe quand l'envoi réussit : la promesse de ce dossier pour cette unité est tenue */
+	function tenirPromesse(index, cle) {
+		const p = promesseEnAttente(index, cle);
+		if (p) p.etat = 'tenue';
+		return p;
+	}
+	/** Échéance dépassée (ou fin de journée) : promesse non tenue — réputation et fluidité baissent, malus compté,
+	 * message du patron. Renvoie la promesse. */
+	function rompre(p) {
+		p.etat = 'ratee';
+		Jeu.compterMalus('promesse');
+		Jeu.appliquerDeltas({ reputation: REGLAGES.promesse.reputation, fluidite: REGLAGES.promesse.fluidite });
+		if (Jeu.messagePatron) Jeu.messagePatron(T('promesse.patron', { nom: p.nom, sujet: p.sujet, r: REGLAGES.promesse.reputation, f: REGLAGES.promesse.fluidite }), 'reproche', { promesse: p.cle });
+		return p;
+	}
+	/** Chaque image : renvoie les promesses rompues à cet instant (pour l'annonce et le son) */
+	Jeu.majPromesses = function (maintenant) {
+		return Jeu.promessesEnAttente().filter((p) => maintenant >= p.echeance).map(rompre);
+	};
+	/** Fin de journée : les promesses du jour encore en attente sont rompues */
+	Jeu.romprePromessesDuJour = function () {
+		return Jeu.promessesEnAttente().filter((p) => p.jourIndex === Jeu.jourIndex).map(rompre);
+	};
+
 
 	/** À appeler à chaque image : applique les effets des équipes arrivées (moitié si l'équipe n'est pas pertinente) */
 	Jeu.majEquipes = function (maintenant) {
@@ -2267,6 +2325,7 @@
 	/** Fin de journée : objectif (bonus ou malus) et malus « budget épuisé » — une seule fois par jour */
 	Jeu.finDeJourneeTactique = function () {
 		if ((Jeu.objectifsResultats || []).some((o) => o.jourIndex === Jeu.jourIndex)) return;
+		Jeu.romprePromessesDuJour(); // prompt 224 : une équipe promise et jamais envoyée compte avant le bilan du soir
 		Jeu.finJourneeStatut(); // prompt 84 : dernier avertissement ou licenciement, avant le mail du soir
 		const o = Jeu.objectifDuJour();
 		const atteint = Jeu.jauges[o.jauge] >= o.seuil - (Jeu.allegementObjectif || 0); // prompt 88 : demande « un jour plus calme » accordée
@@ -2334,6 +2393,7 @@
 		{ id: 'credits_perdus', libelle: T('malus.credits_perdus.l'), condition: T('malus.credits_perdus.c', { seuil: REGLAGES.exces.budget }), consequence: T('malus.credits_perdus.q') }, // prompt 213
 		{ id: 'attente_miracle', libelle: T('malus.attente_miracle.l'), condition: T('malus.attente_miracle.c', { seuil: REGLAGES.exces.reputation }), consequence: T('malus.attente_miracle.q') },
 		{ id: 'patience', libelle: T('malus.patience.l'), condition: T('malus.patience.c'), consequence: T('malus.patience.q') },
+		{ id: 'promesse', libelle: T('malus.promesse.l'), condition: T('malus.promesse.c', { s: REGLAGES.promesse.delaiMs / 1000 }), consequence: T('malus.promesse.q', { r: REGLAGES.promesse.reputation, f: REGLAGES.promesse.fluidite }) }, // prompt 224
 	];
 	Jeu.compterMalus = function (id) {
 		Jeu.malus = Jeu.malus || {};

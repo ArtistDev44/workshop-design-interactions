@@ -85,7 +85,7 @@ const optionsTexteAide = (couleur, style) => ({ police: POLICE_TEXTE, taille: TE
 // ——— Illustrations (prompt 172) : une vignette par carte, dessinée en code, jamais plus haute que la carte ———
 const ONGLETS_ILLUSTRES_AIDE = ['demarrer', 'regles', 'malus'];
 const VIGNETTE_AIDE = { l: 116, h: 84, ecart: 20 };
-const ICONES_MALUS_AIDE = { non_traite: 'inbox', sieste: 'moon', objectif_rate: 'flag', equipe_inutile: 'users', budget_epuise: 'wallet', credits_perdus: 'coins', attente_miracle: 'trending-up', patience: 'timer' }; // prompt 213
+const ICONES_MALUS_AIDE = { non_traite: 'inbox', sieste: 'moon', objectif_rate: 'flag', equipe_inutile: 'users', budget_epuise: 'wallet', credits_perdus: 'coins', attente_miracle: 'trending-up', patience: 'timer', promesse: 'circle-x' }; // prompt 213 ; prompt 224 : promesse non tenue
 /** Jauge du bandeau en réduction : piste, remplissage à la couleur du seuil (vert, orange sous 40, rouge sous 20), repères 20 et 40 */
 function miniJaugeAide(x, y, l, h, v) {
 	noStroke();
