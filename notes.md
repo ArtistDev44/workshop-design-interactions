@@ -2,7 +2,7 @@
 
 Notes libres du projet : une page prête pour le wiki, les liens des API utilisées, et des pistes pour les animations.
 
-**Statut : projet clôturé le 15/11/2026.** Les notes ci-dessous sont datées et gardées telles quelles. Depuis, le test par un autre groupe est consigné (groupe de Léo & Nolan, à leur demande ; voir les README).
+**Statut : projet clôturé le 15/11/2026.** Les notes ci-dessous sont datées et gardées telles quelles. Depuis, le test par un autre groupe est consigné (groupe de Léo & Nolan, à leur demande) : interface trop complexe, pas assez d'aide à la prise en main, trop de fonctionnalités ; décision : options dans la section « Avancé » des Paramètres, interface épurée, aide renforcée (voir les README).
 
 ## Page wiki (à copier-coller sur le wiki du dépôt)
 

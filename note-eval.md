@@ -16,7 +16,7 @@
   le cartel de `rendu/` porte Système, Données et la chaîne ; un test prouve que la difficulté est un paramètre
   opérant ; l'archive est resynchronisée. **Aucun score modifié** : les manques qui pèsent (test croisé,
   contributions, part humaine de l'AI usage, oral) dépendent toujours du groupe.
-- **Mise à jour du 15/11/2026 (clôture du projet)** : le test par un autre groupe est consigné dans les deux README (groupe de Léo & Nolan, à leur demande) ; les 3 observations et la décision prise n'y sont pas écrites. Le même jour, rôles, contributions nominatives et part humaine de l'IA sont complétés d'après l'historique git (README de `site/` et de `rendu/`, `manifest.json`). **Aucun score modifié.**
+- **Mise à jour du 15/11/2026 (clôture du projet)** : le test par un autre groupe est consigné dans les deux README (groupe de Léo & Nolan, à leur demande), avec ses 3 observations (interface trop complexe, pas assez d'aide à la prise en main, trop de fonctionnalités) et la décision prise (options dans la section « Avancé » des Paramètres, interface épurée, aide renforcée). Le même jour, rôles, contributions nominatives et part humaine de l'IA sont complétés d'après l'historique git (README de `site/` et de `rendu/`, `manifest.json`). **Aucun score modifié.**
 - **Règle** : un point n'est attribué que s'il est prouvable dans le dépôt aujourd'hui. Ce qui dépend d'une saisie humaine, d'un test en salle ou de l'oral est compté comme manque.
 
 ---

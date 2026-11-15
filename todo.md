@@ -21,7 +21,7 @@ Chaîne à tenir du début à la fin : source → grammaire → système → œu
 | ☑ Sketch minimal p5.js | ☑ Mapping data / API | ☑ Manifest JSON |
 | ☑ Problématique posée | ☑ Fallback local (offline) | ☑ Cartel |
 | ☐ Direction créative fixée | ☑ Test croisé silencieux | ☑ Captation |
-|  | ☐ Itération post-test | ☐ Soutenance individuelle |
+|  | ☑ Itération post-test | ☐ Soutenance individuelle |
 
 Suivi rapide du protocole. Le détail de chaque journée est dans les phases ci-dessous : cocher une ligne du tableau revient à valider les tâches correspondantes de la phase du jour.
 
@@ -56,8 +56,8 @@ Fin J1 attendue : fiche-source / grammaire visuelle / sketch minimal / phrase-pr
 - [ ] Tester en 1920×1080, pixelDensity(1), éviter de recréer de gros tableaux dans draw()
 - [ ] N'ajouter data / API / interaction que si le mapping est justifiable en une phrase ; sinon assumer un projet génératif
 - [x] Intégrer data ou interaction avec fallback local dans data/fallback.json (V2) — 6 cas dans `site/public/data/fallback.json`
-- [x] Test croisé silencieux par un autre groupe (30 à 60 s, 3 observations notées) (fait par le groupe de Léo & Nolan, à leur demande ; les 3 observations ne sont pas consignées)
-- [ ] Corriger une faiblesse perceptuelle ou technique (V3), documenter l'itération
+- [x] Test croisé silencieux par un autre groupe (30 à 60 s, 3 observations notées) (fait par le groupe de Léo & Nolan, à leur demande — observations : interface trop complexe, pas assez d'aide à la prise en main, trop de fonctionnalités ; décision : options dans la section « Avancé » des Paramètres, interface épurée, aide renforcée)
+- [x] Corriger une faiblesse perceptuelle ou technique (V3), documenter l'itération (fait : itération issue du test croisé, voir « Conformité au brief » des README)
 - [x] Démarrer le README avec les sections du livret — `site/README.md`
 
 Fin J2 attendue : prototype V3 / mapping / fallback / test croisé / décision d'itération / README en cours.
