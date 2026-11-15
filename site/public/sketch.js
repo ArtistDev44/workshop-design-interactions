@@ -1450,11 +1450,12 @@ function keyPressed() {
 	// Prompt 183 : le menu de l'appli a le focus (Tab) → Entrée / Espace ouvre l'appli choisie
 	if (MENU_FOCUS.actif && ecran === 'jeu' && (keyCode === ENTER || keyCode === RETURN || key === ' ')) return ouvrirEntreeMenu(ICONES_OS[PC.selection].cle), false;
 	// Prompt 72 : réponses d'une alerte — ↑ ↓ / Tab les parcourent, Entrée valide (le focus « Quitter le PC » d'abord s'il est pris)
-	if (!focusQuitter && !MENU_FOCUS.actif && ecran === 'jeu' && toucheSourcesEnquete()) return false; // prompt 92 : Tab / Entrée / ↑ ↓ dans les sources d'« En savoir plus »
-	if (!focusQuitter && !MENU_FOCUS.actif && ecran === 'jeu' && toucheMultitache()) return false; // prompt 77 : Tab passe d'un signalement actif à l'autre
+	if (!focusQuitter && !focusFinir && !MENU_FOCUS.actif && ecran === 'jeu' && toucheSourcesEnquete()) return false; // prompt 92 : Tab / Entrée / ↑ ↓ dans les sources d'« En savoir plus »
+	if (!focusQuitter && !focusFinir && !MENU_FOCUS.actif && ecran === 'jeu' && toucheMultitache()) return false; // prompt 77 : Tab passe d'un signalement actif à l'autre
 	// Prompt 26 : Tab place le focus sur « Quitter le PC » ; prompt 183 : il passe d'abord par le menu de l'appli
 	// (Patron, Community, Journal, Données) — seul chemin au clavier vers les autres applis depuis la carte
 	if (keyCode === TAB) return ecran === 'jeu' && phase !== 'fin' ? tabMenuApp() : basculerFocusQuitter(!focusQuitter), false;
+	if (focusFinir && (keyCode === ENTER || keyCode === RETURN || key === ' ')) return finirJourneeBouton(), false; // prompt 221
 	if (focusQuitter && (keyCode === ENTER || keyCode === RETURN || key === ' ')) return quitterPC(), false;
 	// Touches valables partout
 	if (key === 'h' || key === 'H' || key === '?') return ouvrir('aide'), false;

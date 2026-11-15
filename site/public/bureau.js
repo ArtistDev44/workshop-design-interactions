@@ -1005,6 +1005,7 @@ function composerVue() {
 
 // ——— Prompt 26 : sortir du PC — bouton « Quitter le PC » et molette (la porte a été retirée) ———
 let focusQuitter = false; // focus clavier sur le bouton « Quitter le PC » (Tab au poste)
+let focusFinir = false; // prompt 221 : focus clavier sur « Finir la journée » (Tab au poste, juste avant « Quitter le PC »)
 let dernierScrollSortie = 0;
 let cumulScroll = 0;
 const BOUTON_QUITTER = { l: 340, h: 50, marge: 40 };
@@ -1012,11 +1013,56 @@ const BOUTON_QUITTER = { l: 340, h: 50, marge: 40 };
 function rectBoutonQuitter() {
 	return { x: L - BOUTON_QUITTER.l - BOUTON_QUITTER.marge, y: H - BOUTON_QUITTER.h - 10, l: BOUTON_QUITTER.l, h: BOUTON_QUITTER.h }; // sous l'écran (prompt 43)
 }
+/** Prompt 221 : « Finir la journée », à gauche de « Quitter le PC », même hauteur */
+function rectBoutonFinir() {
+	const b = rectBoutonQuitter();
+	return { x: b.x - 300 - 16, y: b.y, l: 300, h: b.h };
+}
+/** Prompt 221 : visible quand une journée est en cours (comme le bouton « Quitter la journée » du menu), hors guide */
+function boutonFinirVisible() {
+	return typeof journeeQuittable === 'function' && journeeQuittable() && !(typeof GUIDE !== 'undefined' && GUIDE.actif);
+}
+/** Prompt 221 : geste « Finir la journée » — même règle que « Quitter le PC » (un choix attend → refusé, avec sa raison),
+ * puis l'étape de sortie en cours (quitterJourneeRapide, journee.js) : fin de service atteinte → le soir ; avant l'heure →
+ * « Partir quand même ? » (malus expliqué) ; le soir → sortie du bureau */
+function finirJourneeBouton() {
+	const raison = raisonRetenuAuPC();
+	if (raison) {
+		SORTIE_REFUSEE.t = millis();
+		SORTIE_REFUSEE.alterne = !SORTIE_REFUSEE.alterne;
+		annoncer(t(raison) + (SORTIE_REFUSEE.alterne ? '' : '\u00A0'));
+		return false;
+	}
+	focusFinir = false;
+	return quitterJourneeRapide();
+}
+function basculerFocusFinir(actif) {
+	focusFinir = actif;
+	const raison = actif && raisonRetenuAuPC();
+	if (actif) annoncer(raison ? t('poste.finirJournee_indispo') + ' ' + t(raison) : t('poste.finirJournee_focus'));
+}
+function dessinerBoutonFinir(raison) {
+	if (!boutonFinirVisible()) return (focusFinir = false);
+	const f = rectBoutonFinir();
+	noStroke();
+	fill(13, 12, 12, 225);
+	rect(f.x, f.y, f.l, f.h);
+	bouton(f.x, f.y, f.l, f.h, t('poste.finirJournee'), finirJourneeBouton, !!raison, true);
+	if (raison) boutons.push({ x: f.x, y: f.y, l: f.l, h: f.h, action: finirJourneeBouton }); // désactivé : le clic dit la raison
+	if (focusFinir) {
+		noFill();
+		stroke(DS.blanc);
+		strokeWeight(4);
+		rect(f.x - 8, f.y - 8, f.l + 16, f.h + 16, 14);
+		noStroke();
+	}
+}
 /** Bouton visible au poste, sous le moniteur à droite (dans la pièce, hors de l'écran du PC). */
 function dessinerBoutonQuitterPC() {
 	const b = rectBoutonQuitter();
 	if (clignement) return; // pendant qu'on se lève, le bouton disparaît
 	const raison = raisonRetenuAuPC(); // prompt 182 : un choix attend → bouton désactivé, avec sa raison
+	dessinerBoutonFinir(raison); // prompt 221
 	// Prompt 211 : bouton secondaire (contour) sur un fond sombre — le rouge primaire en faisait l'élément le plus saillant
 	noStroke();
 	fill(13, 12, 12, 225);
@@ -1065,6 +1111,7 @@ function quitterPC() {
 		return false;
 	}
 	focusQuitter = false;
+	focusFinir = false;
 	seLever();
 	return true;
 }
@@ -1164,6 +1211,7 @@ function sAsseoir() {
 function seLever() {
 	if (vue !== 'poste' || clignement) return;
 	focusQuitter = false;
+	focusFinir = false; // prompt 221
 	if (typeof MENU_FOCUS !== 'undefined') MENU_FOCUS.actif = false;
 	if (typeof PC !== 'undefined' && (PC.etat === 'os' || PC.etat === 'appli')) versAppliPrincipale(); // prompt 22 : se lever referme l'app ouverte ; prompt 183 : on retrouvera la carte
 	clignement = { debut: millis(), sens: 'arriere', bascule: false }; // la vue bascule à mi-clignement

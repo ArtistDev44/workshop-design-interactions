@@ -95,15 +95,18 @@ function ouvrirEntreeMenu(cle) {
 	annoncer(t('menuApp.annonce', { vue: cle === 'signalements' ? t('menuApp.carte') : t('menuApp.' + cle) }));
 }
 
-/** Prompt 183 — Tab au poste : aucun focus → entrées du menu (sauf l'entrée affichée) → « Quitter le PC » → aucun
+/** Prompt 183 — Tab au poste : aucun focus → entrées du menu (sauf l'entrée affichée) → « Finir la journée » (prompt 221)
+ * → « Quitter le PC » → aucun
  * focus ; Maj + Tab dans l'autre sens. Entrée / Espace ouvre l'entrée focalisée (sketch.js). */
 function tabMenuApp() {
 	const recul = keyIsDown(SHIFT);
 	const arrets = ENTREES_MENU.map((cle) => ICONES_OS.findIndex((ic) => ic.cle === cle)).filter((i) => i >= 0 && ICONES_OS[i].cle !== entreeActive());
-	const tout = [null, ...arrets, 'quitter'];
-	const ici = focusQuitter ? tout.length - 1 : MENU_FOCUS.actif ? Math.max(0, tout.indexOf(PC.selection)) : 0;
+	const finir = typeof boutonFinirVisible === 'function' && boutonFinirVisible(); // prompt 221 : « Finir la journée » avant « Quitter le PC »
+	const tout = [null, ...arrets, ...(finir ? ['finir'] : []), 'quitter'];
+	const ici = focusQuitter ? tout.length - 1 : focusFinir && finir ? tout.length - 2 : MENU_FOCUS.actif ? Math.max(0, tout.indexOf(PC.selection)) : 0;
 	const suivant = tout[(ici + (recul ? tout.length - 1 : 1)) % tout.length];
 	MENU_FOCUS.actif = typeof suivant === 'number';
+	if (focusFinir !== (suivant === 'finir')) basculerFocusFinir(suivant === 'finir');
 	if (focusQuitter !== (suivant === 'quitter')) basculerFocusQuitter(suivant === 'quitter');
 	if (MENU_FOCUS.actif) {
 		PC.selection = suivant;
