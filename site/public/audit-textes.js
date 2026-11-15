@@ -520,6 +520,21 @@
 			['lignes', 'trafic', 'meteo', 'agenda'].forEach((c) => revelerSource(c, false));
 		}, 12);
 		// Fin de journée, soir, semaine, fins
+		// Prompt 222 : « Fin de journée » — rapport du soir, puis le bilan dans la même fenêtre
+		add('fin de journée · rapport du soir', () => {
+			H.raz();
+			H.poste();
+			const rp = Taches.rapport();
+			if (rp) ouvrirTache({ type: 'rapport', donnees: rp }, () => {});
+		}, 20);
+		add('fin de journée · bilan', () => {
+			if (fenetre !== 'tache' || !TACHE.courante) return;
+			TACHE.groupe = 0;
+			basculerChoix(0);
+			TACHE.groupe = 1;
+			basculerChoix(0);
+			validerTache(false);
+		}, 40);
 		add('mail du soir · Mails', () => (H.raz(), (PLUS.ouvert = false), H.poste(), Jeu.deposerMailDuSoir(), (PC.etat = 'os'), (PC.fenetre = 'patron'), (PATRON.ouvert = false), (PATRON.filtre = 'soirs')), 12); // prompt 194 : le mail du soir est dans l'appli Mails
 		add('soir · sortie', () => (H.raz(), (phase = 'soir'), (SOIR.debut = millis()), (vue = 'bureau')), 20);
 		add('rapport de la veille', () => (H.raz(), (phase = 'attente'), (vue = 'bureau'), ouvrir('rapportVeille')));

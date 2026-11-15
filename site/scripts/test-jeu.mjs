@@ -4529,6 +4529,16 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	verifier(/\.\.\.\(finir \? \['finir'\] : \[\]\), 'quitter'\]/.test(readFileSync(join(pub, 'menu-app.js'), 'utf8')) && /focusFinir && \(keyCode === ENTER/.test(readFileSync(join(pub, 'sketch.js'), 'utf8')), '221 : Tab passe par « Finir la journée » puis « Quitter le PC » ; Entrée l\'active');
 }
 
+// ——— Prompt 222 : rapport du soir et bilan dans la même fenêtre ; fait marquant unique choisi d'office ———
+{
+	const tu = readFileSync(join(pub, 'taches-ui.js'), 'utf8');
+	verifier(!/function ouvrirRecap/.test(tu) && !/type: 'recap'/.test(tu) && /TACHE\.bilan = \{ date: tache\.donnees\.date, rapport: r, recap: j\.recap \};/.test(tu), '222 : plus de deuxième fenêtre « recap » — le bilan est gardé dans la fenêtre du rapport');
+	verifier(/if \(TACHE\.bilan\) return fermerTache\(\);/.test(tu) && /if \(!tache \|\| TACHE\.bilan\) return;/.test(tu), '222 : après l\'envoi, Entrée / Échap continuent et les choix sont figés');
+	verifier(/function fenetreFinJournee\(/.test(tu) && /if \(TACHE\.bilan\) corpsRecap\(TACHE\.bilan, xd, yy \+ 40, ld, true\);/.test(tu) && /function finJourneeSuite\(/.test(tu) && /suiteFenetre\(x2, y2, l, h2\);/.test(tu), '222 : rapport et bilan côte à côte (ordinateur), empilés et défilables (mobile)');
+	verifier(/tache\.donnees\.faits\.length === 1 \? tache\.donnees\.faits\[0\] : null/.test(tu) && /TACHE\.choix\[0\] = unique\.id;\n\t\tTACHE\.groupe = 1;/.test(tu), '222 : un seul fait marquant → choisi d\'office, focus sur la demande');
+	verifier(/add\('fin de journée · bilan'/.test(readFileSync(join(pub, 'audit-textes.js'), 'utf8')), '222 : l\'audit des textes passe par la fin de journée (rapport, bilan)');
+}
+
 if (erreurs.length) {
 	console.error(`Test du jeu : ${erreurs.length} erreur(s) sur ${controles + erreurs.length} contrôles`);
 	for (const e of erreurs) console.error(`  ✗ ${e}`);
