@@ -4619,6 +4619,54 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	verifier(/if \(action !== 'temps'\) promettreEquipeApres\(dDecide, action\);/.test(readFileSync(join(pub, 'sketch.js'), 'utf8')) && /Jeu\.promessePour\(cle\);/.test(readFileSync(join(pub, 'carte.js'), 'utf8')), '224 : promesse créée à la décision ; Maj + n remplit le champ qui attend cette unité');
 }
 
+// ——— Prompt 225 : aucune notification du téléphone avant le début de la journée ———
+{
+	const c = contexte('fr');
+	const r = vm.runInContext(
+		`(() => {
+		var ecran = 'jeu', MENU = { actif: false }, phase = 'attente', TRANSITION_JOUR = null, smsActif = false, tutoriel = null, fenetre = null, vue = 'poste';
+		var JOUR_PC = { attendu: false }, PC = { etat: 'appli' }, PHASES_ACTIVES = ['decision'], __t = 0, __bips = 0, __annonces = 0;
+		var Confort = { Reglages: { npd: false }, Son: { bip: () => __bips++ } };
+		globalThis.millis = () => __t; globalThis.annoncer = (x) => (__annonces++, (globalThis.__txt = (globalThis.__txt || []).concat(String(x).slice(0, 60))));
+		Object.assign(globalThis, { ecran, MENU, phase, TRANSITION_JOUR, smsActif, tutoriel, fenetre, vue, JOUR_PC, PC, PHASES_ACTIVES, Confort });
+		Jeu.chargerSemaine('2026-10-12'); Jeu.nouvellePartie();
+		Jeu.journeeSuivante(); // jour 2, 8 h
+		Jeu.jauges.reputation = 20; // alerte de jauge due dès 8 h
+		const cas = {};
+		globalThis.TRANSITION_JOUR = { debut: 0 }; cas.transition = journeeCommencee();
+		globalThis.TRANSITION_JOUR = null; globalThis.JOUR_PC.attendu = true; cas.pcAttendu = journeeCommencee();
+		globalThis.JOUR_PC.attendu = false; globalThis.smsActif = true; cas.sms = journeeCommencee();
+		globalThis.smsActif = false; globalThis.fenetre = 'rapportVeille'; cas.veille = journeeCommencee();
+		globalThis.fenetre = null; globalThis.phase = 'soir'; cas.soir = journeeCommencee();
+		globalThis.phase = 'attente'; Jeu.horloge.minutes = Jeu.debutJournee() - 1; cas.avant8h = journeeCommencee();
+		Jeu.horloge.minutes = Jeu.debutJournee(); cas.commencee = journeeCommencee();
+		// Pendant la transition : rien n'est livré, aucun son ni annonce
+		globalThis.TRANSITION_JOUR = { debut: 0 };
+		__annonces = 0; globalThis.__txt = []; // les mails du patron du matin (Jeu) ne sont pas le téléphone
+		for (let k = 0; k < 5; k++) { __t += 500; majNotifsTel(); }
+		const pendant = { recues: TELN.recues.length, spontanee: !!TELN.spontanee, bips: __bips, annonces: __annonces, txt: globalThis.__txt };
+		// Transition finie : 1 s de délai, puis une seule notification spontanée (les autres regroupées)
+		globalThis.TRANSITION_JOUR = null;
+		__t += 100; majNotifsTel(); const avantDelai = !!TELN.spontanee;
+		Jeu.horloge.minutes = 10 * 60; __t += 1200; majNotifsTel();
+		const apres = { spontanee: TELN.spontanee && TELN.spontanee.n.id, autres: TELN.spontanee && TELN.spontanee.autres, bips: __bips };
+		// Soir : file et notification affichée vidées
+		globalThis.phase = 'soir'; majNotifsTel();
+		const soir = { attente: TELN.attente.length, spontanee: TELN.spontanee };
+		// Avertissement du patron : une seule fois, pas chaque matin
+		Jeu.statutPatron.avertissements = 1;
+		const ev1 = NotifsTel.evenementsPartie(TELN).filter((n) => /avert/.test(n.id)).map((n) => n.id);
+		return { cas, pendant, avantDelai, apres, soir, ev1 };
+	})()`,
+		c,
+	);
+	verifier(!r.cas.transition && !r.cas.pcAttendu && !r.cas.sms && !r.cas.veille && !r.cas.soir && !r.cas.avant8h && r.cas.commencee, `225 : journeeCommencee fausse pendant transition, démarrage du PC, SMS, rapport de la veille, soir, avant 8 h (${JSON.stringify(r.cas)})`);
+	verifier(r.pendant.recues === 0 && !r.pendant.spontanee && r.pendant.bips === 0 && r.pendant.annonces === 0 && !r.avantDelai, `225 : rien livré avant le début de la journée, ni son ni annonce (${JSON.stringify(r.pendant)})`);
+	verifier(/jaugereputation/.test(r.apres.spontanee || '') && r.apres.autres >= 1 && r.apres.bips === 1, `225 : après le début, une seule notification (l'alerte d'abord), les autres regroupées (${JSON.stringify(r.apres)})`);
+	verifier(r.soir.attente === 0 && r.soir.spontanee === null, '225 : le soir, la file spontanée est vidée (rien ne ressort le lendemain)');
+	verifier(r.ev1.length === 1 && r.ev1[0] === 'regul|avert|1', `225 : un avertissement du patron n'est notifié qu'une fois, pas chaque matin (${r.ev1})`);
+}
+
 if (erreurs.length) {
 	console.error(`Test du jeu : ${erreurs.length} erreur(s) sur ${controles + erreurs.length} contrôles`);
 	for (const e of erreurs) console.error(`  ✗ ${e}`);

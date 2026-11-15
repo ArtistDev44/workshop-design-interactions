@@ -1,7 +1,7 @@
 # Prompt 225 — Jeu : pas de notification du téléphone avant le début de la journée
 
 Origine : demande du 15/11/2026 (« régler les problèmes de début de journée, quand un message sur le téléphone apparaît
-avant le début de la journée »). Statut : **à exécuter**.
+avant le début de la journée »). Statut : **exécuté le 15/11/2026**.
 
 ## Constat (lecture du code, à confirmer en le reproduisant)
 
@@ -38,3 +38,32 @@ Rien n'y attend que la journée ait **vraiment** commencé :
 `npm run build`, `npm test` (contrôles : `journeeCommencee` fausse pendant transition, réveil, démarrage du PC, SMS ;
 aucune notification livrée avant ; livraison groupée après ; rien de la veille ne ressort deux fois) ; reproduction
 du point 1 refaite : aucune notification avant le début ; audit des textes à 0 en 1920 × 1080, 1366 × 768, 412 × 915.
+
+## Reproduit (avant)
+
+Chromium 1920 × 1080, semaine archivée, fin du jour 1 avec la réputation à 22 et une plainte en attente, passage au
+jour 2 : à **8 h 00**, pendant l'écran noir « JOUR 2/6 », PC encore éteint, l'alerte « jauge réputation » est livrée
+(son d'alerte, annonce au lecteur d'écran, téléphone qui vibre ensuite sur le bureau). Capture :
+`jeu/225-captures/avant-transition-jour2.png`. Même résultat en 412 × 915.
+
+## Fait
+
+- `notifs-tel.js` : `journeeCommencee()` — transition finie, PC démarré (`JOUR_PC.attendu`, `pcDemarre`), aucun SMS,
+  tutoriel, guide, cinématique, licenciement ni fenêtre du matin (`blame`, `rapportVeille`, tâche…), phase de jeu (ni
+  `reveil`, ni `soir`, ni `fin`), horloge ≥ début de service. Tant qu'elle est fausse, `majNotifsTel` ne livre rien.
+- Ce qui devient dû est gardé : quand la journée commence, après **1 s** réelle (2 s retenaient près de 3 h de jeu,
+  le temps filant à ×100), `NotifsTel.maj` livre une seule notification spontanée, l'alerte d'abord, « +n autres ».
+- Le soir et à la fin, la file spontanée et la notification affichée sont vidées : rien ne ressort le lendemain, le
+  téléphone ne vibre pas la nuit (les notifications restent dans le centre).
+- Avertissement du patron et plaintes en attente : identifiant sans date — notifiés une fois, pas chaque matin.
+- Reprise d'une sauvegarde : même règle (rien avant que la journée ait repris).
+
+## Vérifié
+
+- `npm run build`, `npm test` (+5 contrôles : `journeeCommencee` fausse pendant transition, démarrage du PC, SMS,
+  rapport de la veille, soir, avant 8 h ; rien livré, ni son ni annonce ; une notification groupée après ; file vidée
+  le soir ; avertissement notifié une fois).
+- Reproduction refaite (1920 × 1080 et 412 × 915) : plus rien pendant la transition ni le démarrage du PC ; première
+  notification une fois la journée commencée, « jauge réputation » + 3 autres regroupées
+  (`jeu/225-captures/apres-journee-commencee.png`).
+- Audit : 0 défaut de texte, 0 cible sous 44 px CSS en 1920 × 1080, 1366 × 768, 412 × 915.
