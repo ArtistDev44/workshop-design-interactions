@@ -4539,6 +4539,39 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	verifier(/add\('fin de journée · bilan'/.test(readFileSync(join(pub, 'audit-textes.js'), 'utf8')), '222 : l\'audit des textes passe par la fin de journée (rapport, bilan)');
 }
 
+// ——— Prompt 223 : répliques adaptées à la question du plaignant (thème de la plainte ; perturbation sans chantier) ———
+{
+	const pa = readFileSync(join(pub, 'panneau.js'), 'utf8');
+	const i18 = readFileSync(join(pub, 'i18n.js'), 'utf8');
+	const THEMES = new Function('return ' + pa.slice(pa.indexOf('const THEMES_REPLIQUES = ') + 'const THEMES_REPLIQUES = '.length, pa.indexOf('};', pa.indexOf('const THEMES_REPLIQUES')) + 1))();
+	const msgs = JSON.parse(readFileSync(join(pub, 'data/messages.json'), 'utf8')).plaintes;
+	const reps = JSON.parse(readFileSync(join(pub, 'data/reponses.json'), 'utf8')).categories;
+	// Valeurs FR et EN d'une clé (la première occurrence est le français, la seconde l'anglais)
+	const valeurs = (cle) => [...i18.matchAll(new RegExp('"' + cle.replace(/\./g, '\\.') + '": "((?:[^"\\\\]|\\\\.)*)"', 'g'))].map((m) => m[1]);
+	const vars = (x) => (x.match(/\{\w+\}/g) || []).sort().join();
+	const avecTheme = msgs.filter((m) => m.theme);
+	verifier(avecTheme.length >= 30 && avecTheme.every((m) => THEMES[m.theme]), `223 : thèmes de plainte connus (${avecTheme.length} plaintes à thème)`);
+	const BASE = { 'ligne en difficulté': ['retard'], perturbation: ['travaux'], 'événement': ['affluence'], 'alerte météo': ['meteo'], 'incident fictif': ['securite'], '*': ['retard', 'travaux', 'affluence', 'meteo'] };
+	const manques = [];
+	avecTheme.forEach((m) => {
+		const t = m.condition.type;
+		const cats = new Set(BASE[t] || []);
+		if (t !== 'incident fictif') cats.add('meteo'); // jour de forte pluie : le dossier passe en « météo »
+		cats.forEach((cat) => {
+			if (!THEMES[m.theme].includes(cat)) return manques.push(m.id + ' : catégorie ' + cat + ' hors du thème ' + m.theme);
+			reps[cat].forEach((r) => {
+				const v = valeurs('repl.theme.' + m.theme + '.' + r.id + '.1');
+				if (v.length !== 2 || vars(v[0]) !== vars(v[1]) || /\{(?!nature|ligne|retard|nom|auteur)\w+\}/.test(v[0])) manques.push(m.theme + '.' + r.id + ' (' + cat + ')');
+			});
+		});
+	});
+	verifier(!manques.length, `223 : chaque plainte à thème a une réplique de thème (FR + EN) pour chaque réponse de chaque catégorie où elle peut tomber (${[...new Set(manques)].slice(0, 6).join(' ; ')})`);
+	const perturb = reps.travaux.every((r) => [1, 2].every((k) => valeurs('repl.perturbation.' + r.id + '.' + k).length === 2)) && [1, 2].every((k) => valeurs('clash.perturbation.' + k).length === 2);
+	verifier(perturb && /const perturbationSansChantier = \(d\) => Jeu\.categorie\(d\) === 'travaux' && !\/travaux\|chantier\/i/.test(pa), '223 : perturbation qui n\'est pas un chantier — répliques et clash qui nomment sa nature (FR + EN)');
+	verifier(/prefixesReplique\(r, d\)\.concat\('repl\.' \+ r\.cle\)/.test(pa) && /theme: def\.theme \|\| null/.test(readFileSync(join(pub, 'game.js'), 'utf8')), '223 : thème → perturbation → réplique de la catégorie');
+	verifier(/if \(c\.type === '\*' && \['securite', 'accident'\]\.includes\(Jeu\.categorie\(d\)\)\) return false;/.test(readFileSync(join(pub, 'game.js'), 'utf8')), '223 : pas de plainte générale (« * ») sur une urgence');
+}
+
 if (erreurs.length) {
 	console.error(`Test du jeu : ${erreurs.length} erreur(s) sur ${controles + erreurs.length} contrôles`);
 	for (const e of erreurs) console.error(`  ✗ ${e}`);

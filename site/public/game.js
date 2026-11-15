@@ -1604,6 +1604,7 @@
 		if (p.incitation && Jeu.violenceMasquee()) return false; // prompt 210 : masquage actif (et toujours en exposition) → aucune incitation tirée
 		if (c.fil && !(Jeu.plaintes || []).some((x) => x.index === index && !x.extra)) return false; // prompt 198 : relance / doublon d'un fil qui existe
 		if (c.type && c.type !== '*' && c.type !== d.type) return false;
+		if (c.type === '*' && ['securite', 'accident'].includes(Jeu.categorie(d))) return false; // prompt 223 : pas de plainte générale (pluie, abri…) sur une urgence
 		if (c.retard_min !== undefined && !(typeof d.retard === 'number' && d.retard >= c.retard_min)) return false;
 		if (c.ligne !== undefined && !(d.lignes || []).includes(String(c.ligne))) return false;
 		if (c.nature_contient && !String(d.nature || '').toLowerCase().includes(String(c.nature_contient).toLowerCase())) return false;
@@ -1663,13 +1664,13 @@
 		const d = (Jeu.paquet || [])[index];
 		if (!d || !Jeu.MESSAGES) return null;
 		const deja = (Jeu.plaintes || []).find((p) => p.index === index && !p.extra);
-		if (deja) return { id: deja.id, auteur: deja.auteur, texte: Jeu.texteMessage(deja.def.texte, deja.vars), ton: deja.def.ton || 'normal' };
+		if (deja) return { id: deja.id, auteur: deja.auteur, texte: Jeu.texteMessage(deja.def.texte, deja.vars), ton: deja.def.ton || 'normal', theme: deja.def.theme || null }; // prompt 223 : thème de la question
 		const vars = variablesDossier(d);
 		const candidates = (Jeu.MESSAGES.plaintes || []).filter((p) => estPrincipale(p) && plainteCorrespond(p, d, vars));
 		if (!candidates.length) return null;
 		const max = Math.max(...candidates.map(specificite));
 		const def = choisirSelonTon(candidates.filter((p) => specificite(p) === max), index);
-		return { id: def.id, auteur: def.auteur || '@usager_44', texte: Jeu.texteMessage(def.texte, vars), ton: def.ton || 'normal' };
+		return { id: def.id, auteur: def.auteur || '@usager_44', texte: Jeu.texteMessage(def.texte, vars), ton: def.ton || 'normal', theme: def.theme || null };
 	};
 	/** À la présentation d'un dossier : au plus une plainte, la plus spécifique parmi celles qui correspondent */
 	Jeu.declencherPlainte = function (index) {

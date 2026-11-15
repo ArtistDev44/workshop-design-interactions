@@ -291,18 +291,46 @@ function repliquesDuDossier(rs, d) {
 		return txt;
 	});
 }
+/** Prompt 223 : catégories où les répliques d'un thème de plainte (data/messages.json, « theme ») restent vraies —
+ * la réplique répond à la question ET décrit l'action jouée (effets inchangés). Ailleurs : réplique de la catégorie. */
+const THEMES_REPLIQUES = {
+	accessibilite: ['retard', 'affluence', 'meteo'],
+	vehicule: ['retard', 'affluence', 'meteo', 'travaux'],
+	info: ['retard', 'affluence', 'meteo', 'travaux', 'securite'],
+	itineraire: ['retard', 'travaux', 'meteo'],
+	abri: ['retard', 'affluence', 'meteo', 'travaux'],
+	tarif: ['affluence', 'meteo'],
+	rassurer: ['securite'],
+	justificatif: ['retard', 'meteo'],
+};
+/** Prompt 223 : préfixes de clés essayés avant la réplique de la catégorie — thème de la plainte, puis perturbation
+ * qui n'est pas un chantier (catégorie « travaux » sans « travaux » ni « chantier » dans la nature réelle) */
+const perturbationSansChantier = (d) => Jeu.categorie(d) === 'travaux' && !/travaux|chantier/i.test(String(d.nature || ''));
+function prefixesReplique(r, d) {
+	const cat = Jeu.categorie(d);
+	const id = String(r.cle).split('.').pop();
+	const out = [];
+	const i = Jeu.paquet ? Jeu.paquet.indexOf(d) : -1;
+	const pl = Jeu.plaignantPour ? Jeu.plaignantPour(i >= 0 ? i : Jeu.index) : null;
+	if (pl && pl.theme && (THEMES_REPLIQUES[pl.theme] || []).includes(cat)) out.push('repl.theme.' + pl.theme + '.' + id);
+	if (perturbationSansChantier(d)) out.push('repl.perturbation.' + id);
+	return out;
+}
 /** Prompt 116 : une des trois variantes de la réplique, choisie de façon déterministe (dossier + réponse), parmi
  * celles dont toutes les variables sont connues pour ce dossier ; repli : réplique unique (prompt 107), puis libellé */
 function repliqueDe(r, d, sansAuteur) {
 	const vars = Object.assign({}, Jeu.variablesReplique ? Jeu.variablesReplique(Jeu.index) : {});
 	if (sansAuteur) delete vars.auteur; // le pseudo n'est cité qu'une fois par dossier
 	const ok = [];
-	const prefixe = r.clash ? 'clash.' + (Jeu.categorie(d) || 'autre') : 'repl.' + r.cle; // prompt 117
-	for (let k = 1; k <= 3; k++) {
-		const cle = prefixe + '.' + k;
-		if (TRADUCTIONS.fr[cle] === undefined) continue;
-		const brut = String(t(cle));
-		if ((brut.match(/\{(\w+)\}/g) || []).every((m) => vars[m.slice(1, -1)] !== undefined && vars[m.slice(1, -1)] !== '')) ok.push(brut);
+	const prefixes = r.clash ? (perturbationSansChantier(d) ? ['clash.perturbation'] : []).concat('clash.' + (Jeu.categorie(d) || 'autre')) : prefixesReplique(r, d).concat('repl.' + r.cle); // prompt 117 ; prompt 223
+	for (const prefixe of prefixes) {
+		for (let k = 1; k <= 3; k++) {
+			const cle = prefixe + '.' + k;
+			if (TRADUCTIONS.fr[cle] === undefined) continue;
+			const brut = String(t(cle));
+			if ((brut.match(/\{(\w+)\}/g) || []).every((m) => vars[m.slice(1, -1)] !== undefined && vars[m.slice(1, -1)] !== '')) ok.push(brut);
+		}
+		if (ok.length) break;
 	}
 	if (!ok.length) return sansAuteur ? (r.clash ? t('clash.autre.1') : tSi('repl.' + r.cle, String(r.lib))) : repliqueDe(r, d, true);
 	let h = Jeu.index * 7;

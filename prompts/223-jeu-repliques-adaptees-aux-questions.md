@@ -1,7 +1,7 @@
 # Prompt 223 — Jeu : des répliques adaptées à la question du plaignant
 
 Origine : demande du 15/11/2026 (« pour l'application, certaines questions n'ont pas de réponses spécifiques adaptées
-dans certains cas »). Statut : **à exécuter**.
+dans certains cas »). Statut : **exécuté le 15/11/2026**.
 
 ## Constat (sondage des dossiers des semaines jouables, Chromium)
 
@@ -39,3 +39,26 @@ pas lue. Exemples relevés :
 `npm run build`, `npm test` : chaque plainte à thème a, pour chaque catégorie où elle peut tomber, une réplique de thème
 pour chacune des 4 familles (FR + EN, mêmes variables) ; sondage Chromium avant / après (dossiers des semaines jouables) ;
 audit des textes à 0 en 1920 × 1080, 1366 × 768, 412 × 915.
+
+## Fait
+
+- `data/messages.json` : champ `theme` sur 39 plaintes (accessibilite 5, vehicule 5, info 9, itineraire 7, abri 6,
+  tarif 1, rassurer 2, justificatif 4) ; documenté dans `_lisezMoi` ; `messages.js` régénéré.
+- `game.js` : `Jeu.plaignantPour` rend le thème ; une plainte générale (« * » : pluie, abri…) n'est plus tirée sur un
+  dossier de sécurité ou d'accident.
+- `panneau.js` : `THEMES_REPLIQUES` (catégories où chaque thème reste vrai) et `prefixesReplique` — ordre : réplique du
+  thème (`repl.theme.<thème>.<réponse>.1`), puis perturbation sans chantier (`repl.perturbation.<réponse>.<n>`, et
+  `clash.perturbation.<n>` pour le clash), puis la réplique de la catégorie, inchangée.
+- `i18n.js` : 63 répliques de thème + 8 de perturbation + 2 clashs, FR + EN, sans variable inventée (aucun nom de titre,
+  de service ou d'horaire qui n'est pas dans les données).
+- Hors champ : un dossier classé « accident » (mots du texte réel) garde les répliques d'accident, quel que soit le thème.
+
+## Vérifié
+
+- `npm run build`, `npm test` (+5 contrôles : chaque plainte à thème a, pour chaque catégorie où elle peut tomber —
+  jour de forte pluie compris —, une réplique de thème pour chacune des réponses, FR + EN, mêmes variables).
+- Sondage Chromium des dossiers des semaines jouables, avant / après. Exemples après :
+  « Je me déplace en fauteuil… » → « Des agents seront sur le quai pour organiser la montée et vous aider à monter. » ;
+  « …les rames risquent d'être pleines de déchets » → « On ajoute des passages, et les rames seront nettoyées et
+  vérifiées entre deux services. » ; perturbation « manifestation » → « Concrètement : votre ligne contourne la zone… »,
+  clash « « manifestation », et alors ? … » (plus de « travaux »).
