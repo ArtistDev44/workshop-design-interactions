@@ -80,7 +80,7 @@ const NotifsTel = (() => {
 		const out = [];
 		const jr = Jeu.jourCourant ? Jeu.jourCourant() : null;
 		if (!jr || !Jeu.jauges) return out;
-		const ajouter = (o) => out.push(Object.assign({ id: o.app + '|' + jr.date + '|' + o.sel, prio: o.alerte ? PRIO.alerte : PRIO.partie, lu: false, ignoree: false, minute: Jeu.horloge ? Math.floor(Jeu.horloge.minutes) : 0, source: 'partie' }, o));
+		const ajouter = (o) => out.push(Object.assign({ id: o.unique || o.app + '|' + jr.date + '|' + o.sel, prio: o.alerte ? PRIO.alerte : PRIO.partie, lu: false, ignoree: false, minute: Jeu.horloge ? Math.floor(Jeu.horloge.minutes) : 0, source: 'partie' }, o));
 		['fluidite', 'reputation', 'budget'].forEach((k) => {
 			if (Jeu.jauges[k] < 30) ajouter({ app: 'regul', alerte: true, cle: variante('tel.n.jauge', 'j' + k + jr.date), vars: { jauge: t('jaugeTitre.' + k), v: Jeu.jauges[k] }, sel: 'jauge' + k });
 		});
@@ -88,9 +88,9 @@ const NotifsTel = (() => {
 		if (o && o.atteint) ajouter({ app: 'regul', cle: 'tel.n.objectif', vars: { libelle: String(o.libelle) }, sel: 'objectif' });
 		(Jeu.equipes || []).filter((q) => q.jour === jr.date && q.arrivee_sim && !q.inutile).forEach((q, i) => ajouter({ app: 'regul', bureau: true, cle: 'tel.n.equipe', vars: { nom: String(q.nom), heure: q.arrivee_sim }, sel: 'eq' + (Jeu.equipes.indexOf(q)) }));
 		const attente = Jeu.plaintesEnAttente ? Jeu.plaintesEnAttente().length : 0;
-		if (attente) ajouter({ app: 'quai', bureau: true, cle: 'tel.n.quai', vars: { n: attente }, sel: 'quai' + (Jeu.plaintes || []).length });
+		if (attente) ajouter({ app: 'quai', bureau: true, cle: 'tel.n.quai', vars: { n: attente }, sel: 'quai' + (Jeu.plaintes || []).length, unique: 'quai|' + (Jeu.plaintes || []).length }); // prompt 225 : pas redit le lendemain
 		const SP = Jeu.statutPatron;
-		if (SP && SP.avertissements) ajouter({ app: 'regul', alerte: true, cle: 'tel.n.avertissement', vars: { n: SP.avertissements }, sel: 'avert' + SP.avertissements });
+		if (SP && SP.avertissements) ajouter({ app: 'regul', alerte: true, cle: 'tel.n.avertissement', vars: { n: SP.avertissements }, sel: 'avert' + SP.avertissements, unique: 'regul|avert|' + SP.avertissements }); // prompt 225 : une fois par avertissement, pas chaque matin
 		const tj = Jeu.taches && Jeu.taches.jours && Jeu.taches.jours[jr.date];
 		(tj && tj.recap && tj.recap.badges ? tj.recap.badges : []).forEach((b) => ajouter({ app: 'regul', cle: 'tel.n.badge', vars: { badge: t('badge.' + b) }, sel: 'badge' + b }));
 		return out.filter((n) => !etat.vus[n.id]);
@@ -152,8 +152,34 @@ function panneauDecisionOuvert() {
 	return typeof PHASES_ACTIVES !== 'undefined' && PHASES_ACTIVES.includes(phase) && vue === 'poste' && PC.etat === 'appli';
 }
 /** Chaque image (draw) : arrivées spontanées. Aucun appel réseau ici. */
+/** Prompt 225 : FENÊTRES du matin et des moments où le téléphone se tait */
+const FENETRES_SANS_TELEPHONE = ['blame', 'rapportVeille', 'tache', 'mailFin', 'rapport', 'partir', 'demission', 'inspection', 'cafe'];
+/** Prompt 225 : règle unique — la journée a vraiment commencé : transition finie, PC démarré, aucun SMS, tutoriel,
+ * guide, cinématique ni fenêtre du matin, phase de jeu (ni réveil, ni soir, ni fin), horloge ≥ début de service.
+ * Tant qu'elle est fausse, le téléphone ne livre rien (ni son, ni vibration, ni annonce) : tout est gardé. */
+function journeeCommencee() {
+	if (ecran !== 'jeu' || !Jeu.paquet || !Jeu.horloge || !Jeu.jourCourant || !Jeu.jourCourant() || MENU.actif) return false;
+	if (['fin', 'soir', 'reveil'].includes(phase)) return false;
+	if (TRANSITION_JOUR || smsActif || tutoriel) return false;
+	if ((typeof CINE !== 'undefined' && CINE) || (typeof GAMEOVER !== 'undefined' && GAMEOVER)) return false;
+	if (typeof JOUR_PC !== 'undefined' && JOUR_PC.attendu) return false;
+	if (typeof pcDemarre === 'function' && pcDemarre()) return false;
+	if (typeof GUIDE !== 'undefined' && GUIDE.actif) return false;
+	if (FENETRES_SANS_TELEPHONE.includes(fenetre)) return false;
+	return Jeu.horloge.minutes >= (Jeu.debutJournee ? Jeu.debutJournee() : 480);
+}
+/** Prompt 225 : délai après le début de la journée avant la première notification (le joueur s'installe) */
+const DELAI_TELEPHONE_MATIN = 1000; // 1 s réelle : à ×100, 2 s retenaient près de 3 h de notifications
 function majNotifsTel() {
-	if (ecran !== 'jeu' || !Jeu.paquet || !Jeu.horloge || MENU.actif || ['fin', 'soir'].includes(phase)) return;
+	// Prompt 225 : le soir (et à la fin), la file spontanée et la notification affichée sont vidées — rien ne ressort
+	// le lendemain, le téléphone ne vibre pas la nuit (les notifications restent dans le centre)
+	if (ecran === 'jeu' && ['fin', 'soir'].includes(phase)) {
+		TELN.attente = [];
+		TELN.spontanee = null;
+	}
+	if (!journeeCommencee()) return (TELN.pretDepuis = null);
+	if (TELN.pretDepuis === null || TELN.pretDepuis === undefined) TELN.pretDepuis = millis();
+	if (millis() - TELN.pretDepuis < DELAI_TELEPHONE_MATIN) return;
 	// Mode « aujourd'hui » : les relevés en direct déjà chargés (au clic) deviennent des notifications d'ambiance datées de leur heure réelle
 	if (Jeu.etat.mode === 'direct' && TELN.jour)
 		Object.values(TELN.direct).forEach((d) => {

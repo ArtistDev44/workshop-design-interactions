@@ -1,7 +1,7 @@
 # Prompt 226 — Jeu : chaque fin devient une petite vidéo de trois séquences
 
 Origine : demande du 15/11/2026 (« avoir pour chaque fin 3 séquences de fin de jeu personnalisées : 1 seule fin, mais
-avec une petite vidéo de fin, pas juste 1 séquence avec 1 écran »). Statut : **à exécuter**.
+avec une petite vidéo de fin, pas juste 1 séquence avec 1 écran »). Statut : **tableau écrit le 15/11/2026 (`jeu/226-fins-en-sequences.md`), en attente de validation** ; code à exécuter.
 
 ## Constat
 
