@@ -4521,6 +4521,14 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	verifier(a.x + a.l <= b.x + 0.001 && a.h * 0.711 >= 44 && Math.abs(a.x + a.l - 135) < 0.01 && Math.abs(b.x - 135) < 0.01, '220 : deux voisines à 10 px — chacune s\'arrête au milieu de l\'écart, 44 px CSS en hauteur');
 }
 
+// ——— Prompt 221 : bouton « Finir la journée » à côté de « Quitter le PC » ———
+{
+	const bu = readFileSync(join(pub, 'bureau.js'), 'utf8');
+	verifier(/function rectBoutonFinir\(\)/.test(bu) && /x: b\.x - 300 - 16, y: b\.y, l: 300, h: b\.h/.test(bu) && /dessinerBoutonFinir\(raison\); \/\/ prompt 221/.test(bu), '221 : « Finir la journée » à gauche de « Quitter le PC », même hauteur');
+	verifier(/return quitterJourneeRapide\(\);/.test(bu) && /function finirJourneeBouton\(\) \{\n\tconst raison = raisonRetenuAuPC\(\);/.test(bu), '221 : action quitterJourneeRapide, refusée avec sa raison si un choix attend');
+	verifier(/\.\.\.\(finir \? \['finir'\] : \[\]\), 'quitter'\]/.test(readFileSync(join(pub, 'menu-app.js'), 'utf8')) && /focusFinir && \(keyCode === ENTER/.test(readFileSync(join(pub, 'sketch.js'), 'utf8')), '221 : Tab passe par « Finir la journée » puis « Quitter le PC » ; Entrée l\'active');
+}
+
 if (erreurs.length) {
 	console.error(`Test du jeu : ${erreurs.length} erreur(s) sur ${controles + erreurs.length} contrôles`);
 	for (const e of erreurs) console.error(`  ✗ ${e}`);

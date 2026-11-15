@@ -799,7 +799,7 @@ function repondreRapide(m, cle) {
 const ZONES_MAILS = () => (PATRON.etroit ? (PATRON.lecture ? ['barre', 'dossiers', 'lecture'] : ['barre', 'dossiers', 'liste']) : ['barre', 'dossiers', 'liste', 'lecture']);
 function tabPatron() {
 	if (typeof MENU_FOCUS !== 'undefined' && MENU_FOCUS.actif) return false;
-	if (typeof focusQuitter !== 'undefined' && focusQuitter) return false;
+	if (typeof focusQuitter !== 'undefined' && (focusQuitter || focusFinir)) return false; // prompt 221 : focusFinir aussi
 	const zs = ZONES_MAILS();
 	const k = zs.indexOf(PATRON.zoneFocus);
 	const recul = keyIsDown(SHIFT);
