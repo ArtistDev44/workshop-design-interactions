@@ -1,7 +1,7 @@
 # Prompt 226 — Jeu : chaque fin devient une petite vidéo de trois séquences
 
 Origine : demande du 15/11/2026 (« avoir pour chaque fin 3 séquences de fin de jeu personnalisées : 1 seule fin, mais
-avec une petite vidéo de fin, pas juste 1 séquence avec 1 écran »). Statut : **tableau écrit le 15/11/2026 (`jeu/226-fins-en-sequences.md`), en attente de validation** ; code à exécuter.
+avec une petite vidéo de fin, pas juste 1 séquence avec 1 écran »). Statut : **exécuté le 15/11/2026** (tableau validé : `jeu/226-fins-en-sequences.md`).
 
 ## Constat
 
@@ -53,3 +53,30 @@ avec une petite vidéo de fin, pas juste 1 séquence avec 1 écran »). Statut :
 non remplie, données absentes gérées, Échap mène au rapport, mode réduit sans animation) ; captures des 36 séquences
 dans `jeu/226-captures/` ; audit des textes à 0 en 1920 × 1080, 1366 × 768, 412 × 915 (une étape par séquence) ;
 essai Chromium : une semaine jouée jusqu'à une fin, vidéo puis rapport ; « Revoir la fin » dans la galerie.
+
+## Fait
+
+- `site/public/fins-video.js` (nouveau) : état `CINE` (repris de la cinématique du prompt 41), lecture (5 s par
+  séquence, fondus 0,4 s, barre en 3 segments, Entrée / Espace / → / clic, Échap, P — bloqué si les raccourcis d'une
+  lettre sont désactivés — et bouton Pause), sous-titres annoncés, mode portrait (colonne centrale, prompt 209).
+- **9 décors** : ville (V), pièce (B) et salle de nuit (S), carte stylisée du réseau (C), téléphone (T), lettre (L) et
+  les trois nouveaux — **bureau du patron** (baie vitrée, porte et plaque, fauteuil, plante), **ascenseur** du siège
+  (portes qui se ferment, étage ; variante porte du patron et chaise d'attente), **quai de tram** (abri, voie, foule,
+  tram qui entre ou passe). Silhouettes pixel : joueur, patron, Camille, direction.
+- **36 séquences** (`SEQUENCES_FIN`) suivant le tableau ; étiquettes de données réelles (`pese.*` du prompt 207),
+  `donneesVideoFin` (signaux, jauges, premier clash, lignes, météo, lundi suivant, licenciement).
+- Branchements : fin de semaine (`histoire.js`, la vidéo puis `imprimerRapportSemaine`) ; semaine 3 du mode
+  histoire (fin finale ; ancienne cinématique supprimée, `finHistoire`) ; démission ; licenciement (`gameover.js`,
+  vidéo puis la lettre) ; galerie (`mecaniques.js`, « ▶ Revoir » sur ordinateur, carte touchable en portrait ;
+  `Galerie.noterVideo` garde les données).
+- Audit des textes : les 36 séquences ajoutées au parcours.
+- Son : la signature de fin existante (prompt 44) ; pas d'ambiance propre à chaque fin (non faite).
+
+## Vérifié
+
+- `npm run build`, `npm test` (+6 contrôles : 12 fins × 3 séquences, sous-titres FR + EN avec et sans données,
+  durées et mode réduit, trois décors, ancienne cinématique absente, branchements).
+- Chromium : fin de semaine → vidéo (Entrée avance, P met en pause, Échap) → mail et rapport ; « Revoir » → vidéo →
+  retour à la galerie ; licenciement → vidéo → lettre ; animations réduites : plan fixe, séquence suivante à 6 s.
+- Captures : `jeu/226-captures/sequences-01-04.png`, `-05-08`, `-09-12` (les 36), `mobile-portrait.png`.
+- Audit : 0 défaut de texte, 0 cible sous 44 px CSS en 1920 × 1080, 1366 × 768, 412 × 915.

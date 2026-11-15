@@ -323,6 +323,16 @@
 			} catch (e) {}
 			return nouvelle;
 		},
+		/** Prompt 226 : données de la partie où la fin a été obtenue (nombres, textes courts) — « Revoir la fin » */
+		noterVideo(cle, donnees) {
+			if (!FINS.some((f) => f.cle === cle) || !donnees) return;
+			const g = Galerie.lire();
+			if (!g[cle]) return;
+			g[cle].video = donnees;
+			try {
+				localStorage.setItem(CLE_GALERIE, JSON.stringify(g));
+			} catch (e) {}
+		},
 		decouvertes() {
 			const g = Galerie.lire();
 			return FINS.filter((f) => g[f.cle]).length;

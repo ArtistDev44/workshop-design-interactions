@@ -1,7 +1,7 @@
 # Prompt 226 — Tableau des fins en trois séquences (à valider avant de coder)
 
-Date : 15/11/2026. Prompt : `prompts/226-jeu-fins-en-trois-sequences.md`. Statut : **tableau proposé, en attente de
-validation** — aucune ligne de code écrite.
+Date : 15/11/2026. Prompt : `prompts/226-jeu-fins-en-trois-sequences.md`. Statut : **validé le 15/11/2026 (« dessine
+les 3 décors et exécute le 226 ») et codé** dans `site/public/fins-video.js` ; captures dans `jeu/226-captures/`.
 
 Ce document fixe, pour chacune des 12 fins, les trois séquences de la petite vidéo qui précède le rapport papier :
 **(a) le moment** — ce qui a fait basculer la semaine ; **(b) la conséquence** — ce que ça provoque autour ;
@@ -136,12 +136,14 @@ Trois décors nouveaux, réutilisés par plusieurs fins ; les autres existent d�
 | b | B | Le badge posé sur le clavier ; la chaise recule. | — | « Vous avez rendu votre badge. » |
 | c | V puis Q | Dehors, les quais de Loire au matin ; un tram passe sans vous. | date du jour de la démission | « Le réseau roule encore. Sans vous. » |
 
-## Ce qui reste à décider (avant de coder)
+## Décisions prises à l'exécution
 
-1. **Les trois décors nouveaux** (P bureau du patron, A ascenseur, Q quai de tram) : les dessiner, ou les remplacer
-   par des décors existants (B, V, L) pour réduire le travail ? Sans eux : 9 séquences sur 36 à recomposer.
-2. **Sous-titres** : ces formulations, ou plus courtes encore (≤ 50 caractères) ?
-3. **Mode histoire** : la vidéo de la fin finale remplace la cinématique par palier (semaine 3) — confirmé dans le
-   prompt ; garder la ville du palier en fond de la séquence (c) ?
-4. **Galerie** : « Revoir la fin » rejoue avec les données de la partie où elle a été obtenue (stockées dans la
-   galerie) — accepter ce stockage en plus (quelques nombres par fin) ?
+1. **Décors nouveaux** : dessinés (`decorPatron`, `decorAscenseur` — avec la variante « porte du patron » de la
+   réprimande —, `decorQuai`).
+2. **Sous-titres** : formulations du tableau, gardées (FR + EN). Seul écart : « La capture a fait le tour de Nantes »
+   (sans « avant midi », aucune donnée ne le dit) et le jour du premier clash lu dans l'historique.
+3. **Mode histoire** : la vidéo de la fin finale passe avant le rapport de la semaine 3 ; l'ancienne cinématique par
+   palier est supprimée (le décor de ville en reprend le ciel). Après le rapport : retour au menu.
+4. **Galerie** : les données de la partie (≈ 28 nombres et textes courts) sont gardées avec la fin découverte.
+5. Une étiquette dont le total est nul (« 0 sur 0 ») n'est pas affichée ; les nombres d'objets dessinés (gobelets,
+   jetons, croix) suivent les chiffres réels, plafonnés pour rester lisibles.

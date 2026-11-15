@@ -32,7 +32,10 @@ function lancerLicenciement() {
 	} catch (e) {}
 	Confort.Son.bip('consequence'); // signal grave et court
 	if (Confort.Son.musique && Confort.Son.musique.attenuer) Confort.Son.musique.attenuer(0); // musique coupée en fondu
-	annoncer(t('gameover.annonce', { score: GAMEOVER.lettre.score }));
+	const ecranLettre = () => GAMEOVER && annoncer(t('gameover.annonce', { score: GAMEOVER.lettre.score }));
+	// Prompt 226 : la vidéo de la fin « licenciement » (trois séquences) passe avant l'écran de la lettre
+	if (typeof lancerVideoFin === 'function') return lancerVideoFin('licenciement', donneesVideoFin('licenciement'), ecranLettre);
+	ecranLettre();
 }
 function quitterGameOver(action) {
 	GAMEOVER = null;

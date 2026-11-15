@@ -291,10 +291,11 @@ function fenetreFins() {
 		textStyle(BOLD);
 		textSize(24);
 		fill(vu ? C.texte : C.gris);
-		text(vu ? t('fin.' + f.cle + '.nom') : t('fins.cachee'), cx + 56, cy + 10, cl - 72, 32);
+		text(vu ? t('fin.' + f.cle + '.nom') : t('fins.cachee'), cx + 56, cy + 10, cl - 72 - (vu ? 176 : 0), 32);
 		textStyle(NORMAL);
 		const ligne = vu ? t('fins.obtenue', { le: vu.le.split('-').reverse().join('/'), s: vu.score, n: vu.n || 1 }) + ' — ' + t('fin.' + f.cle + '.indice') : t('fin.' + f.cle + '.indice');
-		dessinerTexte(ligne, cx + 56, cy + 46, cl - 72, { taille: 17, couleur: C.gris, maxLignes: 2, interligne: 23 });
+		dessinerTexte(ligne, cx + 56, cy + 52, cl - 72, { taille: 17, couleur: C.gris, maxLignes: 2, interligne: 23 });
+		if (vu) bouton(cx + cl - 16 - 160, cy + 6, 160, 44, '▶ ' + t('video.revoir'), () => revoirFin(f.cle), false, true); // prompt 226
 	});
 	bouton(x + l - 56 - 300, y + h - 92, 300, 64, t('fins.retour'), fermerFins);
 }
@@ -321,7 +322,8 @@ function finsPortrait() {
 		textStyle(BOLD);
 		textSize(24);
 		fill(vu ? C.texte : C.gris);
-		text(vu ? t('fin.' + f.cle + '.nom') : t('fins.cachee'), cx + 60, cy + 10, cl - 76, 32);
+		text(vu ? '▶ ' + t('fin.' + f.cle + '.nom') : t('fins.cachee'), cx + 60, cy + 10, cl - 76, 32);
+		if (vu) boutons.push({ x: cx, y: cy, l: cl, h: hc, action: () => revoirFin(f.cle), titre: t('video.revoirFin', { nom: t('fin.' + f.cle + '.nom') }) }); // prompt 226 : toucher la carte rejoue la fin
 		textStyle(NORMAL);
 		const ligne = vu ? t('fins.obtenue', { le: vu.le.split('-').reverse().join('/'), s: vu.score, n: vu.n || 1 }) + ' — ' + t('fin.' + f.cle + '.indice') : t('fin.' + f.cle + '.indice');
 		dessinerTexte(ligne, cx + 60, cy + 48, cl - 76, { taille: 20, couleur: C.gris, maxLignes: 3, interligne: 26 });
@@ -343,6 +345,14 @@ function finsPortrait() {
 	suiteFenetre(x2, y2, l, h2);
 	fins.slice(moitie).forEach((f, i) => carte(f, moitie + i, x2 + 32, y2 + 24 + i * (hc + 12)));
 	bouton(x2 + 32, y2 + h2 - 96, cl, 74, t('fins.retour'), fermerFins); // prompt 216 : 74 px
+}
+/** Prompt 226 : « Revoir la fin » — rejoue sa vidéo avec les données de la partie où elle a été obtenue (sinon sans
+ * données : les séquences s'en passent), puis revient à la galerie */
+function revoirFin(cle) {
+	const g = Jeu.Galerie ? Jeu.Galerie.lire() : {};
+	if (!g[cle] || typeof lancerVideoFin !== 'function') return;
+	fenetre = null;
+	lancerVideoFin(cle, g[cle].video || { cle }, ouvrirFins);
 }
 function fermerFins() {
 	ouvrir('palmares');

@@ -4667,6 +4667,44 @@ for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/
 	verifier(r.ev1.length === 1 && r.ev1[0] === 'regul|avert|1', `225 : un avertissement du patron n'est notifié qu'une fois, pas chaque matin (${r.ev1})`);
 }
 
+// ——— Prompt 226 : chaque fin devient une vidéo de trois séquences ———
+{
+	const lire = (x) => readFileSync(join(pub, x), 'utf8');
+	const fv = lire('fins-video.js');
+	const sous = {};
+	for (const langue of ['fr', 'en']) {
+		const c = contexte(langue);
+		vm.runInContext('var reduireAnimations = false; function jourDate(iso) { return "mardi 13 octobre"; }', c);
+		vm.runInContext(fv, c, { filename: 'fins-video.js' });
+		sous[langue] = vm.runInContext(
+			`(() => {
+			const plein = { cle: 'x', jourClash: '2026-10-13', dateLic: '2026-10-13', heureLic: '10h12', avert: 2, lundi: '2026-10-12' };
+			const out = { fins: FINS_VIDEO.length, defauts: [] };
+			FINS_VIDEO.forEach((cle) => {
+				const seq = SEQUENCES_FIN[cle];
+				if (!seq || seq.length !== 3) return out.defauts.push(cle + ' : pas 3 séquences');
+				seq.forEach((q, n) => {
+					[{ cle }, Object.assign({}, plein, { cle })].forEach((d) => {
+						let txt = '';
+						try { txt = String(q.sous(d)); } catch (e) { return out.defauts.push(cle + '.' + n + ' : ' + e.message); }
+						if (!txt || /\{\w+\}|À COMPLÉTER|^video\./.test(txt) || typeof q.dessin !== 'function') out.defauts.push(cle + '.' + n + ' : « ' + txt + ' »');
+					});
+				});
+			});
+			return out;
+		})()`,
+			c,
+		);
+	}
+	verifier(sous.fr.fins === 12 && !sous.fr.defauts.length && !sous.en.defauts.length, `226 : 12 fins × 3 séquences, sous-titres FR + EN remplis, avec et sans données (${sous.fr.defauts.concat(sous.en.defauts).slice(0, 4).join(' ; ')})`);
+	verifier(/const DUREE_SEQUENCE = 5000;/.test(fv) && /u: reduireAnimations \? 0\.6 :/.test(fv) && /DUREE_SEQUENCE_REDUITE = 6000/.test(fv) && /if \(keyCode === ESCAPE\) return finVideo\(\);/.test(fv), '226 : 5 s par séquence ; animations réduites : plan fixe, 6 s ; Échap passe la vidéo');
+	verifier(['decorPatron', 'decorAscenseur', 'decorQuai'].every((f) => new RegExp('function ' + f + '\\(').test(fv)), '226 : trois décors nouveaux (bureau du patron, ascenseur, quai de tram)');
+	const tous = readdirSync(pub).filter((f) => f.endsWith('.js')).map(lire).join('\n');
+	verifier(!/lancerCinematique|dessinerCinematique|planSuivant\(/.test(tous), '226 : la cinématique par palier (prompt 41) a disparu');
+	verifier(/return lancerVideoFin\(cleVideo, donneesVideo, \(\) => imprimerRapportSemaine\(b, ch\)\);/.test(lire('histoire.js')) && /lancerVideoFin\('licenciement', donneesVideoFin\('licenciement'\), ecranLettre\)/.test(lire('gameover.js')) && /function revoirFin\(cle\)/.test(lire('mecaniques.js')) && /noterVideo\(cle, donnees\)/.test(lire('posture.js')), '226 : vidéo avant le rapport, avant la lettre de licenciement, « Revoir la fin » dans la galerie');
+	verifier(/<script src="\.\/fins-video\.js"><\/script>/.test(lire('index.html')), '226 : fins-video.js chargé');
+}
+
 if (erreurs.length) {
 	console.error(`Test du jeu : ${erreurs.length} erreur(s) sur ${controles + erreurs.length} contrôles`);
 	for (const e of erreurs) console.error(`  ✗ ${e}`);
