@@ -31,7 +31,7 @@
 		{ "name": "Musiques lo-fi (Loyalty Freak Music, album MELODIES WITH A BEAT)", "provider": "Free Music Archive via Wikimedia Commons", "url": "https://freemusicarchive.org/music/Loyalty_Freak_Music/MELODIES_WITH_A_BEAT", "rights": "CC0 1.0 (vérifié sur les pages FMA des 3 morceaux le 2026-11-11)" },
 		{ "name": "Musique du trailer (« Heroic Age », Kevin MacLeod)", "provider": "incompetech.com", "url": "https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100848", "rights": "CC BY 4.0 (vérifié le 2026-11-12, voir trailer/CREDITS.md)" }
 	],
-	"ai_usage": "Code, documentation et prompts réalisés avec un assistant IA (commits marqués Co-Authored-By: Claude), à partir de prompts écrits par le groupe (dossier prompts/). Relecture et part humaine : [À COMPLÉTER].",
+	"ai_usage": "Code, documentation et prompts réalisés avec un assistant IA (commits marqués Co-Authored-By: Claude), à partir de prompts écrits par le groupe (dossier prompts/). Part humaine (historique git, 15/11/2026) : chaque étape commandée par un prompt numéroté (217, dont 188 de Guillaume et 29 de Mattéo), décisions de jeu Q1 à Q61 verrouillées avant le code, chaque étape validée par une fusion dans main (260) ; 480 commits sur 499 portent une marque d'IA, les 19 autres couvrent le cadrage.",
 	"license": "MIT (code, voir LICENSE) ; données et médias sous leurs licences propres (data_sources)",
 	"version": "1.0"
 }

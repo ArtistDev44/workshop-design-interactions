@@ -106,7 +106,7 @@ jauges, UI, narration, fallback, raccourcis, paramètres, accessibilité).
 - [x] Prototype fonctionnel lançable dans un navigateur — `site/public/index.html`
 - [x] Au moins 3 paramètres réellement opérants — `site/scripts/test-jeu.mjs` (difficulté, semaines, hors ligne, défi chrono)
 - [x] Test par un autre groupe + au moins une itération documentée (test : groupe de Léo & Nolan ; itérations : `prompts/` et `journal.md`)
-- [ ] Documentation complète permettant de comprendre et relancer le projet (README aux 12 rubriques du livret ; rôles, contributions et part humaine de l'IA restent `[À COMPLÉTER]`)
+- [x] Documentation complète permettant de comprendre et relancer le projet (README aux 12 rubriques du livret ; rôles, contributions et part humaine de l'IA complétés le 15/11/2026 d'après l'historique git)
 
 ### Checklist de robustesse (avant l'exposition)
 
@@ -162,10 +162,10 @@ Note finale /20 = (points projet /70 + points individuels /30) ÷ 5. Exemple du 
 | Autonomie, engagement, itération | 4 |
 | Documentation personnelle & intégrité (Contributions, AI usage, sources) | 3 |
 
-- [ ] Remplir la section Contributions du README, nominative et précise (pas de passager invisible)
+- [x] Remplir la section Contributions du README, nominative et précise (pas de passager invisible) (fait le 15/11/2026 d'après l'historique git)
 - [ ] Conserver commits, captures de travail et fichiers intermédiaires
 - [ ] Remplir la fiche individuelle avant la soutenance : nom, groupe, 3 contributions principales, une décision de design défendable, une décision technique explicable, une difficulté résolue, usage d'IA
-- [ ] Ajouter la note AI usage (3 à 5 lignes) au README si un assistant IA a été utilisé
+- [x] Ajouter la note AI usage (3 à 5 lignes) au README si un assistant IA a été utilisé (part humaine ajoutée le 15/11/2026)
 - [ ] Pouvoir ouvrir et expliquer n'importe quelle partie du code ou du design
 
 ### Questions de soutenance à préparer
@@ -192,7 +192,7 @@ Vérifié par `ls` / `grep` dans le dépôt : seuls les éléments existants son
 - [x] Version finale sauvegardée : `rendu/PXE_NTE001_G01_NANTES-EN-REGULATION/` (lancée hors ligne par `file://`, sans erreur ; prompt 46)
 
 ### `[À COMPLÉTER]` qui attendent une saisie humaine du groupe
-- [ ] `site/README.md` : Auteurs (noms et rôles), Contributions (nominatives), AI usage (ce qui a été relu, réécrit, testé)
+- [x] `site/README.md` : Auteurs (noms et rôles), Contributions (nominatives), AI usage (ce qui a été relu, réécrit, testé) (fait le 15/11/2026 d'après l'historique git)
 - [x] `site/src/content/oeuvres/pxe-nte001-g01-w01.json` : `auteurs` (Mattéo Brevet, Guillaume Renoult, comme `LICENSE` et les crédits du menu) et `groupe` (G01, repris de l'identifiant) renseignés le 11/11/2026
 - [x] `site/public/source-sheet.md` : Contexte et 3 propriétés observables remplis (prompt 59) ; propriété écartée confirmée le 11/11/2026
 - [x] `LICENSE` : licence MIT, titulaires Mattéo Brevet & Guillaume Renoult (README et manifest alignés le 11/11/2026)

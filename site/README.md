@@ -10,7 +10,11 @@ Site statique (Astro) de l'édition Nantes 001 — ESD Nantes, B3 Design, 9, 10 
 
 ## Auteurs
 
-[À COMPLÉTER : noms et rôles des membres du groupe — saisie humaine attendue, voir `todo.md`]
+Mattéo Brevet, Guillaume Renoult (groupe G01).
+
+Rôles, d'après l'historique git (15/11/2026) : **Mattéo Brevet** a construit le site de l'édition et les fondations du jeu,
+puis le gameplay des applications du PC ; **Guillaume Renoult** a cadré le projet, rédigé la plupart des prompts,
+piloté les fusions et exécuté la majorité des étapes du jeu à partir du 10/11, avec les tests, la captation et la documentation.
 
 ## Édition
 
@@ -132,7 +136,37 @@ aurait effacé la seule source machine-readable du cartel et de l'identifiant `P
 
 ## Contributions
 
-[À COMPLÉTER : contributions nominatives et précises de chaque membre — pas de passager invisible ; saisie humaine attendue. Les commits par compte se listent avec `git shortlog -sn --all`.]
+Établi à partir de l'historique git de `main` au 15/11/2026. Comptes rattachés par le groupe (12/11/2026) :
+ArtistDev44, Vibe Nuage Agent et Skyfe → Guillaume ; matteobvt49-code → Mattéo. Détail prompt par prompt :
+https://workshop-design-interactions.pages.dev/making-of/ (`prompts/auteurs.json`).
+
+**Mattéo Brevet** — 89 commits, 56 fusions dans `main`, 29 fichiers de prompts ajoutés.
+- Site de l'édition (09/11) : prompts 01 à 13 exécutés (projet Astro, layout et design system, accueil, registre
+  et schéma des œuvres, galerie, page œuvre, cartel et 404, statistiques, pages Méthode / Corpus / Crédits,
+  données vivantes, contrôles d'accessibilité, QR codes) ; audit des API Open Data Nantes Métropole
+  (`contexte/audit-api-open-data-nantes.md`).
+- Fondations du jeu (10/11) : prompts 14 à 19 et 21 à 24 (sources et données, écrans, boucle, effets et jauges,
+  contrôles, fins, PC et bureau en pixel art, jauges fluidité / réputation / budget, économie, jeu en français et
+  anglais), prompts 64 (la Carte devient l'appli principale) et 67 (fin de journée de nuit).
+- Applications du PC et gameplay (11–12/11) : prompts 84 à 93 (rappel à l'ordre et licenciement, Community,
+  Messages du patron, décisions sans chrono, progression, Journal de bord, notifications, textes d'enquête, textes
+  hors de leur case), 101 à 111 (applis désencombrées, carte des alertes réelles, appli unique, bureau qui se
+  remplit, carte interactive, équipes et trajets, géocodage OpenStreetMap, palettes), 114 à 119 (réponses au
+  plaignant, clash, plaignants désagréables, incidents fictifs marqués) ; correctif de l'écran figé.
+- Logo : planche des quatre pistes (prompts 120 et 126, dossier `logo/`).
+
+**Guillaume Renoult** — 410 commits (ArtistDev44 354, Vibe Nuage Agent 37, Skyfe 19), 204 fusions dans `main`,
+188 fichiers de prompts ajoutés.
+- Cadrage (09/11) : création du dépôt, `todo.md` aligné sur le livret, livret et framework dans `contexte/`,
+  `notes.md`, extraction du design system, décisions de jeu Q1 à Q61 verrouillées dans `jeu/` avant le code
+  (titre, fins, seuils, table des effets 1d6), découpage du prompt 14, prompts 01 à 34 écrits.
+- Jeu (10–15/11) : prompt 20 (immersion), puis la majorité des prompts 25 à 231 — sauvegarde, mode histoire,
+  dix fins de posture et fins en trois séquences, mails du patron et lettres, animations, son, icônes,
+  accessibilité et audits de textes, mode développeur.
+- Qualité : tests automatisés (`site/scripts/`, 142 commits : smoke test, test du jeu, test navigateur) et
+  workflow `tests.yml`.
+- Exposition et documentation : captation et cartel, bande-annonce (`trailer/`), diaporama (`slides/`), kit de
+  presse, image Open Graph, page making-of, `journal.md`, audits, `note-eval.md`, README et « Conformité au brief ».
 
 ## AI usage
 
@@ -141,7 +175,14 @@ des assistants IA exécutant les prompts numérotés de `prompts/` (site Astro, 
 smoke test, ce README). L'historique git en garde la trace : des commits portent la mention
 `Co-Authored-By: Claude` (Anthropic) et d'autres sont signés par un compte d'agent (« Vibe Nuage Agent »).
 Les décisions de jeu (Q1–Q61, `jeu/`) et les prompts ont été rédigés en amont ; les données sont réelles.
-[À COMPLÉTER par l'équipe : ce qui a été relu, réécrit et testé par vous.]
+Part humaine, d'après l'historique git (15/11/2026) : 480 des 499 commits hors fusions de `main` portent une marque
+d'IA (`Co-Authored-By: Claude` ou `Mistral Vibe`, ou compte « Vibe Nuage Agent ») ; les 19 sans marque (compte Skyfe)
+couvrent le cadrage : création du dépôt, `todo.md` aligné sur le livret, livret dans `contexte/`, prompts 20, 197
+et 199. Le groupe a commandé chaque étape par un prompt numéroté (217 fichiers : Guillaume 188, Mattéo 29),
+choisi la source, verrouillé les décisions de jeu Q1 à Q61 avant le code, validé chaque étape par une fusion
+dans `main` (260 fusions : Guillaume 204, Mattéo 56) et demandé des corrections, notées dans les commits
+(ex. « suppression de la fenêtre “Votre poste” (suite du prompt 183, demande du groupe) »). L'historique ne
+montre pas les relectures ou réécritures faites à la main hors commit.
 
 ## Sources / droits
 
